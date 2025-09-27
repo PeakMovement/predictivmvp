@@ -1,7 +1,7 @@
 import { TrendingUp, Target, AlertTriangle, FileText, Play, ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 const metrics = [
   { name: "Acute:Chronic Workload Ratio", value: "1.2", status: "green" },
@@ -168,6 +168,7 @@ const FocusAreasCard = () => (
 const GraphCarousel = () => {
   const [currentGraph, setCurrentGraph] = useState(0);
   const [timeRange, setTimeRange] = useState(30);
+  const [isTransitioning, setIsTransitioning] = useState(false);
   
   const timeRanges = [
     { days: 7, label: "7 Days" },
@@ -175,12 +176,43 @@ const GraphCarousel = () => {
     { days: 30, label: "30 Days" }
   ];
   
+  // Auto-rotation every 5 seconds
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setIsTransitioning(true);
+      setTimeout(() => {
+        setCurrentGraph((prev) => (prev + 1) % graphData.length);
+        setIsTransitioning(false);
+      }, 150);
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, []);
+  
   const nextGraph = () => {
-    setCurrentGraph((prev) => (prev + 1) % graphData.length);
+    setIsTransitioning(true);
+    setTimeout(() => {
+      setCurrentGraph((prev) => (prev + 1) % graphData.length);
+      setIsTransitioning(false);
+    }, 150);
   };
   
   const prevGraph = () => {
-    setCurrentGraph((prev) => (prev - 1 + graphData.length) % graphData.length);
+    setIsTransitioning(true);
+    setTimeout(() => {
+      setCurrentGraph((prev) => (prev - 1 + graphData.length) % graphData.length);
+      setIsTransitioning(false);
+    }, 150);
+  };
+  
+  const selectGraph = (index: number) => {
+    if (index !== currentGraph) {
+      setIsTransitioning(true);
+      setTimeout(() => {
+        setCurrentGraph(index);
+        setIsTransitioning(false);
+      }, 150);
+    }
   };
   
   const graph = graphData[currentGraph];
@@ -237,7 +269,7 @@ const GraphCarousel = () => {
             {graphData.map((_, index) => (
               <button
                 key={index}
-                onClick={() => setCurrentGraph(index)}
+                onClick={() => selectGraph(index)}
                 className={cn(
                   "w-2 h-2 rounded-full transition-all duration-300",
                   index === currentGraph 
@@ -276,10 +308,16 @@ const GraphCarousel = () => {
         </div>
       </div>
       
-      <div className="h-80 bg-muted/5 rounded-xl border border-glass-border relative overflow-hidden">
+      <div className={cn(
+        "h-80 bg-muted/5 rounded-xl border border-glass-border relative overflow-hidden transition-all duration-300 ease-out",
+        isTransitioning ? "opacity-50 scale-95" : "opacity-100 scale-100"
+      )}>
         <svg 
           viewBox={`0 0 ${viewBoxWidth} ${viewBoxHeight}`}
-          className="w-full h-full"
+          className={cn(
+            "w-full h-full transition-all duration-300 ease-out",
+            isTransitioning ? "opacity-0 translate-x-2" : "opacity-100 translate-x-0"
+          )}
           preserveAspectRatio="xMidYMid meet"
           style={{ filter: `drop-shadow(0 0 8px ${glowColor})` }}
         >
@@ -325,7 +363,10 @@ const GraphCarousel = () => {
           })}
         </svg>
         
-        <div className="absolute top-4 right-4 text-right">
+        <div className={cn(
+          "absolute top-4 right-4 text-right transition-all duration-300 ease-out",
+          isTransitioning ? "opacity-0 translate-y-1" : "opacity-100 translate-y-0"
+        )}>
           <div className="text-2xl font-bold text-foreground transition-colors duration-300">
             {graph.currentValue}
           </div>

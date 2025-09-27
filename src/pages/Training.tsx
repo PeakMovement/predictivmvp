@@ -2,6 +2,8 @@ import { BarChart3, Activity, Calendar, TrendingUp, Gauge, ChevronLeft, ChevronR
 import { cn } from "@/lib/utils";
 import { useState, useEffect } from "react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { useToast } from "@/hooks/use-toast";
 
 const sessionLogs = [
   { title: "Upper Body Strength", date: "2024-01-15", load: 125, type: "Strength" },
@@ -131,6 +133,9 @@ const AccountabilityChallenges = () => {
   const [acceptedSuggestions, setAcceptedSuggestions] = useState<Set<number>>(new Set());
   const [processingStates, setProcessingStates] = useState<Record<number, 'accepting' | 'added' | 'cancelling' | 'cancelled'>>({});
   const [removedSuggestions, setRemovedSuggestions] = useState<Set<number>>(new Set());
+  const [selectedInsight, setSelectedInsight] = useState<typeof suggestions[0] | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const { toast } = useToast();
 
   const handleAccept = (suggestionId: number) => {
     // Set to accepting state immediately
@@ -167,111 +172,179 @@ const AccountabilityChallenges = () => {
     }, 300);
   };
 
+  const handleInsightClick = (suggestion: typeof suggestions[0]) => {
+    setSelectedInsight(suggestion);
+    setIsModalOpen(true);
+  };
+
+  const handleFeedback = (isUseful: boolean) => {
+    toast({
+      title: isUseful ? "Thank you!" : "Feedback received",
+      description: isUseful 
+        ? "We're glad you found this insight helpful." 
+        : "We'll work to improve our insights for you.",
+      duration: 3000,
+    });
+    setIsModalOpen(false);
+    setSelectedInsight(null);
+  };
+
   const visibleSuggestions = suggestions.filter(suggestion => 
     !removedSuggestions.has(suggestion.id)
   );
 
   return (
-    <div className="bg-glass backdrop-blur-xl border border-glass-border rounded-2xl p-6 shadow-glass hover:bg-glass-highlight hover:scale-105 hover:-translate-y-1 transition-all duration-300 ease-out animate-fade-in transform-gpu mb-8">
-      <div className="flex items-center gap-3 mb-6">
-        <div className="w-8 h-8 bg-primary/20 rounded-lg flex items-center justify-center hover:scale-110 transition-transform duration-200">
-          <TrendingUp size={16} className="text-primary" />
+    <>
+      <div className="bg-glass backdrop-blur-xl border border-glass-border rounded-2xl p-6 shadow-glass hover:bg-glass-highlight hover:scale-105 hover:-translate-y-1 transition-all duration-300 ease-out animate-fade-in transform-gpu mb-8">
+        <div className="flex items-center gap-3 mb-6">
+          <div className="w-8 h-8 bg-primary/20 rounded-lg flex items-center justify-center hover:scale-110 transition-transform duration-200">
+            <TrendingUp size={16} className="text-primary" />
+          </div>
+          <div className="flex items-center gap-2">
+            <h3 className="text-lg font-semibold text-foreground">Accountability Challenges</h3>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button className="p-1 rounded-md hover:bg-primary/10 transition-all duration-200 hover:scale-110">
+                  <HelpCircle size={16} className="text-muted-foreground hover:text-primary transition-colors duration-200" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p className="max-w-xs">These are personalized challenges designed to help you improve your health. Accept a challenge to commit, and we'll track your progress</p>
+              </TooltipContent>
+            </Tooltip>
+          </div>
         </div>
-        <div className="flex items-center gap-2">
-          <h3 className="text-lg font-semibold text-foreground">Accountability Challenges</h3>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <button className="p-1 rounded-md hover:bg-primary/10 transition-all duration-200 hover:scale-110">
-                <HelpCircle size={16} className="text-muted-foreground hover:text-primary transition-colors duration-200" />
-              </button>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p className="max-w-xs">These are personalized challenges designed to help you improve your health. Accept a challenge to commit, and we'll track your progress</p>
-            </TooltipContent>
-          </Tooltip>
-        </div>
-      </div>
-      <div className="space-y-4">
-        {visibleSuggestions.map((suggestion) => {
-          const isActionable = suggestion.type === "actionable";
-          const processingState = processingStates[suggestion.id];
-          
-          return (
-            <div 
-              key={suggestion.id} 
-              className={cn(
-                "bg-glass/30 backdrop-blur-sm border border-glass-border rounded-xl p-4 hover:bg-glass-highlight transition-all duration-300 border-l-4",
-                getAccentColor(suggestion.accentColor),
-                processingState === 'cancelling' && "opacity-0 scale-95",
-                processingState === 'added' && "opacity-0 scale-95"
-              )}
-            >
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex-1 space-y-2">
-                  <div className="flex items-center gap-2">
-                    <span className={cn(
-                      "px-2 py-1 text-xs font-medium rounded-md border transition-colors duration-200",
-                      getCategoryStyle(suggestion.category)
-                    )}>
-                      {suggestion.category}
-                    </span>
-                  </div>
-                  <p className="font-medium text-foreground leading-relaxed">
-                    {processingState === 'accepting' ? 'Added' : suggestion.text}
-                  </p>
-                </div>
-                
-                <div className="flex items-center gap-3">
-                  {/* Action Icons */}
-                  {!processingState && (suggestion.hasPdf || suggestion.hasVideo) && (
-                    <div className="flex items-center gap-1 opacity-50 hover:opacity-100 transition-opacity duration-200">
-                      {suggestion.hasPdf && (
-                        <button 
-                          className="p-2 rounded-md hover:bg-primary/10 hover:shadow-glow transition-all duration-200 hover:scale-110 active:scale-95"
-                          onClick={() => console.log('Download PDF for suggestion:', suggestion.id)}
-                        >
-                          <FileText size={16} className="text-muted-foreground hover:text-primary transition-colors duration-200" />
-                        </button>
-                      )}
-                      {suggestion.hasVideo && (
-                        <button 
-                          className="p-2 rounded-md hover:bg-primary/10 hover:shadow-glow transition-all duration-200 hover:scale-110 active:scale-95"
-                          onClick={() => console.log('Watch Video for suggestion:', suggestion.id)}
-                        >
-                          <Play size={16} className="text-muted-foreground hover:text-primary transition-colors duration-200" />
-                        </button>
-                      )}
-                    </div>
-                  )}
-                  
-                  {/* Action Buttons or Insight Label */}
-                  {!processingState && isActionable ? (
+        <div className="space-y-4">
+          {visibleSuggestions.map((suggestion) => {
+            const isActionable = suggestion.type === "actionable";
+            const processingState = processingStates[suggestion.id];
+            
+            return (
+              <div 
+                key={suggestion.id} 
+                className={cn(
+                  "bg-glass/30 backdrop-blur-sm border border-glass-border rounded-xl p-4 transition-all duration-300 border-l-4",
+                  getAccentColor(suggestion.accentColor),
+                  processingState === 'cancelling' && "opacity-0 scale-95",
+                  processingState === 'added' && "opacity-0 scale-95",
+                  !isActionable && !processingState && "hover:bg-glass-highlight cursor-pointer",
+                  isActionable && !processingState && "hover:bg-glass-highlight"
+                )}
+                onClick={!isActionable && !processingState ? () => handleInsightClick(suggestion) : undefined}
+              >
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex-1 space-y-2">
                     <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => handleAccept(suggestion.id)}
-                        className="p-2 rounded-lg bg-green-500/20 text-green-400 hover:bg-green-500/30 hover:scale-110 active:scale-95 transition-all duration-200"
-                      >
-                        <Check size={16} />
-                      </button>
-                      <button
-                        onClick={() => handleCancel(suggestion.id)}
-                        className="p-2 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30 hover:scale-110 active:scale-95 transition-all duration-200"
-                      >
-                        <X size={16} />
-                      </button>
+                      <span className={cn(
+                        "px-2 py-1 text-xs font-medium rounded-md border transition-colors duration-200",
+                        getCategoryStyle(suggestion.category)
+                      )}>
+                        {suggestion.category}
+                      </span>
                     </div>
-                  ) : !processingState && !isActionable ? (
-                    <div className="px-4 py-2 text-sm font-medium text-muted-foreground/60 bg-muted/10 rounded-lg">
-                      Insight
-                    </div>
-                  ) : null}
+                    <p className="font-medium text-foreground leading-relaxed">
+                      {processingState === 'accepting' ? 'Added' : suggestion.text}
+                    </p>
+                  </div>
+                  
+                  <div className="flex items-center gap-3">
+                    {/* Action Icons */}
+                    {!processingState && (suggestion.hasPdf || suggestion.hasVideo) && (
+                      <div className="flex items-center gap-1 opacity-50 hover:opacity-100 transition-opacity duration-200">
+                        {suggestion.hasPdf && (
+                          <button 
+                            className="p-2 rounded-md hover:bg-primary/10 hover:shadow-glow transition-all duration-200 hover:scale-110 active:scale-95"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              console.log('Download PDF for suggestion:', suggestion.id);
+                            }}
+                          >
+                            <FileText size={16} className="text-muted-foreground hover:text-primary transition-colors duration-200" />
+                          </button>
+                        )}
+                        {suggestion.hasVideo && (
+                          <button 
+                            className="p-2 rounded-md hover:bg-primary/10 hover:shadow-glow transition-all duration-200 hover:scale-110 active:scale-95"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              console.log('Watch Video for suggestion:', suggestion.id);
+                            }}
+                          >
+                            <Play size={16} className="text-muted-foreground hover:text-primary transition-colors duration-200" />
+                          </button>
+                        )}
+                      </div>
+                    )}
+                    
+                    {/* Action Buttons or Insight Label */}
+                    {!processingState && isActionable ? (
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => handleAccept(suggestion.id)}
+                          className="p-2 rounded-lg bg-green-500/20 text-green-400 hover:bg-green-500/30 hover:scale-110 active:scale-95 transition-all duration-200"
+                        >
+                          <Check size={16} />
+                        </button>
+                        <button
+                          onClick={() => handleCancel(suggestion.id)}
+                          className="p-2 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30 hover:scale-110 active:scale-95 transition-all duration-200"
+                        >
+                          <X size={16} />
+                        </button>
+                      </div>
+                    ) : !processingState && !isActionable ? (
+                      <div className="px-4 py-2 text-sm font-medium text-muted-foreground/60 bg-muted/10 rounded-lg hover:bg-muted/20 transition-colors duration-200">
+                        Insight
+                      </div>
+                    ) : null}
+                  </div>
                 </div>
               </div>
-            </div>
-          );
-        })}
+            );
+          })}
+        </div>
       </div>
-    </div>
+
+      {/* Insight Modal */}
+      <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+        <DialogContent className="sm:max-w-md bg-glass backdrop-blur-xl border border-glass-border shadow-glass">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-semibold text-foreground">
+              {selectedInsight?.category} Insight
+            </DialogTitle>
+            <DialogDescription className="text-muted-foreground">
+              {selectedInsight?.text}
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="mt-4 p-4 bg-glass/30 rounded-lg border border-glass-border">
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              This insight is generated based on your recent training patterns and performance metrics. 
+              It helps you understand your current adaptation status and provides context for making 
+              informed decisions about your training approach.
+            </p>
+          </div>
+
+          <div className="flex items-center justify-between pt-4 border-t border-glass-border">
+            <span className="text-sm font-medium text-foreground">Did you find this useful?</span>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => handleFeedback(true)}
+                className="p-2 rounded-lg bg-green-500/20 text-green-400 hover:bg-green-500/30 hover:scale-110 active:scale-95 transition-all duration-200"
+              >
+                <Check size={16} />
+              </button>
+              <button
+                onClick={() => handleFeedback(false)}
+                className="p-2 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30 hover:scale-110 active:scale-95 transition-all duration-200"
+              >
+                <X size={16} />
+              </button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 };
 

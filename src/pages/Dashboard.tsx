@@ -167,6 +167,13 @@ const FocusAreasCard = () => (
 
 const GraphCarousel = () => {
   const [currentGraph, setCurrentGraph] = useState(0);
+  const [timeRange, setTimeRange] = useState(30);
+  
+  const timeRanges = [
+    { days: 7, label: "7 Days" },
+    { days: 14, label: "14 Days" },
+    { days: 30, label: "30 Days" }
+  ];
   
   const nextGraph = () => {
     setCurrentGraph((prev) => (prev + 1) % graphData.length);
@@ -180,23 +187,36 @@ const GraphCarousel = () => {
   const lineColor = getRiskColor(graph.riskZone);
   const glowColor = getRiskColor(graph.riskZone, true);
   
-  // Generate SVG path for the line graph
-  const width = 300;
-  const height = 150;
-  const padding = 20;
-  const maxValue = Math.max(...graph.dataPoints);
-  const minValue = Math.min(...graph.dataPoints);
+  // Generate data points based on selected time range
+  const getDataForRange = (days: number) => {
+    const fullData = graph.dataPoints;
+    if (days >= fullData.length) return fullData;
+    return fullData.slice(-days);
+  };
+  
+  const currentData = getDataForRange(timeRange);
+  const maxValue = Math.max(...currentData);
+  const minValue = Math.min(...currentData);
   const range = maxValue - minValue || 1;
   
-  const points = graph.dataPoints.map((value, index) => {
-    const x = padding + (index * (width - 2 * padding)) / (graph.dataPoints.length - 1);
-    const y = height - padding - ((value - minValue) / range) * (height - 2 * padding);
-    return `${x},${y}`;
-  }).join(' ');
+  // SVG viewBox dimensions
+  const viewBoxWidth = 400;
+  const viewBoxHeight = 200;
+  const padding = 30;
+  
+  const generatePath = (data: number[]) => {
+    return data.map((value, index) => {
+      const x = padding + (index * (viewBoxWidth - 2 * padding)) / Math.max(data.length - 1, 1);
+      const y = viewBoxHeight - padding - ((value - minValue) / range) * (viewBoxHeight - 2 * padding);
+      return `${x},${y}`;
+    }).join(' ');
+  };
+  
+  const points = generatePath(currentData);
   
   return (
     <div className="bg-glass backdrop-blur-xl border border-glass-border rounded-2xl p-6 shadow-glass hover:bg-glass-highlight hover:scale-105 hover:-translate-y-1 transition-all duration-300 ease-out animate-fade-in transform-gpu">
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 bg-primary/20 rounded-lg flex items-center justify-center hover:scale-110 transition-transform duration-200">
             <TrendingUp size={16} className="text-primary" />
@@ -236,49 +256,69 @@ const GraphCarousel = () => {
         </div>
       </div>
       
-      <div className="h-64 bg-muted/10 rounded-xl flex items-center justify-center border border-glass-border relative overflow-hidden">
+      {/* Time Range Selector */}
+      <div className="flex justify-end mb-4">
+        <div className="flex bg-muted/10 rounded-lg p-1 border border-glass-border">
+          {timeRanges.map((range) => (
+            <button
+              key={range.days}
+              onClick={() => setTimeRange(range.days)}
+              className={cn(
+                "px-3 py-1.5 text-xs font-medium rounded-md transition-all duration-200",
+                timeRange === range.days
+                  ? "bg-primary text-primary-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground hover:bg-glass-highlight"
+              )}
+            >
+              {range.label}
+            </button>
+          ))}
+        </div>
+      </div>
+      
+      <div className="h-80 bg-muted/5 rounded-xl border border-glass-border relative overflow-hidden">
         <svg 
-          width={width} 
-          height={height} 
-          className="absolute inset-0 w-full h-full"
+          viewBox={`0 0 ${viewBoxWidth} ${viewBoxHeight}`}
+          className="w-full h-full"
+          preserveAspectRatio="xMidYMid meet"
           style={{ filter: `drop-shadow(0 0 8px ${glowColor})` }}
         >
           {/* Grid lines */}
           <defs>
-            <pattern id="grid" width="30" height="30" patternUnits="userSpaceOnUse">
-              <path d="M 30 0 L 0 0 0 30" fill="none" stroke="currentColor" strokeWidth="0.5" opacity="0.1"/>
+            <pattern id={`grid-${currentGraph}`} width="40" height="40" patternUnits="userSpaceOnUse">
+              <path d="M 40 0 L 0 0 0 40" fill="none" stroke="currentColor" strokeWidth="0.5" opacity="0.1"/>
             </pattern>
           </defs>
-          <rect width="100%" height="100%" fill="url(#grid)" />
+          <rect width="100%" height="100%" fill={`url(#grid-${currentGraph})`} />
           
           {/* Trend line */}
           <polyline
             fill="none"
             stroke={lineColor}
-            strokeWidth="3"
+            strokeWidth="2.5"
             strokeLinecap="round"
             strokeLinejoin="round"
             points={points}
             className="transition-all duration-500 ease-out"
             style={{
-              filter: `drop-shadow(0 0 6px ${glowColor})`,
+              filter: `drop-shadow(0 0 4px ${glowColor})`,
             }}
           />
           
           {/* Data points */}
-          {graph.dataPoints.map((value, index) => {
-            const x = padding + (index * (width - 2 * padding)) / (graph.dataPoints.length - 1);
-            const y = height - padding - ((value - minValue) / range) * (height - 2 * padding);
+          {currentData.map((value, index) => {
+            const x = padding + (index * (viewBoxWidth - 2 * padding)) / Math.max(currentData.length - 1, 1);
+            const y = viewBoxHeight - padding - ((value - minValue) / range) * (viewBoxHeight - 2 * padding);
             return (
               <circle
                 key={index}
                 cx={x}
                 cy={y}
-                r="4"
+                r="3"
                 fill={lineColor}
                 className="transition-all duration-500 ease-out"
                 style={{
-                  filter: `drop-shadow(0 0 4px ${glowColor})`,
+                  filter: `drop-shadow(0 0 2px ${glowColor})`,
                 }}
               />
             );

@@ -16,6 +16,8 @@ const suggestions = [
     id: 1,
     text: "Schedule a deload week to reduce training intensity by 20%",
     type: "actionable",
+    category: "Training",
+    accentColor: "yellow",
     hasVideo: true,
     hasPdf: true
   },
@@ -23,6 +25,8 @@ const suggestions = [
     id: 2,
     text: "Your acute:chronic ratio suggests optimal adaptation window",
     type: "insight",
+    category: "Insight",
+    accentColor: "green",
     hasVideo: false,
     hasPdf: false
   },
@@ -30,6 +34,8 @@ const suggestions = [
     id: 3,
     text: "Add 2 mobility sessions focusing on hip flexors and thoracic spine",
     type: "actionable",
+    category: "Recovery",
+    accentColor: "green",
     hasVideo: true,
     hasPdf: true
   },
@@ -37,6 +43,8 @@ const suggestions = [
     id: 4,
     text: "Training monotony is within acceptable range (2.4/5.0)",
     type: "insight",
+    category: "Insight",
+    accentColor: "green",
     hasVideo: false,
     hasPdf: true
   },
@@ -44,6 +52,8 @@ const suggestions = [
     id: 5,
     text: "Consider periodizing toward strength phase next week",
     type: "actionable",
+    category: "Training",
+    accentColor: "red",
     hasVideo: true,
     hasPdf: false
   }
@@ -89,6 +99,24 @@ const getRiskColor = (zone: string, isGlow = false) => {
   return colors[zone as keyof typeof colors] || colors.optimal;
 };
 
+const getAccentColor = (color: string) => {
+  switch (color) {
+    case "green": return "border-l-green-500";
+    case "yellow": return "border-l-yellow-500";
+    case "red": return "border-l-red-500";
+    default: return "border-l-primary";
+  }
+};
+
+const getCategoryStyle = (category: string) => {
+  switch (category) {
+    case "Training": return "border-blue-400/30 text-blue-400 bg-blue-500/10";
+    case "Recovery": return "border-green-400/30 text-green-400 bg-green-500/10";
+    case "Insight": return "border-purple-400/30 text-purple-400 bg-purple-500/10";
+    default: return "border-muted text-muted-foreground bg-muted/10";
+  }
+};
+
 const getTypeColor = (type: string) => {
   switch (type) {
     case "Strength": return "bg-blue-500/20 text-blue-400";
@@ -99,23 +127,114 @@ const getTypeColor = (type: string) => {
   }
 };
 
-const WeeklyLoadChart = () => (
-  <div className="bg-glass backdrop-blur-xl border border-glass-border rounded-2xl p-6 shadow-glass hover:bg-glass-highlight hover:scale-105 hover:-translate-y-1 transition-all duration-300 ease-out animate-fade-in transform-gpu">
-    <div className="flex items-center gap-3 mb-6">
-      <div className="w-8 h-8 bg-primary/20 rounded-lg flex items-center justify-center hover:scale-110 transition-transform duration-200">
-        <BarChart3 size={16} className="text-primary" />
+const AccountabilityChallenges = () => {
+  const [acceptedSuggestions, setAcceptedSuggestions] = useState<Set<number>>(new Set());
+
+  const handleAccept = (suggestionId: number) => {
+    setAcceptedSuggestions(prev => new Set([...prev, suggestionId]));
+  };
+
+  return (
+    <div className="bg-glass backdrop-blur-xl border border-glass-border rounded-2xl p-6 shadow-glass hover:bg-glass-highlight hover:scale-105 hover:-translate-y-1 transition-all duration-300 ease-out animate-fade-in transform-gpu">
+      <div className="flex items-center gap-3 mb-6">
+        <div className="w-8 h-8 bg-primary/20 rounded-lg flex items-center justify-center hover:scale-110 transition-transform duration-200">
+          <TrendingUp size={16} className="text-primary" />
+        </div>
+        <div className="flex items-center gap-2">
+          <h3 className="text-lg font-semibold text-foreground">Accountability Challenges</h3>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button className="p-1 rounded-md hover:bg-primary/10 transition-all duration-200 hover:scale-110">
+                <HelpCircle size={16} className="text-muted-foreground hover:text-primary transition-colors duration-200" />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p className="max-w-xs">These are personalized challenges designed to help you improve your health. Accept a challenge to commit, and we'll track your progress</p>
+            </TooltipContent>
+          </Tooltip>
+        </div>
       </div>
-      <h3 className="text-lg font-semibold text-foreground">Weekly Training Load</h3>
-    </div>
-    <div className="h-64 bg-muted/20 rounded-xl flex items-center justify-center border border-glass-border hover:bg-muted/30 transition-colors duration-300">
-      <div className="text-center space-y-2">
-        <BarChart3 size={32} className="text-muted-foreground mx-auto animate-bounce-subtle" />
-        <p className="text-sm text-muted-foreground">Stacked bar chart</p>
-        <p className="text-xs text-muted-foreground">Training load by day</p>
+      <div className="space-y-4">
+        {suggestions.map((suggestion) => {
+          const isAccepted = acceptedSuggestions.has(suggestion.id);
+          const isActionable = suggestion.type === "actionable";
+          
+          return (
+            <div key={suggestion.id} className={cn(
+              "bg-glass/30 backdrop-blur-sm border border-glass-border rounded-xl p-4 hover:bg-glass-highlight transition-all duration-200 border-l-4",
+              getAccentColor(suggestion.accentColor)
+            )}>
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex-1 space-y-2">
+                  <div className="flex items-center gap-2">
+                    <span className={cn(
+                      "px-2 py-1 text-xs font-medium rounded-md border transition-colors duration-200",
+                      getCategoryStyle(suggestion.category)
+                    )}>
+                      {suggestion.category}
+                    </span>
+                  </div>
+                  <p className="font-medium text-foreground leading-relaxed">{suggestion.text}</p>
+                </div>
+                
+                <div className="flex items-center gap-3">
+                  {/* Action Icons */}
+                  {(suggestion.hasPdf || suggestion.hasVideo) && (
+                    <div className="flex items-center gap-1 opacity-50 hover:opacity-100 transition-opacity duration-200">
+                      {suggestion.hasPdf && (
+                        <button 
+                          className="p-2 rounded-md hover:bg-primary/10 hover:shadow-glow transition-all duration-200 hover:scale-110 active:scale-95"
+                          onClick={() => console.log('Download PDF for suggestion:', suggestion.id)}
+                        >
+                          <FileText size={16} className="text-muted-foreground hover:text-primary transition-colors duration-200" />
+                        </button>
+                      )}
+                      {suggestion.hasVideo && (
+                        <button 
+                          className="p-2 rounded-md hover:bg-primary/10 hover:shadow-glow transition-all duration-200 hover:scale-110 active:scale-95"
+                          onClick={() => console.log('Watch Video for suggestion:', suggestion.id)}
+                        >
+                          <Play size={16} className="text-muted-foreground hover:text-primary transition-colors duration-200" />
+                        </button>
+                      )}
+                    </div>
+                  )}
+                  
+                  {/* Action Button or Insight Label */}
+                  {isActionable ? (
+                    <button
+                      onClick={() => handleAccept(suggestion.id)}
+                      disabled={isAccepted}
+                      className={cn(
+                        "px-4 py-2 text-sm font-medium rounded-lg transition-all duration-300",
+                        isAccepted
+                          ? "bg-green-500/20 text-green-400 shadow-glow cursor-default"
+                          : "bg-primary/20 text-primary hover:bg-primary/30 hover:scale-105 active:scale-95"
+                      )}
+                    >
+                      {isAccepted ? (
+                        <div className="flex items-center gap-1.5">
+                          <CheckCircle size={14} />
+                          <span>Added to Plan</span>
+                        </div>
+                      ) : (
+                        "Accept"
+                      )}
+                    </button>
+                  ) : (
+                    <div className="px-4 py-2 text-sm font-medium text-muted-foreground/60 bg-muted/10 rounded-lg">
+                      Insight
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          );
+        })}
       </div>
     </div>
-  </div>
-);
+  );
+};
 
 const SessionLogCard = ({ session }: { session: typeof sessionLogs[0] }) => (
   <div className="bg-glass backdrop-blur-xl border border-glass-border rounded-xl p-4 shadow-glass hover:bg-glass-highlight hover:scale-105 hover:-translate-y-1 transition-all duration-300 ease-out transform-gpu">
@@ -532,34 +651,29 @@ export const Training = () => {
             <p className="text-muted-foreground">Track your workouts and training progression</p>
           </div>
 
-          {/* Weekly Load Chart */}
-          <div className="mb-8">
-            <WeeklyLoadChart />
-          </div>
+        {/* Accountability Challenges */}
+        <div className="mb-8">
+          <AccountabilityChallenges />
+        </div>
 
-          {/* Session Log and Gauges Row */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-            {/* Session Log - Takes 2 columns on large screens */}
-            <div className="lg:col-span-2">
-              <SessionLogList />
-            </div>
-            
-            {/* Gauges - Stacked vertically in 1 column */}
-            <div className="space-y-6">
-              <CircularGauge title="Training Monotony" value={2.4} maxValue={5} unit="ratio" />
-              <CircularGauge title="Training Strain" value={156} maxValue={200} unit="TSS" />
-            </div>
+        {/* Session Log and Gauges Row */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+          {/* Session Log - Takes 2 columns on large screens */}
+          <div className="lg:col-span-2">
+            <SessionLogList />
           </div>
+          
+          {/* Gauges - Stacked vertically in 1 column */}
+          <div className="space-y-6">
+            <CircularGauge title="Training Monotony" value={2.4} maxValue={5} unit="ratio" />
+            <CircularGauge title="Training Strain" value={156} maxValue={200} unit="TSS" />
+          </div>
+        </div>
 
-          {/* Trend Analysis Carousel */}
-          <div className="mb-8">
-            <GraphCarousel />
-          </div>
-
-          {/* Accountability Challenges */}
-          <div>
-            <SuggestionsCard />
-          </div>
+        {/* Trend Analysis Carousel */}
+        <div>
+          <GraphCarousel />
+        </div>
         </div>
       </div>
     </TooltipProvider>

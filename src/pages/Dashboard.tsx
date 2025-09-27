@@ -1,6 +1,7 @@
-import { TrendingUp, Target, AlertTriangle, FileText, Play } from "lucide-react";
+import { TrendingUp, Target, AlertTriangle, FileText, Play, ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { useState } from "react";
 
 const metrics = [
   { name: "Acute:Chronic Workload Ratio", value: "1.2", status: "green" },
@@ -9,6 +10,46 @@ const metrics = [
   { name: "Weekly Training Load", value: "420", status: "green" },
   { name: "EWMA Trend", value: "+5.2%", status: "green" },
 ];
+
+const graphData = [
+  {
+    title: "EWMA Trend Analysis",
+    subtitle: "Exponentially weighted moving average over 28 days",
+    currentValue: "+5.2%",
+    riskZone: "optimal", // optimal, caution, high-risk
+    dataPoints: [65, 68, 72, 70, 75, 78, 82, 80, 85, 88, 90, 87, 89, 92, 95]
+  },
+  {
+    title: "Acute:Chronic Workload",
+    subtitle: "Training load ratio over time",
+    currentValue: "1.2",
+    riskZone: "optimal",
+    dataPoints: [1.3, 1.2, 1.1, 1.0, 1.1, 1.2, 1.3, 1.2, 1.1, 1.0, 1.2, 1.3, 1.2, 1.1, 1.2]
+  },
+  {
+    title: "Weekly Training Load",
+    subtitle: "Total training stress by week",
+    currentValue: "420 TSS",
+    riskZone: "caution",
+    dataPoints: [380, 390, 400, 420, 440, 430, 420, 410, 430, 450, 440, 420, 410, 420, 420]
+  },
+  {
+    title: "Training Strain Trend",
+    subtitle: "Daily strain accumulation",
+    currentValue: "156",
+    riskZone: "high-risk",
+    dataPoints: [120, 130, 140, 145, 150, 155, 160, 158, 162, 165, 160, 158, 156, 154, 156]
+  }
+];
+
+const getRiskColor = (zone: string, isGlow = false) => {
+  const colors = {
+    optimal: isGlow ? "rgba(34, 197, 94, 0.6)" : "#22c55e",
+    caution: isGlow ? "rgba(251, 146, 60, 0.6)" : "#fb923c", 
+    "high-risk": isGlow ? "rgba(239, 68, 68, 0.6)" : "#ef4444"
+  };
+  return colors[zone as keyof typeof colors] || colors.optimal;
+};
 
 const recommendations = [
   "Consider reducing training intensity by 15% this week",
@@ -124,23 +165,143 @@ const FocusAreasCard = () => (
   </div>
 );
 
-const GraphPlaceholder = () => (
-  <div className="bg-glass backdrop-blur-xl border border-glass-border rounded-2xl p-6 shadow-glass hover:bg-glass-highlight hover:scale-105 hover:-translate-y-1 transition-all duration-300 ease-out animate-fade-in transform-gpu">
-    <div className="flex items-center gap-3 mb-6">
-      <div className="w-8 h-8 bg-primary/20 rounded-lg flex items-center justify-center hover:scale-110 transition-transform duration-200">
-        <TrendingUp size={16} className="text-primary" />
+const GraphCarousel = () => {
+  const [currentGraph, setCurrentGraph] = useState(0);
+  
+  const nextGraph = () => {
+    setCurrentGraph((prev) => (prev + 1) % graphData.length);
+  };
+  
+  const prevGraph = () => {
+    setCurrentGraph((prev) => (prev - 1 + graphData.length) % graphData.length);
+  };
+  
+  const graph = graphData[currentGraph];
+  const lineColor = getRiskColor(graph.riskZone);
+  const glowColor = getRiskColor(graph.riskZone, true);
+  
+  // Generate SVG path for the line graph
+  const width = 300;
+  const height = 150;
+  const padding = 20;
+  const maxValue = Math.max(...graph.dataPoints);
+  const minValue = Math.min(...graph.dataPoints);
+  const range = maxValue - minValue || 1;
+  
+  const points = graph.dataPoints.map((value, index) => {
+    const x = padding + (index * (width - 2 * padding)) / (graph.dataPoints.length - 1);
+    const y = height - padding - ((value - minValue) / range) * (height - 2 * padding);
+    return `${x},${y}`;
+  }).join(' ');
+  
+  return (
+    <div className="bg-glass backdrop-blur-xl border border-glass-border rounded-2xl p-6 shadow-glass hover:bg-glass-highlight hover:scale-105 hover:-translate-y-1 transition-all duration-300 ease-out animate-fade-in transform-gpu">
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 bg-primary/20 rounded-lg flex items-center justify-center hover:scale-110 transition-transform duration-200">
+            <TrendingUp size={16} className="text-primary" />
+          </div>
+          <div>
+            <h3 className="text-lg font-semibold text-foreground">{graph.title}</h3>
+            <p className="text-xs text-muted-foreground">{graph.subtitle}</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <button 
+            onClick={prevGraph}
+            className="p-2 rounded-lg hover:bg-glass-highlight transition-all duration-200 hover:scale-110 active:scale-95"
+          >
+            <ChevronLeft size={16} className="text-muted-foreground hover:text-foreground transition-colors" />
+          </button>
+          <div className="flex gap-1">
+            {graphData.map((_, index) => (
+              <button
+                key={index}
+                onClick={() => setCurrentGraph(index)}
+                className={cn(
+                  "w-2 h-2 rounded-full transition-all duration-300",
+                  index === currentGraph 
+                    ? "bg-primary scale-125" 
+                    : "bg-muted-foreground/30 hover:bg-muted-foreground/50"
+                )}
+              />
+            ))}
+          </div>
+          <button 
+            onClick={nextGraph}
+            className="p-2 rounded-lg hover:bg-glass-highlight transition-all duration-200 hover:scale-110 active:scale-95"
+          >
+            <ChevronRight size={16} className="text-muted-foreground hover:text-foreground transition-colors" />
+          </button>
+        </div>
       </div>
-      <h3 className="text-lg font-semibold text-foreground">EWMA Trend Analysis</h3>
-    </div>
-    <div className="h-64 bg-muted/20 rounded-xl flex items-center justify-center border border-glass-border hover:bg-muted/30 transition-colors duration-300">
-      <div className="text-center space-y-2">
-        <TrendingUp size={32} className="text-muted-foreground mx-auto animate-bounce-subtle" />
-        <p className="text-sm text-muted-foreground">Line graph visualization</p>
-        <p className="text-xs text-muted-foreground">EWMA trend over time</p>
+      
+      <div className="h-64 bg-muted/10 rounded-xl flex items-center justify-center border border-glass-border relative overflow-hidden">
+        <svg 
+          width={width} 
+          height={height} 
+          className="absolute inset-0 w-full h-full"
+          style={{ filter: `drop-shadow(0 0 8px ${glowColor})` }}
+        >
+          {/* Grid lines */}
+          <defs>
+            <pattern id="grid" width="30" height="30" patternUnits="userSpaceOnUse">
+              <path d="M 30 0 L 0 0 0 30" fill="none" stroke="currentColor" strokeWidth="0.5" opacity="0.1"/>
+            </pattern>
+          </defs>
+          <rect width="100%" height="100%" fill="url(#grid)" />
+          
+          {/* Trend line */}
+          <polyline
+            fill="none"
+            stroke={lineColor}
+            strokeWidth="3"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            points={points}
+            className="transition-all duration-500 ease-out"
+            style={{
+              filter: `drop-shadow(0 0 6px ${glowColor})`,
+            }}
+          />
+          
+          {/* Data points */}
+          {graph.dataPoints.map((value, index) => {
+            const x = padding + (index * (width - 2 * padding)) / (graph.dataPoints.length - 1);
+            const y = height - padding - ((value - minValue) / range) * (height - 2 * padding);
+            return (
+              <circle
+                key={index}
+                cx={x}
+                cy={y}
+                r="4"
+                fill={lineColor}
+                className="transition-all duration-500 ease-out"
+                style={{
+                  filter: `drop-shadow(0 0 4px ${glowColor})`,
+                }}
+              />
+            );
+          })}
+        </svg>
+        
+        <div className="absolute top-4 right-4 text-right">
+          <div className="text-2xl font-bold text-foreground transition-colors duration-300">
+            {graph.currentValue}
+          </div>
+          <div className={cn(
+            "text-xs font-medium px-2 py-1 rounded-full transition-all duration-300",
+            graph.riskZone === "optimal" && "bg-green-500/20 text-green-400",
+            graph.riskZone === "caution" && "bg-orange-500/20 text-orange-400", 
+            graph.riskZone === "high-risk" && "bg-red-500/20 text-red-400"
+          )}>
+            {graph.riskZone.toUpperCase().replace('-', ' ')}
+          </div>
+        </div>
       </div>
     </div>
-  </div>
-);
+  );
+};
 
 export const Dashboard = () => {
   return (
@@ -163,9 +324,9 @@ export const Dashboard = () => {
             ))}
           </div>
 
-          {/* EWMA Trend Graph */}
+          {/* Trend Analysis Carousel */}
           <div className="mb-8">
-            <GraphPlaceholder />
+            <GraphCarousel />
           </div>
 
           {/* Recommendations and Focus Areas */}

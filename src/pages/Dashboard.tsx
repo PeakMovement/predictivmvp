@@ -1,5 +1,6 @@
-import { TrendingUp, Target, AlertTriangle } from "lucide-react";
+import { TrendingUp, Target, AlertTriangle, FileText, Play } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 const metrics = [
   { name: "Acute:Chronic Workload Ratio", value: "1.2", status: "green" },
@@ -62,9 +63,39 @@ const RecommendationCard = () => (
     </div>
     <div className="space-y-3">
       {recommendations.map((rec, index) => (
-        <div key={index} className="flex items-start gap-3 hover:bg-glass-highlight rounded-lg p-2 -m-2 transition-all duration-200">
-          <div className="w-1.5 h-1.5 bg-primary rounded-full mt-2 flex-shrink-0 animate-bounce-subtle" />
-          <p className="text-sm text-muted-foreground">{rec}</p>
+        <div key={index} className="flex items-center justify-between gap-3 hover:bg-glass-highlight rounded-lg p-2 -m-2 transition-all duration-200">
+          <div className="flex items-start gap-3 flex-1">
+            <div className="w-1.5 h-1.5 bg-primary rounded-full mt-2 flex-shrink-0 animate-bounce-subtle" />
+            <p className="text-sm text-muted-foreground">{rec}</p>
+          </div>
+          <div className="flex items-center gap-2 opacity-40 hover:opacity-100 transition-opacity duration-200">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button 
+                  className="p-1 rounded-md hover:bg-primary/10 hover:shadow-glow transition-all duration-200 hover:scale-110 active:scale-95"
+                  onClick={() => console.log('Download PDF for:', rec)}
+                >
+                  <FileText size={16} className="text-muted-foreground hover:text-primary transition-colors duration-200" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Download PDF</p>
+              </TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button 
+                  className="p-1 rounded-md hover:bg-primary/10 hover:shadow-glow transition-all duration-200 hover:scale-110 active:scale-95"
+                  onClick={() => console.log('Watch Video for:', rec)}
+                >
+                  <Play size={16} className="text-muted-foreground hover:text-primary transition-colors duration-200" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Watch Video</p>
+              </TooltipContent>
+            </Tooltip>
+          </div>
         </div>
       ))}
     </div>
@@ -113,35 +144,37 @@ const GraphPlaceholder = () => (
 
 export const Dashboard = () => {
   return (
-    <div className="min-h-screen bg-background pb-32">
-      <div className="container mx-auto px-6 pt-8">
-        {/* Welcome Header */}
-        <WelcomeHeader />
-        
-        {/* Section Header */}
-        <div className="text-center mb-8 animate-fade-in">
-          <h3 className="text-xl font-semibold text-foreground mb-2">Training Metrics</h3>
-          <p className="text-muted-foreground">Your key performance indicators</p>
-        </div>
+    <TooltipProvider>
+      <div className="min-h-screen bg-background pb-32">
+        <div className="container mx-auto px-6 pt-8">
+          {/* Welcome Header */}
+          <WelcomeHeader />
+          
+          {/* Section Header */}
+          <div className="text-center mb-8 animate-fade-in">
+            <h3 className="text-xl font-semibold text-foreground mb-2">Training Metrics</h3>
+            <p className="text-muted-foreground">Your key performance indicators</p>
+          </div>
 
-        {/* Metrics Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 mb-8">
-          {metrics.map((metric, index) => (
-            <MetricCard key={index} metric={metric} />
-          ))}
-        </div>
+          {/* Metrics Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 mb-8">
+            {metrics.map((metric, index) => (
+              <MetricCard key={index} metric={metric} />
+            ))}
+          </div>
 
-        {/* EWMA Trend Graph */}
-        <div className="mb-8">
-          <GraphPlaceholder />
-        </div>
+          {/* EWMA Trend Graph */}
+          <div className="mb-8">
+            <GraphPlaceholder />
+          </div>
 
-        {/* Recommendations and Focus Areas */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <RecommendationCard />
-          <FocusAreasCard />
+          {/* Recommendations and Focus Areas */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <RecommendationCard />
+            <FocusAreasCard />
+          </div>
         </div>
       </div>
-    </div>
+    </TooltipProvider>
   );
 };

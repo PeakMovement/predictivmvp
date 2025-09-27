@@ -1,4 +1,4 @@
-import { BarChart3, Activity, Calendar, TrendingUp, Gauge, ChevronLeft, ChevronRight, FileText, Play, CheckCircle, HelpCircle } from "lucide-react";
+import { BarChart3, Activity, Calendar, TrendingUp, Gauge, ChevronLeft, ChevronRight, FileText, Play, CheckCircle, HelpCircle, Check, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState, useEffect } from "react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -129,13 +129,50 @@ const getTypeColor = (type: string) => {
 
 const AccountabilityChallenges = () => {
   const [acceptedSuggestions, setAcceptedSuggestions] = useState<Set<number>>(new Set());
+  const [processingStates, setProcessingStates] = useState<Record<number, 'accepting' | 'added' | 'cancelling' | 'cancelled'>>({});
+  const [removedSuggestions, setRemovedSuggestions] = useState<Set<number>>(new Set());
 
   const handleAccept = (suggestionId: number) => {
-    setAcceptedSuggestions(prev => new Set([...prev, suggestionId]));
+    // Set to accepting state immediately
+    setProcessingStates(prev => ({ ...prev, [suggestionId]: 'accepting' }));
+    
+    // Show "Added" for 2 seconds
+    setTimeout(() => {
+      setProcessingStates(prev => ({ ...prev, [suggestionId]: 'added' }));
+      
+      // After 2 seconds, fade out and add to accepted
+      setTimeout(() => {
+        setAcceptedSuggestions(prev => new Set([...prev, suggestionId]));
+        setRemovedSuggestions(prev => new Set([...prev, suggestionId]));
+        setProcessingStates(prev => {
+          const newState = { ...prev };
+          delete newState[suggestionId];
+          return newState;
+        });
+      }, 2000);
+    }, 100);
+  };
+
+  const handleCancel = (suggestionId: number) => {
+    // Set to cancelling state and fade out
+    setProcessingStates(prev => ({ ...prev, [suggestionId]: 'cancelling' }));
+    
+    setTimeout(() => {
+      setRemovedSuggestions(prev => new Set([...prev, suggestionId]));
+      setProcessingStates(prev => {
+        const newState = { ...prev };
+        delete newState[suggestionId];
+        return newState;
+      });
+    }, 300);
   };
 
   const acceptedChallenges = suggestions.filter(suggestion => 
     acceptedSuggestions.has(suggestion.id) && suggestion.type === "actionable"
+  );
+
+  const visibleSuggestions = suggestions.filter(suggestion => 
+    !removedSuggestions.has(suggestion.id)
   );
 
   return (
@@ -160,15 +197,20 @@ const AccountabilityChallenges = () => {
           </div>
         </div>
         <div className="space-y-4">
-          {suggestions.map((suggestion) => {
-            const isAccepted = acceptedSuggestions.has(suggestion.id);
+          {visibleSuggestions.map((suggestion) => {
             const isActionable = suggestion.type === "actionable";
+            const processingState = processingStates[suggestion.id];
             
             return (
-              <div key={suggestion.id} className={cn(
-                "bg-glass/30 backdrop-blur-sm border border-glass-border rounded-xl p-4 hover:bg-glass-highlight transition-all duration-200 border-l-4",
-                getAccentColor(suggestion.accentColor)
-              )}>
+              <div 
+                key={suggestion.id} 
+                className={cn(
+                  "bg-glass/30 backdrop-blur-sm border border-glass-border rounded-xl p-4 hover:bg-glass-highlight transition-all duration-300 border-l-4",
+                  getAccentColor(suggestion.accentColor),
+                  processingState === 'cancelling' && "opacity-0 scale-95",
+                  processingState === 'added' && "opacity-0 scale-95"
+                )}
+              >
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1 space-y-2">
                     <div className="flex items-center gap-2">
@@ -179,12 +221,14 @@ const AccountabilityChallenges = () => {
                         {suggestion.category}
                       </span>
                     </div>
-                    <p className="font-medium text-foreground leading-relaxed">{suggestion.text}</p>
+                    <p className="font-medium text-foreground leading-relaxed">
+                      {processingState === 'accepting' ? 'Added' : suggestion.text}
+                    </p>
                   </div>
                   
                   <div className="flex items-center gap-3">
                     {/* Action Icons */}
-                    {(suggestion.hasPdf || suggestion.hasVideo) && (
+                    {!processingState && (suggestion.hasPdf || suggestion.hasVideo) && (
                       <div className="flex items-center gap-1 opacity-50 hover:opacity-100 transition-opacity duration-200">
                         {suggestion.hasPdf && (
                           <button 
@@ -205,32 +249,27 @@ const AccountabilityChallenges = () => {
                       </div>
                     )}
                     
-                    {/* Action Button or Insight Label */}
-                    {isActionable ? (
-                      <button
-                        onClick={() => handleAccept(suggestion.id)}
-                        disabled={isAccepted}
-                        className={cn(
-                          "px-4 py-2 text-sm font-medium rounded-lg transition-all duration-300",
-                          isAccepted
-                            ? "bg-green-500/20 text-green-400 shadow-glow cursor-default"
-                            : "bg-primary/20 text-primary hover:bg-primary/30 hover:scale-105 active:scale-95"
-                        )}
-                      >
-                        {isAccepted ? (
-                          <div className="flex items-center gap-1.5">
-                            <CheckCircle size={14} />
-                            <span>Accepted</span>
-                          </div>
-                        ) : (
-                          "Accept"
-                        )}
-                      </button>
-                    ) : (
+                    {/* Action Buttons or Insight Label */}
+                    {!processingState && isActionable ? (
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => handleAccept(suggestion.id)}
+                          className="p-2 rounded-lg bg-green-500/20 text-green-400 hover:bg-green-500/30 hover:scale-110 active:scale-95 transition-all duration-200"
+                        >
+                          <Check size={16} />
+                        </button>
+                        <button
+                          onClick={() => handleCancel(suggestion.id)}
+                          className="p-2 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30 hover:scale-110 active:scale-95 transition-all duration-200"
+                        >
+                          <X size={16} />
+                        </button>
+                      </div>
+                    ) : !processingState && !isActionable ? (
                       <div className="px-4 py-2 text-sm font-medium text-muted-foreground/60 bg-muted/10 rounded-lg">
                         Insight
                       </div>
-                    )}
+                    ) : null}
                   </div>
                 </div>
               </div>

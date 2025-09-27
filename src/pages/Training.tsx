@@ -1,6 +1,7 @@
-import { BarChart3, Activity, Calendar, TrendingUp, Gauge, ChevronLeft, ChevronRight, FileText, Play, CheckCircle } from "lucide-react";
+import { BarChart3, Activity, Calendar, TrendingUp, Gauge, ChevronLeft, ChevronRight, FileText, Play, CheckCircle, HelpCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState, useEffect } from "react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 const sessionLogs = [
   { title: "Upper Body Strength", date: "2024-01-15", load: 125, type: "Strength" },
@@ -218,7 +219,19 @@ const SuggestionsCard = () => {
         <div className="w-8 h-8 bg-primary/20 rounded-lg flex items-center justify-center hover:scale-110 transition-transform duration-200">
           <TrendingUp size={16} className="text-primary" />
         </div>
-        <h3 className="text-lg font-semibold text-foreground">Suggestions for the Next 7 Days</h3>
+        <div className="flex items-center gap-2">
+          <h3 className="text-lg font-semibold text-foreground">Accountability Challenges</h3>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button className="p-1 rounded-md hover:bg-primary/10 transition-all duration-200 hover:scale-110">
+                <HelpCircle size={16} className="text-muted-foreground hover:text-primary transition-colors duration-200" />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p className="max-w-xs">These are personalized challenges designed to help you improve your health. Accept a challenge to commit, and we'll track your progress</p>
+            </TooltipContent>
+          </Tooltip>
+        </div>
       </div>
       <div className="space-y-3">
         {suggestions.map((suggestion) => {
@@ -510,43 +523,45 @@ const GraphCarousel = () => {
 
 export const Training = () => {
   return (
-    <div className="min-h-screen bg-background pb-32">
-      <div className="container mx-auto px-6 pt-8">
-        {/* Header */}
-        <div className="text-center mb-8 animate-fade-in">
-          <h1 className="text-3xl font-bold text-foreground mb-2">Training Analytics</h1>
-          <p className="text-muted-foreground">Track your workouts and training progression</p>
-        </div>
-
-        {/* Weekly Load Chart */}
-        <div className="mb-8">
-          <WeeklyLoadChart />
-        </div>
-
-        {/* Session Log and Gauges Row */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-          {/* Session Log - Takes 2 columns on large screens */}
-          <div className="lg:col-span-2">
-            <SessionLogList />
+    <TooltipProvider>
+      <div className="min-h-screen bg-background pb-32">
+        <div className="container mx-auto px-6 pt-8">
+          {/* Header */}
+          <div className="text-center mb-8 animate-fade-in">
+            <h1 className="text-3xl font-bold text-foreground mb-2">Training Analytics</h1>
+            <p className="text-muted-foreground">Track your workouts and training progression</p>
           </div>
-          
-          {/* Gauges - Stacked vertically in 1 column */}
-          <div className="space-y-6">
-            <CircularGauge title="Training Monotony" value={2.4} maxValue={5} unit="ratio" />
-            <CircularGauge title="Training Strain" value={156} maxValue={200} unit="TSS" />
+
+          {/* Weekly Load Chart */}
+          <div className="mb-8">
+            <WeeklyLoadChart />
           </div>
-        </div>
 
-        {/* Trend Analysis Carousel */}
-        <div className="mb-8">
-          <GraphCarousel />
-        </div>
+          {/* Session Log and Gauges Row */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+            {/* Session Log - Takes 2 columns on large screens */}
+            <div className="lg:col-span-2">
+              <SessionLogList />
+            </div>
+            
+            {/* Gauges - Stacked vertically in 1 column */}
+            <div className="space-y-6">
+              <CircularGauge title="Training Monotony" value={2.4} maxValue={5} unit="ratio" />
+              <CircularGauge title="Training Strain" value={156} maxValue={200} unit="TSS" />
+            </div>
+          </div>
 
-        {/* Suggestions for Next 7 Days */}
-        <div>
-          <SuggestionsCard />
+          {/* Trend Analysis Carousel */}
+          <div className="mb-8">
+            <GraphCarousel />
+          </div>
+
+          {/* Accountability Challenges */}
+          <div>
+            <SuggestionsCard />
+          </div>
         </div>
       </div>
-    </div>
+    </TooltipProvider>
   );
 };

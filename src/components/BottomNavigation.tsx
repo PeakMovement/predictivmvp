@@ -1,4 +1,4 @@
-import { Home, Dumbbell, Heart } from "lucide-react";
+import { Home, Dumbbell, Heart, Calendar } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface BottomNavigationProps {
@@ -10,6 +10,7 @@ const tabs = [
   { id: "dashboard", label: "Dashboard", icon: Home },
   { id: "training", label: "Training", icon: Dumbbell },
   { id: "health", label: "Health", icon: Heart },
+  { id: "schedule", label: "Schedule", icon: Calendar },
 ];
 
 export const BottomNavigation = ({ activeTab, onTabChange }: BottomNavigationProps) => {

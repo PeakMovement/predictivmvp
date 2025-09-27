@@ -16,13 +16,13 @@ const App = () => {
   const renderContent = () => {
     switch (activeTab) {
       case "dashboard":
-        return <Dashboard />;
+        return <div key="dashboard" className="animate-fade-in"><Dashboard /></div>;
       case "training":
-        return <Training />;
+        return <div key="training" className="animate-fade-in"><Training /></div>;
       case "health":
-        return <Health />;
+        return <div key="health" className="animate-fade-in"><Health /></div>;
       default:
-        return <Dashboard />;
+        return <div key="dashboard" className="animate-fade-in"><Dashboard /></div>;
     }
   };
 
@@ -31,8 +31,10 @@ const App = () => {
       <TooltipProvider>
         <Toaster />
         <Sonner />
-        <div className="relative">
-          {renderContent()}
+        <div className="relative overflow-hidden">
+          <div className="transition-all duration-500 ease-out">
+            {renderContent()}
+          </div>
           <BottomNavigation activeTab={activeTab} onTabChange={setActiveTab} />
         </div>
       </TooltipProvider>

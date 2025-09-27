@@ -102,12 +102,12 @@ const MetricTile = ({ metric, onClick }: { metric: typeof healthMetrics[0]; onCl
   return (
     <div 
       onClick={onClick}
-      className="bg-glass backdrop-blur-xl border border-glass-border rounded-2xl p-6 shadow-glass hover:bg-glass-highlight transition-all duration-300 cursor-pointer animate-fade-in hover-scale"
+      className="bg-glass backdrop-blur-xl border border-glass-border rounded-2xl p-6 shadow-glass hover:bg-glass-highlight hover:scale-105 hover:-translate-y-2 transition-all duration-300 ease-out cursor-pointer animate-fade-in transform-gpu will-change-transform active:scale-95"
     >
       <div className="flex items-start justify-between mb-4">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-primary/20 rounded-xl flex items-center justify-center">
-            <Icon size={18} className="text-primary" />
+          <div className="w-10 h-10 bg-primary/20 rounded-xl flex items-center justify-center hover:scale-110 transition-transform duration-200">
+            <Icon size={18} className="text-primary animate-bounce-subtle" />
           </div>
           <div>
             <h3 className="font-semibold text-foreground">{metric.name}</h3>

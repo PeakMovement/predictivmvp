@@ -20,16 +20,16 @@ const getTypeColor = (type: string) => {
 };
 
 const WeeklyLoadChart = () => (
-  <div className="bg-glass backdrop-blur-xl border border-glass-border rounded-2xl p-6 shadow-glass animate-fade-in">
+  <div className="bg-glass backdrop-blur-xl border border-glass-border rounded-2xl p-6 shadow-glass hover:bg-glass-highlight hover:scale-105 hover:-translate-y-1 transition-all duration-300 ease-out animate-fade-in transform-gpu">
     <div className="flex items-center gap-3 mb-6">
-      <div className="w-8 h-8 bg-primary/20 rounded-lg flex items-center justify-center">
+      <div className="w-8 h-8 bg-primary/20 rounded-lg flex items-center justify-center hover:scale-110 transition-transform duration-200">
         <BarChart3 size={16} className="text-primary" />
       </div>
       <h3 className="text-lg font-semibold text-foreground">Weekly Training Load</h3>
     </div>
-    <div className="h-64 bg-muted/20 rounded-xl flex items-center justify-center border border-glass-border">
+    <div className="h-64 bg-muted/20 rounded-xl flex items-center justify-center border border-glass-border hover:bg-muted/30 transition-colors duration-300">
       <div className="text-center space-y-2">
-        <BarChart3 size={32} className="text-muted-foreground mx-auto" />
+        <BarChart3 size={32} className="text-muted-foreground mx-auto animate-bounce-subtle" />
         <p className="text-sm text-muted-foreground">Stacked bar chart</p>
         <p className="text-xs text-muted-foreground">Training load by day</p>
       </div>
@@ -38,10 +38,10 @@ const WeeklyLoadChart = () => (
 );
 
 const SessionLogCard = ({ session }: { session: typeof sessionLogs[0] }) => (
-  <div className="bg-glass backdrop-blur-xl border border-glass-border rounded-xl p-4 shadow-glass hover:bg-glass-highlight transition-all duration-300">
+  <div className="bg-glass backdrop-blur-xl border border-glass-border rounded-xl p-4 shadow-glass hover:bg-glass-highlight hover:scale-105 hover:-translate-y-1 transition-all duration-300 ease-out transform-gpu">
     <div className="flex items-center justify-between mb-2">
       <h4 className="font-semibold text-foreground">{session.title}</h4>
-      <span className={cn("px-2 py-1 text-xs rounded-lg font-medium", getTypeColor(session.type))}>
+      <span className={cn("px-2 py-1 text-xs rounded-lg font-medium hover:scale-105 transition-transform duration-200", getTypeColor(session.type))}>
         {session.type}
       </span>
     </div>
@@ -51,7 +51,7 @@ const SessionLogCard = ({ session }: { session: typeof sessionLogs[0] }) => (
         <span>{session.date}</span>
       </div>
       <div className="flex items-center gap-2">
-        <Activity size={14} className="text-primary" />
+        <Activity size={14} className="text-primary animate-bounce-subtle" />
         <span className="font-medium text-foreground">{session.load}</span>
         <span className="text-muted-foreground text-xs">load</span>
       </div>
@@ -60,9 +60,9 @@ const SessionLogCard = ({ session }: { session: typeof sessionLogs[0] }) => (
 );
 
 const SessionLogList = () => (
-  <div className="bg-glass backdrop-blur-xl border border-glass-border rounded-2xl p-6 shadow-glass animate-fade-in">
+  <div className="bg-glass backdrop-blur-xl border border-glass-border rounded-2xl p-6 shadow-glass hover:bg-glass-highlight hover:scale-105 hover:-translate-y-1 transition-all duration-300 ease-out animate-fade-in transform-gpu">
     <div className="flex items-center gap-3 mb-6">
-      <div className="w-8 h-8 bg-primary/20 rounded-lg flex items-center justify-center">
+      <div className="w-8 h-8 bg-primary/20 rounded-lg flex items-center justify-center hover:scale-110 transition-transform duration-200">
         <Activity size={16} className="text-primary" />
       </div>
       <h3 className="text-lg font-semibold text-foreground">Recent Sessions</h3>
@@ -82,9 +82,9 @@ const CircularGauge = ({ title, value, maxValue, unit }: { title: string; value:
   const strokeDashoffset = circumference - (percentage / 100) * circumference;
 
   return (
-    <div className="bg-glass backdrop-blur-xl border border-glass-border rounded-2xl p-6 shadow-glass animate-fade-in">
+    <div className="bg-glass backdrop-blur-xl border border-glass-border rounded-2xl p-6 shadow-glass hover:bg-glass-highlight hover:scale-105 hover:-translate-y-1 transition-all duration-300 ease-out animate-fade-in transform-gpu">
       <div className="flex items-center gap-3 mb-4">
-        <div className="w-8 h-8 bg-primary/20 rounded-lg flex items-center justify-center">
+        <div className="w-8 h-8 bg-primary/20 rounded-lg flex items-center justify-center hover:scale-110 transition-transform duration-200">
           <Gauge size={16} className="text-primary" />
         </div>
         <h3 className="text-lg font-semibold text-foreground">{title}</h3>

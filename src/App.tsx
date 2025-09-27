@@ -10,6 +10,7 @@ import { Dashboard } from "@/pages/Dashboard";
 import { Training } from "@/pages/Training";
 import { Health } from "@/pages/Health";
 import { Schedule } from "@/pages/Schedule";
+import { YourPlan } from "@/pages/YourPlan";
 
 const queryClient = new QueryClient();
 
@@ -26,6 +27,8 @@ const App = () => {
         return <div key="health" className="animate-fade-in"><Health /></div>;
       case "schedule":
         return <div key="schedule" className="animate-fade-in"><Schedule /></div>;
+      case "your-plan":
+        return <div key="your-plan" className="animate-fade-in"><YourPlan /></div>;
       default:
         return <div key="dashboard" className="animate-fade-in"><Dashboard /></div>;
     }

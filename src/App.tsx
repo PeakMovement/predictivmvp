@@ -3,6 +3,8 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { ThemeProvider } from "@/components/ThemeProvider";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { BottomNavigation } from "@/components/BottomNavigation";
 import { Dashboard } from "@/pages/Dashboard";
 import { Training } from "@/pages/Training";
@@ -27,18 +29,21 @@ const App = () => {
   };
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <div className="relative overflow-hidden">
-          <div className="transition-all duration-500 ease-out">
-            {renderContent()}
+    <ThemeProvider defaultTheme="dark" storageKey="fitness-app-theme">
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <div className="relative overflow-hidden">
+            <ThemeToggle />
+            <div className="transition-all duration-500 ease-out">
+              {renderContent()}
+            </div>
+            <BottomNavigation activeTab={activeTab} onTabChange={setActiveTab} />
           </div>
-          <BottomNavigation activeTab={activeTab} onTabChange={setActiveTab} />
-        </div>
-      </TooltipProvider>
-    </QueryClientProvider>
+        </TooltipProvider>
+      </QueryClientProvider>
+    </ThemeProvider>
   );
 };
 

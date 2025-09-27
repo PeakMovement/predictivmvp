@@ -1,4 +1,4 @@
-import { BarChart3, Activity, Calendar, TrendingUp, Gauge, ChevronLeft, ChevronRight } from "lucide-react";
+import { BarChart3, Activity, Calendar, TrendingUp, Gauge, ChevronLeft, ChevronRight, FileText, Play, CheckCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState, useEffect } from "react";
 
@@ -8,6 +8,44 @@ const sessionLogs = [
   { title: "Lower Body Power", date: "2024-01-13", load: 156, type: "Power" },
   { title: "Recovery Run", date: "2024-01-12", load: 45, type: "Recovery" },
   { title: "Olympic Lifting", date: "2024-01-11", load: 178, type: "Strength" },
+];
+
+const suggestions = [
+  {
+    id: 1,
+    text: "Schedule a deload week to reduce training intensity by 20%",
+    type: "actionable",
+    hasVideo: true,
+    hasPdf: true
+  },
+  {
+    id: 2,
+    text: "Your acute:chronic ratio suggests optimal adaptation window",
+    type: "insight",
+    hasVideo: false,
+    hasPdf: false
+  },
+  {
+    id: 3,
+    text: "Add 2 mobility sessions focusing on hip flexors and thoracic spine",
+    type: "actionable",
+    hasVideo: true,
+    hasPdf: true
+  },
+  {
+    id: 4,
+    text: "Training monotony is within acceptable range (2.4/5.0)",
+    type: "insight",
+    hasVideo: false,
+    hasPdf: true
+  },
+  {
+    id: 5,
+    text: "Consider periodizing toward strength phase next week",
+    type: "actionable",
+    hasVideo: true,
+    hasPdf: false
+  }
 ];
 
 const graphData = [
@@ -162,6 +200,90 @@ const CircularGauge = ({ title, value, maxValue, unit }: { title: string; value:
             <span className="text-xs text-muted-foreground">{unit}</span>
           </div>
         </div>
+      </div>
+    </div>
+  );
+};
+
+const SuggestionsCard = () => {
+  const [acceptedSuggestions, setAcceptedSuggestions] = useState<Set<number>>(new Set());
+
+  const handleAccept = (suggestionId: number) => {
+    setAcceptedSuggestions(prev => new Set([...prev, suggestionId]));
+  };
+
+  return (
+    <div className="bg-glass backdrop-blur-xl border border-glass-border rounded-2xl p-6 shadow-glass hover:bg-glass-highlight hover:scale-105 hover:-translate-y-1 transition-all duration-300 ease-out animate-fade-in transform-gpu">
+      <div className="flex items-center gap-3 mb-6">
+        <div className="w-8 h-8 bg-primary/20 rounded-lg flex items-center justify-center hover:scale-110 transition-transform duration-200">
+          <TrendingUp size={16} className="text-primary" />
+        </div>
+        <h3 className="text-lg font-semibold text-foreground">Suggestions for the Next 7 Days</h3>
+      </div>
+      <div className="space-y-3">
+        {suggestions.map((suggestion) => {
+          const isAccepted = acceptedSuggestions.has(suggestion.id);
+          const isActionable = suggestion.type === "actionable";
+          
+          return (
+            <div key={suggestion.id} className="flex items-center justify-between gap-3 hover:bg-glass-highlight rounded-lg p-3 -m-3 transition-all duration-200">
+              <div className="flex items-start gap-3 flex-1">
+                <div className="w-1.5 h-1.5 bg-primary rounded-full mt-2 flex-shrink-0 animate-bounce-subtle" />
+                <p className="text-sm text-muted-foreground">{suggestion.text}</p>
+              </div>
+              <div className="flex items-center gap-2">
+                {/* Action Icons */}
+                {(suggestion.hasPdf || suggestion.hasVideo) && (
+                  <div className="flex items-center gap-1 opacity-40 hover:opacity-100 transition-opacity duration-200">
+                    {suggestion.hasPdf && (
+                      <button 
+                        className="p-1 rounded-md hover:bg-primary/10 hover:shadow-glow transition-all duration-200 hover:scale-110 active:scale-95"
+                        onClick={() => console.log('Download PDF for suggestion:', suggestion.id)}
+                      >
+                        <FileText size={14} className="text-muted-foreground hover:text-primary transition-colors duration-200" />
+                      </button>
+                    )}
+                    {suggestion.hasVideo && (
+                      <button 
+                        className="p-1 rounded-md hover:bg-primary/10 hover:shadow-glow transition-all duration-200 hover:scale-110 active:scale-95"
+                        onClick={() => console.log('Watch Video for suggestion:', suggestion.id)}
+                      >
+                        <Play size={14} className="text-muted-foreground hover:text-primary transition-colors duration-200" />
+                      </button>
+                    )}
+                  </div>
+                )}
+                
+                {/* Action Button or Insight Label */}
+                {isActionable ? (
+                  <button
+                    onClick={() => handleAccept(suggestion.id)}
+                    disabled={isAccepted}
+                    className={cn(
+                      "px-3 py-1.5 text-xs font-medium rounded-lg transition-all duration-300",
+                      isAccepted
+                        ? "bg-green-500/20 text-green-400 shadow-glow cursor-default"
+                        : "bg-primary/20 text-primary hover:bg-primary/30 hover:scale-105 active:scale-95"
+                    )}
+                  >
+                    {isAccepted ? (
+                      <div className="flex items-center gap-1">
+                        <CheckCircle size={12} />
+                        <span>Added to Plan</span>
+                      </div>
+                    ) : (
+                      "Accept"
+                    )}
+                  </button>
+                ) : (
+                  <div className="px-3 py-1.5 text-xs font-medium text-muted-foreground/60 bg-muted/10 rounded-lg">
+                    Insight
+                  </div>
+                )}
+              </div>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
@@ -416,8 +538,13 @@ export const Training = () => {
         </div>
 
         {/* Trend Analysis Carousel */}
-        <div>
+        <div className="mb-8">
           <GraphCarousel />
+        </div>
+
+        {/* Suggestions for Next 7 Days */}
+        <div>
+          <SuggestionsCard />
         </div>
       </div>
     </div>

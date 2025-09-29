@@ -1,4 +1,4 @@
-import { BarChart3, Activity, Calendar, TrendingUp, Gauge, ChevronLeft, ChevronRight, FileText, Play, CheckCircle, HelpCircle, Check, X } from "lucide-react";
+import { BarChart3, Activity, Calendar, TrendingUp, Gauge, ChevronLeft, ChevronRight, FileText, Play, CheckCircle, HelpCircle, Check, X, CalendarPlus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState, useEffect } from "react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -249,29 +249,67 @@ const AccountabilityChallenges = () => {
                   
                   <div className="flex items-center gap-3">
                     {/* Action Icons */}
-                    {!processingState && (suggestion.hasPdf || suggestion.hasVideo) && (
+                    {!processingState && (suggestion.hasPdf || suggestion.hasVideo || isActionable) && (
                       <div className="flex items-center gap-1 opacity-50 hover:opacity-100 transition-opacity duration-200">
                         {suggestion.hasPdf && (
-                          <button 
-                            className="p-2 rounded-md hover:bg-primary/10 hover:shadow-glow transition-all duration-200 hover:scale-110 active:scale-95"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              console.log('Download PDF for suggestion:', suggestion.id);
-                            }}
-                          >
-                            <FileText size={16} className="text-muted-foreground hover:text-primary transition-colors duration-200" />
-                          </button>
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <button 
+                                  className="p-2 rounded-md hover:bg-primary/10 hover:shadow-glow transition-all duration-200 hover:scale-110 active:scale-95"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    console.log('Download PDF for suggestion:', suggestion.id);
+                                  }}
+                                >
+                                  <FileText size={16} className="text-muted-foreground hover:text-primary transition-colors duration-200" />
+                                </button>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>Download PDF</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
                         )}
                         {suggestion.hasVideo && (
-                          <button 
-                            className="p-2 rounded-md hover:bg-primary/10 hover:shadow-glow transition-all duration-200 hover:scale-110 active:scale-95"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              console.log('Watch Video for suggestion:', suggestion.id);
-                            }}
-                          >
-                            <Play size={16} className="text-muted-foreground hover:text-primary transition-colors duration-200" />
-                          </button>
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <button 
+                                  className="p-2 rounded-md hover:bg-primary/10 hover:shadow-glow transition-all duration-200 hover:scale-110 active:scale-95"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    console.log('Watch Video for suggestion:', suggestion.id);
+                                  }}
+                                >
+                                  <Play size={16} className="text-muted-foreground hover:text-primary transition-colors duration-200" />
+                                </button>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>Watch Video</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        )}
+                        {isActionable && (
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <button 
+                                  className="p-2 rounded-md hover:bg-primary/10 hover:shadow-glow transition-all duration-200 hover:scale-110 active:scale-95"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    console.log('Add to calendar for suggestion:', suggestion.id);
+                                  }}
+                                >
+                                  <CalendarPlus size={16} className="text-muted-foreground hover:text-primary transition-colors duration-200" />
+                                </button>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>Add to calendar?</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
                         )}
                       </div>
                     )}

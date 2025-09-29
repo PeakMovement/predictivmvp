@@ -1,8 +1,14 @@
 import { CheckCircle, Calendar, Clock, User, FileText, Play, CalendarPlus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
+import { format } from "date-fns";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Calendar as CalendarComponent } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 const acceptedChallenges = [
   {
@@ -82,6 +88,8 @@ const getCategoryStyle = (category: string) => {
 const AcceptedChallengesSection = () => {
   const [isCalendarModalOpen, setIsCalendarModalOpen] = useState(false);
   const [selectedChallenge, setSelectedChallenge] = useState<typeof acceptedChallenges[0] | null>(null);
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const [selectedTime, setSelectedTime] = useState<string>("12:00");
 
   const handleCalendarClick = (challenge: typeof acceptedChallenges[0]) => {
     setSelectedChallenge(challenge);
@@ -90,13 +98,18 @@ const AcceptedChallengesSection = () => {
 
   const handleAddToCalendar = () => {
     if (selectedChallenge) {
-      // Create Google Calendar URL with prefilled event
+      // Create Google Calendar URL with prefilled event using selected date and time
       const eventTitle = encodeURIComponent(selectedChallenge.text);
       const eventDescription = encodeURIComponent(`${selectedChallenge.category} challenge from your training plan`);
-      const startDate = new Date();
-      startDate.setDate(startDate.getDate() + 1); // Tomorrow
+      
+      // Parse selected time and create start date
+      const [hours, minutes] = selectedTime.split(':').map(Number);
+      const startDate = new Date(selectedDate);
+      startDate.setHours(hours, minutes, 0, 0);
+      
+      // Create end date (1 hour duration)
       const endDate = new Date(startDate);
-      endDate.setHours(startDate.getHours() + 1); // 1 hour duration
+      endDate.setHours(startDate.getHours() + 1);
       
       const googleCalendarUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${eventTitle}&details=${eventDescription}&dates=${startDate.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '')}/${endDate.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '')}`;
       
@@ -219,13 +232,54 @@ const AcceptedChallengesSection = () => {
         
         <div className="mt-4 space-y-4">
           <p className="text-muted-foreground">
-            Do you want to add this challenge to your Google Calendar?
+            Select when you want to schedule this challenge:
           </p>
           
           <div className="bg-glass/30 rounded-lg border border-glass-border p-3">
-            <p className="text-sm font-medium text-foreground">
+            <p className="text-sm font-medium text-foreground mb-3">
               {selectedChallenge?.text}
             </p>
+            
+            <div className="space-y-3">
+              <div>
+                <Label htmlFor="date" className="text-sm text-muted-foreground">Date</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "w-full justify-start text-left font-normal mt-1 bg-glass/30 border-glass-border hover:bg-glass-highlight",
+                        !selectedDate && "text-muted-foreground"
+                      )}
+                    >
+                      <Calendar className="mr-2 h-4 w-4" />
+                      {selectedDate ? format(selectedDate, "PPP") : <span>Pick a date</span>}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0 bg-glass backdrop-blur-xl border border-glass-border" align="start">
+                    <CalendarComponent
+                      mode="single"
+                      selected={selectedDate}
+                      onSelect={(date) => date && setSelectedDate(date)}
+                      disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
+                      initialFocus
+                      className="p-3 pointer-events-auto"
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+              
+              <div>
+                <Label htmlFor="time" className="text-sm text-muted-foreground">Time</Label>
+                <Input
+                  id="time"
+                  type="time"
+                  value={selectedTime}
+                  onChange={(e) => setSelectedTime(e.target.value)}
+                  className="mt-1 bg-glass/30 border-glass-border focus:border-primary"
+                />
+              </div>
+            </div>
           </div>
           
           <div className="flex items-center gap-3 pt-2">
@@ -233,7 +287,7 @@ const AcceptedChallengesSection = () => {
               onClick={handleAddToCalendar}
               className="flex-1 p-3 rounded-lg bg-green-500/20 text-green-400 hover:bg-green-500/30 hover:scale-105 active:scale-95 transition-all duration-200 font-medium"
             >
-              Yes, add to calendar
+              Add to calendar
             </button>
             <button
               onClick={() => {
@@ -242,7 +296,7 @@ const AcceptedChallengesSection = () => {
               }}
               className="flex-1 p-3 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30 hover:scale-105 active:scale-95 transition-all duration-200 font-medium"
             >
-              No, cancel
+              Cancel
             </button>
           </div>
         </div>

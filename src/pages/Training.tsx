@@ -249,7 +249,7 @@ const AccountabilityChallenges = () => {
                   
                   <div className="flex items-center gap-3">
                     {/* Action Icons */}
-                    {!processingState && (suggestion.hasPdf || suggestion.hasVideo || isActionable) && (
+                    {!processingState && (suggestion.hasPdf || suggestion.hasVideo) && (
                       <div className="flex items-center gap-1 opacity-50 hover:opacity-100 transition-opacity duration-200">
                         {suggestion.hasPdf && (
                           <TooltipProvider>
@@ -287,26 +287,6 @@ const AccountabilityChallenges = () => {
                               </TooltipTrigger>
                               <TooltipContent>
                                 <p>Watch Video</p>
-                              </TooltipContent>
-                            </Tooltip>
-                          </TooltipProvider>
-                        )}
-                        {isActionable && (
-                          <TooltipProvider>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <button 
-                                  className="p-2 rounded-md hover:bg-primary/10 hover:shadow-glow transition-all duration-200 hover:scale-110 active:scale-95"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    console.log('Add to calendar for suggestion:', suggestion.id);
-                                  }}
-                                >
-                                  <CalendarPlus size={16} className="text-muted-foreground hover:text-primary transition-colors duration-200" />
-                                </button>
-                              </TooltipTrigger>
-                              <TooltipContent>
-                                <p>Add to calendar?</p>
                               </TooltipContent>
                             </Tooltip>
                           </TooltipProvider>

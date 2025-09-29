@@ -1,5 +1,8 @@
-import { CheckCircle, Calendar, Clock, User, FileText, Play } from "lucide-react";
+import { CheckCircle, Calendar, Clock, User, FileText, Play, CalendarPlus } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useState } from "react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 const acceptedChallenges = [
   {
@@ -76,7 +79,34 @@ const getCategoryStyle = (category: string) => {
   }
 };
 
-const AcceptedChallengesSection = () => (
+const AcceptedChallengesSection = () => {
+  const [isCalendarModalOpen, setIsCalendarModalOpen] = useState(false);
+  const [selectedChallenge, setSelectedChallenge] = useState<typeof acceptedChallenges[0] | null>(null);
+
+  const handleCalendarClick = (challenge: typeof acceptedChallenges[0]) => {
+    setSelectedChallenge(challenge);
+    setIsCalendarModalOpen(true);
+  };
+
+  const handleAddToCalendar = () => {
+    if (selectedChallenge) {
+      // Create Google Calendar URL with prefilled event
+      const eventTitle = encodeURIComponent(selectedChallenge.text);
+      const eventDescription = encodeURIComponent(`${selectedChallenge.category} challenge from your training plan`);
+      const startDate = new Date();
+      startDate.setDate(startDate.getDate() + 1); // Tomorrow
+      const endDate = new Date(startDate);
+      endDate.setHours(startDate.getHours() + 1); // 1 hour duration
+      
+      const googleCalendarUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${eventTitle}&details=${eventDescription}&dates=${startDate.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '')}/${endDate.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '')}`;
+      
+      window.open(googleCalendarUrl, '_blank');
+    }
+    setIsCalendarModalOpen(false);
+    setSelectedChallenge(null);
+  };
+
+  return (
   <div className="bg-glass backdrop-blur-xl border border-glass-border rounded-2xl p-6 shadow-glass hover:bg-glass-highlight hover:scale-105 hover:-translate-y-1 transition-all duration-300 ease-out animate-fade-in transform-gpu mb-8">
     <div className="flex items-center gap-3 mb-6">
       <div className="w-8 h-8 bg-green-500/20 rounded-lg flex items-center justify-center hover:scale-110 transition-transform duration-200">
@@ -115,21 +145,54 @@ const AcceptedChallengesSection = () => (
               {(challenge.hasPdf || challenge.hasVideo) && (
                 <div className="flex items-center gap-1 opacity-50 hover:opacity-100 transition-opacity duration-200">
                   {challenge.hasPdf && (
-                    <button 
-                      className="p-2 rounded-md hover:bg-primary/10 hover:shadow-glow transition-all duration-200 hover:scale-110 active:scale-95"
-                      onClick={() => console.log('Download PDF for challenge:', challenge.id)}
-                    >
-                      <FileText size={16} className="text-muted-foreground hover:text-primary transition-colors duration-200" />
-                    </button>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <button 
+                            className="p-2 rounded-md hover:bg-primary/10 hover:shadow-glow transition-all duration-200 hover:scale-110 active:scale-95"
+                            onClick={() => console.log('Download PDF for challenge:', challenge.id)}
+                          >
+                            <FileText size={16} className="text-muted-foreground hover:text-primary transition-colors duration-200" />
+                          </button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Download PDF</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
                   )}
                   {challenge.hasVideo && (
-                    <button 
-                      className="p-2 rounded-md hover:bg-primary/10 hover:shadow-glow transition-all duration-200 hover:scale-110 active:scale-95"
-                      onClick={() => console.log('Watch Video for challenge:', challenge.id)}
-                    >
-                      <Play size={16} className="text-muted-foreground hover:text-primary transition-colors duration-200" />
-                    </button>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <button 
+                            className="p-2 rounded-md hover:bg-primary/10 hover:shadow-glow transition-all duration-200 hover:scale-110 active:scale-95"
+                            onClick={() => console.log('Watch Video for challenge:', challenge.id)}
+                          >
+                            <Play size={16} className="text-muted-foreground hover:text-primary transition-colors duration-200" />
+                          </button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Watch Video</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
                   )}
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <button 
+                          className="p-2 rounded-md hover:bg-primary/10 hover:shadow-glow transition-all duration-200 hover:scale-110 active:scale-95"
+                          onClick={() => handleCalendarClick(challenge)}
+                        >
+                          <CalendarPlus size={16} className="text-muted-foreground hover:text-primary transition-colors duration-200" />
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Add to calendar?</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
                 </div>
               )}
               
@@ -144,8 +207,51 @@ const AcceptedChallengesSection = () => (
         </div>
       ))}
     </div>
+
+    {/* Calendar Modal */}
+    <Dialog open={isCalendarModalOpen} onOpenChange={setIsCalendarModalOpen}>
+      <DialogContent className="sm:max-w-md bg-glass backdrop-blur-xl border border-glass-border shadow-glass">
+        <DialogHeader>
+          <DialogTitle className="text-lg font-semibold text-foreground">
+            Add to Google Calendar
+          </DialogTitle>
+        </DialogHeader>
+        
+        <div className="mt-4 space-y-4">
+          <p className="text-muted-foreground">
+            Do you want to add this challenge to your Google Calendar?
+          </p>
+          
+          <div className="bg-glass/30 rounded-lg border border-glass-border p-3">
+            <p className="text-sm font-medium text-foreground">
+              {selectedChallenge?.text}
+            </p>
+          </div>
+          
+          <div className="flex items-center gap-3 pt-2">
+            <button
+              onClick={handleAddToCalendar}
+              className="flex-1 p-3 rounded-lg bg-green-500/20 text-green-400 hover:bg-green-500/30 hover:scale-105 active:scale-95 transition-all duration-200 font-medium"
+            >
+              Yes, add to calendar
+            </button>
+            <button
+              onClick={() => {
+                setIsCalendarModalOpen(false);
+                setSelectedChallenge(null);
+              }}
+              className="flex-1 p-3 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30 hover:scale-105 active:scale-95 transition-all duration-200 font-medium"
+            >
+              No, cancel
+            </button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
   </div>
 );
+
+};
 
 const UpcomingBookingsSection = () => (
   <div className="bg-glass backdrop-blur-xl border border-glass-border rounded-2xl p-6 shadow-glass hover:bg-glass-highlight hover:scale-105 hover:-translate-y-1 transition-all duration-300 ease-out animate-fade-in transform-gpu">

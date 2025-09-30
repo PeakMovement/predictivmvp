@@ -1,4 +1,4 @@
-import { CheckCircle, Calendar, Clock, User, FileText, Play, CalendarPlus } from "lucide-react";
+import { CheckCircle, Calendar, Clock, User, FileText, Play, CalendarPlus, Download } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
 import { format } from "date-fns";
@@ -9,6 +9,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import jsPDF from "jspdf";
 
 const acceptedChallenges = [
   {
@@ -83,6 +84,162 @@ const getCategoryStyle = (category: string) => {
     case "Insight": return "border-purple-400/30 text-purple-400 bg-purple-500/10";
     default: return "border-muted text-muted-foreground bg-muted/10";
   }
+};
+
+// Mock graph data for PDF generation
+const graphData = [
+  {
+    title: "Acute:Chronic Workload",
+    currentValue: "1.2",
+    riskZone: "optimal"
+  },
+  {
+    title: "Training Monotony",
+    currentValue: "2.4/5.0",
+    riskZone: "optimal"
+  },
+  {
+    title: "Training Strain",
+    currentValue: "156/200",
+    riskZone: "caution"
+  },
+  {
+    title: "EWMA Trend",
+    currentValue: "+5.2%",
+    riskZone: "optimal"
+  }
+];
+
+const generateWeeklyReportPDF = () => {
+  const doc = new jsPDF();
+  const pageWidth = doc.internal.pageSize.getWidth();
+  let yPosition = 20;
+
+  // Header
+  doc.setFontSize(24);
+  doc.setFont("helvetica", "bold");
+  doc.text("Weekly Health Summary", pageWidth / 2, yPosition, { align: "center" });
+  
+  yPosition += 15;
+  doc.setFontSize(10);
+  doc.setFont("helvetica", "normal");
+  doc.setTextColor(100, 100, 100);
+  doc.text(`Generated on ${format(new Date(), "PPP")}`, pageWidth / 2, yPosition, { align: "center" });
+  
+  yPosition += 15;
+  doc.setTextColor(0, 0, 0);
+
+  // Current Risk Graphs Section
+  doc.setFontSize(16);
+  doc.setFont("helvetica", "bold");
+  doc.text("Current Risk Graphs", 20, yPosition);
+  yPosition += 10;
+
+  doc.setFontSize(10);
+  doc.setFont("helvetica", "normal");
+  
+  graphData.forEach((graph) => {
+    const riskColor = graph.riskZone === "optimal" ? [34, 197, 94] : 
+                      graph.riskZone === "caution" ? [251, 146, 60] : 
+                      [239, 68, 68];
+    
+    doc.setTextColor(0, 0, 0);
+    doc.text(`• ${graph.title}:`, 25, yPosition);
+    doc.text(`${graph.currentValue}`, 80, yPosition);
+    
+    doc.setTextColor(riskColor[0], riskColor[1], riskColor[2]);
+    doc.text(`(${graph.riskZone.toUpperCase()})`, 110, yPosition);
+    doc.setTextColor(0, 0, 0);
+    
+    yPosition += 8;
+  });
+
+  yPosition += 10;
+
+  // Accepted Challenges Section
+  doc.setFontSize(16);
+  doc.setFont("helvetica", "bold");
+  doc.text("Accepted Challenges", 20, yPosition);
+  yPosition += 10;
+
+  doc.setFontSize(10);
+  doc.setFont("helvetica", "normal");
+  
+  acceptedChallenges.forEach((challenge, index) => {
+    if (yPosition > 260) {
+      doc.addPage();
+      yPosition = 20;
+    }
+    
+    doc.text(`${index + 1}. ${challenge.text}`, 25, yPosition, { maxWidth: pageWidth - 50 });
+    yPosition += 7;
+    doc.setFontSize(9);
+    doc.setTextColor(100, 100, 100);
+    doc.text(`   Category: ${challenge.category} | Accepted: ${challenge.dateAccepted}`, 25, yPosition);
+    doc.setFontSize(10);
+    doc.setTextColor(0, 0, 0);
+    yPosition += 10;
+  });
+
+  yPosition += 5;
+
+  // Upcoming Bookings Section
+  if (yPosition > 220) {
+    doc.addPage();
+    yPosition = 20;
+  }
+
+  doc.setFontSize(16);
+  doc.setFont("helvetica", "bold");
+  doc.text("Upcoming Bookings", 20, yPosition);
+  yPosition += 10;
+
+  doc.setFontSize(10);
+  doc.setFont("helvetica", "normal");
+  
+  upcomingBookings.forEach((booking, index) => {
+    if (yPosition > 260) {
+      doc.addPage();
+      yPosition = 20;
+    }
+    
+    doc.text(`${index + 1}. ${booking.service}`, 25, yPosition);
+    yPosition += 7;
+    doc.setFontSize(9);
+    doc.setTextColor(100, 100, 100);
+    doc.text(`   Clinician: ${booking.clinician}`, 25, yPosition);
+    yPosition += 5;
+    doc.text(`   Date: ${booking.date} at ${booking.time} (${booking.type})`, 25, yPosition);
+    doc.setFontSize(10);
+    doc.setTextColor(0, 0, 0);
+    yPosition += 10;
+  });
+
+  yPosition += 5;
+
+  // Highlights Section
+  if (yPosition > 240) {
+    doc.addPage();
+    yPosition = 20;
+  }
+
+  doc.setFontSize(16);
+  doc.setFont("helvetica", "bold");
+  doc.text("Weekly Highlights", 20, yPosition);
+  yPosition += 10;
+
+  doc.setFontSize(10);
+  doc.setFont("helvetica", "normal");
+  doc.text("• Best Training Day: Tuesday", 25, yPosition);
+  yPosition += 8;
+  doc.text("• Total Training Sessions: 5", 25, yPosition);
+  yPosition += 8;
+  doc.text("• Average Strain: 142 TSS", 25, yPosition);
+  yPosition += 8;
+  doc.text("• Recovery Score: 8.2/10", 25, yPosition);
+
+  // Save the PDF
+  doc.save(`weekly-health-summary-${format(new Date(), "yyyy-MM-dd")}.pdf`);
 };
 
 const AcceptedChallengesSection = () => {
@@ -370,6 +527,26 @@ export const YourPlan = () => {
           </div>
           <div className="animate-slide-in" style={{ animationDelay: '0.2s', animationFillMode: 'both' }}>
             <p className="text-muted-foreground text-lg">Track your active challenges and upcoming appointments</p>
+          </div>
+          
+          {/* Generate Report Button */}
+          <div className="flex justify-center mt-6">
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    onClick={generateWeeklyReportPDF}
+                    className="flex items-center gap-2 px-6 py-3 bg-primary/20 text-primary rounded-lg border border-primary/30 hover:bg-primary/30 hover:scale-105 active:scale-95 transition-all duration-200 font-medium shadow-glow"
+                  >
+                    <Download size={18} />
+                    <span>Generate Weekly Report</span>
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Download a PDF summary of your weekly health data</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           </div>
         </div>
 

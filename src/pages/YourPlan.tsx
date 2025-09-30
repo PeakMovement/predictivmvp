@@ -19,7 +19,9 @@ const acceptedChallenges = [
     accentColor: "yellow",
     hasVideo: true,
     hasPdf: true,
-    dateAccepted: "2024-01-15"
+    dateAccepted: "2024-01-15",
+    scheduledDate: "2024-01-22",
+    scheduledTime: "09:00"
   },
   {
     id: 3,
@@ -28,7 +30,9 @@ const acceptedChallenges = [
     accentColor: "green",
     hasVideo: true,
     hasPdf: true,
-    dateAccepted: "2024-01-14"
+    dateAccepted: "2024-01-14",
+    scheduledDate: "2024-01-20",
+    scheduledTime: "14:30"
   },
   {
     id: 5,
@@ -37,7 +41,9 @@ const acceptedChallenges = [
     accentColor: "red",
     hasVideo: true,
     hasPdf: false,
-    dateAccepted: "2024-01-13"
+    dateAccepted: "2024-01-13",
+    scheduledDate: "2024-01-25",
+    scheduledTime: "10:00"
   }
 ];
 
@@ -307,7 +313,17 @@ const AcceptedChallengesSection = () => {
                 </div>
               </div>
               <p className="font-medium text-foreground leading-relaxed">{challenge.text}</p>
-              <p className="text-xs text-muted-foreground">Accepted on {challenge.dateAccepted}</p>
+              <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                <span>Accepted: {challenge.dateAccepted}</span>
+                {challenge.scheduledDate && challenge.scheduledTime && (
+                  <div className="flex items-center gap-1 px-2 py-1 bg-primary/10 rounded-md border border-primary/30">
+                    <Calendar size={12} className="text-primary" />
+                    <span className="text-primary font-medium">
+                      Scheduled: {format(new Date(challenge.scheduledDate), "MMM dd")} at {challenge.scheduledTime}
+                    </span>
+                  </div>
+                )}
+              </div>
             </div>
             
             <div className="flex items-center gap-3">

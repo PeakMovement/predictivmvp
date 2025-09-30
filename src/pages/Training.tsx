@@ -1,8 +1,14 @@
 import { BarChart3, Activity, Calendar, TrendingUp, Gauge, ChevronLeft, ChevronRight, FileText, Play, CheckCircle, HelpCircle, Check, X, CalendarPlus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState, useEffect } from "react";
+import { format } from "date-fns";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Calendar as CalendarComponent } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 
 const sessionLogs = [
@@ -167,27 +173,48 @@ const AccountabilityChallenges = () => {
   const [removedSuggestions, setRemovedSuggestions] = useState<Set<number>>(new Set());
   const [selectedInsight, setSelectedInsight] = useState<typeof suggestions[0] | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false);
+  const [selectedChallenge, setSelectedChallenge] = useState<typeof suggestions[0] | null>(null);
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const [selectedTime, setSelectedTime] = useState<string>("12:00");
   const { toast } = useToast();
 
-  const handleAccept = (suggestionId: number) => {
-    // Set to accepting state immediately
-    setProcessingStates(prev => ({ ...prev, [suggestionId]: 'accepting' }));
-    
-    // Show "Added" for 2 seconds
-    setTimeout(() => {
-      setProcessingStates(prev => ({ ...prev, [suggestionId]: 'added' }));
+  const handleAccept = (suggestion: typeof suggestions[0]) => {
+    // Open scheduling modal for time-based challenges
+    setSelectedChallenge(suggestion);
+    setIsScheduleModalOpen(true);
+  };
+
+  const handleScheduleConfirm = () => {
+    if (selectedChallenge) {
+      // Set to accepting state immediately
+      setProcessingStates(prev => ({ ...prev, [selectedChallenge.id]: 'accepting' }));
       
-      // After 2 seconds, fade out and add to accepted
+      // Show "Added" for 2 seconds
       setTimeout(() => {
-        setAcceptedSuggestions(prev => new Set([...prev, suggestionId]));
-        setRemovedSuggestions(prev => new Set([...prev, suggestionId]));
-        setProcessingStates(prev => {
-          const newState = { ...prev };
-          delete newState[suggestionId];
-          return newState;
-        });
-      }, 2000);
-    }, 100);
+        setProcessingStates(prev => ({ ...prev, [selectedChallenge.id]: 'added' }));
+        
+        // After 2 seconds, fade out and add to accepted
+        setTimeout(() => {
+          setAcceptedSuggestions(prev => new Set([...prev, selectedChallenge.id]));
+          setRemovedSuggestions(prev => new Set([...prev, selectedChallenge.id]));
+          setProcessingStates(prev => {
+            const newState = { ...prev };
+            delete newState[selectedChallenge.id];
+            return newState;
+          });
+          
+          toast({
+            title: "Challenge Scheduled",
+            description: `Scheduled for ${format(selectedDate, "PPP")} at ${selectedTime}`,
+            duration: 3000,
+          });
+        }, 2000);
+      }, 100);
+      
+      setIsScheduleModalOpen(false);
+      setSelectedChallenge(null);
+    }
   };
 
   const handleCancel = (suggestionId: number) => {
@@ -330,7 +357,7 @@ const AccountabilityChallenges = () => {
                     {!processingState && isActionable ? (
                       <div className="flex items-center gap-2">
                         <button
-                          onClick={() => handleAccept(suggestion.id)}
+                          onClick={() => handleAccept(suggestion)}
                           className="p-2 rounded-lg bg-green-500/20 text-green-400 hover:bg-green-500/30 hover:scale-110 active:scale-95 transition-all duration-200"
                         >
                           <Check size={16} />
@@ -389,6 +416,84 @@ const AccountabilityChallenges = () => {
                 className="p-2 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30 hover:scale-110 active:scale-95 transition-all duration-200"
               >
                 <X size={16} />
+              </button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Scheduling Modal */}
+      <Dialog open={isScheduleModalOpen} onOpenChange={setIsScheduleModalOpen}>
+        <DialogContent className="sm:max-w-md bg-glass backdrop-blur-xl border border-glass-border shadow-glass">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-semibold text-foreground">
+              Schedule Challenge
+            </DialogTitle>
+          </DialogHeader>
+          
+          <div className="mt-4 space-y-4">
+            <div className="bg-glass/30 rounded-lg border border-glass-border p-3">
+              <p className="text-sm font-medium text-foreground">
+                {selectedChallenge?.text}
+              </p>
+            </div>
+            
+            <div className="space-y-3">
+              <div>
+                <Label htmlFor="schedule-date" className="text-sm text-muted-foreground">Date</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "w-full justify-start text-left font-normal mt-1 bg-glass/30 border-glass-border hover:bg-glass-highlight",
+                        !selectedDate && "text-muted-foreground"
+                      )}
+                    >
+                      <Calendar className="mr-2 h-4 w-4" />
+                      {selectedDate ? format(selectedDate, "PPP") : <span>Pick a date</span>}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0 bg-glass backdrop-blur-xl border border-glass-border z-50" align="start">
+                    <CalendarComponent
+                      mode="single"
+                      selected={selectedDate}
+                      onSelect={(date) => date && setSelectedDate(date)}
+                      disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
+                      initialFocus
+                      className="p-3 pointer-events-auto"
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+              
+              <div>
+                <Label htmlFor="schedule-time" className="text-sm text-muted-foreground">Time</Label>
+                <Input
+                  id="schedule-time"
+                  type="time"
+                  value={selectedTime}
+                  onChange={(e) => setSelectedTime(e.target.value)}
+                  className="mt-1 bg-glass/30 border-glass-border focus:border-primary"
+                />
+              </div>
+            </div>
+            
+            <div className="flex items-center gap-3 pt-2">
+              <button
+                onClick={handleScheduleConfirm}
+                className="flex-1 p-3 rounded-lg bg-green-500/20 text-green-400 hover:bg-green-500/30 hover:scale-105 active:scale-95 transition-all duration-200 font-medium"
+              >
+                Confirm
+              </button>
+              <button
+                onClick={() => {
+                  setIsScheduleModalOpen(false);
+                  setSelectedChallenge(null);
+                }}
+                className="flex-1 p-3 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30 hover:scale-105 active:scale-95 transition-all duration-200 font-medium"
+              >
+                Cancel
               </button>
             </div>
           </div>

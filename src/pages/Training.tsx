@@ -187,8 +187,31 @@ const AccountabilityChallenges = () => {
 
   const handleScheduleConfirm = () => {
     if (selectedChallenge) {
+      // Parse selected time and create start date
+      const [hours, minutes] = selectedTime.split(':').map(Number);
+      const startDate = new Date(selectedDate);
+      startDate.setHours(hours, minutes, 0, 0);
+      
+      // Create end date (1 hour duration)
+      const endDate = new Date(startDate);
+      endDate.setHours(startDate.getHours() + 1);
+      
+      // Format dates for Google Calendar (ISO format without dashes and colons)
+      const formatGoogleDate = (date: Date) => {
+        return date.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
+      };
+      
+      // Create Google Calendar URL with prefilled event
+      const eventTitle = encodeURIComponent(selectedChallenge.text);
+      const eventDetails = encodeURIComponent("Event from Predictiv");
+      const dates = `${formatGoogleDate(startDate)}/${formatGoogleDate(endDate)}`;
+      const googleCalendarUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${eventTitle}&dates=${dates}&details=${eventDetails}`;
+      
       // Set to accepting state immediately
       setProcessingStates(prev => ({ ...prev, [selectedChallenge.id]: 'accepting' }));
+      
+      // Open Google Calendar in new tab
+      window.open(googleCalendarUrl, '_blank');
       
       // Show "Added" for 2 seconds
       setTimeout(() => {
@@ -205,7 +228,7 @@ const AccountabilityChallenges = () => {
           });
           
           toast({
-            title: "Challenge Scheduled",
+            title: "Event added to Google Calendar (demo)",
             description: `Scheduled for ${format(selectedDate, "PPP")} at ${selectedTime}`,
             duration: 3000,
           });

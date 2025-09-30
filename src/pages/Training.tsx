@@ -67,30 +67,62 @@ const graphData = [
     subtitle: "Exponentially weighted moving average over 28 days",
     currentValue: "+5.2%",
     riskZone: "optimal", // optimal, caution, high-risk
-    dataPoints: [65, 68, 72, 70, 75, 78, 82, 80, 85, 88, 90, 87, 89, 92, 95]
+    dataPoints: [65, 68, 72, 70, 75, 78, 82, 80, 85, 88, 90, 87, 89, 92, 95],
+    thresholds: { optimal: [60, 85] as [number, number], caution: [85, 95] as [number, number], highRisk: [95, 100] as [number, number] },
+    interpretation: {
+      optimal: "Your training load is progressing well. Maintain consistency.",
+      caution: "Training load is increasing rapidly. Monitor recovery carefully.",
+      highRisk: "High training load detected. Consider reducing volume to prevent overtraining."
+    }
   },
   {
     title: "Acute:Chronic Workload",
     subtitle: "Training load ratio over time",
     currentValue: "1.2",
     riskZone: "optimal",
-    dataPoints: [1.3, 1.2, 1.1, 1.0, 1.1, 1.2, 1.3, 1.2, 1.1, 1.0, 1.2, 1.3, 1.2, 1.1, 1.2]
+    dataPoints: [1.3, 1.2, 1.1, 1.0, 1.1, 1.2, 1.3, 1.2, 1.1, 1.0, 1.2, 1.3, 1.2, 1.1, 1.2],
+    thresholds: { optimal: [0.8, 1.3] as [number, number], caution: [1.3, 1.5] as [number, number], highRisk: [1.5, 2.0] as [number, number] },
+    interpretation: {
+      optimal: "Optimal training adaptation. You're in the sweet spot for gains.",
+      caution: "Slightly elevated ratio. Monitor fatigue and adjust if needed.",
+      highRisk: "High risk of overload. Consider reducing volume immediately."
+    }
   },
   {
     title: "Weekly Training Load",
     subtitle: "Total training stress by week",
     currentValue: "420 TSS",
     riskZone: "caution",
-    dataPoints: [380, 390, 400, 420, 440, 430, 420, 410, 430, 450, 440, 420, 410, 420, 420]
+    dataPoints: [380, 390, 400, 420, 440, 430, 420, 410, 430, 450, 440, 420, 410, 420, 420],
+    thresholds: { optimal: [300, 430] as [number, number], caution: [430, 470] as [number, number], highRisk: [470, 600] as [number, number] },
+    interpretation: {
+      optimal: "Training stress is well-managed. Keep up the good work.",
+      caution: "Approaching high training stress. Ensure adequate recovery.",
+      highRisk: "Excessive training stress detected. Prioritize rest and recovery."
+    }
   },
   {
     title: "Training Strain Trend",
     subtitle: "Daily strain accumulation",
     currentValue: "156",
     riskZone: "high-risk",
-    dataPoints: [120, 130, 140, 145, 150, 155, 160, 158, 162, 165, 160, 158, 156, 154, 156]
+    dataPoints: [120, 130, 140, 145, 150, 155, 160, 158, 162, 165, 160, 158, 156, 154, 156],
+    thresholds: { optimal: [100, 150] as [number, number], caution: [150, 165] as [number, number], highRisk: [165, 200] as [number, number] },
+    interpretation: {
+      optimal: "Strain levels are balanced. Continue current training approach.",
+      caution: "Elevated strain detected. Monitor recovery markers closely.",
+      highRisk: "Critical strain levels. Immediate deload recommended."
+    }
   }
 ];
+
+// Helper function to determine risk zone based on value and thresholds
+const getRiskZoneForValue = (value: number, thresholds: { optimal: [number, number], caution: [number, number], highRisk: [number, number] }) => {
+  if (value >= thresholds.optimal[0] && value < thresholds.optimal[1]) return "optimal";
+  if (value >= thresholds.caution[0] && value < thresholds.caution[1]) return "caution";
+  if (value >= thresholds.highRisk[0]) return "highRisk";
+  return "optimal"; // default
+};
 
 const getRiskColor = (zone: string, isGlow = false) => {
   const colors = {
@@ -555,6 +587,7 @@ const GraphCarousel = () => {
   const [currentGraph, setCurrentGraph] = useState(0);
   const [timeRange, setTimeRange] = useState(30);
   const [isTransitioning, setIsTransitioning] = useState(false);
+  const [hoveredPoint, setHoveredPoint] = useState<number | null>(null);
   
   const timeRanges = [
     { days: 7, label: "7 Days" },
@@ -602,8 +635,6 @@ const GraphCarousel = () => {
   };
   
   const graph = graphData[currentGraph];
-  const lineColor = getRiskColor(graph.riskZone);
-  const glowColor = getRiskColor(graph.riskZone, true);
   
   // Generate data points based on selected time range
   const getDataForRange = (days: number) => {
@@ -631,6 +662,18 @@ const GraphCarousel = () => {
   };
   
   const points = generatePath(currentData);
+  
+  // Generate gradient stops based on risk zones
+  const generateGradient = () => {
+    return currentData.map((value, index) => {
+      const zone = getRiskZoneForValue(value, graph.thresholds);
+      const color = zone === "optimal" ? "#22c55e" : zone === "caution" ? "#fb923c" : "#ef4444";
+      const offset = (index / (currentData.length - 1)) * 100;
+      return { offset: `${offset}%`, color };
+    });
+  };
+  
+  const gradientStops = generateGradient();
   
   return (
     <div className="bg-glass backdrop-blur-xl border border-glass-border rounded-2xl p-6 shadow-glass hover:bg-glass-highlight hover:scale-105 hover:-translate-y-1 transition-all duration-300 ease-out animate-fade-in transform-gpu">
@@ -705,46 +748,68 @@ const GraphCarousel = () => {
             isTransitioning ? "opacity-0 translate-x-2" : "opacity-100 translate-x-0"
           )}
           preserveAspectRatio="xMidYMid meet"
-          style={{ filter: `drop-shadow(0 0 8px ${glowColor})` }}
         >
           {/* Grid lines */}
           <defs>
             <pattern id={`grid-training-${currentGraph}`} width="40" height="40" patternUnits="userSpaceOnUse">
               <path d="M 40 0 L 0 0 0 40" fill="none" stroke="currentColor" strokeWidth="0.5" opacity="0.1"/>
             </pattern>
+            {/* Dynamic gradient based on risk zones */}
+            <linearGradient id={`line-gradient-${currentGraph}`} x1="0%" y1="0%" x2="100%" y2="0%">
+              {gradientStops.map((stop, idx) => (
+                <stop key={idx} offset={stop.offset} stopColor={stop.color} className="transition-all duration-500" />
+              ))}
+            </linearGradient>
           </defs>
           <rect width="100%" height="100%" fill={`url(#grid-training-${currentGraph})`} />
           
-          {/* Trend line */}
+          {/* Trend line with dynamic gradient */}
           <polyline
             fill="none"
-            stroke={lineColor}
+            stroke={`url(#line-gradient-${currentGraph})`}
             strokeWidth="2.5"
             strokeLinecap="round"
             strokeLinejoin="round"
             points={points}
             className="transition-all duration-500 ease-out"
             style={{
-              filter: `drop-shadow(0 0 4px ${glowColor})`,
+              filter: `drop-shadow(0 0 4px rgba(255, 255, 255, 0.3))`,
             }}
           />
           
-          {/* Data points */}
+          {/* Data points with tooltips */}
           {currentData.map((value, index) => {
             const x = padding + (index * (viewBoxWidth - 2 * padding)) / Math.max(currentData.length - 1, 1);
             const y = viewBoxHeight - padding - ((value - minValue) / range) * (viewBoxHeight - 2 * padding);
+            const zone = getRiskZoneForValue(value, graph.thresholds);
+            const pointColor = zone === "optimal" ? "#22c55e" : zone === "caution" ? "#fb923c" : "#ef4444";
+            const interpretation = graph.interpretation[zone as keyof typeof graph.interpretation];
+            
             return (
-              <circle
-                key={index}
-                cx={x}
-                cy={y}
-                r="3"
-                fill={lineColor}
-                className="transition-all duration-500 ease-out"
-                style={{
-                  filter: `drop-shadow(0 0 2px ${glowColor})`,
-                }}
-              />
+              <g key={index}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <circle
+                      cx={x}
+                      cy={y}
+                      r={hoveredPoint === index ? "5" : "3"}
+                      fill={pointColor}
+                      className="transition-all duration-300 ease-out cursor-pointer"
+                      style={{
+                        filter: `drop-shadow(0 0 ${hoveredPoint === index ? '6px' : '2px'} ${pointColor})`,
+                      }}
+                      onMouseEnter={() => setHoveredPoint(index)}
+                      onMouseLeave={() => setHoveredPoint(null)}
+                    />
+                  </TooltipTrigger>
+                  <TooltipContent className="max-w-xs bg-glass backdrop-blur-xl border border-glass-border shadow-glass">
+                    <div className="space-y-1">
+                      <p className="font-semibold text-sm">{value.toFixed(2)}</p>
+                      <p className="text-xs text-muted-foreground">{interpretation}</p>
+                    </div>
+                  </TooltipContent>
+                </Tooltip>
+              </g>
             );
           })}
         </svg>

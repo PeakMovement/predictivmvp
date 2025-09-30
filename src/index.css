@@ -136,13 +136,13 @@ All colors MUST be HSL.
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
+    --border: 0 0% 82%;
+    --input: 0 0% 82%;
     --ring: 263 70% 50%;
 
     /* Light mode glassmorphism */
-    --glass-bg: 255 255 255 / 0.7;
-    --glass-border: 240 5% 64.9% / 0.3;
+    --glass-bg: 0 0% 100% / 0.7;
+    --glass-border: 0 0% 82%;
     --glass-highlight: 240 5% 96% / 0.5;
     
     /* Light mode glow effects */

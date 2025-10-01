@@ -57,13 +57,23 @@ const recommendations = [
   "Focus on sleep quality to improve adaptation"
 ];
 
-const dailyNudges = [
-  "Yesterday's load was high, schedule a mobility session today.",
-  "You've had 3 intense days in a row. Consider a recovery day tomorrow.",
-  "Your sleep quality was below target. Prioritize 8+ hours tonight.",
-  "Great consistency this week! Keep your intensity moderate today.",
-  "Training monotony is increasing. Add variety to your next session.",
-];
+const generateDailyNudge = () => {
+  const acwr = parseFloat(metrics.find(m => m.name === "Acute:Chronic Workload Ratio")?.value || "0");
+  const monotony = parseFloat(metrics.find(m => m.name === "Training Monotony")?.value || "0");
+  const strainStatus = metrics.find(m => m.name === "Training Strain")?.status;
+
+  // Priority-based logic
+  if (acwr > 1.5) {
+    return "Load is high. Add a recovery day.";
+  }
+  if (monotony > 2.0) {
+    return "Your training is repetitive. Add variety this week.";
+  }
+  if (strainStatus === "red") {
+    return "Strain is elevated. Consider reducing intensity tomorrow.";
+  }
+  return "Great balance this week. Keep it up.";
+};
 
 const focusAreas = [
   { area: "Recovery Quality", score: "6.8/10", status: "yellow" },
@@ -152,13 +162,13 @@ const RecommendationCard = () => (
 );
 
 const DailyNudgeCard = () => {
-  const [currentNudgeIndex, setCurrentNudgeIndex] = useState(0);
+  const [nudgeMessage, setNudgeMessage] = useState(generateDailyNudge());
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   const refreshNudge = () => {
     setIsRefreshing(true);
     setTimeout(() => {
-      setCurrentNudgeIndex((prev) => (prev + 1) % dailyNudges.length);
+      setNudgeMessage(generateDailyNudge());
       setIsRefreshing(false);
     }, 300);
   };
@@ -184,7 +194,7 @@ const DailyNudgeCard = () => {
           isRefreshing ? "opacity-0 translate-y-2" : "opacity-100 translate-y-0"
         )}
       >
-        {dailyNudges[currentNudgeIndex]}
+        {nudgeMessage}
       </p>
     </div>
   );

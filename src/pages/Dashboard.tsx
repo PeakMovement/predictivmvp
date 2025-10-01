@@ -1,4 +1,4 @@
-import { TrendingUp, Target, AlertTriangle, FileText, Play, ChevronLeft, ChevronRight, RefreshCw, Download, AlertCircle, CheckCircle, X } from "lucide-react";
+import { TrendingUp, Target, AlertTriangle, FileText, Play, ChevronLeft, ChevronRight, RefreshCw, Download, AlertCircle, CheckCircle, X, Heart, Activity, Zap, Dumbbell } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useState, useEffect } from "react";
@@ -78,7 +78,7 @@ const generateTodaysPlan = () => {
       title: "Recovery Day Recommended",
       message: "Your HRV dropped significantly overnight. Swap today's training for mobility work or light stretching.",
       actionText: "Swap training for mobility work today",
-      icon: "🧘",
+      icon: Heart,
       category: "Recovery"
     });
   }
@@ -90,7 +90,7 @@ const generateTodaysPlan = () => {
       title: "Reduce Training Load",
       message: "Your strain is elevated. Consider a lighter session today—focus on technique over intensity.",
       actionText: "Reduce training intensity today",
-      icon: "⚖️",
+      icon: Activity,
       category: "Training"
     });
   }
@@ -104,7 +104,7 @@ const generateTodaysPlan = () => {
       title: "Performance Day",
       message: "All systems are optimal! This is a great day to add interval training or push intensity.",
       actionText: "Add interval training session today",
-      icon: "🚀",
+      icon: Zap,
       category: "Training"
     });
   }
@@ -116,7 +116,7 @@ const generateTodaysPlan = () => {
       title: "Moderate Training",
       message: "Your recovery is moderate. Stick to your planned session but listen to your body.",
       actionText: "Continue with planned training",
-      icon: "💪",
+      icon: Dumbbell,
       category: "Training"
     });
   }
@@ -128,7 +128,7 @@ const generateTodaysPlan = () => {
       title: "Balanced Day",
       message: "Your metrics look balanced. Continue with your planned training session.",
       actionText: "Continue with planned training",
-      icon: "✅",
+      icon: CheckCircle,
       category: "Training"
     });
   }
@@ -583,12 +583,21 @@ const TodaysPlanCard = () => {
   const [todaysRecommendations, setTodaysRecommendations] = useState(generateTodaysPlan());
   const [acceptedRecommendations, setAcceptedRecommendations] = useState<number[]>([]);
 
-  const getPriorityColor = (priority: string) => {
+  const getPriorityAccentColor = (priority: string) => {
     switch (priority) {
-      case "high": return "bg-red-500/10 border-red-500/30";
-      case "medium": return "bg-yellow-500/10 border-yellow-500/30";
-      case "low": return "bg-green-500/10 border-green-500/30";
-      default: return "bg-primary/10 border-primary/30";
+      case "high": return "bg-red-500";
+      case "medium": return "bg-amber-500";
+      case "low": return "bg-green-500";
+      default: return "bg-primary";
+    }
+  };
+
+  const getIconColor = (priority: string) => {
+    switch (priority) {
+      case "high": return "text-red-500";
+      case "medium": return "text-amber-500";
+      case "low": return "text-green-500";
+      default: return "text-primary";
     }
   };
 
@@ -613,41 +622,52 @@ const TodaysPlanCard = () => {
       <div className="space-y-4">
         {todaysRecommendations.map((rec, index) => {
           const isAccepted = acceptedRecommendations.includes(index);
+          const IconComponent = rec.icon;
           
           return (
             <div 
               key={index}
-              className={cn(
-                "p-4 rounded-xl border transition-all duration-200",
-                isAccepted ? "bg-green-500/10 border-green-500/30" : getPriorityColor(rec.priority)
-              )}
+              className="relative bg-card border border-border rounded-xl overflow-hidden transition-all duration-200 hover:shadow-md"
             >
-              <div className="flex items-start gap-3">
-                <span className="text-2xl flex-shrink-0">{isAccepted ? "✅" : rec.icon}</span>
-                <div className="flex-1">
-                  <h4 className="font-semibold text-foreground mb-1">{rec.title}</h4>
-                  <p className="text-sm text-muted-foreground leading-relaxed mb-3">{rec.message}</p>
-                  
-                  {!isAccepted ? (
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => handleAcceptRecommendation(index, rec.actionText, rec.category)}
-                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-green-500/20 hover:bg-green-500/30 text-green-400 text-xs font-medium transition-all duration-200 hover:scale-105 active:scale-95"
-                      >
-                        <CheckCircle size={14} />
-                        Accept Adjustment
-                      </button>
-                      <button
-                        onClick={() => handleDismissRecommendation(index)}
-                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-500/20 hover:bg-red-500/30 text-red-400 text-xs font-medium transition-all duration-200 hover:scale-105 active:scale-95"
-                      >
-                        <X size={14} />
-                        Dismiss
-                      </button>
-                    </div>
-                  ) : (
-                    <p className="text-xs text-green-400 font-medium">Added to Your Plan</p>
-                  )}
+              {/* Left accent bar */}
+              <div className={cn(
+                "absolute left-0 top-0 bottom-0 w-1",
+                isAccepted ? "bg-green-500" : getPriorityAccentColor(rec.priority)
+              )} />
+              
+              <div className="p-4 pl-5">
+                <div className="flex items-start gap-3">
+                  <div className={cn(
+                    "mt-0.5 flex-shrink-0",
+                    isAccepted ? "text-green-500" : getIconColor(rec.priority)
+                  )}>
+                    {isAccepted ? <CheckCircle size={20} /> : <IconComponent size={20} />}
+                  </div>
+                  <div className="flex-1">
+                    <h4 className="font-bold text-foreground mb-1">{rec.title}</h4>
+                    <p className="text-sm text-muted-foreground/80 leading-relaxed mb-3">{rec.message}</p>
+                    
+                    {!isAccepted ? (
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => handleAcceptRecommendation(index, rec.actionText, rec.category)}
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-green-500/20 hover:bg-green-500/30 text-green-400 text-xs font-medium transition-all duration-200 hover:scale-105 active:scale-95"
+                        >
+                          <CheckCircle size={14} />
+                          Accept Adjustment
+                        </button>
+                        <button
+                          onClick={() => handleDismissRecommendation(index)}
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-500/20 hover:bg-red-500/30 text-red-400 text-xs font-medium transition-all duration-200 hover:scale-105 active:scale-95"
+                        >
+                          <X size={14} />
+                          Dismiss
+                        </button>
+                      </div>
+                    ) : (
+                      <p className="text-xs text-green-400 font-medium">Added to Your Plan</p>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
@@ -656,8 +676,8 @@ const TodaysPlanCard = () => {
       </div>
       
       <div className="mt-4 pt-4 border-t border-glass-border">
-        <p className="text-xs text-muted-foreground text-center">
-          Based on your HRV ({healthMetrics.hrv.value}ms), Strain ({healthMetrics.strain.value}), and Sleep ({healthMetrics.sleep.value}h)
+        <p className="text-xs text-muted-foreground/60 text-center italic">
+          Based on HRV ({healthMetrics.hrv.value}ms), Strain ({healthMetrics.strain.value}), Sleep ({healthMetrics.sleep.value}h)
         </p>
       </div>
     </div>

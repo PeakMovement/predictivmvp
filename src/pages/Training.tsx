@@ -179,6 +179,10 @@ const AccountabilityChallenges = () => {
   const [selectedTime, setSelectedTime] = useState<string>("12:00");
   const [suggestedSlots, setSuggestedSlots] = useState<Array<{ date: Date; time: string; label: string }>>([]);
   const [selectedSlotIndex, setSelectedSlotIndex] = useState<number | null>(null);
+  const [scheduledChallenges, setScheduledChallenges] = useState<Array<{ id: number; text: string; startTime: Date; endTime: Date }>>([]);
+  const [conflictDialogOpen, setConflictDialogOpen] = useState(false);
+  const [conflictingBooking, setConflictingBooking] = useState<{ id: number; text: string; startTime: Date; endTime: Date } | null>(null);
+  const [pendingSchedule, setPendingSchedule] = useState<{ startDate: Date; endDate: Date } | null>(null);
   const { toast } = useToast();
 
   const generateSuggestedSlots = (category: string) => {
@@ -242,59 +246,105 @@ const AccountabilityChallenges = () => {
     setSelectedSlotIndex(index);
   };
 
+  const checkForConflicts = (startDate: Date, endDate: Date) => {
+    return scheduledChallenges.find(booking => {
+      // Check if the new time overlaps with existing booking
+      return (startDate < booking.endTime && endDate > booking.startTime);
+    });
+  };
+
+  const proceedWithScheduling = (startDate: Date, endDate: Date) => {
+    if (!selectedChallenge) return;
+    
+    // Format dates for Google Calendar
+    const formatGoogleDate = (date: Date) => {
+      return date.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
+    };
+    
+    // Create Google Calendar URL
+    const eventTitle = encodeURIComponent(selectedChallenge.text);
+    const eventDetails = encodeURIComponent("Event from Predictiv");
+    const dates = `${formatGoogleDate(startDate)}/${formatGoogleDate(endDate)}`;
+    const googleCalendarUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${eventTitle}&dates=${dates}&details=${eventDetails}`;
+    
+    // Add to scheduled challenges
+    setScheduledChallenges(prev => [...prev, {
+      id: selectedChallenge.id,
+      text: selectedChallenge.text,
+      startTime: startDate,
+      endTime: endDate
+    }]);
+    
+    // Set to accepting state immediately
+    setProcessingStates(prev => ({ ...prev, [selectedChallenge.id]: 'accepting' }));
+    
+    // Open Google Calendar
+    window.open(googleCalendarUrl, '_blank');
+    
+    // Show "Added" for 2 seconds
+    setTimeout(() => {
+      setProcessingStates(prev => ({ ...prev, [selectedChallenge.id]: 'added' }));
+      
+      setTimeout(() => {
+        setAcceptedSuggestions(prev => new Set([...prev, selectedChallenge.id]));
+        setRemovedSuggestions(prev => new Set([...prev, selectedChallenge.id]));
+        setProcessingStates(prev => {
+          const newState = { ...prev };
+          delete newState[selectedChallenge.id];
+          return newState;
+        });
+        
+        toast({
+          title: "Event added to Google Calendar (demo)",
+          description: `Scheduled for ${format(startDate, "PPP")} at ${format(startDate, "p")}`,
+          duration: 3000,
+        });
+      }, 2000);
+    }, 100);
+    
+    setIsScheduleModalOpen(false);
+    setSelectedChallenge(null);
+    setPendingSchedule(null);
+  };
+
   const handleScheduleConfirm = () => {
     if (selectedChallenge) {
-      // Parse selected time and create start date
+      // Parse selected time and create dates
       const [hours, minutes] = selectedTime.split(':').map(Number);
       const startDate = new Date(selectedDate);
       startDate.setHours(hours, minutes, 0, 0);
       
-      // Create end date (1 hour duration)
       const endDate = new Date(startDate);
       endDate.setHours(startDate.getHours() + 1);
       
-      // Format dates for Google Calendar (ISO format without dashes and colons)
-      const formatGoogleDate = (date: Date) => {
-        return date.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
-      };
+      // Check for conflicts
+      const conflict = checkForConflicts(startDate, endDate);
       
-      // Create Google Calendar URL with prefilled event
-      const eventTitle = encodeURIComponent(selectedChallenge.text);
-      const eventDetails = encodeURIComponent("Event from Predictiv");
-      const dates = `${formatGoogleDate(startDate)}/${formatGoogleDate(endDate)}`;
-      const googleCalendarUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${eventTitle}&dates=${dates}&details=${eventDetails}`;
-      
-      // Set to accepting state immediately
-      setProcessingStates(prev => ({ ...prev, [selectedChallenge.id]: 'accepting' }));
-      
-      // Open Google Calendar in new tab
-      window.open(googleCalendarUrl, '_blank');
-      
-      // Show "Added" for 2 seconds
-      setTimeout(() => {
-        setProcessingStates(prev => ({ ...prev, [selectedChallenge.id]: 'added' }));
-        
-        // After 2 seconds, fade out and add to accepted
-        setTimeout(() => {
-          setAcceptedSuggestions(prev => new Set([...prev, selectedChallenge.id]));
-          setRemovedSuggestions(prev => new Set([...prev, selectedChallenge.id]));
-          setProcessingStates(prev => {
-            const newState = { ...prev };
-            delete newState[selectedChallenge.id];
-            return newState;
-          });
-          
-          toast({
-            title: "Event added to Google Calendar (demo)",
-            description: `Scheduled for ${format(selectedDate, "PPP")} at ${selectedTime}`,
-            duration: 3000,
-          });
-        }, 2000);
-      }, 100);
-      
-      setIsScheduleModalOpen(false);
-      setSelectedChallenge(null);
+      if (conflict) {
+        // Store pending schedule and show conflict dialog
+        setPendingSchedule({ startDate, endDate });
+        setConflictingBooking(conflict);
+        setConflictDialogOpen(true);
+      } else {
+        // No conflict, proceed with scheduling
+        proceedWithScheduling(startDate, endDate);
+      }
     }
+  };
+
+  const handleKeepBoth = () => {
+    if (pendingSchedule) {
+      proceedWithScheduling(pendingSchedule.startDate, pendingSchedule.endDate);
+    }
+    setConflictDialogOpen(false);
+    setConflictingBooking(null);
+  };
+
+  const handleReschedule = () => {
+    setConflictDialogOpen(false);
+    setConflictingBooking(null);
+    setPendingSchedule(null);
+    // Keep the scheduling modal open for user to pick a different time
   };
 
   const handleCancel = (suggestionId: number) => {
@@ -625,6 +675,46 @@ const AccountabilityChallenges = () => {
                 className="flex-1 p-3 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30 hover:scale-105 active:scale-95 transition-all duration-200 font-medium"
               >
                 Cancel
+              </button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Conflict Resolution Dialog */}
+      <Dialog open={conflictDialogOpen} onOpenChange={setConflictDialogOpen}>
+        <DialogContent className="sm:max-w-md bg-glass backdrop-blur-xl border border-glass-border shadow-glass">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-semibold text-foreground flex items-center gap-2">
+              <Calendar className="text-yellow-500" size={20} />
+              Schedule Conflict
+            </DialogTitle>
+            <DialogDescription className="text-muted-foreground">
+              This overlaps with another booking. Do you want to reschedule?
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="mt-4 space-y-3">
+            <div className="p-3 bg-yellow-500/10 border border-yellow-500/30 rounded-lg">
+              <p className="text-sm font-medium text-foreground mb-1">Conflicting booking:</p>
+              <p className="text-sm text-muted-foreground">{conflictingBooking?.text}</p>
+              <p className="text-xs text-muted-foreground mt-1">
+                {conflictingBooking && format(conflictingBooking.startTime, "PPP 'at' p")}
+              </p>
+            </div>
+            
+            <div className="flex items-center gap-3 pt-2">
+              <button
+                onClick={handleReschedule}
+                className="flex-1 p-3 rounded-lg bg-primary/20 text-primary hover:bg-primary/30 hover:scale-105 active:scale-95 transition-all duration-200 font-medium"
+              >
+                Reschedule
+              </button>
+              <button
+                onClick={handleKeepBoth}
+                className="flex-1 p-3 rounded-lg bg-glass/30 border border-glass-border hover:bg-glass-highlight hover:scale-105 active:scale-95 transition-all duration-200 font-medium"
+              >
+                Keep Both
               </button>
             </div>
           </div>

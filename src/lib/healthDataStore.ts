@@ -1,4 +1,4 @@
-// Health data store with session-based uploaded data and demo fallback
+// Health data store with session-based uploaded data, multi-client profiles, and demo fallback
 
 export interface HealthDataRow {
   Date: string;
@@ -13,6 +13,64 @@ export interface HealthDataRow {
   TrainingLoad: string;
   EWMA: string;
 }
+
+export interface ClientProfile {
+  id: string;
+  name: string;
+  data: HealthDataRow[];
+}
+
+// Active profile management
+const ACTIVE_PROFILE_KEY = "activeClientProfile";
+const PROFILES_KEY = "clientProfiles";
+
+export const getActiveProfileId = (): string => {
+  return sessionStorage.getItem(ACTIVE_PROFILE_KEY) || "demo";
+};
+
+export const setActiveProfileId = (profileId: string): void => {
+  sessionStorage.setItem(ACTIVE_PROFILE_KEY, profileId);
+};
+
+export const getAllProfiles = (): ClientProfile[] => {
+  try {
+    const profiles = sessionStorage.getItem(PROFILES_KEY);
+    if (profiles) {
+      return JSON.parse(profiles);
+    }
+  } catch (error) {
+    console.error("Error reading client profiles:", error);
+  }
+  return [];
+};
+
+export const saveProfile = (profile: ClientProfile): void => {
+  const profiles = getAllProfiles();
+  const existingIndex = profiles.findIndex(p => p.id === profile.id);
+  
+  if (existingIndex >= 0) {
+    profiles[existingIndex] = profile;
+  } else {
+    profiles.push(profile);
+  }
+  
+  sessionStorage.setItem(PROFILES_KEY, JSON.stringify(profiles));
+  setActiveProfileId(profile.id);
+};
+
+export const deleteProfile = (profileId: string): void => {
+  const profiles = getAllProfiles().filter(p => p.id !== profileId);
+  sessionStorage.setItem(PROFILES_KEY, JSON.stringify(profiles));
+  
+  if (getActiveProfileId() === profileId) {
+    setActiveProfileId("demo");
+  }
+};
+
+export const resetToDemo = (): void => {
+  sessionStorage.removeItem(PROFILES_KEY);
+  sessionStorage.removeItem(ACTIVE_PROFILE_KEY);
+};
 
 // Demo data fallback
 const demoHealthData: HealthDataRow[] = [
@@ -58,29 +116,25 @@ const demoHealthData: HealthDataRow[] = [
 ];
 
 export const getHealthData = (): HealthDataRow[] => {
-  try {
-    const uploadedData = sessionStorage.getItem("uploadedHealthData");
-    if (uploadedData) {
-      const parsed = JSON.parse(uploadedData);
-      return Array.isArray(parsed) && parsed.length > 0 ? parsed : demoHealthData;
-    }
-  } catch (error) {
-    console.error("Error reading uploaded health data:", error);
+  const activeProfileId = getActiveProfileId();
+  
+  if (activeProfileId === "demo") {
+    return demoHealthData;
   }
+  
+  const profiles = getAllProfiles();
+  const activeProfile = profiles.find(p => p.id === activeProfileId);
+  
+  if (activeProfile && activeProfile.data.length > 0) {
+    return activeProfile.data;
+  }
+  
   return demoHealthData;
 };
 
-export const saveHealthData = (data: HealthDataRow[]): void => {
-  sessionStorage.setItem("uploadedHealthData", JSON.stringify(data));
-};
-
-export const clearHealthData = (): void => {
-  sessionStorage.removeItem("uploadedHealthData");
-};
-
 export const hasUploadedData = (): boolean => {
-  const data = sessionStorage.getItem("uploadedHealthData");
-  return data !== null && data !== undefined;
+  const activeProfileId = getActiveProfileId();
+  return activeProfileId !== "demo" && getAllProfiles().some(p => p.id === activeProfileId);
 };
 
 // Helper functions to get specific metrics from the latest data
@@ -103,7 +157,21 @@ export const getLatestMetrics = () => {
 };
 
 // Get historical trend data for charts
-export const getTrendData = (metric: keyof HealthDataRow) => {
+export const getTrendData = (metric: keyof HealthDataRow): number[] => {
   const data = getHealthData();
   return data.map(row => parseFloat(row[metric] || "0"));
+};
+
+// Get last N days of data
+export const getLastNDays = (days: number): HealthDataRow[] => {
+  const data = getHealthData();
+  return data.slice(-days);
+};
+
+// Calculate weekly average for a metric
+export const getWeeklyAverage = (metric: keyof HealthDataRow): number => {
+  const lastWeek = getLastNDays(7);
+  const values = lastWeek.map(row => parseFloat(row[metric] || "0"));
+  const sum = values.reduce((acc, val) => acc + val, 0);
+  return values.length > 0 ? sum / values.length : 0;
 };

@@ -5,7 +5,7 @@ import { useState, useEffect } from "react";
 import { toast } from "@/hooks/use-toast";
 import jsPDF from "jspdf";
 import { format } from "date-fns";
-import { getLatestMetrics, hasUploadedData } from "@/lib/healthDataStore";
+import { getLatestMetrics, hasUploadedData, getTrendData, getLastNDays, getWeeklyAverage } from "@/lib/healthDataStore";
 
 // Get dynamic metrics from uploaded data or demo fallback
 const getMetrics = () => {
@@ -150,36 +150,45 @@ const generateTodaysPlan = () => {
   return recommendations.slice(0, 2);
 };
 
-const graphData = [
-  {
-    title: "EWMA Trend Analysis",
-    subtitle: "Exponentially weighted moving average over 28 days",
-    currentValue: "+5.2%",
-    riskZone: "optimal", // optimal, caution, high-risk
-    dataPoints: [65, 68, 72, 70, 75, 78, 82, 80, 85, 88, 90, 87, 89, 92, 95]
-  },
-  {
-    title: "Acute:Chronic Workload",
-    subtitle: "Training load ratio over time",
-    currentValue: "1.2",
-    riskZone: "optimal",
-    dataPoints: [1.3, 1.2, 1.1, 1.0, 1.1, 1.2, 1.3, 1.2, 1.1, 1.0, 1.2, 1.3, 1.2, 1.1, 1.2]
-  },
-  {
-    title: "Weekly Training Load",
-    subtitle: "Total training stress by week",
-    currentValue: "420 TSS",
-    riskZone: "caution",
-    dataPoints: [380, 390, 400, 420, 440, 430, 420, 410, 430, 450, 440, 420, 410, 420, 420]
-  },
-  {
-    title: "Training Strain Trend",
-    subtitle: "Daily strain accumulation",
-    currentValue: "156",
-    riskZone: "high-risk",
-    dataPoints: [120, 130, 140, 145, 150, 155, 160, 158, 162, 165, 160, 158, 156, 154, 156]
-  }
-];
+// Generate graph data from uploaded CSV
+const getGraphData = () => {
+  const latest = getLatestMetrics();
+  const ewmaTrend = getTrendData("EWMA");
+  const acwrTrend = getTrendData("ACWR");
+  const loadTrend = getTrendData("TrainingLoad");
+  const strainTrend = getTrendData("Strain");
+  
+  return [
+    {
+      title: "EWMA Trend Analysis",
+      subtitle: "Exponentially weighted moving average over time",
+      currentValue: `+${latest.ewma.toFixed(1)}%`,
+      riskZone: latest.ewma > 7 ? "high-risk" : latest.ewma > 5 ? "caution" : "optimal",
+      dataPoints: ewmaTrend.slice(-15)
+    },
+    {
+      title: "Acute:Chronic Workload",
+      subtitle: "Training load ratio over time",
+      currentValue: latest.acwr.toFixed(1),
+      riskZone: latest.acwr > 1.5 ? "high-risk" : latest.acwr > 1.3 ? "caution" : "optimal",
+      dataPoints: acwrTrend.slice(-15)
+    },
+    {
+      title: "Weekly Training Load",
+      subtitle: "Total training stress",
+      currentValue: `${latest.trainingLoad} TSS`,
+      riskZone: latest.trainingLoad > 450 ? "high-risk" : latest.trainingLoad > 400 ? "caution" : "optimal",
+      dataPoints: loadTrend.slice(-15)
+    },
+    {
+      title: "Training Strain Trend",
+      subtitle: "Daily strain accumulation",
+      currentValue: latest.strain.toString(),
+      riskZone: latest.strain > 150 ? "high-risk" : latest.strain > 130 ? "caution" : "optimal",
+      dataPoints: strainTrend.slice(-15)
+    }
+  ];
+};
 
 const getRiskColor = (zone: string, isGlow = false) => {
   const colors = {
@@ -281,6 +290,7 @@ const generateWeeklyReportPDF = () => {
   const doc = new jsPDF();
   const pageWidth = doc.internal.pageSize.getWidth();
   let yPosition = 20;
+  const graphData = getGraphData();
 
   // Header
   doc.setFontSize(24);
@@ -764,6 +774,7 @@ const GraphCarousel = () => {
   const [currentGraph, setCurrentGraph] = useState(0);
   const [timeRange, setTimeRange] = useState(30);
   const [isTransitioning, setIsTransitioning] = useState(false);
+  const graphData = getGraphData();
   
   const timeRanges = [
     { days: 7, label: "7 Days" },
@@ -782,7 +793,7 @@ const GraphCarousel = () => {
     }, 5000);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [graphData.length]);
   
   const nextGraph = () => {
     setIsTransitioning(true);
@@ -981,6 +992,18 @@ const GraphCarousel = () => {
 
 export const Dashboard = () => {
   const metrics = getMetrics();
+  const graphData = getGraphData();
+  const [currentGraphIndex, setCurrentGraphIndex] = useState(0);
+
+  const nextGraph = () => {
+    setCurrentGraphIndex((prev) => (prev + 1) % graphData.length);
+  };
+
+  const prevGraph = () => {
+    setCurrentGraphIndex((prev) => (prev - 1 + graphData.length) % graphData.length);
+  };
+
+  const currentGraph = graphData[currentGraphIndex];
   
   return (
     <TooltipProvider>

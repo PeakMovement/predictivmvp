@@ -1,24 +1,17 @@
 import { useState, useEffect } from "react";
-import { Upload, FileText, CheckCircle, AlertCircle, Database } from "lucide-react";
+import { Upload, FileText, CheckCircle, AlertCircle, Database, Trash2, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
-import { hasUploadedData } from "@/lib/healthDataStore";
-
-interface HealthData {
-  Date: string;
-  RestingHR: string;
-  MaxHR: string;
-  HRV: string;
-  SleepHours: string;
-  SleepScore: string;
-  Strain: string;
-  ACWR: string;
-  Monotony: string;
-  TrainingLoad: string;
-  EWMA: string;
-}
+import { hasUploadedData, getAllProfiles, saveProfile, getActiveProfileId, setActiveProfileId, resetToDemo, ClientProfile, HealthDataRow } from "@/lib/healthDataStore";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const requiredColumns = [
   "Date",
@@ -35,17 +28,19 @@ const requiredColumns = [
 ];
 
 export const DataUpload = () => {
-  const [csvData, setCsvData] = useState<HealthData[]>([]);
+  const [csvData, setCsvData] = useState<HealthDataRow[]>([]);
   const [fileName, setFileName] = useState<string>("");
   const [isValidated, setIsValidated] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
-  const [hasActiveData, setHasActiveData] = useState(hasUploadedData());
+  const [activeProfile, setActiveProfile] = useState(getActiveProfileId());
+  const [profiles, setProfiles] = useState<ClientProfile[]>(getAllProfiles());
+  const [newProfileName, setNewProfileName] = useState("");
 
   useEffect(() => {
-    setHasActiveData(hasUploadedData());
-  }, [csvData]);
+    setProfiles(getAllProfiles());
+  }, [activeProfile, csvData]);
 
-  const parseCSV = (text: string): HealthData[] => {
+  const parseCSV = (text: string): HealthDataRow[] => {
     const lines = text.trim().split('\n');
     const headers = lines[0].split(',').map(h => h.trim());
     
@@ -61,7 +56,7 @@ export const DataUpload = () => {
     }
 
     // Parse data rows
-    const data: HealthData[] = [];
+    const data: HealthDataRow[] = [];
     for (let i = 1; i < lines.length; i++) {
       if (lines[i].trim()) {
         const values = lines[i].split(',').map(v => v.trim());
@@ -69,7 +64,7 @@ export const DataUpload = () => {
         headers.forEach((header, index) => {
           row[header] = values[index] || "";
         });
-        data.push(row as HealthData);
+        data.push(row as HealthDataRow);
       }
     }
     
@@ -142,27 +137,80 @@ export const DataUpload = () => {
   };
 
   const handleApplyData = () => {
-    sessionStorage.setItem("uploadedHealthData", JSON.stringify(csvData));
+    if (!newProfileName.trim()) {
+      toast({
+        title: "Profile name required",
+        description: "Please enter a client profile name",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    const profile: ClientProfile = {
+      id: `profile-${Date.now()}`,
+      name: newProfileName.trim(),
+      data: csvData
+    };
+
+    saveProfile(profile);
+    setActiveProfile(profile.id);
     
     toast({
       title: "Data applied successfully",
-      description: `${csvData.length} rows of health data are now active for this session.`,
+      description: `${csvData.length} rows for "${newProfileName}" are now active.`,
     });
 
     // Reset state
     setCsvData([]);
     setFileName("");
     setIsValidated(false);
+    setNewProfileName("");
+    setProfiles(getAllProfiles());
   };
 
   const handleClearData = () => {
     setCsvData([]);
     setFileName("");
     setIsValidated(false);
+    setNewProfileName("");
     
     toast({
       title: "Upload cleared",
       description: "You can upload a new CSV file.",
+    });
+  };
+
+  const handleProfileChange = (profileId: string) => {
+    setActiveProfileId(profileId);
+    setActiveProfile(profileId);
+    
+    if (profileId === "demo") {
+      toast({
+        title: "Switched to Demo Data",
+        description: "All dashboards now show demo values.",
+      });
+    } else {
+      const profile = getAllProfiles().find(p => p.id === profileId);
+      toast({
+        title: "Profile Switched",
+        description: `Now viewing data for "${profile?.name}"`,
+      });
+    }
+    
+    setProfiles(getAllProfiles());
+  };
+
+  const handleResetToDemo = () => {
+    resetToDemo();
+    setActiveProfile("demo");
+    setProfiles([]);
+    setCsvData([]);
+    setFileName("");
+    setIsValidated(false);
+    
+    toast({
+      title: "Reset Complete",
+      description: "All data cleared. Using demo values.",
     });
   };
 
@@ -179,19 +227,57 @@ export const DataUpload = () => {
             Upload your health and training data via CSV to replace demo values
           </p>
           
-          {/* Session Status Indicator */}
-          {hasActiveData ? (
-            <div className="inline-flex items-center gap-2 px-4 py-2 bg-green-500/20 border border-green-500/30 rounded-full text-sm text-green-400">
-              <CheckCircle size={16} />
-              <span>Active Session Data Loaded</span>
-            </div>
-          ) : (
-            <div className="inline-flex items-center gap-2 px-4 py-2 bg-amber-500/20 border border-amber-500/30 rounded-full text-sm text-amber-400">
-              <AlertCircle size={16} />
-              <span>Using Demo Data</span>
-            </div>
-          )}
+          {/* Session Status and Controls */}
+          <div className="flex items-center justify-center gap-4 flex-wrap">
+            {hasUploadedData() ? (
+              <div className="inline-flex items-center gap-2 px-4 py-2 bg-green-500/20 border border-green-500/30 rounded-full text-sm text-green-400">
+                <CheckCircle size={16} />
+                <span>Active Session Data Loaded</span>
+              </div>
+            ) : (
+              <div className="inline-flex items-center gap-2 px-4 py-2 bg-amber-500/20 border border-amber-500/30 rounded-full text-sm text-amber-400">
+                <AlertCircle size={16} />
+                <span>Using Demo Data</span>
+              </div>
+            )}
+            
+            <Button
+              onClick={handleResetToDemo}
+              variant="outline"
+              size="sm"
+              className="gap-2"
+            >
+              <Trash2 size={16} />
+              Reset to Demo Data
+            </Button>
+          </div>
         </div>
+
+        {/* Client Profile Selector */}
+        <Card className="p-6 bg-glass backdrop-blur-xl border-glass-border shadow-glass">
+          <div className="flex items-center gap-3 mb-4">
+            <Users className="text-primary" size={20} />
+            <h3 className="text-lg font-semibold text-foreground">Select Client Profile</h3>
+          </div>
+          
+          <Select value={activeProfile} onValueChange={handleProfileChange}>
+            <SelectTrigger className="w-full bg-background/50">
+              <SelectValue placeholder="Select a profile" />
+            </SelectTrigger>
+            <SelectContent className="bg-popover border-border z-50">
+              <SelectItem value="demo">Demo Data (Default)</SelectItem>
+              {profiles.map((profile) => (
+                <SelectItem key={profile.id} value={profile.id}>
+                  {profile.name} ({profile.data.length} rows)
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          
+          <p className="text-xs text-muted-foreground mt-2">
+            Switch between different client profiles. Each profile maintains its own data for this session.
+          </p>
+        </Card>
 
         {/* Upload Area */}
         <Card className="p-8 bg-glass backdrop-blur-xl border-glass-border shadow-glass">
@@ -288,7 +374,7 @@ export const DataUpload = () => {
                     <tr key={index} className="border-b border-border/50 hover:bg-glass-highlight transition-colors">
                       {requiredColumns.map((col) => (
                         <td key={col} className="p-3 text-muted-foreground whitespace-nowrap">
-                          {row[col as keyof HealthData]}
+                          {row[col as keyof HealthDataRow]}
                         </td>
                       ))}
                     </tr>
@@ -297,21 +383,37 @@ export const DataUpload = () => {
               </table>
             </div>
 
-            {/* Action Buttons */}
-            <div className="flex items-center gap-4 mt-6 pt-6 border-t border-border">
-              <Button 
-                onClick={handleApplyData}
-                className="flex-1 bg-primary hover:bg-primary/90"
-              >
-                <CheckCircle size={16} className="mr-2" />
-                Apply Data
-              </Button>
-              <Button 
-                onClick={handleClearData}
-                variant="outline"
-              >
-                Clear Upload
-              </Button>
+            {/* Profile Name Input & Action Buttons */}
+            <div className="mt-6 pt-6 border-t border-border space-y-4">
+              <div>
+                <label className="text-sm font-semibold text-foreground mb-2 block">
+                  Client Profile Name
+                </label>
+                <input
+                  type="text"
+                  value={newProfileName}
+                  onChange={(e) => setNewProfileName(e.target.value)}
+                  placeholder="e.g., John Doe, Athlete #123"
+                  className="w-full px-4 py-2 bg-background/50 border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                />
+              </div>
+              
+              <div className="flex items-center gap-4">
+                <Button 
+                  onClick={handleApplyData}
+                  className="flex-1 bg-primary hover:bg-primary/90"
+                  disabled={!newProfileName.trim()}
+                >
+                  <CheckCircle size={16} className="mr-2" />
+                  Apply Data
+                </Button>
+                <Button 
+                  onClick={handleClearData}
+                  variant="outline"
+                >
+                  Clear Upload
+                </Button>
+              </div>
             </div>
           </Card>
         )}

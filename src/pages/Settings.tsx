@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { User, Smartphone, Bell, Palette, Info, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Switch } from "@/components/ui/switch";
@@ -10,6 +10,7 @@ export const Settings = () => {
   const [notifications, setNotifications] = useState(true);
   const [appleHealthConnected, setAppleHealthConnected] = useState(false);
   const [primaryHue, setPrimaryHue] = useState(263);
+  const [isDragging, setIsDragging] = useState(false);
   const { theme, setTheme } = useTheme();
 
   // Load saved primary hue from localStorage
@@ -36,6 +37,43 @@ export const Settings = () => {
     setPrimaryHue(hue);
     updatePrimaryColor(hue);
   };
+
+  // Handle mouse interaction for circular picker
+  const handleCircleInteraction = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const centerX = rect.left + rect.width / 2;
+    const centerY = rect.top + rect.height / 2;
+    const x = e.clientX - centerX;
+    const y = e.clientY - centerY;
+    
+    // Calculate angle in degrees (0-360)
+    let angle = Math.atan2(y, x) * 180 / Math.PI;
+    angle = (angle + 90 + 360) % 360; // Adjust to start from top
+    
+    setPrimaryHue(Math.round(angle));
+    updatePrimaryColor(Math.round(angle));
+  }, []);
+
+  const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
+    setIsDragging(true);
+    handleCircleInteraction(e);
+  };
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (isDragging) {
+      handleCircleInteraction(e);
+    }
+  };
+
+  const handleMouseUp = () => {
+    setIsDragging(false);
+  };
+
+  useEffect(() => {
+    const handleGlobalMouseUp = () => setIsDragging(false);
+    window.addEventListener('mouseup', handleGlobalMouseUp);
+    return () => window.removeEventListener('mouseup', handleGlobalMouseUp);
+  }, []);
 
   const handleAppleHealthConnect = () => {
     setAppleHealthConnected(!appleHealthConnected);
@@ -200,41 +238,69 @@ export const Settings = () => {
               {/* Color Picker */}
               <div>
                 <Label className="text-sm text-muted-foreground mb-3 block">Primary Color</Label>
-                <div className="space-y-4">
-                  <div className="relative">
+                <div className="flex flex-col items-center space-y-4">
+                  {/* Circular Color Spectrum Picker */}
+                  <div 
+                    className="relative w-48 h-48 cursor-pointer select-none"
+                    onMouseDown={handleMouseDown}
+                    onMouseMove={handleMouseMove}
+                  >
+                    {/* Color wheel background */}
                     <div 
-                      className="w-full h-32 rounded-xl border border-glass-border relative overflow-hidden"
+                      className="absolute inset-0 rounded-full transition-transform hover:scale-105 duration-200"
                       style={{
-                        background: `linear-gradient(to right, 
-                          hsl(0, 70%, 50%), 
-                          hsl(60, 70%, 50%), 
-                          hsl(120, 70%, 50%), 
-                          hsl(180, 70%, 50%), 
-                          hsl(240, 70%, 50%), 
-                          hsl(300, 70%, 50%), 
-                          hsl(360, 70%, 50%))`
+                        background: `conic-gradient(
+                          hsl(0, 70%, 50%),
+                          hsl(30, 70%, 50%),
+                          hsl(60, 70%, 50%),
+                          hsl(90, 70%, 50%),
+                          hsl(120, 70%, 50%),
+                          hsl(150, 70%, 50%),
+                          hsl(180, 70%, 50%),
+                          hsl(210, 70%, 50%),
+                          hsl(240, 70%, 50%),
+                          hsl(270, 70%, 50%),
+                          hsl(300, 70%, 50%),
+                          hsl(330, 70%, 50%),
+                          hsl(360, 70%, 50%)
+                        )`,
+                        boxShadow: '0 4px 20px rgba(0,0,0,0.2), inset 0 0 0 1px rgba(255,255,255,0.1)'
                       }}
-                    >
-                      <input
-                        type="range"
-                        min="0"
-                        max="360"
-                        value={primaryHue}
-                        onChange={handleColorChange}
-                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                      />
-                      <div 
-                        className="absolute top-1/2 -translate-y-1/2 w-1 h-full bg-white shadow-lg pointer-events-none"
-                        style={{ left: `${(primaryHue / 360) * 100}%` }}
-                      />
-                    </div>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-muted-foreground">Selected Color</span>
-                    <div 
-                      className="w-12 h-12 rounded-full border-2 border-white shadow-lg"
-                      style={{ backgroundColor: `hsl(${primaryHue}, 70%, 50%)` }}
                     />
+                    
+                    {/* Selected color indicator */}
+                    <div 
+                      className={cn(
+                        "absolute w-8 h-8 rounded-full border-4 border-background shadow-lg transition-all duration-150 pointer-events-none z-20",
+                        isDragging && "scale-125"
+                      )}
+                      style={{
+                        backgroundColor: `hsl(${primaryHue}, 70%, 50%)`,
+                        top: `${50 + 42 * Math.sin((primaryHue - 90) * Math.PI / 180)}%`,
+                        left: `${50 + 42 * Math.cos((primaryHue - 90) * Math.PI / 180)}%`,
+                        transform: 'translate(-50%, -50%)',
+                        boxShadow: `0 0 20px hsl(${primaryHue}, 70%, 50%), 0 0 40px hsl(${primaryHue}, 70%, 50%, 0.5)`
+                      }}
+                    />
+                    
+                    {/* Center preview circle */}
+                    <div 
+                      className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-20 h-20 rounded-full border-4 border-background shadow-xl transition-all duration-150"
+                      style={{ 
+                        backgroundColor: `hsl(${primaryHue}, 70%, 50%)`,
+                        boxShadow: `0 0 30px hsl(${primaryHue}, 70%, 50%), inset 0 2px 10px rgba(255,255,255,0.3)`
+                      }}
+                    />
+                  </div>
+                  
+                  {/* Color info */}
+                  <div className="text-center space-y-1">
+                    <p className="text-sm font-medium text-foreground">
+                      HSL({primaryHue}°, 70%, 50%)
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {isDragging ? "Adjusting color..." : "Click and drag to change color"}
+                    </p>
                   </div>
                 </div>
               </div>

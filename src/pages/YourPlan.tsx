@@ -1,4 +1,4 @@
-import { CheckCircle, Calendar, Clock, User, FileText, Play, CalendarPlus, Download } from "lucide-react";
+import { CheckCircle, Calendar, Clock, User, FileText, Play, CalendarPlus, Download, Info, TrendingUp } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState, useEffect } from "react";
 import { format } from "date-fns";
@@ -480,6 +480,84 @@ const AcceptedChallengesSection = () => {
 
 };
 
+const WeeklyInsightsSection = () => {
+  const [isInfoDialogOpen, setIsInfoDialogOpen] = useState(false);
+
+  return (
+    <>
+      <div className="bg-glass backdrop-blur-xl border border-glass-border rounded-2xl p-6 shadow-glass hover:bg-glass-highlight hover:scale-105 hover:-translate-y-1 transition-all duration-300 ease-out animate-fade-in transform-gpu mb-8">
+        <div className="flex items-center gap-3 mb-6">
+          <div className="w-8 h-8 bg-purple-500/20 rounded-lg flex items-center justify-center hover:scale-110 transition-transform duration-200">
+            <TrendingUp size={16} className="text-purple-400" />
+          </div>
+          <h3 className="text-lg font-semibold text-foreground">Weekly Insights</h3>
+          <button
+            onClick={() => setIsInfoDialogOpen(true)}
+            className="ml-auto p-1.5 rounded-md hover:bg-glass/30 hover:scale-110 active:scale-95 transition-all duration-200"
+            aria-label="Information about Weekly Insights"
+          >
+            <Info size={16} className="text-muted-foreground hover:text-primary transition-colors duration-200" />
+          </button>
+        </div>
+
+        {/* Summary */}
+        <div className="bg-glass/30 backdrop-blur-sm border border-glass-border rounded-xl p-4 mb-4">
+          <p className="text-foreground leading-relaxed">
+            Your recovery was below target this week. Training load was high on Wednesday, causing increased strain. Consider adjusting your upcoming sessions to allow for better recovery.
+          </p>
+        </div>
+
+        {/* Recommendations */}
+        <div className="space-y-3">
+          <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+            Recommendations for Next Week
+          </h4>
+          <div className="space-y-2">
+            <div className="flex items-start gap-3 bg-glass/30 backdrop-blur-sm border border-glass-border rounded-lg p-3 hover:bg-glass-highlight transition-all duration-200">
+              <div className="w-1.5 h-1.5 rounded-full bg-green-400 mt-2 flex-shrink-0" />
+              <p className="text-sm text-foreground">Add 1 recovery session focusing on mobility and light stretching</p>
+            </div>
+            <div className="flex items-start gap-3 bg-glass/30 backdrop-blur-sm border border-glass-border rounded-lg p-3 hover:bg-glass-highlight transition-all duration-200">
+              <div className="w-1.5 h-1.5 rounded-full bg-yellow-400 mt-2 flex-shrink-0" />
+              <p className="text-sm text-foreground">Reduce sprint volume by 15-20% to prevent overtraining</p>
+            </div>
+            <div className="flex items-start gap-3 bg-glass/30 backdrop-blur-sm border border-glass-border rounded-lg p-3 hover:bg-glass-highlight transition-all duration-200">
+              <div className="w-1.5 h-1.5 rounded-full bg-blue-400 mt-2 flex-shrink-0" />
+              <p className="text-sm text-foreground">Prioritize sleep quality with 8+ hours per night</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Info Dialog */}
+      <Dialog open={isInfoDialogOpen} onOpenChange={setIsInfoDialogOpen}>
+        <DialogContent className="sm:max-w-md bg-glass backdrop-blur-xl border border-glass-border shadow-glass">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-semibold text-foreground flex items-center gap-2">
+              <Info size={20} className="text-primary" />
+              About Weekly Insights
+            </DialogTitle>
+          </DialogHeader>
+          
+          <div className="mt-4 space-y-4">
+            <p className="text-foreground leading-relaxed">
+              Weekly Insights summarize your progress and risks from the last 7 days.
+            </p>
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              This analysis combines your training load, recovery metrics, and health data to provide personalized recommendations that help you optimize performance while minimizing injury risk.
+            </p>
+            <div className="bg-primary/10 border border-primary/30 rounded-lg p-3 mt-4">
+              <p className="text-sm text-primary font-medium">
+                💡 Tip: Review these insights every Monday to plan your week effectively.
+              </p>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+};
+
 const UpcomingBookingsSection = () => {
   const [allBookings, setAllBookings] = useState<typeof upcomingBookings>([]);
 
@@ -580,6 +658,9 @@ export const YourPlan = () => {
 
         {/* Accepted Challenges */}
         <AcceptedChallengesSection />
+
+        {/* Weekly Insights */}
+        <WeeklyInsightsSection />
 
         {/* Upcoming Bookings */}
         <UpcomingBookingsSection />

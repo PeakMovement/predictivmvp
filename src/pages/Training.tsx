@@ -177,12 +177,69 @@ const AccountabilityChallenges = () => {
   const [selectedChallenge, setSelectedChallenge] = useState<typeof suggestions[0] | null>(null);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [selectedTime, setSelectedTime] = useState<string>("12:00");
+  const [suggestedSlots, setSuggestedSlots] = useState<Array<{ date: Date; time: string; label: string }>>([]);
+  const [selectedSlotIndex, setSelectedSlotIndex] = useState<number | null>(null);
   const { toast } = useToast();
 
+  const generateSuggestedSlots = (category: string) => {
+    const now = new Date();
+    const slots: Array<{ date: Date; time: string; label: string }> = [];
+    
+    if (category === "Recovery") {
+      // Mid-week (Wednesday) + weekend (Saturday)
+      const wednesday = new Date(now);
+      wednesday.setDate(now.getDate() + ((3 - now.getDay() + 7) % 7 || 7));
+      slots.push({ date: wednesday, time: "18:00", label: "Wednesday Evening" });
+      
+      const saturday = new Date(now);
+      saturday.setDate(now.getDate() + ((6 - now.getDay() + 7) % 7 || 7));
+      slots.push({ date: saturday, time: "10:00", label: "Saturday Morning" });
+      
+      const sundayAlt = new Date(saturday);
+      sundayAlt.setDate(saturday.getDate() + 1);
+      slots.push({ date: sundayAlt, time: "14:00", label: "Sunday Afternoon" });
+    } else if (category === "Training") {
+      // Early week (Monday, Tuesday)
+      const monday = new Date(now);
+      monday.setDate(now.getDate() + ((1 - now.getDay() + 7) % 7 || 7));
+      slots.push({ date: monday, time: "06:00", label: "Monday Morning" });
+      
+      const tuesday = new Date(now);
+      tuesday.setDate(now.getDate() + ((2 - now.getDay() + 7) % 7 || 7));
+      slots.push({ date: tuesday, time: "17:00", label: "Tuesday Evening" });
+      
+      const thursdayAlt = new Date(now);
+      thursdayAlt.setDate(now.getDate() + ((4 - now.getDay() + 7) % 7 || 7));
+      slots.push({ date: thursdayAlt, time: "06:00", label: "Thursday Morning" });
+    } else {
+      // Default: next 3 weekdays
+      for (let i = 1; i <= 3; i++) {
+        const nextDay = new Date(now);
+        nextDay.setDate(now.getDate() + i);
+        const dayName = nextDay.toLocaleDateString('en-US', { weekday: 'long' });
+        slots.push({ date: nextDay, time: "12:00", label: `${dayName} Noon` });
+      }
+    }
+    
+    return slots;
+  };
+
   const handleAccept = (suggestion: typeof suggestions[0]) => {
+    // Generate suggested slots based on challenge category
+    const slots = generateSuggestedSlots(suggestion.category);
+    setSuggestedSlots(slots);
+    setSelectedSlotIndex(null);
+    
     // Open scheduling modal for time-based challenges
     setSelectedChallenge(suggestion);
     setIsScheduleModalOpen(true);
+  };
+
+  const handleSlotSelect = (index: number) => {
+    const slot = suggestedSlots[index];
+    setSelectedDate(slot.date);
+    setSelectedTime(slot.time);
+    setSelectedSlotIndex(index);
   };
 
   const handleScheduleConfirm = () => {
@@ -461,6 +518,48 @@ const AccountabilityChallenges = () => {
               </p>
             </div>
             
+            {/* Suggested Time Slots */}
+            <div className="space-y-2">
+              <Label className="text-sm text-muted-foreground">Suggested Times</Label>
+              <div className="grid grid-cols-1 gap-2">
+                {suggestedSlots.map((slot, index) => (
+                  <button
+                    key={index}
+                    onClick={() => handleSlotSelect(index)}
+                    className={cn(
+                      "p-3 rounded-lg border transition-all duration-200 text-left",
+                      selectedSlotIndex === index
+                        ? "bg-primary/20 border-primary text-primary font-medium scale-105"
+                        : "bg-glass/30 border-glass-border hover:bg-glass-highlight hover:scale-102"
+                    )}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <div className="text-sm font-medium">{slot.label}</div>
+                        <div className="text-xs text-muted-foreground mt-0.5">
+                          {format(slot.date, "MMM d, yyyy")} at {slot.time}
+                        </div>
+                      </div>
+                      {selectedSlotIndex === index && (
+                        <CheckCircle size={18} className="text-primary" />
+                      )}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Divider */}
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-glass-border"></div>
+              </div>
+              <div className="relative flex justify-center text-xs">
+                <span className="bg-glass px-2 text-muted-foreground">or choose custom time</span>
+              </div>
+            </div>
+            
+            {/* Custom Date/Time Picker */}
             <div className="space-y-3">
               <div>
                 <Label htmlFor="schedule-date" className="text-sm text-muted-foreground">Date</Label>
@@ -472,6 +571,7 @@ const AccountabilityChallenges = () => {
                         "w-full justify-start text-left font-normal mt-1 bg-glass/30 border-glass-border hover:bg-glass-highlight",
                         !selectedDate && "text-muted-foreground"
                       )}
+                      onClick={() => setSelectedSlotIndex(null)}
                     >
                       <Calendar className="mr-2 h-4 w-4" />
                       {selectedDate ? format(selectedDate, "PPP") : <span>Pick a date</span>}
@@ -481,7 +581,12 @@ const AccountabilityChallenges = () => {
                     <CalendarComponent
                       mode="single"
                       selected={selectedDate}
-                      onSelect={(date) => date && setSelectedDate(date)}
+                      onSelect={(date) => {
+                        if (date) {
+                          setSelectedDate(date);
+                          setSelectedSlotIndex(null);
+                        }
+                      }}
                       disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
                       initialFocus
                       className="p-3 pointer-events-auto"
@@ -496,7 +601,10 @@ const AccountabilityChallenges = () => {
                   id="schedule-time"
                   type="time"
                   value={selectedTime}
-                  onChange={(e) => setSelectedTime(e.target.value)}
+                  onChange={(e) => {
+                    setSelectedTime(e.target.value);
+                    setSelectedSlotIndex(null);
+                  }}
                   className="mt-1 bg-glass/30 border-glass-border focus:border-primary"
                 />
               </div>

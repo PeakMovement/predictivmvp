@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Upload, FileText, CheckCircle, AlertCircle, Database } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { hasUploadedData } from "@/lib/healthDataStore";
 
 interface HealthData {
   Date: string;
@@ -38,6 +39,11 @@ export const DataUpload = () => {
   const [fileName, setFileName] = useState<string>("");
   const [isValidated, setIsValidated] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
+  const [hasActiveData, setHasActiveData] = useState(hasUploadedData());
+
+  useEffect(() => {
+    setHasActiveData(hasUploadedData());
+  }, [csvData]);
 
   const parseCSV = (text: string): HealthData[] => {
     const lines = text.trim().split('\n');
@@ -136,11 +142,11 @@ export const DataUpload = () => {
   };
 
   const handleApplyData = () => {
-    localStorage.setItem("uploadedHealthData", JSON.stringify(csvData));
+    sessionStorage.setItem("uploadedHealthData", JSON.stringify(csvData));
     
     toast({
       title: "Data applied successfully",
-      description: `${csvData.length} rows of health data are now active.`,
+      description: `${csvData.length} rows of health data are now active for this session.`,
     });
 
     // Reset state
@@ -172,6 +178,19 @@ export const DataUpload = () => {
           <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
             Upload your health and training data via CSV to replace demo values
           </p>
+          
+          {/* Session Status Indicator */}
+          {hasActiveData ? (
+            <div className="inline-flex items-center gap-2 px-4 py-2 bg-green-500/20 border border-green-500/30 rounded-full text-sm text-green-400">
+              <CheckCircle size={16} />
+              <span>Active Session Data Loaded</span>
+            </div>
+          ) : (
+            <div className="inline-flex items-center gap-2 px-4 py-2 bg-amber-500/20 border border-amber-500/30 rounded-full text-sm text-amber-400">
+              <AlertCircle size={16} />
+              <span>Using Demo Data</span>
+            </div>
+          )}
         </div>
 
         {/* Upload Area */}

@@ -5,25 +5,37 @@ import { useState, useEffect } from "react";
 import { toast } from "@/hooks/use-toast";
 import jsPDF from "jspdf";
 import { format } from "date-fns";
+import { getLatestMetrics, hasUploadedData } from "@/lib/healthDataStore";
 
-const metrics = [
-  { name: "Acute:Chronic Workload Ratio", value: "1.2", status: "green" },
-  { name: "Training Monotony", value: "2.4", status: "yellow" },
-  { name: "Training Strain", value: "156", status: "red" },
-  { name: "Weekly Training Load", value: "420", status: "green" },
-  { name: "EWMA Trend", value: "+5.2%", status: "green" },
-];
+// Get dynamic metrics from uploaded data or demo fallback
+const getMetrics = () => {
+  const latest = getLatestMetrics();
+  
+  return [
+    { name: "Acute:Chronic Workload Ratio", value: latest.acwr.toFixed(1), status: latest.acwr > 1.5 ? "red" : latest.acwr > 1.3 ? "yellow" : "green" },
+    { name: "Training Monotony", value: latest.monotony.toFixed(1), status: latest.monotony > 2.0 ? "yellow" : "green" },
+    { name: "Training Strain", value: latest.strain.toString(), status: latest.strain > 150 ? "red" : latest.strain > 130 ? "yellow" : "green" },
+    { name: "Weekly Training Load", value: latest.trainingLoad.toString(), status: "green" },
+    { name: "EWMA Trend", value: `+${latest.ewma.toFixed(1)}%`, status: "green" },
+  ];
+};
 
-// Demo health metrics for Today's Plan
-const healthMetrics = {
-  hrv: { value: 45, status: "low", change: -15 }, // HRV dropped by 15
-  strain: { value: 156, status: "high", weeklyChange: 22 }, // Increased 22% this week
-  sleep: { value: 7.5, status: "good" },
-  recovery: { value: 65, status: "moderate" }
+// Get dynamic health metrics
+const getHealthMetrics = () => {
+  const latest = getLatestMetrics();
+  
+  return {
+    hrv: { value: latest.hrv, status: latest.hrv < 50 ? "low" : latest.hrv < 65 ? "moderate" : "good", change: -15 },
+    strain: { value: latest.strain, status: latest.strain > 150 ? "high" : latest.strain > 130 ? "moderate" : "optimal", weeklyChange: 22 },
+    sleep: { value: latest.sleepHours, status: latest.sleepHours >= 7 ? "good" : "low" },
+    recovery: { value: latest.sleepScore, status: latest.sleepScore >= 75 ? "good" : "moderate" }
+  };
 };
 
 const generateAlerts = () => {
   const alerts = [];
+  const metrics = getMetrics();
+  const healthMetrics = getHealthMetrics();
   
   const acwr = parseFloat(metrics.find(m => m.name === "Acute:Chronic Workload Ratio")?.value || "0");
   const monotony = parseFloat(metrics.find(m => m.name === "Training Monotony")?.value || "0");
@@ -70,6 +82,7 @@ const generateAlerts = () => {
 
 const generateTodaysPlan = () => {
   const recommendations = [];
+  const healthMetrics = getHealthMetrics();
   
   // Priority 1: Check HRV drop
   if (healthMetrics.hrv.status === "low" && healthMetrics.hrv.change < -10) {
@@ -209,6 +222,7 @@ const saveAcceptedAdjustment = (adjustmentText: string, category: string) => {
 };
 
 const generateDailyNudge = () => {
+  const metrics = getMetrics();
   const acwr = parseFloat(metrics.find(m => m.name === "Acute:Chronic Workload Ratio")?.value || "0");
   const monotony = parseFloat(metrics.find(m => m.name === "Training Monotony")?.value || "0");
   const strainStatus = metrics.find(m => m.name === "Training Strain")?.status;
@@ -241,7 +255,7 @@ const getStatusColor = (status: string) => {
   }
 };
 
-const MetricCard = ({ metric }: { metric: typeof metrics[0] }) => (
+const MetricCard = ({ metric }: { metric: { name: string; value: string; status: string } }) => (
   <div className="bg-glass backdrop-blur-xl border border-glass-border rounded-2xl p-6 shadow-glass hover:bg-glass-highlight hover:scale-105 hover:-translate-y-1 transition-all duration-300 ease-out animate-fade-in transform-gpu will-change-transform active:scale-95">
     <div className="flex items-start justify-between mb-4">
       <h3 className="text-sm font-medium text-muted-foreground leading-tight">{metric.name}</h3>
@@ -582,6 +596,7 @@ const AlertsCard = () => {
 const TodaysPlanCard = () => {
   const [todaysRecommendations, setTodaysRecommendations] = useState(generateTodaysPlan());
   const [acceptedRecommendations, setAcceptedRecommendations] = useState<number[]>([]);
+  const healthMetrics = getHealthMetrics();
 
   const getPriorityAccentColor = (priority: string) => {
     switch (priority) {
@@ -965,6 +980,8 @@ const GraphCarousel = () => {
 };
 
 export const Dashboard = () => {
+  const metrics = getMetrics();
+  
   return (
     <TooltipProvider>
       <div className="min-h-screen bg-background pb-32">

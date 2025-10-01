@@ -1,4 +1,4 @@
-import { TrendingUp, Target, AlertTriangle, FileText, Play, ChevronLeft, ChevronRight, RefreshCw, Download, AlertCircle } from "lucide-react";
+import { TrendingUp, Target, AlertTriangle, FileText, Play, ChevronLeft, ChevronRight, RefreshCw, Download, AlertCircle, CheckCircle, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useState, useEffect } from "react";
@@ -35,8 +35,10 @@ const generateAlerts = () => {
     alerts.push({
       severity: "critical",
       message: "Overload risk detected. ACWR is above safe threshold.",
+      actionText: "Reduce training load by 20% this week",
       metric: "ACWR",
-      value: acwr.toFixed(1)
+      value: acwr.toFixed(1),
+      category: "Training"
     });
   }
   
@@ -45,8 +47,10 @@ const generateAlerts = () => {
     alerts.push({
       severity: "warning",
       message: "Training is too repetitive. Add variation to your sessions.",
+      actionText: "Add 2 varied training sessions this week",
       metric: "Monotony",
-      value: monotony.toFixed(1)
+      value: monotony.toFixed(1),
+      category: "Training"
     });
   }
   
@@ -54,8 +58,10 @@ const generateAlerts = () => {
     alerts.push({
       severity: "warning",
       message: `Strain increased ${healthMetrics.strain.weeklyChange}% this week. Plan a deload.`,
+      actionText: "Schedule a deload week to reduce intensity",
       metric: "Strain",
-      value: strain.toString()
+      value: strain.toString(),
+      category: "Recovery"
     });
   }
   
@@ -71,7 +77,9 @@ const generateTodaysPlan = () => {
       priority: "high",
       title: "Recovery Day Recommended",
       message: "Your HRV dropped significantly overnight. Swap today's training for mobility work or light stretching.",
-      icon: "🧘"
+      actionText: "Swap training for mobility work today",
+      icon: "🧘",
+      category: "Recovery"
     });
   }
   
@@ -81,7 +89,9 @@ const generateTodaysPlan = () => {
       priority: "medium",
       title: "Reduce Training Load",
       message: "Your strain is elevated. Consider a lighter session today—focus on technique over intensity.",
-      icon: "⚖️"
+      actionText: "Reduce training intensity today",
+      icon: "⚖️",
+      category: "Training"
     });
   }
   
@@ -93,7 +103,9 @@ const generateTodaysPlan = () => {
       priority: "low",
       title: "Performance Day",
       message: "All systems are optimal! This is a great day to add interval training or push intensity.",
-      icon: "🚀"
+      actionText: "Add interval training session today",
+      icon: "🚀",
+      category: "Training"
     });
   }
   
@@ -103,7 +115,9 @@ const generateTodaysPlan = () => {
       priority: "medium",
       title: "Moderate Training",
       message: "Your recovery is moderate. Stick to your planned session but listen to your body.",
-      icon: "💪"
+      actionText: "Continue with planned training",
+      icon: "💪",
+      category: "Training"
     });
   }
   
@@ -113,7 +127,9 @@ const generateTodaysPlan = () => {
       priority: "low",
       title: "Balanced Day",
       message: "Your metrics look balanced. Continue with your planned training session.",
-      icon: "✅"
+      actionText: "Continue with planned training",
+      icon: "✅",
+      category: "Training"
     });
   }
   
@@ -166,6 +182,31 @@ const recommendations = [
   "Add 2 recovery sessions to prevent overreaching",
   "Focus on sleep quality to improve adaptation"
 ];
+
+// Helper function to save accepted adjustment to localStorage
+const saveAcceptedAdjustment = (adjustmentText: string, category: string) => {
+  const existingAdjustments = JSON.parse(localStorage.getItem("acceptedAdjustments") || "[]");
+  
+  const newAdjustment = {
+    id: Date.now(),
+    text: adjustmentText,
+    category: category,
+    accentColor: category === "Recovery" ? "green" : category === "Training" ? "yellow" : "red",
+    hasVideo: false,
+    hasPdf: false,
+    dateAccepted: format(new Date(), "yyyy-MM-dd"),
+    scheduledDate: null,
+    scheduledTime: null
+  };
+  
+  existingAdjustments.push(newAdjustment);
+  localStorage.setItem("acceptedAdjustments", JSON.stringify(existingAdjustments));
+  
+  toast({
+    title: "Adjustment added to Your Plan",
+    description: "You can view it in the Your Plan section.",
+  });
+};
 
 const generateDailyNudge = () => {
   const acwr = parseFloat(metrics.find(m => m.name === "Acute:Chronic Workload Ratio")?.value || "0");
@@ -423,7 +464,8 @@ const RecommendationCard = () => (
 );
 
 const AlertsCard = () => {
-  const alerts = generateAlerts();
+  const [alerts, setAlerts] = useState(generateAlerts());
+  const [acceptedAlerts, setAcceptedAlerts] = useState<number[]>([]);
 
   const getSeverityStyle = (severity: string) => {
     switch (severity) {
@@ -440,7 +482,18 @@ const AlertsCard = () => {
     return severity === "critical" ? "🚨" : "⚠️";
   };
 
-  if (alerts.length === 0) {
+  const handleAcceptAlert = (index: number, actionText: string, category: string) => {
+    saveAcceptedAdjustment(actionText, category);
+    setAcceptedAlerts([...acceptedAlerts, index]);
+  };
+
+  const handleDismissAlert = (index: number) => {
+    setAlerts(alerts.filter((_, i) => i !== index));
+  };
+
+  const activeAlerts = alerts.filter((_, i) => !acceptedAlerts.includes(i));
+
+  if (activeAlerts.length === 0) {
     return (
       <div className="bg-glass backdrop-blur-xl border border-glass-border rounded-2xl p-6 shadow-glass hover:bg-glass-highlight hover:scale-105 hover:-translate-y-1 transition-all duration-300 ease-out animate-fade-in transform-gpu">
         <div className="flex items-center gap-3 mb-4">
@@ -465,42 +518,70 @@ const AlertsCard = () => {
         </div>
         <h3 className="text-lg font-semibold text-foreground">Alerts</h3>
         <span className="ml-auto text-xs font-medium px-2 py-1 rounded-full bg-red-500/20 text-red-400">
-          {alerts.length}
+          {activeAlerts.length}
         </span>
       </div>
       
       <div className="space-y-3">
-        {alerts.map((alert, index) => (
-          <div 
-            key={index}
-            className={cn(
-              "p-3 rounded-lg border transition-all duration-200",
-              getSeverityStyle(alert.severity)
-            )}
-          >
-            <div className="flex items-start gap-3">
-              <span className="text-xl flex-shrink-0 animate-bounce-subtle">{getSeverityIcon(alert.severity)}</span>
-              <div className="flex-1">
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="text-xs font-semibold text-foreground uppercase tracking-wide">
-                    {alert.metric}
-                  </span>
-                  <span className="text-xs font-mono text-muted-foreground">
-                    {alert.value}
-                  </span>
+        {alerts.map((alert, index) => {
+          const isAccepted = acceptedAlerts.includes(index);
+          
+          return (
+            <div 
+              key={index}
+              className={cn(
+                "p-3 rounded-lg border transition-all duration-200",
+                isAccepted ? "bg-green-500/10 border-green-500/30" : getSeverityStyle(alert.severity)
+              )}
+            >
+              <div className="flex items-start gap-3">
+                <span className="text-xl flex-shrink-0 animate-bounce-subtle">
+                  {isAccepted ? "✅" : getSeverityIcon(alert.severity)}
+                </span>
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-xs font-semibold text-foreground uppercase tracking-wide">
+                      {alert.metric}
+                    </span>
+                    <span className="text-xs font-mono text-muted-foreground">
+                      {alert.value}
+                    </span>
+                  </div>
+                  <p className="text-sm text-muted-foreground leading-tight mb-3">{alert.message}</p>
+                  
+                  {!isAccepted ? (
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => handleAcceptAlert(index, alert.actionText, alert.category)}
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-green-500/20 hover:bg-green-500/30 text-green-400 text-xs font-medium transition-all duration-200 hover:scale-105 active:scale-95"
+                      >
+                        <CheckCircle size={14} />
+                        Accept Adjustment
+                      </button>
+                      <button
+                        onClick={() => handleDismissAlert(index)}
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-500/20 hover:bg-red-500/30 text-red-400 text-xs font-medium transition-all duration-200 hover:scale-105 active:scale-95"
+                      >
+                        <X size={14} />
+                        Dismiss
+                      </button>
+                    </div>
+                  ) : (
+                    <p className="text-xs text-green-400 font-medium">Added to Your Plan</p>
+                  )}
                 </div>
-                <p className="text-sm text-muted-foreground leading-tight">{alert.message}</p>
               </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
 };
 
 const TodaysPlanCard = () => {
-  const todaysRecommendations = generateTodaysPlan();
+  const [todaysRecommendations, setTodaysRecommendations] = useState(generateTodaysPlan());
+  const [acceptedRecommendations, setAcceptedRecommendations] = useState<number[]>([]);
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
@@ -509,6 +590,15 @@ const TodaysPlanCard = () => {
       case "low": return "bg-green-500/10 border-green-500/30";
       default: return "bg-primary/10 border-primary/30";
     }
+  };
+
+  const handleAcceptRecommendation = (index: number, actionText: string, category: string) => {
+    saveAcceptedAdjustment(actionText, category);
+    setAcceptedRecommendations([...acceptedRecommendations, index]);
+  };
+
+  const handleDismissRecommendation = (index: number) => {
+    setTodaysRecommendations(todaysRecommendations.filter((_, i) => i !== index));
   };
 
   return (
@@ -521,23 +611,48 @@ const TodaysPlanCard = () => {
       </div>
       
       <div className="space-y-4">
-        {todaysRecommendations.map((rec, index) => (
-          <div 
-            key={index}
-            className={cn(
-              "p-4 rounded-xl border transition-all duration-200 hover:scale-[1.02]",
-              getPriorityColor(rec.priority)
-            )}
-          >
-            <div className="flex items-start gap-3">
-              <span className="text-2xl flex-shrink-0">{rec.icon}</span>
-              <div className="flex-1">
-                <h4 className="font-semibold text-foreground mb-1">{rec.title}</h4>
-                <p className="text-sm text-muted-foreground leading-relaxed">{rec.message}</p>
+        {todaysRecommendations.map((rec, index) => {
+          const isAccepted = acceptedRecommendations.includes(index);
+          
+          return (
+            <div 
+              key={index}
+              className={cn(
+                "p-4 rounded-xl border transition-all duration-200",
+                isAccepted ? "bg-green-500/10 border-green-500/30" : getPriorityColor(rec.priority)
+              )}
+            >
+              <div className="flex items-start gap-3">
+                <span className="text-2xl flex-shrink-0">{isAccepted ? "✅" : rec.icon}</span>
+                <div className="flex-1">
+                  <h4 className="font-semibold text-foreground mb-1">{rec.title}</h4>
+                  <p className="text-sm text-muted-foreground leading-relaxed mb-3">{rec.message}</p>
+                  
+                  {!isAccepted ? (
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => handleAcceptRecommendation(index, rec.actionText, rec.category)}
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-green-500/20 hover:bg-green-500/30 text-green-400 text-xs font-medium transition-all duration-200 hover:scale-105 active:scale-95"
+                      >
+                        <CheckCircle size={14} />
+                        Accept Adjustment
+                      </button>
+                      <button
+                        onClick={() => handleDismissRecommendation(index)}
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-500/20 hover:bg-red-500/30 text-red-400 text-xs font-medium transition-all duration-200 hover:scale-105 active:scale-95"
+                      >
+                        <X size={14} />
+                        Dismiss
+                      </button>
+                    </div>
+                  ) : (
+                    <p className="text-xs text-green-400 font-medium">Added to Your Plan</p>
+                  )}
+                </div>
               </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
       
       <div className="mt-4 pt-4 border-t border-glass-border">

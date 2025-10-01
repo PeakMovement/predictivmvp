@@ -294,6 +294,14 @@ const AcceptedChallengesSection = () => {
   const [selectedChallenge, setSelectedChallenge] = useState<typeof acceptedChallenges[0] | null>(null);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [selectedTime, setSelectedTime] = useState<string>("12:00");
+  const [allChallenges, setAllChallenges] = useState<typeof acceptedChallenges>([]);
+
+  // Load accepted adjustments from localStorage on mount
+  useEffect(() => {
+    const storedAdjustments = JSON.parse(localStorage.getItem("acceptedAdjustments") || "[]");
+    // Combine static challenges with stored adjustments
+    setAllChallenges([...acceptedChallenges, ...storedAdjustments]);
+  }, []);
 
   const handleCalendarClick = (challenge: typeof acceptedChallenges[0]) => {
     setSelectedChallenge(challenge);
@@ -331,11 +339,11 @@ const AcceptedChallengesSection = () => {
       </div>
       <h3 className="text-lg font-semibold text-foreground">Accepted Challenges</h3>
       <div className="px-2 py-1 text-xs font-medium bg-green-500/20 text-green-400 rounded-full">
-        {acceptedChallenges.length} Active
+        {allChallenges.length} Active
       </div>
     </div>
     <div className="space-y-4">
-      {acceptedChallenges.map((challenge) => (
+      {allChallenges.map((challenge) => (
         <div key={challenge.id} className={cn(
           "bg-glass/30 backdrop-blur-sm border border-glass-border rounded-xl p-4 transition-all duration-200 border-l-4",
           getAccentColor(challenge.accentColor)

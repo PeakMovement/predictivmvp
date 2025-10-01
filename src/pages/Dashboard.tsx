@@ -1,4 +1,4 @@
-import { TrendingUp, Target, AlertTriangle, FileText, Play, ChevronLeft, ChevronRight } from "lucide-react";
+import { TrendingUp, Target, AlertTriangle, FileText, Play, ChevronLeft, ChevronRight, RefreshCw } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useState, useEffect } from "react";
@@ -55,6 +55,14 @@ const recommendations = [
   "Consider reducing training intensity by 15% this week",
   "Add 2 recovery sessions to prevent overreaching",
   "Focus on sleep quality to improve adaptation"
+];
+
+const dailyNudges = [
+  "Yesterday's load was high, schedule a mobility session today.",
+  "You've had 3 intense days in a row. Consider a recovery day tomorrow.",
+  "Your sleep quality was below target. Prioritize 8+ hours tonight.",
+  "Great consistency this week! Keep your intensity moderate today.",
+  "Training monotony is increasing. Add variety to your next session.",
 ];
 
 const focusAreas = [
@@ -142,6 +150,45 @@ const RecommendationCard = () => (
     </div>
   </div>
 );
+
+const DailyNudgeCard = () => {
+  const [currentNudgeIndex, setCurrentNudgeIndex] = useState(0);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  const refreshNudge = () => {
+    setIsRefreshing(true);
+    setTimeout(() => {
+      setCurrentNudgeIndex((prev) => (prev + 1) % dailyNudges.length);
+      setIsRefreshing(false);
+    }, 300);
+  };
+
+  return (
+    <div className="bg-glass backdrop-blur-xl border border-glass-border rounded-2xl p-6 shadow-glass hover:bg-glass-highlight hover:scale-105 hover:-translate-y-1 transition-all duration-300 ease-out animate-fade-in transform-gpu">
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-lg font-semibold text-foreground">Daily Nudge</h3>
+        <button
+          onClick={refreshNudge}
+          className={cn(
+            "p-2 rounded-lg bg-primary/10 hover:bg-primary/20 transition-all duration-200 hover:scale-110 active:scale-95 hover:shadow-glow",
+            isRefreshing && "animate-spin"
+          )}
+          disabled={isRefreshing}
+        >
+          <RefreshCw size={16} className="text-primary" />
+        </button>
+      </div>
+      <p 
+        className={cn(
+          "text-muted-foreground transition-all duration-300",
+          isRefreshing ? "opacity-0 translate-y-2" : "opacity-100 translate-y-0"
+        )}
+      >
+        {dailyNudges[currentNudgeIndex]}
+      </p>
+    </div>
+  );
+};
 
 const FocusAreasCard = () => (
   <div className="bg-glass backdrop-blur-xl border border-glass-border rounded-2xl p-6 shadow-glass hover:bg-glass-highlight hover:scale-105 hover:-translate-y-1 transition-all duration-300 ease-out animate-fade-in transform-gpu">
@@ -403,6 +450,11 @@ export const Dashboard = () => {
             {metrics.map((metric, index) => (
               <MetricCard key={index} metric={metric} />
             ))}
+          </div>
+
+          {/* Daily Nudge Section */}
+          <div className="mb-8">
+            <DailyNudgeCard />
           </div>
 
           {/* Trend Analysis Carousel */}

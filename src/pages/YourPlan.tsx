@@ -1,6 +1,6 @@
 import { CheckCircle, Calendar, Clock, User, FileText, Play, CalendarPlus, Download } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { format } from "date-fns";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -480,57 +480,69 @@ const AcceptedChallengesSection = () => {
 
 };
 
-const UpcomingBookingsSection = () => (
-  <div className="bg-glass backdrop-blur-xl border border-glass-border rounded-2xl p-6 shadow-glass hover:bg-glass-highlight hover:scale-105 hover:-translate-y-1 transition-all duration-300 ease-out animate-fade-in transform-gpu">
-    <div className="flex items-center gap-3 mb-6">
-      <div className="w-8 h-8 bg-primary/20 rounded-lg flex items-center justify-center hover:scale-110 transition-transform duration-200">
-        <Calendar size={16} className="text-primary" />
+const UpcomingBookingsSection = () => {
+  const [allBookings, setAllBookings] = useState<typeof upcomingBookings>([]);
+
+  useEffect(() => {
+    // Load bookings from localStorage
+    const userBookings = JSON.parse(localStorage.getItem('userBookings') || '[]');
+    
+    // Combine static bookings with user bookings
+    setAllBookings([...upcomingBookings, ...userBookings]);
+  }, []);
+
+  return (
+    <div className="bg-glass backdrop-blur-xl border border-glass-border rounded-2xl p-6 shadow-glass hover:bg-glass-highlight hover:scale-105 hover:-translate-y-1 transition-all duration-300 ease-out animate-fade-in transform-gpu">
+      <div className="flex items-center gap-3 mb-6">
+        <div className="w-8 h-8 bg-primary/20 rounded-lg flex items-center justify-center hover:scale-110 transition-transform duration-200">
+          <Calendar size={16} className="text-primary" />
+        </div>
+        <h3 className="text-lg font-semibold text-foreground">Upcoming Bookings</h3>
+        <div className="px-2 py-1 text-xs font-medium bg-primary/20 text-primary rounded-full">
+          {allBookings.length} Scheduled
+        </div>
       </div>
-      <h3 className="text-lg font-semibold text-foreground">Upcoming Bookings</h3>
-      <div className="px-2 py-1 text-xs font-medium bg-primary/20 text-primary rounded-full">
-        {upcomingBookings.length} Scheduled
-      </div>
-    </div>
-    <div className="space-y-4">
-      {upcomingBookings.map((booking) => (
-        <div key={booking.id} className="bg-glass/30 backdrop-blur-sm border border-glass-border rounded-xl p-4 transition-all duration-200 border-l-4 border-l-primary hover:bg-glass-highlight">
-          <div className="flex items-start justify-between gap-4">
-            <div className="flex-1 space-y-2">
-              <div className="flex items-center gap-2">
-                <span className={cn(
-                  "px-2 py-1 text-xs font-medium rounded-md border border-primary/30 text-primary bg-primary/10"
-                )}>
-                  {booking.type}
-                </span>
-              </div>
-              <div className="space-y-1">
-                <p className="font-medium text-foreground">{booking.service}</p>
-                <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                  <div className="flex items-center gap-1">
-                    <User size={14} />
-                    <span>{booking.clinician}</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <Calendar size={14} />
-                    <span>{booking.date}</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <Clock size={14} />
-                    <span>{booking.time}</span>
+      <div className="space-y-4">
+        {allBookings.map((booking) => (
+          <div key={booking.id} className="bg-glass/30 backdrop-blur-sm border border-glass-border rounded-xl p-4 transition-all duration-200 border-l-4 border-l-primary hover:bg-glass-highlight">
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex-1 space-y-2">
+                <div className="flex items-center gap-2">
+                  <span className={cn(
+                    "px-2 py-1 text-xs font-medium rounded-md border border-primary/30 text-primary bg-primary/10"
+                  )}>
+                    {booking.type}
+                  </span>
+                </div>
+                <div className="space-y-1">
+                  <p className="font-medium text-foreground">{booking.service}</p>
+                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                    <div className="flex items-center gap-1">
+                      <User size={14} />
+                      <span>{booking.clinician}</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <Calendar size={14} />
+                      <span>{booking.date}</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <Clock size={14} />
+                      <span>{booking.time}</span>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-            
-            <div className="px-4 py-2 text-sm font-medium bg-primary/20 text-primary rounded-lg">
-              Confirmed
+              
+              <div className="px-4 py-2 text-sm font-medium bg-primary/20 text-primary rounded-lg">
+                Confirmed
+              </div>
             </div>
           </div>
-        </div>
-      ))}
+        ))}
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 export const YourPlan = () => {
   return (

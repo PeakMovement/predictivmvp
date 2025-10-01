@@ -1,10 +1,12 @@
-import { useState } from "react";
-import { Search, MapPin, DollarSign, User, Star, Phone, Mail } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Search, MapPin, DollarSign, User, Star, Phone, Mail, CalendarPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
+import { useToast } from "@/hooks/use-toast";
 
 interface Professional {
   id: number;
@@ -93,6 +95,9 @@ export const FindHelp = () => {
   const [location, setLocation] = useState("");
   const [showResults, setShowResults] = useState(false);
   const [filteredProfessionals, setFilteredProfessionals] = useState<Professional[]>([]);
+  const [selectedProfessional, setSelectedProfessional] = useState<Professional | null>(null);
+  const [isBookingDialogOpen, setIsBookingDialogOpen] = useState(false);
+  const { toast } = useToast();
 
   const handleSearch = () => {
     let results = [...professionals];
@@ -116,6 +121,43 @@ export const FindHelp = () => {
 
     setFilteredProfessionals(results);
     setShowResults(true);
+  };
+
+  const handleAddBooking = (professional: Professional) => {
+    setSelectedProfessional(professional);
+    setIsBookingDialogOpen(true);
+  };
+
+  const confirmBooking = () => {
+    if (selectedProfessional) {
+      // Get existing bookings from localStorage
+      const existingBookings = JSON.parse(localStorage.getItem('userBookings') || '[]');
+      
+      // Create new booking
+      const newBooking = {
+        id: Date.now(),
+        clinician: selectedProfessional.name,
+        service: `${selectedProfessional.specialty} Consultation`,
+        date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 1 week from now
+        time: "2:00 PM",
+        type: "In-Person",
+        specialty: selectedProfessional.specialty
+      };
+      
+      // Add to bookings
+      const updatedBookings = [...existingBookings, newBooking];
+      localStorage.setItem('userBookings', JSON.stringify(updatedBookings));
+      
+      // Show toast
+      toast({
+        title: "Booking request saved (demo)",
+        description: `Your booking with ${selectedProfessional.name} has been added to Your Plan`,
+        duration: 3000,
+      });
+      
+      setIsBookingDialogOpen(false);
+      setSelectedProfessional(null);
+    }
   };
 
   return (
@@ -271,16 +313,19 @@ export const FindHelp = () => {
 
                         {/* Action Buttons */}
                         <div className="flex items-center gap-2 pt-3">
-                          <button className="flex-1 px-3 py-2 rounded-lg bg-primary/20 text-primary hover:bg-primary/30 hover:scale-105 active:scale-95 transition-all duration-200 text-sm font-medium flex items-center justify-center gap-1">
+                          <button 
+                            onClick={() => handleAddBooking(professional)}
+                            className="flex-1 px-3 py-2 rounded-lg bg-primary/20 text-primary hover:bg-primary/30 hover:scale-105 active:scale-95 transition-all duration-200 text-sm font-medium flex items-center justify-center gap-1"
+                          >
+                            <CalendarPlus size={14} />
+                            Add Booking
+                          </button>
+                          <button className="flex-1 px-3 py-2 rounded-lg bg-glass/30 border border-glass-border hover:bg-glass-highlight hover:scale-105 active:scale-95 transition-all duration-200 text-sm font-medium flex items-center justify-center gap-1">
                             <Phone size={14} />
                             Call
                           </button>
-                          <button className="flex-1 px-3 py-2 rounded-lg bg-glass/30 border border-glass-border hover:bg-glass-highlight hover:scale-105 active:scale-95 transition-all duration-200 text-sm font-medium flex items-center justify-center gap-1">
-                            <Mail size={14} />
-                            Email
-                          </button>
                           <button className="px-3 py-2 rounded-lg bg-glass/30 border border-glass-border hover:bg-glass-highlight hover:scale-105 active:scale-95 transition-all duration-200 text-sm font-medium">
-                            <User size={14} />
+                            <Mail size={14} />
                           </button>
                         </div>
                       </div>
@@ -292,6 +337,63 @@ export const FindHelp = () => {
           </div>
         )}
       </div>
+
+      {/* Booking Confirmation Dialog */}
+      <Dialog open={isBookingDialogOpen} onOpenChange={setIsBookingDialogOpen}>
+        <DialogContent className="sm:max-w-md bg-glass backdrop-blur-xl border border-glass-border shadow-glass">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-semibold text-foreground">
+              Confirm Booking
+            </DialogTitle>
+            <DialogDescription className="text-muted-foreground">
+              Add this professional to your upcoming bookings?
+            </DialogDescription>
+          </DialogHeader>
+          
+          {selectedProfessional && (
+            <div className="mt-4 space-y-4">
+              <div className="bg-glass/30 rounded-lg border border-glass-border p-4">
+                <div className="flex items-start gap-3">
+                  <div className="w-12 h-12 rounded-full bg-primary/20 border-2 border-primary/30 overflow-hidden flex-shrink-0">
+                    <img 
+                      src={selectedProfessional.image} 
+                      alt={selectedProfessional.name}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-foreground">{selectedProfessional.name}</h4>
+                    <p className="text-sm text-primary">{selectedProfessional.specialty}</p>
+                    <div className="flex items-center gap-1 mt-1">
+                      <Star size={12} className="text-yellow-500 fill-yellow-500" />
+                      <span className="text-xs text-muted-foreground">{selectedProfessional.rating}</span>
+                    </div>
+                  </div>
+                </div>
+                <p className="text-sm text-muted-foreground mt-3">{selectedProfessional.description}</p>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={confirmBooking}
+                  className="flex-1 p-3 rounded-lg bg-primary/20 text-primary hover:bg-primary/30 hover:scale-105 active:scale-95 transition-all duration-200 font-medium"
+                >
+                  Confirm Booking
+                </button>
+                <button
+                  onClick={() => {
+                    setIsBookingDialogOpen(false);
+                    setSelectedProfessional(null);
+                  }}
+                  className="flex-1 p-3 rounded-lg bg-glass/30 border border-glass-border hover:bg-glass-highlight hover:scale-105 active:scale-95 transition-all duration-200 font-medium"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

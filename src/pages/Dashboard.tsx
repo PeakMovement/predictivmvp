@@ -14,6 +14,73 @@ const metrics = [
   { name: "EWMA Trend", value: "+5.2%", status: "green" },
 ];
 
+// Demo health metrics for Today's Plan
+const healthMetrics = {
+  hrv: { value: 45, status: "low", change: -15 }, // HRV dropped by 15
+  strain: { value: 156, status: "high" },
+  sleep: { value: 7.5, status: "good" },
+  recovery: { value: 65, status: "moderate" }
+};
+
+const generateTodaysPlan = () => {
+  const recommendations = [];
+  
+  // Priority 1: Check HRV drop
+  if (healthMetrics.hrv.status === "low" && healthMetrics.hrv.change < -10) {
+    recommendations.push({
+      priority: "high",
+      title: "Recovery Day Recommended",
+      message: "Your HRV dropped significantly overnight. Swap today's training for mobility work or light stretching.",
+      icon: "🧘"
+    });
+  }
+  
+  // Priority 2: Check high strain
+  if (healthMetrics.strain.status === "high" && healthMetrics.strain.value > 150) {
+    recommendations.push({
+      priority: "medium",
+      title: "Reduce Training Load",
+      message: "Your strain is elevated. Consider a lighter session today—focus on technique over intensity.",
+      icon: "⚖️"
+    });
+  }
+  
+  // Priority 3: All metrics green - performance push
+  if (healthMetrics.hrv.status === "good" && 
+      healthMetrics.strain.status === "optimal" && 
+      healthMetrics.recovery.value > 75) {
+    recommendations.push({
+      priority: "low",
+      title: "Performance Day",
+      message: "All systems are optimal! This is a great day to add interval training or push intensity.",
+      icon: "🚀"
+    });
+  }
+  
+  // Default if no specific conditions met but some caution
+  if (recommendations.length === 0 && healthMetrics.recovery.value < 70) {
+    recommendations.push({
+      priority: "medium",
+      title: "Moderate Training",
+      message: "Your recovery is moderate. Stick to your planned session but listen to your body.",
+      icon: "💪"
+    });
+  }
+  
+  // If still no recommendations, give a general positive message
+  if (recommendations.length === 0) {
+    recommendations.push({
+      priority: "low",
+      title: "Balanced Day",
+      message: "Your metrics look balanced. Continue with your planned training session.",
+      icon: "✅"
+    });
+  }
+  
+  // Return top 2 recommendations
+  return recommendations.slice(0, 2);
+};
+
 const graphData = [
   {
     title: "EWMA Trend Analysis",
@@ -315,6 +382,56 @@ const RecommendationCard = () => (
   </div>
 );
 
+const TodaysPlanCard = () => {
+  const todaysRecommendations = generateTodaysPlan();
+
+  const getPriorityColor = (priority: string) => {
+    switch (priority) {
+      case "high": return "bg-red-500/10 border-red-500/30";
+      case "medium": return "bg-yellow-500/10 border-yellow-500/30";
+      case "low": return "bg-green-500/10 border-green-500/30";
+      default: return "bg-primary/10 border-primary/30";
+    }
+  };
+
+  return (
+    <div className="bg-glass backdrop-blur-xl border border-glass-border rounded-2xl p-6 shadow-glass hover:bg-glass-highlight hover:scale-105 hover:-translate-y-1 transition-all duration-300 ease-out animate-fade-in transform-gpu">
+      <div className="flex items-center gap-3 mb-6">
+        <div className="w-8 h-8 bg-primary/20 rounded-lg flex items-center justify-center hover:scale-110 transition-transform duration-200">
+          <Target size={16} className="text-primary" />
+        </div>
+        <h3 className="text-lg font-semibold text-foreground">Today's Plan</h3>
+      </div>
+      
+      <div className="space-y-4">
+        {todaysRecommendations.map((rec, index) => (
+          <div 
+            key={index}
+            className={cn(
+              "p-4 rounded-xl border transition-all duration-200 hover:scale-[1.02]",
+              getPriorityColor(rec.priority)
+            )}
+          >
+            <div className="flex items-start gap-3">
+              <span className="text-2xl flex-shrink-0">{rec.icon}</span>
+              <div className="flex-1">
+                <h4 className="font-semibold text-foreground mb-1">{rec.title}</h4>
+                <p className="text-sm text-muted-foreground leading-relaxed">{rec.message}</p>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+      
+      <div className="mt-4 pt-4 border-t border-glass-border">
+        <p className="text-xs text-muted-foreground text-center">
+          Based on your HRV ({healthMetrics.hrv.value}ms), Strain ({healthMetrics.strain.value}), and Sleep ({healthMetrics.sleep.value}h)
+        </p>
+      </div>
+    </div>
+  );
+};
+
 const DailyNudgeCard = () => {
   const [nudgeMessage, setNudgeMessage] = useState(generateDailyNudge());
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -602,6 +719,11 @@ export const Dashboard = () => {
         <div className="container mx-auto px-6 pt-8">
           {/* Welcome Header */}
           <WelcomeHeader />
+          
+          {/* Today's Plan Section */}
+          <div className="mb-8">
+            <TodaysPlanCard />
+          </div>
           
           {/* Section Header */}
           <div className="text-center mb-8 animate-fade-in">

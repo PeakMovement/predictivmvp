@@ -1,4 +1,4 @@
-import { TrendingUp, Target, AlertTriangle, FileText, Play, ChevronLeft, ChevronRight, RefreshCw, Download } from "lucide-react";
+import { TrendingUp, Target, AlertTriangle, FileText, Play, ChevronLeft, ChevronRight, RefreshCw, Download, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useState, useEffect } from "react";
@@ -17,9 +17,49 @@ const metrics = [
 // Demo health metrics for Today's Plan
 const healthMetrics = {
   hrv: { value: 45, status: "low", change: -15 }, // HRV dropped by 15
-  strain: { value: 156, status: "high" },
+  strain: { value: 156, status: "high", weeklyChange: 22 }, // Increased 22% this week
   sleep: { value: 7.5, status: "good" },
   recovery: { value: 65, status: "moderate" }
+};
+
+const generateAlerts = () => {
+  const alerts = [];
+  
+  const acwr = parseFloat(metrics.find(m => m.name === "Acute:Chronic Workload Ratio")?.value || "0");
+  const monotony = parseFloat(metrics.find(m => m.name === "Training Monotony")?.value || "0");
+  const strain = parseFloat(metrics.find(m => m.name === "Training Strain")?.value || "0");
+  const strainStatus = metrics.find(m => m.name === "Training Strain")?.status;
+  
+  // Critical alerts (red)
+  if (acwr > 1.5) {
+    alerts.push({
+      severity: "critical",
+      message: "Overload risk detected. ACWR is above safe threshold.",
+      metric: "ACWR",
+      value: acwr.toFixed(1)
+    });
+  }
+  
+  // Warning alerts (orange/yellow)
+  if (monotony > 2.0) {
+    alerts.push({
+      severity: "warning",
+      message: "Training is too repetitive. Add variation to your sessions.",
+      metric: "Monotony",
+      value: monotony.toFixed(1)
+    });
+  }
+  
+  if (strainStatus === "red" || healthMetrics.strain.weeklyChange > 15) {
+    alerts.push({
+      severity: "warning",
+      message: `Strain increased ${healthMetrics.strain.weeklyChange}% this week. Plan a deload.`,
+      metric: "Strain",
+      value: strain.toString()
+    });
+  }
+  
+  return alerts;
 };
 
 const generateTodaysPlan = () => {
@@ -382,6 +422,83 @@ const RecommendationCard = () => (
   </div>
 );
 
+const AlertsCard = () => {
+  const alerts = generateAlerts();
+
+  const getSeverityStyle = (severity: string) => {
+    switch (severity) {
+      case "critical":
+        return "bg-red-500/10 border-red-500/30 hover:bg-red-500/15";
+      case "warning":
+        return "bg-orange-500/10 border-orange-500/30 hover:bg-orange-500/15";
+      default:
+        return "bg-yellow-500/10 border-yellow-500/30 hover:bg-yellow-500/15";
+    }
+  };
+
+  const getSeverityIcon = (severity: string) => {
+    return severity === "critical" ? "🚨" : "⚠️";
+  };
+
+  if (alerts.length === 0) {
+    return (
+      <div className="bg-glass backdrop-blur-xl border border-glass-border rounded-2xl p-6 shadow-glass hover:bg-glass-highlight hover:scale-105 hover:-translate-y-1 transition-all duration-300 ease-out animate-fade-in transform-gpu">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="w-8 h-8 bg-green-500/20 rounded-lg flex items-center justify-center hover:scale-110 transition-transform duration-200">
+            <AlertCircle size={16} className="text-green-500" />
+          </div>
+          <h3 className="text-lg font-semibold text-foreground">Alerts</h3>
+        </div>
+        <div className="flex items-center gap-3 p-4 rounded-xl bg-green-500/10 border border-green-500/30">
+          <span className="text-2xl">✅</span>
+          <p className="text-sm text-muted-foreground">No alerts. All metrics within safe ranges.</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="bg-glass backdrop-blur-xl border border-glass-border rounded-2xl p-6 shadow-glass hover:bg-glass-highlight hover:scale-105 hover:-translate-y-1 transition-all duration-300 ease-out animate-fade-in transform-gpu">
+      <div className="flex items-center gap-3 mb-4">
+        <div className="w-8 h-8 bg-red-500/20 rounded-lg flex items-center justify-center hover:scale-110 transition-transform duration-200 animate-bounce-subtle">
+          <AlertCircle size={16} className="text-red-500" />
+        </div>
+        <h3 className="text-lg font-semibold text-foreground">Alerts</h3>
+        <span className="ml-auto text-xs font-medium px-2 py-1 rounded-full bg-red-500/20 text-red-400">
+          {alerts.length}
+        </span>
+      </div>
+      
+      <div className="space-y-3">
+        {alerts.map((alert, index) => (
+          <div 
+            key={index}
+            className={cn(
+              "p-3 rounded-lg border transition-all duration-200",
+              getSeverityStyle(alert.severity)
+            )}
+          >
+            <div className="flex items-start gap-3">
+              <span className="text-xl flex-shrink-0 animate-bounce-subtle">{getSeverityIcon(alert.severity)}</span>
+              <div className="flex-1">
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-xs font-semibold text-foreground uppercase tracking-wide">
+                    {alert.metric}
+                  </span>
+                  <span className="text-xs font-mono text-muted-foreground">
+                    {alert.value}
+                  </span>
+                </div>
+                <p className="text-sm text-muted-foreground leading-tight">{alert.message}</p>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
 const TodaysPlanCard = () => {
   const todaysRecommendations = generateTodaysPlan();
 
@@ -741,6 +858,11 @@ export const Dashboard = () => {
           {/* Daily Nudge Section */}
           <div className="mb-8">
             <DailyNudgeCard />
+          </div>
+
+          {/* Alerts Section */}
+          <div className="mb-8">
+            <AlertsCard />
           </div>
 
           {/* Trend Analysis Carousel */}

@@ -32,6 +32,20 @@ export const Settings = () => {
     localStorage.setItem("primary-hue", hue.toString());
   };
 
+  // Convert HSL to HEX
+  const hslToHex = (h: number, s: number, l: number) => {
+    l /= 100;
+    const a = s * Math.min(l, 1 - l) / 100;
+    const f = (n: number) => {
+      const k = (n + h / 30) % 12;
+      const color = l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1);
+      return Math.round(255 * color).toString(16).padStart(2, '0');
+    };
+    return `#${f(0)}${f(8)}${f(4)}`.toUpperCase();
+  };
+
+  const hexColor = hslToHex(primaryHue, 70, 50);
+
   const handleColorChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const hue = parseInt(e.target.value);
     setPrimaryHue(hue);
@@ -238,68 +252,103 @@ export const Settings = () => {
               {/* Color Picker */}
               <div>
                 <Label className="text-sm text-muted-foreground mb-3 block">Primary Color</Label>
-                <div className="flex flex-col items-center space-y-4">
+                <div className="flex flex-col items-center space-y-6">
                   {/* Circular Color Spectrum Picker */}
                   <div 
-                    className="relative w-48 h-48 cursor-pointer select-none"
+                    className="relative w-56 h-56 cursor-pointer select-none group"
                     onMouseDown={handleMouseDown}
                     onMouseMove={handleMouseMove}
                   >
+                    {/* Outer glow ring for dark mode / shadow for light mode */}
+                    <div 
+                      className="absolute inset-0 rounded-full light:shadow-[0_8px_32px_rgba(0,0,0,0.08)] dark:shadow-none transition-all duration-300"
+                      style={{
+                        boxShadow: theme === 'dark' 
+                          ? `0 0 60px hsl(${primaryHue}, 70%, 50%, 0.4), 0 0 100px hsl(${primaryHue}, 70%, 50%, 0.2)` 
+                          : undefined
+                      }}
+                    />
+                    
                     {/* Color wheel background */}
                     <div 
-                      className="absolute inset-0 rounded-full transition-transform hover:scale-105 duration-200"
+                      className="absolute inset-0 rounded-full transition-transform group-hover:scale-[1.02] duration-300 ease-out"
                       style={{
                         background: `conic-gradient(
                           hsl(0, 70%, 50%),
-                          hsl(30, 70%, 50%),
+                          hsl(20, 70%, 50%),
+                          hsl(40, 70%, 50%),
                           hsl(60, 70%, 50%),
-                          hsl(90, 70%, 50%),
+                          hsl(80, 70%, 50%),
+                          hsl(100, 70%, 50%),
                           hsl(120, 70%, 50%),
-                          hsl(150, 70%, 50%),
+                          hsl(140, 70%, 50%),
+                          hsl(160, 70%, 50%),
                           hsl(180, 70%, 50%),
-                          hsl(210, 70%, 50%),
+                          hsl(200, 70%, 50%),
+                          hsl(220, 70%, 50%),
                           hsl(240, 70%, 50%),
-                          hsl(270, 70%, 50%),
+                          hsl(260, 70%, 50%),
+                          hsl(280, 70%, 50%),
                           hsl(300, 70%, 50%),
-                          hsl(330, 70%, 50%),
+                          hsl(320, 70%, 50%),
+                          hsl(340, 70%, 50%),
                           hsl(360, 70%, 50%)
                         )`,
-                        boxShadow: '0 4px 20px rgba(0,0,0,0.2), inset 0 0 0 1px rgba(255,255,255,0.1)'
+                        boxShadow: theme === 'dark' 
+                          ? 'inset 0 0 0 1px rgba(255,255,255,0.1), 0 4px 24px rgba(0,0,0,0.3)'
+                          : 'inset 0 0 0 1px rgba(0,0,0,0.05), 0 2px 16px rgba(0,0,0,0.08)'
                       }}
                     />
                     
                     {/* Selected color indicator */}
                     <div 
                       className={cn(
-                        "absolute w-8 h-8 rounded-full border-4 border-background shadow-lg transition-all duration-150 pointer-events-none z-20",
+                        "absolute w-10 h-10 rounded-full border-[3px] transition-all duration-150 pointer-events-none z-20",
+                        "light:border-white light:shadow-[0_4px_16px_rgba(0,0,0,0.15)]",
+                        "dark:border-background dark:shadow-lg",
                         isDragging && "scale-125"
                       )}
                       style={{
                         backgroundColor: `hsl(${primaryHue}, 70%, 50%)`,
-                        top: `${50 + 42 * Math.sin((primaryHue - 90) * Math.PI / 180)}%`,
-                        left: `${50 + 42 * Math.cos((primaryHue - 90) * Math.PI / 180)}%`,
+                        top: `${50 + 44 * Math.sin((primaryHue - 90) * Math.PI / 180)}%`,
+                        left: `${50 + 44 * Math.cos((primaryHue - 90) * Math.PI / 180)}%`,
                         transform: 'translate(-50%, -50%)',
-                        boxShadow: `0 0 20px hsl(${primaryHue}, 70%, 50%), 0 0 40px hsl(${primaryHue}, 70%, 50%, 0.5)`
+                        boxShadow: theme === 'dark'
+                          ? `0 0 24px hsl(${primaryHue}, 70%, 50%, 0.8), 0 0 48px hsl(${primaryHue}, 70%, 50%, 0.4), 0 4px 12px rgba(0,0,0,0.3)`
+                          : `0 0 16px hsl(${primaryHue}, 70%, 50%, 0.5), 0 4px 16px rgba(0,0,0,0.15)`
                       }}
                     />
                     
                     {/* Center preview circle */}
                     <div 
-                      className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-20 h-20 rounded-full border-4 border-background shadow-xl transition-all duration-150"
+                      className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-24 h-24 rounded-full border-[3px] transition-all duration-150 light:border-white dark:border-background"
                       style={{ 
                         backgroundColor: `hsl(${primaryHue}, 70%, 50%)`,
-                        boxShadow: `0 0 30px hsl(${primaryHue}, 70%, 50%), inset 0 2px 10px rgba(255,255,255,0.3)`
+                        boxShadow: theme === 'dark'
+                          ? `0 0 40px hsl(${primaryHue}, 70%, 50%, 0.6), inset 0 2px 16px rgba(255,255,255,0.2), 0 8px 24px rgba(0,0,0,0.4)`
+                          : `0 0 24px hsl(${primaryHue}, 70%, 50%, 0.3), inset 0 2px 8px rgba(255,255,255,0.5), 0 4px 16px rgba(0,0,0,0.12)`
                       }}
                     />
                   </div>
                   
                   {/* Color info */}
-                  <div className="text-center space-y-1">
-                    <p className="text-sm font-medium text-foreground">
-                      HSL({primaryHue}°, 70%, 50%)
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {isDragging ? "Adjusting color..." : "Click and drag to change color"}
+                  <div className="w-full space-y-3">
+                    <div className="flex items-center justify-center gap-4">
+                      <div className="text-center">
+                        <p className="text-xs text-muted-foreground mb-1">HSL</p>
+                        <p className="text-sm font-mono font-medium text-foreground bg-glass/50 px-3 py-1.5 rounded-lg border border-glass-border">
+                          {primaryHue}°, 70%, 50%
+                        </p>
+                      </div>
+                      <div className="text-center">
+                        <p className="text-xs text-muted-foreground mb-1">HEX</p>
+                        <p className="text-sm font-mono font-medium text-foreground bg-glass/50 px-3 py-1.5 rounded-lg border border-glass-border">
+                          {hexColor}
+                        </p>
+                      </div>
+                    </div>
+                    <p className="text-xs text-center text-muted-foreground">
+                      {isDragging ? "✨ Adjusting color..." : "Click and drag around the circle to select"}
                     </p>
                   </div>
                 </div>

@@ -13,6 +13,7 @@ import { Schedule } from "@/pages/Schedule";
 import { YourPlan } from "@/pages/YourPlan";
 import { Settings } from "@/pages/Settings";
 import { FindHelp } from "@/pages/FindHelp";
+import { DataUpload } from "@/pages/DataUpload";
 import { Settings as SettingsIcon } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
@@ -34,6 +35,8 @@ const App = () => {
         return <div key="schedule" className="animate-fade-in"><Schedule /></div>;
       case "your-plan":
         return <div key="your-plan" className="animate-fade-in"><YourPlan /></div>;
+      case "data-upload":
+        return <div key="data-upload" className="animate-fade-in"><DataUpload /></div>;
       case "find-help":
         return <div key="find-help" className="animate-fade-in"><FindHelp /></div>;
       case "settings":

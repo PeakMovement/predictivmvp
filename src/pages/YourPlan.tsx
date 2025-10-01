@@ -132,14 +132,14 @@ const generateWeeklyReportPDF = () => {
   doc.setTextColor(100, 100, 100);
   doc.text(`Generated on ${format(new Date(), "PPP")}`, pageWidth / 2, yPosition, { align: "center" });
   
-  yPosition += 15;
+  yPosition += 20;
   doc.setTextColor(0, 0, 0);
 
   // Current Risk Graphs Section
   doc.setFontSize(16);
   doc.setFont("helvetica", "bold");
   doc.text("Current Risk Graphs", 20, yPosition);
-  yPosition += 10;
+  yPosition += 12;
 
   doc.setFontSize(10);
   doc.setFont("helvetica", "normal");
@@ -160,7 +160,45 @@ const generateWeeklyReportPDF = () => {
     yPosition += 8;
   });
 
+  yPosition += 15;
+
+  // Weekly Insights Section
+  doc.setFontSize(16);
+  doc.setFont("helvetica", "bold");
+  doc.text("Weekly Insights", 20, yPosition);
+  yPosition += 12;
+
+  doc.setFontSize(10);
+  doc.setFont("helvetica", "normal");
+  doc.setTextColor(60, 60, 60);
+  const insightText = "Your recovery was below target this week. Training load was high on Wednesday, causing increased strain. Consider adjusting your upcoming sessions to allow for better recovery.";
+  const splitInsight = doc.splitTextToSize(insightText, pageWidth - 50);
+  doc.text(splitInsight, 25, yPosition);
+  yPosition += splitInsight.length * 6 + 10;
+
+  // Recommendations Section
+  doc.setFontSize(14);
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(0, 0, 0);
+  doc.text("Recommendations for Next Week", 25, yPosition);
   yPosition += 10;
+
+  doc.setFontSize(10);
+  doc.setFont("helvetica", "normal");
+  doc.setTextColor(60, 60, 60);
+  
+  const recommendations = [
+    "Add 1 recovery session focusing on mobility and light stretching",
+    "Reduce sprint volume by 15-20% to prevent overtraining",
+    "Prioritize sleep quality with 8+ hours per night"
+  ];
+
+  recommendations.forEach((rec) => {
+    doc.text(`• ${rec}`, 30, yPosition, { maxWidth: pageWidth - 60 });
+    yPosition += 8;
+  });
+
+  yPosition += 15;
 
   // Accepted Challenges Section
   doc.setFontSize(16);
@@ -187,7 +225,7 @@ const generateWeeklyReportPDF = () => {
     yPosition += 10;
   });
 
-  yPosition += 5;
+  yPosition += 10;
 
   // Upcoming Bookings Section
   if (yPosition > 220) {
@@ -198,7 +236,7 @@ const generateWeeklyReportPDF = () => {
   doc.setFontSize(16);
   doc.setFont("helvetica", "bold");
   doc.text("Upcoming Bookings", 20, yPosition);
-  yPosition += 10;
+  yPosition += 12;
 
   doc.setFontSize(10);
   doc.setFont("helvetica", "normal");
@@ -221,9 +259,9 @@ const generateWeeklyReportPDF = () => {
     yPosition += 10;
   });
 
-  yPosition += 5;
+  yPosition += 15;
 
-  // Highlights Section
+  // Weekly Highlights Section
   if (yPosition > 240) {
     doc.addPage();
     yPosition = 20;
@@ -232,10 +270,11 @@ const generateWeeklyReportPDF = () => {
   doc.setFontSize(16);
   doc.setFont("helvetica", "bold");
   doc.text("Weekly Highlights", 20, yPosition);
-  yPosition += 10;
+  yPosition += 12;
 
   doc.setFontSize(10);
   doc.setFont("helvetica", "normal");
+  doc.setTextColor(60, 60, 60);
   doc.text("• Best Training Day: Tuesday", 25, yPosition);
   yPosition += 8;
   doc.text("• Total Training Sessions: 5", 25, yPosition);
@@ -243,6 +282,8 @@ const generateWeeklyReportPDF = () => {
   doc.text("• Average Strain: 142 TSS", 25, yPosition);
   yPosition += 8;
   doc.text("• Recovery Score: 8.2/10", 25, yPosition);
+  yPosition += 8;
+  doc.text("• Peak Heart Rate: 178 bpm", 25, yPosition);
 
   // Save the PDF
   doc.save(`weekly-health-summary-${format(new Date(), "yyyy-MM-dd")}.pdf`);
@@ -508,7 +549,7 @@ const WeeklyInsightsSection = () => {
         </div>
 
         {/* Recommendations */}
-        <div className="space-y-3">
+        <div className="space-y-3 mb-6">
           <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
             Recommendations for Next Week
           </h4>
@@ -527,6 +568,15 @@ const WeeklyInsightsSection = () => {
             </div>
           </div>
         </div>
+
+        {/* Download Button */}
+        <button
+          onClick={generateWeeklyReportPDF}
+          className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-purple-500/20 text-purple-400 rounded-lg border border-purple-400/30 hover:bg-purple-500/30 hover:scale-105 active:scale-95 transition-all duration-200 font-medium shadow-glow"
+        >
+          <Download size={18} />
+          <span>Download Weekly Report</span>
+        </button>
       </div>
 
       {/* Info Dialog */}

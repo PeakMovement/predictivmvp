@@ -1,7 +1,10 @@
-import { TrendingUp, Target, AlertTriangle, FileText, Play, ChevronLeft, ChevronRight, RefreshCw } from "lucide-react";
+import { TrendingUp, Target, AlertTriangle, FileText, Play, ChevronLeft, ChevronRight, RefreshCw, Download } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useState, useEffect } from "react";
+import { toast } from "@/hooks/use-toast";
+import jsPDF from "jspdf";
+import { format } from "date-fns";
 
 const metrics = [
   { name: "Acute:Chronic Workload Ratio", value: "1.2", status: "green" },
@@ -111,6 +114,157 @@ const WelcomeHeader = () => (
     </div>
   </div>
 );
+
+const generateWeeklyReportPDF = () => {
+  const doc = new jsPDF();
+  const pageWidth = doc.internal.pageSize.getWidth();
+  let yPosition = 20;
+
+  // Header
+  doc.setFontSize(24);
+  doc.setFont("helvetica", "bold");
+  doc.text("Weekly Health Summary", pageWidth / 2, yPosition, { align: "center" });
+  
+  yPosition += 15;
+  doc.setFontSize(10);
+  doc.setFont("helvetica", "normal");
+  doc.setTextColor(100, 100, 100);
+  doc.text(`Generated on ${format(new Date(), "PPP")}`, pageWidth / 2, yPosition, { align: "center" });
+  
+  yPosition += 20;
+  doc.setTextColor(0, 0, 0);
+
+  // Current Risk Graphs Section
+  doc.setFontSize(16);
+  doc.setFont("helvetica", "bold");
+  doc.text("Current Risk Graphs", 20, yPosition);
+  yPosition += 12;
+
+  doc.setFontSize(10);
+  doc.setFont("helvetica", "normal");
+  
+  graphData.forEach((graph) => {
+    const riskColor = graph.riskZone === "optimal" ? [34, 197, 94] : 
+                      graph.riskZone === "caution" ? [251, 146, 60] : 
+                      [239, 68, 68];
+    
+    doc.setTextColor(0, 0, 0);
+    doc.text(`• ${graph.title}:`, 25, yPosition);
+    doc.text(`${graph.currentValue}`, 80, yPosition);
+    
+    doc.setTextColor(riskColor[0], riskColor[1], riskColor[2]);
+    doc.text(`(${graph.riskZone.toUpperCase()})`, 110, yPosition);
+    doc.setTextColor(0, 0, 0);
+    
+    yPosition += 8;
+  });
+
+  yPosition += 15;
+
+  // Weekly Insights Section
+  doc.setFontSize(16);
+  doc.setFont("helvetica", "bold");
+  doc.text("Weekly Insights", 20, yPosition);
+  yPosition += 12;
+
+  doc.setFontSize(10);
+  doc.setFont("helvetica", "normal");
+  doc.setTextColor(60, 60, 60);
+  const insightText = "Your recovery was below target this week. Training load was high on Wednesday, causing increased strain. Consider adjusting your upcoming sessions to allow for better recovery.";
+  const splitInsight = doc.splitTextToSize(insightText, pageWidth - 50);
+  doc.text(splitInsight, 25, yPosition);
+  yPosition += splitInsight.length * 6 + 10;
+
+  // Recommendations Section
+  doc.setFontSize(14);
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(0, 0, 0);
+  doc.text("Recommendations for Next Week", 25, yPosition);
+  yPosition += 10;
+
+  doc.setFontSize(10);
+  doc.setFont("helvetica", "normal");
+  doc.setTextColor(60, 60, 60);
+  
+  recommendations.forEach((rec) => {
+    doc.text(`• ${rec}`, 30, yPosition, { maxWidth: pageWidth - 60 });
+    yPosition += 8;
+  });
+
+  yPosition += 15;
+
+  // Weekly Highlights Section
+  if (yPosition > 240) {
+    doc.addPage();
+    yPosition = 20;
+  }
+
+  doc.setFontSize(16);
+  doc.setFont("helvetica", "bold");
+  doc.text("Weekly Highlights", 20, yPosition);
+  yPosition += 12;
+
+  doc.setFontSize(10);
+  doc.setFont("helvetica", "normal");
+  doc.setTextColor(60, 60, 60);
+  doc.text("• Best Training Day: Tuesday", 25, yPosition);
+  yPosition += 8;
+  doc.text("• Total Training Sessions: 5", 25, yPosition);
+  yPosition += 8;
+  doc.text("• Average Strain: 142 TSS", 25, yPosition);
+  yPosition += 8;
+  doc.text("• Recovery Score: 8.2/10", 25, yPosition);
+  yPosition += 8;
+  doc.text("• Peak Heart Rate: 178 bpm", 25, yPosition);
+
+  // Save the PDF
+  doc.save(`weekly-health-summary-${format(new Date(), "yyyy-MM-dd")}.pdf`);
+};
+
+const WeeklyInsightsCard = () => {
+  const handleRunReport = () => {
+    toast({
+      title: "Weekly Report Generated (Demo)",
+      description: "Your weekly health summary has been created.",
+    });
+    generateWeeklyReportPDF();
+  };
+
+  return (
+    <div className="bg-glass backdrop-blur-xl border border-glass-border rounded-2xl p-6 shadow-glass hover:bg-glass-highlight hover:scale-105 hover:-translate-y-1 transition-all duration-300 ease-out animate-fade-in transform-gpu">
+      <div className="flex items-center gap-3 mb-4">
+        <div className="w-8 h-8 bg-primary/20 rounded-lg flex items-center justify-center hover:scale-110 transition-transform duration-200">
+          <TrendingUp size={16} className="text-primary" />
+        </div>
+        <h3 className="text-lg font-semibold text-foreground">Weekly Insights</h3>
+      </div>
+      
+      <p className="text-sm text-muted-foreground mb-6 leading-relaxed">
+        Your recovery was below target this week. Training load was high on Wednesday, causing increased strain. Consider adjusting your upcoming sessions to allow for better recovery.
+      </p>
+
+      <div className="mb-6">
+        <h4 className="text-sm font-semibold text-foreground mb-3">Recommendations</h4>
+        <div className="space-y-2">
+          {recommendations.map((rec, index) => (
+            <div key={index} className="flex items-start gap-2">
+              <div className="w-1.5 h-1.5 bg-primary rounded-full mt-2 flex-shrink-0 animate-bounce-subtle" />
+              <p className="text-sm text-muted-foreground">{rec}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <button
+        onClick={handleRunReport}
+        className="w-full bg-secondary/80 hover:bg-secondary text-secondary-foreground border border-glass-border rounded-lg px-4 py-3 flex items-center justify-center gap-2 transition-all duration-200 hover:scale-[1.02] hover:shadow-glow active:scale-95"
+      >
+        <Download size={16} />
+        <span className="font-medium">Run Weekly Report (Demo)</span>
+      </button>
+    </div>
+  );
+};
 
 const RecommendationCard = () => (
   <div className="bg-glass backdrop-blur-xl border border-glass-border rounded-2xl p-6 shadow-glass hover:bg-glass-highlight hover:scale-105 hover:-translate-y-1 transition-all duration-300 ease-out animate-fade-in transform-gpu">
@@ -472,9 +626,9 @@ export const Dashboard = () => {
             <GraphCarousel />
           </div>
 
-          {/* Recommendations and Focus Areas */}
+          {/* Weekly Insights and Focus Areas */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <RecommendationCard />
+            <WeeklyInsightsCard />
             <FocusAreasCard />
           </div>
         </div>

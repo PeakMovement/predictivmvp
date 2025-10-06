@@ -10,6 +10,8 @@ import {
   getActiveProfileId
 } from "@/lib/healthDataStore";
 import { AlertCircle } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { getDailyInsight, getToastVariant } from "@/lib/dailyInsights";
 
 // Calculate average stats for a profile
 const calculateProfileStats = (data: any[]) => {
@@ -28,11 +30,12 @@ const profileDescriptors: Record<DemoProfileType, string> = {
 };
 
 export const DemoProfileSelector = () => {
-  const { refreshData, setDayIndex } = useLiveData();
+  const { refreshData, setDayIndex, csvData } = useLiveData();
   const [activeProfile, setActiveProfile] = useState<DemoProfileType>(getActiveDemoProfile());
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [showUploadNotice, setShowUploadNotice] = useState(false);
   const lastClickTime = useRef(0);
+  const { toast } = useToast();
 
   // Check if custom data is active
   useEffect(() => {
@@ -64,6 +67,18 @@ export const DemoProfileSelector = () => {
     setTimeout(() => {
       refreshData();
       setIsTransitioning(false);
+      
+      // Show profile switch toast
+      const profile = demoProfiles[profileType];
+      const dayData = csvData[0];
+      const insight = getDailyInsight(dayData);
+      
+      toast({
+        title: `${profile.emoji} ${profile.name.replace(" Profile", "")} Active`,
+        description: insight.message,
+        variant: getToastVariant(insight.level),
+        duration: 3500,
+      });
     }, 300);
 
     // Hide notice after switching back to demo

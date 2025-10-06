@@ -8,6 +8,7 @@ import { format } from "date-fns";
 import { useLiveData } from "@/contexts/LiveDataContext";
 import { HealthDataRow } from "@/lib/healthDataStore";
 import { FloatingNextDayButton } from "@/components/FloatingNextDayButton";
+import { DemoProfileSelector } from "@/components/DemoProfileSelector";
 
 // Helper to parse current day metrics
 const parseMetrics = (data: HealthDataRow | null) => {
@@ -1066,6 +1067,9 @@ export const Dashboard = () => {
         <div className="container mx-auto px-6 pt-8">
           {/* Welcome Header */}
           <WelcomeHeader />
+          
+          {/* Demo Profile Selector */}
+          <DemoProfileSelector />
           
           {/* Today's Plan Section */}
           <div className="mb-8">

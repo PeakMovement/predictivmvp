@@ -5,6 +5,7 @@ import { Card } from "@/components/ui/card";
 import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { hasUploadedData, getAllProfiles, saveProfile, getActiveProfileId, setActiveProfileId, resetToDemo, ClientProfile, HealthDataRow } from "@/lib/healthDataStore";
+import { useLiveData } from "@/contexts/LiveDataContext";
 import {
   Select,
   SelectContent,
@@ -28,6 +29,7 @@ const requiredColumns = [
 ];
 
 export const DataUpload = () => {
+  const { refreshData } = useLiveData();
   const [csvData, setCsvData] = useState<HealthDataRow[]>([]);
   const [fileName, setFileName] = useState<string>("");
   const [isValidated, setIsValidated] = useState(false);
@@ -154,6 +156,7 @@ export const DataUpload = () => {
 
     saveProfile(profile);
     setActiveProfile(profile.id);
+    refreshData(); // Refresh the LiveDataContext
     
     toast({
       title: "Data applied successfully",
@@ -183,6 +186,7 @@ export const DataUpload = () => {
   const handleProfileChange = (profileId: string) => {
     setActiveProfileId(profileId);
     setActiveProfile(profileId);
+    refreshData(); // Refresh the LiveDataContext
     
     if (profileId === "demo") {
       toast({
@@ -207,6 +211,7 @@ export const DataUpload = () => {
     setCsvData([]);
     setFileName("");
     setIsValidated(false);
+    refreshData(); // Refresh the LiveDataContext
     
     toast({
       title: "Reset Complete",

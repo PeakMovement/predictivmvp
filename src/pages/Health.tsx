@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Heart, Activity, Zap, Moon, Brain, Footprints, ArrowLeft, TrendingUp } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useLiveData } from "@/contexts/LiveDataContext";
 
 const healthMetrics = [
   { 
@@ -198,7 +199,99 @@ const DetailView = ({ metric, onBack }: { metric: typeof healthMetrics[0]; onBac
 };
 
 export const Health = () => {
-  const [selectedMetric, setSelectedMetric] = useState<typeof healthMetrics[0] | null>(null);
+  const { currentDayData, csvData, currentDayIndex } = useLiveData();
+  const [selectedMetric, setSelectedMetric] = useState<any>(null);
+
+  // Generate health metrics from live data
+  const healthMetrics = useMemo(() => {
+    if (!currentDayData) return [];
+    
+    const dataUpToNow = csvData.slice(Math.max(0, currentDayIndex - 6), currentDayIndex + 1);
+    
+    const hrv = parseFloat(currentDayData.HRV || "42");
+    const restingHR = parseFloat(currentDayData.RestingHR || "52");
+    const sleepHours = parseFloat(currentDayData.SleepHours || "7.2");
+    const sleepScore = parseFloat(currentDayData.SleepScore || "85");
+    const strain = parseFloat(currentDayData.Strain || "120");
+    
+    return [
+      { 
+        id: "hrv", 
+        name: "HRV", 
+        value: hrv.toFixed(0), 
+        unit: "ms", 
+        change: "+8.2%", 
+        changeType: hrv >= 50 ? "positive" : "negative",
+        icon: Heart,
+        sparklineData: dataUpToNow.map(d => parseFloat(d.HRV || "42")),
+        insights: [
+          hrv >= 50 ? "Your HRV is in a healthy range" : "HRV below optimal - prioritize recovery",
+          "Monitor daily trends for best results",
+          "Sleep quality directly impacts HRV"
+        ]
+      },
+      { 
+        id: "resting-hr", 
+        name: "Resting HR", 
+        value: restingHR.toFixed(0), 
+        unit: "bpm", 
+        change: "-2.1%", 
+        changeType: "positive",
+        icon: Activity,
+        sparklineData: dataUpToNow.map(d => parseFloat(d.RestingHR || "52")),
+        insights: [
+          "Resting heart rate indicates fitness level",
+          "Lower values generally indicate better fitness",
+          "Sudden increases may signal overtraining"
+        ]
+      },
+      { 
+        id: "sleep", 
+        name: "Sleep", 
+        value: sleepHours.toFixed(1), 
+        unit: "hours", 
+        change: sleepHours >= 7 ? "+2.5%" : "-5.3%", 
+        changeType: sleepHours >= 7 ? "positive" : "negative",
+        icon: Moon,
+        sparklineData: dataUpToNow.map(d => parseFloat(d.SleepHours || "7.2")),
+        insights: [
+          sleepHours >= 7 ? "Sleep duration within optimal range" : "Sleep duration below optimal - aim for 7-9 hours",
+          "Consistent sleep schedule improves recovery",
+          "Sleep quality matters as much as quantity"
+        ]
+      },
+      { 
+        id: "strain", 
+        name: "Strain", 
+        value: strain.toFixed(0), 
+        unit: "score", 
+        change: strain > 130 ? "+12.4%" : "-3.2%", 
+        changeType: strain > 150 ? "negative" : "positive",
+        icon: Zap,
+        sparklineData: dataUpToNow.map(d => parseFloat(d.Strain || "120")),
+        insights: [
+          strain > 150 ? "Strain levels elevated - consider deload" : "Strain levels well-managed",
+          "Balance high strain days with recovery",
+          "Monitor cumulative fatigue"
+        ]
+      },
+      { 
+        id: "sleep-score", 
+        name: "Sleep Score", 
+        value: sleepScore.toFixed(0), 
+        unit: "/100", 
+        change: sleepScore >= 75 ? "+5.2%" : "-8.1%", 
+        changeType: sleepScore >= 75 ? "positive" : "negative",
+        icon: Brain,
+        sparklineData: dataUpToNow.map(d => parseFloat(d.SleepScore || "85")),
+        insights: [
+          sleepScore >= 75 ? "Sleep quality is good" : "Sleep quality needs improvement",
+          "Optimize sleep environment and routine",
+          "Recovery depends heavily on sleep quality"
+        ]
+      },
+    ];
+  }, [currentDayData, csvData, currentDayIndex]);
 
   if (selectedMetric) {
     return <DetailView metric={selectedMetric} onBack={() => setSelectedMetric(null)} />;

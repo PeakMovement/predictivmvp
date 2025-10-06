@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { BottomNavigation } from "@/components/BottomNavigation";
+import { LiveDataProvider } from "@/contexts/LiveDataContext";
 import { Dashboard } from "@/pages/Dashboard";
 import { Training } from "@/pages/Training";
 import { Health } from "@/pages/Health";
@@ -49,9 +50,10 @@ const App = () => {
   return (
     <ThemeProvider defaultTheme="dark" storageKey="fitness-app-theme">
       <QueryClientProvider client={queryClient}>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
+        <LiveDataProvider>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
           <div className="relative overflow-hidden">
             <ThemeToggle />
             <Tooltip>
@@ -84,7 +86,8 @@ const App = () => {
             </div>
             <BottomNavigation activeTab={activeTab} onTabChange={setActiveTab} />
           </div>
-        </TooltipProvider>
+          </TooltipProvider>
+        </LiveDataProvider>
       </QueryClientProvider>
     </ThemeProvider>
   );

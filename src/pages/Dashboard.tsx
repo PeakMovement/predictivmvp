@@ -5,11 +5,43 @@ import { useState, useEffect } from "react";
 import { toast } from "@/hooks/use-toast";
 import jsPDF from "jspdf";
 import { format } from "date-fns";
-import { getLatestMetrics, hasUploadedData, getTrendData, getLastNDays, getWeeklyAverage } from "@/lib/healthDataStore";
+import { useLiveData } from "@/contexts/LiveDataContext";
+import { HealthDataRow } from "@/lib/healthDataStore";
 
-// Get dynamic metrics from uploaded data or demo fallback
-const getMetrics = () => {
-  const latest = getLatestMetrics();
+// Helper to parse current day metrics
+const parseMetrics = (data: HealthDataRow | null) => {
+  if (!data) {
+    return {
+      acwr: 1.2,
+      monotony: 2.4,
+      strain: 156,
+      trainingLoad: 420,
+      ewma: 5.2,
+      hrv: 45,
+      sleepHours: 7.5,
+      sleepScore: 85,
+      restingHR: 52,
+      maxHR: 178
+    };
+  }
+  
+  return {
+    acwr: parseFloat(data.ACWR || "1.2"),
+    monotony: parseFloat(data.Monotony || "2.4"),
+    strain: parseFloat(data.Strain || "156"),
+    trainingLoad: parseFloat(data.TrainingLoad || "420"),
+    ewma: parseFloat(data.EWMA || "5.2"),
+    hrv: parseFloat(data.HRV || "45"),
+    sleepHours: parseFloat(data.SleepHours || "7.5"),
+    sleepScore: parseFloat(data.SleepScore || "85"),
+    restingHR: parseFloat(data.RestingHR || "52"),
+    maxHR: parseFloat(data.MaxHR || "178")
+  };
+};
+
+// Get dynamic metrics from current day data
+const getMetrics = (currentData: HealthDataRow | null) => {
+  const latest = parseMetrics(currentData);
   
   return [
     { name: "Acute:Chronic Workload Ratio", value: latest.acwr.toFixed(1), status: latest.acwr > 1.5 ? "red" : latest.acwr > 1.3 ? "yellow" : "green" },
@@ -21,8 +53,8 @@ const getMetrics = () => {
 };
 
 // Get dynamic health metrics
-const getHealthMetrics = () => {
-  const latest = getLatestMetrics();
+const getHealthMetrics = (currentData: HealthDataRow | null) => {
+  const latest = parseMetrics(currentData);
   
   return {
     hrv: { value: latest.hrv, status: latest.hrv < 50 ? "low" : latest.hrv < 65 ? "moderate" : "good", change: -15 },
@@ -32,10 +64,10 @@ const getHealthMetrics = () => {
   };
 };
 
-const generateAlerts = () => {
+const generateAlerts = (currentData: HealthDataRow | null) => {
   const alerts = [];
-  const metrics = getMetrics();
-  const healthMetrics = getHealthMetrics();
+  const metrics = getMetrics(currentData);
+  const healthMetrics = getHealthMetrics(currentData);
   
   const acwr = parseFloat(metrics.find(m => m.name === "Acute:Chronic Workload Ratio")?.value || "0");
   const monotony = parseFloat(metrics.find(m => m.name === "Training Monotony")?.value || "0");
@@ -80,9 +112,9 @@ const generateAlerts = () => {
   return alerts;
 };
 
-const generateTodaysPlan = () => {
+const generateTodaysPlan = (currentData: HealthDataRow | null) => {
   const recommendations = [];
-  const healthMetrics = getHealthMetrics();
+  const healthMetrics = getHealthMetrics(currentData);
   
   // Priority 1: Check HRV drop
   if (healthMetrics.hrv.status === "low" && healthMetrics.hrv.change < -10) {
@@ -150,13 +182,16 @@ const generateTodaysPlan = () => {
   return recommendations.slice(0, 2);
 };
 
-// Generate graph data from uploaded CSV
-const getGraphData = () => {
-  const latest = getLatestMetrics();
-  const ewmaTrend = getTrendData("EWMA");
-  const acwrTrend = getTrendData("ACWR");
-  const loadTrend = getTrendData("TrainingLoad");
-  const strainTrend = getTrendData("Strain");
+// Generate graph data from CSV up to current day
+const getGraphData = (csvData: HealthDataRow[], currentDayIndex: number) => {
+  const dataUpToNow = csvData.slice(0, currentDayIndex + 1);
+  const currentData = csvData[currentDayIndex];
+  const latest = parseMetrics(currentData);
+  
+  const ewmaTrend = dataUpToNow.map(row => parseFloat(row.EWMA || "0"));
+  const acwrTrend = dataUpToNow.map(row => parseFloat(row.ACWR || "0"));
+  const loadTrend = dataUpToNow.map(row => parseFloat(row.TrainingLoad || "0"));
+  const strainTrend = dataUpToNow.map(row => parseFloat(row.Strain || "0"));
   
   return [
     {
@@ -230,8 +265,8 @@ const saveAcceptedAdjustment = (adjustmentText: string, category: string) => {
   });
 };
 
-const generateDailyNudge = () => {
-  const metrics = getMetrics();
+const generateDailyNudge = (currentData: HealthDataRow | null) => {
+  const metrics = getMetrics(currentData);
   const acwr = parseFloat(metrics.find(m => m.name === "Acute:Chronic Workload Ratio")?.value || "0");
   const monotony = parseFloat(metrics.find(m => m.name === "Training Monotony")?.value || "0");
   const strainStatus = metrics.find(m => m.name === "Training Strain")?.status;
@@ -286,11 +321,11 @@ const WelcomeHeader = () => (
   </div>
 );
 
-const generateWeeklyReportPDF = () => {
+const generateWeeklyReportPDF = (csvData: HealthDataRow[], currentDayIndex: number) => {
   const doc = new jsPDF();
   const pageWidth = doc.internal.pageSize.getWidth();
   let yPosition = 20;
-  const graphData = getGraphData();
+  const graphData = getGraphData(csvData, currentDayIndex);
 
   // Header
   doc.setFontSize(24);
@@ -394,12 +429,14 @@ const generateWeeklyReportPDF = () => {
 };
 
 const WeeklyInsightsCard = () => {
+  const { csvData, currentDayIndex } = useLiveData();
+  
   const handleRunReport = () => {
     toast({
       title: "Weekly Report Generated (Demo)",
       description: "Your weekly health summary has been created.",
     });
-    generateWeeklyReportPDF();
+    generateWeeklyReportPDF(csvData, currentDayIndex);
   };
 
   return (
@@ -488,8 +525,13 @@ const RecommendationCard = () => (
 );
 
 const AlertsCard = () => {
-  const [alerts, setAlerts] = useState(generateAlerts());
+  const { currentDayData } = useLiveData();
+  const [alerts, setAlerts] = useState(() => generateAlerts(currentDayData));
   const [acceptedAlerts, setAcceptedAlerts] = useState<number[]>([]);
+  
+  useEffect(() => {
+    setAlerts(generateAlerts(currentDayData));
+  }, [currentDayData]);
 
   const getSeverityStyle = (severity: string) => {
     switch (severity) {
@@ -604,9 +646,14 @@ const AlertsCard = () => {
 };
 
 const TodaysPlanCard = () => {
-  const [todaysRecommendations, setTodaysRecommendations] = useState(generateTodaysPlan());
+  const { currentDayData } = useLiveData();
+  const [todaysRecommendations, setTodaysRecommendations] = useState(() => generateTodaysPlan(currentDayData));
   const [acceptedRecommendations, setAcceptedRecommendations] = useState<number[]>([]);
-  const healthMetrics = getHealthMetrics();
+  const healthMetrics = getHealthMetrics(currentDayData);
+  
+  useEffect(() => {
+    setTodaysRecommendations(generateTodaysPlan(currentDayData));
+  }, [currentDayData]);
 
   const getPriorityAccentColor = (priority: string) => {
     switch (priority) {
@@ -710,13 +757,18 @@ const TodaysPlanCard = () => {
 };
 
 const DailyNudgeCard = () => {
-  const [nudgeMessage, setNudgeMessage] = useState(generateDailyNudge());
+  const { currentDayData } = useLiveData();
+  const [nudgeMessage, setNudgeMessage] = useState(() => generateDailyNudge(currentDayData));
   const [isRefreshing, setIsRefreshing] = useState(false);
+  
+  useEffect(() => {
+    setNudgeMessage(generateDailyNudge(currentDayData));
+  }, [currentDayData]);
 
   const refreshNudge = () => {
     setIsRefreshing(true);
     setTimeout(() => {
-      setNudgeMessage(generateDailyNudge());
+      setNudgeMessage(generateDailyNudge(currentDayData));
       setIsRefreshing(false);
     }, 300);
   };
@@ -771,10 +823,11 @@ const FocusAreasCard = () => (
 );
 
 const GraphCarousel = () => {
+  const { csvData, currentDayIndex } = useLiveData();
   const [currentGraph, setCurrentGraph] = useState(0);
   const [timeRange, setTimeRange] = useState(30);
   const [isTransitioning, setIsTransitioning] = useState(false);
-  const graphData = getGraphData();
+  const graphData = getGraphData(csvData, currentDayIndex);
   
   const timeRanges = [
     { days: 7, label: "7 Days" },
@@ -991,8 +1044,9 @@ const GraphCarousel = () => {
 };
 
 export const Dashboard = () => {
-  const metrics = getMetrics();
-  const graphData = getGraphData();
+  const { currentDayData, csvData, currentDayIndex } = useLiveData();
+  const metrics = getMetrics(currentDayData);
+  const graphData = getGraphData(csvData, currentDayIndex);
   const [currentGraphIndex, setCurrentGraphIndex] = useState(0);
 
   const nextGraph = () => {

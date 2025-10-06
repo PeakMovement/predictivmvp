@@ -10,6 +10,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
+import { useLiveData } from "@/contexts/LiveDataContext";
+import { HealthDataRow } from "@/lib/healthDataStore";
+import { FloatingNextDayButton } from "@/components/FloatingNextDayButton";
 
 const sessionLogs = [
   { title: "Upper Body Strength", date: "2024-01-15", load: 125, type: "Strength" },
@@ -19,53 +22,98 @@ const sessionLogs = [
   { title: "Olympic Lifting", date: "2024-01-11", load: 178, type: "Strength" },
 ];
 
-const suggestions = [
-  {
-    id: 1,
-    text: "Schedule a deload week to reduce training intensity by 20%",
-    type: "actionable",
-    category: "Training",
-    accentColor: "yellow",
-    hasVideo: true,
-    hasPdf: true
-  },
-  {
-    id: 2,
-    text: "Your acute:chronic ratio suggests optimal adaptation window",
-    type: "insight",
-    category: "Insight",
-    accentColor: "green",
-    hasVideo: false,
-    hasPdf: false
-  },
-  {
-    id: 3,
-    text: "Add 2 mobility sessions focusing on hip flexors and thoracic spine",
-    type: "actionable",
-    category: "Recovery",
-    accentColor: "green",
-    hasVideo: true,
-    hasPdf: true
-  },
-  {
-    id: 4,
-    text: "Training monotony is within acceptable range (2.4/5.0)",
-    type: "insight",
-    category: "Insight",
-    accentColor: "green",
-    hasVideo: false,
-    hasPdf: true
-  },
-  {
-    id: 5,
-    text: "Consider periodizing toward strength phase next week",
-    type: "actionable",
-    category: "Training",
-    accentColor: "red",
-    hasVideo: true,
-    hasPdf: false
+// Generate dynamic suggestions based on current day data
+const generateSuggestions = (currentData: HealthDataRow | null) => {
+  if (!currentData) return [];
+  
+  const suggestions = [];
+  const hrv = parseFloat(currentData.HRV || "0");
+  const acwr = parseFloat(currentData.ACWR || "0");
+  const monotony = parseFloat(currentData.Monotony || "0");
+  const sleepHours = parseFloat(currentData.SleepHours || "0");
+  const sleepScore = parseFloat(currentData.SleepScore || "0");
+  const strain = parseFloat(currentData.Strain || "0");
+  
+  // HRV < 65 → recommend mobility/recovery
+  if (hrv < 65) {
+    suggestions.push({
+      id: 1,
+      text: "Your HRV is below optimal. Add 2 mobility sessions focusing on recovery.",
+      type: "actionable",
+      category: "Recovery",
+      accentColor: "yellow",
+      hasVideo: true,
+      hasPdf: true
+    });
   }
-];
+  
+  // ACWR > 1.5 → warn of overload
+  if (acwr > 1.5) {
+    suggestions.push({
+      id: 2,
+      text: "Overload risk detected. Schedule a deload week to reduce training intensity by 20%.",
+      type: "actionable",
+      category: "Training",
+      accentColor: "red",
+      hasVideo: true,
+      hasPdf: true
+    });
+  }
+  
+  // Sleep > 7h and score > 80 → suggest performance session
+  if (sleepHours >= 7 && sleepScore > 80) {
+    suggestions.push({
+      id: 3,
+      text: "Excellent recovery! This is a great day for a high-intensity performance session.",
+      type: "actionable",
+      category: "Training",
+      accentColor: "green",
+      hasVideo: true,
+      hasPdf: false
+    });
+  }
+  
+  // Monotony > 2.0 → add variety
+  if (monotony > 2.0) {
+    suggestions.push({
+      id: 4,
+      text: "Training is too repetitive. Add varied training modalities this week.",
+      type: "actionable",
+      category: "Training",
+      accentColor: "yellow",
+      hasVideo: false,
+      hasPdf: true
+    });
+  }
+  
+  // High strain
+  if (strain > 150) {
+    suggestions.push({
+      id: 5,
+      text: "Strain is elevated. Consider adding an extra recovery day this week.",
+      type: "actionable",
+      category: "Recovery",
+      accentColor: "red",
+      hasVideo: true,
+      hasPdf: true
+    });
+  }
+  
+  // Optimal window (good insight)
+  if (acwr >= 0.8 && acwr <= 1.3 && hrv >= 65) {
+    suggestions.push({
+      id: 6,
+      text: "Your acute:chronic ratio suggests optimal adaptation window. Great progress!",
+      type: "insight",
+      category: "Insight",
+      accentColor: "green",
+      hasVideo: false,
+      hasPdf: false
+    });
+  }
+  
+  return suggestions;
+};
 
 const graphData = [
   {
@@ -167,7 +215,7 @@ const getTypeColor = (type: string) => {
   }
 };
 
-const AccountabilityChallenges = () => {
+const AccountabilityChallenges = ({ suggestions }: { suggestions: ReturnType<typeof generateSuggestions> }) => {
   const [acceptedSuggestions, setAcceptedSuggestions] = useState<Set<number>>(new Set());
   const [processingStates, setProcessingStates] = useState<Record<number, 'accepting' | 'added' | 'cancelling' | 'cancelled'>>({});
   const [removedSuggestions, setRemovedSuggestions] = useState<Set<number>>(new Set());
@@ -813,7 +861,7 @@ const CircularGauge = ({ title, value, maxValue, unit }: { title: string; value:
   );
 };
 
-const SuggestionsCard = () => {
+const SuggestionsCard = ({ suggestions }: { suggestions: ReturnType<typeof generateSuggestions> }) => {
   const [acceptedSuggestions, setAcceptedSuggestions] = useState<Set<number>>(new Set());
 
   const handleAccept = (suggestionId: number) => {
@@ -1162,6 +1210,15 @@ const GraphCarousel = () => {
 };
 
 export const Training = () => {
+  const { currentDayData } = useLiveData();
+  const [suggestions, setSuggestions] = useState<ReturnType<typeof generateSuggestions>>([]);
+  
+  // Update suggestions when currentDayData changes
+  useEffect(() => {
+    const newSuggestions = generateSuggestions(currentDayData);
+    setSuggestions(newSuggestions);
+  }, [currentDayData]);
+  
   return (
     <TooltipProvider>
       <div className="min-h-screen bg-background pb-32">
@@ -1174,7 +1231,7 @@ export const Training = () => {
 
         {/* Accountability Challenges */}
         <div>
-          <AccountabilityChallenges />
+          <AccountabilityChallenges suggestions={suggestions} />
         </div>
 
         {/* Session Log and Gauges Row */}
@@ -1186,8 +1243,18 @@ export const Training = () => {
           
           {/* Gauges - Stacked vertically in 1 column */}
           <div className="space-y-6">
-            <CircularGauge title="Training Monotony" value={2.4} maxValue={5} unit="ratio" />
-            <CircularGauge title="Training Strain" value={156} maxValue={200} unit="TSS" />
+            <CircularGauge 
+              title="Training Monotony" 
+              value={parseFloat(currentDayData?.Monotony || "2.4")} 
+              maxValue={5} 
+              unit="ratio" 
+            />
+            <CircularGauge 
+              title="Training Strain" 
+              value={parseFloat(currentDayData?.Strain || "156")} 
+              maxValue={200} 
+              unit="TSS" 
+            />
           </div>
         </div>
 
@@ -1196,6 +1263,7 @@ export const Training = () => {
           <GraphCarousel />
         </div>
         </div>
+        <FloatingNextDayButton />
       </div>
     </TooltipProvider>
   );

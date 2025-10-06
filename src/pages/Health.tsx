@@ -2,6 +2,7 @@ import { useState, useMemo } from "react";
 import { Heart, Activity, Zap, Moon, Brain, Footprints, ArrowLeft, TrendingUp } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useLiveData } from "@/contexts/LiveDataContext";
+import { FloatingNextDayButton } from "@/components/FloatingNextDayButton";
 
 const healthMetrics = [
   { 
@@ -317,6 +318,7 @@ export const Health = () => {
           ))}
         </div>
       </div>
+      <FloatingNextDayButton />
     </div>
   );
 };

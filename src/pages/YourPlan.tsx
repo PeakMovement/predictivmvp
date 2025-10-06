@@ -10,6 +10,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import jsPDF from "jspdf";
+import { useLiveData } from "@/contexts/LiveDataContext";
+import { FloatingNextDayButton } from "@/components/FloatingNextDayButton";
 
 const acceptedChallenges = [
   {
@@ -531,6 +533,97 @@ const AcceptedChallengesSection = () => {
 
 const WeeklyInsightsSection = () => {
   const [isInfoDialogOpen, setIsInfoDialogOpen] = useState(false);
+  const { csvData, currentDayIndex } = useLiveData();
+  
+  // Calculate 7-day rolling averages
+  const calculate7DayAverages = () => {
+    const startIndex = Math.max(0, currentDayIndex - 6);
+    const endIndex = currentDayIndex + 1;
+    const last7Days = csvData.slice(startIndex, endIndex);
+    
+    if (last7Days.length === 0) {
+      return {
+        avgHRV: 0,
+        avgACWR: 0,
+        avgSleepScore: 0,
+        avgStrain: 0
+      };
+    }
+    
+    const avgHRV = last7Days.reduce((sum, row) => sum + parseFloat(row.HRV || "0"), 0) / last7Days.length;
+    const avgACWR = last7Days.reduce((sum, row) => sum + parseFloat(row.ACWR || "0"), 0) / last7Days.length;
+    const avgSleepScore = last7Days.reduce((sum, row) => sum + parseFloat(row.SleepScore || "0"), 0) / last7Days.length;
+    const avgStrain = last7Days.reduce((sum, row) => sum + parseFloat(row.Strain || "0"), 0) / last7Days.length;
+    
+    return {
+      avgHRV,
+      avgACWR,
+      avgSleepScore,
+      avgStrain
+    };
+  };
+  
+  const { avgHRV, avgACWR, avgSleepScore, avgStrain } = calculate7DayAverages();
+  
+  // Generate dynamic summary based on averages
+  const generateSummary = () => {
+    const parts = [];
+    
+    if (avgSleepScore < 70) {
+      parts.push("Your recovery was below target this week");
+    } else if (avgSleepScore > 80) {
+      parts.push("Excellent recovery this week");
+    } else {
+      parts.push("Recovery was moderate this week");
+    }
+    
+    if (avgACWR > 1.3) {
+      parts.push("Training load was elevated, causing increased strain");
+    } else if (avgACWR < 0.8) {
+      parts.push("Training load was light, allowing for good recovery");
+    }
+    
+    if (avgStrain > 150) {
+      parts.push("Consider adjusting your upcoming sessions to allow for better recovery");
+    }
+    
+    return parts.join(". ") + ".";
+  };
+  
+  // Generate dynamic recommendations
+  const generateRecommendations = () => {
+    const recommendations = [];
+    
+    if (avgHRV < 60) {
+      recommendations.push({
+        color: "green",
+        text: "Add 2 recovery sessions focusing on mobility and light stretching"
+      });
+    }
+    
+    if (avgACWR > 1.3) {
+      recommendations.push({
+        color: "yellow",
+        text: "Reduce training volume by 15-20% to prevent overtraining"
+      });
+    }
+    
+    if (avgSleepScore < 75) {
+      recommendations.push({
+        color: "blue",
+        text: "Prioritize sleep quality with 8+ hours per night"
+      });
+    }
+    
+    if (recommendations.length === 0) {
+      recommendations.push({
+        color: "green",
+        text: "Maintain current training balance and recovery practices"
+      });
+    }
+    
+    return recommendations;
+  };
 
   return (
     <>
@@ -549,10 +642,30 @@ const WeeklyInsightsSection = () => {
           </button>
         </div>
 
+        {/* 7-Day Averages */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+          <div className="bg-glass/30 backdrop-blur-sm border border-glass-border rounded-lg p-3 transition-all duration-300 hover:bg-glass-highlight">
+            <p className="text-xs text-muted-foreground mb-1">Avg HRV</p>
+            <p className="text-lg font-bold text-foreground">{avgHRV.toFixed(1)}</p>
+          </div>
+          <div className="bg-glass/30 backdrop-blur-sm border border-glass-border rounded-lg p-3 transition-all duration-300 hover:bg-glass-highlight">
+            <p className="text-xs text-muted-foreground mb-1">Avg ACWR</p>
+            <p className="text-lg font-bold text-foreground">{avgACWR.toFixed(2)}</p>
+          </div>
+          <div className="bg-glass/30 backdrop-blur-sm border border-glass-border rounded-lg p-3 transition-all duration-300 hover:bg-glass-highlight">
+            <p className="text-xs text-muted-foreground mb-1">Avg Sleep</p>
+            <p className="text-lg font-bold text-foreground">{avgSleepScore.toFixed(0)}</p>
+          </div>
+          <div className="bg-glass/30 backdrop-blur-sm border border-glass-border rounded-lg p-3 transition-all duration-300 hover:bg-glass-highlight">
+            <p className="text-xs text-muted-foreground mb-1">Avg Strain</p>
+            <p className="text-lg font-bold text-foreground">{avgStrain.toFixed(0)}</p>
+          </div>
+        </div>
+
         {/* Summary */}
-        <div className="bg-glass/30 backdrop-blur-sm border border-glass-border rounded-xl p-4 mb-4">
+        <div className="bg-glass/30 backdrop-blur-sm border border-glass-border rounded-xl p-4 mb-4 transition-all duration-300">
           <p className="text-foreground leading-relaxed">
-            Your recovery was below target this week. Training load was high on Wednesday, causing increased strain. Consider adjusting your upcoming sessions to allow for better recovery.
+            {generateSummary()}
           </p>
         </div>
 
@@ -562,18 +675,18 @@ const WeeklyInsightsSection = () => {
             Recommendations for Next Week
           </h4>
           <div className="space-y-2">
-            <div className="flex items-start gap-3 bg-glass/30 backdrop-blur-sm border border-glass-border rounded-lg p-3 hover:bg-glass-highlight transition-all duration-200">
-              <div className="w-1.5 h-1.5 rounded-full bg-green-400 mt-2 flex-shrink-0" />
-              <p className="text-sm text-foreground">Add 1 recovery session focusing on mobility and light stretching</p>
-            </div>
-            <div className="flex items-start gap-3 bg-glass/30 backdrop-blur-sm border border-glass-border rounded-lg p-3 hover:bg-glass-highlight transition-all duration-200">
-              <div className="w-1.5 h-1.5 rounded-full bg-yellow-400 mt-2 flex-shrink-0" />
-              <p className="text-sm text-foreground">Reduce sprint volume by 15-20% to prevent overtraining</p>
-            </div>
-            <div className="flex items-start gap-3 bg-glass/30 backdrop-blur-sm border border-glass-border rounded-lg p-3 hover:bg-glass-highlight transition-all duration-200">
-              <div className="w-1.5 h-1.5 rounded-full bg-blue-400 mt-2 flex-shrink-0" />
-              <p className="text-sm text-foreground">Prioritize sleep quality with 8+ hours per night</p>
-            </div>
+            {generateRecommendations().map((rec, index) => (
+              <div key={index} className="flex items-start gap-3 bg-glass/30 backdrop-blur-sm border border-glass-border rounded-lg p-3 hover:bg-glass-highlight transition-all duration-300">
+                <div className={cn(
+                  "w-1.5 h-1.5 rounded-full mt-2 flex-shrink-0",
+                  rec.color === "green" && "bg-green-400",
+                  rec.color === "yellow" && "bg-yellow-400",
+                  rec.color === "blue" && "bg-blue-400",
+                  rec.color === "red" && "bg-red-400"
+                )} />
+                <p className="text-sm text-foreground">{rec.text}</p>
+              </div>
+            ))}
           </div>
         </div>
 
@@ -723,6 +836,7 @@ export const YourPlan = () => {
         {/* Upcoming Bookings */}
         <UpcomingBookingsSection />
       </div>
+      <FloatingNextDayButton />
     </div>
   );
 };

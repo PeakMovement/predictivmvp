@@ -1,23 +1,39 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 
 export const FindHelp = () => {
   const [iframeError, setIframeError] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [fadeIn, setFadeIn] = useState(false);
+  const iframeRef = useRef<HTMLIFrameElement>(null);
 
   useEffect(() => {
     // Reset loading state when component mounts
     setLoading(true);
+    setFadeIn(false);
   }, []);
 
   const handleIframeLoad = () => {
-    // Small delay to ensure smooth transition
+    // Send postMessage to Finder app to navigate to AI Health Assistant page
+    if (iframeRef.current?.contentWindow) {
+      try {
+        iframeRef.current.contentWindow.postMessage(
+          { action: 'goToAIHealthAssistant' }, 
+          'https://preview--predictivmedicalfinder.lovable.app'
+        );
+      } catch (error) {
+        console.log('PostMessage not supported or blocked by CORS');
+      }
+    }
+    
+    // Trigger fade-in effect
     setTimeout(() => {
       setLoading(false);
-    }, 100);
+      setFadeIn(true);
+    }, 300);
   };
 
   return (
-    <div className="flex flex-col w-full h-screen bg-background relative">
+    <div className="flex flex-col w-full h-screen relative" style={{ backgroundColor: '#0A0A0A' }}>
       {/* Purple-blue glow overlay */}
       <div 
         className="absolute inset-0 pointer-events-none z-0"
@@ -39,17 +55,20 @@ export const FindHelp = () => {
       
       {/* Main iframe container */}
       <div 
-        className="flex-1 relative overflow-hidden z-10"
+        className="flex-1 relative overflow-hidden z-10 transition-opacity duration-500"
         style={{
           paddingBottom: 'env(safe-area-inset-bottom)',
+          opacity: fadeIn ? 1 : 0,
         }}
       >
         {!iframeError ? (
           <iframe
+            ref={iframeRef}
+            id="finderFrame"
             src="https://preview--predictivmedicalfinder.lovable.app/?step=2"
             style={{
               width: '100%',
-              height: '100%',
+              height: '100vh',
               border: 'none',
               borderRadius: '0',
               overflow: 'auto',
@@ -58,7 +77,7 @@ export const FindHelp = () => {
             allow="clipboard-write; fullscreen"
             onLoad={handleIframeLoad}
             onError={() => setIframeError(true)}
-            title="Predictiv Medical Finder"
+            title="Predictiv Medical Finder - AI Health Assistant"
           />
         ) : (
           <div className="flex items-center justify-center h-full p-6">

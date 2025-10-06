@@ -11,7 +11,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import jsPDF from "jspdf";
 import { useLiveData } from "@/contexts/LiveDataContext";
-import { FloatingNextDayButton } from "@/components/FloatingNextDayButton";
 
 const acceptedChallenges = [
   {
@@ -836,7 +835,6 @@ export const YourPlan = () => {
         {/* Upcoming Bookings */}
         <UpcomingBookingsSection />
       </div>
-      <FloatingNextDayButton />
     </div>
   );
 };

@@ -7,7 +7,6 @@ import jsPDF from "jspdf";
 import { format } from "date-fns";
 import { useLiveData } from "@/contexts/LiveDataContext";
 import { HealthDataRow } from "@/lib/healthDataStore";
-import { FloatingNextDayButton } from "@/components/FloatingNextDayButton";
 import { DemoProfileSelector } from "@/components/DemoProfileSelector";
 
 // Helper to parse current day metrics
@@ -1110,7 +1109,6 @@ export const Dashboard = () => {
             <FocusAreasCard />
           </div>
         </div>
-        <FloatingNextDayButton />
       </div>
     </TooltipProvider>
   );

@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { BottomNavigation } from "@/components/BottomNavigation";
+import { FloatingNextDayButton } from "@/components/FloatingNextDayButton";
 import { LiveDataProvider } from "@/contexts/LiveDataContext";
 import { Dashboard } from "@/pages/Dashboard";
 import { Training } from "@/pages/Training";
@@ -85,6 +86,7 @@ const App = () => {
               {renderContent()}
             </div>
             <BottomNavigation activeTab={activeTab} onTabChange={setActiveTab} />
+            <FloatingNextDayButton />
           </div>
           </TooltipProvider>
         </LiveDataProvider>

@@ -4,15 +4,22 @@ import { cn } from "@/lib/utils";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useToast } from "@/hooks/use-toast";
 import { getDailyInsight, getToastVariant } from "@/lib/dailyInsights";
+import { useRef } from "react";
 
 export const FloatingNextDayButton = () => {
   const { isSimulating, currentDayIndex, totalDays, setDayIndex, csvData } = useLiveData();
   const { toast } = useToast();
+  const lastClickTime = useRef(0);
 
   // Only show when simulation is active
   if (!isSimulating) return null;
 
   const handleNextDay = () => {
+    // Debounce: prevent multiple clicks within 500ms
+    const now = Date.now();
+    if (now - lastClickTime.current < 500) return;
+    lastClickTime.current = now;
+
     const nextIndex = currentDayIndex + 1;
     const newIndex = nextIndex >= totalDays ? 0 : nextIndex;
     setDayIndex(newIndex);
@@ -29,30 +36,40 @@ export const FloatingNextDayButton = () => {
     });
   };
 
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      handleNextDay();
+    }
+  };
+
   return (
     <TooltipProvider>
       <Tooltip>
         <TooltipTrigger asChild>
           <button
             onClick={handleNextDay}
+            onKeyDown={handleKeyDown}
             className={cn(
-              "fixed bottom-24 right-6 z-50",
+              "fixed bottom-24 left-4 md:left-6 lg:left-8 z-50",
               "w-14 h-14 rounded-full",
               "bg-primary text-primary-foreground",
-              "shadow-lg hover:shadow-xl",
-              "transition-all duration-300",
-              "hover:scale-110 active:scale-95",
+              "transition-all duration-300 ease-out",
+              "hover:scale-110 hover:-translate-y-1 active:scale-95",
               "flex items-center justify-center",
               "animate-pulse hover:animate-none",
-              "light:border-2 light:border-border",
-              "dark:shadow-[0_0_30px_hsl(var(--primary)/0.5)]"
+              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+              "shadow-[0_0_15px_rgba(120,64,255,0.4)] hover:shadow-[0_0_25px_rgba(120,64,255,0.6)]",
+              "light:border-2 light:border-border"
             )}
+            aria-label="Advance Simulation Day"
+            tabIndex={0}
           >
             <SkipForward size={24} />
           </button>
         </TooltipTrigger>
-        <TooltipContent side="left">
-          <p className="font-semibold">Next Day</p>
+        <TooltipContent side="right">
+          <p className="font-semibold">Advance Simulation Day</p>
           <p className="text-xs text-muted-foreground">
             Currently on Day {currentDayIndex + 1} of {totalDays}
           </p>

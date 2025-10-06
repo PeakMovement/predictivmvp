@@ -12,7 +12,6 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useLiveData } from "@/contexts/LiveDataContext";
 import { HealthDataRow } from "@/lib/healthDataStore";
-import { FloatingNextDayButton } from "@/components/FloatingNextDayButton";
 
 const sessionLogs = [
   { title: "Upper Body Strength", date: "2024-01-15", load: 125, type: "Strength" },
@@ -1263,7 +1262,6 @@ export const Training = () => {
           <GraphCarousel />
         </div>
         </div>
-        <FloatingNextDayButton />
       </div>
     </TooltipProvider>
   );

@@ -1,5 +1,3 @@
-import { FloatingNextDayButton } from "@/components/FloatingNextDayButton";
-
 export const Schedule = () => {
   return (
     <div className="min-h-screen bg-background pb-32">
@@ -10,7 +8,6 @@ export const Schedule = () => {
           </div>
         </div>
       </div>
-      <FloatingNextDayButton />
     </div>
   );
 };

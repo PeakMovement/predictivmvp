@@ -1,14 +1,17 @@
 import { useState, useEffect, useCallback } from "react";
-import { User, Smartphone, Bell, Palette, Info, ChevronRight, PlayCircle, PauseCircle, SkipForward, RotateCcw, Database } from "lucide-react";
+import { User, Smartphone, Bell, Palette, Info, ChevronRight, PlayCircle, PauseCircle, SkipForward, RotateCcw, Database, Mail, HelpCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useTheme } from "@/components/ThemeProvider";
 import { useLiveData } from "@/contexts/LiveDataContext";
 import { demoProfiles, DemoProfileType, getActiveDemoProfile, setActiveDemoProfile } from "@/lib/healthDataStore";
 import { getAlertSettings, saveAlertSettings } from "@/lib/alertConditions";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 export const Settings = () => {
   const [notifications, setNotifications] = useState(true);
@@ -21,7 +24,16 @@ export const Settings = () => {
   const [smsEnabled, setSmsEnabled] = useState(false);
   const [phoneNumber, setPhoneNumber] = useState('');
   
+  // Email notification settings
+  const [emailNotificationsEnabled, setEmailNotificationsEnabled] = useState(true);
+  const [emailPreferences, setEmailPreferences] = useState({
+    weeklySummary: true,
+    riskAlerts: true,
+    aiCoachRecommendations: true
+  });
+  
   const { theme, setTheme } = useTheme();
+  const { toast } = useToast();
   const { 
     currentDayIndex, 
     totalDays, 
@@ -48,7 +60,7 @@ export const Settings = () => {
     refreshData(); // Refresh LiveDataContext with new demo profile
   };
 
-  // Load saved primary hue from localStorage
+  // Load saved primary hue from localStorage and email preferences from Supabase
   useEffect(() => {
     const savedHue = localStorage.getItem("primary-hue");
     if (savedHue) {
@@ -60,7 +72,82 @@ export const Settings = () => {
     const alertSettings = getAlertSettings();
     setSmsEnabled(alertSettings.enableSMS);
     setPhoneNumber(alertSettings.phoneNumber);
+    
+    // Load email preferences from Supabase
+    loadEmailPreferences();
   }, []);
+  
+  const loadEmailPreferences = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      
+      const { data, error } = await supabase
+        .from('Users')
+        .select('email_preferences' as any)
+        .eq('id', user.id)
+        .single();
+      
+      if (error) {
+        console.error('Error loading email preferences:', error);
+        return;
+      }
+      
+      if (data && (data as any).email_preferences) {
+        const prefs = (data as any).email_preferences;
+        setEmailPreferences({
+          weeklySummary: prefs.weeklySummary ?? true,
+          riskAlerts: prefs.riskAlerts ?? true,
+          aiCoachRecommendations: prefs.aiCoachRecommendations ?? true
+        });
+        // If all preferences are false, consider master toggle as disabled
+        const allDisabled = !prefs.weeklySummary && !prefs.riskAlerts && !prefs.aiCoachRecommendations;
+        if (allDisabled) {
+          setEmailNotificationsEnabled(false);
+        }
+      }
+    } catch (error) {
+      console.error('Error loading email preferences:', error);
+    }
+  };
+  
+  const saveEmailPreferences = async (prefs: typeof emailPreferences) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      
+      const { error } = await supabase
+        .from('Users')
+        .update({ email_preferences: prefs } as any)
+        .eq('id', user.id);
+      
+      if (error) {
+        console.error('Error saving email preferences:', error);
+        toast({
+          title: "Error",
+          description: "Failed to save email preferences",
+          variant: "destructive"
+        });
+        return;
+      }
+      
+      // Also call mock API endpoint
+      try {
+        await supabase.functions.invoke('email-preferences', {
+          body: prefs
+        });
+      } catch (apiError) {
+        console.log('Mock API call (will be connected later):', prefs);
+      }
+      
+      toast({
+        title: "Saved",
+        description: "Email preferences updated successfully"
+      });
+    } catch (error) {
+      console.error('Error saving email preferences:', error);
+    }
+  };
 
   const updatePrimaryColor = (hue: number) => {
     // Update CSS variables for primary color
@@ -143,6 +230,35 @@ export const Settings = () => {
     const number = e.target.value;
     setPhoneNumber(number);
     saveAlertSettings({ enableSMS: smsEnabled, phoneNumber: number });
+  };
+  
+  const handleEmailMasterToggle = (enabled: boolean) => {
+    setEmailNotificationsEnabled(enabled);
+    if (!enabled) {
+      // Disable all sub-toggles
+      const newPrefs = {
+        weeklySummary: false,
+        riskAlerts: false,
+        aiCoachRecommendations: false
+      };
+      setEmailPreferences(newPrefs);
+      saveEmailPreferences(newPrefs);
+    } else {
+      // Enable all sub-toggles
+      const newPrefs = {
+        weeklySummary: true,
+        riskAlerts: true,
+        aiCoachRecommendations: true
+      };
+      setEmailPreferences(newPrefs);
+      saveEmailPreferences(newPrefs);
+    }
+  };
+  
+  const handleEmailPreferenceChange = (key: keyof typeof emailPreferences, value: boolean) => {
+    const newPrefs = { ...emailPreferences, [key]: value };
+    setEmailPreferences(newPrefs);
+    saveEmailPreferences(newPrefs);
   };
 
   return (
@@ -289,6 +405,122 @@ export const Settings = () => {
               </div>
             </div>
           </div>
+
+          {/* Email Notifications Section */}
+          <TooltipProvider>
+            <div className="bg-glass backdrop-blur-xl border border-glass-border rounded-2xl p-6 shadow-glass hover:bg-glass-highlight transition-all duration-300">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-8 h-8 bg-primary/20 rounded-lg flex items-center justify-center">
+                  <Mail size={16} className="text-primary" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-foreground">Email Notifications</h3>
+                  <p className="text-sm text-muted-foreground">Choose what updates you'd like to receive by email</p>
+                </div>
+              </div>
+              
+              <div className="space-y-4">
+                {/* Master Toggle */}
+                <div className="flex items-center justify-between pb-4 border-b border-glass-border">
+                  <div>
+                    <p className="font-medium text-foreground">Enable Email Notifications</p>
+                    <p className="text-sm text-muted-foreground">Turn on to receive email updates</p>
+                  </div>
+                  <Switch
+                    checked={emailNotificationsEnabled}
+                    onCheckedChange={handleEmailMasterToggle}
+                  />
+                </div>
+                
+                {/* Individual Preferences */}
+                <div className="space-y-4">
+                  {/* Weekly Summary */}
+                  <div className={cn(
+                    "flex items-center justify-between transition-opacity duration-200",
+                    !emailNotificationsEnabled && "opacity-50"
+                  )}>
+                    <div className="flex items-center gap-2 flex-1">
+                      <div>
+                        <p className="font-medium text-foreground">Weekly Summary Report</p>
+                        <p className="text-sm text-muted-foreground">Receive a PDF overview of your health and training metrics</p>
+                      </div>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <button className="text-muted-foreground hover:text-foreground transition-colors">
+                            <HelpCircle size={16} />
+                          </button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p className="max-w-xs text-xs">Get a comprehensive weekly report with insights on your performance, recovery, and progress</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </div>
+                    <Switch
+                      checked={emailPreferences.weeklySummary}
+                      onCheckedChange={(checked) => handleEmailPreferenceChange('weeklySummary', checked)}
+                      disabled={!emailNotificationsEnabled}
+                    />
+                  </div>
+                  
+                  {/* Risk Alerts */}
+                  <div className={cn(
+                    "flex items-center justify-between transition-opacity duration-200",
+                    !emailNotificationsEnabled && "opacity-50"
+                  )}>
+                    <div className="flex items-center gap-2 flex-1">
+                      <div>
+                        <p className="font-medium text-foreground">Risk Alerts</p>
+                        <p className="text-sm text-muted-foreground">Get notified when risk scores reach unsafe levels</p>
+                      </div>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <button className="text-muted-foreground hover:text-foreground transition-colors">
+                            <HelpCircle size={16} />
+                          </button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p className="max-w-xs text-xs">Receive alerts when ACWR, strain, or recovery indicators suggest increased injury risk</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </div>
+                    <Switch
+                      checked={emailPreferences.riskAlerts}
+                      onCheckedChange={(checked) => handleEmailPreferenceChange('riskAlerts', checked)}
+                      disabled={!emailNotificationsEnabled}
+                    />
+                  </div>
+                  
+                  {/* AI Coach Recommendations */}
+                  <div className={cn(
+                    "flex items-center justify-between transition-opacity duration-200",
+                    !emailNotificationsEnabled && "opacity-50"
+                  )}>
+                    <div className="flex items-center gap-2 flex-1">
+                      <div>
+                        <p className="font-medium text-foreground">AI Coach Recommendations</p>
+                        <p className="text-sm text-muted-foreground">Receive daily performance and recovery advice</p>
+                      </div>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <button className="text-muted-foreground hover:text-foreground transition-colors">
+                            <HelpCircle size={16} />
+                          </button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p className="max-w-xs text-xs">Get personalized training and recovery recommendations based on your data</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </div>
+                    <Switch
+                      checked={emailPreferences.aiCoachRecommendations}
+                      onCheckedChange={(checked) => handleEmailPreferenceChange('aiCoachRecommendations', checked)}
+                      disabled={!emailNotificationsEnabled}
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </TooltipProvider>
 
           {/* Theme Section */}
           <div className="bg-glass backdrop-blur-xl border border-glass-border rounded-2xl p-6 shadow-glass hover:bg-glass-highlight transition-all duration-300">

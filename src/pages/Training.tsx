@@ -1220,28 +1220,28 @@ export const Training = () => {
   
   return (
     <TooltipProvider>
-      <div className="min-h-screen bg-background pb-32">
-        <div className="container mx-auto px-6 pt-8">
+      <div className="min-h-screen bg-background pb-[calc(6rem+env(safe-area-inset-bottom))] md:pb-32">
+        <div className="container mx-auto px-4 md:px-6 pt-6 md:pt-8 scrollable-content">
           {/* Header */}
-          <div className="text-center mb-8 animate-fade-in">
-            <h1 className="text-3xl font-bold text-foreground mb-2">Training Analytics</h1>
-            <p className="text-muted-foreground">Track your workouts and training progression</p>
+          <div className="text-center mb-6 md:mb-8 animate-fade-in px-4 md:px-0">
+            <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-2">Training Analytics</h1>
+            <p className="text-sm md:text-base text-muted-foreground">Track your workouts and training progression</p>
           </div>
 
         {/* Accountability Challenges */}
-        <div>
+        <div className="mb-6 md:mb-8">
           <AccountabilityChallenges suggestions={suggestions} />
         </div>
 
         {/* Session Log and Gauges Row */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6 mb-6 md:mb-8">
           {/* Session Log - Takes 2 columns on large screens */}
           <div className="lg:col-span-2">
             <SessionLogList />
           </div>
           
           {/* Gauges - Stacked vertically in 1 column */}
-          <div className="space-y-6">
+          <div className="space-y-4 md:space-y-6">
             <CircularGauge 
               title="Training Monotony" 
               value={parseFloat(currentDayData?.Monotony || "2.4")} 
@@ -1258,7 +1258,7 @@ export const Training = () => {
         </div>
 
         {/* Trend Analysis Carousel */}
-        <div>
+        <div className="mb-6 md:mb-8">
           <GraphCarousel />
         </div>
         </div>

@@ -301,23 +301,23 @@ const getStatusColor = (status: string) => {
 };
 
 const MetricCard = ({ metric }: { metric: { name: string; value: string; status: string } }) => (
-  <div className="bg-glass backdrop-blur-xl border border-glass-border rounded-2xl p-6 shadow-glass hover:bg-glass-highlight hover:scale-105 hover:-translate-y-1 transition-all duration-300 ease-out animate-fade-in transform-gpu will-change-transform active:scale-95">
-    <div className="flex items-start justify-between mb-4">
-      <h3 className="text-sm font-medium text-muted-foreground leading-tight">{metric.name}</h3>
-      <div className={cn("w-3 h-3 rounded-full shadow-glow animate-bounce-subtle", getStatusColor(metric.status))} />
+  <div className="bg-glass backdrop-blur-xl border border-glass-border rounded-2xl p-4 md:p-6 shadow-glass hover:bg-glass-highlight hover:scale-105 hover:-translate-y-1 transition-all duration-300 ease-out animate-fade-in transform-gpu will-change-transform active:scale-95">
+    <div className="flex items-start justify-between mb-3 md:mb-4">
+      <h3 className="text-xs md:text-sm font-medium text-muted-foreground leading-tight">{metric.name}</h3>
+      <div className={cn("w-2.5 h-2.5 md:w-3 md:h-3 rounded-full shadow-glow animate-bounce-subtle", getStatusColor(metric.status))} />
     </div>
-    <p className="text-2xl font-bold text-foreground">{metric.value}</p>
+    <p className="text-xl md:text-2xl font-bold text-foreground">{metric.value}</p>
   </div>
 );
 
 const WelcomeHeader = () => (
-  <div className="text-center mb-12 space-y-4">
+  <div className="text-center mb-8 md:mb-12 space-y-3 md:space-y-4 px-4 md:px-0">
     <div className="animate-fade-in-slow">
-      <h1 className="text-2xl font-light text-muted-foreground mb-2">Hello,</h1>
-      <h2 className="text-4xl font-bold text-foreground tracking-tight">Alex Johnson</h2>
+      <h1 className="text-xl md:text-2xl font-light text-muted-foreground mb-1 md:mb-2">Hello,</h1>
+      <h2 className="text-3xl md:text-4xl font-bold text-foreground tracking-tight">Alex Johnson</h2>
     </div>
     <div className="animate-slide-in" style={{ animationDelay: '0.2s', animationFillMode: 'both' }}>
-      <p className="text-muted-foreground text-lg">Here's your training overview for today</p>
+      <p className="text-muted-foreground text-base md:text-lg">Here's your training overview for today</p>
     </div>
   </div>
 );
@@ -907,25 +907,26 @@ const GraphCarousel = () => {
   const points = generatePath(currentData);
   
   return (
-    <div className="bg-glass backdrop-blur-xl border border-glass-border rounded-2xl p-6 shadow-glass hover:bg-glass-highlight hover:scale-105 hover:-translate-y-1 transition-all duration-300 ease-out animate-fade-in transform-gpu">
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 bg-primary/20 rounded-lg flex items-center justify-center hover:scale-110 transition-transform duration-200">
-            <TrendingUp size={16} className="text-primary" />
+    <div className="bg-glass backdrop-blur-xl border border-glass-border rounded-2xl p-4 md:p-6 shadow-glass hover:bg-glass-highlight md:hover:scale-105 md:hover:-translate-y-1 transition-all duration-300 ease-out animate-fade-in transform-gpu overflow-hidden">
+      <div className="flex items-center justify-between mb-3 md:mb-4 gap-2">
+        <div className="flex items-center gap-2 md:gap-3 min-w-0">
+          <div className="w-7 h-7 md:w-8 md:h-8 bg-primary/20 rounded-lg flex items-center justify-center hover:scale-110 transition-transform duration-200 flex-shrink-0">
+            <TrendingUp size={14} className="md:size-[16px] text-primary" />
           </div>
-          <div>
-            <h3 className="text-lg font-semibold text-foreground">{graph.title}</h3>
-            <p className="text-xs text-muted-foreground">{graph.subtitle}</p>
+          <div className="min-w-0">
+            <h3 className="text-sm md:text-lg font-semibold text-foreground truncate">{graph.title}</h3>
+            <p className="text-[10px] md:text-xs text-muted-foreground truncate">{graph.subtitle}</p>
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1 md:gap-2 flex-shrink-0">
           <button 
             onClick={prevGraph}
-            className="p-2 rounded-lg hover:bg-glass-highlight transition-all duration-200 hover:scale-110 active:scale-95"
+            className="p-2 rounded-lg hover:bg-glass-highlight transition-all duration-200 hover:scale-110 active:scale-95 min-h-[44px] md:min-h-0"
+            aria-label="Previous graph"
           >
             <ChevronLeft size={16} className="text-muted-foreground hover:text-foreground transition-colors" />
           </button>
-          <div className="flex gap-1">
+          <div className="hidden md:flex gap-1">
             {graphData.map((_, index) => (
               <button
                 key={index}
@@ -936,6 +937,7 @@ const GraphCarousel = () => {
                     ? "bg-primary scale-125" 
                     : "bg-muted-foreground/30 hover:bg-muted-foreground/50"
                 )}
+                aria-label={`Go to graph ${index + 1}`}
               />
             ))}
           </div>
@@ -1062,8 +1064,8 @@ export const Dashboard = () => {
   
   return (
     <TooltipProvider>
-      <div className="min-h-screen bg-background pb-32">
-        <div className="container mx-auto px-6 pt-8">
+      <div className="min-h-screen bg-background pb-[calc(6rem+env(safe-area-inset-bottom))] md:pb-32">
+        <div className="container mx-auto px-4 md:px-6 pt-6 md:pt-8">
           {/* Welcome Header */}
           <WelcomeHeader />
           
@@ -1071,40 +1073,40 @@ export const Dashboard = () => {
           <DemoProfileSelector />
           
           {/* Today's Plan Section */}
-          <div className="mb-8">
+          <div className="mb-6 md:mb-8">
             <TodaysPlanCard />
           </div>
           
           {/* Section Header */}
-          <div className="text-center mb-8 animate-fade-in">
-            <h3 className="text-xl font-semibold text-foreground mb-2">Training Metrics</h3>
-            <p className="text-muted-foreground">Your key performance indicators</p>
+          <div className="text-center mb-6 md:mb-8 animate-fade-in px-4 md:px-0">
+            <h3 className="text-lg md:text-xl font-semibold text-foreground mb-1 md:mb-2">Training Metrics</h3>
+            <p className="text-sm md:text-base text-muted-foreground">Your key performance indicators</p>
           </div>
 
           {/* Metrics Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 mb-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3 md:gap-4 mb-6 md:mb-8">
             {metrics.map((metric, index) => (
               <MetricCard key={index} metric={metric} />
             ))}
           </div>
 
           {/* Daily Nudge Section */}
-          <div className="mb-8">
+          <div className="mb-6 md:mb-8">
             <DailyNudgeCard />
           </div>
 
           {/* Alerts Section */}
-          <div className="mb-8">
+          <div className="mb-6 md:mb-8">
             <AlertsCard />
           </div>
 
           {/* Trend Analysis Carousel */}
-          <div className="mb-8">
+          <div className="mb-6 md:mb-8">
             <GraphCarousel />
           </div>
 
           {/* Weekly Insights and Focus Areas */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
             <WeeklyInsightsCard />
             <FocusAreasCard />
           </div>

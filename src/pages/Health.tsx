@@ -103,20 +103,20 @@ const MetricTile = ({ metric, onClick }: { metric: typeof healthMetrics[0]; onCl
   return (
     <div 
       onClick={onClick}
-      className="bg-glass backdrop-blur-xl border border-glass-border rounded-2xl p-6 shadow-glass hover:bg-glass-highlight hover:scale-105 hover:-translate-y-2 transition-all duration-300 ease-out cursor-pointer animate-fade-in transform-gpu will-change-transform active:scale-95"
+      className="bg-glass backdrop-blur-xl border border-glass-border rounded-2xl p-4 md:p-6 shadow-glass hover:bg-glass-highlight hover:scale-105 hover:-translate-y-2 transition-all duration-300 ease-out cursor-pointer animate-fade-in transform-gpu will-change-transform active:scale-95 min-h-[44px]"
     >
-      <div className="flex items-start justify-between mb-4">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-primary/20 rounded-xl flex items-center justify-center hover:scale-110 transition-transform duration-200">
-            <Icon size={18} className="text-primary animate-bounce-subtle" />
+      <div className="flex items-start justify-between mb-3 md:mb-4">
+        <div className="flex items-center gap-2 md:gap-3">
+          <div className="w-8 h-8 md:w-10 md:h-10 bg-primary/20 rounded-xl flex items-center justify-center hover:scale-110 transition-transform duration-200 flex-shrink-0">
+            <Icon size={16} className="md:size-[18px] text-primary animate-bounce-subtle" />
           </div>
           <div>
-            <h3 className="font-semibold text-foreground">{metric.name}</h3>
-            <p className="text-2xl font-bold text-foreground">{metric.value}</p>
+            <h3 className="text-sm md:text-base font-semibold text-foreground">{metric.name}</h3>
+            <p className="text-xl md:text-2xl font-bold text-foreground">{metric.value}</p>
             <p className="text-xs text-muted-foreground">{metric.unit}</p>
           </div>
         </div>
-        <div className="text-right">
+        <div className="text-right flex-shrink-0">
           <div className={cn(
             "px-2 py-1 rounded-lg text-xs font-medium mb-2",
             isPositive ? "bg-green-500/20 text-green-400" : "bg-red-500/20 text-red-400"
@@ -135,36 +135,37 @@ const DetailView = ({ metric, onBack }: { metric: typeof healthMetrics[0]; onBac
   const isPositive = metric.changeType === "positive";
 
   return (
-    <div className="min-h-screen bg-background pb-32">
-      <div className="container mx-auto px-6 pt-8">
+    <div className="min-h-screen bg-background pb-[calc(6rem+env(safe-area-inset-bottom))] md:pb-32">
+      <div className="container mx-auto px-4 md:px-6 pt-6 md:pt-8">
         {/* Header */}
-        <div className="flex items-center gap-4 mb-8 animate-fade-in">
+        <div className="flex items-center gap-3 md:gap-4 mb-6 md:mb-8 animate-fade-in">
           <button 
             onClick={onBack}
-            className="w-10 h-10 bg-glass backdrop-blur-xl border border-glass-border rounded-xl flex items-center justify-center hover:bg-glass-highlight transition-all duration-300"
+            className="w-10 h-10 md:w-10 md:h-10 bg-glass backdrop-blur-xl border border-glass-border rounded-xl flex items-center justify-center hover:bg-glass-highlight transition-all duration-300 flex-shrink-0 min-h-[44px]"
+            aria-label="Go back"
           >
             <ArrowLeft size={18} className="text-foreground" />
           </button>
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 bg-primary/20 rounded-xl flex items-center justify-center">
-              <Icon size={20} className="text-primary" />
+          <div className="flex items-center gap-2 md:gap-3">
+            <div className="w-10 h-10 md:w-12 md:h-12 bg-primary/20 rounded-xl flex items-center justify-center flex-shrink-0">
+              <Icon size={18} className="md:size-[20px] text-primary" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-foreground">{metric.name}</h1>
-              <p className="text-muted-foreground">Detailed analysis and trends</p>
+              <h1 className="text-xl md:text-2xl font-bold text-foreground">{metric.name}</h1>
+              <p className="text-sm md:text-base text-muted-foreground">Detailed analysis and trends</p>
             </div>
           </div>
         </div>
 
         {/* Current Value Card */}
-        <div className="bg-glass backdrop-blur-xl border border-glass-border rounded-2xl p-8 mb-8 animate-fade-in">
-          <div className="flex items-center justify-between mb-6">
+        <div className="bg-glass backdrop-blur-xl border border-glass-border rounded-2xl p-4 md:p-8 mb-6 md:mb-8 animate-fade-in">
+          <div className="flex items-center justify-between mb-4 md:mb-6 flex-wrap gap-3">
             <div>
-              <p className="text-4xl font-bold text-foreground mb-2">{metric.value}</p>
-              <p className="text-muted-foreground">{metric.unit}</p>
+              <p className="text-3xl md:text-4xl font-bold text-foreground mb-1 md:mb-2">{metric.value}</p>
+              <p className="text-sm md:text-base text-muted-foreground">{metric.unit}</p>
             </div>
             <div className={cn(
-              "px-4 py-2 rounded-xl text-sm font-medium",
+              "px-3 py-1.5 md:px-4 md:py-2 rounded-xl text-xs md:text-sm font-medium",
               isPositive ? "bg-green-500/20 text-green-400" : "bg-red-500/20 text-red-400"
             )}>
               {metric.change} vs last week
@@ -172,23 +173,23 @@ const DetailView = ({ metric, onBack }: { metric: typeof healthMetrics[0]; onBac
           </div>
           
           {/* Large Chart Placeholder */}
-          <div className="h-64 bg-muted/20 rounded-xl flex items-center justify-center border border-glass-border">
+          <div className="h-48 md:h-64 bg-muted/20 rounded-xl flex items-center justify-center border border-glass-border">
             <div className="text-center space-y-2">
-              <TrendingUp size={32} className="text-muted-foreground mx-auto" />
-              <p className="text-sm text-muted-foreground">Detailed {metric.name} trend</p>
+              <TrendingUp size={28} className="md:size-[32px] text-muted-foreground mx-auto" />
+              <p className="text-xs md:text-sm text-muted-foreground">Detailed {metric.name} trend</p>
               <p className="text-xs text-muted-foreground">7-day detailed analysis</p>
             </div>
           </div>
         </div>
 
         {/* Insights Card */}
-        <div className="bg-glass backdrop-blur-xl border border-glass-border rounded-2xl p-8 animate-fade-in">
-          <h3 className="text-lg font-semibold text-foreground mb-6">Insights & Recommendations</h3>
-          <div className="space-y-4">
+        <div className="bg-glass backdrop-blur-xl border border-glass-border rounded-2xl p-4 md:p-8 animate-fade-in">
+          <h3 className="text-base md:text-lg font-semibold text-foreground mb-4 md:mb-6">Insights & Recommendations</h3>
+          <div className="space-y-3 md:space-y-4">
             {metric.insights.map((insight, index) => (
-              <div key={index} className="flex items-start gap-3">
+              <div key={index} className="flex items-start gap-2 md:gap-3">
                 <div className="w-1.5 h-1.5 bg-primary rounded-full mt-2 flex-shrink-0" />
-                <p className="text-muted-foreground">{insight}</p>
+                <p className="text-sm md:text-base text-muted-foreground">{insight}</p>
               </div>
             ))}
           </div>
@@ -298,16 +299,16 @@ export const Health = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background pb-32">
-      <div className="container mx-auto px-6 pt-8">
+    <div className="min-h-screen bg-background pb-[calc(6rem+env(safe-area-inset-bottom))] md:pb-32">
+      <div className="container mx-auto px-4 md:px-6 pt-6 md:pt-8">
         {/* Header */}
-        <div className="text-center mb-8 animate-fade-in">
-          <h1 className="text-3xl font-bold text-foreground mb-2">Health Metrics</h1>
-          <p className="text-muted-foreground">Monitor your health and wellness indicators</p>
+        <div className="text-center mb-6 md:mb-8 animate-fade-in">
+          <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-2">Health Metrics</h1>
+          <p className="text-sm md:text-base text-muted-foreground">Monitor your health and wellness indicators</p>
         </div>
 
         {/* Metrics Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
           {healthMetrics.map((metric) => (
             <MetricTile 
               key={metric.id} 

@@ -262,22 +262,22 @@ export const Settings = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background pb-32">
-      <div className="container mx-auto px-6 pt-8 max-w-3xl">
+    <div className="min-h-screen bg-background pb-[calc(6rem+env(safe-area-inset-bottom))] md:pb-32">
+      <div className="container mx-auto px-4 md:px-6 pt-6 md:pt-8 max-w-3xl scrollable-content">
         {/* Header */}
-        <div className="text-center mb-12 space-y-4">
+        <div className="text-center mb-8 md:mb-12 space-y-3 md:space-y-4 px-4 md:px-0">
           <div className="animate-fade-in">
-            <h1 className="text-4xl font-bold text-foreground tracking-tight">Settings</h1>
+            <h1 className="text-3xl md:text-4xl font-bold text-foreground tracking-tight">Settings</h1>
           </div>
           <div className="animate-slide-in" style={{ animationDelay: '0.2s', animationFillMode: 'both' }}>
-            <p className="text-muted-foreground text-lg">Customize your experience</p>
+            <p className="text-muted-foreground text-base md:text-lg">Customize your experience</p>
           </div>
         </div>
 
-        <div className="space-y-6">
+        <div className="space-y-4 md:space-y-6">
           {/* Profile Section */}
-          <div className="bg-glass backdrop-blur-xl border border-glass-border rounded-2xl p-6 shadow-glass hover:bg-glass-highlight transition-all duration-300">
-            <div className="flex items-center gap-3 mb-6">
+          <div className="bg-glass backdrop-blur-xl border border-glass-border rounded-2xl p-4 md:p-6 shadow-glass hover:bg-glass-highlight transition-all duration-300">
+            <div className="flex items-center gap-3 mb-4 md:mb-6">
               <div className="w-8 h-8 bg-primary/20 rounded-lg flex items-center justify-center">
                 <User size={16} className="text-primary" />
               </div>

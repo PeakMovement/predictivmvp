@@ -51,7 +51,9 @@ export const FloatingNextDayButton = () => {
             onClick={handleNextDay}
             onKeyDown={handleKeyDown}
             className={cn(
-              "fixed bottom-24 left-4 md:left-6 lg:left-8 z-50",
+              "fixed z-50",
+              "bottom-[calc(5rem+env(safe-area-inset-bottom))] left-4",
+              "md:bottom-24 md:left-6 lg:left-8",
               "w-14 h-14 rounded-full",
               "bg-primary text-primary-foreground",
               "transition-all duration-300 ease-out",
@@ -60,7 +62,8 @@ export const FloatingNextDayButton = () => {
               "animate-pulse hover:animate-none",
               "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
               "shadow-[0_0_15px_rgba(120,64,255,0.4)] hover:shadow-[0_0_25px_rgba(120,64,255,0.6)]",
-              "light:border-2 light:border-border"
+              "light:border-2 light:border-border",
+              "touch-none"
             )}
             aria-label="Advance Simulation Day"
             tabIndex={0}

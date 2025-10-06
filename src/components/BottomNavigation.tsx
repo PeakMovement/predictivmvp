@@ -18,9 +18,18 @@ const tabs = [
 
 export const BottomNavigation = ({ activeTab, onTabChange }: BottomNavigationProps) => {
   return (
-    <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-50 animate-float">
-      <nav className="bg-glass backdrop-blur-xl border border-glass-border rounded-2xl px-4 py-3 shadow-glass">
-        <div className="flex items-center">
+    <div className={cn(
+      "fixed left-0 right-0 z-50",
+      "bottom-0 pb-[env(safe-area-inset-bottom)]",
+      "md:bottom-6 md:left-1/2 md:right-auto md:transform md:-translate-x-1/2 md:pb-0",
+      "md:w-auto md:animate-float"
+    )}>
+      <nav className={cn(
+        "bg-glass backdrop-blur-xl border-t border-glass-border shadow-glass",
+        "md:border md:rounded-2xl md:border-t-glass-border",
+        "px-2 py-2 md:px-4 md:py-3"
+      )}>
+        <div className="flex items-center justify-around md:justify-center">
           {tabs.map((tab) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
@@ -30,12 +39,16 @@ export const BottomNavigation = ({ activeTab, onTabChange }: BottomNavigationPro
                 key={tab.id}
                 onClick={() => onTabChange(tab.id)}
                 className={cn(
-                  "relative flex flex-col items-center justify-center gap-1 px-3 py-2 rounded-xl transition-all duration-500 ease-out flex-1 min-w-0",
+                  "relative flex flex-col items-center justify-center gap-0.5 md:gap-1",
+                  "px-2 py-2 md:px-3 md:py-2 rounded-xl transition-all duration-500 ease-out",
+                  "flex-1 md:flex-initial min-w-0",
+                  "min-h-[44px]", // iOS touch target minimum
                   "hover:bg-glass-highlight hover:scale-105 active:scale-95",
                   "transform-gpu will-change-transform",
                   isActive && "bg-primary/20 scale-105"
                 )}
-                style={{ minWidth: '64px' }}
+                style={{ minWidth: '48px', maxWidth: '80px' }}
+                aria-label={tab.label}
               >
                 {isActive && (
                   <>
@@ -58,7 +71,8 @@ export const BottomNavigation = ({ activeTab, onTabChange }: BottomNavigationPro
                 />
                 <span 
                   className={cn(
-                    "text-xs font-medium transition-all duration-300 truncate w-full text-center",
+                    "text-[10px] md:text-xs font-medium transition-all duration-300 truncate w-full text-center",
+                    "max-w-[60px] md:max-w-none",
                     isActive ? "text-primary font-semibold" : "text-muted-foreground"
                   )}
                 >

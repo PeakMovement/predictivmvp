@@ -394,10 +394,10 @@ export const Settings = () => {
             
             <div className="space-y-6">
               {/* Simulation Toggle */}
-              <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between">
                 <div>
                   <p className="font-medium text-foreground">Simulate Live Feed</p>
-                  <p className="text-sm text-muted-foreground">Auto-advance through days every 2 seconds</p>
+                  <p className="text-sm text-muted-foreground">Show floating 'Next Day' button for manual progression</p>
                 </div>
                 <Switch
                   checked={isSimulating}
@@ -413,7 +413,7 @@ export const Settings = () => {
 
               {/* Status Display */}
               <div className="bg-glass/30 border border-glass-border rounded-xl p-4">
-                <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center justify-between mb-3">
                   <span className="text-sm text-muted-foreground">Current Status</span>
                   <div className={cn(
                     "flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium transition-all",
@@ -423,9 +423,9 @@ export const Settings = () => {
                   )}>
                     <div className={cn(
                       "w-2 h-2 rounded-full transition-all",
-                      isSimulating ? "bg-green-400 animate-pulse" : "bg-muted-foreground"
+                      isSimulating ? "bg-green-400" : "bg-muted-foreground"
                     )} />
-                    {isSimulating ? "Simulating" : "Paused"}
+                    {isSimulating ? "Active" : "Inactive"}
                   </div>
                 </div>
                 <div className="text-center py-2">

@@ -36,27 +36,7 @@ export const LiveDataProvider = ({ children }: { children: ReactNode }) => {
     refreshData();
   }, []);
 
-  // Auto-advance simulation
-  useEffect(() => {
-    if (!isSimulating) return;
-
-    const interval = setInterval(() => {
-      setCurrentDayIndex((prev) => {
-        if (prev >= csvData.length - 1) {
-          setIsSimulating(false);
-          return prev;
-        }
-        return prev + 1;
-      });
-    }, 2000); // Advance every 2 seconds
-
-    return () => clearInterval(interval);
-  }, [isSimulating, csvData.length]);
-
   const startSimulation = () => {
-    if (currentDayIndex >= csvData.length - 1) {
-      setCurrentDayIndex(0);
-    }
     setIsSimulating(true);
   };
 
@@ -72,7 +52,6 @@ export const LiveDataProvider = ({ children }: { children: ReactNode }) => {
   const setDayIndex = (index: number) => {
     if (index >= 0 && index < csvData.length) {
       setCurrentDayIndex(index);
-      setIsSimulating(false);
     }
   };
 

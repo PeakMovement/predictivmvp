@@ -41,9 +41,9 @@ export const FloatingNextDayButton = () => {
           </button>
         </TooltipTrigger>
         <TooltipContent side="left">
-          <p>Advance Simulation Day</p>
+          <p className="font-semibold">Next Day</p>
           <p className="text-xs text-muted-foreground">
-            Day {currentDayIndex + 1} of {totalDays}
+            Currently on Day {currentDayIndex + 1} of {totalDays}
           </p>
         </TooltipContent>
       </Tooltip>

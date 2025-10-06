@@ -49,6 +49,71 @@ export type Database = {
           },
         ]
       }
+      health_daily: {
+        Row: {
+          active_energy_kcal: number | null
+          date: string | null
+          distance_m: number | null
+          id: string
+          resting_hr: number | null
+          steps: number | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          active_energy_kcal?: number | null
+          date?: string | null
+          distance_m?: number | null
+          id?: string
+          resting_hr?: number | null
+          steps?: number | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          active_energy_kcal?: number | null
+          date?: string | null
+          distance_m?: number | null
+          id?: string
+          resting_hr?: number | null
+          steps?: number | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "health_daily_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notification_log: {
+        Row: {
+          created_at: string
+          id: string
+          message: string
+          recipient: string
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          message: string
+          recipient: string
+          status: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          message?: string
+          recipient?: string
+          status?: string
+        }
+        Relationships: []
+      }
       "Risk Scores": {
         Row: {
           date: string | null
@@ -80,6 +145,56 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      terra_connections: {
+        Row: {
+          connected_at: string | null
+          id: string
+          provider: string | null
+          terra_user_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          connected_at?: string | null
+          id?: string
+          provider?: string | null
+          terra_user_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          connected_at?: string | null
+          id?: string
+          provider?: string | null
+          terra_user_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "terra_connections_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      users: {
+        Row: {
+          created_at: string | null
+          email: string | null
+          id: string
+        }
+        Insert: {
+          created_at?: string | null
+          email?: string | null
+          id?: string
+        }
+        Update: {
+          created_at?: string | null
+          email?: string | null
+          id?: string
+        }
+        Relationships: []
       }
       Users: {
         Row: {

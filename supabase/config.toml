@@ -1,1 +1,4 @@
 project_id = "ixtwbkikyuexskdgfpfq"
+
+[functions.test-twilio-env]
+verify_jwt = false

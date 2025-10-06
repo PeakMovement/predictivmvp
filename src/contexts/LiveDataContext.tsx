@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { getHealthData, HealthDataRow } from "@/lib/healthDataStore";
+import { checkAlertConditions } from "@/lib/alertConditions";
 
 interface LiveDataContextType {
   csvData: HealthDataRow[];
@@ -52,6 +53,14 @@ export const LiveDataProvider = ({ children }: { children: ReactNode }) => {
   const setDayIndex = (index: number) => {
     if (index >= 0 && index < csvData.length) {
       setCurrentDayIndex(index);
+      
+      // Check alert conditions when day changes
+      const dayData = csvData[index];
+      if (dayData) {
+        checkAlertConditions(dayData).catch(error => {
+          console.error('Error checking alert conditions:', error);
+        });
+      }
     }
   };
 

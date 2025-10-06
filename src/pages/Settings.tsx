@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { useTheme } from "@/components/ThemeProvider";
 import { useLiveData } from "@/contexts/LiveDataContext";
 import { demoProfiles, DemoProfileType, getActiveDemoProfile, setActiveDemoProfile } from "@/lib/healthDataStore";
+import { getAlertSettings, saveAlertSettings } from "@/lib/alertConditions";
 
 export const Settings = () => {
   const [notifications, setNotifications] = useState(true);
@@ -15,6 +16,11 @@ export const Settings = () => {
   const [primaryHue, setPrimaryHue] = useState(263);
   const [isDragging, setIsDragging] = useState(false);
   const [activeDemoProfile, setActiveDemoProfileState] = useState<DemoProfileType>(getActiveDemoProfile());
+  
+  // SMS Alert settings
+  const [smsEnabled, setSmsEnabled] = useState(false);
+  const [phoneNumber, setPhoneNumber] = useState('');
+  
   const { theme, setTheme } = useTheme();
   const { 
     currentDayIndex, 
@@ -49,6 +55,11 @@ export const Settings = () => {
       setPrimaryHue(parseInt(savedHue));
       updatePrimaryColor(parseInt(savedHue));
     }
+    
+    // Load SMS alert settings
+    const alertSettings = getAlertSettings();
+    setSmsEnabled(alertSettings.enableSMS);
+    setPhoneNumber(alertSettings.phoneNumber);
   }, []);
 
   const updatePrimaryColor = (hue: number) => {
@@ -121,6 +132,17 @@ export const Settings = () => {
   const handleAppleHealthConnect = () => {
     setAppleHealthConnected(!appleHealthConnected);
     // Placeholder for actual connection flow
+  };
+
+  const handleSmsToggle = (enabled: boolean) => {
+    setSmsEnabled(enabled);
+    saveAlertSettings({ enableSMS: enabled, phoneNumber });
+  };
+
+  const handlePhoneNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const number = e.target.value;
+    setPhoneNumber(number);
+    saveAlertSettings({ enableSMS: smsEnabled, phoneNumber: number });
   };
 
   return (
@@ -222,15 +244,49 @@ export const Settings = () => {
               </div>
               <h3 className="text-lg font-semibold text-foreground">Notifications</h3>
             </div>
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="font-medium text-foreground">Push Notifications</p>
-                <p className="text-sm text-muted-foreground">Receive updates about your progress</p>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="font-medium text-foreground">Push Notifications</p>
+                  <p className="text-sm text-muted-foreground">Receive updates about your progress</p>
+                </div>
+                <Switch
+                  checked={notifications}
+                  onCheckedChange={setNotifications}
+                />
               </div>
-              <Switch
-                checked={notifications}
-                onCheckedChange={setNotifications}
-              />
+              
+              <div className="pt-4 border-t border-glass-border">
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <p className="font-medium text-foreground">SMS Alerts</p>
+                    <p className="text-sm text-muted-foreground">Get real-time alerts for training risks</p>
+                  </div>
+                  <Switch
+                    checked={smsEnabled}
+                    onCheckedChange={handleSmsToggle}
+                  />
+                </div>
+                
+                {smsEnabled && (
+                  <div className="space-y-2 animate-fade-in">
+                    <Label htmlFor="phone" className="text-sm text-muted-foreground">
+                      Phone Number (South Africa)
+                    </Label>
+                    <Input
+                      id="phone"
+                      type="tel"
+                      placeholder="+27827251107"
+                      value={phoneNumber}
+                      onChange={handlePhoneNumberChange}
+                      className="bg-glass/30 border-glass-border"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Alert conditions: High training load (ACWR &gt; 1.5), Low recovery (HRV &lt; 65), Poor sleep (&lt; 70)
+                    </p>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 

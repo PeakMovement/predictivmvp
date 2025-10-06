@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { User, Smartphone, Bell, Palette, Info, ChevronRight, PlayCircle, PauseCircle, SkipForward, RotateCcw } from "lucide-react";
+import { User, Smartphone, Bell, Palette, Info, ChevronRight, PlayCircle, PauseCircle, SkipForward, RotateCcw, Database } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
@@ -7,12 +7,14 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "@/components/ThemeProvider";
 import { useLiveData } from "@/contexts/LiveDataContext";
+import { demoProfiles, DemoProfileType, getActiveDemoProfile, setActiveDemoProfile } from "@/lib/healthDataStore";
 
 export const Settings = () => {
   const [notifications, setNotifications] = useState(true);
   const [appleHealthConnected, setAppleHealthConnected] = useState(false);
   const [primaryHue, setPrimaryHue] = useState(263);
   const [isDragging, setIsDragging] = useState(false);
+  const [activeDemoProfile, setActiveDemoProfileState] = useState<DemoProfileType>(getActiveDemoProfile());
   const { theme, setTheme } = useTheme();
   const { 
     currentDayIndex, 
@@ -21,7 +23,8 @@ export const Settings = () => {
     startSimulation, 
     pauseSimulation, 
     resetSimulation,
-    setDayIndex 
+    setDayIndex,
+    refreshData
   } = useLiveData();
 
   const handleNextDay = () => {
@@ -31,6 +34,12 @@ export const Settings = () => {
     } else {
       setDayIndex(nextIndex);
     }
+  };
+
+  const handleDemoProfileChange = (profileType: DemoProfileType) => {
+    setActiveDemoProfile(profileType);
+    setActiveDemoProfileState(profileType);
+    refreshData(); // Refresh LiveDataContext with new demo profile
   };
 
   // Load saved primary hue from localStorage
@@ -372,6 +381,48 @@ export const Settings = () => {
                     </p>
                   </div>
                 </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Demo Profile Selection Section */}
+          <div className="bg-glass backdrop-blur-xl border border-glass-border rounded-2xl p-6 shadow-glass hover:bg-glass-highlight transition-all duration-300">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-8 h-8 bg-primary/20 rounded-lg flex items-center justify-center">
+                <Database size={16} className="text-primary" />
+              </div>
+              <h3 className="text-lg font-semibold text-foreground">Demo Profile</h3>
+            </div>
+            
+            <div className="space-y-4">
+              <p className="text-sm text-muted-foreground">
+                Select a demo profile with unique training patterns and metrics
+              </p>
+              
+              <div className="grid gap-3">
+                {Object.values(demoProfiles).map((profile) => (
+                  <button
+                    key={profile.id}
+                    onClick={() => handleDemoProfileChange(profile.id)}
+                    className={cn(
+                      "w-full p-4 rounded-xl border transition-all duration-200 text-left",
+                      activeDemoProfile === profile.id
+                        ? "bg-primary/10 border-primary/30 ring-2 ring-primary/20"
+                        : "bg-glass/30 border-glass-border hover:bg-glass-highlight"
+                    )}
+                  >
+                    <div className="flex items-start gap-3">
+                      <span className="text-2xl mt-0.5">{profile.emoji}</span>
+                      <div className="flex-1">
+                        <p className="font-medium text-foreground mb-1">{profile.name}</p>
+                        <p className="text-sm text-muted-foreground">{profile.description}</p>
+                        <p className="text-xs text-muted-foreground mt-2">
+                          {profile.data.length} days of sample data
+                        </p>
+                      </div>
+                    </div>
+                  </button>
+                ))}
               </div>
             </div>
           </div>

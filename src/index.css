@@ -195,4 +195,52 @@ All colors MUST be HSL.
     overscroll-behavior-y: contain;
     -webkit-overflow-scrolling: touch;
   }
+
+  /* Improved focus rings - consistent with primary color */
+  *:focus-visible {
+    outline: 2px solid hsl(var(--primary));
+    outline-offset: 2px;
+  }
+
+  /* Ensure minimum touch targets for mobile */
+  button, a, input, select, textarea {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}
+
+@layer utilities {
+  /* Fade In Out Animation for Loading Overlay */
+  @keyframes fadeInOut {
+    0% { opacity: 0; }
+    20% { opacity: 1; }
+    80% { opacity: 1; }
+    100% { opacity: 0; }
+  }
+  
+  .animate-fadeInOut {
+    animation: fadeInOut 1.5s ease-in-out forwards;
+  }
+
+  /* Consistent card borders for light and dark mode */
+  .card-border {
+    @apply border;
+  }
+
+  .light .card-border {
+    border-color: rgba(0, 0, 0, 0.08);
+  }
+
+  .dark .card-border {
+    border-color: rgba(255, 255, 255, 0.1);
+  }
+
+  /* Consistent hover glow effect */
+  .hover-glow {
+    transition: box-shadow 0.3s ease-in-out;
+  }
+
+  .hover-glow:hover {
+    box-shadow: 0 0 20px hsl(var(--primary) / 0.3);
+  }
 }

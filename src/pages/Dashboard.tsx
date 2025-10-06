@@ -301,7 +301,7 @@ const getStatusColor = (status: string) => {
 };
 
 const MetricCard = ({ metric }: { metric: { name: string; value: string; status: string } }) => (
-  <div className="bg-glass backdrop-blur-xl border border-glass-border rounded-2xl p-4 md:p-6 shadow-glass hover:bg-glass-highlight hover:scale-105 hover:-translate-y-1 transition-all duration-300 ease-out animate-fade-in transform-gpu will-change-transform active:scale-95">
+  <div className="bg-glass backdrop-blur-xl border border-glass-border rounded-2xl p-4 md:p-6 shadow-glass hover:bg-glass-highlight hover:scale-105 hover:-translate-y-1 hover-glow transition-all duration-300 ease-out animate-fade-in transform-gpu will-change-transform active:scale-95 min-h-[120px]">
     <div className="flex items-start justify-between mb-3 md:mb-4">
       <h3 className="text-xs md:text-sm font-medium text-muted-foreground leading-tight">{metric.name}</h3>
       <div className={cn("w-2.5 h-2.5 md:w-3 md:h-3 rounded-full shadow-glow animate-bounce-subtle", getStatusColor(metric.status))} />
@@ -441,12 +441,12 @@ const WeeklyInsightsCard = () => {
   };
 
   return (
-    <div className="bg-glass backdrop-blur-xl border border-glass-border rounded-2xl p-6 shadow-glass hover:bg-glass-highlight hover:scale-105 hover:-translate-y-1 transition-all duration-300 ease-out animate-fade-in transform-gpu">
+    <div className="bg-glass backdrop-blur-xl border border-glass-border rounded-2xl p-4 md:p-6 shadow-glass hover:bg-glass-highlight hover:scale-105 hover:-translate-y-1 hover-glow transition-all duration-300 ease-out animate-fade-in transform-gpu">
       <div className="flex items-center gap-3 mb-4">
         <div className="w-8 h-8 bg-primary/20 rounded-lg flex items-center justify-center hover:scale-110 transition-transform duration-200">
           <TrendingUp size={16} className="text-primary" />
         </div>
-        <h3 className="text-lg font-semibold text-foreground">Weekly Insights</h3>
+        <h3 className="text-base md:text-lg font-semibold text-foreground">Weekly Insights</h3>
       </div>
       
       <p className="text-sm text-muted-foreground mb-6 leading-relaxed">

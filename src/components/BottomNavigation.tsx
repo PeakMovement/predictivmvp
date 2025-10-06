@@ -27,9 +27,10 @@ export const BottomNavigation = ({ activeTab, onTabChange }: BottomNavigationPro
       <nav className={cn(
         "bg-glass backdrop-blur-xl border-t border-glass-border shadow-glass",
         "md:border md:rounded-2xl md:border-t-glass-border",
-        "px-2 py-2 md:px-4 md:py-3"
+        "px-2 py-2 md:px-4 md:py-3",
+        "hover-glow"
       )}>
-        <div className="flex items-center justify-around md:justify-center">
+        <div className="flex items-center justify-evenly md:justify-center gap-1">
           {tabs.map((tab) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;

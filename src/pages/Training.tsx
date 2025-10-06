@@ -431,13 +431,13 @@ const AccountabilityChallenges = ({ suggestions }: { suggestions: ReturnType<typ
 
   return (
     <>
-      <div className="bg-glass backdrop-blur-xl border border-glass-border rounded-2xl p-6 shadow-glass hover:bg-glass-highlight hover:scale-105 hover:-translate-y-1 transition-all duration-300 ease-out animate-fade-in transform-gpu mb-8">
-        <div className="flex items-center gap-3 mb-6">
+      <div className="bg-glass backdrop-blur-xl border border-glass-border rounded-2xl p-4 md:p-6 shadow-glass hover:bg-glass-highlight hover:scale-105 hover:-translate-y-1 hover-glow transition-all duration-300 ease-out animate-fade-in transform-gpu mb-6 md:mb-8">
+        <div className="flex items-center gap-3 mb-4 md:mb-6">
           <div className="w-8 h-8 bg-primary/20 rounded-lg flex items-center justify-center hover:scale-110 transition-transform duration-200">
             <TrendingUp size={16} className="text-primary" />
           </div>
           <div className="flex items-center gap-2">
-            <h3 className="text-lg font-semibold text-foreground">Accountability Challenges</h3>
+            <h3 className="text-base md:text-lg font-semibold text-foreground">Accountability Challenges</h3>
             <Tooltip>
               <TooltipTrigger asChild>
                 <button className="p-1 rounded-md hover:bg-primary/10 transition-all duration-200 hover:scale-110">

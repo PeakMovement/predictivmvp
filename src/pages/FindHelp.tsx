@@ -1,10 +1,23 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 export const FindHelp = () => {
   const [iframeError, setIframeError] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    // Reset loading state when component mounts
+    setLoading(true);
+  }, []);
+
+  const handleIframeLoad = () => {
+    // Small delay to ensure smooth transition
+    setTimeout(() => {
+      setLoading(false);
+    }, 100);
+  };
 
   return (
-    <div className="flex flex-col w-full h-screen bg-background">
+    <div className="flex flex-col w-full h-screen bg-background relative">
       {/* Purple-blue glow overlay */}
       <div 
         className="absolute inset-0 pointer-events-none z-0"
@@ -13,12 +26,22 @@ export const FindHelp = () => {
         }}
       />
       
+      {/* Loading overlay with blurred gradient */}
+      {loading && (
+        <div 
+          className="absolute inset-0 z-50 animate-fadeInOut"
+          style={{
+            background: 'linear-gradient(135deg, rgba(18, 18, 18, 0.95) 0%, rgba(95, 132, 255, 0.25) 100%)',
+            backdropFilter: 'blur(8px)',
+          }}
+        />
+      )}
+      
       {/* Main iframe container */}
       <div 
-        className="flex-1 relative overflow-hidden animate-fade-in z-10"
+        className="flex-1 relative overflow-hidden z-10"
         style={{
           paddingBottom: 'env(safe-area-inset-bottom)',
-          animationDuration: '0.5s'
         }}
       >
         {!iframeError ? (
@@ -33,6 +56,7 @@ export const FindHelp = () => {
             }}
             loading="lazy"
             allow="clipboard-write; fullscreen"
+            onLoad={handleIframeLoad}
             onError={() => setIframeError(true)}
             title="Predictiv Medical Finder"
           />
@@ -47,8 +71,11 @@ export const FindHelp = () => {
                 Please try again later or check your internet connection.
               </p>
               <button
-                onClick={() => setIframeError(false)}
-                className="mt-4 px-4 py-2 rounded-lg bg-primary/20 text-primary hover:bg-primary/30 hover:scale-105 active:scale-95 transition-all duration-200 font-medium"
+                onClick={() => {
+                  setIframeError(false);
+                  setLoading(true);
+                }}
+                className="mt-4 px-4 py-2 rounded-lg bg-primary/20 text-primary hover:bg-primary/30 hover:scale-105 active:scale-95 transition-all duration-200 font-medium min-h-[44px]"
               >
                 Try Again
               </button>

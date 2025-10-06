@@ -103,7 +103,7 @@ const MetricTile = ({ metric, onClick }: { metric: typeof healthMetrics[0]; onCl
   return (
     <div 
       onClick={onClick}
-      className="bg-glass backdrop-blur-xl border border-glass-border rounded-2xl p-4 md:p-6 shadow-glass hover:bg-glass-highlight hover:scale-105 hover:-translate-y-2 transition-all duration-300 ease-out cursor-pointer animate-fade-in transform-gpu will-change-transform active:scale-95 min-h-[44px]"
+      className="bg-glass backdrop-blur-xl border border-glass-border rounded-2xl p-4 md:p-6 shadow-glass hover:bg-glass-highlight hover:scale-105 hover:-translate-y-2 hover-glow transition-all duration-300 ease-out cursor-pointer animate-fade-in transform-gpu will-change-transform active:scale-95 min-h-[120px]"
     >
       <div className="flex items-start justify-between mb-3 md:mb-4">
         <div className="flex items-center gap-2 md:gap-3">
@@ -158,7 +158,7 @@ const DetailView = ({ metric, onBack }: { metric: typeof healthMetrics[0]; onBac
         </div>
 
         {/* Current Value Card */}
-        <div className="bg-glass backdrop-blur-xl border border-glass-border rounded-2xl p-4 md:p-8 mb-6 md:mb-8 animate-fade-in">
+        <div className="bg-glass backdrop-blur-xl border border-glass-border rounded-2xl p-4 md:p-8 mb-6 md:mb-8 hover-glow animate-fade-in">
           <div className="flex items-center justify-between mb-4 md:mb-6 flex-wrap gap-3">
             <div>
               <p className="text-3xl md:text-4xl font-bold text-foreground mb-1 md:mb-2">{metric.value}</p>
@@ -183,7 +183,7 @@ const DetailView = ({ metric, onBack }: { metric: typeof healthMetrics[0]; onBac
         </div>
 
         {/* Insights Card */}
-        <div className="bg-glass backdrop-blur-xl border border-glass-border rounded-2xl p-4 md:p-8 animate-fade-in">
+        <div className="bg-glass backdrop-blur-xl border border-glass-border rounded-2xl p-4 md:p-8 hover-glow animate-fade-in">
           <h3 className="text-base md:text-lg font-semibold text-foreground mb-4 md:mb-6">Insights & Recommendations</h3>
           <div className="space-y-3 md:space-y-4">
             {metric.insights.map((insight, index) => (

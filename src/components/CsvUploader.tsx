@@ -22,57 +22,33 @@ export default function CsvUploader() {
     setIsUploading(true);
 
     try {
-      // Get current user
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) {
-        toast({
-          title: "Authentication required",
-          description: "Please log in to upload files.",
-          variant: "destructive",
-        });
-        setIsUploading(false);
-        return;
-      }
+      // Generate a unique filename (public uploads don't use user.id)
+      const filePath = `${Date.now()}-${file.name}`;
 
-      // Upload file to storage
-      const path = `${user.id}/${Date.now()}-${file.name}`;
-      const { error: uploadError } = await supabase.storage.from("predictiv_data").upload(path, file, {
+      // ✅ Upload to public bucket using anon key
+      const { data, error } = await supabase.storage.from("predictiv_data").upload(filePath, file, {
         upsert: true,
         cacheControl: "3600",
       });
 
-      if (uploadError) {
+      if (error) {
+        console.error("Upload error:", error);
         toast({
           title: "Upload failed",
-          description: uploadError.message,
+          description: error.message,
           variant: "destructive",
         });
-        return;
-      }
-
-      // Record upload in database
-      const { error: dbError } = await supabase.from("csv_uploads").insert({
-        user_id: user.id,
-        file_url: path,
-      });
-
-      if (dbError) {
+      } else {
+        console.log("✅ Upload success:", data);
         toast({
-          title: "Database error",
-          description: dbError.message,
-          variant: "destructive",
+          title: "Upload successful",
+          description: `${file.name} uploaded to predictiv_data bucket.`,
         });
-        return;
       }
-
-      toast({
-        title: "Upload successful",
-        description: `${file.name} has been uploaded successfully.`,
-      });
 
       setFile(null);
     } catch (err: any) {
+      console.error("Unexpected error:", err);
       toast({
         title: "Unexpected error",
         description: err.message || "An error occurred during upload.",

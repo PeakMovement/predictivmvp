@@ -23,28 +23,24 @@ export default function CsvUploader() {
 
     try {
       // Get current user
-      // ✅ Force upload to use anon key (public upload)
-      try {
-        const { data, error } = await supabase.storage.from("predictiv_data").upload(filePath, file, {
-          upsert: true,
-          cacheControl: "3600",
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        toast({
+          title: "Authentication required",
+          description: "Please log in to upload files.",
+          variant: "destructive",
         });
-
-        if (error) {
-          console.error("Upload error:", error);
-          alert("Upload failed: " + error.message);
-        } else {
-          console.log("Upload success:", data);
-          alert("✅ Upload successful!");
-        }
-      } catch (err) {
-        console.error("Unexpected error:", err);
-        alert("Unexpected error during upload.");
+        setIsUploading(false);
+        return;
       }
 
       // Upload file to storage
       const path = `${user.id}/${Date.now()}-${file.name}`;
-      const { error: uploadError } = await supabase.storage.from("predictiv_data").upload(path, file);
+      const { error: uploadError } = await supabase.storage.from("predictiv_data").upload(path, file, {
+        upsert: true,
+        cacheControl: "3600",
+      });
 
       if (uploadError) {
         toast({

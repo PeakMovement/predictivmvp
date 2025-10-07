@@ -23,22 +23,28 @@ export default function CsvUploader() {
 
     try {
       // Get current user
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
-      
-      if (userError || !user) {
-        toast({
-          title: "Authentication required",
-          description: "Please log in to upload files.",
-          variant: "destructive",
+      // ✅ Force upload to use anon key (public upload)
+      try {
+        const { data, error } = await supabase.storage.from("predictiv_data").upload(filePath, file, {
+          upsert: true,
+          cacheControl: "3600",
         });
-        return;
+
+        if (error) {
+          console.error("Upload error:", error);
+          alert("Upload failed: " + error.message);
+        } else {
+          console.log("Upload success:", data);
+          alert("✅ Upload successful!");
+        }
+      } catch (err) {
+        console.error("Unexpected error:", err);
+        alert("Unexpected error during upload.");
       }
 
       // Upload file to storage
       const path = `${user.id}/${Date.now()}-${file.name}`;
-      const { error: uploadError } = await supabase.storage
-        .from("predictiv_data")
-        .upload(path, file);
+      const { error: uploadError } = await supabase.storage.from("predictiv_data").upload(path, file);
 
       if (uploadError) {
         toast({
@@ -50,12 +56,10 @@ export default function CsvUploader() {
       }
 
       // Record upload in database
-      const { error: dbError } = await supabase
-        .from("csv_uploads")
-        .insert({
-          user_id: user.id,
-          file_url: path,
-        });
+      const { error: dbError } = await supabase.from("csv_uploads").insert({
+        user_id: user.id,
+        file_url: path,
+      });
 
       if (dbError) {
         toast({
@@ -86,7 +90,7 @@ export default function CsvUploader() {
   return (
     <div className="border border-border rounded-lg p-6 bg-card/50 backdrop-blur">
       <h2 className="text-xl font-semibold mb-4 text-foreground">Upload Your CSV</h2>
-      
+
       <div className="space-y-4">
         <div className="flex items-center gap-3">
           <input
@@ -104,11 +108,7 @@ export default function CsvUploader() {
           </p>
         )}
 
-        <Button
-          onClick={handleUpload}
-          disabled={!file || isUploading}
-          className="w-full"
-        >
+        <Button onClick={handleUpload} disabled={!file || isUploading} className="w-full">
           <Upload className="mr-2 h-4 w-4" />
           {isUploading ? "Uploading..." : "Upload"}
         </Button>

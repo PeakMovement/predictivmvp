@@ -52,7 +52,7 @@ const App = () => {
           <TooltipProvider>
             <Toaster />
             <Sonner />
-           <div className="relative overflow-hidden bg-gradient-to-b from-black via-[#0B0B0F] to-black">
+           <div className="relative overflow-hidden min-h-screen">
             <ThemeToggle />
             <Tooltip>
               <TooltipTrigger asChild>

@@ -1092,16 +1092,16 @@ const GraphCarousel = () => {
       
       {/* Time Range Selector */}
       <div className="flex justify-end mb-4">
-        <div className="flex bg-muted/10 rounded-lg p-1 border border-glass-border">
+        <div className="flex gap-1 bg-black/40 backdrop-blur-sm rounded-xl p-1.5 border border-white/[0.06]">
           {timeRanges.map((range) => (
             <button
               key={range.days}
               onClick={() => setTimeRange(range.days)}
               className={cn(
-                "px-3 py-1.5 text-xs font-medium rounded-md transition-all duration-200",
+                "px-4 py-2 text-xs font-medium rounded-lg transition-all duration-200",
                 timeRange === range.days
-                  ? "bg-primary text-primary-foreground shadow-sm"
-                  : "text-muted-foreground hover:text-foreground hover:bg-glass-highlight"
+                  ? "bg-primary text-white shadow-[0_0_10px_hsl(var(--primary)/0.5)]"
+                  : "text-gray-400 hover:text-white hover:bg-white/5"
               )}
             >
               {range.label}

@@ -46,7 +46,7 @@ const App = () => {
   };
 
   return (
-    <ThemeProvider defaultTheme="dark" storageKey="fitness-app-theme">
+    <ThemeProvider defaultTheme="dark" storageKey="predictiv-theme">
       <QueryClientProvider client={queryClient}>
         <LiveDataProvider>
           <TooltipProvider>

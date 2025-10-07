@@ -38,6 +38,10 @@ All colors MUST be HSL.
 
     --radius: 1rem;
 
+    /* Custom Predictiv tokens */
+    --card-bg: 240 20% 10% / 0.7;
+    --text-muted: 240 10% 74%;
+
     /* Glassmorphism design tokens */
     --glass-bg: 240 10% 3.9% / 0.8;
     --glass-border: 240 5% 64.9% / 0.2;

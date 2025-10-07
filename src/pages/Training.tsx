@@ -535,13 +535,13 @@ const AccountabilityChallenges = ({ suggestions }: { suggestions: ReturnType<typ
                       <div className="flex items-center gap-2">
                         <button
                           onClick={() => handleAccept(suggestion)}
-                          className="p-2 rounded-lg bg-green-500/20 text-green-400 hover:bg-green-500/30 hover:scale-110 active:scale-95 transition-all duration-200"
+                          className="w-9 h-9 rounded-xl flex items-center justify-center border border-emerald-500/40 bg-[#1A2E24] text-emerald-400 hover:bg-[#2A3E34] hover:scale-105 active:scale-95 transition-all duration-200 shadow-[0_0_10px_rgba(16,185,129,0.15)] hover:shadow-[0_0_15px_rgba(16,185,129,0.25)]"
                         >
                           <Check size={16} />
                         </button>
                         <button
                           onClick={() => handleCancel(suggestion.id)}
-                          className="p-2 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30 hover:scale-110 active:scale-95 transition-all duration-200"
+                          className="w-9 h-9 rounded-xl flex items-center justify-center border border-red-500/40 bg-[#3B1A1A] text-red-400 hover:bg-[#4B2A2A] hover:scale-105 active:scale-95 transition-all duration-200 shadow-[0_0_10px_rgba(239,68,68,0.15)] hover:shadow-[0_0_15px_rgba(239,68,68,0.25)]"
                         >
                           <X size={16} />
                         </button>
@@ -584,13 +584,13 @@ const AccountabilityChallenges = ({ suggestions }: { suggestions: ReturnType<typ
             <div className="flex items-center gap-2">
               <button
                 onClick={() => handleFeedback(true)}
-                className="p-2 rounded-lg bg-green-500/20 text-green-400 hover:bg-green-500/30 hover:scale-110 active:scale-95 transition-all duration-200"
+                className="w-9 h-9 rounded-xl flex items-center justify-center border border-emerald-500/40 bg-[#1A2E24] text-emerald-400 hover:bg-[#2A3E34] hover:scale-105 active:scale-95 transition-all duration-200 shadow-[0_0_10px_rgba(16,185,129,0.15)] hover:shadow-[0_0_15px_rgba(16,185,129,0.25)]"
               >
                 <Check size={16} />
               </button>
               <button
                 onClick={() => handleFeedback(false)}
-                className="p-2 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30 hover:scale-110 active:scale-95 transition-all duration-200"
+                className="w-9 h-9 rounded-xl flex items-center justify-center border border-red-500/40 bg-[#3B1A1A] text-red-400 hover:bg-[#4B2A2A] hover:scale-105 active:scale-95 transition-all duration-200 shadow-[0_0_10px_rgba(239,68,68,0.15)] hover:shadow-[0_0_15px_rgba(239,68,68,0.25)]"
               >
                 <X size={16} />
               </button>

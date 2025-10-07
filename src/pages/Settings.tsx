@@ -13,7 +13,7 @@ import { getAlertSettings, saveAlertSettings } from "@/lib/alertConditions";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
-export const Settings = () => {
+export const Settings = ({ onNavigate }: { onNavigate?: (tab: string) => void }) => {
   const [notifications, setNotifications] = useState(true);
   const [appleHealthConnected, setAppleHealthConnected] = useState(false);
   const [primaryHue, setPrimaryHue] = useState(263);
@@ -832,6 +832,33 @@ export const Settings = () => {
                 <span>Contact Support</span>
                 <ChevronRight size={16} />
               </div>
+            </div>
+          </div>
+
+          {/* Developer Tools Section */}
+          <div className="bg-glass backdrop-blur-xl border border-glass-border rounded-2xl p-6 shadow-glass hover:bg-glass-highlight transition-all duration-300">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-8 h-8 bg-primary/20 rounded-lg flex items-center justify-center">
+                <Database size={16} className="text-primary" />
+              </div>
+              <h3 className="text-lg font-semibold text-foreground">Developer Tools</h3>
+            </div>
+            <div className="space-y-3">
+              <button
+                onClick={() => onNavigate?.('test-supabase')}
+                className="w-full flex items-center justify-between p-4 rounded-xl border bg-glass/30 border-glass-border hover:bg-glass-highlight transition-all duration-200"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center">
+                    <Database size={16} className="text-primary" />
+                  </div>
+                  <div className="text-left">
+                    <p className="font-medium text-foreground">Test Supabase Connection</p>
+                    <p className="text-xs text-muted-foreground">Verify database connectivity</p>
+                  </div>
+                </div>
+                <ChevronRight size={16} className="text-muted-foreground" />
+              </button>
             </div>
           </div>
         </div>

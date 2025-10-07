@@ -15,6 +15,7 @@ import { YourPlan } from "@/pages/YourPlan";
 import { Settings } from "@/pages/Settings";
 import { FindHelp } from "@/pages/FindHelp";
 import { DataUpload } from "@/pages/DataUpload";
+import TestSupabase from "@/pages/TestSupabase";
 import { Settings as SettingsIcon } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
@@ -39,7 +40,9 @@ const App = () => {
       case "find-help":
         return <div key="find-help" className="animate-fade-in"><FindHelp /></div>;
       case "settings":
-        return <div key="settings" className="animate-fade-in"><Settings /></div>;
+        return <div key="settings" className="animate-fade-in"><Settings onNavigate={setActiveTab} /></div>;
+      case "test-supabase":
+        return <div key="test-supabase" className="animate-fade-in"><TestSupabase /></div>;
       default:
         return <div key="dashboard" className="animate-fade-in"><Dashboard /></div>;
     }

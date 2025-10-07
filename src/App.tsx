@@ -11,7 +11,6 @@ import { LiveDataProvider } from "@/contexts/LiveDataContext";
 import { Dashboard } from "@/pages/Dashboard";
 import { Training } from "@/pages/Training";
 import { Health } from "@/pages/Health";
-import { Schedule } from "@/pages/Schedule";
 import { YourPlan } from "@/pages/YourPlan";
 import { Settings } from "@/pages/Settings";
 import { FindHelp } from "@/pages/FindHelp";
@@ -33,8 +32,6 @@ const App = () => {
         return <div key="training" className="animate-fade-in"><Training /></div>;
       case "health":
         return <div key="health" className="animate-fade-in"><Health /></div>;
-      case "schedule":
-        return <div key="schedule" className="animate-fade-in"><Schedule /></div>;
       case "your-plan":
         return <div key="your-plan" className="animate-fade-in"><YourPlan /></div>;
       case "data-upload":
@@ -55,7 +52,7 @@ const App = () => {
           <TooltipProvider>
             <Toaster />
             <Sonner />
-          <div className="relative overflow-hidden">
+           <div className="relative overflow-hidden bg-gradient-to-b from-black via-[#0B0B0F] to-black">
             <ThemeToggle />
             <Tooltip>
               <TooltipTrigger asChild>

@@ -306,7 +306,7 @@ const MetricCard = ({ metric }: { metric: { name: string; value: string; status:
       <h3 className="text-xs md:text-sm font-medium text-muted-foreground leading-tight">{metric.name}</h3>
       <div className={cn("w-2.5 h-2.5 md:w-3 md:h-3 rounded-full shadow-glow animate-bounce-subtle", getStatusColor(metric.status))} />
     </div>
-    <p className="text-xl md:text-2xl font-bold text-foreground">{metric.value}</p>
+    <p className="text-xl md:text-2xl font-bold text-foreground">{metric.value ?? "–"}</p>
   </div>
 );
 

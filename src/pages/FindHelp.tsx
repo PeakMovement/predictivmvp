@@ -33,7 +33,7 @@ export const FindHelp = () => {
   };
 
   return (
-    <div className="flex flex-col w-full h-screen relative" style={{ backgroundColor: '#0A0A0A' }}>
+    <div className="flex flex-col w-full h-screen relative bg-gradient-to-b from-black via-[#0B0B0F] to-black">
       {/* Purple-blue glow overlay */}
       <div 
         className="absolute inset-0 pointer-events-none z-0"
@@ -80,8 +80,8 @@ export const FindHelp = () => {
             title="Predictiv Medical Finder - AI Health Assistant"
           />
         ) : (
-          <div className="flex items-center justify-center h-full p-6">
-            <div className="bg-glass backdrop-blur-xl border border-glass-border rounded-2xl p-8 max-w-md text-center shadow-glass">
+          <div className="min-h-screen flex items-center justify-center px-4 pb-[calc(5rem+env(safe-area-inset-bottom))]">
+            <div className="bg-gradient-to-b from-[#141414] to-[#0B0B0F] backdrop-blur-xl border border-[#222] rounded-2xl p-8 max-w-4xl w-full text-center shadow-2xl">
               <div className="text-4xl mb-4">⚠️</div>
               <p className="text-foreground font-medium mb-2">
                 Couldn't load the professional finder right now
@@ -94,7 +94,7 @@ export const FindHelp = () => {
                   setIframeError(false);
                   setLoading(true);
                 }}
-                className="mt-4 px-4 py-2 rounded-lg bg-primary/20 text-primary hover:bg-primary/30 hover:scale-105 active:scale-95 transition-all duration-200 font-medium min-h-[44px]"
+                className="mt-4 px-6 py-3 rounded-2xl bg-[#1E1E1E] text-gray-200 border border-gray-700 hover:bg-[#2D2D2D] hover:text-white hover:scale-105 hover:shadow-xl active:scale-95 transition-all duration-200 font-medium min-h-[44px]"
               >
                 Try Again
               </button>

@@ -112,7 +112,7 @@ const MetricTile = ({ metric, onClick }: { metric: typeof healthMetrics[0]; onCl
           </div>
           <div>
             <h3 className="text-sm md:text-base font-semibold text-foreground">{metric.name}</h3>
-            <p className="text-xl md:text-2xl font-bold text-foreground">{metric.value}</p>
+            <p className="text-xl md:text-2xl font-bold text-foreground">{metric.value ?? "–"}</p>
             <p className="text-xs text-muted-foreground">{metric.unit}</p>
           </div>
         </div>
@@ -161,7 +161,7 @@ const DetailView = ({ metric, onBack }: { metric: typeof healthMetrics[0]; onBac
         <div className="bg-glass backdrop-blur-xl border border-glass-border rounded-2xl p-4 md:p-8 mb-6 md:mb-8 hover-glow animate-fade-in">
           <div className="flex items-center justify-between mb-4 md:mb-6 flex-wrap gap-3">
             <div>
-              <p className="text-3xl md:text-4xl font-bold text-foreground mb-1 md:mb-2">{metric.value}</p>
+              <p className="text-3xl md:text-4xl font-bold text-foreground mb-1 md:mb-2">{metric.value ?? "–"}</p>
               <p className="text-sm md:text-base text-muted-foreground">{metric.unit}</p>
             </div>
             <div className={cn(

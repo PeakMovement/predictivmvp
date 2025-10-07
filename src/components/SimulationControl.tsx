@@ -121,7 +121,7 @@ export const SimulationControl = () => {
               onContextMenu={handleContextMenu}
               onKeyDown={handleKeyDown}
               className={cn(
-                "fixed bottom-24 left-4 md:left-6 lg:left-8 z-50",
+                "fixed bottom-[calc(5rem+env(safe-area-inset-bottom))] left-4 md:bottom-24 md:left-6 lg:left-8 z-50",
                 "w-14 h-14 rounded-full",
                 "bg-primary text-primary-foreground",
                 "transition-all duration-300 ease-out",

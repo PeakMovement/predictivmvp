@@ -8,6 +8,7 @@ import { format } from "date-fns";
 import { useLiveData } from "@/contexts/LiveDataContext";
 import { HealthDataRow } from "@/lib/healthDataStore";
 import { DemoProfileSelector } from "@/components/DemoProfileSelector";
+import HealthDataChart from "@/components/HealthDataChart";
 
 // Helper to parse current day metrics
 const parseMetrics = (data: HealthDataRow | null) => {
@@ -1103,6 +1104,11 @@ export const Dashboard = () => {
           {/* Trend Analysis Carousel */}
           <div className="mb-6 md:mb-8">
             <GraphCarousel />
+          </div>
+
+          {/* Health Data Chart */}
+          <div className="mb-6 md:mb-8">
+            <HealthDataChart />
           </div>
 
           {/* Weekly Insights and Focus Areas */}

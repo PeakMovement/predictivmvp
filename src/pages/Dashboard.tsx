@@ -932,10 +932,10 @@ const GraphCarousel = () => {
                 key={index}
                 onClick={() => selectGraph(index)}
                 className={cn(
-                  "w-2 h-2 rounded-full transition-all duration-300",
+                  "w-3 h-3 p-3 rounded-full transition-all duration-300 ease-out border",
                   index === currentGraph 
-                    ? "bg-primary scale-125" 
-                    : "bg-muted-foreground/30 hover:bg-muted-foreground/50"
+                    ? "bg-primary text-white shadow-[0_0_15px_hsl(var(--primary)/0.7)] scale-[1.03] border-primary" 
+                    : "bg-[#1A1A1A] border-gray-700 hover:shadow-[0_0_10px_hsl(var(--primary)/0.5)] hover:border-primary/50"
                 )}
                 aria-label={`Go to graph ${index + 1}`}
               />
@@ -958,10 +958,10 @@ const GraphCarousel = () => {
               key={range.days}
               onClick={() => setTimeRange(range.days)}
               className={cn(
-                "px-4 py-2 text-xs font-medium rounded-lg transition-all duration-200",
+                "px-4 py-2 text-xs font-medium rounded-lg transition-all duration-300 ease-out border",
                 timeRange === range.days
-                  ? "bg-primary text-white shadow-[0_0_10px_hsl(var(--primary)/0.5)]"
-                  : "text-gray-400 hover:text-white hover:bg-white/5"
+                  ? "bg-primary text-white shadow-[0_0_15px_hsl(var(--primary)/0.7)] scale-[1.03] border-primary ring-1 ring-primary/50 ring-offset-[1px] ring-offset-black/40"
+                  : "bg-[#1A1A1A] text-gray-400 border-gray-700 hover:text-gray-200 hover:shadow-[0_0_10px_hsl(var(--primary)/0.5)] hover:border-primary/50"
               )}
             >
               {range.label}

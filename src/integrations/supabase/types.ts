@@ -49,6 +49,27 @@ export type Database = {
           },
         ]
       }
+      csv_uploads: {
+        Row: {
+          created_at: string
+          file_url: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          file_url: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          file_url?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       health_daily: {
         Row: {
           active_energy_kcal: number | null
@@ -89,6 +110,27 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      health_data: {
+        Row: {
+          collected_at: string | null
+          id: number
+          samples: Json | null
+          user_id: string
+        }
+        Insert: {
+          collected_at?: string | null
+          id?: number
+          samples?: Json | null
+          user_id: string
+        }
+        Update: {
+          collected_at?: string | null
+          id?: number
+          samples?: Json | null
+          user_id?: string
+        }
+        Relationships: []
       }
       notification_log: {
         Row: {
@@ -200,6 +242,7 @@ export type Database = {
         Row: {
           created_at: string
           email: string | null
+          email_preferences: Json | null
           id: string
           name: string | null
           wearables_connected: Json | null
@@ -207,6 +250,7 @@ export type Database = {
         Insert: {
           created_at?: string
           email?: string | null
+          email_preferences?: Json | null
           id?: string
           name?: string | null
           wearables_connected?: Json | null
@@ -214,6 +258,7 @@ export type Database = {
         Update: {
           created_at?: string
           email?: string | null
+          email_preferences?: Json | null
           id?: string
           name?: string | null
           wearables_connected?: Json | null

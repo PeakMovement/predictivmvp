@@ -13,6 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import CsvUploader from "@/components/CsvUploader";
 
 const requiredColumns = [
   "Date",
@@ -283,6 +284,9 @@ export const DataUpload = () => {
             Switch between different client profiles. Each profile maintains its own data for this session.
           </p>
         </Card>
+
+        {/* Supabase CSV Upload */}
+        <CsvUploader />
 
         {/* Upload Area */}
         <Card className="p-8 bg-glass backdrop-blur-xl border-glass-border shadow-glass">

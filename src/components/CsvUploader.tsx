@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Upload } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import Papa from "papaparse";
 
 export default function CsvUploader() {
   const [file, setFile] = useState<File | null>(null);
@@ -22,39 +23,96 @@ export default function CsvUploader() {
     setIsUploading(true);
 
     try {
-      // Generate a unique filename (public uploads don't use user.id)
       const filePath = `${Date.now()}-${file.name}`;
 
-      // ✅ Upload to public bucket using anon key
-      const { data, error } = await supabase.storage.from("predictiv_data").upload(filePath, file, {
-        upsert: true,
-        cacheControl: "3600",
-      });
+      const { error: uploadError } = await supabase.storage
+        .from("predictiv_data")
+        .upload(filePath, file, {
+          upsert: true,
+          cacheControl: "3600",
+        });
 
-      if (error) {
-        console.error("Upload error:", error);
+      if (uploadError) {
         toast({
           title: "Upload failed",
-          description: error.message,
+          description: uploadError.message,
           variant: "destructive",
         });
-      } else {
-        console.log("✅ Upload success:", data);
-        toast({
-          title: "Upload successful",
-          description: `${file.name} uploaded to predictiv_data bucket.`,
-        });
+        setIsUploading(false);
+        return;
       }
 
-      setFile(null);
+      // Parse CSV and insert into health_data
+      Papa.parse(file, {
+        header: true,
+        skipEmptyLines: true,
+        complete: async (results) => {
+          try {
+            const samples = results.data.map((row: any) => {
+              const sample: any = {};
+              Object.keys(row).forEach((key) => {
+                if (key.toLowerCase() !== 'date') {
+                  sample[key] = {
+                    value: parseFloat(row[key]) || row[key],
+                    unit: "auto"
+                  };
+                }
+              });
+              return {
+                date: row.date || row.Date || new Date().toISOString(),
+                metrics: sample
+              };
+            });
+
+            const { error: dbError } = await supabase
+              .from("health_data")
+              .insert({
+                user_id: "anon_upload",
+                samples: samples,
+                collected_at: new Date().toISOString()
+              });
+
+            if (dbError) {
+              toast({
+                title: "Database error",
+                description: dbError.message,
+                variant: "destructive",
+              });
+              setIsUploading(false);
+              return;
+            }
+
+            toast({
+              title: "✅ CSV data successfully saved to health_data table.",
+              description: `Processed ${results.data.length} rows from ${file.name}`,
+            });
+
+            setFile(null);
+            setIsUploading(false);
+          } catch (parseError: any) {
+            toast({
+              title: "Parse error",
+              description: parseError.message || "Failed to process CSV data.",
+              variant: "destructive",
+            });
+            setIsUploading(false);
+          }
+        },
+        error: (error) => {
+          toast({
+            title: "CSV parsing failed",
+            description: error.message,
+            variant: "destructive",
+          });
+          setIsUploading(false);
+        }
+      });
     } catch (err: any) {
-      console.error("Unexpected error:", err);
       toast({
         title: "Unexpected error",
         description: err.message || "An error occurred during upload.",
         variant: "destructive",
       });
-    } finally {
       setIsUploading(false);
     }
   };

@@ -14,6 +14,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import CsvUploader from "@/components/CsvUploader";
+import { DemoProfileSelector } from "@/components/DemoProfileSelector";
+import Papa from "papaparse";
 
 const requiredColumns = [
   "Date",
@@ -221,16 +223,16 @@ export const DataUpload = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5 pb-32 pt-24 px-6">
-      <div className="max-w-5xl mx-auto space-y-8 animate-fade-in">
+    <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-blue-950 pb-32 pt-24 px-6">
+      <div className="max-w-7xl mx-auto space-y-8 animate-fade-in">
         {/* Header */}
         <div className="text-center space-y-4">
           <div className="inline-flex items-center justify-center w-16 h-16 bg-primary/20 rounded-2xl mb-4">
             <Database className="text-primary" size={32} />
           </div>
-          <h1 className="text-4xl font-bold text-foreground tracking-tight">Data Upload</h1>
-          <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-            Upload your health and training data via CSV to replace demo values
+          <h1 className="text-4xl font-bold text-white tracking-tight">Data Upload Center</h1>
+          <p className="text-gray-300 text-lg max-w-2xl mx-auto">
+            View your demo athlete data or upload your own CSVs for analysis
           </p>
           
           {/* Session Status and Controls */}
@@ -259,11 +261,43 @@ export const DataUpload = () => {
           </div>
         </div>
 
+        {/* Demo Athlete Profile Cards */}
+        <DemoProfileSelector />
+
+        {/* Dual Upload Section */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          {/* Cloud Upload Panel */}
+          <Card className="p-8 bg-gray-900/80 backdrop-blur-xl border border-blue-500/20 shadow-xl shadow-blue-950/30">
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <h3 className="text-2xl font-bold text-white">Cloud Upload</h3>
+                <p className="text-gray-400 text-sm">
+                  Send your CSV to Supabase for cloud storage and processing.
+                </p>
+              </div>
+              <CsvUploader />
+            </div>
+          </Card>
+
+          {/* Live Analysis Panel */}
+          <Card className="p-8 bg-gray-900/80 backdrop-blur-xl border border-blue-500/20 shadow-xl shadow-blue-950/30">
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <h3 className="text-2xl font-bold text-white">Live Analysis</h3>
+                <p className="text-gray-400 text-sm">
+                  Upload a CSV to test real-time graph changes instantly in Predictiv.
+                </p>
+              </div>
+              <LocalCsvUploader refreshData={refreshData} />
+            </div>
+          </Card>
+        </div>
+
         {/* Client Profile Selector */}
-        <Card className="p-6 bg-glass backdrop-blur-xl border-glass-border shadow-glass">
+        <Card className="p-6 bg-gray-900/80 backdrop-blur-xl border border-blue-500/20 shadow-xl shadow-blue-950/30">
           <div className="flex items-center gap-3 mb-4">
             <Users className="text-primary" size={20} />
-            <h3 className="text-lg font-semibold text-foreground">Select Client Profile</h3>
+            <h3 className="text-lg font-semibold text-white">Select Client Profile</h3>
           </div>
           
           <Select value={activeProfile} onValueChange={handleProfileChange}>
@@ -280,16 +314,13 @@ export const DataUpload = () => {
             </SelectContent>
           </Select>
           
-          <p className="text-xs text-muted-foreground mt-2">
+          <p className="text-xs text-gray-400 mt-2">
             Switch between different client profiles. Each profile maintains its own data for this session.
           </p>
         </Card>
 
-        {/* Supabase CSV Upload */}
-        <CsvUploader />
-
         {/* Upload Area */}
-        <Card className="p-8 bg-glass backdrop-blur-xl border-glass-border shadow-glass">
+        <Card className="p-8 bg-gray-900/80 backdrop-blur-xl border border-blue-500/20 shadow-xl shadow-blue-950/30">
           <div
             onDrop={handleDrop}
             onDragOver={handleDragOver}
@@ -427,6 +458,95 @@ export const DataUpload = () => {
           </Card>
         )}
       </div>
+    </div>
+  );
+};
+
+// Local CSV Uploader Component for Live Analysis
+const LocalCsvUploader = ({ refreshData }: { refreshData: () => void }) => {
+  const [file, setFile] = useState<File | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const { toast } = require("@/hooks/use-toast");
+
+  const handleUpload = async () => {
+    if (!file) {
+      toast({
+        title: "No file selected",
+        description: "Please select a CSV file first.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsUploading(true);
+
+    try {
+      Papa.parse(file, {
+        header: true,
+        skipEmptyLines: true,
+        complete: async (results) => {
+          try {
+            // Store in localStorage for live analysis
+            localStorage.setItem('liveAnalysisData', JSON.stringify(results.data));
+            
+            toast({
+              title: "✅ CSV loaded for live analysis",
+              description: `Processed ${results.data.length} rows from ${file.name}`,
+            });
+
+            refreshData();
+            setFile(null);
+            setIsUploading(false);
+          } catch (error: any) {
+            toast({
+              title: "Parse error",
+              description: error.message || "Failed to process CSV data.",
+              variant: "destructive",
+            });
+            setIsUploading(false);
+          }
+        },
+        error: (error) => {
+          toast({
+            title: "CSV parsing failed",
+            description: error.message,
+            variant: "destructive",
+          });
+          setIsUploading(false);
+        }
+      });
+    } catch (err: any) {
+      toast({
+        title: "Unexpected error",
+        description: err.message || "An error occurred during upload.",
+        variant: "destructive",
+      });
+      setIsUploading(false);
+    }
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center gap-3">
+        <input
+          type="file"
+          accept=".csv"
+          onChange={(e) => setFile(e.target.files?.[0] || null)}
+          className="flex-1 text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-indigo-600 file:text-white hover:file:bg-indigo-700 file:transition-colors file:cursor-pointer"
+          disabled={isUploading}
+        />
+      </div>
+
+      {file && (
+        <p className="text-sm text-gray-400">
+          Selected: <span className="text-white font-medium">{file.name}</span>
+        </p>
+      )}
+
+      <Button onClick={handleUpload} disabled={!file || isUploading} className="w-full bg-indigo-600 hover:bg-indigo-700 text-white">
+        <Upload className="mr-2 h-4 w-4" />
+        {isUploading ? "Processing..." : "Load for Live Analysis"}
+      </Button>
     </div>
   );
 };

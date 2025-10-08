@@ -1,4 +1,4 @@
-import { TrendingUp, Target, AlertTriangle, FileText, Play, ChevronLeft, ChevronRight, RefreshCw, Download, AlertCircle, CheckCircle, X, Heart, Activity, Zap, Dumbbell } from "lucide-react";
+import { TrendingUp, Target, AlertTriangle, FileText, Play, ChevronLeft, ChevronRight, RefreshCw, Download, AlertCircle, CheckCircle, X, Heart, Activity, Zap, Dumbbell, Upload, CloudUpload, LineChart } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useState, useEffect } from "react";
@@ -6,9 +6,10 @@ import { toast } from "@/hooks/use-toast";
 import jsPDF from "jspdf";
 import { format } from "date-fns";
 import { useLiveData } from "@/contexts/LiveDataContext";
-import { HealthDataRow } from "@/lib/healthDataStore";
+import { HealthDataRow, saveProfile, ClientProfile } from "@/lib/healthDataStore";
 import { DemoProfileSelector } from "@/components/DemoProfileSelector";
 import HealthDataChart from "@/components/HealthDataChart";
+import CsvUploader from "@/components/CsvUploader";
 
 // Helper to parse current day metrics
 const parseMetrics = (data: HealthDataRow | null) => {
@@ -1047,6 +1048,165 @@ const GraphCarousel = () => {
   );
 };
 
+const LocalCsvUploader = () => {
+  const { refreshData } = useLiveData();
+  const [file, setFile] = useState<File | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+
+  const requiredColumns = ["Date", "RestingHR", "MaxHR", "HRV", "SleepHours", "SleepScore", "Strain", "ACWR", "Monotony", "TrainingLoad", "EWMA"];
+
+  const parseCSV = (text: string): HealthDataRow[] => {
+    const lines = text.trim().split('\n');
+    const headers = lines[0].split(',').map(h => h.trim());
+    
+    const missingColumns = requiredColumns.filter(col => !headers.includes(col));
+    if (missingColumns.length > 0) {
+      toast({
+        title: "CSV missing required fields",
+        description: `Missing columns: ${missingColumns.join(', ')}`,
+        variant: "destructive"
+      });
+      throw new Error("Missing required columns");
+    }
+
+    const data: HealthDataRow[] = [];
+    for (let i = 1; i < lines.length; i++) {
+      if (lines[i].trim()) {
+        const values = lines[i].split(',').map(v => v.trim());
+        const row: any = {};
+        headers.forEach((header, index) => {
+          row[header] = values[index] || "";
+        });
+        data.push(row as HealthDataRow);
+      }
+    }
+    
+    return data;
+  };
+
+  const handleUpload = async () => {
+    if (!file) {
+      toast({
+        title: "No file selected",
+        description: "Please select a CSV file first.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsUploading(true);
+
+    try {
+      const text = await file.text();
+      const parsedData = parseCSV(text);
+      
+      if (parsedData.length === 0) {
+        toast({
+          title: "Empty CSV file",
+          description: "The CSV file contains no data rows",
+          variant: "destructive"
+        });
+        setIsUploading(false);
+        return;
+      }
+
+      const profile: ClientProfile = {
+        id: `profile-${Date.now()}`,
+        name: file.name.replace('.csv', ''),
+        data: parsedData
+      };
+
+      saveProfile(profile);
+      refreshData();
+      
+      toast({
+        title: "✅ Predictiv dual-upload layout finalized.",
+        description: `${parsedData.length} rows loaded for live analysis.`,
+      });
+
+      setFile(null);
+      setIsUploading(false);
+    } catch (error: any) {
+      toast({
+        title: "Parse error",
+        description: error.message || "Failed to process CSV data.",
+        variant: "destructive",
+      });
+      setIsUploading(false);
+    }
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const droppedFile = e.dataTransfer.files[0];
+    if (droppedFile?.name.endsWith('.csv')) {
+      setFile(droppedFile);
+    }
+  };
+
+  return (
+    <div className="border border-white/10 rounded-xl p-6 bg-gradient-to-br from-gray-900/90 via-blue-950/30 to-gray-900/90 backdrop-blur shadow-xl shadow-blue-950/30">
+      <div className="flex items-center gap-3 mb-4">
+        <div className="w-10 h-10 bg-blue-500/20 rounded-lg flex items-center justify-center">
+          <LineChart size={20} className="text-blue-400" />
+        </div>
+        <div>
+          <h2 className="text-xl font-semibold text-white">Live Analysis</h2>
+          <p className="text-sm text-gray-400">Upload a CSV to test real-time graph changes instantly in Predictiv.</p>
+        </div>
+      </div>
+
+      <div 
+        className={cn(
+          "border-2 border-dashed rounded-xl p-8 text-center transition-all duration-300 mb-4",
+          isDragging ? "border-blue-500 bg-blue-500/10" : "border-white/20 hover:border-blue-500/50"
+        )}
+        onDrop={handleDrop}
+        onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+        onDragLeave={() => setIsDragging(false)}
+      >
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-12 h-12 bg-blue-500/20 rounded-full flex items-center justify-center">
+            <Upload className="text-blue-400" size={24} />
+          </div>
+          <p className="text-sm text-gray-400">Drag & drop or choose file</p>
+          
+          <input
+            type="file"
+            accept=".csv"
+            onChange={(e) => setFile(e.target.files?.[0] || null)}
+            className="hidden"
+            id="live-csv-upload"
+            disabled={isUploading}
+          />
+          <label htmlFor="live-csv-upload">
+            <div className="px-4 py-2 bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 rounded-lg text-sm font-medium cursor-pointer transition-all">
+              Choose File
+            </div>
+          </label>
+
+          {file && (
+            <p className="text-sm text-white font-medium mt-2">
+              {file.name}
+            </p>
+          )}
+        </div>
+      </div>
+
+      <button
+        onClick={handleUpload}
+        disabled={!file || isUploading}
+        className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-700 disabled:text-gray-500 text-white rounded-lg px-4 py-3 flex items-center justify-center gap-2 transition-all duration-200 font-medium"
+      >
+        <Upload size={16} />
+        {isUploading ? "Processing..." : "Upload for Live Analysis"}
+      </button>
+    </div>
+  );
+};
+
 export const Dashboard = () => {
   const { currentDayData, csvData, currentDayIndex } = useLiveData();
   const metrics = getMetrics(currentDayData);
@@ -1072,6 +1232,37 @@ export const Dashboard = () => {
           
           {/* Demo Profile Selector */}
           <DemoProfileSelector />
+          
+          {/* Dual Upload Section */}
+          <div className="mb-8 md:mb-12">
+            <div className="text-center mb-6">
+              <h3 className="text-2xl font-bold text-white mb-2">Data Upload</h3>
+              <p className="text-gray-400">Choose between cloud storage or live testing</p>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              {/* Left Panel: Cloud Upload */}
+              <div className="space-y-4">
+                <div className="border border-white/10 rounded-xl p-6 bg-gradient-to-br from-gray-900/90 via-indigo-950/30 to-gray-900/90 backdrop-blur shadow-xl shadow-blue-950/30">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-10 h-10 bg-indigo-500/20 rounded-lg flex items-center justify-center">
+                      <CloudUpload size={20} className="text-indigo-400" />
+                    </div>
+                    <div>
+                      <h2 className="text-xl font-semibold text-white">Cloud Upload</h2>
+                      <p className="text-sm text-gray-400">Send your CSV to Supabase for cloud storage and processing.</p>
+                    </div>
+                  </div>
+                  <div className="mt-6">
+                    <CsvUploader />
+                  </div>
+                </div>
+              </div>
+
+              {/* Right Panel: Live Analysis */}
+              <LocalCsvUploader />
+            </div>
+          </div>
           
           {/* Today's Plan Section */}
           <div className="mb-6 md:mb-8">

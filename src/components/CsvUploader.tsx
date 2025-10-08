@@ -118,31 +118,27 @@ export default function CsvUploader() {
   };
 
   return (
-    <div className="border border-border rounded-lg p-6 bg-card/50 backdrop-blur">
-      <h2 className="text-xl font-semibold mb-4 text-foreground">Upload Your CSV</h2>
-
-      <div className="space-y-4">
-        <div className="flex items-center gap-3">
-          <input
-            type="file"
-            accept=".csv"
-            onChange={(e) => setFile(e.target.files?.[0] || null)}
-            className="flex-1 text-sm text-muted-foreground file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-primary file:text-primary-foreground hover:file:bg-primary/90 file:transition-colors"
-            disabled={isUploading}
-          />
-        </div>
-
-        {file && (
-          <p className="text-sm text-muted-foreground">
-            Selected: <span className="text-foreground font-medium">{file.name}</span>
-          </p>
-        )}
-
-        <Button onClick={handleUpload} disabled={!file || isUploading} className="w-full">
-          <Upload className="mr-2 h-4 w-4" />
-          {isUploading ? "Uploading..." : "Upload"}
-        </Button>
+    <div className="space-y-4">
+      <div className="flex items-center gap-3">
+        <input
+          type="file"
+          accept=".csv"
+          onChange={(e) => setFile(e.target.files?.[0] || null)}
+          className="flex-1 text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-indigo-600 file:text-white hover:file:bg-indigo-700 file:transition-colors file:cursor-pointer"
+          disabled={isUploading}
+        />
       </div>
+
+      {file && (
+        <p className="text-sm text-gray-400">
+          Selected: <span className="text-white font-medium">{file.name}</span>
+        </p>
+      )}
+
+      <Button onClick={handleUpload} disabled={!file || isUploading} className="w-full bg-indigo-600 hover:bg-indigo-700 text-white">
+        <Upload className="mr-2 h-4 w-4" />
+        {isUploading ? "Uploading..." : "Upload to Cloud"}
+      </Button>
     </div>
   );
 }

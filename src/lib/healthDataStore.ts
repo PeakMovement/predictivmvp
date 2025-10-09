@@ -35,9 +35,7 @@ export const setActiveProfileId = (profileId: string): void => {
 export const getAllProfiles = (): ClientProfile[] => {
   try {
     const profiles = sessionStorage.getItem(PROFILES_KEY);
-    if (profiles) {
-      return JSON.parse(profiles);
-    }
+    if (profiles) return JSON.parse(profiles);
   } catch (error) {
     console.error("Error reading client profiles:", error);
   }
@@ -46,25 +44,20 @@ export const getAllProfiles = (): ClientProfile[] => {
 
 export const saveProfile = (profile: ClientProfile): void => {
   const profiles = getAllProfiles();
-  const existingIndex = profiles.findIndex(p => p.id === profile.id);
-  
-  if (existingIndex >= 0) {
-    profiles[existingIndex] = profile;
-  } else {
-    profiles.push(profile);
-  }
-  
+  const existingIndex = profiles.findIndex((p) => p.id === profile.id);
+
+  if (existingIndex >= 0) profiles[existingIndex] = profile;
+  else profiles.push(profile);
+
   sessionStorage.setItem(PROFILES_KEY, JSON.stringify(profiles));
   setActiveProfileId(profile.id);
 };
 
 export const deleteProfile = (profileId: string): void => {
-  const profiles = getAllProfiles().filter(p => p.id !== profileId);
+  const profiles = getAllProfiles().filter((p) => p.id !== profileId);
   sessionStorage.setItem(PROFILES_KEY, JSON.stringify(profiles));
-  
-  if (getActiveProfileId() === profileId) {
-    setActiveProfileId("demo");
-  }
+
+  if (getActiveProfileId() === profileId) setActiveProfileId("demo");
 };
 
 export const resetToDemo = (): void => {
@@ -81,6 +74,48 @@ export interface DemoProfile {
   description: string;
   emoji: string;
   data: HealthDataRow[];
+}
+
+// 🧠 Natural-Language Insight Transformer
+// Converts short insight phrases into richer, more human summaries
+export function evolveInsight(raw: string, context?: any): string {
+  const toneStarters = [
+    "Your data indicates",
+    "Recent patterns suggest",
+    "Based on your current recovery metrics",
+    "Predictiv analysis shows",
+    "According to your training trends",
+  ];
+
+  const adviceEndings = [
+    "consider a short recovery phase to optimize long-term performance",
+    "maintaining current load is ideal for sustained adaptation",
+    "now is a good window to add controlled intensity",
+    "light mobility or breathwork could enhance recovery balance",
+    "keep consistency — your metrics are trending in the right direction",
+  ];
+
+  const start = toneStarters[Math.floor(Math.random() * toneStarters.length)];
+  const end = adviceEndings[Math.floor(Math.random() * adviceEndings.length)];
+
+  if (raw.toLowerCase().includes("strain")) {
+    return `${start} elevated training strain this week (+${context?.strainDelta ?? "N/A"}%). ${end}.`;
+  }
+
+  if (raw.toLowerCase().includes("performance")) {
+    return `${start} peak readiness across HRV and sleep quality. ${end}.`;
+  }
+
+  if (raw.toLowerCase().includes("balance")) {
+    return `${start} stable equilibrium between workload and recovery. ${end}.`;
+  }
+
+  if (raw.toLowerCase().includes("recovery")) {
+    return `${start} recovery metrics are strong — ${end}.`;
+  }
+
+  // Default fallback
+  return `${start} good overall adaptation today — ${end}.`;
 }
 
 // 🟢 Athletic Profile - High strain, good recovery
@@ -168,19 +203,17 @@ const demoHealthData: HealthDataRow[] = demoProfiles.athletic.data;
 
 export const getHealthData = (): HealthDataRow[] => {
   const activeProfileId = getActiveProfileId();
-  
+
   if (activeProfileId === "demo") {
     const activeDemoProfile = getActiveDemoProfile();
     return demoProfiles[activeDemoProfile].data;
   }
-  
+
   const profiles = getAllProfiles();
-  const activeProfile = profiles.find(p => p.id === activeProfileId);
-  
-  if (activeProfile && activeProfile.data.length > 0) {
-    return activeProfile.data;
-  }
-  
+  const activeProfile = profiles.find((p) => p.id === activeProfileId);
+
+  if (activeProfile && activeProfile.data.length > 0) return activeProfile.data;
+
   // Fallback to active demo profile
   const activeDemoProfile = getActiveDemoProfile();
   return demoProfiles[activeDemoProfile].data;
@@ -188,44 +221,14 @@ export const getHealthData = (): HealthDataRow[] => {
 
 export const hasUploadedData = (): boolean => {
   const activeProfileId = getActiveProfileId();
-  return activeProfileId !== "demo" && getAllProfiles().some(p => p.id === activeProfileId);
+  return activeProfileId !== "demo" && getAllProfiles().some((p) => p.id === activeProfileId);
 };
 
 // Helper functions to get specific metrics from the latest data
 export const getLatestMetrics = () => {
   const data = getHealthData();
   const latest = data[data.length - 1]; // Most recent entry
-  
+
   return {
     acwr: parseFloat(latest.ACWR || "1.2"),
-    monotony: parseFloat(latest.Monotony || "2.4"),
-    strain: parseFloat(latest.Strain || "156"),
-    trainingLoad: parseFloat(latest.TrainingLoad || "420"),
-    ewma: parseFloat(latest.EWMA || "5.2"),
-    hrv: parseFloat(latest.HRV || "45"),
-    sleepHours: parseFloat(latest.SleepHours || "7.5"),
-    sleepScore: parseFloat(latest.SleepScore || "85"),
-    restingHR: parseFloat(latest.RestingHR || "52"),
-    maxHR: parseFloat(latest.MaxHR || "178")
-  };
-};
-
-// Get historical trend data for charts
-export const getTrendData = (metric: keyof HealthDataRow): number[] => {
-  const data = getHealthData();
-  return data.map(row => parseFloat(row[metric] || "0"));
-};
-
-// Get last N days of data
-export const getLastNDays = (days: number): HealthDataRow[] => {
-  const data = getHealthData();
-  return data.slice(-days);
-};
-
-// Calculate weekly average for a metric
-export const getWeeklyAverage = (metric: keyof HealthDataRow): number => {
-  const lastWeek = getLastNDays(7);
-  const values = lastWeek.map(row => parseFloat(row[metric] || "0"));
-  const sum = values.reduce((acc, val) => acc + val, 0);
-  return values.length > 0 ? sum / values.length : 0;
-};
+    monotony: parseFloat(latest.Monotony || "2.

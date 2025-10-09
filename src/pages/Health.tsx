@@ -308,7 +308,7 @@ export const Health = () => {
         </div>
 
         {/* Metrics Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 mb-8">
           {healthMetrics.map((metric) => (
             <MetricTile 
               key={metric.id} 
@@ -316,6 +316,25 @@ export const Health = () => {
               onClick={() => setSelectedMetric(metric)} 
             />
           ))}
+        </div>
+
+        {/* View Insights Button */}
+        <div className="bg-glass backdrop-blur-xl border border-glass-border rounded-2xl p-6 md:p-8 shadow-glass hover:bg-glass-highlight hover-glow transition-all duration-300 ease-out animate-fade-in">
+          <div className="text-center space-y-4">
+            <div className="flex items-center justify-center gap-3 mb-4">
+              <span className="text-4xl">🌿</span>
+            </div>
+            <h3 className="text-xl md:text-2xl font-bold text-foreground">View Your Insights</h3>
+            <p className="text-sm md:text-base text-muted-foreground max-w-2xl mx-auto">
+              Explore your progress and training patterns over time in an interactive visual journey.
+            </p>
+            <button
+              onClick={() => window.dispatchEvent(new CustomEvent('navigate-insights'))}
+              className="w-full md:w-auto mt-4 bg-primary/80 hover:bg-primary text-primary-foreground border border-glass-border rounded-xl px-8 py-4 text-base md:text-lg font-semibold shadow-glow hover:scale-[1.02] active:scale-95 transition-all duration-200"
+            >
+              🌿 Open Insight Tree
+            </button>
+          </div>
         </div>
       </div>
     </div>

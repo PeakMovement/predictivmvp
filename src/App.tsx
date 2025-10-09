@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -15,6 +15,7 @@ import { YourPlan } from "@/pages/YourPlan";
 import { Settings } from "@/pages/Settings";
 import { FindHelp } from "@/pages/FindHelp";
 import { DataUpload } from "@/pages/DataUpload";
+import { InsightsTree } from "@/pages/InsightsTree";
 import TestSupabase from "@/pages/TestSupabase";
 import { Settings as SettingsIcon } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -24,6 +25,13 @@ const queryClient = new QueryClient();
 
 const App = () => {
   const [activeTab, setActiveTab] = useState("dashboard");
+
+  // Listen for custom navigation event from Health page
+  useEffect(() => {
+    const handleNavigateInsights = () => setActiveTab("insights-tree");
+    window.addEventListener('navigate-insights', handleNavigateInsights);
+    return () => window.removeEventListener('navigate-insights', handleNavigateInsights);
+  }, []);
 
   const renderContent = () => {
     switch (activeTab) {
@@ -41,6 +49,8 @@ const App = () => {
         return <div key="find-help" className="animate-fade-in"><FindHelp /></div>;
       case "settings":
         return <div key="settings" className="animate-fade-in"><Settings onNavigate={setActiveTab} /></div>;
+      case "insights-tree":
+        return <div key="insights-tree" className="animate-fade-in"><InsightsTree onNavigate={setActiveTab} /></div>;
       case "test-supabase":
         return <div key="test-supabase" className="animate-fade-in"><TestSupabase /></div>;
       default:

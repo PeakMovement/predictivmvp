@@ -118,6 +118,115 @@ export function evolveInsight(raw: string, context?: any): string {
   return `${start} good overall adaptation today — ${end}.`;
 }
 
+// 📊 Insight History Management
+export interface InsightHistoryEntry {
+  id: string;
+  message: string;
+  date: string;
+  category: string;
+  level: "optimal" | "good" | "warning" | "critical";
+}
+
+export const saveInsightToHistory = (
+  message: string,
+  category: string,
+  level: "optimal" | "good" | "warning" | "critical"
+): void => {
+  try {
+    const history = getInsightHistory();
+    const newInsight: InsightHistoryEntry = {
+      id: `insight-${Date.now()}`,
+      message,
+      date: new Date().toISOString().split('T')[0],
+      category,
+      level,
+    };
+    
+    // Add to history (keep last 50 insights)
+    history.push(newInsight);
+    if (history.length > 50) {
+      history.shift();
+    }
+    
+    localStorage.setItem("insightHistory", JSON.stringify(history));
+  } catch (error) {
+    console.error("Error saving insight to history:", error);
+  }
+};
+
+export const getInsightHistory = (): InsightHistoryEntry[] => {
+  try {
+    const stored = localStorage.getItem("insightHistory");
+    return stored ? JSON.parse(stored) : [];
+  } catch (error) {
+    console.error("Error reading insight history:", error);
+    return [];
+  }
+};
+
+export const clearInsightHistory = (): void => {
+  localStorage.removeItem("insightHistory");
+};
+
+// Initialize with sample insights if none exist
+export const initializeSampleInsights = (): void => {
+  const history = getInsightHistory();
+  if (history.length === 0) {
+    const sampleInsights: InsightHistoryEntry[] = [
+      {
+        id: "insight-1",
+        message: "Your data indicates elevated training strain this week (+22%). Consider a short recovery phase to optimize long-term performance.",
+        date: new Date(Date.now() - 6 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        category: "Training",
+        level: "warning",
+      },
+      {
+        id: "insight-2",
+        message: "Recent patterns suggest stable equilibrium between workload and recovery. Maintaining current load is ideal for sustained adaptation.",
+        date: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        category: "Recovery",
+        level: "good",
+      },
+      {
+        id: "insight-3",
+        message: "Based on your current recovery metrics peak readiness across HRV and sleep quality. Now is a good window to add controlled intensity.",
+        date: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        category: "Performance",
+        level: "optimal",
+      },
+      {
+        id: "insight-4",
+        message: "Your data indicates elevated training strain this week (+18%). Light mobility or breathwork could enhance recovery balance.",
+        date: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        category: "Recovery",
+        level: "warning",
+      },
+      {
+        id: "insight-5",
+        message: "According to your training trends recovery metrics are strong — keep consistency — your metrics are trending in the right direction.",
+        date: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        category: "Training",
+        level: "good",
+      },
+      {
+        id: "insight-6",
+        message: "Predictiv analysis shows elevated training strain this week (+25%). Consider a short recovery phase to optimize long-term performance.",
+        date: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        category: "Training",
+        level: "critical",
+      },
+      {
+        id: "insight-7",
+        message: "Recent patterns suggest peak readiness across HRV and sleep quality. Now is a good window to add controlled intensity.",
+        date: new Date().toISOString().split('T')[0],
+        category: "Performance",
+        level: "optimal",
+      },
+    ];
+    localStorage.setItem("insightHistory", JSON.stringify(sampleInsights));
+  }
+};
+
 // 🟢 Athletic Profile - High strain, good recovery
 const athleticProfileData: HealthDataRow[] = [
   { Date: "2025-01-01", RestingHR: "48", MaxHR: "185", HRV: "75", SleepHours: "8.0", SleepScore: "88", Strain: "140", ACWR: "1.1", Monotony: "1.5", TrainingLoad: "420", EWMA: "5.8" },

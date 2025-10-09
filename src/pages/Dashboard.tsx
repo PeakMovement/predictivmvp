@@ -23,8 +23,11 @@ import { toast } from "@/hooks/use-toast";
 import jsPDF from "jspdf";
 import { format } from "date-fns";
 import { useLiveData } from "@/contexts/LiveDataContext";
-import { evolveInsight, HealthDataRow } from "@/lib/healthDataStore";
+import { evolveInsight, HealthDataRow, initializeSampleInsights } from "@/lib/healthDataStore";
 import HealthDataChart from "@/components/HealthDataChart";
+
+// Initialize sample insights on load
+initializeSampleInsights();
 
 // Helper to parse current day metrics
 const parseMetrics = (data: HealthDataRow | null) => {

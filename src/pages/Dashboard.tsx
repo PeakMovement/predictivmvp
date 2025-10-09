@@ -23,7 +23,7 @@ import { toast } from "@/hooks/use-toast";
 import jsPDF from "jspdf";
 import { format } from "date-fns";
 import { useLiveData } from "@/contexts/LiveDataContext";
-import { evolveInsight } from "@/lib/healthDataStore";
+import { evolveInsight, HealthDataRow } from "@/lib/healthDataStore";
 import HealthDataChart from "@/components/HealthDataChart";
 
 // Helper to parse current day metrics
@@ -663,7 +663,9 @@ const AlertsCard = () => {
                     </span>
                     <span className="text-xs font-mono text-muted-foreground">{alert.value}</span>
                   </div>
-                  <p className="text-sm text-muted-foreground leading-tight mb-3">{alert.message}</p>
+                  <p className="text-sm text-muted-foreground leading-tight mb-3">
+                    {evolveInsight(alert.message, { strainDelta: alert.value })}
+                  </p>
 
                   {!isAccepted ? (
                     <div className="flex items-center gap-2">
@@ -776,7 +778,9 @@ const TodaysPlanCard = () => {
                   </div>
                   <div className="flex-1">
                     <h4 className="font-bold text-foreground mb-1">{rec.title}</h4>
-                    <p className="text-sm text-muted-foreground/80 leading-relaxed mb-3">{rec.message}</p>
+                    <p className="text-sm text-muted-foreground/80 leading-relaxed mb-3">
+                      {evolveInsight(rec.message, { strainDelta: healthMetrics.strain.value })}
+                    </p>
 
                     {!isAccepted ? (
                       <div className="flex items-center gap-2">
@@ -854,7 +858,7 @@ const DailyNudgeCard = () => {
           isRefreshing ? "opacity-0 translate-y-2" : "opacity-100 translate-y-0",
         )}
       >
-        {nudgeMessage}
+        {evolveInsight(nudgeMessage)}
       </p>
     </div>
   );

@@ -231,4 +231,9 @@ export const getLatestMetrics = () => {
 
   return {
     acwr: parseFloat(latest.ACWR || "1.2"),
-    monotony: parseFloat(latest.Monotony || "2.
+    monotony: parseFloat(latest.Monotony || "2.0"),
+    strain: parseFloat(latest.Strain || "0"),
+    hrv: parseFloat(latest.HRV || "0"),
+    sleepScore: parseFloat(latest.SleepScore || "0"),
+  };
+};

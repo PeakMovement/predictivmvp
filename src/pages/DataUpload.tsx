@@ -466,7 +466,6 @@ export const DataUpload = () => {
 const LocalCsvUploader = ({ refreshData }: { refreshData: () => void }) => {
   const [file, setFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
-  const { toast } = require("@/hooks/use-toast");
 
   const handleUpload = async () => {
     if (!file) {

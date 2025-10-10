@@ -1,5 +1,4 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -7,27 +6,30 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    // ✅ Safely extract authorization code from both query params or JSON body
+    // ✅ Safely extract authorization code (Fitbit only sends in query)
     let code: string | null = null;
     try {
       const url = new URL(req.url);
       code = url.searchParams.get("code");
     } catch {
-      // ignore if req.url is incomplete
+      console.warn("Could not parse URL for code");
     }
 
+    // ✅ Try to extract from body if present (for testing)
     if (!code) {
       try {
-        const body = await req.json();
-        code = body.code;
+        const text = await req.text();
+        if (text) {
+          const body = JSON.parse(text);
+          code = body.code || null;
+        }
       } catch {
-        console.warn("No query or JSON code provided");
+        console.warn("No valid JSON body found");
       }
     }
 
@@ -38,21 +40,22 @@ serve(async (req) => {
       });
     }
 
-    const clientId = Deno.env.get("FITBASE_CLIENT_ID");
-    const clientSecret = Deno.env.get("FITBASE_CLIENT_SECRET");
+    // ✅ Load credentials from environment
+    const clientId = Deno.env.get("FITBIT_CLIENT_ID");
+    const clientSecret = Deno.env.get("FITBIT_CLIENT_SECRET");
+    const redirectUri = "https://predictiv.netlify.app/auth/fitbit";
 
     if (!clientId || !clientSecret) {
-      console.error("Missing Fitbase credentials");
+      console.error("Missing Fitbit credentials");
       return new Response(JSON.stringify({ success: false, error: "Server configuration error" }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    // Create base64 encoded credentials for Basic Auth
     const credentials = btoa(`${clientId}:${clientSecret}`);
 
-    // Exchange code for access token
+    // ✅ Exchange code for token
     const tokenResponse = await fetch("https://api.fitbit.com/oauth2/token", {
       method: "POST",
       headers: {
@@ -62,56 +65,49 @@ serve(async (req) => {
       body: new URLSearchParams({
         client_id: clientId,
         grant_type: "authorization_code",
-        redirect_uri: "https://predictiv.netlify.app/auth/fitbit",
-        code: code,
-      }).toString(),
+        redirect_uri: redirectUri,
+        code,
+      }),
     });
 
-    if (!tokenResponse.ok) {
-      const errorText = await tokenResponse.text();
-      console.error("Fitbit token exchange failed:", errorText);
+    const tokenText = await tokenResponse.text();
+    let tokenData = null;
+    try {
+      tokenData = JSON.parse(tokenText);
+    } catch {
+      console.error("Fitbit returned invalid JSON:", tokenText);
+    }
+
+    if (!tokenResponse.ok || !tokenData) {
+      console.error("Fitbit token exchange failed:", tokenText);
       return new Response(
         JSON.stringify({
           success: false,
-          error: "Failed to exchange authorization code for tokens",
-          details: errorText,
+          error: "Failed to exchange authorization code",
+          details: tokenText,
         }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
 
-    const tokenData = await tokenResponse.json();
-
-    // Extract the important data
     const { access_token, refresh_token, user_id } = tokenData;
 
-    // Return the token data (the client will store it in the Users table)
     return new Response(
       JSON.stringify({
         success: true,
-        message: "Token exchange successful",
-        data: {
-          access_token,
-          refresh_token,
-          user_id,
-        },
+        message: "Fitbit token exchange successful",
+        data: { access_token, refresh_token, user_id },
       }),
-      {
-        status: 200,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      },
+      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   } catch (error) {
-    console.error("Error in exchange-fitbit-token function:", error);
+    console.error("Error in exchange-fitbit-token:", error);
     return new Response(
       JSON.stringify({
         success: false,
-        error: error instanceof Error ? error.message : "An unexpected error occurred",
+        error: error instanceof Error ? error.message : "Unexpected server error",
       }),
-      {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      },
+      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   }
 });

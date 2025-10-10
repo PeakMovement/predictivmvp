@@ -3,21 +3,25 @@ import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
 };
 
 serve(async (req) => {
-  if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+  // ✅ Always handle CORS preflight
+  if (req.method === "OPTIONS") {
+    return new Response("ok", { headers: corsHeaders });
+  }
 
   try {
-    // ✅ Fitbit sends ?code= in the URL, never a JSON body
+    // ✅ Fitbit sends code in query string
     const url = new URL(req.url);
     const code = url.searchParams.get("code");
 
     if (!code) {
-      return new Response(
-        JSON.stringify({ success: false, error: "Missing authorization code in URL" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return new Response(JSON.stringify({ success: false, error: "Missing authorization code" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     const clientId = Deno.env.get("FITBIT_CLIENT_ID");
@@ -26,10 +30,10 @@ serve(async (req) => {
 
     if (!clientId || !clientSecret) {
       console.error("Missing Fitbit credentials");
-      return new Response(
-        JSON.stringify({ success: false, error: "Missing Fitbit credentials" }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return new Response(JSON.stringify({ success: false, error: "Server missing Fitbit credentials" }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     const credentials = btoa(`${clientId}:${clientSecret}`);
@@ -49,7 +53,7 @@ serve(async (req) => {
     });
 
     const text = await tokenResponse.text();
-    let tokenData: any = {};
+    let tokenData = {};
     try {
       tokenData = JSON.parse(text);
     } catch {
@@ -59,24 +63,28 @@ serve(async (req) => {
     if (!tokenResponse.ok) {
       return new Response(
         JSON.stringify({ success: false, error: "Fitbit token exchange failed", details: tokenData }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
 
     const { access_token, refresh_token, user_id } = tokenData;
+
     return new Response(
       JSON.stringify({
         success: true,
         message: "Fitbit connection successful",
         data: { access_token, refresh_token, user_id },
       }),
-      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   } catch (err) {
-    console.error("Unhandled Fitbit error:", err);
+    console.error("Fitbit exchange error:", err);
     return new Response(
-      JSON.stringify({ success: false, error: err instanceof Error ? err.message : "Unexpected error" }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      JSON.stringify({
+        success: false,
+        error: err instanceof Error ? err.message : "Unexpected server error",
+      }),
+      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   }
 });

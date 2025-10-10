@@ -1,42 +1,42 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
 };
 
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+    return new Response("ok", { status: 200, headers: corsHeaders });
   }
 
   try {
-    const { code } = await req.json();
+    // ✅ Get code from URL query (not JSON)
+    const url = new URL(req.url);
+    const code = url.searchParams.get("code");
 
     if (!code) {
-      return new Response(JSON.stringify({ success: false, error: "Authorization code is required" }), {
+      return new Response(JSON.stringify({ success: false, error: "Missing authorization code" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    const clientId = Deno.env.get("FITBASE_CLIENT_ID");
-    const clientSecret = Deno.env.get("FITBASE_CLIENT_SECRET");
+    const clientId = Deno.env.get("FITBIT_CLIENT_ID");
+    const clientSecret = Deno.env.get("FITBIT_CLIENT_SECRET");
+    const redirectUri = "https://predictiv.netlify.app/auth/fitbit";
 
     if (!clientId || !clientSecret) {
-      console.error("Missing Fitbase credentials");
-      return new Response(JSON.stringify({ success: false, error: "Server configuration error" }), {
+      console.error("Missing Fitbit credentials");
+      return new Response(JSON.stringify({ success: false, error: "Missing Fitbit credentials" }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    // Create base64 encoded credentials for Basic Auth
     const credentials = btoa(`${clientId}:${clientSecret}`);
 
-    // Exchange code for access token
     const tokenResponse = await fetch("https://api.fitbit.com/oauth2/token", {
       method: "POST",
       headers: {
@@ -46,41 +46,27 @@ serve(async (req) => {
       body: new URLSearchParams({
         client_id: clientId,
         grant_type: "authorization_code",
-        redirect_uri: "https://predictiv.netlify.com/auth/fitbase",
-        code: code,
-      }).toString(),
+        redirect_uri: redirectUri,
+        code,
+      }),
     });
 
-    if (!tokenResponse.ok) {
-      const errorText = await tokenResponse.text();
-      console.error("Fitbase token exchange failed:", errorText);
-      return new Response(
-        JSON.stringify({
-          success: false,
-          error: "Failed to exchange authorization code for tokens",
-        }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-      );
+    const text = await tokenResponse.text();
+    let tokenData = {};
+    try {
+      tokenData = JSON.parse(text);
+    } catch {
+      console.error("Fitbit returned non-JSON:", text);
     }
 
-    const tokenData = await tokenResponse.json();
-
-    // Extract the important data
-    const { access_token, refresh_token, user_id } = tokenData;
-
-    // Return the token data (the client will store it in the Users table)
     return new Response(
       JSON.stringify({
-        success: true,
-        message: "Token exchange successful",
-        data: {
-          access_token,
-          refresh_token,
-          user_id,
-        },
+        success: tokenResponse.ok,
+        message: tokenResponse.ok ? "Fitbit connection successful" : "Fitbit connection failed",
+        data: tokenData,
       }),
       {
-        status: 200,
+        status: tokenResponse.ok ? 200 : 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       },
     );

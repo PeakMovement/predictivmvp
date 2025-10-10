@@ -1,4 +1,4 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -11,12 +11,13 @@ serve(async (req) => {
   }
 
   try {
+    // ✅ Fitbit sends the code via query params, NOT a JSON body
     const url = new URL(req.url);
     const code = url.searchParams.get("code");
 
     if (!code) {
       return new Response(
-        JSON.stringify({ success: false, error: "Authorization code missing in redirect URL" }),
+        JSON.stringify({ success: false, error: "Missing authorization code in URL" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -28,17 +29,18 @@ serve(async (req) => {
     if (!clientId || !clientSecret) {
       console.error("Missing Fitbit credentials");
       return new Response(
-        JSON.stringify({ success: false, error: "Server configuration error" }),
+        JSON.stringify({ success: false, error: "Server missing Fitbit credentials" }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
     const credentials = btoa(`${clientId}:${clientSecret}`);
 
+    // ✅ Make Fitbit token exchange request
     const tokenResponse = await fetch("https://api.fitbit.com/oauth2/token", {
       method: "POST",
       headers: {
-        Authorization: `Basic ${credentials}`,
+        "Authorization": `Basic ${credentials}`,
         "Content-Type": "application/x-www-form-urlencoded",
       },
       body: new URLSearchParams({
@@ -50,42 +52,38 @@ serve(async (req) => {
     });
 
     const text = await tokenResponse.text();
-    let tokenData = null;
+    let tokenData;
     try {
       tokenData = JSON.parse(text);
     } catch {
-      console.error("Fitbit returned invalid JSON:", text);
+      console.error("Fitbit returned non-JSON:", text);
+      return new Response(
+        JSON.stringify({ success: false, error: "Fitbit returned invalid response", details: text }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
 
-    if (!tokenResponse.ok || !tokenData) {
-      console.error("Fitbit token exchange failed:", text);
+    if (!tokenResponse.ok) {
+      console.error("Fitbit token exchange failed:", tokenData);
       return new Response(
-        JSON.stringify({
-          success: false,
-          error: "Failed to exchange authorization code",
-          details: text,
-        }),
+        JSON.stringify({ success: false, error: "Fitbit token exchange failed", details: tokenData }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
     const { access_token, refresh_token, user_id } = tokenData;
-
     return new Response(
       JSON.stringify({
         success: true,
-        message: "Token exchange successful",
+        message: "Fitbit connection successful",
         data: { access_token, refresh_token, user_id },
       }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
-  } catch (error) {
-    console.error("Error in exchange-fitbit-token function:", error);
+  } catch (err) {
+    console.error("Unhandled Fitbit error:", err);
     return new Response(
-      JSON.stringify({
-        success: false,
-        error: error instanceof Error ? error.message : "Unexpected server error",
-      }),
+      JSON.stringify({ success: false, error: err instanceof Error ? err.message : "Unexpected error" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }

@@ -1,21 +1,94 @@
-"Unexpected error: SyntaxError: Unexpected end of JSON input\n    at parse (<anonymous>)\n    at packageData (ext:deno_fetch/22_body.js:408:14)\n    at consumeBody (ext:deno_fetch/22_body.js:261:12)\n    at eventLoopTick (ext:core/01_core.js:175:7)\n    at async Server.<anonymous> (file:///tmp/user_fn_ixtwbkikyuexskdgfpfq_082ca759-9992-442c-942a-cfd15bdb8048_36/source/supabase/functions/exchange-fitbit-token/index.ts:10:22)\n    at async Server.#respond (https://deno.land/std@0.177.0/http/server.ts:220:18)\n";
-metadata[
-  {
-    boot_time: null,
-    cpu_time_used: null,
-    deployment_id: "ixtwbkikyuexskdgfpfq_082ca759-9992-442c-942a-cfd15bdb8048_36",
-    event_type: "Log",
-    execution_id: "a37ba94b-2dbb-47fb-88f8-7f0c9485f698",
-    function_id: "082ca759-9992-442c-942a-cfd15bdb8048",
-    level: "error",
-    memory_used: [],
-    project_ref: "ixtwbkikyuexskdgfpfq",
-    reason: null,
-    region: "eu-west-3",
-    served_by: "supabase-edge-runtime-1.69.4 (compatible with Deno v2.1.4)",
-    timestamp: "2025-10-10T17:42:44.290Z",
-    version: "36",
-  }
-];
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
-Collapse;
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+};
+
+serve(async (req) => {
+  if (req.method === "OPTIONS") {
+    return new Response(null, { headers: corsHeaders });
+  }
+
+  try {
+    // ✅ Get code safely from query string (Fitbit sends it here)
+    const url = new URL(req.url);
+    const code = url.searchParams.get("code");
+
+    if (!code) {
+      return new Response(
+        JSON.stringify({ success: false, error: "Authorization code missing in redirect URL" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const clientId = Deno.env.get("FITBIT_CLIENT_ID");
+    const clientSecret = Deno.env.get("FITBIT_CLIENT_SECRET");
+    const redirectUri = "https://predictiv.netlify.app/auth/fitbit";
+
+    if (!clientId || !clientSecret) {
+      console.error("Missing Fitbit credentials");
+      return new Response(
+        JSON.stringify({ success: false, error: "Server configuration error" }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const credentials = btoa(`${clientId}:${clientSecret}`);
+
+    // Exchange code for access token
+    const tokenResponse = await fetch("https://api.fitbit.com/oauth2/token", {
+      method: "POST",
+      headers: {
+        Authorization: `Basic ${credentials}`,
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body: new URLSearchParams({
+        client_id: clientId,
+        grant_type: "authorization_code",
+        redirect_uri: redirectUri,
+        code,
+      }),
+    });
+
+    const text = await tokenResponse.text();
+    let tokenData = null;
+    try {
+      tokenData = JSON.parse(text);
+    } catch {
+      console.error("Fitbit returned invalid JSON:", text);
+    }
+
+    if (!tokenResponse.ok || !tokenData) {
+      console.error("Fitbit token exchange failed:", text);
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: "Failed to exchange authorization code",
+          details: text,
+        }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const { access_token, refresh_token, user_id } = tokenData;
+
+    return new Response(
+      JSON.stringify({
+        success: true,
+        message: "Token exchange successful",
+        data: { access_token, refresh_token, user_id },
+      }),
+      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
+  } catch (error) {
+    console.error("Error in exchange-fitbit-token function:", error);
+    return new Response(
+      JSON.stringify({
+        success: false,
+        error: error instanceof Error ? error.message : "Unexpected server error",
+      }),
+      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
+  }
+});

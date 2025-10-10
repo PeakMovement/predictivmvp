@@ -7,18 +7,18 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
-  // ✅ Always handle CORS preflight
+  // ✅ Always handle CORS preflight cleanly
   if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: corsHeaders });
+    return new Response("ok", { status: 200, headers: corsHeaders });
   }
 
   try {
-    // ✅ Fitbit sends code in query string
+    // ✅ Read code from query string instead of JSON body
     const url = new URL(req.url);
     const code = url.searchParams.get("code");
 
     if (!code) {
-      return new Response(JSON.stringify({ success: false, error: "Missing authorization code" }), {
+      return new Response(JSON.stringify({ success: false, error: "Authorization code missing" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -30,7 +30,7 @@ serve(async (req) => {
 
     if (!clientId || !clientSecret) {
       console.error("Missing Fitbit credentials");
-      return new Response(JSON.stringify({ success: false, error: "Server missing Fitbit credentials" }), {
+      return new Response(JSON.stringify({ success: false, error: "Missing Fitbit credentials" }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -53,11 +53,15 @@ serve(async (req) => {
     });
 
     const text = await tokenResponse.text();
-    let tokenData = {};
+    let tokenData;
     try {
       tokenData = JSON.parse(text);
     } catch {
       console.error("Fitbit returned non-JSON:", text);
+      return new Response(JSON.stringify({ success: false, error: "Fitbit returned invalid JSON", details: text }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     if (!tokenResponse.ok) {

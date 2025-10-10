@@ -1,101 +1,92 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 
 const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
 serve(async (req) => {
-  // Handle CORS preflight requests
-  if (req.method === 'OPTIONS') {
+  // Handle CORS preflight
+  if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const { code } = await req.json();
+    // Try reading the code from JSON or query params
+    let code = null;
+    try {
+      const body = await req.json();
+      code = body.code;
+    } catch {
+      const url = new URL(req.url);
+      code = url.searchParams.get("code");
+    }
 
     if (!code) {
-      return new Response(
-        JSON.stringify({ success: false, error: 'Authorization code is required' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      return new Response(JSON.stringify({ error: "Authorization code missing" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
-    const clientId = Deno.env.get('FITBASE_CLIENT_ID');
-    const clientSecret = Deno.env.get('FITBASE_CLIENT_SECRET');
+    const clientId = Deno.env.get("FITBIT_CLIENT_ID");
+    const clientSecret = Deno.env.get("FITBIT_CLIENT_SECRET");
+    const redirectUri = Deno.env.get("FITBIT_REDIRECT_URI");
 
-    if (!clientId || !clientSecret) {
-      console.error('Missing Fitbase credentials');
-      return new Response(
-        JSON.stringify({ success: false, error: 'Server configuration error' }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+    if (!clientId || !clientSecret || !redirectUri) {
+      console.error("❌ Missing Fitbit credentials in environment variables");
+      return new Response(JSON.stringify({ error: "Server misconfiguration: missing Fitbit credentials" }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
-    // Create base64 encoded credentials for Basic Auth
     const credentials = btoa(`${clientId}:${clientSecret}`);
 
-    // Exchange code for access token
-    const tokenResponse = await fetch('https://api.fitbit.com/oauth2/token', {
-      method: 'POST',
+    // Exchange the code for tokens via Fitbit API
+    const tokenResponse = await fetch("https://api.fitbit.com/oauth2/token", {
+      method: "POST",
       headers: {
-        'Authorization': `Basic ${credentials}`,
-        'Content-Type': 'application/x-www-form-urlencoded',
+        Authorization: `Basic ${credentials}`,
+        "Content-Type": "application/x-www-form-urlencoded",
       },
       body: new URLSearchParams({
         client_id: clientId,
-        grant_type: 'authorization_code',
-        redirect_uri: 'https://predictiv.netlify.com/auth/fitbase',
-        code: code,
-      }).toString(),
+        grant_type: "authorization_code",
+        redirect_uri: redirectUri,
+        code,
+      }),
     });
 
-    if (!tokenResponse.ok) {
-      const errorText = await tokenResponse.text();
-      console.error('Fitbase token exchange failed:', errorText);
-      return new Response(
-        JSON.stringify({ 
-          success: false, 
-          error: 'Failed to exchange authorization code for tokens' 
-        }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+    const tokenData = await tokenResponse.json().catch(() => null);
+
+    if (!tokenResponse.ok || !tokenData) {
+      console.error("⚠️ Fitbit token exchange failed:", tokenData);
+      return new Response(JSON.stringify({ error: "Failed to exchange authorization code", details: tokenData }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
-    const tokenData = await tokenResponse.json();
-    
-    // Extract the important data
-    const { access_token, refresh_token, user_id } = tokenData;
-
-    // Return the token data (the client will store it in the Users table)
+    // ✅ Success: return tokens
     return new Response(
       JSON.stringify({
         success: true,
-        message: 'Token exchange successful',
+        message: "Fitbit token exchange successful",
         data: {
-          access_token,
-          refresh_token,
-          user_id,
-        }
+          access_token: tokenData.access_token,
+          refresh_token: tokenData.refresh_token,
+          user_id: tokenData.user_id,
+          expires_in: tokenData.expires_in,
+        },
       }),
-      { 
-        status: 200, 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-      }
+      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
-
   } catch (error) {
-    console.error('Error in exchange-fitbase-token function:', error);
-    return new Response(
-      JSON.stringify({ 
-        success: false, 
-        error: error instanceof Error ? error.message : 'An unexpected error occurred'
-      }),
-      { 
-        status: 500, 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-      }
-    );
+    console.error("💥 Unexpected server error:", error);
+    return new Response(JSON.stringify({ error: "Unexpected server error", details: error.message }), {
+      status: 500,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
   }
 });

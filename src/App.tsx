@@ -75,7 +75,7 @@ const App = () => {
         );
       case "your-plan":
         return (
-          <div key="your-place" className="animate-fade-in">
+          <div key="your-plan" className="animate-fade-in">
             <YourPlan />
           </div>
         );

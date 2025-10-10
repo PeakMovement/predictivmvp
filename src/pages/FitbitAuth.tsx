@@ -11,65 +11,66 @@ export default function FitbitAuth() {
   useEffect(() => {
     const connectFitbit = async () => {
       try {
-        // ✅ Extract the authorization code from the URL
+        // Extract authorization code from the redirect URL
         const params = new URLSearchParams(window.location.search);
         const code = params.get("code");
 
         if (!code) {
+          console.error("No authorization code found in URL");
           setStatus("error");
           setMessage("No authorization code found. Please try again.");
           return;
         }
 
-        // ✅ Call your Supabase Edge Function directly
-        const response = await fetch("https://ixtwbkikyuexskdgfpfq.supabase.co/functions/v1/exchange-fitbit-token", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
-          },
-          body: JSON.stringify({ code }),
+        console.log("🔄 Exchanging Fitbit code for tokens...");
+
+        // ✅ Call the correct Supabase Edge Function
+        const { data, error } = await supabase.functions.invoke("exchange-fitbit-token", {
+          body: { code },
         });
 
-        const data = await response.json();
-
-        if (!response.ok || !data) {
-          console.error("Fitbit exchange error:", data);
+        if (error || !data) {
+          console.error("❌ Fitbit token exchange failed:", error || data);
           setStatus("error");
-          setMessage("Failed to connect to Fitbit. Please try again.");
+          setMessage("Fitbit connection failed. Please try again.");
           return;
         }
 
-        // ✅ Update user in Supabase
-        const { data: userData, error: userError } = await supabase.auth.getUser();
-        if (userError || !userData?.user) {
+        // ✅ Update the user profile
+        const { data: userData } = await supabase.auth.getUser();
+        const user = userData?.user;
+
+        if (!user) {
+          console.error("❌ No logged-in user found.");
           setStatus("error");
           setMessage("No logged-in user found.");
           return;
         }
 
-        const user = userData.user;
+        console.log("✅ Fitbit tokens received. Updating user record...");
+
         const { error: updateError } = await supabase
           .from("users")
           .update({
             fitbit_connected: true,
-            fitbit_user_id: data.user_id || null,
+            fitbit_user_id: data.user_id,
             connected_at: new Date().toISOString(),
           })
           .eq("id", user.id);
 
         if (updateError) {
-          console.error("Supabase update error:", updateError);
+          console.error("⚠️ Error updating user table:", updateError);
           setStatus("error");
           setMessage("Connected to Fitbit, but failed to save connection.");
           return;
         }
 
+        console.log("🎉 Fitbit connection successful!");
         setStatus("success");
-        setMessage("✅ Fitbit connected successfully! Redirecting...");
+        setMessage("Fitbit connected successfully! Redirecting...");
         setTimeout(() => (window.location.href = "/health"), 2500);
       } catch (err) {
-        console.error("Unexpected Fitbit error:", err);
+        console.error("💥 Unexpected Fitbit error:", err);
         setStatus("error");
         setMessage("Unexpected error. Please try again.");
       }

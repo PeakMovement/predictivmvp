@@ -1,41 +1,42 @@
-import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
 };
 
 serve(async (req) => {
+  // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
-    return new Response("ok", { status: 200, headers: corsHeaders });
+    return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    // ✅ Only get `code` from query string (never from body)
-    const url = new URL(req.url);
-    const code = url.searchParams.get("code");
+    const { code } = await req.json();
 
     if (!code) {
-      return new Response(JSON.stringify({ success: false, error: "Missing authorization code" }), {
+      return new Response(JSON.stringify({ success: false, error: "Authorization code is required" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    const clientId = Deno.env.get("FITBIT_CLIENT_ID");
-    const clientSecret = Deno.env.get("FITBIT_CLIENT_SECRET");
-    const redirectUri = "https://predictiv.netlify.app/auth/fitbit";
+    const clientId = Deno.env.get("FITBASE_CLIENT_ID");
+    const clientSecret = Deno.env.get("FITBASE_CLIENT_SECRET");
 
     if (!clientId || !clientSecret) {
-      return new Response(JSON.stringify({ success: false, error: "Missing Fitbit credentials" }), {
+      console.error("Missing Fitbase credentials");
+      return new Response(JSON.stringify({ success: false, error: "Server configuration error" }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
+    // Create base64 encoded credentials for Basic Auth
     const credentials = btoa(`${clientId}:${clientSecret}`);
 
+    // Exchange code for access token
     const tokenResponse = await fetch("https://api.fitbit.com/oauth2/token", {
       method: "POST",
       headers: {
@@ -45,33 +46,48 @@ serve(async (req) => {
       body: new URLSearchParams({
         client_id: clientId,
         grant_type: "authorization_code",
-        redirect_uri: redirectUri,
-        code,
-      }),
+        redirect_uri: "https://predictiv.netlify.com/auth/fitbase",
+        code: code,
+      }).toString(),
     });
 
-    const text = await tokenResponse.text();
-    let tokenData = {};
-    try {
-      tokenData = JSON.parse(text);
-    } catch {
-      console.error("Fitbit returned non-JSON:", text);
+    if (!tokenResponse.ok) {
+      const errorText = await tokenResponse.text();
+      console.error("Fitbase token exchange failed:", errorText);
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: "Failed to exchange authorization code for tokens",
+        }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
     }
 
+    const tokenData = await tokenResponse.json();
+
+    // Extract the important data
+    const { access_token, refresh_token, user_id } = tokenData;
+
+    // Return the token data (the client will store it in the Users table)
     return new Response(
       JSON.stringify({
-        success: tokenResponse.ok,
-        message: tokenResponse.ok ? "Fitbit connection successful" : "Fitbit connection failed",
-        data: tokenData,
+        success: true,
+        message: "Token exchange successful",
+        data: {
+          access_token,
+          refresh_token,
+          user_id,
+        },
       }),
       {
-        status: tokenResponse.ok ? 200 : 400,
+        status: 200,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       },
     );
   } catch (error) {
     console.error("Fitbit exchange error:", error);
-    return new Response(JSON.stringify({ success: false, error: error.message }), {
+    const message = error instanceof Error ? error.message : "Unexpected server error";
+    return new Response(JSON.stringify({ success: false, error: message }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });

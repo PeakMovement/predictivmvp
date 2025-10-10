@@ -220,20 +220,83 @@ export type Database = {
           },
         ]
       }
+      user_fitbit_data: {
+        Row: {
+          calories: number | null
+          collected_at: string | null
+          distance: number | null
+          heart_rate: number | null
+          hrv: number | null
+          id: string
+          readiness_score: number | null
+          resting_hr: number | null
+          sleep_duration: number | null
+          sleep_efficiency: number | null
+          source: string | null
+          spo2: number | null
+          steps: number | null
+          training_load: number | null
+          user_id: string | null
+        }
+        Insert: {
+          calories?: number | null
+          collected_at?: string | null
+          distance?: number | null
+          heart_rate?: number | null
+          hrv?: number | null
+          id?: string
+          readiness_score?: number | null
+          resting_hr?: number | null
+          sleep_duration?: number | null
+          sleep_efficiency?: number | null
+          source?: string | null
+          spo2?: number | null
+          steps?: number | null
+          training_load?: number | null
+          user_id?: string | null
+        }
+        Update: {
+          calories?: number | null
+          collected_at?: string | null
+          distance?: number | null
+          heart_rate?: number | null
+          hrv?: number | null
+          id?: string
+          readiness_score?: number | null
+          resting_hr?: number | null
+          sleep_duration?: number | null
+          sleep_efficiency?: number | null
+          source?: string | null
+          spo2?: number | null
+          steps?: number | null
+          training_load?: number | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       users: {
         Row: {
+          connected_at: string | null
           created_at: string | null
           email: string | null
+          fitbit_connected: boolean | null
+          fitbit_user_id: string | null
           id: string
         }
         Insert: {
+          connected_at?: string | null
           created_at?: string | null
           email?: string | null
+          fitbit_connected?: boolean | null
+          fitbit_user_id?: string | null
           id?: string
         }
         Update: {
+          connected_at?: string | null
           created_at?: string | null
           email?: string | null
+          fitbit_connected?: boolean | null
+          fitbit_user_id?: string | null
           id?: string
         }
         Relationships: []
@@ -316,7 +379,20 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      user_training_metrics: {
+        Row: {
+          acute_load: number | null
+          acwr: number | null
+          acwr_status: string | null
+          chronic_load: number | null
+          daily_load: number | null
+          day: string | null
+          fatigue_index: number | null
+          readiness_score_est: number | null
+          user_id: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       [_ in never]: never

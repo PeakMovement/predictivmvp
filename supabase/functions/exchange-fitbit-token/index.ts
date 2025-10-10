@@ -6,12 +6,10 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
-  if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
-  }
+  if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    // ✅ Fitbit sends the code via query params, NOT a JSON body
+    // ✅ Fitbit sends ?code= in the URL, never a JSON body
     const url = new URL(req.url);
     const code = url.searchParams.get("code");
 
@@ -29,18 +27,17 @@ serve(async (req) => {
     if (!clientId || !clientSecret) {
       console.error("Missing Fitbit credentials");
       return new Response(
-        JSON.stringify({ success: false, error: "Server missing Fitbit credentials" }),
+        JSON.stringify({ success: false, error: "Missing Fitbit credentials" }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
     const credentials = btoa(`${clientId}:${clientSecret}`);
 
-    // ✅ Make Fitbit token exchange request
     const tokenResponse = await fetch("https://api.fitbit.com/oauth2/token", {
       method: "POST",
       headers: {
-        "Authorization": `Basic ${credentials}`,
+        Authorization: `Basic ${credentials}`,
         "Content-Type": "application/x-www-form-urlencoded",
       },
       body: new URLSearchParams({
@@ -52,19 +49,14 @@ serve(async (req) => {
     });
 
     const text = await tokenResponse.text();
-    let tokenData;
+    let tokenData: any = {};
     try {
       tokenData = JSON.parse(text);
     } catch {
       console.error("Fitbit returned non-JSON:", text);
-      return new Response(
-        JSON.stringify({ success: false, error: "Fitbit returned invalid response", details: text }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
     }
 
     if (!tokenResponse.ok) {
-      console.error("Fitbit token exchange failed:", tokenData);
       return new Response(
         JSON.stringify({ success: false, error: "Fitbit token exchange failed", details: tokenData }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }

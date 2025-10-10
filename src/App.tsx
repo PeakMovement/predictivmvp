@@ -16,7 +16,7 @@ import { Settings } from "@/pages/Settings";
 import { FindHelp } from "@/pages/FindHelp";
 import { DataUpload } from "@/pages/DataUpload";
 import { InsightsTree } from "@/pages/InsightsTree";
-import { FitbitAuth } from "@/pages/FitbitAuth";
+import FitbitAuth from "@/pages/FitbitAuth";
 import TestSupabase from "@/pages/TestSupabase";
 import { Settings as SettingsIcon } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";

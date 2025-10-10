@@ -1,75 +1,106 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Loader2, CheckCircle2, XCircle } from "lucide-react";
 
-export const FitbitAuth = () => {
+export default function FitbitAuth() {
   const [status, setStatus] = useState<"loading" | "success" | "error">("loading");
   const [message, setMessage] = useState("Connecting to Fitbit...");
 
   useEffect(() => {
-    const handleFitbitCallback = async () => {
+    const connectFitbit = async () => {
       try {
-        // ✅ Get the "code" Fitbit sends in the redirect URL
+        // ✅ Extract the authorization code from the URL
         const params = new URLSearchParams(window.location.search);
         const code = params.get("code");
 
         if (!code) {
           setStatus("error");
-          setMessage("No authorization code found. Please try connecting again.");
+          setMessage("No authorization code found. Please try again.");
           return;
         }
 
-        // ✅ Call the Supabase Edge Function to exchange the code for tokens
-        const { data, error } = await supabase.functions.invoke("exchange-fitbit-token", {
-          body: { code },
+        // ✅ Call your Supabase Edge Function directly
+        const response = await fetch("https://ixtwbkikyuexskdgfpfq.supabase.co/functions/v1/exchange-fitbit-token", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+          },
+          body: JSON.stringify({ code }),
         });
 
-        if (error) {
-          console.error("Fitbit token exchange error:", error);
+        const data = await response.json();
+
+        if (!response.ok || !data) {
+          console.error("Fitbit exchange error:", data);
           setStatus("error");
           setMessage("Failed to connect to Fitbit. Please try again.");
           return;
         }
 
-        console.log("✅ Fitbit token exchange success:", data);
+        // ✅ Update user in Supabase
+        const { data: userData, error: userError } = await supabase.auth.getUser();
+        if (userError || !userData?.user) {
+          setStatus("error");
+          setMessage("No logged-in user found.");
+          return;
+        }
+
+        const user = userData.user;
+        const { error: updateError } = await supabase
+          .from("users")
+          .update({
+            fitbit_connected: true,
+            fitbit_user_id: data.user_id || null,
+            connected_at: new Date().toISOString(),
+          })
+          .eq("id", user.id);
+
+        if (updateError) {
+          console.error("Supabase update error:", updateError);
+          setStatus("error");
+          setMessage("Connected to Fitbit, but failed to save connection.");
+          return;
+        }
 
         setStatus("success");
-        setMessage("Fitbit connected successfully!");
+        setMessage("✅ Fitbit connected successfully! Redirecting...");
+        setTimeout(() => (window.location.href = "/health"), 2500);
       } catch (err) {
-        console.error("❌ Unexpected error:", err);
+        console.error("Unexpected Fitbit error:", err);
         setStatus("error");
-        setMessage("An unexpected error occurred. Please try again.");
+        setMessage("Unexpected error. Please try again.");
       }
     };
 
-    handleFitbitCallback();
+    connectFitbit();
   }, []);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5 flex items-center justify-center p-4">
-      <Card className="w-full max-w-md p-8 bg-glass backdrop-blur-xl border-glass-border shadow-2xl text-center">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-primary/10 p-6">
+      <Card className="max-w-md w-full p-8 text-center space-y-6 shadow-lg">
         {status === "loading" && (
           <>
-            <Loader2 className="w-16 h-16 text-primary animate-spin mx-auto mb-4" />
+            <Loader2 className="animate-spin w-16 h-16 text-primary mx-auto" />
             <p>{message}</p>
           </>
         )}
         {status === "success" && (
           <>
-            <CheckCircle2 className="w-16 h-16 text-green-500 mx-auto mb-4" />
-            <p className="text-green-500 font-bold">{message}</p>
+            <CheckCircle2 className="w-16 h-16 text-green-500 mx-auto" />
+            <p>{message}</p>
           </>
         )}
         {status === "error" && (
           <>
-            <XCircle className="w-16 h-16 text-destructive mx-auto mb-4" />
-            <p className="text-destructive">{message}</p>
+            <XCircle className="w-16 h-16 text-red-500 mx-auto" />
+            <p>{message}</p>
+            <Button onClick={() => (window.location.href = "/")}>Try Again</Button>
           </>
         )}
       </Card>
     </div>
   );
-};
-
-export default FitbitAuth;
+}

@@ -1,7 +1,10 @@
-project_id = "ixtwbkikyuexskdgfpfq"
+project_id = "ixwtbkvikx5seyskdgfpfq"
 
-[functions.test-twilio-env]
+[functions.test-ping]
 verify_jwt = false
 
 [functions.send-sms-alert]
+verify_jwt = false
+
+[functions.exchange-fitbase-token]
 verify_jwt = false

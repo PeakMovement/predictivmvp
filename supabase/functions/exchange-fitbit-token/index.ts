@@ -7,18 +7,17 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
-  // ✅ Always handle CORS preflight cleanly
   if (req.method === "OPTIONS") {
     return new Response("ok", { status: 200, headers: corsHeaders });
   }
 
   try {
-    // ✅ Read code from query string instead of JSON body
+    // ✅ Only get `code` from query string (never from body)
     const url = new URL(req.url);
     const code = url.searchParams.get("code");
 
     if (!code) {
-      return new Response(JSON.stringify({ success: false, error: "Authorization code missing" }), {
+      return new Response(JSON.stringify({ success: false, error: "Missing authorization code" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -29,7 +28,6 @@ serve(async (req) => {
     const redirectUri = "https://predictiv.netlify.app/auth/fitbit";
 
     if (!clientId || !clientSecret) {
-      console.error("Missing Fitbit credentials");
       return new Response(JSON.stringify({ success: false, error: "Missing Fitbit credentials" }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -53,42 +51,29 @@ serve(async (req) => {
     });
 
     const text = await tokenResponse.text();
-    let tokenData;
+    let tokenData = {};
     try {
       tokenData = JSON.parse(text);
     } catch {
       console.error("Fitbit returned non-JSON:", text);
-      return new Response(JSON.stringify({ success: false, error: "Fitbit returned invalid JSON", details: text }), {
-        status: 500,
+    }
+
+    return new Response(
+      JSON.stringify({
+        success: tokenResponse.ok,
+        message: tokenResponse.ok ? "Fitbit connection successful" : "Fitbit connection failed",
+        data: tokenData,
+      }),
+      {
+        status: tokenResponse.ok ? 200 : 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    if (!tokenResponse.ok) {
-      return new Response(
-        JSON.stringify({ success: false, error: "Fitbit token exchange failed", details: tokenData }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-      );
-    }
-
-    const { access_token, refresh_token, user_id } = tokenData;
-
-    return new Response(
-      JSON.stringify({
-        success: true,
-        message: "Fitbit connection successful",
-        data: { access_token, refresh_token, user_id },
-      }),
-      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      },
     );
-  } catch (err) {
-    console.error("Fitbit exchange error:", err);
-    return new Response(
-      JSON.stringify({
-        success: false,
-        error: err instanceof Error ? err.message : "Unexpected server error",
-      }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-    );
+  } catch (error) {
+    console.error("Fitbit exchange error:", error);
+    return new Response(JSON.stringify({ success: false, error: error.message }), {
+      status: 500,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
   }
 });

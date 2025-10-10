@@ -16,6 +16,7 @@ import { Settings } from "@/pages/Settings";
 import { FindHelp } from "@/pages/FindHelp";
 import { DataUpload } from "@/pages/DataUpload";
 import { InsightsTree } from "@/pages/InsightsTree";
+import { FitbitAuth } from "@/pages/FitbitAuth";
 import TestSupabase from "@/pages/TestSupabase";
 import { Settings as SettingsIcon } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -26,12 +27,31 @@ const queryClient = new QueryClient();
 const App = () => {
   const [activeTab, setActiveTab] = useState("dashboard");
 
-  // Listen for custom navigation event from Health page
+  // Check if we're on the Fitbit auth callback route
+  const currentPath = window.location.pathname;
+  const isFitbitAuth = currentPath === "/auth/fitbase";
+
+  // Listen for custom navigation event from the previous-based navigation
   useEffect(() => {
     const handleNavigateInsights = () => setActiveTab("insights-tree");
     window.addEventListener('navigate-insights', handleNavigateInsights);
     return () => window.removeEventListener('navigate-insights', handleNavigateInsights);
   }, []);
+
+  // If on Fitbit auth route, render only that page
+  if (isFitbitAuth) {
+    return (
+      <ThemeProvider defaultTheme="dark" storageKey="predictiv-theme">
+        <QueryClientProvider client={queryClient}>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
+            <FitbitAuth />
+          </TooltipProvider>
+        </QueryClientProvider>
+      </ThemeProvider>
+    );
+  }
 
   const renderContent = () => {
     switch (activeTab) {
@@ -42,7 +62,7 @@ const App = () => {
       case "health":
         return <div key="health" className="animate-fade-in"><Health /></div>;
       case "your-plan":
-        return <div key="your-plan" className="animate-fade-in"><YourPlan /></div>;
+        return <div key="your-place" className="animate-fade-in"><YourPlan /></div>;
       case "data-upload":
         return <div key="data-upload" className="animate-fade-in"><DataUpload /></div>;
       case "find-help":
@@ -72,9 +92,9 @@ const App = () => {
                 <button
                   onClick={() => setActiveTab("settings")}
                   className={cn(
-                    "fixed top-[88px] right-6 z-50",
+                    "fixed top-[80px] right-6 z-50",
                     "w-12 h-12 rounded-xl",
-                    "bg-glass backdrop-blur-xl border border-glass-border shadow-glass",
+                    "bg-glass backdrop-blur-xl border-glass-border",
                     "flex items-center justify-center",
                     "hover:bg-glass-highlight hover:scale-110 active:scale-95",
                     "transition-all duration-300 ease-out transform-gpu",

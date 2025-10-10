@@ -6,21 +6,19 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
-  // Handle CORS preflight
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    // ✅ Get code safely from query string (Fitbit only sends via URL)
     const url = new URL(req.url);
     const code = url.searchParams.get("code");
 
     if (!code) {
-      return new Response(JSON.stringify({ success: false, error: "Authorization code missing in redirect URL" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return new Response(
+        JSON.stringify({ success: false, error: "Authorization code missing in redirect URL" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
 
     const clientId = Deno.env.get("FITBIT_CLIENT_ID");
@@ -29,15 +27,14 @@ serve(async (req) => {
 
     if (!clientId || !clientSecret) {
       console.error("Missing Fitbit credentials");
-      return new Response(JSON.stringify({ success: false, error: "Server configuration error" }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return new Response(
+        JSON.stringify({ success: false, error: "Server configuration error" }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
 
     const credentials = btoa(`${clientId}:${clientSecret}`);
 
-    // ✅ Correct token exchange call
     const tokenResponse = await fetch("https://api.fitbit.com/oauth2/token", {
       method: "POST",
       headers: {
@@ -68,7 +65,7 @@ serve(async (req) => {
           error: "Failed to exchange authorization code",
           details: text,
         }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
@@ -80,7 +77,7 @@ serve(async (req) => {
         message: "Token exchange successful",
         data: { access_token, refresh_token, user_id },
       }),
-      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {
     console.error("Error in exchange-fitbit-token function:", error);
@@ -89,7 +86,7 @@ serve(async (req) => {
         success: false,
         error: error instanceof Error ? error.message : "Unexpected server error",
       }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
 });

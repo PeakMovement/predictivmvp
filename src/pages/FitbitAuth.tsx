@@ -1,98 +1,75 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Loader2, CheckCircle2, XCircle } from "lucide-react";
 
-export default function FitbitAuth() {
+export const FitbitAuth = () => {
   const [status, setStatus] = useState<"loading" | "success" | "error">("loading");
   const [message, setMessage] = useState("Connecting to Fitbit...");
 
   useEffect(() => {
-    const connectFitbit = async () => {
+    const handleFitbitCallback = async () => {
       try {
-        // Extract the authorization code from URL
+        // ✅ Get the "code" Fitbit sends in the redirect URL
         const params = new URLSearchParams(window.location.search);
         const code = params.get("code");
 
         if (!code) {
           setStatus("error");
-          setMessage("No authorization code found. Please try again.");
+          setMessage("No authorization code found. Please try connecting again.");
           return;
         }
 
-        // Call Supabase Edge Function to exchange code for tokens
+        // ✅ Call the Supabase Edge Function to exchange the code for tokens
         const { data, error } = await supabase.functions.invoke("exchange-fitbit-token", {
           body: { code },
         });
 
-        if (error || !data) {
-          console.error("Fitbit exchange error:", error);
+        if (error) {
+          console.error("Fitbit token exchange error:", error);
           setStatus("error");
-          setMessage("Fitbit connection failed. Please try again.");
+          setMessage("Failed to connect to Fitbit. Please try again.");
           return;
         }
 
-        // Update user profile with Fitbit tokens
-        const user = (await supabase.auth.getUser()).data.user;
-        if (!user) {
-          setStatus("error");
-          setMessage("No logged-in user found.");
-          return;
-        }
-
-        const { error: updateError } = await supabase
-          .from("users")
-          .update({
-            fitbit_connected: true,
-            fitbit_user_id: data.user_id,
-            connected_at: new Date().toISOString(),
-          })
-          .eq("id", user.id);
-
-        if (updateError) {
-          console.error("Supabase update error:", updateError);
-          setStatus("error");
-          setMessage("Connected to Fitbit, but failed to save connection.");
-          return;
-        }
+        console.log("✅ Fitbit token exchange success:", data);
 
         setStatus("success");
-        setMessage("Fitbit connected successfully! Redirecting...");
-        setTimeout(() => (window.location.href = "/health"), 2500);
+        setMessage("Fitbit connected successfully!");
       } catch (err) {
-        console.error("Unexpected Fitbit error:", err);
+        console.error("❌ Unexpected error:", err);
         setStatus("error");
-        setMessage("Unexpected error. Please try again.");
+        setMessage("An unexpected error occurred. Please try again.");
       }
     };
 
-    connectFitbit();
+    handleFitbitCallback();
   }, []);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-primary/10 p-6">
-      <Card className="max-w-md w-full p-8 text-center space-y-6 shadow-lg">
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5 flex items-center justify-center p-4">
+      <Card className="w-full max-w-md p-8 bg-glass backdrop-blur-xl border-glass-border shadow-2xl text-center">
         {status === "loading" && (
           <>
-            <Loader2 className="animate-spin w-16 h-16 text-primary mx-auto" />
+            <Loader2 className="w-16 h-16 text-primary animate-spin mx-auto mb-4" />
             <p>{message}</p>
           </>
         )}
         {status === "success" && (
           <>
-            <CheckCircle2 className="w-16 h-16 text-green-500 mx-auto" />
-            <p>{message}</p>
+            <CheckCircle2 className="w-16 h-16 text-green-500 mx-auto mb-4" />
+            <p className="text-green-500 font-bold">{message}</p>
           </>
         )}
         {status === "error" && (
           <>
-            <XCircle className="w-16 h-16 text-red-500 mx-auto" />
-            <p>{message}</p>
-            <Button onClick={() => (window.location.href = "/")}>Try Again</Button>
+            <XCircle className="w-16 h-16 text-destructive mx-auto mb-4" />
+            <p className="text-destructive">{message}</p>
           </>
         )}
       </Card>
     </div>
   );
-}
+};
+
+export default FitbitAuth;

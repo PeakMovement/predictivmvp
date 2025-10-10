@@ -23,7 +23,7 @@ export const FitbitAuth = () => {
 
         // Call the Supabase edge function to exchange the code for tokens
         const { data, error } = await supabase.functions.invoke("exchange-fitbit-token", {
-          body: { code }
+          body: { code },
         });
 
         if (error) {
@@ -42,9 +42,9 @@ export const FitbitAuth = () => {
                 access_token: data.access_token,
                 refresh_token: data.refresh_token,
                 user_id: data.user_id,
-                connected_at: new Date().toISOString()
-              }
-            }
+                connected_at: new Date().toISOString(),
+              },
+            },
           })
           .eq("id", (await supabase.auth.getUser()).data.user?.id);
 
@@ -62,7 +62,6 @@ export const FitbitAuth = () => {
         setTimeout(() => {
           window.location.href = "/";
         }, 2000);
-
       } catch (error) {
         console.error("Fitbit connection error:", error);
         setStatus("error");
@@ -99,9 +98,7 @@ export const FitbitAuth = () => {
               <div>
                 <h2 className="text-2xl font-bold mb-2 text-green-500">Success!</h2>
                 <p className="text-muted-foreground">{message}</p>
-                <p className="text-sm text-muted-foreground mt-2">
-                  Redirecting to dashboard...
-                </p>
+                <p className="text-sm text-muted-foreground mt-2">Redirecting to dashboard...</p>
               </div>
             </>
           )}
@@ -112,17 +109,10 @@ export const FitbitAuth = () => {
               <div>
                 <h2 className="text-2xl font-bold mb-2 text-destructive">Connection Failed</h2>
                 <p className="text-muted-foreground mb-4">{message}</p>
-                <Button 
-                  onClick={handleRetry}
-                  className="w-full bg-primary hover:bg-primary/90"
-                >
+                <Button onClick={handleRetry} className="w-full bg-primary hover:bg-primary/90">
                   Try Again
                 </Button>
-                <Button 
-                  variant="ghost"
-                  onClick={() => window.location.href = "/"}
-                  className="w-full mt-2"
-                >
+                <Button variant="ghost" onClick={() => (window.location.href = "/")} className="w-full mt-2">
                   Return to Dashboard
                 </Button>
               </div>

@@ -29,13 +29,13 @@ const App = () => {
 
   // Check if we're on the Fitbit auth callback route
   const currentPath = window.location.pathname;
-  const isFitbitAuth = currentPath === "/auth/fitbase";
+  const isFitbitAuth = currentPath === "/fitbit-auth";
 
   // Listen for custom navigation event from the previous-based navigation
   useEffect(() => {
     const handleNavigateInsights = () => setActiveTab("insights-tree");
-    window.addEventListener('navigate-insights', handleNavigateInsights);
-    return () => window.removeEventListener('navigate-insights', handleNavigateInsights);
+    window.addEventListener("navigate-insights", handleNavigateInsights);
+    return () => window.removeEventListener("navigate-insights", handleNavigateInsights);
   }, []);
 
   // If on Fitbit auth route, render only that page
@@ -56,25 +56,65 @@ const App = () => {
   const renderContent = () => {
     switch (activeTab) {
       case "dashboard":
-        return <div key="dashboard" className="animate-fade-in"><Dashboard /></div>;
+        return (
+          <div key="dashboard" className="animate-fade-in">
+            <Dashboard />
+          </div>
+        );
       case "training":
-        return <div key="training" className="animate-fade-in"><Training /></div>;
+        return (
+          <div key="training" className="animate-fade-in">
+            <Training />
+          </div>
+        );
       case "health":
-        return <div key="health" className="animate-fade-in"><Health /></div>;
+        return (
+          <div key="health" className="animate-fade-in">
+            <Health />
+          </div>
+        );
       case "your-plan":
-        return <div key="your-place" className="animate-fade-in"><YourPlan /></div>;
+        return (
+          <div key="your-place" className="animate-fade-in">
+            <YourPlan />
+          </div>
+        );
       case "data-upload":
-        return <div key="data-upload" className="animate-fade-in"><DataUpload /></div>;
+        return (
+          <div key="data-upload" className="animate-fade-in">
+            <DataUpload />
+          </div>
+        );
       case "find-help":
-        return <div key="find-help" className="animate-fade-in"><FindHelp /></div>;
+        return (
+          <div key="find-help" className="animate-fade-in">
+            <FindHelp />
+          </div>
+        );
       case "settings":
-        return <div key="settings" className="animate-fade-in"><Settings onNavigate={setActiveTab} /></div>;
+        return (
+          <div key="settings" className="animate-fade-in">
+            <Settings onNavigate={setActiveTab} />
+          </div>
+        );
       case "insights-tree":
-        return <div key="insights-tree" className="animate-fade-in"><InsightsTree onNavigate={setActiveTab} /></div>;
+        return (
+          <div key="insights-tree" className="animate-fade-in">
+            <InsightsTree onNavigate={setActiveTab} />
+          </div>
+        );
       case "test-supabase":
-        return <div key="test-supabase" className="animate-fade-in"><TestSupabase /></div>;
+        return (
+          <div key="test-supabase" className="animate-fade-in">
+            <TestSupabase />
+          </div>
+        );
       default:
-        return <div key="dashboard" className="animate-fade-in"><Dashboard /></div>;
+        return (
+          <div key="dashboard" className="animate-fade-in">
+            <Dashboard />
+          </div>
+        );
     }
   };
 
@@ -85,39 +125,34 @@ const App = () => {
           <TooltipProvider>
             <Toaster />
             <Sonner />
-           <div className="relative overflow-hidden min-h-screen">
-            <ThemeToggle />
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button
-                  onClick={() => setActiveTab("settings")}
-                  className={cn(
-                    "fixed top-[80px] right-6 z-50",
-                    "w-12 h-12 rounded-xl",
-                    "bg-glass backdrop-blur-xl border-glass-border",
-                    "flex items-center justify-center",
-                    "hover:bg-glass-highlight hover:scale-110 active:scale-95",
-                    "transition-all duration-300 ease-out transform-gpu",
-                    "animate-fade-in"
-                  )}
-                  aria-label="Settings"
-                >
-                  <SettingsIcon 
-                    size={20} 
-                    className="text-primary drop-shadow-[0_0_8px_hsl(var(--primary)/0.6)]"
-                  />
-                </button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Settings</p>
-              </TooltipContent>
-            </Tooltip>
-            <div className="transition-all duration-500 ease-out">
-              {renderContent()}
+            <div className="relative overflow-hidden min-h-screen">
+              <ThemeToggle />
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    onClick={() => setActiveTab("settings")}
+                    className={cn(
+                      "fixed top-[80px] right-6 z-50",
+                      "w-12 h-12 rounded-xl",
+                      "bg-glass backdrop-blur-xl border-glass-border",
+                      "flex items-center justify-center",
+                      "hover:bg-glass-highlight hover:scale-110 active:scale-95",
+                      "transition-all duration-300 ease-out transform-gpu",
+                      "animate-fade-in",
+                    )}
+                    aria-label="Settings"
+                  >
+                    <SettingsIcon size={20} className="text-primary drop-shadow-[0_0_8px_hsl(var(--primary)/0.6)]" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Settings</p>
+                </TooltipContent>
+              </Tooltip>
+              <div className="transition-all duration-500 ease-out">{renderContent()}</div>
+              <BottomNavigation activeTab={activeTab} onTabChange={setActiveTab} />
+              <SimulationControl />
             </div>
-            <BottomNavigation activeTab={activeTab} onTabChange={setActiveTab} />
-            <SimulationControl />
-          </div>
           </TooltipProvider>
         </LiveDataProvider>
       </QueryClientProvider>

@@ -11,12 +11,12 @@ serve(async (req) => {
   }
 
   try {
-    // Safely extract the code
+    // Safely get authorization code from either JSON body or query params
     let code = null;
     try {
-      const text = await req.text();
-      if (text) {
-        const body = JSON.parse(text);
+      const bodyText = await req.text();
+      if (bodyText) {
+        const body = JSON.parse(bodyText);
         code = body.code;
       }
     } catch {

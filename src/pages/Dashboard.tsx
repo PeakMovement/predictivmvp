@@ -233,9 +233,17 @@ const generateTodaysPlan = (currentData: HealthDataRow | null) => {
 
 // Generate graph data from CSV up to current day
 const getGraphData = (csvData: HealthDataRow[], currentDayIndex: number) => {
+  if (csvData.length === 0 || currentDayIndex < 0 || currentDayIndex >= csvData.length) {
+    return [];
+  }
+  
   const dataUpToNow = csvData.slice(0, currentDayIndex + 1);
   const currentData = csvData[currentDayIndex];
   const latest = parseMetrics(currentData);
+
+  if (!latest) {
+    return [];
+  }
 
   const ewmaTrend = dataUpToNow.map((row) => parseFloat(row.EWMA || "0"));
   const acwrTrend = dataUpToNow.map((row) => parseFloat(row.ACWR || "0"));
@@ -246,28 +254,28 @@ const getGraphData = (csvData: HealthDataRow[], currentDayIndex: number) => {
     {
       title: "EWMA Trend Analysis",
       subtitle: "Exponentially weighted moving average over time",
-      currentValue: `+${latest.ewma.toFixed(1)}%`,
+      currentValue: latest.ewma > 0 ? `+${latest.ewma.toFixed(1)}%` : "–",
       riskZone: latest.ewma > 7 ? "high-risk" : latest.ewma > 5 ? "caution" : "optimal",
       dataPoints: ewmaTrend.slice(-15),
     },
     {
       title: "Acute:Chronic Workload",
       subtitle: "Training load ratio over time",
-      currentValue: latest.acwr.toFixed(1),
+      currentValue: latest.acwr > 0 ? latest.acwr.toFixed(1) : "–",
       riskZone: latest.acwr > 1.5 ? "high-risk" : latest.acwr > 1.3 ? "caution" : "optimal",
       dataPoints: acwrTrend.slice(-15),
     },
     {
       title: "Weekly Training Load",
       subtitle: "Total training stress",
-      currentValue: `${latest.trainingLoad} TSS`,
+      currentValue: latest.trainingLoad > 0 ? `${latest.trainingLoad} TSS` : "–",
       riskZone: latest.trainingLoad > 450 ? "high-risk" : latest.trainingLoad > 400 ? "caution" : "optimal",
       dataPoints: loadTrend.slice(-15),
     },
     {
       title: "Training Strain Trend",
       subtitle: "Daily strain accumulation",
-      currentValue: latest.strain.toString(),
+      currentValue: latest.strain > 0 ? latest.strain.toString() : "–",
       riskZone: latest.strain > 150 ? "high-risk" : latest.strain > 130 ? "caution" : "optimal",
       dataPoints: strainTrend.slice(-15),
     },
@@ -954,6 +962,8 @@ const GraphCarousel = () => {
 
   // Auto-rotation every 5 seconds
   useEffect(() => {
+    if (graphData.length === 0) return;
+    
     const interval = setInterval(() => {
       setIsTransitioning(true);
       setTimeout(() => {
@@ -966,6 +976,7 @@ const GraphCarousel = () => {
   }, [graphData.length]);
 
   const nextGraph = () => {
+    if (graphData.length === 0) return;
     setIsTransitioning(true);
     setTimeout(() => {
       setCurrentGraph((prev) => (prev + 1) % graphData.length);
@@ -974,6 +985,7 @@ const GraphCarousel = () => {
   };
 
   const prevGraph = () => {
+    if (graphData.length === 0) return;
     setIsTransitioning(true);
     setTimeout(() => {
       setCurrentGraph((prev) => (prev - 1 + graphData.length) % graphData.length);
@@ -990,6 +1002,19 @@ const GraphCarousel = () => {
       }, 150);
     }
   };
+
+  // Show empty state if no data
+  if (graphData.length === 0) {
+    return (
+      <div className="bg-glass backdrop-blur-xl border border-glass-border rounded-2xl p-8 shadow-glass text-center">
+        <div className="space-y-4">
+          <div className="text-4xl mb-4">📊</div>
+          <h3 className="text-xl font-semibold text-foreground">No Trend Data Available</h3>
+          <p className="text-muted-foreground">Upload your health data to view training trends</p>
+        </div>
+      </div>
+    );
+  }
 
   const graph = graphData[currentGraph];
   const lineColor = getRiskColor(graph.riskZone);
@@ -1175,14 +1200,16 @@ export const Dashboard = () => {
   const [currentGraphIndex, setCurrentGraphIndex] = useState(0);
 
   const nextGraph = () => {
+    if (graphData.length === 0) return;
     setCurrentGraphIndex((prev) => (prev + 1) % graphData.length);
   };
 
   const prevGraph = () => {
+    if (graphData.length === 0) return;
     setCurrentGraphIndex((prev) => (prev - 1 + graphData.length) % graphData.length);
   };
 
-  const currentGraph = graphData[currentGraphIndex];
+  const currentGraph = graphData.length > 0 ? graphData[currentGraphIndex] : null;
 
   return (
     <TooltipProvider>

@@ -18,6 +18,7 @@ import { DataUpload } from "@/pages/DataUpload";
 import { InsightsTree } from "@/pages/InsightsTree";
 import FitbitAuth from "@/pages/FitbitAuth";
 import TestSupabase from "@/pages/TestSupabase";
+import FitbitSyncNow from "@/pages/FitbitSyncNow";
 import { Settings as SettingsIcon } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
@@ -107,6 +108,12 @@ const App = () => {
         return (
           <div key="test-supabase" className="animate-fade-in">
             <TestSupabase />
+          </div>
+        );
+      case "fitbit-sync-now":
+        return (
+          <div key="fitbit-sync-now" className="animate-fade-in">
+            <FitbitSyncNow />
           </div>
         );
       default:

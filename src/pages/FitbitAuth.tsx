@@ -21,9 +21,11 @@ export default function FitbitAuth() {
 
         console.log("🔄 Exchanging Fitbit code for tokens...");
 
-        // ✅ Call the correct Supabase Edge Function
         const { data, error } = await supabase.functions.invoke("exchange-fitbit-token", {
-          body: { code },
+          method: "GET",
+          headers: { "Content-Type": "application/json" },
+          // ✅ Pass code in the URL instead of body
+          url: `https://ixtwbkikyuexskdgfpfq.supabase.co/functions/v1/exchange-fitbit-token?code=${code}`,
         });
 
         // Check for network errors first

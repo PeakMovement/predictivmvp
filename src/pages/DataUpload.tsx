@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
-import { hasUploadedData, getAllProfiles, saveProfile, getActiveProfileId, setActiveProfileId, resetToDemo, ClientProfile, HealthDataRow } from "@/lib/healthDataStore";
+import { hasUploadedData, getAllProfiles, saveProfile, getActiveProfileId, setActiveProfileId, resetData, ClientProfile, HealthDataRow } from "@/lib/healthDataStore";
 import { useLiveData } from "@/contexts/LiveDataContext";
 import {
   Select,
@@ -14,7 +14,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import CsvUploader from "@/components/CsvUploader";
-import { DemoProfileSelector } from "@/components/DemoProfileSelector";
 import Papa from "papaparse";
 
 const requiredColumns = [
@@ -193,8 +192,8 @@ export const DataUpload = () => {
     
     if (profileId === "demo") {
       toast({
-        title: "Switched to Demo Data",
-        description: "All dashboards now show demo values.",
+        title: "No Data Active",
+        description: "Upload data to begin analysis.",
       });
     } else {
       const profile = getAllProfiles().find(p => p.id === profileId);
@@ -207,8 +206,8 @@ export const DataUpload = () => {
     setProfiles(getAllProfiles());
   };
 
-  const handleResetToDemo = () => {
-    resetToDemo();
+  const handleResetData = () => {
+    resetData();
     setActiveProfile("demo");
     setProfiles([]);
     setCsvData([]);
@@ -218,7 +217,7 @@ export const DataUpload = () => {
     
     toast({
       title: "Reset Complete",
-      description: "All data cleared. Using demo values.",
+      description: "All data cleared.",
     });
   };
 
@@ -232,7 +231,7 @@ export const DataUpload = () => {
           </div>
           <h1 className="text-4xl font-bold text-white tracking-tight">Data Upload Center</h1>
           <p className="text-gray-300 text-lg max-w-2xl mx-auto">
-            View your demo athlete data or upload your own CSVs for analysis
+            Upload your CSV files to begin health data analysis
           </p>
           
           {/* Session Status and Controls */}
@@ -245,24 +244,21 @@ export const DataUpload = () => {
             ) : (
               <div className="inline-flex items-center gap-2 px-4 py-2 bg-amber-500/20 border border-amber-500/30 rounded-full text-sm text-amber-400">
                 <AlertCircle size={16} />
-                <span>Using Demo Data</span>
+                <span>No Data - Upload CSV to Begin</span>
               </div>
             )}
             
             <Button
-              onClick={handleResetToDemo}
+              onClick={handleResetData}
               variant="outline"
               size="sm"
               className="gap-2"
             >
               <Trash2 size={16} />
-              Reset to Demo Data
+              Clear All Data
             </Button>
           </div>
         </div>
-
-        {/* Demo Athlete Profile Cards */}
-        <DemoProfileSelector />
 
         {/* Dual Upload Section */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">

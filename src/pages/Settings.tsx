@@ -8,7 +8,6 @@ import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useTheme } from "@/components/ThemeProvider";
 import { useLiveData } from "@/contexts/LiveDataContext";
-import { demoProfiles, DemoProfileType, getActiveDemoProfile, setActiveDemoProfile } from "@/lib/healthDataStore";
 import { getAlertSettings, saveAlertSettings } from "@/lib/alertConditions";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -17,7 +16,6 @@ export const Settings = ({ onNavigate }: { onNavigate?: (tab: string) => void })
   const [notifications, setNotifications] = useState(true);
   const [primaryHue, setPrimaryHue] = useState(263);
   const [isDragging, setIsDragging] = useState(false);
-  const [activeDemoProfile, setActiveDemoProfileState] = useState<DemoProfileType>(getActiveDemoProfile());
   
   // Fitbit sync state
   const [isSyncing, setIsSyncing] = useState(false);
@@ -55,12 +53,6 @@ export const Settings = ({ onNavigate }: { onNavigate?: (tab: string) => void })
     } else {
       setDayIndex(nextIndex);
     }
-  };
-
-  const handleDemoProfileChange = (profileType: DemoProfileType) => {
-    setActiveDemoProfile(profileType);
-    setActiveDemoProfileState(profileType);
-    refreshData(); // Refresh LiveDataContext with new demo profile
   };
 
   // Load saved primary hue from localStorage and email preferences from Supabase
@@ -729,48 +721,6 @@ export const Settings = ({ onNavigate }: { onNavigate?: (tab: string) => void })
                     </p>
                   </div>
                 </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Demo Profile Selection Section */}
-          <div className="bg-glass backdrop-blur-xl border border-glass-border rounded-2xl p-6 shadow-glass hover:bg-glass-highlight transition-all duration-300">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-8 h-8 bg-primary/20 rounded-lg flex items-center justify-center">
-                <Database size={16} className="text-primary" />
-              </div>
-              <h3 className="text-lg font-semibold text-foreground">Demo Profile</h3>
-            </div>
-            
-            <div className="space-y-4">
-              <p className="text-sm text-muted-foreground">
-                Select a demo profile with unique training patterns and metrics
-              </p>
-              
-              <div className="grid gap-3">
-                {Object.values(demoProfiles).map((profile) => (
-                  <button
-                    key={profile.id}
-                    onClick={() => handleDemoProfileChange(profile.id)}
-                    className={cn(
-                      "w-full p-4 rounded-xl border transition-all duration-200 text-left",
-                      activeDemoProfile === profile.id
-                        ? "bg-primary/10 border-primary/30 ring-2 ring-primary/20"
-                        : "bg-glass/30 border-glass-border hover:bg-glass-highlight"
-                    )}
-                  >
-                    <div className="flex items-start gap-3">
-                      <span className="text-2xl mt-0.5">{profile.emoji}</span>
-                      <div className="flex-1">
-                        <p className="font-medium text-foreground mb-1">{profile.name}</p>
-                        <p className="text-sm text-muted-foreground">{profile.description}</p>
-                        <p className="text-xs text-muted-foreground mt-2">
-                          {profile.data.length} days of sample data
-                        </p>
-                      </div>
-                    </div>
-                  </button>
-                ))}
               </div>
             </div>
           </div>

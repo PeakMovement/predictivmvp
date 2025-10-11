@@ -26,9 +26,11 @@ export const LiveDataProvider = ({ children }: { children: ReactNode }) => {
   const refreshData = () => {
     const data = getHealthData();
     setCsvData(data);
-    // Reset to last day when data changes
+    // Reset to last day when data changes, or 0 if no data
     if (data.length > 0) {
       setCurrentDayIndex(data.length - 1);
+    } else {
+      setCurrentDayIndex(0);
     }
   };
 

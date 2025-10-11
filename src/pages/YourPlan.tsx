@@ -12,68 +12,31 @@ import { Label } from "@/components/ui/label";
 import jsPDF from "jspdf";
 import { useLiveData } from "@/contexts/LiveDataContext";
 
-const acceptedChallenges = [
-  {
-    id: 1,
-    text: "Schedule a deload week to reduce training intensity by 20%",
-    category: "Training",
-    accentColor: "yellow",
-    hasVideo: true,
-    hasPdf: true,
-    dateAccepted: "2024-01-15",
-    scheduledDate: "2024-01-22",
-    scheduledTime: "09:00"
-  },
-  {
-    id: 3,
-    text: "Add 2 mobility sessions focusing on hip flexors and thoracic spine",
-    category: "Recovery", 
-    accentColor: "green",
-    hasVideo: true,
-    hasPdf: true,
-    dateAccepted: "2024-01-14",
-    scheduledDate: "2024-01-20",
-    scheduledTime: "14:30"
-  },
-  {
-    id: 5,
-    text: "Consider periodizing toward strength phase next week",
-    category: "Training",
-    accentColor: "red",
-    hasVideo: true,
-    hasPdf: false,
-    dateAccepted: "2024-01-13",
-    scheduledDate: "2024-01-25",
-    scheduledTime: "10:00"
+// Load accepted challenges from localStorage
+const getAcceptedChallenges = () => {
+  try {
+    const stored = localStorage.getItem("acceptedAdjustments");
+    if (stored) {
+      return JSON.parse(stored);
+    }
+  } catch (error) {
+    console.error("Error loading accepted challenges:", error);
   }
-];
+  return [];
+};
 
-const upcomingBookings = [
-  {
-    id: 1,
-    clinician: "Dr. Sarah Chen",
-    service: "Sports Medicine Consultation",
-    date: "2024-01-20",
-    time: "2:30 PM",
-    type: "In-Person"
-  },
-  {
-    id: 2,
-    clinician: "Mike Rodriguez, PT",
-    service: "Physical Therapy Session",
-    date: "2024-01-22", 
-    time: "10:00 AM",
-    type: "In-Person"
-  },
-  {
-    id: 3,
-    clinician: "Dr. James Wilson",
-    service: "Nutrition Consultation",
-    date: "2024-01-25",
-    time: "1:00 PM", 
-    type: "Virtual"
+// Load bookings from localStorage
+const getUpcomingBookings = () => {
+  try {
+    const stored = localStorage.getItem('userBookings');
+    if (stored) {
+      return JSON.parse(stored);
+    }
+  } catch (error) {
+    console.error("Error loading bookings:", error);
   }
-];
+  return [];
+};
 
 const getAccentColor = (color: string) => {
   switch (color) {
@@ -93,34 +56,49 @@ const getCategoryStyle = (category: string) => {
   }
 };
 
-// Mock graph data for PDF generation
-const graphData = [
-  {
-    title: "Acute:Chronic Workload",
-    currentValue: "1.2",
-    riskZone: "optimal"
-  },
-  {
-    title: "Training Monotony",
-    currentValue: "2.4/5.0",
-    riskZone: "optimal"
-  },
-  {
-    title: "Training Strain",
-    currentValue: "156/200",
-    riskZone: "caution"
-  },
-  {
-    title: "EWMA Trend",
-    currentValue: "+5.2%",
-    riskZone: "optimal"
+// Dynamic graph data for PDF generation
+const getGraphDataForPDF = (csvData: any[], currentDayIndex: number) => {
+  if (csvData.length === 0 || currentDayIndex < 0) {
+    return [];
   }
-];
+  
+  const currentData = csvData[currentDayIndex];
+  if (!currentData) return [];
+  
+  const acwrValue = parseFloat(currentData.ACWR || "0");
+  const monotonyValue = parseFloat(currentData.Monotony || "0");
+  const strainValue = parseFloat(currentData.Strain || "0");
+  const ewmaValue = parseFloat(currentData.EWMA || "0");
+  
+  return [
+    {
+      title: "Acute:Chronic Workload",
+      currentValue: acwrValue > 0 ? acwrValue.toFixed(1) : "–",
+      riskZone: acwrValue > 1.5 ? "high-risk" : acwrValue > 1.3 ? "caution" : "optimal"
+    },
+    {
+      title: "Training Monotony",
+      currentValue: monotonyValue > 0 ? `${monotonyValue.toFixed(1)}/5.0` : "–",
+      riskZone: monotonyValue > 2.5 ? "caution" : "optimal"
+    },
+    {
+      title: "Training Strain",
+      currentValue: strainValue > 0 ? `${strainValue.toFixed(0)}/200` : "–",
+      riskZone: strainValue > 165 ? "high-risk" : strainValue > 150 ? "caution" : "optimal"
+    },
+    {
+      title: "EWMA Trend",
+      currentValue: ewmaValue > 0 ? `+${ewmaValue.toFixed(1)}%` : "–",
+      riskZone: ewmaValue > 7 ? "high-risk" : ewmaValue > 5 ? "caution" : "optimal"
+    }
+  ];
+};
 
-const generateWeeklyReportPDF = () => {
+const generateWeeklyReportPDF = (csvData: any[], currentDayIndex: number) => {
   const doc = new jsPDF();
   const pageWidth = doc.internal.pageSize.getWidth();
   let yPosition = 20;
+  const graphData = getGraphDataForPDF(csvData, currentDayIndex);
 
   // Header
   doc.setFontSize(24);
@@ -145,21 +123,26 @@ const generateWeeklyReportPDF = () => {
   doc.setFontSize(10);
   doc.setFont("helvetica", "normal");
   
-  graphData.forEach((graph) => {
-    const riskColor = graph.riskZone === "optimal" ? [34, 197, 94] : 
-                      graph.riskZone === "caution" ? [251, 146, 60] : 
-                      [239, 68, 68];
-    
-    doc.setTextColor(0, 0, 0);
-    doc.text(`• ${graph.title}:`, 25, yPosition);
-    doc.text(`${graph.currentValue}`, 80, yPosition);
-    
-    doc.setTextColor(riskColor[0], riskColor[1], riskColor[2]);
-    doc.text(`(${graph.riskZone.toUpperCase()})`, 110, yPosition);
-    doc.setTextColor(0, 0, 0);
-    
+  if (graphData.length > 0) {
+    graphData.forEach((graph) => {
+      const riskColor = graph.riskZone === "optimal" ? [34, 197, 94] : 
+                        graph.riskZone === "caution" ? [251, 146, 60] : 
+                        [239, 68, 68];
+      
+      doc.setTextColor(0, 0, 0);
+      doc.text(`• ${graph.title}:`, 25, yPosition);
+      doc.text(`${graph.currentValue}`, 80, yPosition);
+      
+      doc.setTextColor(riskColor[0], riskColor[1], riskColor[2]);
+      doc.text(`(${graph.riskZone.toUpperCase()})`, 110, yPosition);
+      doc.setTextColor(0, 0, 0);
+      
+      yPosition += 8;
+    });
+  } else {
+    doc.text("• No data available", 25, yPosition);
     yPosition += 8;
-  });
+  }
 
   yPosition += 15;
 
@@ -189,9 +172,7 @@ const generateWeeklyReportPDF = () => {
   doc.setTextColor(60, 60, 60);
   
   const recommendations = [
-    "Add 1 recovery session focusing on mobility and light stretching",
-    "Reduce sprint volume by 15-20% to prevent overtraining",
-    "Prioritize sleep quality with 8+ hours per night"
+    "Review and adjust based on your current metrics"
   ];
 
   recommendations.forEach((rec) => {
@@ -210,21 +191,27 @@ const generateWeeklyReportPDF = () => {
   doc.setFontSize(10);
   doc.setFont("helvetica", "normal");
   
-  acceptedChallenges.forEach((challenge, index) => {
-    if (yPosition > 260) {
-      doc.addPage();
-      yPosition = 20;
-    }
-    
-    doc.text(`${index + 1}. ${challenge.text}`, 25, yPosition, { maxWidth: pageWidth - 50 });
-    yPosition += 7;
-    doc.setFontSize(9);
-    doc.setTextColor(100, 100, 100);
-    doc.text(`   Category: ${challenge.category} | Accepted: ${challenge.dateAccepted}`, 25, yPosition);
-    doc.setFontSize(10);
-    doc.setTextColor(0, 0, 0);
+  const acceptedChallenges = getAcceptedChallenges();
+  if (acceptedChallenges.length > 0) {
+    acceptedChallenges.forEach((challenge: any, index: number) => {
+      if (yPosition > 260) {
+        doc.addPage();
+        yPosition = 20;
+      }
+      
+      doc.text(`${index + 1}. ${challenge.text}`, 25, yPosition, { maxWidth: pageWidth - 50 });
+      yPosition += 7;
+      doc.setFontSize(9);
+      doc.setTextColor(100, 100, 100);
+      doc.text(`   Category: ${challenge.category} | Accepted: ${challenge.dateAccepted}`, 25, yPosition);
+      doc.setFontSize(10);
+      doc.setTextColor(0, 0, 0);
+      yPosition += 10;
+    });
+  } else {
+    doc.text("No accepted challenges yet", 25, yPosition);
     yPosition += 10;
-  });
+  }
 
   yPosition += 10;
 
@@ -242,23 +229,29 @@ const generateWeeklyReportPDF = () => {
   doc.setFontSize(10);
   doc.setFont("helvetica", "normal");
   
-  upcomingBookings.forEach((booking, index) => {
-    if (yPosition > 260) {
-      doc.addPage();
-      yPosition = 20;
-    }
-    
-    doc.text(`${index + 1}. ${booking.service}`, 25, yPosition);
-    yPosition += 7;
-    doc.setFontSize(9);
-    doc.setTextColor(100, 100, 100);
-    doc.text(`   Clinician: ${booking.clinician}`, 25, yPosition);
-    yPosition += 5;
-    doc.text(`   Date: ${booking.date} at ${booking.time} (${booking.type})`, 25, yPosition);
-    doc.setFontSize(10);
-    doc.setTextColor(0, 0, 0);
+  const bookings = getUpcomingBookings();
+  if (bookings.length > 0) {
+    bookings.forEach((booking: any, index: number) => {
+      if (yPosition > 260) {
+        doc.addPage();
+        yPosition = 20;
+      }
+      
+      doc.text(`${index + 1}. ${booking.service}`, 25, yPosition);
+      yPosition += 7;
+      doc.setFontSize(9);
+      doc.setTextColor(100, 100, 100);
+      doc.text(`   Clinician: ${booking.clinician}`, 25, yPosition);
+      yPosition += 5;
+      doc.text(`   Date: ${booking.date} at ${booking.time} (${booking.type})`, 25, yPosition);
+      doc.setFontSize(10);
+      doc.setTextColor(0, 0, 0);
+      yPosition += 10;
+    });
+  } else {
+    doc.text("No upcoming bookings", 25, yPosition);
     yPosition += 10;
-  });
+  }
 
   yPosition += 15;
 
@@ -276,15 +269,27 @@ const generateWeeklyReportPDF = () => {
   doc.setFontSize(10);
   doc.setFont("helvetica", "normal");
   doc.setTextColor(60, 60, 60);
-  doc.text("• Best Training Day: Tuesday", 25, yPosition);
-  yPosition += 8;
-  doc.text("• Total Training Sessions: 5", 25, yPosition);
-  yPosition += 8;
-  doc.text("• Average Strain: 142 TSS", 25, yPosition);
-  yPosition += 8;
-  doc.text("• Recovery Score: 8.2/10", 25, yPosition);
-  yPosition += 8;
-  doc.text("• Peak Heart Rate: 178 bpm", 25, yPosition);
+  
+  if (csvData.length > 0 && currentDayIndex >= 0) {
+    const currentData = csvData[currentDayIndex];
+    const strain = parseFloat(currentData.Strain || "0");
+    const sleepScore = parseFloat(currentData.SleepScore || "0");
+    const restingHR = parseFloat(currentData.RestingHR || "0");
+    
+    if (strain > 0) {
+      doc.text(`• Average Strain: ${strain.toFixed(0)} TSS`, 25, yPosition);
+      yPosition += 8;
+    }
+    if (sleepScore > 0) {
+      doc.text(`• Recovery Score: ${(sleepScore / 10).toFixed(1)}/10`, 25, yPosition);
+      yPosition += 8;
+    }
+    if (restingHR > 0) {
+      doc.text(`• Resting HR: ${restingHR.toFixed(0)} bpm`, 25, yPosition);
+    }
+  } else {
+    doc.text("• No data available for this period", 25, yPosition);
+  }
 
   // Save the PDF
   doc.save(`weekly-health-summary-${format(new Date(), "yyyy-MM-dd")}.pdf`);
@@ -292,19 +297,18 @@ const generateWeeklyReportPDF = () => {
 
 const AcceptedChallengesSection = () => {
   const [isCalendarModalOpen, setIsCalendarModalOpen] = useState(false);
-  const [selectedChallenge, setSelectedChallenge] = useState<typeof acceptedChallenges[0] | null>(null);
+  const [selectedChallenge, setSelectedChallenge] = useState<any | null>(null);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [selectedTime, setSelectedTime] = useState<string>("12:00");
-  const [allChallenges, setAllChallenges] = useState<typeof acceptedChallenges>([]);
+  const [allChallenges, setAllChallenges] = useState<any[]>([]);
 
   // Load accepted adjustments from localStorage on mount
   useEffect(() => {
-    const storedAdjustments = JSON.parse(localStorage.getItem("acceptedAdjustments") || "[]");
-    // Combine static challenges with stored adjustments
-    setAllChallenges([...acceptedChallenges, ...storedAdjustments]);
+    const storedAdjustments = getAcceptedChallenges();
+    setAllChallenges(storedAdjustments);
   }, []);
 
-  const handleCalendarClick = (challenge: typeof acceptedChallenges[0]) => {
+  const handleCalendarClick = (challenge: any) => {
     setSelectedChallenge(challenge);
     setIsCalendarModalOpen(true);
   };
@@ -691,8 +695,9 @@ const WeeklyInsightsSection = () => {
 
         {/* Download Button */}
         <button
-          onClick={generateWeeklyReportPDF}
-          className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-purple-500/20 text-purple-400 rounded-lg border border-purple-400/30 hover:bg-purple-500/30 hover:scale-105 active:scale-95 transition-all duration-200 font-medium shadow-glow"
+          onClick={() => generateWeeklyReportPDF(csvData, currentDayIndex)}
+          disabled={csvData.length === 0}
+          className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-purple-500/20 text-purple-400 rounded-lg border border-purple-400/30 hover:bg-purple-500/30 hover:scale-105 active:scale-95 transition-all duration-200 font-medium shadow-glow disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
         >
           <Download size={18} />
           <span>Download Weekly Report</span>
@@ -729,15 +734,25 @@ const WeeklyInsightsSection = () => {
 };
 
 const UpcomingBookingsSection = () => {
-  const [allBookings, setAllBookings] = useState<typeof upcomingBookings>([]);
+  const [allBookings, setAllBookings] = useState<any[]>([]);
 
   useEffect(() => {
     // Load bookings from localStorage
-    const userBookings = JSON.parse(localStorage.getItem('userBookings') || '[]');
-    
-    // Combine static bookings with user bookings
-    setAllBookings([...upcomingBookings, ...userBookings]);
+    const userBookings = getUpcomingBookings();
+    setAllBookings(userBookings);
   }, []);
+  
+  if (allBookings.length === 0) {
+    return (
+      <div className="bg-glass backdrop-blur-xl border border-glass-border rounded-2xl p-8 shadow-glass text-center">
+        <div className="space-y-4">
+          <Calendar size={48} className="mx-auto text-muted-foreground" />
+          <h3 className="text-xl font-semibold text-foreground">No Upcoming Bookings</h3>
+          <p className="text-muted-foreground">Schedule appointments to see them here</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-glass backdrop-blur-xl border border-glass-border rounded-2xl p-6 shadow-glass hover:bg-glass-highlight hover:scale-105 hover:-translate-y-1 transition-all duration-300 ease-out animate-fade-in transform-gpu">
@@ -811,7 +826,11 @@ export const YourPlan = () => {
               <Tooltip>
                 <TooltipTrigger asChild>
                   <button
-                    onClick={generateWeeklyReportPDF}
+                    onClick={() => {
+                      const { csvData: data, currentDayIndex: index } = { csvData: [], currentDayIndex: 0 };
+                      // This will be called from the parent component context
+                      generateWeeklyReportPDF(data, index);
+                    }}
                     className="flex items-center gap-2 px-6 py-3 bg-primary/20 text-primary rounded-lg border border-primary/30 hover:bg-primary/30 hover:scale-105 active:scale-95 transition-all duration-200 font-medium shadow-glow"
                   >
                     <Download size={18} />

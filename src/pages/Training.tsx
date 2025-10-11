@@ -13,13 +13,17 @@ import { useToast } from "@/hooks/use-toast";
 import { useLiveData } from "@/contexts/LiveDataContext";
 import { HealthDataRow } from "@/lib/healthDataStore";
 
-const sessionLogs = [
-  { title: "Upper Body Strength", date: "2024-01-15", load: 125, type: "Strength" },
-  { title: "HIIT Cardio", date: "2024-01-14", load: 89, type: "Cardio" },
-  { title: "Lower Body Power", date: "2024-01-13", load: 156, type: "Power" },
-  { title: "Recovery Run", date: "2024-01-12", load: 45, type: "Recovery" },
-  { title: "Olympic Lifting", date: "2024-01-11", load: 178, type: "Strength" },
-];
+// Session logs will be loaded dynamically from data
+const getSessionLogs = (csvData: HealthDataRow[]) => {
+  if (csvData.length === 0) return [];
+  
+  return csvData.slice(-5).map((row, index) => ({
+    title: `Training Session ${csvData.length - 4 + index}`,
+    date: row.Date || "N/A",
+    load: parseFloat(row.TrainingLoad || "0"),
+    type: "Training"
+  })).reverse();
+};
 
 // Generate dynamic suggestions based on current day data
 const generateSuggestions = (currentData: HealthDataRow | null) => {
@@ -114,60 +118,80 @@ const generateSuggestions = (currentData: HealthDataRow | null) => {
   return suggestions;
 };
 
-const graphData = [
-  {
-    title: "EWMA Trend Analysis",
-    subtitle: "Exponentially weighted moving average over 28 days",
-    currentValue: "+5.2%",
-    riskZone: "optimal", // optimal, caution, high-risk
-    dataPoints: [65, 68, 72, 70, 75, 78, 82, 80, 85, 88, 90, 87, 89, 92, 95],
-    thresholds: { optimal: [60, 85] as [number, number], caution: [85, 95] as [number, number], highRisk: [95, 100] as [number, number] },
-    interpretation: {
-      optimal: "Your training load is progressing well. Maintain consistency.",
-      caution: "Training load is increasing rapidly. Monitor recovery carefully.",
-      highRisk: "High training load detected. Consider reducing volume to prevent overtraining."
+// Generate dynamic graph data from CSV
+const getGraphData = (csvData: HealthDataRow[], currentDayIndex: number) => {
+  if (csvData.length === 0 || currentDayIndex < 0) return [];
+  
+  const dataUpToNow = csvData.slice(0, currentDayIndex + 1);
+  const currentData = csvData[currentDayIndex];
+  
+  if (!currentData) return [];
+  
+  const ewmaTrend = dataUpToNow.map(row => parseFloat(row.EWMA || "0"));
+  const acwrTrend = dataUpToNow.map(row => parseFloat(row.ACWR || "0"));
+  const loadTrend = dataUpToNow.map(row => parseFloat(row.TrainingLoad || "0"));
+  const strainTrend = dataUpToNow.map(row => parseFloat(row.Strain || "0"));
+  
+  const ewmaValue = parseFloat(currentData.EWMA || "0");
+  const acwrValue = parseFloat(currentData.ACWR || "0");
+  const loadValue = parseFloat(currentData.TrainingLoad || "0");
+  const strainValue = parseFloat(currentData.Strain || "0");
+  
+  return [
+    {
+      title: "EWMA Trend Analysis",
+      subtitle: "Exponentially weighted moving average over time",
+      currentValue: ewmaValue > 0 ? `+${ewmaValue.toFixed(1)}%` : "–",
+      riskZone: ewmaValue > 7 ? "high-risk" : ewmaValue > 5 ? "caution" : "optimal",
+      dataPoints: ewmaTrend.slice(-15),
+      thresholds: { optimal: [0, 5] as [number, number], caution: [5, 7] as [number, number], highRisk: [7, 100] as [number, number] },
+      interpretation: {
+        optimal: "Your training load is progressing well. Maintain consistency.",
+        caution: "Training load is increasing rapidly. Monitor recovery carefully.",
+        highRisk: "High training load detected. Consider reducing volume to prevent overtraining."
+      }
+    },
+    {
+      title: "Acute:Chronic Workload",
+      subtitle: "Training load ratio over time",
+      currentValue: acwrValue > 0 ? acwrValue.toFixed(1) : "–",
+      riskZone: acwrValue > 1.5 ? "high-risk" : acwrValue > 1.3 ? "caution" : "optimal",
+      dataPoints: acwrTrend.slice(-15),
+      thresholds: { optimal: [0.8, 1.3] as [number, number], caution: [1.3, 1.5] as [number, number], highRisk: [1.5, 2.0] as [number, number] },
+      interpretation: {
+        optimal: "Optimal training adaptation. You're in the sweet spot for gains.",
+        caution: "Slightly elevated ratio. Monitor fatigue and adjust if needed.",
+        highRisk: "High risk of overload. Consider reducing volume immediately."
+      }
+    },
+    {
+      title: "Weekly Training Load",
+      subtitle: "Total training stress by week",
+      currentValue: loadValue > 0 ? `${loadValue} TSS` : "–",
+      riskZone: loadValue > 470 ? "high-risk" : loadValue > 430 ? "caution" : "optimal",
+      dataPoints: loadTrend.slice(-15),
+      thresholds: { optimal: [0, 430] as [number, number], caution: [430, 470] as [number, number], highRisk: [470, 600] as [number, number] },
+      interpretation: {
+        optimal: "Training stress is well-managed. Keep up the good work.",
+        caution: "Approaching high training stress. Ensure adequate recovery.",
+        highRisk: "Excessive training stress detected. Prioritize rest and recovery."
+      }
+    },
+    {
+      title: "Training Strain Trend",
+      subtitle: "Daily strain accumulation",
+      currentValue: strainValue > 0 ? strainValue.toString() : "–",
+      riskZone: strainValue > 165 ? "high-risk" : strainValue > 150 ? "caution" : "optimal",
+      dataPoints: strainTrend.slice(-15),
+      thresholds: { optimal: [0, 150] as [number, number], caution: [150, 165] as [number, number], highRisk: [165, 200] as [number, number] },
+      interpretation: {
+        optimal: "Strain levels are balanced. Continue current training approach.",
+        caution: "Elevated strain detected. Monitor recovery markers closely.",
+        highRisk: "Critical strain levels. Immediate deload recommended."
+      }
     }
-  },
-  {
-    title: "Acute:Chronic Workload",
-    subtitle: "Training load ratio over time",
-    currentValue: "1.2",
-    riskZone: "optimal",
-    dataPoints: [1.3, 1.2, 1.1, 1.0, 1.1, 1.2, 1.3, 1.2, 1.1, 1.0, 1.2, 1.3, 1.2, 1.1, 1.2],
-    thresholds: { optimal: [0.8, 1.3] as [number, number], caution: [1.3, 1.5] as [number, number], highRisk: [1.5, 2.0] as [number, number] },
-    interpretation: {
-      optimal: "Optimal training adaptation. You're in the sweet spot for gains.",
-      caution: "Slightly elevated ratio. Monitor fatigue and adjust if needed.",
-      highRisk: "High risk of overload. Consider reducing volume immediately."
-    }
-  },
-  {
-    title: "Weekly Training Load",
-    subtitle: "Total training stress by week",
-    currentValue: "420 TSS",
-    riskZone: "caution",
-    dataPoints: [380, 390, 400, 420, 440, 430, 420, 410, 430, 450, 440, 420, 410, 420, 420],
-    thresholds: { optimal: [300, 430] as [number, number], caution: [430, 470] as [number, number], highRisk: [470, 600] as [number, number] },
-    interpretation: {
-      optimal: "Training stress is well-managed. Keep up the good work.",
-      caution: "Approaching high training stress. Ensure adequate recovery.",
-      highRisk: "Excessive training stress detected. Prioritize rest and recovery."
-    }
-  },
-  {
-    title: "Training Strain Trend",
-    subtitle: "Daily strain accumulation",
-    currentValue: "156",
-    riskZone: "high-risk",
-    dataPoints: [120, 130, 140, 145, 150, 155, 160, 158, 162, 165, 160, 158, 156, 154, 156],
-    thresholds: { optimal: [100, 150] as [number, number], caution: [150, 165] as [number, number], highRisk: [165, 200] as [number, number] },
-    interpretation: {
-      optimal: "Strain levels are balanced. Continue current training approach.",
-      caution: "Elevated strain detected. Monitor recovery markers closely.",
-      highRisk: "Critical strain levels. Immediate deload recommended."
-    }
-  }
-];
+  ];
+};
 
 // Helper function to determine risk zone based on value and thresholds
 const getRiskZoneForValue = (value: number, thresholds: { optimal: [number, number], caution: [number, number], highRisk: [number, number] }) => {
@@ -771,7 +795,7 @@ const AccountabilityChallenges = ({ suggestions }: { suggestions: ReturnType<typ
   );
 };
 
-const SessionLogCard = ({ session }: { session: typeof sessionLogs[0] }) => (
+const SessionLogCard = ({ session }: { session: ReturnType<typeof getSessionLogs>[0] }) => (
   <div className="bg-glass backdrop-blur-xl border border-glass-border rounded-xl p-4 shadow-glass hover:bg-glass-highlight hover:scale-105 hover:-translate-y-1 transition-all duration-300 ease-out transform-gpu">
     <div className="flex items-center justify-between mb-2">
       <h4 className="font-semibold text-foreground">{session.title}</h4>
@@ -786,28 +810,45 @@ const SessionLogCard = ({ session }: { session: typeof sessionLogs[0] }) => (
       </div>
       <div className="flex items-center gap-2">
         <Activity size={14} className="text-primary animate-bounce-subtle" />
-        <span className="font-medium text-foreground">{session.load}</span>
+        <span className="font-medium text-foreground">{session.load > 0 ? session.load.toFixed(0) : "–"}</span>
         <span className="text-muted-foreground text-xs">load</span>
       </div>
     </div>
   </div>
 );
 
-const SessionLogList = () => (
-  <div className="bg-glass backdrop-blur-xl border border-glass-border rounded-2xl p-6 shadow-glass hover:bg-glass-highlight hover:scale-105 hover:-translate-y-1 transition-all duration-300 ease-out animate-fade-in transform-gpu">
-    <div className="flex items-center gap-3 mb-6">
-      <div className="w-8 h-8 bg-primary/20 rounded-lg flex items-center justify-center hover:scale-110 transition-transform duration-200">
-        <Activity size={16} className="text-primary" />
+const SessionLogList = () => {
+  const { csvData } = useLiveData();
+  const sessionLogs = getSessionLogs(csvData);
+  
+  if (sessionLogs.length === 0) {
+    return (
+      <div className="bg-glass backdrop-blur-xl border border-glass-border rounded-2xl p-8 shadow-glass text-center">
+        <div className="space-y-4">
+          <Activity size={48} className="mx-auto text-muted-foreground" />
+          <h3 className="text-xl font-semibold text-foreground">No Session Data</h3>
+          <p className="text-muted-foreground">Upload your training data to track recent sessions</p>
+        </div>
       </div>
-      <h3 className="text-lg font-semibold text-foreground">Recent Sessions</h3>
+    );
+  }
+  
+  return (
+    <div className="bg-glass backdrop-blur-xl border border-glass-border rounded-2xl p-6 shadow-glass hover:bg-glass-highlight hover:scale-105 hover:-translate-y-1 transition-all duration-300 ease-out animate-fade-in transform-gpu">
+      <div className="flex items-center gap-3 mb-6">
+        <div className="w-8 h-8 bg-primary/20 rounded-lg flex items-center justify-center hover:scale-110 transition-transform duration-200">
+          <Activity size={16} className="text-primary" />
+        </div>
+        <h3 className="text-lg font-semibold text-foreground">Recent Sessions</h3>
+      </div>
+      <div className="space-y-3">
+        {sessionLogs.map((session, index) => (
+          <SessionLogCard key={index} session={session} />
+        ))}
+      </div>
     </div>
-    <div className="space-y-3">
-      {sessionLogs.map((session, index) => (
-        <SessionLogCard key={index} session={session} />
-      ))}
-    </div>
-  </div>
-);
+  );
+};
 
 const CircularGauge = ({ title, value, maxValue, unit }: { title: string; value: number; maxValue: number; unit: string }) => {
   const percentage = (value / maxValue) * 100;
@@ -957,10 +998,12 @@ const SuggestionsCard = ({ suggestions }: { suggestions: ReturnType<typeof gener
 };
 
 const GraphCarousel = () => {
+  const { csvData, currentDayIndex } = useLiveData();
   const [currentGraph, setCurrentGraph] = useState(0);
   const [timeRange, setTimeRange] = useState(30);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [hoveredPoint, setHoveredPoint] = useState<number | null>(null);
+  const graphData = getGraphData(csvData, currentDayIndex);
   
   const timeRanges = [
     { days: 7, label: "7 Days" },
@@ -970,6 +1013,8 @@ const GraphCarousel = () => {
   
   // Auto-rotation every 5 seconds
   useEffect(() => {
+    if (graphData.length === 0) return;
+    
     const interval = setInterval(() => {
       setIsTransitioning(true);
       setTimeout(() => {
@@ -979,9 +1024,10 @@ const GraphCarousel = () => {
     }, 5000);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [graphData.length]);
   
   const nextGraph = () => {
+    if (graphData.length === 0) return;
     setIsTransitioning(true);
     setTimeout(() => {
       setCurrentGraph((prev) => (prev + 1) % graphData.length);
@@ -990,6 +1036,7 @@ const GraphCarousel = () => {
   };
   
   const prevGraph = () => {
+    if (graphData.length === 0) return;
     setIsTransitioning(true);
     setTimeout(() => {
       setCurrentGraph((prev) => (prev - 1 + graphData.length) % graphData.length);
@@ -1006,6 +1053,18 @@ const GraphCarousel = () => {
       }, 150);
     }
   };
+  
+  if (graphData.length === 0) {
+    return (
+      <div className="bg-glass backdrop-blur-xl border border-glass-border rounded-2xl p-8 shadow-glass text-center">
+        <div className="space-y-4">
+          <BarChart3 size={48} className="mx-auto text-muted-foreground" />
+          <h3 className="text-xl font-semibold text-foreground">No Training Data</h3>
+          <p className="text-muted-foreground">Upload your data to visualize training trends</p>
+        </div>
+      </div>
+    );
+  }
   
   const graph = graphData[currentGraph];
   
@@ -1244,13 +1303,13 @@ export const Training = () => {
           <div className="space-y-4 md:space-y-6">
             <CircularGauge 
               title="Training Monotony" 
-              value={parseFloat(currentDayData?.Monotony || "2.4")} 
+              value={currentDayData ? parseFloat(currentDayData.Monotony || "0") : 0} 
               maxValue={5} 
               unit="ratio" 
             />
             <CircularGauge 
               title="Training Strain" 
-              value={parseFloat(currentDayData?.Strain || "156")} 
+              value={currentDayData ? parseFloat(currentDayData.Strain || "0") : 0} 
               maxValue={200} 
               unit="TSS" 
             />

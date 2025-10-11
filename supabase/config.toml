@@ -8,3 +8,6 @@ verify_jwt = false
 
 [functions.exchange-fitbase-token]
 verify_jwt = false
+
+[functions.fetch-fitbit-data]
+verify_jwt = false

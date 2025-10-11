@@ -204,19 +204,23 @@ export const Health = () => {
   const [selectedMetric, setSelectedMetric] = useState<any>(null);
 
   // Generate health metrics from live data
-  const healthMetrics = useMemo(() => {
-    if (!currentDayData) return [];
+  const dynamicHealthMetrics = useMemo(() => {
+    if (!currentDayData || csvData.length === 0) {
+      return [];
+    }
     
     const dataUpToNow = csvData.slice(Math.max(0, currentDayIndex - 6), currentDayIndex + 1);
     
-    const hrv = parseFloat(currentDayData.HRV || "42");
-    const restingHR = parseFloat(currentDayData.RestingHR || "52");
-    const sleepHours = parseFloat(currentDayData.SleepHours || "7.2");
-    const sleepScore = parseFloat(currentDayData.SleepScore || "85");
-    const strain = parseFloat(currentDayData.Strain || "120");
+    const hrv = parseFloat(currentDayData.HRV || "0");
+    const restingHR = parseFloat(currentDayData.RestingHR || "0");
+    const sleepHours = parseFloat(currentDayData.SleepHours || "0");
+    const sleepScore = parseFloat(currentDayData.SleepScore || "0");
+    const strain = parseFloat(currentDayData.Strain || "0");
     
-    return [
-      { 
+    const metrics = [];
+    
+    if (hrv > 0) {
+      metrics.push({ 
         id: "hrv", 
         name: "HRV", 
         value: hrv.toFixed(0), 
@@ -224,14 +228,17 @@ export const Health = () => {
         change: "+8.2%", 
         changeType: hrv >= 50 ? "positive" : "negative",
         icon: Heart,
-        sparklineData: dataUpToNow.map(d => parseFloat(d.HRV || "42")),
+        sparklineData: dataUpToNow.map(d => parseFloat(d.HRV || "0")).filter(v => v > 0),
         insights: [
           hrv >= 50 ? "Your HRV is in a healthy range" : "HRV below optimal - prioritize recovery",
           "Monitor daily trends for best results",
           "Sleep quality directly impacts HRV"
         ]
-      },
-      { 
+      });
+    }
+    
+    if (restingHR > 0) {
+      metrics.push({ 
         id: "resting-hr", 
         name: "Resting HR", 
         value: restingHR.toFixed(0), 
@@ -239,14 +246,17 @@ export const Health = () => {
         change: "-2.1%", 
         changeType: "positive",
         icon: Activity,
-        sparklineData: dataUpToNow.map(d => parseFloat(d.RestingHR || "52")),
+        sparklineData: dataUpToNow.map(d => parseFloat(d.RestingHR || "0")).filter(v => v > 0),
         insights: [
           "Resting heart rate indicates fitness level",
           "Lower values generally indicate better fitness",
           "Sudden increases may signal overtraining"
         ]
-      },
-      { 
+      });
+    }
+    
+    if (sleepHours > 0) {
+      metrics.push({ 
         id: "sleep", 
         name: "Sleep", 
         value: sleepHours.toFixed(1), 
@@ -254,14 +264,17 @@ export const Health = () => {
         change: sleepHours >= 7 ? "+2.5%" : "-5.3%", 
         changeType: sleepHours >= 7 ? "positive" : "negative",
         icon: Moon,
-        sparklineData: dataUpToNow.map(d => parseFloat(d.SleepHours || "7.2")),
+        sparklineData: dataUpToNow.map(d => parseFloat(d.SleepHours || "0")).filter(v => v > 0),
         insights: [
           sleepHours >= 7 ? "Sleep duration within optimal range" : "Sleep duration below optimal - aim for 7-9 hours",
           "Consistent sleep schedule improves recovery",
           "Sleep quality matters as much as quantity"
         ]
-      },
-      { 
+      });
+    }
+    
+    if (strain > 0) {
+      metrics.push({ 
         id: "strain", 
         name: "Strain", 
         value: strain.toFixed(0), 
@@ -269,14 +282,17 @@ export const Health = () => {
         change: strain > 130 ? "+12.4%" : "-3.2%", 
         changeType: strain > 150 ? "negative" : "positive",
         icon: Zap,
-        sparklineData: dataUpToNow.map(d => parseFloat(d.Strain || "120")),
+        sparklineData: dataUpToNow.map(d => parseFloat(d.Strain || "0")).filter(v => v > 0),
         insights: [
           strain > 150 ? "Strain levels elevated - consider deload" : "Strain levels well-managed",
           "Balance high strain days with recovery",
           "Monitor cumulative fatigue"
         ]
-      },
-      { 
+      });
+    }
+    
+    if (sleepScore > 0) {
+      metrics.push({ 
         id: "sleep-score", 
         name: "Sleep Score", 
         value: sleepScore.toFixed(0), 
@@ -284,18 +300,41 @@ export const Health = () => {
         change: sleepScore >= 75 ? "+5.2%" : "-8.1%", 
         changeType: sleepScore >= 75 ? "positive" : "negative",
         icon: Brain,
-        sparklineData: dataUpToNow.map(d => parseFloat(d.SleepScore || "85")),
+        sparklineData: dataUpToNow.map(d => parseFloat(d.SleepScore || "0")).filter(v => v > 0),
         insights: [
           sleepScore >= 75 ? "Sleep quality is good" : "Sleep quality needs improvement",
           "Optimize sleep environment and routine",
           "Recovery depends heavily on sleep quality"
         ]
-      },
-    ];
+      });
+    }
+    
+    return metrics;
   }, [currentDayData, csvData, currentDayIndex]);
 
   if (selectedMetric) {
     return <DetailView metric={selectedMetric} onBack={() => setSelectedMetric(null)} />;
+  }
+
+  if (dynamicHealthMetrics.length === 0) {
+    return (
+      <div className="min-h-screen bg-background pb-[calc(6rem+env(safe-area-inset-bottom))] md:pb-32">
+        <div className="container mx-auto px-4 md:px-6 pt-6 md:pt-8">
+          <div className="text-center mb-6 md:mb-8 animate-fade-in">
+            <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-2">Health Metrics</h1>
+            <p className="text-sm md:text-base text-muted-foreground">Monitor your health and wellness indicators</p>
+          </div>
+          
+          <div className="bg-glass backdrop-blur-xl border border-glass-border rounded-2xl p-8 shadow-glass text-center">
+            <div className="space-y-4">
+              <div className="text-4xl mb-4">📊</div>
+              <h3 className="text-xl font-semibold text-foreground">No Health Data Available</h3>
+              <p className="text-muted-foreground">Upload your health data to start tracking metrics</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -309,7 +348,7 @@ export const Health = () => {
 
         {/* Metrics Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 mb-8">
-          {healthMetrics.map((metric) => (
+          {dynamicHealthMetrics.map((metric) => (
             <MetricTile 
               key={metric.id} 
               metric={metric} 

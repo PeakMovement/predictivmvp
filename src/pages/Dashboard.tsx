@@ -32,69 +32,79 @@ initializeSampleInsights();
 // Helper to parse current day metrics
 const parseMetrics = (data: HealthDataRow | null) => {
   if (!data) {
-    return {
-      acwr: 1.2,
-      monotony: 2.4,
-      strain: 156,
-      trainingLoad: 420,
-      ewma: 5.2,
-      hrv: 45,
-      sleepHours: 7.5,
-      sleepScore: 85,
-      restingHR: 52,
-      maxHR: 178,
-    };
+    return null;
   }
 
   return {
-    acwr: parseFloat(data.ACWR || "1.2"),
-    monotony: parseFloat(data.Monotony || "2.4"),
-    strain: parseFloat(data.Strain || "156"),
-    trainingLoad: parseFloat(data.TrainingLoad || "420"),
-    ewma: parseFloat(data.EWMA || "5.2"),
-    hrv: parseFloat(data.HRV || "45"),
-    sleepHours: parseFloat(data.SleepHours || "7.5"),
-    sleepScore: parseFloat(data.SleepScore || "85"),
-    restingHR: parseFloat(data.RestingHR || "52"),
-    maxHR: parseFloat(data.MaxHR || "178"),
+    acwr: parseFloat(data.ACWR || "0"),
+    monotony: parseFloat(data.Monotony || "0"),
+    strain: parseFloat(data.Strain || "0"),
+    trainingLoad: parseFloat(data.TrainingLoad || "0"),
+    ewma: parseFloat(data.EWMA || "0"),
+    hrv: parseFloat(data.HRV || "0"),
+    sleepHours: parseFloat(data.SleepHours || "0"),
+    sleepScore: parseFloat(data.SleepScore || "0"),
+    restingHR: parseFloat(data.RestingHR || "0"),
+    maxHR: parseFloat(data.MaxHR || "0"),
   };
 };
 
 // Get dynamic metrics from current day data
 const getMetrics = (currentData: HealthDataRow | null) => {
   const latest = parseMetrics(currentData);
+  
+  if (!latest) {
+    return [];
+  }
 
   return [
     {
       name: "Acute:Chronic Workload Ratio",
-      value: latest.acwr.toFixed(1),
+      value: latest.acwr > 0 ? latest.acwr.toFixed(1) : "–",
       status: latest.acwr > 1.5 ? "red" : latest.acwr > 1.3 ? "yellow" : "green",
     },
     {
       name: "Training Monotony",
-      value: latest.monotony.toFixed(1),
+      value: latest.monotony > 0 ? latest.monotony.toFixed(1) : "–",
       status: latest.monotony > 2.0 ? "yellow" : "green",
     },
     {
       name: "Training Strain",
-      value: latest.strain.toString(),
+      value: latest.strain > 0 ? latest.strain.toString() : "–",
       status: latest.strain > 150 ? "red" : latest.strain > 130 ? "yellow" : "green",
     },
-    { name: "Weekly Training Load", value: latest.trainingLoad.toString(), status: "green" },
-    { name: "EWMA Trend", value: `+${latest.ewma.toFixed(1)}%`, status: "green" },
+    { 
+      name: "Weekly Training Load", 
+      value: latest.trainingLoad > 0 ? latest.trainingLoad.toString() : "–", 
+      status: "green" 
+    },
+    { 
+      name: "EWMA Trend", 
+      value: latest.ewma > 0 ? `+${latest.ewma.toFixed(1)}%` : "–", 
+      status: "green" 
+    },
   ];
 };
 
 // Get dynamic health metrics
 const getHealthMetrics = (currentData: HealthDataRow | null) => {
   const latest = parseMetrics(currentData);
+  
+  if (!latest) {
+    return {
+      hrv: { value: 0, status: "low", change: 0 },
+      strain: { value: 0, status: "optimal", weeklyChange: 0 },
+      sleep: { value: 0, status: "low" },
+      recovery: { value: 0, status: "moderate" },
+    };
+  }
 
   return {
-    hrv: { value: latest.hrv, status: latest.hrv < 50 ? "low" : latest.hrv < 65 ? "moderate" : "good", change: -15 },
+    hrv: { value: latest.hrv, status: latest.hrv < 50 ? "low" : latest.hrv < 65 ? "moderate" : "good", change: 0 },
     strain: {
       value: latest.strain,
       status: latest.strain > 150 ? "high" : latest.strain > 130 ? "moderate" : "optimal",
-      weeklyChange: 22,
+      weeklyChange: 0,
     },
     sleep: { value: latest.sleepHours, status: latest.sleepHours >= 7 ? "good" : "low" },
     recovery: { value: latest.sleepScore, status: latest.sleepScore >= 75 ? "good" : "moderate" },
@@ -273,11 +283,26 @@ const getRiskColor = (zone: string, isGlow = false) => {
   return colors[zone as keyof typeof colors] || colors.optimal;
 };
 
-const recommendations = [
-  "Consider reducing training intensity by 15% this week",
-  "Add 2 recovery sessions to prevent overreaching",
-  "Focus on sleep quality to improve adaptation",
-];
+// Dynamic recommendations based on current data
+const getRecommendations = (currentData: HealthDataRow | null) => {
+  const metrics = getMetrics(currentData);
+  if (metrics.length === 0) return [];
+  
+  const recommendations = [];
+  const latest = parseMetrics(currentData);
+  
+  if (latest && latest.acwr > 1.3) {
+    recommendations.push("Consider reducing training intensity by 15% this week");
+  }
+  if (latest && latest.monotony > 2.0) {
+    recommendations.push("Add 2 recovery sessions to prevent overreaching");
+  }
+  if (latest && latest.sleepScore < 75) {
+    recommendations.push("Focus on sleep quality to improve adaptation");
+  }
+  
+  return recommendations;
+};
 
 // Helper function to save accepted adjustment to localStorage
 const saveAcceptedAdjustment = (adjustmentText: string, category: string) => {
@@ -323,11 +348,23 @@ const generateDailyNudge = (currentData: HealthDataRow | null) => {
   return "Great balance this week. Keep it up.";
 };
 
-const focusAreas = [
-  { area: "Recovery Quality", score: "6.8/10", status: "yellow" },
-  { area: "Training Consistency", score: "8.2/10", status: "green" },
-  { area: "Load Progression", score: "4.5/10", status: "red" },
-];
+// Dynamic focus areas based on current data
+const getFocusAreas = (currentData: HealthDataRow | null) => {
+  const latest = parseMetrics(currentData);
+  if (!latest) return [];
+  
+  const recoveryScore = latest.sleepScore > 0 ? (latest.sleepScore / 10).toFixed(1) : "–";
+  const recoveryStatus = latest.sleepScore >= 75 ? "green" : latest.sleepScore >= 60 ? "yellow" : "red";
+  
+  const loadScore = latest.acwr > 0 ? (latest.acwr > 1.5 ? "4.5" : latest.acwr > 1.3 ? "6.5" : "8.5") : "–";
+  const loadStatus = latest.acwr > 1.5 ? "red" : latest.acwr > 1.3 ? "yellow" : "green";
+  
+  return [
+    { area: "Recovery Quality", score: `${recoveryScore}/10`, status: recoveryStatus },
+    { area: "Training Balance", score: "–", status: "yellow" },
+    { area: "Load Progression", score: `${loadScore}/10`, status: loadStatus },
+  ];
+};
 
 const getStatusColor = (status: string) => {
   switch (status) {
@@ -361,7 +398,7 @@ const WelcomeHeader = () => (
   <div className="text-center mb-8 md:mb-12 space-y-3 md:space-y-4 px-4 md:px-0">
     <div className="animate-fade-in-slow">
       <h1 className="text-xl md:text-2xl font-light text-muted-foreground mb-1 md:mb-2">Hello,</h1>
-      <h2 className="text-3xl md:text-4xl font-bold text-foreground tracking-tight">Alex Johnson</h2>
+      <h2 className="text-3xl md:text-4xl font-bold text-foreground tracking-tight">Athlete</h2>
     </div>
     <div className="animate-slide-in" style={{ animationDelay: "0.2s", animationFillMode: "both" }}>
       <p className="text-muted-foreground text-base md:text-lg">Here's your training overview for today</p>
@@ -441,10 +478,16 @@ const generateWeeklyReportPDF = (csvData: HealthDataRow[], currentDayIndex: numb
   doc.setFont("helvetica", "normal");
   doc.setTextColor(60, 60, 60);
 
-  recommendations.forEach((rec) => {
-    doc.text(`• ${rec}`, 30, yPosition, { maxWidth: pageWidth - 60 });
+  const dynamicRecommendations = getRecommendations(csvData[currentDayIndex]);
+  if (dynamicRecommendations.length > 0) {
+    dynamicRecommendations.forEach((rec) => {
+      doc.text(`• ${rec}`, 30, yPosition, { maxWidth: pageWidth - 60 });
+      yPosition += 8;
+    });
+  } else {
+    doc.text("• No specific recommendations at this time", 30, yPosition);
     yPosition += 8;
-  });
+  }
 
   yPosition += 15;
 
@@ -462,30 +505,43 @@ const generateWeeklyReportPDF = (csvData: HealthDataRow[], currentDayIndex: numb
   doc.setFontSize(10);
   doc.setFont("helvetica", "normal");
   doc.setTextColor(60, 60, 60);
-  doc.text("• Best Training Day: Tuesday", 25, yPosition);
-  yPosition += 8;
-  doc.text("• Total Training Sessions: 5", 25, yPosition);
-  yPosition += 8;
-  doc.text("• Average Strain: 142 TSS", 25, yPosition);
-  yPosition += 8;
-  doc.text("• Recovery Score: 8.2/10", 25, yPosition);
-  yPosition += 8;
-  doc.text("• Peak Heart Rate: 178 bpm", 25, yPosition);
+  
+  const latest = parseMetrics(csvData[currentDayIndex]);
+  if (latest) {
+    doc.text(`• Average Strain: ${latest.strain > 0 ? latest.strain.toFixed(0) : "N/A"} TSS`, 25, yPosition);
+    yPosition += 8;
+    doc.text(`• Recovery Score: ${latest.sleepScore > 0 ? (latest.sleepScore / 10).toFixed(1) : "N/A"}/10`, 25, yPosition);
+    yPosition += 8;
+    doc.text(`• Resting HR: ${latest.restingHR > 0 ? latest.restingHR.toFixed(0) : "N/A"} bpm`, 25, yPosition);
+  } else {
+    doc.text("• No data available for this period", 25, yPosition);
+  }
 
   // Save the PDF
   doc.save(`weekly-health-summary-${format(new Date(), "yyyy-MM-dd")}.pdf`);
 };
 
 const WeeklyInsightsCard = () => {
-  const { csvData, currentDayIndex } = useLiveData();
+  const { csvData, currentDayIndex, currentDayData } = useLiveData();
 
   const handleRunReport = () => {
+    if (csvData.length === 0) {
+      toast({
+        title: "No data available",
+        description: "Please upload your health data first.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     toast({
-      title: "Weekly Report Generated (Demo)",
+      title: "Weekly Report Generated",
       description: "Your weekly health summary has been created.",
     });
     generateWeeklyReportPDF(csvData, currentDayIndex);
   };
+  
+  const dynamicRecommendations = getRecommendations(currentDayData);
 
   return (
     <div className="bg-glass backdrop-blur-xl border border-glass-border rounded-2xl p-4 md:p-6 shadow-glass hover:bg-glass-highlight hover:scale-105 hover:-translate-y-1 hover-glow transition-all duration-300 ease-out animate-fade-in transform-gpu">
@@ -497,88 +553,70 @@ const WeeklyInsightsCard = () => {
       </div>
 
       <p className="text-sm text-muted-foreground mb-6 leading-relaxed">
-        Your recovery was below target this week. Training load was high on Wednesday, causing increased strain.
-        Consider adjusting your upcoming sessions to allow for better recovery.
+        {csvData.length > 0 
+          ? "Review your weekly trends and download a comprehensive health summary."
+          : "Upload your health data to generate weekly insights and trends."
+        }
       </p>
 
-      <div className="mb-6">
-        <h4 className="text-sm font-semibold text-foreground mb-3">Recommendations</h4>
-        <div className="space-y-2">
-          {recommendations.map((rec, index) => (
-            <div key={index} className="flex items-start gap-2">
-              <div className="w-1.5 h-1.5 bg-primary rounded-full mt-2 flex-shrink-0 animate-bounce-subtle" />
-              <p className="text-sm text-muted-foreground">{rec}</p>
-            </div>
-          ))}
+      {dynamicRecommendations.length > 0 && (
+        <div className="mb-6">
+          <h4 className="text-sm font-semibold text-foreground mb-3">Recommendations</h4>
+          <div className="space-y-2">
+            {dynamicRecommendations.map((rec, index) => (
+              <div key={index} className="flex items-start gap-2">
+                <div className="w-1.5 h-1.5 bg-primary rounded-full mt-2 flex-shrink-0 animate-bounce-subtle" />
+                <p className="text-sm text-muted-foreground">{rec}</p>
+              </div>
+            ))}
+          </div>
         </div>
-      </div>
+      )}
 
       <button
         onClick={handleRunReport}
-        className="w-full bg-secondary/80 hover:bg-secondary text-secondary-foreground border border-glass-border rounded-lg px-4 py-3 flex items-center justify-center gap-2 transition-all duration-200 hover:scale-[1.02] hover:shadow-glow active:scale-95"
+        disabled={csvData.length === 0}
+        className="w-full bg-secondary/80 hover:bg-secondary text-secondary-foreground border border-glass-border rounded-lg px-4 py-3 flex items-center justify-center gap-2 transition-all duration-200 hover:scale-[1.02] hover:shadow-glow active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
       >
         <Download size={16} />
-        <span className="font-medium">Run Weekly Report (Demo)</span>
+        <span className="font-medium">Run Weekly Report</span>
       </button>
     </div>
   );
 };
 
-const RecommendationCard = () => (
-  <div className="bg-glass backdrop-blur-xl border border-glass-border rounded-2xl p-6 shadow-glass hover:bg-glass-highlight hover:scale-105 hover:-translate-y-1 transition-all duration-300 ease-out animate-fade-in transform-gpu">
-    <div className="flex items-center gap-3 mb-4">
-      <div className="w-8 h-8 bg-primary/20 rounded-lg flex items-center justify-center hover:scale-110 transition-transform duration-200">
-        <AlertTriangle size={16} className="text-primary" />
-      </div>
-      <h3 className="text-lg font-semibold text-foreground">Recommendations</h3>
-    </div>
-    <div className="space-y-3">
-      {recommendations.map((rec, index) => (
-        <div
-          key={index}
-          className="flex items-center justify-between gap-3 hover:bg-glass-highlight rounded-lg p-2 -m-2 transition-all duration-200"
-        >
-          <div className="flex items-start gap-3 flex-1">
-            <div className="w-1.5 h-1.5 bg-primary rounded-full mt-2 flex-shrink-0 animate-bounce-subtle" />
-            <p className="text-sm text-muted-foreground">{rec}</p>
-          </div>
-          <div className="flex items-center gap-2 opacity-40 hover:opacity-100 transition-opacity duration-200">
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button
-                  className="p-1 rounded-md hover:bg-primary/10 hover:shadow-glow transition-all duration-200 hover:scale-110 active:scale-95"
-                  onClick={() => console.log("Download PDF for:", rec)}
-                >
-                  <FileText
-                    size={16}
-                    className="text-muted-foreground hover:text-primary transition-colors duration-200"
-                  />
-                </button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Download PDF</p>
-              </TooltipContent>
-            </Tooltip>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button
-                  className="p-1 rounded-md hover:bg-primary/10 hover:shadow-glow transition-all duration-200 hover:scale-110 active:scale-95"
-                  onClick={() => console.log("Watch Video for:", rec)}
-                >
-                  <Play size={16} className="text-muted-foreground hover:text-primary transition-colors duration-200" />
-                </button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Watch Video</p>
-              </TooltipContent>
-            </Tooltip>
-          </div>
+const RecommendationCard = () => {
+  const { currentDayData } = useLiveData();
+  const dynamicRecommendations = getRecommendations(currentDayData);
+  
+  if (dynamicRecommendations.length === 0) {
+    return null;
+  }
+  
+  return (
+    <div className="bg-glass backdrop-blur-xl border border-glass-border rounded-2xl p-6 shadow-glass hover:bg-glass-highlight hover:scale-105 hover:-translate-y-1 transition-all duration-300 ease-out animate-fade-in transform-gpu">
+      <div className="flex items-center gap-3 mb-4">
+        <div className="w-8 h-8 bg-primary/20 rounded-lg flex items-center justify-center hover:scale-110 transition-transform duration-200">
+          <AlertTriangle size={16} className="text-primary" />
         </div>
-      ))}
+        <h3 className="text-lg font-semibold text-foreground">Recommendations</h3>
+      </div>
+      <div className="space-y-3">
+        {dynamicRecommendations.map((rec, index) => (
+          <div
+            key={index}
+            className="flex items-center justify-between gap-3 hover:bg-glass-highlight rounded-lg p-2 -m-2 transition-all duration-200"
+          >
+            <div className="flex items-start gap-3 flex-1">
+              <div className="w-1.5 h-1.5 bg-primary rounded-full mt-2 flex-shrink-0 animate-bounce-subtle" />
+              <p className="text-sm text-muted-foreground">{rec}</p>
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
-  </div>
-);
-
+  );
+};
 const AlertsCard = () => {
   const { currentDayData } = useLiveData();
   const [alerts, setAlerts] = useState(() => generateAlerts(currentDayData));
@@ -867,30 +905,39 @@ const DailyNudgeCard = () => {
   );
 };
 
-const FocusAreasCard = () => (
-  <div className="bg-glass backdrop-blur-xl border border-glass-border rounded-2xl p-6 shadow-glass hover:bg-glass-highlight hover:scale-105 hover:-translate-y-1 transition-all duration-300 ease-out animate-fade-in transform-gpu">
-    <div className="flex items-center gap-3 mb-4">
-      <div className="w-8 h-8 bg-primary/20 rounded-lg flex items-center justify-center hover:scale-110 transition-transform duration-200">
-        <Target size={16} className="text-primary" />
-      </div>
-      <h3 className="text-lg font-semibold text-foreground">Focus Areas</h3>
-    </div>
-    <div className="space-y-4">
-      {focusAreas.map((area, index) => (
-        <div
-          key={index}
-          className="flex items-center justify-between hover:bg-glass-highlight rounded-lg p-2 -m-2 transition-all duration-200"
-        >
-          <div className="flex items-center gap-3">
-            <div className={cn("w-2 h-2 rounded-full animate-bounce-subtle", getStatusColor(area.status))} />
-            <span className="text-sm font-medium text-foreground">{area.area}</span>
-          </div>
-          <span className="text-sm text-muted-foreground">{area.score}</span>
+const FocusAreasCard = () => {
+  const { currentDayData } = useLiveData();
+  const dynamicFocusAreas = getFocusAreas(currentDayData);
+  
+  if (dynamicFocusAreas.length === 0) {
+    return null;
+  }
+  
+  return (
+    <div className="bg-glass backdrop-blur-xl border border-glass-border rounded-2xl p-6 shadow-glass hover:bg-glass-highlight hover:scale-105 hover:-translate-y-1 transition-all duration-300 ease-out animate-fade-in transform-gpu">
+      <div className="flex items-center gap-3 mb-4">
+        <div className="w-8 h-8 bg-primary/20 rounded-lg flex items-center justify-center hover:scale-110 transition-transform duration-200">
+          <Target size={16} className="text-primary" />
         </div>
-      ))}
+        <h3 className="text-lg font-semibold text-foreground">Focus Areas</h3>
+      </div>
+      <div className="space-y-4">
+        {dynamicFocusAreas.map((area, index) => (
+          <div
+            key={index}
+            className="flex items-center justify-between hover:bg-glass-highlight rounded-lg p-2 -m-2 transition-all duration-200"
+          >
+            <div className="flex items-center gap-3">
+              <div className={cn("w-2 h-2 rounded-full animate-bounce-subtle", getStatusColor(area.status))} />
+              <span className="text-sm font-medium text-foreground">{area.area}</span>
+            </div>
+            <span className="text-sm text-muted-foreground">{area.score}</span>
+          </div>
+        ))}
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 const GraphCarousel = () => {
   const { csvData, currentDayIndex } = useLiveData();

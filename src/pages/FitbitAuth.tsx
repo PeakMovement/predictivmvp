@@ -26,31 +26,27 @@ export default function FitbitAuth() {
           headers: { "Content-Type": "application/json" },
         });
 
-        // Check for network errors first
+        // Check for network errors
         if (error) {
           console.error("❌ Network error calling edge function:", error);
-          await new Promise((resolve) => setTimeout(resolve, 1000));
           setStatus("error");
           setMessage("Fitbit connection failed. Please try again.");
           return;
         }
 
-        // Check the success field from the edge function response
+        // Check success field from edge function
         if (!data?.success) {
           console.error("❌ Fitbit token exchange failed:", data);
-          await new Promise((resolve) => setTimeout(resolve, 1000));
           setStatus("error");
           setMessage("Fitbit connection failed. Please try again.");
           return;
         }
 
-        // ✅ Update the user profile
+        // ✅ Get current user
         const { data: userData } = await supabase.auth.getUser();
         const user = userData?.user;
-
         if (!user) {
           console.error("❌ No logged-in user found.");
-          await new Promise((resolve) => setTimeout(resolve, 1000));
           setStatus("error");
           setMessage("No logged-in user found.");
           return;
@@ -69,19 +65,43 @@ export default function FitbitAuth() {
 
         if (updateError) {
           console.error("⚠️ Error updating user table:", updateError);
-          await new Promise((resolve) => setTimeout(resolve, 1000));
           setStatus("error");
           setMessage("Connected to Fitbit, but failed to save connection.");
           return;
         }
 
         console.log("🎉 Fitbit connection successful!");
+
+        // ✅ Automatically fetch Fitbit activity data once connected
+        console.log("⏳ Fetching latest Fitbit data...");
+        const { data: fetchData, error: fetchError } = await supabase.functions.invoke("fetch-fitbit-data", {
+          body: { access_token: data.data.access_token },
+        });
+
+        if (fetchError) {
+          console.error("❌ Error fetching Fitbit data:", fetchError);
+        } else {
+          console.log("✅ Fitbit activity data synced:", fetchData);
+        }
+
+        // ✅ Fetch sleep and heart rate data for readiness metrics
+        console.log("⏳ Fetching sleep & HR data...");
+        const { data: sleepData, error: sleepError } = await supabase.functions.invoke("fetch-fitbit-sleep", {
+          body: { access_token: data.data.access_token },
+        });
+
+        if (sleepError) {
+          console.error("❌ Error fetching sleep data:", sleepError);
+        } else {
+          console.log("✅ Sleep & HR data synced:", sleepData);
+        }
+
+        // ✅ Success & redirect
         setStatus("success");
-        setMessage("Fitbit connected successfully! Redirecting...");
+        setMessage("Fitbit connected and data synced! Redirecting...");
         setTimeout(() => (window.location.href = "/health"), 2500);
       } catch (err) {
         console.error("💥 Unexpected Fitbit error:", err);
-        await new Promise((resolve) => setTimeout(resolve, 1000));
         setStatus("error");
         setMessage("Unexpected error. Please try again.");
       }

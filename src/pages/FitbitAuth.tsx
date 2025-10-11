@@ -22,58 +22,72 @@ export default function FitbitAuth() {
           return;
         }
 
-        console.log("🔄 Exchanging Fitbit code for tokens...");
+    console.log("🔄 Exchanging Fitbit code for tokens...");
 
-        // ✅ Call the correct Supabase Edge Function
-        const { data, error } = await supabase.functions.invoke("exchange-fitbit-token", {
-          body: { code },
-        });
+    // ✅ Call the correct Supabase Edge Function
+    const { data, error } = await supabase.functions.invoke("exchange-fitbit-token", {
+      body: { code },
+    });
 
-        if (error || !data) {
-          console.error("❌ Fitbit token exchange failed:", error || data);
-          setStatus("error");
-          setMessage("Fitbit connection failed. Please try again.");
-          return;
-        }
+    // Check for network errors first
+    if (error) {
+      console.error("❌ Network error calling edge function:", error);
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      setStatus("error");
+      setMessage("Fitbit connection failed. Please try again.");
+      return;
+    }
 
-        // ✅ Update the user profile
-        const { data: userData } = await supabase.auth.getUser();
-        const user = userData?.user;
+    // Check the success field from the edge function response
+    if (!data?.success) {
+      console.error("❌ Fitbit token exchange failed:", data);
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      setStatus("error");
+      setMessage("Fitbit connection failed. Please try again.");
+      return;
+    }
 
-        if (!user) {
-          console.error("❌ No logged-in user found.");
-          setStatus("error");
-          setMessage("No logged-in user found.");
-          return;
-        }
+    // ✅ Update the user profile
+    const { data: userData } = await supabase.auth.getUser();
+    const user = userData?.user;
 
-        console.log("✅ Fitbit tokens received. Updating user record...");
+    if (!user) {
+      console.error("❌ No logged-in user found.");
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      setStatus("error");
+      setMessage("No logged-in user found.");
+      return;
+    }
 
-        const { error: updateError } = await supabase
-          .from("users")
-          .update({
-            fitbit_connected: true,
-            fitbit_user_id: data.user_id,
-            connected_at: new Date().toISOString(),
-          })
-          .eq("id", user.id);
+    console.log("✅ Fitbit tokens received. Updating user record...");
 
-        if (updateError) {
-          console.error("⚠️ Error updating user table:", updateError);
-          setStatus("error");
-          setMessage("Connected to Fitbit, but failed to save connection.");
-          return;
-        }
+    const { error: updateError } = await supabase
+      .from("users")
+      .update({
+        fitbit_connected: true,
+        fitbit_user_id: data.data.user_id,
+        connected_at: new Date().toISOString(),
+      })
+      .eq("id", user.id);
 
-        console.log("🎉 Fitbit connection successful!");
-        setStatus("success");
-        setMessage("Fitbit connected successfully! Redirecting...");
-        setTimeout(() => (window.location.href = "/health"), 2500);
-      } catch (err) {
-        console.error("💥 Unexpected Fitbit error:", err);
-        setStatus("error");
-        setMessage("Unexpected error. Please try again.");
-      }
+    if (updateError) {
+      console.error("⚠️ Error updating user table:", updateError);
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      setStatus("error");
+      setMessage("Connected to Fitbit, but failed to save connection.");
+      return;
+    }
+
+    console.log("🎉 Fitbit connection successful!");
+    setStatus("success");
+    setMessage("Fitbit connected successfully! Redirecting...");
+    setTimeout(() => (window.location.href = "/health"), 2500);
+  } catch (err) {
+    console.error("💥 Unexpected Fitbit error:", err);
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    setStatus("error");
+    setMessage("Unexpected error. Please try again.");
+  }
     };
 
     connectFitbit();

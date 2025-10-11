@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { User, Smartphone, Bell, Palette, Info, ChevronRight, PlayCircle, PauseCircle, SkipForward, RotateCcw, Database, Mail, HelpCircle } from "lucide-react";
+import { User, Smartphone, Bell, Palette, Info, ChevronRight, PlayCircle, PauseCircle, SkipForward, RotateCcw, Database, Mail, HelpCircle, RefreshCw } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
@@ -15,10 +15,13 @@ import { useToast } from "@/hooks/use-toast";
 
 export const Settings = ({ onNavigate }: { onNavigate?: (tab: string) => void }) => {
   const [notifications, setNotifications] = useState(true);
-  const [appleHealthConnected, setAppleHealthConnected] = useState(false);
   const [primaryHue, setPrimaryHue] = useState(263);
   const [isDragging, setIsDragging] = useState(false);
   const [activeDemoProfile, setActiveDemoProfileState] = useState<DemoProfileType>(getActiveDemoProfile());
+  
+  // Fitbit sync state
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [lastSyncTime, setLastSyncTime] = useState<Date | null>(null);
   
   // SMS Alert settings
   const [smsEnabled, setSmsEnabled] = useState(false);
@@ -72,6 +75,12 @@ export const Settings = ({ onNavigate }: { onNavigate?: (tab: string) => void })
     const alertSettings = getAlertSettings();
     setSmsEnabled(alertSettings.enableSMS);
     setPhoneNumber(alertSettings.phoneNumber);
+    
+    // Load last Fitbit sync time
+    const savedSyncTime = localStorage.getItem("fitbit-last-sync");
+    if (savedSyncTime) {
+      setLastSyncTime(new Date(savedSyncTime));
+    }
     
     // Load email preferences from Supabase
     loadEmailPreferences();
@@ -216,9 +225,44 @@ export const Settings = ({ onNavigate }: { onNavigate?: (tab: string) => void })
     return () => window.removeEventListener('mouseup', handleGlobalMouseUp);
   }, []);
 
-  const handleAppleHealthConnect = () => {
-    setAppleHealthConnected(!appleHealthConnected);
-    // Placeholder for actual connection flow
+  const handleFitbitSync = async () => {
+    setIsSyncing(true);
+    console.log("Starting Fitbit sync...");
+    
+    try {
+      const response = await fetch("/.netlify/functions/fetch-fitbit-auto", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+      
+      const data = await response.json();
+      console.log("Fitbit sync response:", data);
+      
+      if (response.ok && data.success) {
+        const now = new Date();
+        setLastSyncTime(now);
+        localStorage.setItem("fitbit-last-sync", now.toISOString());
+        
+        toast({
+          title: "✅ Fitbit data synced successfully!",
+          description: data.message || "Your health data has been updated.",
+        });
+      } else {
+        throw new Error(data.error || "Sync failed");
+      }
+    } catch (error) {
+      console.error("Fitbit sync error:", error);
+      toast({
+        title: "❌ Fitbit sync failed. Try again.",
+        description: error instanceof Error ? error.message : "Unable to sync Fitbit data.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSyncing(false);
+      console.log("Fitbit sync complete");
+    }
   };
 
   const handleSmsToggle = (enabled: boolean) => {
@@ -322,33 +366,49 @@ export const Settings = ({ onNavigate }: { onNavigate?: (tab: string) => void })
               <h3 className="text-lg font-semibold text-foreground">Connected Devices</h3>
             </div>
             <div className="space-y-3">
-              <button
-                onClick={handleAppleHealthConnect}
-                className={cn(
-                  "w-full flex items-center justify-between p-4 rounded-xl border transition-all duration-200",
-                  appleHealthConnected
-                    ? "bg-green-500/10 border-green-500/30 hover:bg-green-500/20"
-                    : "bg-glass/30 border-glass-border hover:bg-glass-highlight"
-                )}
+              <div
+                className="w-full flex items-center justify-between p-4 rounded-xl border bg-glass/30 border-glass-border hover:bg-glass-highlight hover:scale-[1.01] active:scale-[0.99] transition-all duration-200"
               >
-                <div className="flex items-center gap-3">
-                  <div className="text-2xl">🍎</div>
-                  <div className="text-left">
-                    <p className="font-medium text-foreground">Apple Health</p>
+                <div className="flex items-center gap-3 flex-1">
+                  <div className="w-10 h-10 bg-gradient-to-br from-cyan-500 to-blue-500 rounded-full flex items-center justify-center">
+                    <div className="grid grid-cols-2 gap-0.5">
+                      <div className="w-1 h-1 bg-white rounded-full"></div>
+                      <div className="w-1 h-1 bg-white rounded-full"></div>
+                      <div className="w-1 h-1 bg-white rounded-full"></div>
+                      <div className="w-1 h-1 bg-white rounded-full"></div>
+                    </div>
+                  </div>
+                  <div className="text-left flex-1">
+                    <p className="font-medium text-foreground">Fitbit</p>
                     <p className="text-xs text-muted-foreground">
-                      {appleHealthConnected ? "Connected" : "Not connected"}
+                      Tap to manually sync your Fitbit data
                     </p>
+                    {lastSyncTime && (
+                      <p className="text-xs text-muted-foreground/70 mt-1">
+                        Last synced: {lastSyncTime.toLocaleDateString()} at {lastSyncTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      </p>
+                    )}
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  {appleHealthConnected && (
-                    <span className="px-2 py-1 text-xs bg-green-500/20 text-green-400 rounded-md">
-                      Active
-                    </span>
+                <Button
+                  onClick={handleFitbitSync}
+                  disabled={isSyncing}
+                  size="sm"
+                  className="ml-3 bg-primary/80 hover:bg-primary text-primary-foreground hover:scale-105 active:scale-95 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+                >
+                  {isSyncing ? (
+                    <>
+                      <RefreshCw size={14} className="mr-2 animate-spin" />
+                      Syncing...
+                    </>
+                  ) : (
+                    <>
+                      <RefreshCw size={14} className="mr-2" />
+                      Sync Now
+                    </>
                   )}
-                  <ChevronRight size={16} className="text-muted-foreground" />
-                </div>
-              </button>
+                </Button>
+              </div>
             </div>
           </div>
 

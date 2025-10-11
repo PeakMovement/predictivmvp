@@ -13,8 +13,7 @@ serve(async (req) => {
 
   try {
     // ✅ Get code from URL query (not JSON)
-    const url = new URL(req.url);
-    const code = url.searchParams.get("code");
+    const { code } = await req.json();
 
     if (!code) {
       return new Response(JSON.stringify({ success: false, error: "Missing authorization code" }), {

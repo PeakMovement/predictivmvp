@@ -18,7 +18,6 @@ export const Settings = ({ onNavigate }: { onNavigate?: (tab: string) => void })
   const [isDragging, setIsDragging] = useState(false);
   
   // Fitbit sync state
-  const [isSyncing, setIsSyncing] = useState(false);
   const [lastSyncTime, setLastSyncTime] = useState<Date | null>(null);
   
   // SMS Alert settings
@@ -217,44 +216,8 @@ export const Settings = ({ onNavigate }: { onNavigate?: (tab: string) => void })
     return () => window.removeEventListener('mouseup', handleGlobalMouseUp);
   }, []);
 
-  const handleFitbitSync = async () => {
-    setIsSyncing(true);
-    console.log("Starting Fitbit sync...");
-    
-    try {
-      const response = await fetch("/.netlify/functions/fetch-fitbit-auto", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
-      
-      const data = await response.json();
-      console.log("Fitbit sync response:", data);
-      
-      if (response.ok && data.success) {
-        const now = new Date();
-        setLastSyncTime(now);
-        localStorage.setItem("fitbit-last-sync", now.toISOString());
-        
-        toast({
-          title: "✅ Fitbit data synced successfully!",
-          description: data.message || "Your health data has been updated.",
-        });
-      } else {
-        throw new Error(data.error || "Sync failed");
-      }
-    } catch (error) {
-      console.error("Fitbit sync error:", error);
-      toast({
-        title: "❌ Fitbit sync failed. Try again.",
-        description: error instanceof Error ? error.message : "Unable to sync Fitbit data.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsSyncing(false);
-      console.log("Fitbit sync complete");
-    }
+  const handleFitbitSync = () => {
+    window.location.href = "https://www.fitbit.com/oauth2/authorize?response_type=code&client_id=23TG3N&redirect_uri=https%3A%2F%2Fpredictiv.netlify.app%2Fauth%2Ffitbit&scope=activity%20sleep%20heartrate%20profile";
   };
 
   const handleSmsToggle = (enabled: boolean) => {
@@ -384,21 +347,11 @@ export const Settings = ({ onNavigate }: { onNavigate?: (tab: string) => void })
                 </div>
                 <Button
                   onClick={handleFitbitSync}
-                  disabled={isSyncing}
                   size="sm"
-                  className="ml-3 bg-primary/80 hover:bg-primary text-primary-foreground hover:scale-105 active:scale-95 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+                  className="ml-3 bg-primary/80 hover:bg-primary text-primary-foreground hover:scale-105 active:scale-95 transition-all duration-200"
                 >
-                  {isSyncing ? (
-                    <>
-                      <RefreshCw size={14} className="mr-2 animate-spin" />
-                      Syncing...
-                    </>
-                  ) : (
-                    <>
-                      <RefreshCw size={14} className="mr-2" />
-                      Sync Now
-                    </>
-                  )}
+                  <RefreshCw size={14} className="mr-2" />
+                  Connect Fitbit
                 </Button>
               </div>
             </div>

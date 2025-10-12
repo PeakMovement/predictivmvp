@@ -11,12 +11,16 @@ export default function FitbitAuth() {
   useEffect(() => {
     const connectFitbit = async () => {
       try {
-        // Extract authorization code from the redirect URL
         const params = new URLSearchParams(window.location.search);
         let code = params.get("code");
-        if (!code && window.location.hash) {
-          const hashParams = new URLSearchParams(window.location.hash.replace("#", "?"));
-          code = hashParams.get("code");
+
+        // 🔄 If there's no code, redirect user to Fitbit authorization page
+        if (!code) {
+          const clientId = "23TG3N";
+          const redirectUri = encodeURIComponent("https://predictiv.netlify.app/auth/fitbit");
+          const scope = "activity heartrate sleep oxygen_saturation profile";
+          window.location.href = `https://www.fitbit.com/oauth2/authorize?response_type=code&client_id=${clientId}&redirect_uri=${redirectUri}&scope=${encodeURIComponent(scope)}`;
+          return;
         }
 
         console.log("🔄 Exchanging Fitbit code for tokens...");

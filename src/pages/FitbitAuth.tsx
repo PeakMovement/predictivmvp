@@ -21,7 +21,7 @@ export default function FitbitAuth() {
 
         console.log("🔄 Exchanging Fitbit code for tokens...");
 
-        const { data, error } = await supabase.functions.invoke("exchange-fitbit-token", {
+        const { data, error } = await supabase.functions.invoke("fitbit-auth", {
           body: { code },
           headers: { "Content-Type": "application/json" },
         });

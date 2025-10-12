@@ -1,4 +1,3 @@
-// Fitbit OAuth callback handler
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
@@ -20,23 +19,24 @@ export default function FitbitAuth() {
           code = hashParams.get("code");
         }
 
-        console.log("🔄 Exchanging Fitbit code for tokens...");
-
-        const { data, error } = await supabase.functions.invoke("fitbit-auth", {
-          body: { code },
-          headers: { "Content-Type": "application/json" },
-        });
-
-        // Check for network errors
-        if (error) {
-          console.error("❌ Network error calling edge function:", error);
+        if (!code) {
+          console.error("❌ No authorization code found in URL");
           setStatus("error");
-          setMessage("Fitbit connection failed. Please try again.");
+          setMessage("Missing Fitbit authorization code.");
           return;
         }
 
-        // Check success field from edge function
-        if (!data?.success) {
+        console.log("🔄 Exchanging Fitbit code for tokens via Netlify function...");
+
+        const res = await fetch("/.netlify/functions/exchange-fitbit-token", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ code }),
+        });
+
+        const data = await res.json();
+
+        if (!res.ok || !data?.success) {
           console.error("❌ Fitbit token exchange failed:", data);
           setStatus("error");
           setMessage("Fitbit connection failed. Please try again.");
@@ -73,29 +73,13 @@ export default function FitbitAuth() {
 
         console.log("🎉 Fitbit connection successful!");
 
-        // ✅ Automatically fetch Fitbit activity data once connected
+        // ✅ Fetch latest Fitbit data
         console.log("⏳ Fetching latest Fitbit data...");
-        const { data: fetchData, error: fetchError } = await supabase.functions.invoke("fetch-fitbit-data", {
+        await supabase.functions.invoke("fetch-fitbit-data", {
           body: { access_token: data.data.access_token },
         });
 
-        if (fetchError) {
-          console.error("❌ Error fetching Fitbit data:", fetchError);
-        } else {
-          console.log("✅ Fitbit activity data synced:", fetchData);
-        }
-
-        // ✅ Fetch sleep and heart rate data for readiness metrics
-        console.log("⏳ Fetching sleep & HR data...");
-        const { data: sleepData, error: sleepError } = await supabase.functions.invoke("fetch-fitbit-sleep", {
-          body: { access_token: data.data.access_token },
-        });
-
-        if (sleepError) {
-          console.error("❌ Error fetching sleep data:", sleepError);
-        } else {
-          console.log("✅ Sleep & HR data synced:", sleepData);
-        }
+        console.log("✅ Fitbit activity data synced.");
 
         // ✅ Success & redirect
         setStatus("success");

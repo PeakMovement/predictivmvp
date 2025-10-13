@@ -43,8 +43,14 @@ export async function startFitbitAuth() {
       code_challenge_method: 'S256',
     });
 
+    const authUrl = `https://www.fitbit.com/oauth2/authorize?${params.toString()}`;
+
+    // Debug logging
+    console.log("🔑 Fitbit Auth Debug →");
+    console.log({ code_verifier, code_challenge, authUrl });
+
     // Redirect to Fitbit OAuth authorization page
-    window.location.href = `https://www.fitbit.com/oauth2/authorize?${params.toString()}`;
+    window.location.href = authUrl;
   } catch (error) {
     console.error('Error initiating Fitbit auth:', error);
     throw error;

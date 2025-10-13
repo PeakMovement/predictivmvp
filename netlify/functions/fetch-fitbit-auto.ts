@@ -10,10 +10,10 @@ export const handler = async (event) => {
       };
     }
 
-    const FITBIT_CLIENT_ID = Deno.env.get("FITBIT_CLIENT_ID") || "23TG3N";
-    const FITBIT_CLIENT_SECRET = Deno.env.get("FITBIT_CLIENT_SECRET");
-    const SUPABASE_URL = Deno.env.get("SB_URL");
-    const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SB_SERVICE_ROLE_KEY");
+    const FITBIT_CLIENT_ID = process.env.FITBIT_CLIENT_ID || "23TG3N";
+    const FITBIT_CLIENT_SECRET = process.env.FITBIT_CLIENT_SECRET;
+    const SUPABASE_URL = process.env.SB_URL;
+    const SUPABASE_SERVICE_ROLE_KEY = process.env.SB_SERVICE_ROLE_KEY;
 
     const authHeader = btoa(`${FITBIT_CLIENT_ID}:${FITBIT_CLIENT_SECRET}`);
     const tokenResponse = await fetch("https://api.fitbit.com/oauth2/token", {

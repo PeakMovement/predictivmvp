@@ -26,13 +26,25 @@ export default function FitbitAuth() {
           return;
         }
 
-        console.log("🔄 Exchanging Fitbit code for tokens via Netlify function...");
+        // Retrieve the code_verifier from sessionStorage (set during PKCE flow)
+        const code_verifier = sessionStorage.getItem('fitbit_code_verifier');
+        if (!code_verifier) {
+          console.error("❌ No code_verifier found in sessionStorage");
+          setStatus("error");
+          setMessage("PKCE verification failed. Please try again.");
+          return;
+        }
+
+        console.log("🔄 Exchanging Fitbit code for tokens with PKCE...");
 
         const res = await fetch("/.netlify/functions/exchange-fitbit-token", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ code }),
+          body: JSON.stringify({ code, code_verifier }),
         });
+
+        // Clear the code_verifier from sessionStorage after use
+        sessionStorage.removeItem('fitbit_code_verifier');
 
         const data = await res.json();
 

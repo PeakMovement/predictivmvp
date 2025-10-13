@@ -11,6 +11,7 @@ import { useLiveData } from "@/contexts/LiveDataContext";
 import { getAlertSettings, saveAlertSettings } from "@/lib/alertConditions";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { startFitbitAuth } from "@/lib/fitbitAuth";
 
 export const Settings = ({ onNavigate }: { onNavigate?: (tab: string) => void }) => {
   const [notifications, setNotifications] = useState(true);
@@ -217,7 +218,7 @@ export const Settings = ({ onNavigate }: { onNavigate?: (tab: string) => void })
   }, []);
 
   const handleFitbitSync = () => {
-    window.location.href = "https://www.fitbit.com/oauth2/authorize?response_type=code&client_id=23TG3N&redirect_uri=https%3A%2F%2Fpredictiv.netlify.app%2Fauth%2Ffitbit&scope=activity%20sleep%20heartrate%20profile";
+    startFitbitAuth();
   };
 
   const handleSmsToggle = (enabled: boolean) => {

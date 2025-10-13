@@ -12,8 +12,8 @@ serve(async (req) => {
   }
 
   try {
-    // ✅ Get code from URL query (not JSON)
-    const { code } = await req.json();
+    // Get code and code_verifier from request body
+    const { code, code_verifier } = await req.json();
 
     if (!code) {
       return new Response(JSON.stringify({ success: false, error: "Missing authorization code" }), {
@@ -24,7 +24,10 @@ serve(async (req) => {
 
     const clientId = Deno.env.get("FITBIT_CLIENT_ID");
     const clientSecret = Deno.env.get("FITBIT_CLIENT_SECRET");
-    const redirectUri = "https://predictiv.netlify.app/auth/fitbit";
+    // Support both legacy and PKCE redirect URIs
+    const redirectUri = code_verifier 
+      ? "https://predictiv.netlify.app/fitbit/callback"
+      : "https://predictiv.netlify.app/auth/fitbit";
 
     if (!clientId || !clientSecret) {
       console.error("Missing Fitbit credentials");
@@ -36,18 +39,26 @@ serve(async (req) => {
 
     const credentials = btoa(`${clientId}:${clientSecret}`);
 
+    // Build token request body - include code_verifier if using PKCE
+    const tokenParams: Record<string, string> = {
+      client_id: clientId,
+      grant_type: "authorization_code",
+      redirect_uri: redirectUri,
+      code,
+    };
+
+    // Add code_verifier for PKCE flow (if provided)
+    if (code_verifier) {
+      tokenParams.code_verifier = code_verifier;
+    }
+
     const tokenResponse = await fetch("https://api.fitbit.com/oauth2/token", {
       method: "POST",
       headers: {
         Authorization: `Basic ${credentials}`,
         "Content-Type": "application/x-www-form-urlencoded",
       },
-      body: new URLSearchParams({
-        client_id: clientId,
-        grant_type: "authorization_code",
-        redirect_uri: redirectUri,
-        code,
-      }),
+      body: new URLSearchParams(tokenParams),
     });
 
     const text = await tokenResponse.text();

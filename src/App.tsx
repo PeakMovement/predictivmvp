@@ -30,7 +30,7 @@ const App = () => {
 
   // Check if we're on the Fitbit auth callback route
   const currentPath = window.location.pathname;
-  const isFitbitAuth = currentPath === "/auth/fitbit";
+  const isFitbitAuth = currentPath === "/auth/fitbit" || currentPath === "/fitbit/callback";
 
   // Listen for custom navigation event from the previous-based navigation
   useEffect(() => {

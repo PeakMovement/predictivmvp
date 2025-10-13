@@ -17,6 +17,7 @@ import { FindHelp } from "@/pages/FindHelp";
 import { DataUpload } from "@/pages/DataUpload";
 import { InsightsTree } from "@/pages/InsightsTree";
 import FitbitAuth from "@/pages/FitbitAuth";
+import FitbitCallback from "@/pages/FitbitCallback";
 import TestSupabase from "@/pages/TestSupabase";
 import FitbitSyncNow from "@/pages/FitbitSyncNow";
 import { Settings as SettingsIcon } from "lucide-react";
@@ -30,7 +31,8 @@ const App = () => {
 
   // Check if we're on the Fitbit auth callback route
   const currentPath = window.location.pathname;
-  const isFitbitAuth = currentPath === "/auth/fitbit" || currentPath === "/fitbit/callback";
+  const isFitbitAuth = currentPath === "/auth/fitbit";
+  const isFitbitCallback = currentPath === "/fitbit/callback";
 
   // Listen for custom navigation event from the previous-based navigation
   useEffect(() => {
@@ -48,6 +50,21 @@ const App = () => {
             <Toaster />
             <Sonner />
             <FitbitAuth />
+          </TooltipProvider>
+        </QueryClientProvider>
+      </ThemeProvider>
+    );
+  }
+
+  // If on Fitbit callback route, render the new callback page
+  if (isFitbitCallback) {
+    return (
+      <ThemeProvider defaultTheme="dark" storageKey="predictiv-theme">
+        <QueryClientProvider client={queryClient}>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
+            <FitbitCallback />
           </TooltipProvider>
         </QueryClientProvider>
       </ThemeProvider>

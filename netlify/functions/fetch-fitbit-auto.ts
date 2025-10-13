@@ -47,37 +47,42 @@ export const handler = async (event) => {
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
     // Insert token data into fitbit_auto_data table
-    const { data, error } = await supabase
-      .from("fitbit_auto_data")
-      .insert({
-        user_id: tokenData.user_id || "test_user_01",
-        activity: {
-          access_token: tokenData.access_token,
-          refresh_token: tokenData.refresh_token,
-          expires_in: tokenData.expires_in,
-          scope: tokenData.scope,
-          token_type: tokenData.token_type,
-        },
-        fetched_at: new Date().toISOString(),
-      })
-      .select();
+    try {
+      const { data, error } = await supabase
+        .from("fitbit_auto_data")
+        .insert([
+          {
+            access_token: tokenData.access_token,
+            refresh_token: tokenData.refresh_token,
+            scope: tokenData.scope,
+            token_type: tokenData.token_type,
+            expires_in: tokenData.expires_in,
+            fetched_at: new Date().toISOString(),
+          },
+        ]);
 
-    if (error) {
-      console.error("❌ Supabase insert error:", error);
+      if (error) {
+        console.error("❌ Supabase insert error:", error);
+        return {
+          statusCode: 500,
+          body: JSON.stringify({ error: "Failed to save tokens to Supabase", details: error }),
+        };
+      } else {
+        console.log("✅ Fitbit tokens saved to Supabase:", data);
+      }
+    } catch (insertErr) {
+      console.error("❌ Unexpected insert error:", insertErr);
       return {
         statusCode: 500,
-        body: JSON.stringify({ error: "Failed to save tokens to Supabase", details: error }),
+        body: JSON.stringify({ error: "Insert failed", details: insertErr.message }),
       };
     }
-
-    console.log("✅ Successfully saved to Supabase fitbit_auto_data:", data);
 
     return {
       statusCode: 200,
       body: JSON.stringify({ 
         message: "Fitbit tokens saved successfully", 
-        user_id: tokenData.user_id,
-        saved: true 
+        success: true 
       }),
     };
 

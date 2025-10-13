@@ -1,3 +1,5 @@
+import { createClient } from "@supabase/supabase-js";
+
 export const handler = async (event) => {
   console.log("🔄 Fitbit token exchange started (REST version)");
 
@@ -31,38 +33,52 @@ export const handler = async (event) => {
     });
 
     const tokenData = await tokenResponse.json();
-    console.log("✅ Fitbit token response:", tokenData);
+    console.log("✅ Token data received from Fitbit:", tokenData);
 
     if (!tokenResponse.ok) {
+      console.error("❌ Fitbit token exchange failed:", tokenData);
       return {
         statusCode: 400,
         body: JSON.stringify({ error: tokenData }),
       };
     }
 
-    const supabaseInsert = await fetch(`${SUPABASE_URL}/rest/v1/fitbit_tokens`, {
-      method: "POST",
-      headers: {
-        "apikey": SUPABASE_SERVICE_ROLE_KEY,
-        "Authorization": `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
-        "Content-Type": "application/json",
-        "Prefer": "resolution=merge-duplicates",
-      },
-      body: JSON.stringify({
-        user_id: "test_user_01",
-        access_token: tokenData.access_token,
-        refresh_token: tokenData.refresh_token,
-        expires_in: tokenData.expires_in,
-        fetched_at: new Date().toISOString(),
-      }),
-    });
+    // Create Supabase client
+    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
-    const result = await supabaseInsert.json();
-    console.log("✅ Saved to Supabase:", result);
+    // Insert token data into fitbit_auto_data table
+    const { data, error } = await supabase
+      .from("fitbit_auto_data")
+      .insert({
+        user_id: tokenData.user_id || "test_user_01",
+        activity: {
+          access_token: tokenData.access_token,
+          refresh_token: tokenData.refresh_token,
+          expires_in: tokenData.expires_in,
+          scope: tokenData.scope,
+          token_type: tokenData.token_type,
+        },
+        fetched_at: new Date().toISOString(),
+      })
+      .select();
+
+    if (error) {
+      console.error("❌ Supabase insert error:", error);
+      return {
+        statusCode: 500,
+        body: JSON.stringify({ error: "Failed to save tokens to Supabase", details: error }),
+      };
+    }
+
+    console.log("✅ Successfully saved to Supabase fitbit_auto_data:", data);
 
     return {
       statusCode: 200,
-      body: JSON.stringify({ message: "Fitbit tokens saved successfully", tokenData }),
+      body: JSON.stringify({ 
+        message: "Fitbit tokens saved successfully", 
+        user_id: tokenData.user_id,
+        saved: true 
+      }),
     };
 
   } catch (err) {

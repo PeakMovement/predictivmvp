@@ -63,8 +63,22 @@ export const handler = async (event) => {
 
     console.log(`🔧 Config summary: clientId=${clientId?.slice(0,4)}..., secretLen=${clientSecret?.length ?? 0}, redirectUri=${redirectUri}`);
 
-    // Diagnostics mode: return non-sensitive configuration summary when ?debug=1
-    const isDebug = event.queryStringParameters && event.queryStringParameters.debug === "1";
+    // Diagnostics mode: return non-sensitive configuration summary when ?debug=1, true, or yes
+    const DEBUG_VERSION = "fitbit-exchange:2025-10-14-02";
+    const debugParam = (event.queryStringParameters?.debug || "").toLowerCase();
+    const isDebug = ["1", "true", "yes"].includes(debugParam);
+    
+    // Check Supabase environment variables presence (without exposing values)
+    const hasSupabaseUrl = !!process.env.SUPABASE_URL;
+    const hasSupabaseServiceKey = !!process.env.SUPABASE_SERVICE_ROLE_KEY;
+    
+    console.log("🪵 Debug params:", { 
+      queryStringParams: event.queryStringParameters, 
+      isDebug, 
+      hasSupabaseUrl, 
+      hasSupabaseServiceKey 
+    });
+    
     if (isDebug) {
       const secretLooksLikeUrl =
         looksLikeUrl(clientSecret) || (clientSecret && clientSecret.includes("supabase.co")) || false;
@@ -76,11 +90,14 @@ export const handler = async (event) => {
         },
         body: JSON.stringify({
           debug: true,
+          version: DEBUG_VERSION,
+          method: event.httpMethod,
           clientIdPrefix: clientId?.slice(0, 4),
           secretLength: clientSecret?.length ?? 0,
           secretLooksLikeUrl,
           redirectUri,
-          method: event.httpMethod,
+          hasSupabaseUrl,
+          hasSupabaseServiceKey,
         }),
       };
     }

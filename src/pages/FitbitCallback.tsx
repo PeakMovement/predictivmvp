@@ -21,7 +21,11 @@ export default function FitbitCallback() {
     // ✅ Send the code (and PKCE code_verifier if available) to your Netlify function
     (async () => {
       try {
-        const code_verifier = sessionStorage.getItem("fitbit_code_verifier") || undefined;
+        const code_verifier = localStorage.getItem("fitbit_code_verifier") || undefined;
+        // Clear the code_verifier after using it
+        if (code_verifier) {
+          localStorage.removeItem("fitbit_code_verifier");
+        }
         const response = await fetch("/.netlify/functions/fitbit-token-exchange", {
           method: "POST",
           headers: { "Content-Type": "application/json" },

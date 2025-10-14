@@ -26,8 +26,8 @@ export async function startFitbitAuth() {
     crypto.getRandomValues(array);
     const code_verifier = base64urlencode(array.buffer);
     
-    // Store code_verifier in sessionStorage for later use during token exchange
-    sessionStorage.setItem('fitbit_code_verifier', code_verifier);
+    // Store code_verifier in localStorage for later use during token exchange
+    localStorage.setItem('fitbit_code_verifier', code_verifier);
 
     // Create code_challenge by hashing the code_verifier with SHA-256
     const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(code_verifier));

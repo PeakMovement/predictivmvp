@@ -21,7 +21,7 @@ export default function FitbitCallback() {
     // ✅ Send the code to your Netlify function
     (async () => {
       try {
-        const response = await fetch("/.netlify/functions/fetch-fitbit-auto", {
+        const response = await fetch("/.netlify/functions/fitbit-token-exchange", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ code }),

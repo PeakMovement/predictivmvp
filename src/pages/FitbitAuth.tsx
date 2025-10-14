@@ -37,7 +37,7 @@ export default function FitbitAuth() {
 
         console.log("🔄 Exchanging Fitbit code for tokens with PKCE...");
 
-        const res = await fetch("/.netlify/functions/exchange-fitbit-token", {
+        const res = await fetch("/.netlify/functions/fitbit-token-exchange", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ code, code_verifier }),
@@ -48,7 +48,7 @@ export default function FitbitAuth() {
 
         const data = await res.json();
 
-        if (!res.ok || !data?.success) {
+        if (!res.ok) {
           console.error("❌ Fitbit token exchange failed:", data);
           setStatus("error");
           setMessage("Fitbit connection failed. Please try again.");

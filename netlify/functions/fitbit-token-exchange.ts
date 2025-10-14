@@ -30,7 +30,7 @@ export const handler = async (event) => {
   try {
     // Parse and validate request body
     const body = JSON.parse(event.body || "{}");
-    const { code } = body;
+    const { code, code_verifier } = body;
 
     if (!code) {
       console.error("❌ Missing authorization code");
@@ -65,7 +65,15 @@ export const handler = async (event) => {
       grant_type: "authorization_code",
       code: code,
       redirect_uri: redirectUri,
-    }).toString();
+    });
+
+    // Add code_verifier if provided (PKCE flow)
+    if (code_verifier) {
+      tokenRequestBody.append("code_verifier", code_verifier);
+      console.log("🔐 Using PKCE flow with code_verifier");
+    }
+
+    const tokenRequestBodyString = tokenRequestBody.toString();
 
     console.log("🔑 Exchanging code with Fitbit API...");
 
@@ -76,7 +84,7 @@ export const handler = async (event) => {
         "Authorization": authHeader,
         "Content-Type": "application/x-www-form-urlencoded",
       },
-      body: tokenRequestBody,
+      body: tokenRequestBodyString,
     });
 
     const tokenData: FitbitTokenResponse = await fitbitResponse.json();
@@ -137,7 +145,13 @@ export const handler = async (event) => {
     return {
       statusCode: 200,
       headers: { "Access-Control-Allow-Origin": "*" },
-      body: JSON.stringify({ message: "Fitbit tokens saved successfully" }),
+      body: JSON.stringify({ 
+        message: "Fitbit tokens saved successfully",
+        data: {
+          user_id: tokenData.user_id,
+          access_token: tokenData.access_token
+        }
+      }),
     };
   } catch (err) {
     console.error("❌ Token exchange error:", err);

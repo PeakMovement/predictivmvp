@@ -28,22 +28,7 @@ export const handler = async (event) => {
   }
 
   try {
-    // Parse and validate request body
-    const body = JSON.parse(event.body || "{}");
-    const { code, code_verifier } = body;
-
-    if (!code) {
-      console.error("❌ Missing authorization code");
-      return { 
-        statusCode: 400, 
-        headers: { "Access-Control-Allow-Origin": "*" },
-        body: JSON.stringify({ error: "Missing authorization code" }) 
-      };
-    }
-
-    console.log("🔄 Starting Fitbit token exchange...");
-
-    // Validate environment variables
+    // Validate environment variables first
     const clientIdRaw = process.env.FITBIT_CLIENT_ID;
     const clientSecretRaw = process.env.FITBIT_CLIENT_SECRET;
     const redirectUriRaw = process.env.FITBIT_REDIRECT_URI;
@@ -99,6 +84,21 @@ export const handler = async (event) => {
         }),
       };
     }
+
+    // Parse and validate request body
+    const body = JSON.parse(event.body || "{}");
+    const { code, code_verifier } = body;
+
+    if (!code) {
+      console.error("❌ Missing authorization code");
+      return { 
+        statusCode: 400, 
+        headers: { "Access-Control-Allow-Origin": "*" },
+        body: JSON.stringify({ error: "Missing authorization code" }) 
+      };
+    }
+
+    console.log("🔄 Starting Fitbit token exchange...");
 
     // Create Basic Auth header
     const authHeader = "Basic " + Buffer.from(`${clientId}:${clientSecret}`).toString("base64");

@@ -49,7 +49,7 @@ export default function FitbitCallback() {
         setStatus("❌ Network or server error. Try again.");
       }
     })();
-  }, []);
+  }, [navigate]);
 
   return (
     <div className='flex flex-col items-center justify-center h-screen text-center'>

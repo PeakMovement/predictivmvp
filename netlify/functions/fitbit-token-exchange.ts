@@ -58,7 +58,7 @@ export const handler = async (event) => {
     }
 
     // Create Basic Auth header
-    const authHeader = "Basic " + btoa(`${clientId}:${clientSecret}`);
+    const authHeader = "Basic " + Buffer.from(`${clientId}:${clientSecret}`).toString("base64");
 
     // Prepare URL-encoded body
     const tokenRequestBody = new URLSearchParams({

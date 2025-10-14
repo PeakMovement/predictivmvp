@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 export default function FitbitCallback() {
   const [status, setStatus] = useState("Exchanging Fitbit code...");
+  const navigate = useNavigate();
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -37,6 +39,7 @@ export default function FitbitCallback() {
         if (response.ok) {
           console.log("✅ Fitbit token exchange success:", data);
           setStatus("✅ Fitbit connection successful!");
+          setTimeout(() => navigate("/dashboard"), 1500);
         } else {
           console.error("❌ Fitbit token exchange error:", data);
           setStatus("❌ Fitbit token exchange failed. Check logs.");
@@ -51,8 +54,8 @@ export default function FitbitCallback() {
   return (
     <div className='flex flex-col items-center justify-center h-screen text-center'>
       <h2 className='text-xl font-semibold'>{status}</h2>
-      <p className='text-gray-500 mt-4'>
-        You can close this window once the message above says successful.
+      <p className='text-muted-foreground mt-4'>
+        {status.includes("successful") ? "Redirecting to dashboard..." : "You can close this window once the message above says successful."}
       </p>
     </div>
   );

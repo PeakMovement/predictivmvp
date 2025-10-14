@@ -19,7 +19,7 @@ export const handler = async (event) => {
     };
   }
 
-  if (event.httpMethod !== "POST") {
+  if (event.httpMethod !== "POST" && !(event.queryStringParameters && event.queryStringParameters.debug === "1")) {
     return { 
       statusCode: 405, 
       headers: { "Access-Control-Allow-Origin": "*" },
@@ -44,9 +44,13 @@ export const handler = async (event) => {
     console.log("🔄 Starting Fitbit token exchange...");
 
     // Validate environment variables
-    const clientId = process.env.FITBIT_CLIENT_ID;
-    const clientSecret = process.env.FITBIT_CLIENT_SECRET;
-    const redirectUri = process.env.FITBIT_REDIRECT_URI;
+    const clientIdRaw = process.env.FITBIT_CLIENT_ID;
+    const clientSecretRaw = process.env.FITBIT_CLIENT_SECRET;
+    const redirectUriRaw = process.env.FITBIT_REDIRECT_URI;
+    
+    const clientId = (clientIdRaw || "").trim();
+    const clientSecret = (clientSecretRaw || "").trim();
+    const redirectUri = (redirectUriRaw || "").trim();
 
     if (!clientId || !clientSecret || !redirectUri) {
       console.error("❌ Missing Fitbit environment variables");
@@ -73,6 +77,28 @@ export const handler = async (event) => {
     }
 
     console.log(`🔧 Config summary: clientId=${clientId?.slice(0,4)}..., secretLen=${clientSecret?.length ?? 0}, redirectUri=${redirectUri}`);
+
+    // Diagnostics mode: return non-sensitive configuration summary when ?debug=1
+    const isDebug = event.queryStringParameters && event.queryStringParameters.debug === "1";
+    if (isDebug) {
+      const secretLooksLikeUrl =
+        looksLikeUrl(clientSecret) || (clientSecret && clientSecret.includes("supabase.co")) || false;
+      return {
+        statusCode: 200,
+        headers: {
+          "Access-Control-Allow-Origin": "*",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          debug: true,
+          clientIdPrefix: clientId?.slice(0, 4),
+          secretLength: clientSecret?.length ?? 0,
+          secretLooksLikeUrl,
+          redirectUri,
+          method: event.httpMethod,
+        }),
+      };
+    }
 
     // Create Basic Auth header
     const authHeader = "Basic " + Buffer.from(`${clientId}:${clientSecret}`).toString("base64");

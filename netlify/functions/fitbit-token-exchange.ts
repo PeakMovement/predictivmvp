@@ -183,9 +183,10 @@ export const handler = async (event) => {
     // Store tokens in the activity JSONB column
     const { error } = await supabase.from("fitbit_auto_data").insert([
       {
-        user_id: tokenData.user_id || null,
+        user_id: null,
         fetched_at: new Date().toISOString(),
         activity: {
+          fitbit_user_id: tokenData.user_id,
           access_token: tokenData.access_token,
           refresh_token: tokenData.refresh_token,
           expires_in: tokenData.expires_in,

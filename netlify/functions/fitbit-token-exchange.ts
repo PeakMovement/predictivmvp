@@ -57,6 +57,23 @@ export const handler = async (event) => {
       };
     }
 
+    // Check if clientSecret looks like a URL (common misconfiguration)
+    const looksLikeUrl = (v?: string) => !!v && /^https?:\/\//i.test(v);
+    if (looksLikeUrl(clientSecret) || (clientSecret && clientSecret.includes("supabase.co"))) {
+      console.error("❌ FITBIT_CLIENT_SECRET appears to be a URL (e.g., Supabase URL). Misconfigured env.");
+      console.log(`🔧 Config summary: clientId=${clientId?.slice(0,4)}..., secretLen=${clientSecret?.length ?? 0}, redirectUri=${redirectUri}`);
+      return {
+        statusCode: 500,
+        headers: { "Access-Control-Allow-Origin": "*" },
+        body: JSON.stringify({
+          error: "Server configuration error",
+          details: "FITBIT_CLIENT_SECRET appears to be a URL. Set it to your actual Fitbit Client Secret in Netlify environment variables.",
+        }),
+      };
+    }
+
+    console.log(`🔧 Config summary: clientId=${clientId?.slice(0,4)}..., secretLen=${clientSecret?.length ?? 0}, redirectUri=${redirectUri}`);
+
     // Create Basic Auth header
     const authHeader = "Basic " + Buffer.from(`${clientId}:${clientSecret}`).toString("base64");
 

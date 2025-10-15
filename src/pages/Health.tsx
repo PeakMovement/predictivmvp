@@ -319,27 +319,6 @@ export const Health = () => {
     return <DetailView metric={selectedMetric} onBack={() => setSelectedMetric(null)} />;
   }
 
-  if (dynamicHealthMetrics.length === 0) {
-    return (
-      <div className="min-h-screen bg-background pb-[calc(6rem+env(safe-area-inset-bottom))] md:pb-32">
-        <div className="container mx-auto px-4 md:px-6 pt-6 md:pt-8">
-          <div className="text-center mb-6 md:mb-8 animate-fade-in">
-            <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-2">Health Metrics</h1>
-            <p className="text-sm md:text-base text-muted-foreground">Monitor your health and wellness indicators</p>
-          </div>
-          
-          <div className="bg-glass backdrop-blur-xl border border-glass-border rounded-2xl p-8 shadow-glass text-center">
-            <div className="space-y-4">
-              <div className="text-4xl mb-4">📊</div>
-              <h3 className="text-xl font-semibold text-foreground">No Health Data Available</h3>
-              <p className="text-muted-foreground">Upload your health data to start tracking metrics</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen bg-background pb-[calc(6rem+env(safe-area-inset-bottom))] md:pb-32">
       <div className="container mx-auto px-4 md:px-6 pt-6 md:pt-8">
@@ -366,15 +345,25 @@ export const Health = () => {
         {/* CSV-based Training Metrics Section */}
         <div className="space-y-6 mb-8">
           <h2 className="text-xl font-semibold text-foreground">Training Metrics</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-            {dynamicHealthMetrics.map((metric) => (
-              <MetricTile 
-                key={metric.id} 
-                metric={metric} 
-                onClick={() => setSelectedMetric(metric)} 
-              />
-            ))}
-          </div>
+          {dynamicHealthMetrics.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+              {dynamicHealthMetrics.map((metric) => (
+                <MetricTile 
+                  key={metric.id} 
+                  metric={metric} 
+                  onClick={() => setSelectedMetric(metric)} 
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="bg-glass backdrop-blur-xl border border-glass-border rounded-2xl p-6 shadow-glass text-center">
+              <div className="space-y-3">
+                <div className="text-3xl mb-2">📊</div>
+                <h3 className="text-lg font-semibold text-foreground">No Training Data</h3>
+                <p className="text-sm text-muted-foreground">Upload CSV data to see training metrics</p>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* View Insights Button */}

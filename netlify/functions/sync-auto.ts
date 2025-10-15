@@ -44,6 +44,30 @@ const handler: Handler = async (event) => {
       calories: activityData.summary?.caloriesOut,
     });
 
+    // Fetch sleep data from Fitbit
+    const sleepResponse = await fetch(
+      `https://api.fitbit.com/1.2/user/-/sleep/date/${today}.json`,
+      {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      }
+    );
+
+    let sleepData = null;
+    if (sleepResponse.ok) {
+      sleepData = await sleepResponse.json();
+      logSync("fitbit:sync-auto:sleep-data-received", {
+        has_sleep: !!sleepData.sleep && sleepData.sleep.length > 0,
+        sleep_records: sleepData.sleep?.length || 0,
+      });
+    } else {
+      logSync("fitbit:sync-auto:sleep-data-unavailable", {
+        status: sleepResponse.status,
+      });
+    }
+
     // Store in Supabase
     const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
     
@@ -57,7 +81,7 @@ const handler: Handler = async (event) => {
       .lte("fetched_at", `${todayDate}T23:59:59`)
       .single();
 
-    // Prepare activity data - properly separate tokens and data
+    // Prepare activity and sleep data - properly separate tokens and data
     const existingTokens = existingData ? (existingData.activity as any)?.tokens : null;
     const mergedActivity = {
       tokens: existingTokens || {},
@@ -65,26 +89,39 @@ const handler: Handler = async (event) => {
       synced_at: new Date().toISOString(),
     };
 
+    const mergedSleep = sleepData ? {
+      data: sleepData,
+      synced_at: new Date().toISOString(),
+    } : null;
+
     let dbError;
     if (existingData) {
-      // Update existing record
+      // Update existing record with both activity and sleep
+      const updateData: any = {
+        activity: mergedActivity,
+        fetched_at: new Date().toISOString(),
+      };
+      if (mergedSleep) {
+        updateData.sleep = mergedSleep;
+      }
       const { error } = await supabase
         .from("fitbit_auto_data")
-        .update({
-          activity: mergedActivity,
-          fetched_at: new Date().toISOString(),
-        })
+        .update(updateData)
         .eq("id", existingData.id);
       dbError = error;
     } else {
-      // Insert new record
+      // Insert new record with both activity and sleep
+      const insertData: any = {
+        user_id: userId,
+        activity: mergedActivity,
+        fetched_at: new Date().toISOString(),
+      };
+      if (mergedSleep) {
+        insertData.sleep = mergedSleep;
+      }
       const { error } = await supabase
         .from("fitbit_auto_data")
-        .insert({
-          user_id: userId,
-          activity: mergedActivity,
-          fetched_at: new Date().toISOString(),
-        });
+        .insert(insertData);
       dbError = error;
     }
 

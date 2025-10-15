@@ -57,17 +57,46 @@ const handler: Handler = async (event) => {
       const activityData = entry.activity?.data || entry.activity;
       const summary = activityData?.summary || {};
       
+      // Extract sleep data if available
+      const sleepData = entry.sleep?.data?.sleep?.[0]; // Get main sleep
+      const sleepSummary = entry.sleep?.data?.summary;
+      
       return {
         id: entry.id,
         user_id: entry.user_id,
         fetched_at: entry.fetched_at,
+        
+        // Activity metrics
         steps: summary.steps || 0,
         calories: summary.caloriesOut || 0,
+        activityCalories: summary.activityCalories || 0,
         distance: summary.distances?.[0]?.distance || 0,
         floors: summary.floors || 0,
-        activeMinutes: summary.fairlyActiveMinutes + summary.veryActiveMinutes || 0,
+        elevation: summary.elevation || 0,
+        activeMinutes: (summary.fairlyActiveMinutes || 0) + (summary.veryActiveMinutes || 0),
         sedentaryMinutes: summary.sedentaryMinutes || 0,
-        raw_data: activityData,
+        lightlyActiveMinutes: summary.lightlyActiveMinutes || 0,
+        fairlyActiveMinutes: summary.fairlyActiveMinutes || 0,
+        veryActiveMinutes: summary.veryActiveMinutes || 0,
+        
+        // Heart rate metrics
+        restingHeartRate: summary.restingHeartRate || 0,
+        heartRateZones: summary.heartRateZones || [],
+        
+        // Sleep metrics
+        sleepDuration: sleepData?.minutesAsleep || 0,
+        sleepEfficiency: sleepData?.efficiency || 0,
+        sleepStartTime: sleepData?.startTime || null,
+        sleepEndTime: sleepData?.endTime || null,
+        deepSleepMinutes: sleepData?.levels?.summary?.deep?.minutes || 0,
+        lightSleepMinutes: sleepData?.levels?.summary?.light?.minutes || 0,
+        remSleepMinutes: sleepData?.levels?.summary?.rem?.minutes || 0,
+        awakeSleepMinutes: sleepData?.levels?.summary?.wake?.minutes || 0,
+        
+        raw_data: {
+          activity: activityData,
+          sleep: sleepData,
+        },
       };
     });
 

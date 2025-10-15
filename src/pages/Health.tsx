@@ -2,7 +2,9 @@ import { useState, useMemo } from "react";
 import { Heart, Activity, Zap, Moon, Brain, Footprints, ArrowLeft, TrendingUp } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useLiveData } from "@/contexts/LiveDataContext";
-import { FitbitHealthCard } from "@/components/FitbitHealthCard";
+import { ActivityMetricsCard } from "@/components/fitbit/ActivityMetricsCard";
+import { HeartRateMetricsCard } from "@/components/fitbit/HeartRateMetricsCard";
+import { SleepMetricsCard } from "@/components/fitbit/SleepMetricsCard";
 
 const healthMetrics = [
   { 
@@ -347,20 +349,32 @@ export const Health = () => {
           <p className="text-sm md:text-base text-muted-foreground">Monitor your health and wellness indicators</p>
         </div>
 
-        {/* Fitbit Health Card */}
-        <div className="mb-6 md:mb-8">
-          <FitbitHealthCard />
+        {/* Fitbit Metrics Section */}
+        <div className="space-y-6 mb-8">
+          <h2 className="text-xl font-semibold text-foreground">Fitbit Inspire HR Metrics</h2>
+          
+          {/* Activity & Movement */}
+          <ActivityMetricsCard />
+          
+          {/* Heart Rate */}
+          <HeartRateMetricsCard />
+          
+          {/* Sleep Stages */}
+          <SleepMetricsCard />
         </div>
 
-        {/* Metrics Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 mb-8">
-          {dynamicHealthMetrics.map((metric) => (
-            <MetricTile 
-              key={metric.id} 
-              metric={metric} 
-              onClick={() => setSelectedMetric(metric)} 
-            />
-          ))}
+        {/* CSV-based Training Metrics Section */}
+        <div className="space-y-6 mb-8">
+          <h2 className="text-xl font-semibold text-foreground">Training Metrics</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+            {dynamicHealthMetrics.map((metric) => (
+              <MetricTile 
+                key={metric.id} 
+                metric={metric} 
+                onClick={() => setSelectedMetric(metric)} 
+              />
+            ))}
+          </div>
         </div>
 
         {/* View Insights Button */}

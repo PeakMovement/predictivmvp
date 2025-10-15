@@ -7,22 +7,21 @@ const handler: Handler = async (event) => {
   try {
     // Validate base environment variables
     const env = requireEnv();
+    const userId = "CTBNRR"; // TODO: Make dynamic based on authenticated user
     
-    // Check for access token
-    const FITBIT_ACCESS_TOKEN = process.env.FITBIT_ACCESS_TOKEN;
-    if (!FITBIT_ACCESS_TOKEN) {
-      throw new Error("Missing FITBIT_ACCESS_TOKEN environment variable");
-    }
+    logSync("fitbit:sync-auto:start", { user_id: userId });
 
-    // Fetch today's activity data from Fitbit
-    logSync("fitbit:sync-auto:start", { user_id: "CTBNRR" });
+    // Get valid access token (auto-refreshes if expired)
+    const { getValidToken } = await import("../utils/tokenManager");
+    const accessToken = await getValidToken(userId);
     
+    // Fetch today's activity data from Fitbit
     const response = await fetch(
       "https://api.fitbit.com/1/user/-/activities/date/today.json",
       {
         method: "GET",
         headers: {
-          Authorization: `Bearer ${FITBIT_ACCESS_TOKEN}`,
+          Authorization: `Bearer ${accessToken}`,
         },
       }
     );
@@ -51,22 +50,42 @@ const handler: Handler = async (event) => {
     const today = new Date().toISOString().split('T')[0];
     const { data: existingData } = await supabase
       .from("fitbit_auto_data")
-      .select("id")
-      .eq("user_id", "CTBNRR")
+      .select("id, activity")
+      .eq("user_id", userId)
       .gte("fetched_at", `${today}T00:00:00`)
       .lte("fetched_at", `${today}T23:59:59`)
       .single();
 
-    const { error: dbError } = await supabase
-      .from("fitbit_auto_data")
-      [existingData ? 'update' : 'insert']({
-        user_id: "CTBNRR",
-        activity: {
-          data: activityData,
-          synced_at: new Date().toISOString(),
-        },
-        fetched_at: new Date().toISOString(),
-      });
+    // Prepare activity data - merge with existing tokens if present
+    const existingTokens = existingData ? (existingData.activity as any)?.tokens : null;
+    const mergedActivity = {
+      data: activityData,
+      synced_at: new Date().toISOString(),
+      ...(existingTokens && { tokens: existingTokens })
+    };
+
+    let dbError;
+    if (existingData) {
+      // Update existing record
+      const { error } = await supabase
+        .from("fitbit_auto_data")
+        .update({
+          activity: mergedActivity,
+          fetched_at: new Date().toISOString(),
+        })
+        .eq("id", existingData.id);
+      dbError = error;
+    } else {
+      // Insert new record
+      const { error } = await supabase
+        .from("fitbit_auto_data")
+        .insert({
+          user_id: userId,
+          activity: mergedActivity,
+          fetched_at: new Date().toISOString(),
+        });
+      dbError = error;
+    }
 
     if (dbError) {
       logSync("fitbit:sync-auto:db-error", { error: dbError.message });

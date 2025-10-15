@@ -7,11 +7,25 @@ const handler: Handler = async (event) => {
   try {
     // Validate base environment variables
     const env = requireEnv();
+    const userId = "CTBNRR"; // TODO: Make dynamic based on authenticated user
     
-    // Check for refresh token
-    const FITBIT_REFRESH_TOKEN = process.env.FITBIT_REFRESH_TOKEN;
-    if (!FITBIT_REFRESH_TOKEN) {
-      throw new Error("Missing FITBIT_REFRESH_TOKEN environment variable");
+    // Fetch refresh token from database
+    const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
+    const { data: tokenData, error: fetchError } = await supabase
+      .from("fitbit_auto_data")
+      .select("activity")
+      .eq("user_id", userId)
+      .order("fetched_at", { ascending: false })
+      .limit(1)
+      .single();
+
+    if (fetchError || !tokenData) {
+      throw new Error("No refresh token found in database");
+    }
+
+    const refreshToken = (tokenData.activity as any)?.tokens?.refresh_token;
+    if (!refreshToken) {
+      throw new Error("No refresh token found in database");
     }
 
     // Prepare Basic Auth header
@@ -22,7 +36,7 @@ const handler: Handler = async (event) => {
     // Prepare request body
     const params = new URLSearchParams({
       grant_type: "refresh_token",
-      refresh_token: FITBIT_REFRESH_TOKEN,
+      refresh_token: refreshToken,
     });
 
     // Request new tokens from Fitbit
@@ -45,7 +59,7 @@ const handler: Handler = async (event) => {
     }
 
     const data = await response.json();
-    const { access_token, refresh_token, user_id } = data;
+    const { access_token, refresh_token: new_refresh_token, user_id, expires_in } = data;
 
     // Log success
     logSync("fitbit:refresh", {
@@ -53,20 +67,33 @@ const handler: Handler = async (event) => {
       user_id,
     });
 
-    // Store tokens in Supabase
-    const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
+    // Fetch existing record to preserve activity data
+    const { data: existingRecord } = await supabase
+      .from("fitbit_auto_data")
+      .select("activity")
+      .eq("user_id", user_id || userId)
+      .order("fetched_at", { ascending: false })
+      .limit(1)
+      .single();
+
+    const existingActivityData = existingRecord ? (existingRecord.activity as any)?.data : null;
     
+    // Merge tokens with existing activity data
+    const mergedActivity = {
+      tokens: {
+        access_token,
+        refresh_token: new_refresh_token,
+        expires_in: expires_in || 28800,
+        refreshed_at: new Date().toISOString(),
+      },
+      ...(existingActivityData && { data: existingActivityData })
+    };
+
     const { error: dbError } = await supabase
       .from("fitbit_auto_data")
       .upsert({
-        user_id: user_id,
-        activity: {
-          tokens: {
-            access_token,
-            refresh_token,
-            refreshed_at: new Date().toISOString(),
-          }
-        },
+        user_id: user_id || userId,
+        activity: mergedActivity,
         fetched_at: new Date().toISOString(),
       });
 

@@ -337,7 +337,7 @@ export const Settings = ({ onNavigate }: { onNavigate?: (tab: string) => void })
                   <div className="text-left flex-1">
                     <p className="font-medium text-foreground">Fitbit</p>
                     <p className="text-xs text-muted-foreground">
-                      Tap to manually sync your Fitbit data
+                      Connect and sync your Fitbit data
                     </p>
                     {lastSyncTime && (
                       <p className="text-xs text-muted-foreground/70 mt-1">
@@ -346,14 +346,24 @@ export const Settings = ({ onNavigate }: { onNavigate?: (tab: string) => void })
                     )}
                   </div>
                 </div>
-                <Button
-                  onClick={handleFitbitSync}
-                  size="sm"
-                  className="ml-3 bg-primary/80 hover:bg-primary text-primary-foreground hover:scale-105 active:scale-95 transition-all duration-200"
-                >
-                  <RefreshCw size={14} className="mr-2" />
-                  Connect Fitbit
-                </Button>
+                <div className="flex gap-2">
+                  <Button
+                    onClick={() => onNavigate?.('fitbit-sync-now')}
+                    size="sm"
+                    variant="outline"
+                    className="bg-glass/30 border-glass-border hover:bg-glass-highlight hover:scale-105 active:scale-95 transition-all duration-200"
+                  >
+                    <RefreshCw size={14} className="mr-2" />
+                    Sync Now
+                  </Button>
+                  <Button
+                    onClick={handleFitbitSync}
+                    size="sm"
+                    className="bg-primary/80 hover:bg-primary text-primary-foreground hover:scale-105 active:scale-95 transition-all duration-200"
+                  >
+                    Connect
+                  </Button>
+                </div>
               </div>
             </div>
           </div>

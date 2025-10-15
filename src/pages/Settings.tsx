@@ -12,6 +12,7 @@ import { getAlertSettings, saveAlertSettings } from "@/lib/alertConditions";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { startFitbitAuth } from "@/lib/fitbitAuth";
+import { useFitbitSync } from "@/hooks/useFitbitSync";
 
 export const Settings = ({ onNavigate }: { onNavigate?: (tab: string) => void }) => {
   const [notifications, setNotifications] = useState(true);
@@ -35,7 +36,8 @@ export const Settings = ({ onNavigate }: { onNavigate?: (tab: string) => void })
   
   const { theme, setTheme } = useTheme();
   const { toast } = useToast();
-  const { 
+  const { isConnected, isSyncing, syncNow } = useFitbitSync();
+  const {
     currentDayIndex, 
     totalDays, 
     isSimulating, 
@@ -347,22 +349,35 @@ export const Settings = ({ onNavigate }: { onNavigate?: (tab: string) => void })
                   </div>
                 </div>
                 <div className="flex gap-2">
-                  <Button
-                    onClick={() => onNavigate?.('fitbit-sync-now')}
-                    size="sm"
-                    variant="outline"
-                    className="bg-glass/30 border-glass-border hover:bg-glass-highlight hover:scale-105 active:scale-95 transition-all duration-200"
-                  >
-                    <RefreshCw size={14} className="mr-2" />
-                    Sync Now
-                  </Button>
-                  <Button
-                    onClick={handleFitbitSync}
-                    size="sm"
-                    className="bg-primary/80 hover:bg-primary text-primary-foreground hover:scale-105 active:scale-95 transition-all duration-200"
-                  >
-                    Connect
-                  </Button>
+                  {isConnected ? (
+                    <>
+                      <Button
+                        onClick={syncNow}
+                        disabled={isSyncing}
+                        size="sm"
+                        variant="outline"
+                        className="bg-glass/30 border-glass-border hover:bg-glass-highlight hover:scale-105 active:scale-95 transition-all duration-200"
+                      >
+                        <RefreshCw size={14} className={cn("mr-2", isSyncing && "animate-spin")} />
+                        Sync Now
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="bg-green-500/20 border-green-500/30 text-green-400 cursor-default"
+                      >
+                        Connected ✓
+                      </Button>
+                    </>
+                  ) : (
+                    <Button
+                      onClick={handleFitbitSync}
+                      size="sm"
+                      className="bg-primary/80 hover:bg-primary text-primary-foreground hover:scale-105 active:scale-95 transition-all duration-200"
+                    >
+                      Connect
+                    </Button>
+                  )}
                 </div>
               </div>
             </div>

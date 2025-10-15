@@ -2,6 +2,7 @@ import { useState, useMemo } from "react";
 import { Heart, Activity, Zap, Moon, Brain, Footprints, ArrowLeft, TrendingUp } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useLiveData } from "@/contexts/LiveDataContext";
+import { FitbitHealthCard } from "@/components/FitbitHealthCard";
 
 const healthMetrics = [
   { 
@@ -344,6 +345,11 @@ export const Health = () => {
         <div className="text-center mb-6 md:mb-8 animate-fade-in">
           <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-2">Health Metrics</h1>
           <p className="text-sm md:text-base text-muted-foreground">Monitor your health and wellness indicators</p>
+        </div>
+
+        {/* Fitbit Health Card */}
+        <div className="mb-6 md:mb-8">
+          <FitbitHealthCard />
         </div>
 
         {/* Metrics Grid */}

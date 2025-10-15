@@ -15,9 +15,10 @@ const handler: Handler = async (event) => {
     const { getValidToken } = await import("../utils/tokenManager");
     const accessToken = await getValidToken(userId);
     
-    // Fetch today's activity data from Fitbit
+    // Fetch today's activity data from Fitbit (use proper date format)
+    const today = new Date().toISOString().split('T')[0]; // Format: YYYY-MM-DD
     const response = await fetch(
-      "https://api.fitbit.com/1/user/-/activities/date/today.json",
+      `https://api.fitbit.com/1/user/-/activities/date/${today}.json`,
       {
         method: "GET",
         headers: {
@@ -47,21 +48,21 @@ const handler: Handler = async (event) => {
     const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
     
     // Check if today's data already exists
-    const today = new Date().toISOString().split('T')[0];
+    const todayDate = new Date().toISOString().split('T')[0];
     const { data: existingData } = await supabase
       .from("fitbit_auto_data")
       .select("id, activity")
       .eq("user_id", userId)
-      .gte("fetched_at", `${today}T00:00:00`)
-      .lte("fetched_at", `${today}T23:59:59`)
+      .gte("fetched_at", `${todayDate}T00:00:00`)
+      .lte("fetched_at", `${todayDate}T23:59:59`)
       .single();
 
-    // Prepare activity data - merge with existing tokens if present
+    // Prepare activity data - properly separate tokens and data
     const existingTokens = existingData ? (existingData.activity as any)?.tokens : null;
     const mergedActivity = {
+      tokens: existingTokens || {},
       data: activityData,
       synced_at: new Date().toISOString(),
-      ...(existingTokens && { tokens: existingTokens })
     };
 
     let dbError;

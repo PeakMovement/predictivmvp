@@ -73,6 +73,31 @@ const handler: Handler = async (event) => {
       throw new Error(`Database error: ${dbError.message}`);
     }
 
+    // Trigger auto-sync in the background (non-blocking)
+    logSync("fitbit:refresh:trigger-sync", { message: "🔄 Starting post-refresh auto-sync..." });
+    
+    // Fire-and-forget fetch call - don't await to avoid blocking the response
+    fetch(`${process.env.URL}/.netlify/functions/sync-auto`)
+      .then((syncResponse) => {
+        if (syncResponse.ok) {
+          logSync("fitbit:refresh:sync-success", { 
+            message: "✅ Auto-sync triggered successfully",
+            status: syncResponse.status 
+          });
+        } else {
+          logSync("fitbit:refresh:sync-warning", { 
+            message: "⚠️ Auto-sync trigger failed",
+            status: syncResponse.status 
+          });
+        }
+      })
+      .catch((syncError) => {
+        logSync("fitbit:refresh:sync-error", { 
+          message: "⚠️ Auto-sync trigger failed",
+          error: syncError.message 
+        });
+      });
+
     return {
       statusCode: 200,
       body: JSON.stringify({

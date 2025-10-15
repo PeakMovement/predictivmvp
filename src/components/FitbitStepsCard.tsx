@@ -11,8 +11,15 @@ interface FitbitActivityData {
       summary?: {
         steps?: number;
         caloriesOut?: number;
+        activityCalories?: number;
         distance?: Array<{ distance: number }>;
         activeMinutes?: number;
+        sedentaryMinutes?: number;
+        lightlyActiveMinutes?: number;
+        fairlyActiveMinutes?: number;
+        veryActiveMinutes?: number;
+        floors?: number;
+        elevation?: number;
       };
     };
     synced_at?: string;
@@ -117,6 +124,10 @@ export const FitbitStepsCard = () => {
     return activityData?.activity?.data?.summary?.caloriesOut || 0;
   };
 
+  const getActivityCalories = () => {
+    return activityData?.activity?.data?.summary?.activityCalories || 0;
+  };
+
   const getDistance = () => {
     const distances = activityData?.activity?.data?.summary?.distance;
     if (distances && distances.length > 0) {
@@ -125,8 +136,28 @@ export const FitbitStepsCard = () => {
     return "0";
   };
 
-  const getActiveMinutes = () => {
-    return activityData?.activity?.data?.summary?.activeMinutes || 0;
+  const getSedentaryMinutes = () => {
+    return activityData?.activity?.data?.summary?.sedentaryMinutes || 0;
+  };
+
+  const getLightlyActiveMinutes = () => {
+    return activityData?.activity?.data?.summary?.lightlyActiveMinutes || 0;
+  };
+
+  const getFairlyActiveMinutes = () => {
+    return activityData?.activity?.data?.summary?.fairlyActiveMinutes || 0;
+  };
+
+  const getVeryActiveMinutes = () => {
+    return activityData?.activity?.data?.summary?.veryActiveMinutes || 0;
+  };
+
+  const getFloors = () => {
+    return activityData?.activity?.data?.summary?.floors || 0;
+  };
+
+  const getElevation = () => {
+    return activityData?.activity?.data?.summary?.elevation || 0;
   };
 
   const getLastSyncTime = () => {
@@ -169,22 +200,56 @@ export const FitbitStepsCard = () => {
         </Button>
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
-        <div className="space-y-1">
-          <p className="text-sm text-muted-foreground">Steps</p>
-          <p className="text-2xl font-bold text-foreground">{getSteps().toLocaleString()}</p>
+      <div className="space-y-4">
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-1">
+            <p className="text-sm text-muted-foreground">Steps</p>
+            <p className="text-2xl font-bold text-foreground">{getSteps().toLocaleString()}</p>
+          </div>
+          <div className="space-y-1">
+            <p className="text-sm text-muted-foreground">Calories Out</p>
+            <p className="text-2xl font-bold text-foreground">{getCalories().toLocaleString()}</p>
+          </div>
+          <div className="space-y-1">
+            <p className="text-sm text-muted-foreground">Activity Calories</p>
+            <p className="text-2xl font-bold text-foreground">{getActivityCalories().toLocaleString()}</p>
+          </div>
+          <div className="space-y-1">
+            <p className="text-sm text-muted-foreground">Distance</p>
+            <p className="text-2xl font-bold text-foreground">{getDistance()} km</p>
+          </div>
+          <div className="space-y-1">
+            <p className="text-sm text-muted-foreground">Floors</p>
+            <p className="text-2xl font-bold text-foreground">{getFloors()}</p>
+          </div>
+          {getElevation() > 0 && (
+            <div className="space-y-1">
+              <p className="text-sm text-muted-foreground">Elevation</p>
+              <p className="text-2xl font-bold text-foreground">{getElevation()} m</p>
+            </div>
+          )}
         </div>
-        <div className="space-y-1">
-          <p className="text-sm text-muted-foreground">Calories</p>
-          <p className="text-2xl font-bold text-foreground">{getCalories().toLocaleString()}</p>
-        </div>
-        <div className="space-y-1">
-          <p className="text-sm text-muted-foreground">Distance</p>
-          <p className="text-2xl font-bold text-foreground">{getDistance()} km</p>
-        </div>
-        <div className="space-y-1">
-          <p className="text-sm text-muted-foreground">Active Min</p>
-          <p className="text-2xl font-bold text-foreground">{getActiveMinutes()}</p>
+
+        <div className="border-t border-glass-border pt-4">
+          <p className="text-sm font-medium text-muted-foreground mb-3">Activity Breakdown</p>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1">
+              <p className="text-xs text-muted-foreground">Sedentary</p>
+              <p className="text-lg font-semibold text-foreground">{getSedentaryMinutes()} min</p>
+            </div>
+            <div className="space-y-1">
+              <p className="text-xs text-muted-foreground">Lightly Active</p>
+              <p className="text-lg font-semibold text-foreground">{getLightlyActiveMinutes()} min</p>
+            </div>
+            <div className="space-y-1">
+              <p className="text-xs text-muted-foreground">Fairly Active</p>
+              <p className="text-lg font-semibold text-foreground">{getFairlyActiveMinutes()} min</p>
+            </div>
+            <div className="space-y-1">
+              <p className="text-xs text-muted-foreground">Very Active</p>
+              <p className="text-lg font-semibold text-foreground">{getVeryActiveMinutes()} min</p>
+            </div>
+          </div>
         </div>
       </div>
     </div>

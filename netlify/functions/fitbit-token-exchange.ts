@@ -180,18 +180,24 @@ export const handler = async (event) => {
 
     console.log("💾 Saving tokens to Supabase...");
 
-    // Store tokens in the activity JSONB column
+    // Store tokens in the activity JSONB column with proper structure
     const { error } = await supabase.from("fitbit_auto_data").insert([
       {
-        user_id: null,
+        user_id: tokenData.user_id || "CTBNRR",
         fetched_at: new Date().toISOString(),
         activity: {
-          fitbit_user_id: tokenData.user_id,
-          access_token: tokenData.access_token,
-          refresh_token: tokenData.refresh_token,
-          expires_in: tokenData.expires_in,
-          scope: tokenData.scope,
-          token_type: tokenData.token_type,
+          tokens: {
+            access_token: tokenData.access_token,
+            refresh_token: tokenData.refresh_token,
+            expires_in: tokenData.expires_in,
+            expires_at: new Date(Date.now() + tokenData.expires_in * 1000).toISOString(),
+            token_type: tokenData.token_type,
+            scope: tokenData.scope,
+            fetched_at: new Date().toISOString(),
+          },
+          metadata: {
+            fitbit_user_id: tokenData.user_id,
+          }
         },
       },
     ]);

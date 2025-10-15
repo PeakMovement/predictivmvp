@@ -54,16 +54,18 @@ const handler: Handler = async (event) => {
     });
 
     // Store tokens in Supabase
-    const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE);
+    const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
     
     const { error: dbError } = await supabase
       .from("fitbit_auto_data")
       .upsert({
         user_id: user_id,
         activity: {
-          access_token,
-          refresh_token,
-          refreshed_at: new Date().toISOString(),
+          tokens: {
+            access_token,
+            refresh_token,
+            refreshed_at: new Date().toISOString(),
+          }
         },
         fetched_at: new Date().toISOString(),
       });
@@ -77,7 +79,8 @@ const handler: Handler = async (event) => {
     logSync("fitbit:refresh:trigger-sync", { message: "🔄 Starting post-refresh auto-sync..." });
     
     // Fire-and-forget fetch call - don't await to avoid blocking the response
-    fetch(`${process.env.URL}/.netlify/functions/sync-auto`)
+    const baseUrl = process.env.URL || 'https://predictiv.netlify.app';
+    fetch(`${baseUrl}/.netlify/functions/sync-auto`)
       .then((syncResponse) => {
         if (syncResponse.ok) {
           logSync("fitbit:refresh:sync-success", { 

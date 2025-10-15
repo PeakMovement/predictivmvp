@@ -45,13 +45,26 @@ const handler: Handler = async (event) => {
     });
 
     // Store in Supabase
-    const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE);
+    const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
     
+    // Check if today's data already exists
+    const today = new Date().toISOString().split('T')[0];
+    const { data: existingData } = await supabase
+      .from("fitbit_auto_data")
+      .select("id")
+      .eq("user_id", "CTBNRR")
+      .gte("fetched_at", `${today}T00:00:00`)
+      .lte("fetched_at", `${today}T23:59:59`)
+      .single();
+
     const { error: dbError } = await supabase
       .from("fitbit_auto_data")
-      .insert({
+      [existingData ? 'update' : 'insert']({
         user_id: "CTBNRR",
-        activity: activityData,
+        activity: {
+          data: activityData,
+          synced_at: new Date().toISOString(),
+        },
         fetched_at: new Date().toISOString(),
       });
 

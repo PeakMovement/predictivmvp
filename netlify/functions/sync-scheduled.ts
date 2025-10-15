@@ -14,8 +14,9 @@ const handler: Handler = async (event) => {
     });
 
     // Call the refresh endpoint (which also triggers sync-auto automatically)
+    const baseUrl = process.env.URL || 'https://predictiv.netlify.app';
     const response = await fetch(
-      `${process.env.URL}/.netlify/functions/refresh-fitbit-token`
+      `${baseUrl}/.netlify/functions/refresh-fitbit-token`
     );
 
     if (!response.ok) {

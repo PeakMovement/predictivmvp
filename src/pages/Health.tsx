@@ -342,29 +342,6 @@ export const Health = () => {
           <SleepMetricsCard />
         </div>
 
-        {/* CSV-based Training Metrics Section */}
-        <div className="space-y-6 mb-8">
-          <h2 className="text-xl font-semibold text-foreground">Training Metrics</h2>
-          {dynamicHealthMetrics.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-              {dynamicHealthMetrics.map((metric) => (
-                <MetricTile 
-                  key={metric.id} 
-                  metric={metric} 
-                  onClick={() => setSelectedMetric(metric)} 
-                />
-              ))}
-            </div>
-          ) : (
-            <div className="bg-glass backdrop-blur-xl border border-glass-border rounded-2xl p-6 shadow-glass text-center">
-              <div className="space-y-3">
-                <div className="text-3xl mb-2">📊</div>
-                <h3 className="text-lg font-semibold text-foreground">No Training Data</h3>
-                <p className="text-sm text-muted-foreground">Upload CSV data to see training metrics</p>
-              </div>
-            </div>
-          )}
-        </div>
 
         {/* View Insights Button */}
         <div className="bg-glass backdrop-blur-xl border border-glass-border rounded-2xl p-6 md:p-8 shadow-glass hover:bg-glass-highlight hover-glow transition-all duration-300 ease-out animate-fade-in">

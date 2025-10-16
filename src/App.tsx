@@ -14,7 +14,6 @@ import { Health } from "@/pages/Health";
 import { YourPlan } from "@/pages/YourPlan";
 import { Settings } from "@/pages/Settings";
 import { FindHelp } from "@/pages/FindHelp";
-import { DataUpload } from "@/pages/DataUpload";
 import { InsightsTree } from "@/pages/InsightsTree";
 import FitbitAuth from "@/pages/FitbitAuth";
 import FitbitCallback from "@/pages/FitbitCallback";
@@ -95,12 +94,6 @@ const App = () => {
         return (
           <div key="your-plan" className="animate-fade-in">
             <YourPlan />
-          </div>
-        );
-      case "data-upload":
-        return (
-          <div key="data-upload" className="animate-fade-in">
-            <DataUpload />
           </div>
         );
       case "find-help":

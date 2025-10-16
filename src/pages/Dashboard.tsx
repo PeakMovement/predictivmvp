@@ -25,7 +25,6 @@ import { format } from "date-fns";
 import { useLiveData } from "@/contexts/LiveDataContext";
 import { evolveInsight, HealthDataRow } from "@/lib/healthDataStore";
 import HealthDataChart from "@/components/HealthDataChart";
-import { CaloriesBurnedCard } from "@/components/CaloriesBurnedCard";
 
 // Helper to parse current day metrics
 const parseMetrics = (data: HealthDataRow | null) => {
@@ -1219,11 +1218,6 @@ export const Dashboard = () => {
           {/* Today's Plan Section */}
           <div className="mb-6 md:mb-8">
             <TodaysPlanCard />
-          </div>
-
-          {/* Fitbit Activity Card */}
-          <div className="mb-6 md:mb-8">
-            <CaloriesBurnedCard />
           </div>
 
           {/* Section Header */}

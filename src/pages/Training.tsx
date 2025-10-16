@@ -823,11 +823,10 @@ const SessionLogList = () => {
   
   if (sessionLogs.length === 0) {
     return (
-      <div className="bg-glass backdrop-blur-xl border border-glass-border rounded-2xl p-8 shadow-glass text-center">
+      <div className="bg-glass backdrop-blur-xl border border-glass-border rounded-2xl p-8 shadow-glass">
         <div className="space-y-4">
-          <Activity size={48} className="mx-auto text-muted-foreground" />
-          <h3 className="text-xl font-semibold text-foreground">No Session Data</h3>
-          <p className="text-muted-foreground">Upload your training data to track recent sessions</p>
+          <h3 className="text-xl font-semibold text-foreground">Last Activities</h3>
+          <p className="text-muted-foreground">Recent training sessions will appear here</p>
         </div>
       </div>
     );

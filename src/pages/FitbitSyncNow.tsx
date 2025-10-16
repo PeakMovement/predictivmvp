@@ -23,31 +23,44 @@ export const FitbitSyncNow = () => {
         },
       });
 
-      const data = await response.json();
+      // Check if response is JSON before parsing
+      const contentType = response.headers.get("content-type");
+      const isJson = contentType?.includes("application/json");
+
+      if (!response.ok) {
+        let errorMessage = "Sync failed";
+        
+        if (isJson) {
+          try {
+            const data = await response.json();
+            errorMessage = data.error || errorMessage;
+          } catch {
+            errorMessage = `Server error (${response.status})`;
+          }
+        } else {
+          // HTML error page returned
+          errorMessage = `Server error (${response.status}). Please try again.`;
+        }
+        
+        throw new Error(errorMessage);
+      }
+
+      const data = isJson ? await response.json() : null;
       console.log("Fitbit sync response:", data);
 
-      if (response.ok) {
-        console.log("✅ Sync successful!");
-        setSyncSuccess(true);
-        setSyncData(data.data);
-        toast({
-          title: "Success!",
-          description: data.message || "Fitbit data synced successfully",
-        });
-        
-        // Reset success message after 5 seconds
-        setTimeout(() => {
-          setSyncSuccess(false);
-          setSyncData(null);
-        }, 5000);
-      } else {
-        console.error("❌ Sync failed:", data);
-        toast({
-          title: "Sync Failed",
-          description: data.error || "Failed to sync Fitbit data",
-          variant: "destructive",
-        });
-      }
+      console.log("✅ Sync successful!");
+      setSyncSuccess(true);
+      setSyncData(data?.data);
+      toast({
+        title: "Success!",
+        description: data?.message || "Fitbit data synced successfully",
+      });
+      
+      // Reset success message after 5 seconds
+      setTimeout(() => {
+        setSyncSuccess(false);
+        setSyncData(null);
+      }, 5000);
     } catch (error) {
       console.error("❌ Sync error:", error);
       toast({

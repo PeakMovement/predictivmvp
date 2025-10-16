@@ -52,16 +52,33 @@ export const useFitbitSync = (): FitbitSyncState => {
         method: "POST",
       });
 
+      // Check if response is JSON before parsing
+      const contentType = response.headers.get("content-type");
+      const isJson = contentType?.includes("application/json");
+
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Sync failed");
+        let errorMessage = "Sync failed";
+        
+        if (isJson) {
+          try {
+            const errorData = await response.json();
+            errorMessage = errorData.error || errorMessage;
+          } catch {
+            errorMessage = `Server error (${response.status})`;
+          }
+        } else {
+          // HTML error page returned
+          errorMessage = `Server error (${response.status}). Please try again.`;
+        }
+        
+        throw new Error(errorMessage);
       }
 
-      const result = await response.json();
+      const result = isJson ? await response.json() : null;
       
       toast({
         title: "Sync Successful",
-        description: `Synced ${result.data?.steps || 0} steps, ${result.data?.calories || 0} calories`,
+        description: `Synced ${result?.data?.steps || 0} steps, ${result?.data?.calories || 0} calories`,
       });
 
       setLastSync(new Date());

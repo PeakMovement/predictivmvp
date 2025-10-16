@@ -136,6 +136,25 @@ const handler: Handler = async (event) => {
       timestamp: new Date().toISOString(),
     });
     
+    // Trigger trend calculation in background
+    try {
+      const deployUrl = process.env.DEPLOY_PRIME_URL || 'http://localhost:8888';
+      const trendResponse = await fetch(`${deployUrl}/.netlify/functions/calc-trends`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user_id: "CTBNRR" })
+      });
+      
+      if (trendResponse.ok) {
+        logSync("calc-trends:triggered", { success: true });
+      } else {
+        logSync("calc-trends:trigger-failed", { status: trendResponse.status });
+      }
+    } catch (trendError: any) {
+      logSync("calc-trends:trigger-error", { error: trendError.message });
+      // Don't fail sync if trends calculation fails
+    }
+    
     return {
       statusCode: 200,
       body: JSON.stringify({

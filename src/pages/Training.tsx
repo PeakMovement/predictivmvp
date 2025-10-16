@@ -12,6 +12,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useLiveData } from "@/contexts/LiveDataContext";
 import { HealthDataRow } from "@/lib/healthDataStore";
+import { TrendCarousel } from "@/components/trends/TrendCarousel";
 
 // Session logs will be loaded dynamically from data
 const getSessionLogs = (csvData: HealthDataRow[]) => {
@@ -823,12 +824,28 @@ const SessionLogList = () => {
   
   if (sessionLogs.length === 0) {
     return (
-      <div className="bg-glass backdrop-blur-xl border border-glass-border rounded-2xl p-8 shadow-glass">
-        <div className="space-y-4">
-          <h3 className="text-xl font-semibold text-foreground">Last Activities</h3>
-          <p className="text-muted-foreground">Recent training sessions will appear here</p>
+      <>
+        <div className="bg-glass backdrop-blur-xl border border-glass-border rounded-2xl p-8 shadow-glass mb-8">
+          <div className="space-y-4">
+            <h3 className="text-xl font-semibold text-foreground">Last Activities</h3>
+            <p className="text-muted-foreground">Recent training sessions will appear here</p>
+          </div>
         </div>
-      </div>
+
+        {/* Training Trends Carousel */}
+        <div className="mb-8">
+          <div className="mb-6">
+            <h3 className="text-xl font-semibold text-foreground mb-2">
+              Training Trends Analysis
+            </h3>
+            <p className="text-sm text-muted-foreground">
+              Track your workload, recovery, and performance trends
+            </p>
+          </div>
+          
+          <TrendCarousel />
+        </div>
+      </>
     );
   }
   

@@ -25,6 +25,7 @@ import { format } from "date-fns";
 import { useLiveData } from "@/contexts/LiveDataContext";
 import { evolveInsight, HealthDataRow } from "@/lib/healthDataStore";
 import HealthDataChart from "@/components/HealthDataChart";
+import { TrendCarousel } from "@/components/trends/TrendCarousel";
 
 // Helper to parse current day metrics
 const parseMetrics = (data: HealthDataRow | null) => {
@@ -1000,15 +1001,20 @@ const GraphCarousel = () => {
     }
   };
 
-  // Show empty state if no data
+  // Show training trends carousel
   if (graphData.length === 0) {
     return (
-      <div className="bg-glass backdrop-blur-xl border border-glass-border rounded-2xl p-8 shadow-glass text-center">
-        <div className="space-y-4">
-          <div className="text-4xl mb-4">📊</div>
-          <h3 className="text-xl font-semibold text-foreground">No Trend Data Available</h3>
-          <p className="text-muted-foreground">Upload your health data to view training trends</p>
+      <div className="mb-6 md:mb-8">
+        <div className="text-center mb-6 px-4 md:px-0">
+          <h3 className="text-lg md:text-xl font-semibold text-foreground mb-1 md:mb-2">
+            Training Trends
+          </h3>
+          <p className="text-xs md:text-sm text-muted-foreground">
+            Comprehensive metrics calculated from your Fitbit data
+          </p>
         </div>
+        
+        <TrendCarousel />
       </div>
     );
   }

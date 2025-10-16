@@ -123,3 +123,41 @@ export interface ParsedFitbitMetrics {
   lastSync: string;
   hasSleepData: boolean;
 }
+
+// Training Trends Types
+export interface FitbitTrend {
+  id: string;
+  user_id: string;
+  date: string;
+  acwr: number;
+  ewma: number;
+  strain: number;
+  monotony: number;
+  hrv: number;
+  training_load: number;
+  acute_load: number;
+  chronic_load: number;
+  created_at: string;
+}
+
+export interface TrendDataPoint {
+  date: string;
+  value: number;
+  formattedDate: string;
+}
+
+export interface TrendMetric {
+  id: 'acwr' | 'ewma' | 'strain' | 'monotony' | 'hrv';
+  name: string;
+  description: string;
+  currentValue: number;
+  unit: string;
+  thresholds: {
+    optimal: { min: number; max: number; color: string };
+    caution: { min: number; max: number; color: string };
+    risk: { min: number; max: number; color: string };
+  };
+  data7d: TrendDataPoint[];
+  data14d: TrendDataPoint[];
+  data30d: TrendDataPoint[];
+}

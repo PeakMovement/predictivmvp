@@ -70,6 +70,120 @@ export type Database = {
         }
         Relationships: []
       }
+      fitbit_auto_data: {
+        Row: {
+          activity: Json | null
+          fetched_at: string | null
+          id: number
+          sleep: Json | null
+          user_id: string | null
+        }
+        Insert: {
+          activity?: Json | null
+          fetched_at?: string | null
+          id?: number
+          sleep?: Json | null
+          user_id?: string | null
+        }
+        Update: {
+          activity?: Json | null
+          fetched_at?: string | null
+          id?: number
+          sleep?: Json | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      fitbit_data: {
+        Row: {
+          data: Json
+          fetched_at: string
+          id: string
+          user_id: string | null
+        }
+        Insert: {
+          data: Json
+          fetched_at: string
+          id?: string
+          user_id?: string | null
+        }
+        Update: {
+          data?: Json
+          fetched_at?: string
+          id?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      fitbit_sleep: {
+        Row: {
+          date: string
+          fetched_at: string | null
+          heart_data: Json | null
+          id: string
+          sleep_data: Json | null
+        }
+        Insert: {
+          date: string
+          fetched_at?: string | null
+          heart_data?: Json | null
+          id?: string
+          sleep_data?: Json | null
+        }
+        Update: {
+          date?: string
+          fetched_at?: string | null
+          heart_data?: Json | null
+          id?: string
+          sleep_data?: Json | null
+        }
+        Relationships: []
+      }
+      fitbit_trends: {
+        Row: {
+          acute_load: number | null
+          acwr: number | null
+          chronic_load: number | null
+          created_at: string | null
+          date: string
+          ewma: number | null
+          hrv: number | null
+          id: string
+          monotony: number | null
+          strain: number | null
+          training_load: number | null
+          user_id: string
+        }
+        Insert: {
+          acute_load?: number | null
+          acwr?: number | null
+          chronic_load?: number | null
+          created_at?: string | null
+          date: string
+          ewma?: number | null
+          hrv?: number | null
+          id?: string
+          monotony?: number | null
+          strain?: number | null
+          training_load?: number | null
+          user_id: string
+        }
+        Update: {
+          acute_load?: number | null
+          acwr?: number | null
+          chronic_load?: number | null
+          created_at?: string | null
+          date?: string
+          ewma?: number | null
+          hrv?: number | null
+          id?: string
+          monotony?: number | null
+          strain?: number | null
+          training_load?: number | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       health_daily: {
         Row: {
           active_energy_kcal: number | null
@@ -102,6 +216,13 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "health_daily_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "fitbit_dashboard_view"
+            referencedColumns: ["user_id"]
+          },
           {
             foreignKeyName: "health_daily_user_id_fkey"
             columns: ["user_id"]
@@ -215,6 +336,13 @@ export type Database = {
             foreignKeyName: "terra_connections_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
+            referencedRelation: "fitbit_dashboard_view"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "terra_connections_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
             referencedRelation: "users"
             referencedColumns: ["id"]
           },
@@ -282,6 +410,7 @@ export type Database = {
           fitbit_connected: boolean | null
           fitbit_user_id: string | null
           id: string
+          refresh_token: string | null
         }
         Insert: {
           connected_at?: string | null
@@ -290,6 +419,7 @@ export type Database = {
           fitbit_connected?: boolean | null
           fitbit_user_id?: string | null
           id?: string
+          refresh_token?: string | null
         }
         Update: {
           connected_at?: string | null
@@ -298,6 +428,7 @@ export type Database = {
           fitbit_connected?: boolean | null
           fitbit_user_id?: string | null
           id?: string
+          refresh_token?: string | null
         }
         Relationships: []
       }
@@ -379,6 +510,54 @@ export type Database = {
       }
     }
     Views: {
+      fitbit_daily_summary: {
+        Row: {
+          avg_hr: number | null
+          calories: number | null
+          date: string | null
+          distance: number | null
+          email: string | null
+          floors: number | null
+          sleep_hours: number | null
+          steps: number | null
+          user_id: string | null
+        }
+        Relationships: []
+      }
+      fitbit_dashboard: {
+        Row: {
+          activity: Json | null
+          fetched_at: string | null
+          sleep: Json | null
+          user_id: string | null
+        }
+        Insert: {
+          activity?: Json | null
+          fetched_at?: string | null
+          sleep?: Json | null
+          user_id?: string | null
+        }
+        Update: {
+          activity?: Json | null
+          fetched_at?: string | null
+          sleep?: Json | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      fitbit_dashboard_view: {
+        Row: {
+          avg_hr: number | null
+          calories: number | null
+          date: string | null
+          email: string | null
+          floors: number | null
+          sleep_hours: number | null
+          steps: number | null
+          user_id: string | null
+        }
+        Relationships: []
+      }
       user_training_metrics: {
         Row: {
           acute_load: number | null

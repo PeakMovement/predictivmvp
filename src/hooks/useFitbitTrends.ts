@@ -15,6 +15,7 @@ export const useFitbitTrends = (days: number = 30): UseFitbitTrendsReturn => {
   const [lastUpdate, setLastUpdate] = useState<string | null>(null);
 
   const fetchTrends = useCallback(async () => {
+    console.log(`[useFitbitTrends] Fetching trends for last ${days} days...`);
     setIsLoading(true);
     try {
       const { data, error } = await supabase
@@ -25,13 +26,16 @@ export const useFitbitTrends = (days: number = 30): UseFitbitTrendsReturn => {
         .limit(days);
 
       if (error) {
-        console.error("Error fetching trends:", error);
+        console.error("[useFitbitTrends] Error fetching trends:", error);
       } else if (data) {
+        console.log(`[useFitbitTrends] Successfully fetched ${data.length} trend records`);
         setTrends(data as FitbitTrend[]);
         setLastUpdate(new Date().toISOString());
+      } else {
+        console.log("[useFitbitTrends] No trend data found");
       }
     } catch (err) {
-      console.error("Failed to fetch trends:", err);
+      console.error("[useFitbitTrends] Failed to fetch trends:", err);
     } finally {
       setIsLoading(false);
     }

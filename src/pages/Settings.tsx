@@ -21,6 +21,7 @@ export const Settings = ({ onNavigate }: { onNavigate?: (tab: string) => void })
   
   // Fitbit sync state
   const [lastSyncTime, setLastSyncTime] = useState<Date | null>(null);
+  const [isCalculatingTrends, setIsCalculatingTrends] = useState(false);
   
   // SMS Alert settings
   const [smsEnabled, setSmsEnabled] = useState(false);
@@ -261,6 +262,37 @@ export const Settings = ({ onNavigate }: { onNavigate?: (tab: string) => void })
     const newPrefs = { ...emailPreferences, [key]: value };
     setEmailPreferences(newPrefs);
     saveEmailPreferences(newPrefs);
+  };
+
+  const handleCalculateTrends = async () => {
+    setIsCalculatingTrends(true);
+    try {
+      const response = await fetch('/.netlify/functions/calc-trends', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user_id: 'CTBNRR' })
+      });
+      
+      const result = await response.json();
+      
+      if (result.ok) {
+        toast({
+          title: "Success",
+          description: `Calculated trends for ${result.count} days`,
+        });
+      } else {
+        throw new Error(result.error || 'Unknown error');
+      }
+    } catch (error) {
+      console.error('Failed to calculate trends:', error);
+      toast({
+        title: "Error",
+        description: "Failed to calculate trends. Check console for details.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsCalculatingTrends(false);
+    }
   };
 
   return (
@@ -848,6 +880,30 @@ export const Settings = ({ onNavigate }: { onNavigate?: (tab: string) => void })
                 </div>
                 <ChevronRight size={16} className="text-muted-foreground" />
               </button>
+
+              <Button
+                onClick={handleCalculateTrends}
+                disabled={isCalculatingTrends}
+                className="w-full flex items-center justify-between p-4 rounded-xl border bg-glass/30 border-glass-border hover:bg-glass-highlight transition-all duration-200 h-auto"
+                variant="ghost"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center">
+                    <Database size={16} className="text-primary" />
+                  </div>
+                  <div className="text-left">
+                    <p className="font-medium text-foreground">Calculate Trends</p>
+                    <p className="text-xs text-muted-foreground">
+                      {isCalculatingTrends ? "Processing Fitbit data..." : "Generate training metrics from Fitbit data"}
+                    </p>
+                  </div>
+                </div>
+                {isCalculatingTrends ? (
+                  <RefreshCw size={16} className="text-muted-foreground animate-spin" />
+                ) : (
+                  <ChevronRight size={16} className="text-muted-foreground" />
+                )}
+              </Button>
             </div>
           </div>
         </div>

@@ -157,6 +157,7 @@ const handler: Handler = async (event) => {
     
     return {
       statusCode: 200,
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         ok: true,
         message: "Fitbit auto-sync complete",
@@ -171,6 +172,7 @@ const handler: Handler = async (event) => {
     logSync("fitbit:sync-auto:failed", { error: e.message });
     return {
       statusCode: 500,
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         ok: false,
         error: e.message,

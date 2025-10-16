@@ -130,6 +130,7 @@ const handler: Handler = async (event) => {
 
     return {
       statusCode: 200,
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         ok: true,
         message: "Fitbit tokens refreshed",
@@ -139,6 +140,7 @@ const handler: Handler = async (event) => {
     logSync("fitbit:refresh:failed", { error: e.message });
     return {
       statusCode: 500,
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         error: "Failed to refresh Fitbit tokens",
         details: e.message,

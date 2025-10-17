@@ -29,11 +29,6 @@ import { useLiveData } from "@/contexts/LiveDataContext";
 import { HealthDataRow } from "@/lib/healthDataStore";
 import { TrendCarousel } from "@/components/trends/TrendCarousel";
 
-// ✅ Training Trends cards import
-import { EWMAChart } from "@/components/trends/EWMAChart";
-import { ACWRChart } from "@/components/trends/ACWRChart";
-import { TrainingLoadChart } from "@/components/trends/TrainingLoadChart";
-import { TrainingStrainChart } from "@/components/trends/TrainingStrainChart";
 
 // ✅ getSessionLogs, generateSuggestions, getGraphData and helpers remain unchanged
 // (Paste your original implementations here — they don’t affect the grid fix)
@@ -151,28 +146,10 @@ const SessionLogList = () => {
   const sessionLogs = getSessionLogs(csvData);
   if (sessionLogs.length === 0) {
     return (
-      <>
-        <div className="bg-glass backdrop-blur-xl border border-glass-border rounded-2xl p-8 shadow-glass mb-8">
-          <h3 className="text-xl font-semibold text-foreground mb-2">Last Activities</h3>
-          <p className="text-muted-foreground">Recent training sessions will appear here</p>
-        </div>
-
-        {/* ✅ Training Trends Section FIX */}
-        <div className="mb-8">
-          <div className="mb-6">
-            <h3 className="text-xl font-semibold text-foreground mb-2">Training Trends Analysis</h3>
-            <p className="text-sm text-muted-foreground">Track your workload, recovery, and performance trends</p>
-          </div>
-
-          {/* Fixed grid layout */}
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-            <EWMAChart />
-            <ACWRChart />
-            <TrainingLoadChart />
-            <TrainingStrainChart />
-          </div>
-        </div>
-      </>
+      <div className="bg-glass backdrop-blur-xl border border-glass-border rounded-2xl p-8 shadow-glass mb-8">
+        <h3 className="text-xl font-semibold text-foreground mb-2">Last Activities</h3>
+        <p className="text-muted-foreground">Recent training sessions will appear here</p>
+      </div>
     );
   }
 

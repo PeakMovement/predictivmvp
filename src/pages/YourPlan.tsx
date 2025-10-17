@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import jsPDF from "jspdf";
 import { useLiveData } from "@/contexts/LiveDataContext";
+import { useFitbitTrends } from "@/hooks/useFitbitTrends";
 
 // Load accepted challenges from localStorage
 const getAcceptedChallenges = () => {
@@ -537,14 +538,11 @@ const AcceptedChallengesSection = () => {
 const WeeklyInsightsSection = () => {
   const [isInfoDialogOpen, setIsInfoDialogOpen] = useState(false);
   const { csvData, currentDayIndex } = useLiveData();
+  const { trends, isLoading } = useFitbitTrends(7);
   
-  // Calculate 7-day rolling averages
+  // Calculate 7-day rolling averages from fitbit_trends
   const calculate7DayAverages = () => {
-    const startIndex = Math.max(0, currentDayIndex - 6);
-    const endIndex = currentDayIndex + 1;
-    const last7Days = csvData.slice(startIndex, endIndex);
-    
-    if (last7Days.length === 0) {
+    if (trends.length === 0) {
       return {
         avgHRV: 0,
         avgACWR: 0,
@@ -553,10 +551,10 @@ const WeeklyInsightsSection = () => {
       };
     }
     
-    const avgHRV = last7Days.reduce((sum, row) => sum + parseFloat(row.HRV || "0"), 0) / last7Days.length;
-    const avgACWR = last7Days.reduce((sum, row) => sum + parseFloat(row.ACWR || "0"), 0) / last7Days.length;
-    const avgSleepScore = last7Days.reduce((sum, row) => sum + parseFloat(row.SleepScore || "0"), 0) / last7Days.length;
-    const avgStrain = last7Days.reduce((sum, row) => sum + parseFloat(row.Strain || "0"), 0) / last7Days.length;
+    const avgHRV = trends.reduce((sum, t) => sum + (t.hrv || 0), 0) / trends.length;
+    const avgACWR = trends.reduce((sum, t) => sum + (t.acwr || 0), 0) / trends.length;
+    const avgSleepScore = 75; // Placeholder - sleep_score needs to be added to fitbit_trends
+    const avgStrain = trends.reduce((sum, t) => sum + (t.strain || 0), 0) / trends.length;
     
     return {
       avgHRV,

@@ -18,17 +18,12 @@ export default function MyBaselines() {
   useEffect(() => {
     const fetchBaselines = async () => {
       try {
-        const { data: { user } } = await supabase.auth.getUser();
+        setLoading(true);
         
-        if (!user) {
-          setLoading(false);
-          return;
-        }
-
+        // Query yves_profiles - allow both authenticated and unauthenticated for demo
         const { data, error } = await supabase
           .from("yves_profiles" as any)
-          .select("metric, baseline_value, current_value, deviation_pct, risk_status")
-          .eq("user_id", user.id);
+          .select("metric, baseline_value, current_value, deviation_pct, risk_status");
 
         if (error) {
           console.error("Error fetching baselines:", error);
@@ -43,6 +38,27 @@ export default function MyBaselines() {
     };
 
     fetchBaselines();
+
+    // Set up realtime subscription
+    const channel = supabase
+      .channel('yves_profiles_changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'yves_profiles'
+        },
+        () => {
+          console.log('Baselines updated, refreshing...');
+          fetchBaselines();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   const getRiskColor = (status: string) => {

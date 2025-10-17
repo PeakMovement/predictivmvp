@@ -28,6 +28,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useLiveData } from "@/contexts/LiveDataContext";
 import { HealthDataRow } from "@/lib/healthDataStore";
 import { TrendCarousel } from "@/components/trends/TrendCarousel";
+import { useFitbitTrends } from "@/hooks/useFitbitTrends";
 
 
 // ✅ getSessionLogs, generateSuggestions, getGraphData and helpers remain unchanged
@@ -232,6 +233,7 @@ const CircularGauge = ({
 // ✅ Main Page Component
 export const Training = () => {
   const { currentDayData } = useLiveData();
+  const { latestTrend, isLoading: trendsLoading } = useFitbitTrends(1);
   const [suggestions, setSuggestions] = useState<ReturnType<typeof generateSuggestions>>([]);
 
   useEffect(() => {
@@ -260,13 +262,13 @@ export const Training = () => {
             <div className="space-y-4 md:space-y-6">
               <CircularGauge
                 title="Training Monotony"
-                value={currentDayData ? parseFloat(currentDayData.Monotony || "0") : 0}
+                value={latestTrend?.monotony || 0}
                 maxValue={5}
                 unit="ratio"
               />
               <CircularGauge
                 title="Training Strain"
-                value={currentDayData ? parseFloat(currentDayData.Strain || "0") : 0}
+                value={latestTrend?.strain || 0}
                 maxValue={200}
                 unit="TSS"
               />

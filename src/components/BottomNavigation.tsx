@@ -1,4 +1,4 @@
-import { Home, Dumbbell, Heart, ClipboardList, Users, RefreshCw, TrendingUp } from "lucide-react";
+import { Home, Dumbbell, Heart, ClipboardList, Users, RefreshCw, TrendingUp, Code } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface BottomNavigationProps {
@@ -14,6 +14,7 @@ const tabs = [
   { id: "mybaselines", label: "Baselines", icon: TrendingUp },
   { id: "find-help", label: "Find Help", icon: Users },
   { id: "fitbit-sync-now", label: "Fitbit Sync", icon: RefreshCw },
+  { id: "developer-baselines-engine", label: "Dev Tools", icon: Code },
 ];
 
 export const BottomNavigation = ({ activeTab, onTabChange }: BottomNavigationProps) => {

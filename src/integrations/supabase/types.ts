@@ -139,6 +139,39 @@ export type Database = {
         }
         Relationships: []
       }
+      fitbit_tokens: {
+        Row: {
+          access_token: string
+          created_at: string | null
+          expires_in: number | null
+          refresh_token: string | null
+          scope: string | null
+          token_type: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          access_token: string
+          created_at?: string | null
+          expires_in?: number | null
+          refresh_token?: string | null
+          scope?: string | null
+          token_type?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          access_token?: string
+          created_at?: string | null
+          expires_in?: number | null
+          refresh_token?: string | null
+          scope?: string | null
+          token_type?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       fitbit_trends: {
         Row: {
           acute_load: number | null

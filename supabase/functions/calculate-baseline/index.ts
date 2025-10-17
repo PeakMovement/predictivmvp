@@ -91,7 +91,7 @@ Deno.serve(async (req) => {
     if (baselineRecords.length > 0) {
       const { error: upsertError } = await supabase
         .from('user_baselines')
-        .upsert(baselineRecords, { onConflict: 'user_id,metric' });
+        .upsert(baselineRecords, { onConflict: 'user_id,metric,data_window' });
 
       if (upsertError) throw upsertError;
     }

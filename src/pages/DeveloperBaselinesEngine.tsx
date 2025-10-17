@@ -153,6 +153,38 @@ export default function DeveloperBaselinesEngine() {
     }
   };
 
+  const runPipeline = async () => {
+    toast({
+      title: 'Starting pipeline...',
+      description: 'Running baseline calculation → deviation calculation',
+    });
+
+    try {
+      // Step 1: Calculate baselines
+      const baselineResponse = await supabase.functions.invoke('calculate-baseline', { body: {} });
+      if (baselineResponse.error) throw new Error(`Baseline calc failed: ${baselineResponse.error.message}`);
+
+      // Step 2: Calculate deviations
+      const deviationResponse = await supabase.functions.invoke('calculate-deviation', { body: {} });
+      if (deviationResponse.error) throw new Error(`Deviation calc failed: ${deviationResponse.error.message}`);
+
+      toast({
+        title: 'Pipeline completed!',
+        description: 'Baselines and deviations have been calculated',
+      });
+
+      // Refresh all data
+      setTimeout(fetchData, 1000);
+    } catch (error: any) {
+      console.error('Pipeline error:', error);
+      toast({
+        title: 'Pipeline failed',
+        description: error.message,
+        variant: 'destructive',
+      });
+    }
+  };
+
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'success':
@@ -197,10 +229,16 @@ export default function DeveloperBaselinesEngine() {
           </h1>
           <p className="text-muted-foreground mt-1">Developer Control Panel</p>
         </div>
-        <Button onClick={fetchData} variant="outline" size="sm">
-          <RefreshCw className="w-4 h-4 mr-2" />
-          Refresh
-        </Button>
+        <div className="flex gap-2">
+          <Button onClick={runPipeline} variant="default" size="sm" className="bg-primary/20 hover:bg-primary/30">
+            <Play className="w-4 h-4 mr-2" />
+            Run Pipeline
+          </Button>
+          <Button onClick={fetchData} variant="outline" size="sm">
+            <RefreshCw className="w-4 h-4 mr-2" />
+            Refresh
+          </Button>
+        </div>
       </div>
 
       {/* Function Status Table */}

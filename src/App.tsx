@@ -19,6 +19,7 @@ import FitbitAuth from "@/pages/FitbitAuth";
 import FitbitCallback from "@/pages/FitbitCallback";
 import TestSupabase from "@/pages/TestSupabase";
 import FitbitSyncNow from "@/pages/FitbitSyncNow";
+import MyBaselines from "@/pages/MyBaselines";
 import { Settings as SettingsIcon } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
@@ -94,6 +95,12 @@ const App = () => {
         return (
           <div key="your-plan" className="animate-fade-in">
             <YourPlan />
+          </div>
+        );
+      case "mybaselines":
+        return (
+          <div key="mybaselines" className="animate-fade-in">
+            <MyBaselines />
           </div>
         );
       case "find-help":

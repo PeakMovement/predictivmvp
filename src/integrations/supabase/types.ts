@@ -184,6 +184,87 @@ export type Database = {
         }
         Relationships: []
       }
+      fitbit_trends_backup: {
+        Row: {
+          acute_load: number | null
+          acwr: number | null
+          chronic_load: number | null
+          created_at: string | null
+          date: string | null
+          ewma: number | null
+          hrv: number | null
+          id: string | null
+          monotony: number | null
+          strain: number | null
+          training_load: number | null
+          user_id: string | null
+        }
+        Insert: {
+          acute_load?: number | null
+          acwr?: number | null
+          chronic_load?: number | null
+          created_at?: string | null
+          date?: string | null
+          ewma?: number | null
+          hrv?: number | null
+          id?: string | null
+          monotony?: number | null
+          strain?: number | null
+          training_load?: number | null
+          user_id?: string | null
+        }
+        Update: {
+          acute_load?: number | null
+          acwr?: number | null
+          chronic_load?: number | null
+          created_at?: string | null
+          date?: string | null
+          ewma?: number | null
+          hrv?: number | null
+          id?: string | null
+          monotony?: number | null
+          strain?: number | null
+          training_load?: number | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      function_execution_log: {
+        Row: {
+          completed_at: string | null
+          duration_ms: number | null
+          error_message: string | null
+          function_name: string
+          id: string
+          metadata: Json | null
+          started_at: string | null
+          status: string
+          user_id: string | null
+        }
+        Insert: {
+          completed_at?: string | null
+          duration_ms?: number | null
+          error_message?: string | null
+          function_name: string
+          id?: string
+          metadata?: Json | null
+          started_at?: string | null
+          status: string
+          user_id?: string | null
+        }
+        Update: {
+          completed_at?: string | null
+          duration_ms?: number | null
+          error_message?: string | null
+          function_name?: string
+          id?: string
+          metadata?: Json | null
+          started_at?: string | null
+          status?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       health_daily: {
         Row: {
           active_energy_kcal: number | null
@@ -348,6 +429,33 @@ export type Database = {
           },
         ]
       }
+      user_baselines: {
+        Row: {
+          data_window: number
+          deviation_threshold: number | null
+          metric: string
+          rolling_avg: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          data_window: number
+          deviation_threshold?: number | null
+          metric: string
+          rolling_avg: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          data_window?: number
+          deviation_threshold?: number | null
+          metric?: string
+          rolling_avg?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_fitbit_data: {
         Row: {
           calories: number | null
@@ -507,6 +615,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      yves_profiles: {
+        Row: {
+          baseline_value: number
+          current_value: number
+          deviation_pct: number
+          metric: string
+          risk_status: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          baseline_value: number
+          current_value: number
+          deviation_pct: number
+          metric: string
+          risk_status?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          baseline_value?: number
+          current_value?: number
+          deviation_pct?: number
+          metric?: string
+          risk_status?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
     }
     Views: {

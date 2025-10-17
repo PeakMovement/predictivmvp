@@ -14,3 +14,12 @@ verify_jwt = false
 
 [functions.calc-trends]
 verify_jwt = false
+
+[functions.calculate-baseline]
+verify_jwt = false
+
+[functions.calculate-deviation]
+verify_jwt = false
+
+[functions.fetch-fitbit-auto]
+verify_jwt = false

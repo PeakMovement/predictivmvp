@@ -20,6 +20,7 @@ import FitbitCallback from "@/pages/FitbitCallback";
 import TestSupabase from "@/pages/TestSupabase";
 import FitbitSyncNow from "@/pages/FitbitSyncNow";
 import MyBaselines from "@/pages/MyBaselines";
+import DeveloperBaselinesEngine from "@/pages/DeveloperBaselinesEngine";
 import { Settings as SettingsIcon } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
@@ -131,6 +132,12 @@ const App = () => {
         return (
           <div key="fitbit-sync-now" className="animate-fade-in">
             <FitbitSyncNow />
+          </div>
+        );
+      case "developer-baselines-engine":
+        return (
+          <div key="developer-baselines-engine" className="animate-fade-in">
+            <DeveloperBaselinesEngine />
           </div>
         );
       default:

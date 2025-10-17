@@ -28,6 +28,21 @@ Deno.serve(async (req) => {
       started_at: new Date().toISOString(),
     });
 
+    // Get user ID mapping first
+    const { data: usersData, error: usersError } = await supabase
+      .from('users')
+      .select('id, fitbit_user_id');
+
+    if (usersError) throw usersError;
+
+    // Create a map of fitbit_user_id -> UUID
+    const userIdMap = new Map();
+    usersData?.forEach((user: any) => {
+      if (user.fitbit_user_id) {
+        userIdMap.set(user.fitbit_user_id, user.id);
+      }
+    });
+
     // Get latest Fitbit data (last 7 days)
     const sevenDaysAgo = new Date();
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
@@ -62,12 +77,19 @@ Deno.serve(async (req) => {
     const metrics = ['hrv', 'acwr', 'ewma', 'strain', 'monotony', 'training_load', 'acute_load', 'chronic_load'];
 
     recentData?.forEach((record: any) => {
+      // Map Fitbit user_id to system UUID
+      const systemUserId = userIdMap.get(record.user_id);
+      if (!systemUserId) {
+        console.log(`Skipping record for unmapped Fitbit user: ${record.user_id}`);
+        return;
+      }
+
       // Only process most recent record per user
-      if (processedUsers.has(record.user_id)) return;
-      processedUsers.add(record.user_id);
+      if (processedUsers.has(systemUserId)) return;
+      processedUsers.add(systemUserId);
 
       for (const metric of metrics) {
-        const baseline = baselineMap.get(`${record.user_id}_${metric}`);
+        const baseline = baselineMap.get(`${systemUserId}_${metric}`);
         const currentValue = record[metric];
         
         if (baseline && currentValue != null) {
@@ -75,7 +97,7 @@ Deno.serve(async (req) => {
           const riskStatus = Math.abs(deviation) < 10 ? 'low' : Math.abs(deviation) < 25 ? 'moderate' : 'high';
           
           deviationRecords.push({
-            user_id: record.user_id,
+            user_id: systemUserId,
             metric: metric,
             baseline_value: baseline,
             current_value: currentValue,

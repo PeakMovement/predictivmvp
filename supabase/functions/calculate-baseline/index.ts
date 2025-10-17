@@ -28,9 +28,24 @@ Deno.serve(async (req) => {
       started_at: new Date().toISOString(),
     });
 
-    // Get last 30 days of Fitbit data
+    // Get last 30 days of Fitbit data with user UUID mapping
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+    // First, get the user mapping from fitbit_user_id to UUID
+    const { data: usersData, error: usersError } = await supabase
+      .from('users')
+      .select('id, fitbit_user_id');
+
+    if (usersError) throw usersError;
+
+    // Create a map of fitbit_user_id -> UUID
+    const userIdMap = new Map();
+    usersData?.forEach((user: any) => {
+      if (user.fitbit_user_id) {
+        userIdMap.set(user.fitbit_user_id, user.id);
+      }
+    });
 
     const { data: fitbitData, error: fetchError } = await supabase
       .from('fitbit_trends')
@@ -42,12 +57,19 @@ Deno.serve(async (req) => {
 
     console.log(`Fetched ${fitbitData?.length || 0} records for baseline calculation`);
 
-    // Group by user_id and calculate averages
+    // Group by user_id and calculate averages (using mapped UUIDs)
     const userBaselines = new Map();
     
     fitbitData?.forEach((record: any) => {
-      if (!userBaselines.has(record.user_id)) {
-        userBaselines.set(record.user_id, {
+      // Map Fitbit user_id to system UUID
+      const systemUserId = userIdMap.get(record.user_id);
+      if (!systemUserId) {
+        console.log(`Skipping record for unmapped Fitbit user: ${record.user_id}`);
+        return;
+      }
+
+      if (!userBaselines.has(systemUserId)) {
+        userBaselines.set(systemUserId, {
           hrv: [],
           acwr: [],
           ewma: [],
@@ -59,7 +81,7 @@ Deno.serve(async (req) => {
         });
       }
       
-      const user = userBaselines.get(record.user_id);
+      const user = userBaselines.get(systemUserId);
       if (record.hrv) user.hrv.push(record.hrv);
       if (record.acwr) user.acwr.push(record.acwr);
       if (record.ewma) user.ewma.push(record.ewma);

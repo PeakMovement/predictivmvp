@@ -34,7 +34,7 @@ Deno.serve(async (req) => {
 
     const { data: fitbitData, error: fetchError } = await supabase
       .from('fitbit_trends')
-      .select('user_id, hrv, acwr, date')
+      .select('user_id, hrv, acwr, ewma, strain, monotony, training_load, acute_load, chronic_load, date')
       .gte('date', thirtyDaysAgo.toISOString().split('T')[0])
       .order('date', { ascending: false });
 
@@ -50,32 +50,41 @@ Deno.serve(async (req) => {
         userBaselines.set(record.user_id, {
           hrv: [],
           acwr: [],
+          ewma: [],
+          strain: [],
+          monotony: [],
+          training_load: [],
+          acute_load: [],
+          chronic_load: [],
         });
       }
       
       const user = userBaselines.get(record.user_id);
       if (record.hrv) user.hrv.push(record.hrv);
       if (record.acwr) user.acwr.push(record.acwr);
+      if (record.ewma) user.ewma.push(record.ewma);
+      if (record.strain) user.strain.push(record.strain);
+      if (record.monotony) user.monotony.push(record.monotony);
+      if (record.training_load) user.training_load.push(record.training_load);
+      if (record.acute_load) user.acute_load.push(record.acute_load);
+      if (record.chronic_load) user.chronic_load.push(record.chronic_load);
     });
 
     // Calculate and upsert baselines
     const baselineRecords = [];
-    for (const [userId, metrics] of userBaselines.entries()) {
-      if (metrics.hrv.length > 0) {
-        baselineRecords.push({
-          user_id: userId,
-          metric: 'hrv',
-          rolling_avg: metrics.hrv.reduce((a: number, b: number) => a + b, 0) / metrics.hrv.length,
-          data_window: 30,
-        });
-      }
-      if (metrics.acwr.length > 0) {
-        baselineRecords.push({
-          user_id: userId,
-          metric: 'acwr',
-          rolling_avg: metrics.acwr.reduce((a: number, b: number) => a + b, 0) / metrics.acwr.length,
-          data_window: 30,
-        });
+    const metrics = ['hrv', 'acwr', 'ewma', 'strain', 'monotony', 'training_load', 'acute_load', 'chronic_load'];
+    
+    for (const [userId, userMetrics] of userBaselines.entries()) {
+      for (const metric of metrics) {
+        const values = userMetrics[metric as keyof typeof userMetrics];
+        if (values.length > 0) {
+          baselineRecords.push({
+            user_id: userId,
+            metric: metric,
+            rolling_avg: values.reduce((a: number, b: number) => a + b, 0) / values.length,
+            data_window: 30,
+          });
+        }
       }
     }
 

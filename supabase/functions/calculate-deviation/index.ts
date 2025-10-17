@@ -34,7 +34,7 @@ Deno.serve(async (req) => {
 
     const { data: recentData, error: recentError } = await supabase
       .from('fitbit_trends')
-      .select('user_id, hrv, acwr, date')
+      .select('user_id, hrv, acwr, ewma, strain, monotony, training_load, acute_load, chronic_load, date')
       .gte('date', sevenDaysAgo.toISOString().split('T')[0])
       .order('date', { ascending: false });
 
@@ -59,41 +59,30 @@ Deno.serve(async (req) => {
     // Calculate deviations
     const deviationRecords: any[] = [];
     const processedUsers = new Set();
+    const metrics = ['hrv', 'acwr', 'ewma', 'strain', 'monotony', 'training_load', 'acute_load', 'chronic_load'];
 
     recentData?.forEach((record: any) => {
       // Only process most recent record per user
       if (processedUsers.has(record.user_id)) return;
       processedUsers.add(record.user_id);
 
-      const hrvBaseline = baselineMap.get(`${record.user_id}_hrv`);
-      const acwrBaseline = baselineMap.get(`${record.user_id}_acwr`);
-
-      if (hrvBaseline && record.hrv) {
-        const deviation = ((record.hrv - hrvBaseline) / hrvBaseline) * 100;
-        const riskStatus = Math.abs(deviation) < 10 ? 'low' : Math.abs(deviation) < 25 ? 'moderate' : 'high';
+      for (const metric of metrics) {
+        const baseline = baselineMap.get(`${record.user_id}_${metric}`);
+        const currentValue = record[metric];
         
-        deviationRecords.push({
-          user_id: record.user_id,
-          metric: 'hrv',
-          baseline_value: hrvBaseline,
-          current_value: record.hrv,
-          deviation_pct: deviation,
-          risk_status: riskStatus,
-        });
-      }
-
-      if (acwrBaseline && record.acwr) {
-        const deviation = ((record.acwr - acwrBaseline) / acwrBaseline) * 100;
-        const riskStatus = Math.abs(deviation) < 10 ? 'low' : Math.abs(deviation) < 25 ? 'moderate' : 'high';
-        
-        deviationRecords.push({
-          user_id: record.user_id,
-          metric: 'acwr',
-          baseline_value: acwrBaseline,
-          current_value: record.acwr,
-          deviation_pct: deviation,
-          risk_status: riskStatus,
-        });
+        if (baseline && currentValue != null) {
+          const deviation = ((currentValue - baseline) / baseline) * 100;
+          const riskStatus = Math.abs(deviation) < 10 ? 'low' : Math.abs(deviation) < 25 ? 'moderate' : 'high';
+          
+          deviationRecords.push({
+            user_id: record.user_id,
+            metric: metric,
+            baseline_value: baseline,
+            current_value: currentValue,
+            deviation_pct: deviation,
+            risk_status: riskStatus,
+          });
+        }
       }
     });
 

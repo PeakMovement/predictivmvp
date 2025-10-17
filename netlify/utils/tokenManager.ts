@@ -19,7 +19,7 @@ export async function getValidToken(userId: string = "CTBNRR"): Promise<string> 
   // Fetch latest token data from database
   const { data, error } = await supabase
     .from("fitbit_auto_data")
-    .select("activity")
+    .select("activity, fetched_at")
     .eq("user_id", userId)
     .order("fetched_at", { ascending: false })
     .limit(1)
@@ -33,8 +33,48 @@ export async function getValidToken(userId: string = "CTBNRR"): Promise<string> 
   const activity = data.activity as any;
   const tokens = activity?.tokens as TokenData;
 
+  // If no access token in fitbit_auto_data, try fallback to users table
   if (!tokens?.access_token) {
-    throw new Error("No access token found in database");
+    logSync("tokenManager:fallback", { message: "No token in fitbit_auto_data, checking users table" });
+    
+    const { data: userData, error: userError } = await supabase
+      .from("users")
+      .select("refresh_token")
+      .eq("fitbit_user_id", userId)
+      .single();
+    
+    if (userError || !userData?.refresh_token) {
+      throw new Error("No access token found in database");
+    }
+    
+    // Trigger refresh using the refresh_token from users table
+    logSync("tokenManager:fallback-refresh", { message: "Triggering token refresh from users table" });
+    const baseUrl = process.env.URL || 'https://predictiv.netlify.app';
+    const refreshResponse = await fetch(`${baseUrl}/.netlify/functions/refresh-fitbit-token`);
+    
+    if (!refreshResponse.ok) {
+      throw new Error("Failed to refresh token from users table");
+    }
+    
+    // Fetch the newly refreshed token from fitbit_auto_data
+    const { data: newData, error: newError } = await supabase
+      .from("fitbit_auto_data")
+      .select("activity, fetched_at")
+      .eq("user_id", userId)
+      .order("fetched_at", { ascending: false })
+      .limit(1)
+      .single();
+    
+    if (newError || !newData) {
+      throw new Error("Failed to fetch refreshed token");
+    }
+    
+    const newTokens = (newData.activity as any)?.tokens as TokenData;
+    if (!newTokens?.access_token) {
+      throw new Error("No access token after refresh");
+    }
+    
+    return newTokens.access_token;
   }
 
   // Check if token is expired (Fitbit tokens expire in 8 hours = 28800 seconds)

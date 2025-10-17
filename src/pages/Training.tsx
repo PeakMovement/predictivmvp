@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState, useEffect } from "react";
+import React from "react";
 import { format } from "date-fns";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
@@ -122,20 +123,20 @@ const generateSuggestions = (currentData: HealthDataRow | null) => {
 // ✅ AccountabilityChallenges, SessionLogCard, SessionLogList, CircularGauge, GraphCarousel remain unchanged
 // (Paste your versions — they do not affect layout alignment)
 
-const SessionLogCard = ({ session }: { session: ReturnType<typeof getSessionLogs>[0] }) => (
+const SessionLogCard = ({ title, date, load }: { title: string; date: string; load: number }) => (
   <div className="bg-glass backdrop-blur-xl border border-glass-border rounded-xl p-4 shadow-glass hover:bg-glass-highlight hover:scale-105 hover:-translate-y-1 transition-all duration-300 ease-out transform-gpu">
     <div className="flex items-center justify-between mb-2">
-      <h4 className="font-semibold text-foreground">{session.title}</h4>
-      <span className="px-2 py-1 text-xs rounded-lg font-medium bg-blue-500/20 text-blue-400">{session.type}</span>
+      <h4 className="font-semibold text-foreground">{title}</h4>
+      <span className="px-2 py-1 text-xs rounded-lg font-medium bg-blue-500/20 text-blue-400">Training</span>
     </div>
     <div className="flex items-center justify-between text-sm">
       <div className="flex items-center gap-2 text-muted-foreground">
         <Calendar size={14} />
-        <span>{session.date}</span>
+        <span>{date}</span>
       </div>
       <div className="flex items-center gap-2">
         <Activity size={14} className="text-primary animate-bounce-subtle" />
-        <span className="font-medium text-foreground">{session.load > 0 ? session.load.toFixed(0) : "–"}</span>
+        <span className="font-medium text-foreground">{load > 0 ? load.toFixed(0) : "–"}</span>
         <span className="text-muted-foreground text-xs">load</span>
       </div>
     </div>
@@ -143,16 +144,20 @@ const SessionLogCard = ({ session }: { session: ReturnType<typeof getSessionLogs
 );
 
 const SessionLogList = () => {
-  const { csvData } = useLiveData();
-  const sessionLogs = getSessionLogs(csvData);
-  if (sessionLogs.length === 0) {
-    return (
-      <div className="bg-glass backdrop-blur-xl border border-glass-border rounded-2xl p-8 shadow-glass mb-8">
-        <h3 className="text-xl font-semibold text-foreground mb-2">Last Activities</h3>
-        <p className="text-muted-foreground">Recent training sessions will appear here</p>
-      </div>
-    );
-  }
+  const { trends, isLoading } = useFitbitTrends({ days: 7 });
+  
+  const sessions = React.useMemo(() => {
+    if (!trends || trends.length === 0) return [];
+    
+    return trends
+      .filter(t => t.training_load != null)
+      .slice(0, 5)
+      .map(trend => ({
+        title: `Day ${new Date(trend.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`,
+        date: trend.date,
+        load: Math.round(trend.training_load || 0),
+      }));
+  }, [trends]);
 
   return (
     <div className="bg-glass backdrop-blur-xl border border-glass-border rounded-2xl p-6 shadow-glass hover:bg-glass-highlight hover:scale-105 hover:-translate-y-1 transition-all duration-300 ease-out animate-fade-in transform-gpu">
@@ -163,9 +168,20 @@ const SessionLogList = () => {
         <h3 className="text-lg font-semibold text-foreground">Recent Sessions</h3>
       </div>
       <div className="space-y-3">
-        {sessionLogs.map((session, index) => (
-          <SessionLogCard key={index} session={session} />
-        ))}
+        {isLoading ? (
+          <div className="text-center py-8 text-muted-foreground">
+            <p className="text-sm">Loading sessions...</p>
+          </div>
+        ) : sessions.length > 0 ? (
+          sessions.map((session, i) => (
+            <SessionLogCard key={i} {...session} />
+          ))
+        ) : (
+          <div className="text-center py-8 text-muted-foreground">
+            <p className="text-sm">No recent sessions</p>
+            <p className="text-xs mt-1">Connect Fitbit and calculate trends in Settings</p>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -233,7 +249,7 @@ const CircularGauge = ({
 // ✅ Main Page Component
 export const Training = () => {
   const { currentDayData } = useLiveData();
-  const { latestTrend, isLoading: trendsLoading } = useFitbitTrends(1);
+  const { latestTrend, isLoading: trendsLoading } = useFitbitTrends({ days: 1 });
   const [suggestions, setSuggestions] = useState<ReturnType<typeof generateSuggestions>>([]);
 
   useEffect(() => {

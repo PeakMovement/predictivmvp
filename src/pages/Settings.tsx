@@ -280,6 +280,9 @@ export const Settings = ({ onNavigate }: { onNavigate?: (tab: string) => void })
           title: "Success",
           description: `Calculated trends for ${result.count} days`,
         });
+        
+        // Dispatch custom event to refresh trends in other components
+        window.dispatchEvent(new CustomEvent('fitbit_trends_refresh'));
       } else {
         throw new Error(result.error || 'Unknown error');
       }

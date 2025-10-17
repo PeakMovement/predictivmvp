@@ -538,7 +538,7 @@ const AcceptedChallengesSection = () => {
 const WeeklyInsightsSection = () => {
   const [isInfoDialogOpen, setIsInfoDialogOpen] = useState(false);
   const { csvData, currentDayIndex } = useLiveData();
-  const { trends, isLoading } = useFitbitTrends(7);
+  const { trends, isLoading } = useFitbitTrends({ days: 7 });
   
   // Calculate 7-day rolling averages from fitbit_trends
   const calculate7DayAverages = () => {

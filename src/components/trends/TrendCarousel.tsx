@@ -11,7 +11,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 
 export const TrendCarousel = () => {
-  const { trends, isLoading, refresh } = useFitbitTrends(30);
+  const { trends, isLoading, refresh } = useFitbitTrends({ days: 30 });
 
   // Transform trends data into metrics for display
   const getMetrics = (): TrendMetric[] => {

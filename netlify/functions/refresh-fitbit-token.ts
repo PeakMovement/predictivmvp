@@ -19,13 +19,24 @@ const handler: Handler = async (event) => {
       .limit(1)
       .single();
 
-    if (fetchError || !tokenData) {
-      throw new Error("No refresh token found in database");
-    }
-
-    const refreshToken = (tokenData.activity as any)?.tokens?.refresh_token;
+    let refreshToken = (tokenData?.activity as any)?.tokens?.refresh_token;
+    
+    // Fallback: if no refresh token in fitbit_auto_data, check users table
     if (!refreshToken) {
-      throw new Error("No refresh token found in database");
+      logSync("fitbit:refresh:fallback", { message: "No token in fitbit_auto_data, checking users table" });
+      
+      const { data: userData, error: userError } = await supabase
+        .from("users")
+        .select("refresh_token")
+        .eq("fitbit_user_id", userId)
+        .single();
+      
+      if (userError || !userData?.refresh_token) {
+        throw new Error("No refresh token found in database");
+      }
+      
+      refreshToken = userData.refresh_token;
+      logSync("fitbit:refresh:fallback-success", { message: "Using refresh token from users table" });
     }
 
     // Prepare Basic Auth header
@@ -100,6 +111,17 @@ const handler: Handler = async (event) => {
     if (dbError) {
       logSync("fitbit:refresh:db_error", { error: dbError.message });
       throw new Error(`Database error: ${dbError.message}`);
+    }
+    
+    // Also sync the refresh_token to users table to keep both sources in sync
+    const { error: usersError } = await supabase
+      .from("users")
+      .update({ refresh_token: new_refresh_token })
+      .eq("fitbit_user_id", user_id || userId);
+    
+    if (usersError) {
+      logSync("fitbit:refresh:users-sync-warning", { error: usersError.message });
+      // Don't throw - this is a non-critical sync
     }
 
     // Trigger auto-sync in the background (non-blocking)

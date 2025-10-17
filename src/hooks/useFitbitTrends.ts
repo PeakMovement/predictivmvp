@@ -4,6 +4,7 @@ import { FitbitTrend } from "@/types/fitbit";
 
 interface UseFitbitTrendsReturn {
   trends: FitbitTrend[];
+  latestTrend: FitbitTrend | null;
   isLoading: boolean;
   lastUpdate: string | null;
   refresh: () => Promise<void>;
@@ -11,6 +12,7 @@ interface UseFitbitTrendsReturn {
 
 export const useFitbitTrends = (days: number = 30): UseFitbitTrendsReturn => {
   const [trends, setTrends] = useState<FitbitTrend[]>([]);
+  const [latestTrend, setLatestTrend] = useState<FitbitTrend | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [lastUpdate, setLastUpdate] = useState<string | null>(null);
 
@@ -30,6 +32,7 @@ export const useFitbitTrends = (days: number = 30): UseFitbitTrendsReturn => {
       } else if (data) {
         console.log(`[useFitbitTrends] Successfully fetched ${data.length} trend records`);
         setTrends(data as FitbitTrend[]);
+        setLatestTrend(data.length > 0 ? (data[0] as FitbitTrend) : null);
         setLastUpdate(new Date().toISOString());
       } else {
         console.log("[useFitbitTrends] No trend data found");
@@ -72,6 +75,7 @@ export const useFitbitTrends = (days: number = 30): UseFitbitTrendsReturn => {
 
   return {
     trends,
+    latestTrend,
     isLoading,
     lastUpdate,
     refresh: fetchTrends,

@@ -97,8 +97,7 @@ export default function DeveloperBaselinesEngine() {
       if (!insightsError && insightsData) setInsights(insightsData as Insight[]);
 
       // Feedback
-      const { data: feedbackData, error: feedbackError } = await supabase
-        .from("insight_feedback")
+      const { data: feedbackData, error: feedbackError } = await (supabase.from as any)("insight_feedback")
         .select("*")
         .order("created_at", { ascending: false })
         .limit(10);
@@ -123,7 +122,9 @@ export default function DeveloperBaselinesEngine() {
         fetchData();
       })
       .subscribe();
-    return () => supabase.removeChannel(channel);
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   useEffect(() => {
@@ -273,7 +274,7 @@ export default function DeveloperBaselinesEngine() {
                     size="sm"
                     className="mt-3 w-full"
                     onClick={async () => {
-                      const { error } = await supabase.from("insight_feedback").insert({
+                      const { error } = await (supabase.from as any)("insight_feedback").insert({
                         user_id: "675cf687-785f-447b-b4da-42a84ecc0da4", // replace later with auth.user.id
                         metric: insight.metric,
                         insight: insight.insight,

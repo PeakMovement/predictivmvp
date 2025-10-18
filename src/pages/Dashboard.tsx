@@ -67,8 +67,7 @@ const EngagementCard = () => {
   const [engagement, setEngagement] = useState<any[]>([]);
   useEffect(() => {
     const fetchEngagement = async () => {
-      const { data, error } = await supabase
-        .from("insight_engagement_summary")
+      const { data, error } = await (supabase.from as any)("insight_engagement_summary")
         .select("*")
         .order("engagement_rate", { ascending: false });
       if (!error && data) setEngagement(data);

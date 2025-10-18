@@ -285,7 +285,7 @@ export default function DeveloperBaselinesEngine() {
                     size="sm"
                     className="mt-3 w-full"
                     onClick={async () => {
-                      const { error } = await supabase.from("user_insight_actions").insert({
+                      const { error } = await (supabase.from as any)("user_insight_actions").insert({
                         user_id: "test_user_01", // replace later with auth user
                         metric: insight.metric,
                         insight: insight.insight,

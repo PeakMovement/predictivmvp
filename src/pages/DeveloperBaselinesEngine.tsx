@@ -285,22 +285,15 @@ export default function DeveloperBaselinesEngine() {
                     size="sm"
                     className="mt-3 w-full"
                     onClick={async () => {
-                      const { error } = await (supabase.from as any)("insight_feedback").insert({
-                        user_id: "675cf687-785f-447b-b4da-42a84ecc0da4", // replace later with auth.user.id
+                      const { error } = await (supabase.from as any)("user_insight_actions").insert({
+                        user_id: "test_user_01", // replace later with auth user
                         metric: insight.metric,
                         insight: insight.insight,
                         suggestion: insight.suggestion,
                         action_taken: "Acknowledged",
-                        feedback_score: 1,
                       });
-
                       if (error) {
                         console.error("Error saving acknowledgment:", error);
-                        toast({
-                          title: "Save failed",
-                          description: "Could not record your feedback",
-                          variant: "destructive",
-                        });
                       } else {
                         toast({
                           title: "Insight saved!",
@@ -320,3 +313,34 @@ export default function DeveloperBaselinesEngine() {
     </div>
   );
 }
+
+{
+  /* 💬 User Feedback Log */
+}
+<div>
+  <h2 className="text-xl font-semibold mt-8 mb-4">💬 User Feedback Log</h2>
+  {feedback.length === 0 ? (
+    <Card className="bg-black/40 backdrop-blur-xl border-white/10 rounded-2xl p-8 text-center">
+      <p className="text-muted-foreground">No feedback entries yet. Users haven’t responded to insights.</p>
+    </Card>
+  ) : (
+    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      {feedback.map((entry, idx) => (
+        <Card
+          key={idx}
+          className="bg-black/40 backdrop-blur-xl border-white/10 rounded-2xl p-4 hover:scale-[1.02] transition-all"
+        >
+          <CardHeader>
+            <CardTitle className="capitalize text-lg">{entry.metric}</CardTitle>
+            <CardDescription>{new Date(entry.created_at).toLocaleString()}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className="text-gray-300 text-sm mb-1">{entry.insight}</p>
+            <p className="text-indigo-400 text-sm mb-2">Action: {entry.action_taken}</p>
+            <Badge className="w-full justify-center">{`Score: ${entry.feedback_score}`}</Badge>
+          </CardContent>
+        </Card>
+      ))}
+    </div>
+  )}
+</div>;

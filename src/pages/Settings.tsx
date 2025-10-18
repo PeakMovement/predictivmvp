@@ -360,7 +360,7 @@ export const Settings = ({ onNavigate }: { onNavigate?: (tab: string) => void })
             </div>
             <div className="space-y-3">
               <div
-                className="w-full flex items-center justify-between p-4 rounded-xl border bg-glass/30 border-glass-border hover:bg-glass-highlight hover:scale-[1.01] active:scale-[0.99] transition-all duration-200"
+                className="w-full flex items-center justify-between p-4 rounded-xl border bg-glass/30 border-glass-border hover:bg-glass-highlight transition-all duration-200"
               >
                 <div className="flex items-center gap-3 flex-1">
                   <div className="w-10 h-10 bg-gradient-to-br from-cyan-500 to-blue-500 rounded-full flex items-center justify-center">
@@ -372,45 +372,41 @@ export const Settings = ({ onNavigate }: { onNavigate?: (tab: string) => void })
                     </div>
                   </div>
                   <div className="text-left flex-1">
-                    <p className="font-medium text-foreground">Fitbit</p>
-                    <p className="text-xs text-muted-foreground">
-                      Connect and sync your Fitbit data
+                    <p className="font-medium text-foreground flex items-center gap-2">
+                      Fitbit
+                      {isConnected && (
+                        <span className="text-xs px-2 py-0.5 rounded-full bg-green-500/20 text-green-400 border border-green-500/30">
+                          ✓ Connected
+                        </span>
+                      )}
                     </p>
-                    {lastSyncTime && (
-                      <p className="text-xs text-muted-foreground/70 mt-1">
-                        Last synced: {lastSyncTime.toLocaleDateString()} at {lastSyncTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                      </p>
-                    )}
+                    <p className="text-xs text-muted-foreground">
+                      {isConnected 
+                        ? "Auto-syncing every hour • Click Update for latest data"
+                        : "Connect and sync your Fitbit data"
+                      }
+                    </p>
                   </div>
                 </div>
                 <div className="flex gap-2">
                   {isConnected ? (
-                    <>
-                      <Button
-                        onClick={syncNow}
-                        disabled={isSyncing}
-                        size="sm"
-                        variant="outline"
-                        className="bg-glass/30 border-glass-border hover:bg-glass-highlight hover:scale-105 active:scale-95 transition-all duration-200"
-                      >
-                        <RefreshCw size={14} className={cn("mr-2", isSyncing && "animate-spin")} />
-                        Sync Now
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="bg-green-500/20 border-green-500/30 text-green-400 cursor-default"
-                      >
-                        Connected ✓
-                      </Button>
-                    </>
+                    <Button
+                      onClick={syncNow}
+                      disabled={isSyncing}
+                      size="sm"
+                      variant="outline"
+                      className="bg-glass/30 border-glass-border hover:bg-glass-highlight hover:scale-105 active:scale-95 transition-all duration-200"
+                    >
+                      <RefreshCw size={14} className={cn("mr-2", isSyncing && "animate-spin")} />
+                      {isSyncing ? "Updating..." : "Update Now"}
+                    </Button>
                   ) : (
                     <Button
                       onClick={handleFitbitSync}
                       size="sm"
                       className="bg-primary/80 hover:bg-primary text-primary-foreground hover:scale-105 active:scale-95 transition-all duration-200"
                     >
-                      Connect
+                      Connect Fitbit
                     </Button>
                   )}
                 </div>

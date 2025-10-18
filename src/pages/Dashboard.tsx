@@ -29,6 +29,7 @@ import { TrendCarousel } from "@/components/trends/TrendCarousel";
 import { generateDynamicTodaysPlan, generateDynamicDailyNudge } from "@/lib/dynamicPrompts";
 import { supabase } from "@/integrations/supabase/client";
 import { useFitbitTrends } from "@/hooks/useFitbitTrends";
+import { FitbitSyncStatus } from "@/components/FitbitSyncStatus";
 
 // Helper to parse current day metrics
 const parseMetrics = (data: HealthDataRow | null) => {
@@ -411,6 +412,9 @@ const WelcomeHeader = () => (
     </div>
     <div className="animate-slide-in" style={{ animationDelay: "0.2s", animationFillMode: "both" }}>
       <p className="text-muted-foreground text-base md:text-lg">Here's your training overview for today</p>
+    </div>
+    <div className="flex justify-center animate-fade-in" style={{ animationDelay: '0.3s', animationFillMode: 'both' }}>
+      <FitbitSyncStatus />
     </div>
   </div>
 );

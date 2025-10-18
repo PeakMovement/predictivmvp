@@ -2,15 +2,18 @@ import { Handler } from "@netlify/functions";
 import { createClient } from "@supabase/supabase-js";
 import { logSync } from "../utils/logger";
 import { requireEnv } from "../utils/env";
+import { resolveUserId } from "../utils/userResolver";
 
 const handler: Handler = async (event) => {
   try {
-    // Validate base environment variables
     const env = requireEnv();
-    const userId = "CTBNRR"; // TODO: Make dynamic based on authenticated user
+    const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
+
+    // Resolve user_id dynamically
+    const userId = await resolveUserId(supabase);
+    logSync("fitbit:refresh:user-resolved", { userId });
     
     // Fetch refresh token from database
-    const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
     const { data: tokenData, error: fetchError } = await supabase
       .from("fitbit_auto_data")
       .select("activity")

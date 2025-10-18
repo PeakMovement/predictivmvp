@@ -2,15 +2,16 @@ import { Handler } from "@netlify/functions";
 import { createClient } from "@supabase/supabase-js";
 import { logSync } from "../utils/logger";
 import { requireEnv } from "../utils/env";
+import { resolveUserId } from "../utils/userResolver";
 
 const handler: Handler = async (event) => {
   try {
     const env = requireEnv();
     const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
 
-    // Parse user_id from request body or use default
+    // Resolve user_id dynamically from auth or request body
     const body = event.body ? JSON.parse(event.body) : {};
-    const userId = body.user_id || "CTBNRR";
+    const userId = body.user_id || await resolveUserId(supabase);
 
     logSync("calc-trends:start", { userId });
 

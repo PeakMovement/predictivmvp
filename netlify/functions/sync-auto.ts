@@ -2,13 +2,15 @@ import { Handler } from "@netlify/functions";
 import { createClient } from "@supabase/supabase-js";
 import { logSync } from "../utils/logger";
 import { requireEnv } from "../utils/env";
+import { resolveUserId } from "../utils/userResolver";
 
 const handler: Handler = async (event) => {
   try {
-    // Validate base environment variables
     const env = requireEnv();
-    const userId = "CTBNRR"; // TODO: Make dynamic based on authenticated user
-    
+    const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
+
+    // Resolve user_id dynamically
+    const userId = await resolveUserId(supabase);
     logSync("fitbit:sync-auto:start", { user_id: userId });
 
     // Get valid access token (auto-refreshes if expired)
@@ -132,7 +134,7 @@ const handler: Handler = async (event) => {
 
     // Success
     logSync("fitbit:sync-auto:success", { 
-      user_id: "CTBNRR",
+      user_id: userId,
       timestamp: new Date().toISOString(),
     });
     
@@ -142,7 +144,7 @@ const handler: Handler = async (event) => {
       const trendResponse = await fetch(`${deployUrl}/.netlify/functions/calc-trends`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ user_id: "CTBNRR" })
+        body: JSON.stringify({ user_id: userId })
       });
       
       if (trendResponse.ok) {

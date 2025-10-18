@@ -17,6 +17,18 @@ export const useFitbitSync = (): FitbitSyncState => {
 
   const checkConnection = async (): Promise<boolean> => {
     try {
+      // Check localStorage first for instant feedback
+      const cachedStatus = localStorage.getItem('fitbit_connected');
+      const cachedSync = localStorage.getItem('fitbit_last_sync');
+      
+      if (cachedStatus === 'true') {
+        setIsConnected(true);
+        if (cachedSync) {
+          setLastSync(new Date(cachedSync));
+        }
+      }
+
+      // Verify with database
       const { data, error } = await supabase
         .from("fitbit_auto_data" as any)
         .select("activity, fetched_at")
@@ -26,21 +38,30 @@ export const useFitbitSync = (): FitbitSyncState => {
 
       if (error || !data) {
         setIsConnected(false);
+        localStorage.setItem('fitbit_connected', 'false');
         return false;
       }
 
       const activityData = data as any;
       const hasTokens = !!activityData?.activity?.tokens?.access_token;
-      setIsConnected(hasTokens);
+      const expiresAt = activityData?.activity?.tokens?.expires_at;
+      const isExpired = expiresAt ? new Date(expiresAt) < new Date() : false;
+      
+      const connected = hasTokens && !isExpired;
+      setIsConnected(connected);
+      localStorage.setItem('fitbit_connected', String(connected));
       
       if (activityData.fetched_at) {
-        setLastSync(new Date(activityData.fetched_at));
+        const syncTime = new Date(activityData.fetched_at);
+        setLastSync(syncTime);
+        localStorage.setItem('fitbit_last_sync', syncTime.toISOString());
       }
       
-      return hasTokens;
+      return connected;
     } catch (error) {
       console.error("Error checking Fitbit connection:", error);
       setIsConnected(false);
+      localStorage.setItem('fitbit_connected', 'false');
       return false;
     }
   };
@@ -52,7 +73,6 @@ export const useFitbitSync = (): FitbitSyncState => {
         method: "POST",
       });
 
-      // Check if response is JSON before parsing
       const contentType = response.headers.get("content-type");
       const isJson = contentType?.includes("application/json");
 
@@ -67,7 +87,6 @@ export const useFitbitSync = (): FitbitSyncState => {
             errorMessage = `Server error (${response.status})`;
           }
         } else {
-          // HTML error page returned
           errorMessage = `Server error (${response.status}). Please try again.`;
         }
         
@@ -75,14 +94,19 @@ export const useFitbitSync = (): FitbitSyncState => {
       }
 
       const result = isJson ? await response.json() : null;
+      const now = new Date();
       
       toast({
-        title: "Sync Successful",
+        title: "✅ Fitbit Data Updated",
         description: `Synced ${result?.data?.steps || 0} steps, ${result?.data?.calories || 0} calories`,
       });
 
-      setLastSync(new Date());
+      setLastSync(now);
+      localStorage.setItem('fitbit_last_sync', now.toISOString());
       await checkConnection();
+      
+      // Trigger refresh event for other components
+      window.dispatchEvent(new CustomEvent('fitbit_data_refreshed'));
     } catch (error: any) {
       console.error("Sync error:", error);
       toast({

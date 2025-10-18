@@ -60,9 +60,11 @@ const InsightNode = ({
     return () => clearTimeout(timer);
   }, [index]);
 
-  // Calculate position on the tree
-  const angle = (index / (total - 1)) * 120 - 60; // Spread from -60 to +60 degrees
-  const distance = 80 + (index % 3) * 40; // Vary distance for visual interest
+  // Calculate position on the tree - alternating branches
+  const isLeft = index % 2 === 0;
+  const branchLevel = Math.floor(index / 2);
+  const horizontalOffset = isLeft ? -100 - (branchLevel * 40) : 100 + (branchLevel * 40);
+  const verticalOffset = 100 + index * 100;
 
   return (
     <div
@@ -72,20 +74,21 @@ const InsightNode = ({
       )}
       style={{
         left: "50%",
-        top: `${100 + index * 120}px`,
-        transform: `translateX(calc(-50% + ${Math.sin((angle * Math.PI) / 180) * distance}px))`,
+        top: `${verticalOffset}px`,
+        transform: `translateX(calc(-50% + ${horizontalOffset}px))`,
       }}
     >
-      {/* Connection Line */}
-      {index > 0 && (
-        <div
-          className="absolute bottom-full left-1/2 w-0.5 bg-gradient-to-t from-primary/40 to-transparent"
-          style={{
-            height: "80px",
-            transform: "translateX(-50%)",
-          }}
-        />
-      )}
+      {/* Connection Line - Branch style */}
+      <div
+        className="absolute w-1 bg-gradient-to-b from-primary/50 to-primary/20 rounded-full"
+        style={{
+          height: "60px",
+          bottom: "100%",
+          left: "50%",
+          transform: `translateX(-50%) rotate(${isLeft ? -35 : 35}deg)`,
+          transformOrigin: "bottom center",
+        }}
+      />
 
       {/* Node */}
       <div
@@ -184,17 +187,17 @@ export const InsightsTree = ({ onNavigate }: { onNavigate: (tab: string) => void
         {insights.length === 0 ? (
           // Empty State
           <div className="flex items-center justify-center min-h-[60vh]">
-            <div className="text-center space-y-4 animate-fade-in">
+          <div className="text-center space-y-4 animate-fade-in">
               <div className="text-6xl mb-4">🌱</div>
               <h2 className="text-xl md:text-2xl font-semibold text-foreground">No insights yet</h2>
               <p className="text-muted-foreground max-w-md">
-                Upload data or complete a session to begin your journey. Your insights will appear here as you progress.
+                Connect your Fitbit and calculate trends in Settings to begin tracking your health insights.
               </p>
               <Button
-                onClick={() => onNavigate("data-upload")}
-                className="mt-6 bg-primary/80 hover:bg-primary text-primary-foreground border border-glass-border rounded-xl px-6 py-3 font-semibold shadow-glow hover:scale-105 transition-all duration-200"
+                onClick={() => onNavigate("settings")}
+                className="mt-6 bg-primary/80 hover:bg-primary text-primary-foreground border border-glass-border rounded-xl px-6 py-3 font-semibold shadow-glow hover:scale-105 transition-all duration-200 min-h-[44px]"
               >
-                Upload Data
+                Go to Settings
               </Button>
             </div>
           </div>

@@ -259,8 +259,8 @@ export const Training = () => {
 
   return (
     <TooltipProvider>
-      <div className="min-h-screen bg-background pb-[calc(6rem+env(safe-area-inset-bottom))] md:pb-32">
-        <div className="container mx-auto px-4 md:px-6 pt-6 md:pt-8">
+      <div className="min-h-screen bg-background pb-[calc(7rem+env(safe-area-inset-bottom))] md:pb-32">
+        <div className="container mx-auto px-4 md:px-6 pt-6 md:pt-8 max-w-7xl">
           {/* Header */}
           <div className="text-center mb-6 md:mb-8">
             <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-2">Training Analytics</h1>
@@ -272,19 +272,19 @@ export const Training = () => {
 
           {/* Session Logs and Gauges */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6 mb-6 md:mb-8">
-            <div className="lg:col-span-2">
+            <div className="lg:col-span-2 w-full">
               <SessionLogList />
             </div>
-            <div className="space-y-4 md:space-y-6">
+            <div className="space-y-4 md:space-y-6 w-full">
               <CircularGauge
                 title="Training Monotony"
-                value={latestTrend?.monotony || 0}
+                value={latestTrend?.monotony ? parseFloat(latestTrend.monotony.toFixed(1)) : 0}
                 maxValue={5}
                 unit="ratio"
               />
               <CircularGauge
                 title="Training Strain"
-                value={latestTrend?.strain || 0}
+                value={latestTrend?.strain ? Math.round(latestTrend.strain) : 0}
                 maxValue={200}
                 unit="TSS"
               />

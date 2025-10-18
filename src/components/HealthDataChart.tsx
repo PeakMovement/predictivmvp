@@ -78,13 +78,6 @@ export default function HealthDataChart() {
 
       setChartData(parsedData);
       setMetrics(Array.from(metricSet));
-
-      if (parsedData.length > 0) {
-        toast({
-          title: "✅ Health data visualized successfully.",
-          description: `Loaded ${parsedData.length} data points.`,
-        });
-      }
     } catch (err: any) {
       toast({
         title: "Unexpected error",

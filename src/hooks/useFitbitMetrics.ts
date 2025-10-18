@@ -73,11 +73,35 @@ export const useFitbitMetrics = () => {
     try {
       setIsLoading(true);
       
-      // Use type assertion to work with tables not in generated types
+      // Resolve user_id: try authenticated user first
+      const { data: { user } } = await supabase.auth.getUser();
+      let userId = user?.id;
+
+      // If no authenticated user, get the most recent user_id from fitbit_auto_data
+      if (!userId) {
+        const { data: recentData } = await (supabase as any)
+          .from("fitbit_auto_data")
+          .select("user_id")
+          .order("fetched_at", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        
+        userId = recentData?.user_id;
+      }
+
+      if (!userId) {
+        console.log("No user_id found for Fitbit metrics");
+        setIsLoading(false);
+        return;
+      }
+
+      console.log(`[useFitbitMetrics] Fetching metrics for user: ${userId}`);
+      
+      // Fetch the latest fitbit_auto_data for this user
       const { data, error } = await (supabase as any)
         .from("fitbit_auto_data")
         .select("*")
-        .eq("user_id", "CTBNRR")
+        .eq("user_id", userId)
         .order("fetched_at", { ascending: false })
         .limit(1)
         .maybeSingle();
@@ -88,9 +112,12 @@ export const useFitbitMetrics = () => {
       }
 
       if (data) {
+        console.log("[useFitbitMetrics] Successfully fetched data:", data);
         const parsed = parseMetrics(data);
         setMetrics(parsed);
         setLastSync(data.fetched_at);
+      } else {
+        console.log("[useFitbitMetrics] No data found for user");
       }
     } catch (error) {
       console.error("Error in fetchMetrics:", error);

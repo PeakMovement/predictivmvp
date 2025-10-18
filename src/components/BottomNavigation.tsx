@@ -7,17 +7,19 @@ interface BottomNavigationProps {
 }
 
 const tabs = [
-  { id: "dashboard", label: "Dashboard", icon: Home },
-  { id: "training", label: "Training", icon: Dumbbell },
-  { id: "health", label: "Health", icon: Heart },
-  { id: "your-plan", label: "Your Plan", icon: ClipboardList },
-  { id: "mybaselines", label: "Baselines", icon: TrendingUp },
-  { id: "find-help", label: "Find Help", icon: Users },
-  { id: "fitbit-sync-now", label: "Fitbit Sync", icon: RefreshCw },
-  { id: "developer-baselines-engine", label: "Dev Tools", icon: Code },
+  { id: "dashboard", label: "Dashboard", icon: Home, mobile: true },
+  { id: "training", label: "Training", icon: Dumbbell, mobile: true },
+  { id: "health", label: "Health", icon: Heart, mobile: true },
+  { id: "your-plan", label: "Plan", icon: ClipboardList, mobile: true },
+  { id: "mybaselines", label: "Baselines", icon: TrendingUp, mobile: false },
+  { id: "find-help", label: "Help", icon: Users, mobile: false },
+  { id: "fitbit-sync-now", label: "Sync", icon: RefreshCw, mobile: false },
+  { id: "developer-baselines-engine", label: "Dev", icon: Code, mobile: false },
 ];
 
 export const BottomNavigation = ({ activeTab, onTabChange }: BottomNavigationProps) => {
+  const visibleTabs = tabs.filter(tab => window.innerWidth >= 768 || tab.mobile);
+  
   return (
     <div className={cn(
       "fixed left-0 right-0 z-50",
@@ -31,8 +33,8 @@ export const BottomNavigation = ({ activeTab, onTabChange }: BottomNavigationPro
         "px-2 py-2 md:px-4 md:py-3",
         "hover-glow"
       )}>
-        <div className="flex items-center justify-evenly md:justify-center gap-1">
-          {tabs.map((tab) => {
+        <div className="flex items-center justify-evenly md:justify-center gap-1 md:gap-2">
+          {visibleTabs.map((tab) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
             
@@ -42,14 +44,13 @@ export const BottomNavigation = ({ activeTab, onTabChange }: BottomNavigationPro
                 onClick={() => onTabChange(tab.id)}
                 className={cn(
                   "relative flex flex-col items-center justify-center gap-0.5 md:gap-1",
-                  "px-2 py-2 md:px-3 md:py-2 rounded-xl transition-all duration-500 ease-out",
-                  "flex-1 md:flex-initial min-w-0",
+                  "px-3 py-2 md:px-4 md:py-2 rounded-xl transition-all duration-500 ease-out",
+                  "flex-1 md:flex-initial min-w-[56px]",
                   "min-h-[44px]", // iOS touch target minimum
                   "hover:bg-glass-highlight hover:scale-105 active:scale-95",
                   "transform-gpu will-change-transform",
                   isActive && "bg-primary/20 scale-105"
                 )}
-                style={{ minWidth: '48px', maxWidth: '80px' }}
                 aria-label={tab.label}
               >
                 {isActive && (

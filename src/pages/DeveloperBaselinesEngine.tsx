@@ -62,6 +62,7 @@ export default function DeveloperBaselinesEngine() {
   const [baselines, setBaselines] = useState<BaselineData[]>([]);
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [insights, setInsights] = useState<Insight[]>([]);
+  const [feedback, setFeedback] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   const fetchData = async () => {
@@ -91,6 +92,12 @@ export default function DeveloperBaselinesEngine() {
 
       const { data: insightsData, error: insightsError } = await (supabase.rpc as any)("get_latest_insights");
       if (!insightsError && insightsData) setInsights(insightsData as Insight[]);
+
+      const { data: feedbackData } = await (supabase.from as any)("user_insight_actions")
+        .select("*")
+        .order("acknowledged_at", { ascending: false })
+        .limit(10);
+      if (feedbackData) setFeedback(feedbackData);
 
       setLogs((logData || []).slice(0, 10) as LogEntry[]);
     } catch (error) {
@@ -313,33 +320,3 @@ export default function DeveloperBaselinesEngine() {
     </div>
   );
 }
-{
-  /* Feedback Viewer */
-}
-<div>
-  <h2 className="text-xl font-semibold mt-8 mb-4">💬 User Feedback Log</h2>
-  {feedback.length === 0 ? (
-    <Card className="bg-black/40 backdrop-blur-xl border-white/10 rounded-2xl p-8 text-center">
-      <p className="text-muted-foreground">No feedback entries yet. Users haven't responded to insights.</p>
-    </Card>
-  ) : (
-    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-      {feedback.map((entry, idx) => (
-        <Card
-          key={idx}
-          className="bg-black/40 backdrop-blur-xl border-white/10 rounded-2xl p-4 hover:scale-[1.02] transition-all"
-        >
-          <CardHeader>
-            <CardTitle className="capitalize text-lg">{entry.metric}</CardTitle>
-            <CardDescription>{new Date(entry.created_at).toLocaleString()}</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p className="text-gray-300 text-sm mb-1">{entry.insight}</p>
-            <p className="text-indigo-400 text-sm mb-2">Action: {entry.action_taken}</p>
-            <Badge className="w-full justify-center">{`Score: ${entry.feedback_score}`}</Badge>
-          </CardContent>
-        </Card>
-      ))}
-    </div>
-  )}
-</div>;

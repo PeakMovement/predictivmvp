@@ -62,7 +62,6 @@ export default function DeveloperBaselinesEngine() {
   const [baselines, setBaselines] = useState<BaselineData[]>([]);
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [insights, setInsights] = useState<Insight[]>([]);
-  const [feedback, setFeedback] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   const fetchData = async () => {
@@ -92,12 +91,6 @@ export default function DeveloperBaselinesEngine() {
 
       const { data: insightsData, error: insightsError } = await (supabase.rpc as any)("get_latest_insights");
       if (!insightsError && insightsData) setInsights(insightsData as Insight[]);
-
-      const { data: feedbackData } = await (supabase.from as any)("user_insight_actions")
-        .select("*")
-        .order("acknowledged_at", { ascending: false })
-        .limit(10);
-      if (feedbackData) setFeedback(feedbackData);
 
       setLogs((logData || []).slice(0, 10) as LogEntry[]);
     } catch (error) {
@@ -292,15 +285,22 @@ export default function DeveloperBaselinesEngine() {
                     size="sm"
                     className="mt-3 w-full"
                     onClick={async () => {
-                      const { error } = await (supabase.from as any)("user_insight_actions").insert({
-                        user_id: "test_user_01", // replace later with auth user
+                      const { error } = await supabase.from("insight_feedback").insert({
+                        user_id: "675cf687-785f-447b-b4da-42a84ecc0da4", // replace later with auth.user.id
                         metric: insight.metric,
                         insight: insight.insight,
                         suggestion: insight.suggestion,
                         action_taken: "Acknowledged",
+                        feedback_score: 1,
                       });
+
                       if (error) {
                         console.error("Error saving acknowledgment:", error);
+                        toast({
+                          title: "Save failed",
+                          description: "Could not record your feedback",
+                          variant: "destructive",
+                        });
                       } else {
                         toast({
                           title: "Insight saved!",

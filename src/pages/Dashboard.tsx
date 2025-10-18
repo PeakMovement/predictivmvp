@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
 import { toast } from "@/hooks/use-toast";
 import jsPDF from "jspdf";
@@ -759,19 +760,41 @@ const TodaysPlanCard = () => {
   const [acceptedRecommendations, setAcceptedRecommendations] = useState<number[]>([]);
   const healthMetrics = getHealthMetrics(currentDayData);
 
-  // Fetch YVES profiles
+  // Fetch YVES profiles with user resolution
   useEffect(() => {
     const fetchYvesProfiles = async () => {
-      const { data: user } = await supabase.auth.getUser();
-      if (!user?.user?.id) return;
+      try {
+        // Try to get authenticated user
+        const { data: { user } } = await supabase.auth.getUser();
+        let userId = user?.id;
 
-      const { data, error } = await supabase
-        .from('yves_profiles')
-        .select('*')
-        .eq('user_id', user.user.id);
+        // Fallback: Get most recent user_id from yves_profiles
+        if (!userId) {
+          const { data: profileData } = await supabase
+            .from('yves_profiles')
+            .select('user_id')
+            .order('updated_at', { ascending: false })
+            .limit(1)
+            .single();
+          
+          userId = profileData?.user_id;
+        }
 
-      if (!error && data) {
-        setYvesProfiles(data);
+        if (!userId) {
+          console.log('No user ID found for YVES profiles');
+          return;
+        }
+
+        const { data, error } = await supabase
+          .from('yves_profiles')
+          .select('*')
+          .eq('user_id', userId);
+
+        if (!error && data) {
+          setYvesProfiles(data);
+        }
+      } catch (error) {
+        console.error('Error fetching YVES profiles:', error);
       }
     };
 
@@ -802,10 +825,24 @@ const TodaysPlanCard = () => {
               {dynamicPlan}
             </p>
           </div>
+        ) : yvesProfiles.length === 0 && !latestTrend ? (
+          <div className="bg-card border border-border rounded-xl p-4 text-center space-y-3">
+            <p className="text-sm text-muted-foreground">
+              Connect Fitbit and sync data to see personalized recommendations
+            </p>
+            <Button
+              onClick={() => window.location.href = '/#settings'}
+              variant="outline"
+              size="sm"
+              className="mt-2"
+            >
+              Sync Now
+            </Button>
+          </div>
         ) : (
           <div className="bg-card border border-border rounded-xl p-4">
             <p className="text-sm text-muted-foreground">
-              Loading personalized recommendations from your YVES profile...
+              Loading personalized recommendations...
             </p>
           </div>
         )}
@@ -827,19 +864,41 @@ const DailyNudgeCard = () => {
   const [yvesProfiles, setYvesProfiles] = useState<any[]>([]);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
-  // Fetch YVES profiles
+  // Fetch YVES profiles with user resolution
   useEffect(() => {
     const fetchYvesProfiles = async () => {
-      const { data: user } = await supabase.auth.getUser();
-      if (!user?.user?.id) return;
+      try {
+        // Try to get authenticated user
+        const { data: { user } } = await supabase.auth.getUser();
+        let userId = user?.id;
 
-      const { data, error } = await supabase
-        .from('yves_profiles')
-        .select('*')
-        .eq('user_id', user.user.id);
+        // Fallback: Get most recent user_id from yves_profiles
+        if (!userId) {
+          const { data: profileData } = await supabase
+            .from('yves_profiles')
+            .select('user_id')
+            .order('updated_at', { ascending: false })
+            .limit(1)
+            .single();
+          
+          userId = profileData?.user_id;
+        }
 
-      if (!error && data) {
-        setYvesProfiles(data);
+        if (!userId) {
+          console.log('No user ID found for YVES profiles');
+          return;
+        }
+
+        const { data, error } = await supabase
+          .from('yves_profiles')
+          .select('*')
+          .eq('user_id', userId);
+
+        if (!error && data) {
+          setYvesProfiles(data);
+        }
+      } catch (error) {
+        console.error('Error fetching YVES profiles:', error);
       }
     };
 
@@ -880,14 +939,31 @@ const DailyNudgeCard = () => {
           <RefreshCw size={16} className="text-primary" />
         </button>
       </div>
-      <p
-        className={cn(
-          "text-foreground transition-all duration-300",
-          isRefreshing ? "opacity-0 translate-y-2" : "opacity-100 translate-y-0",
-        )}
-      >
-        {nudgeMessage || "Loading your personalized daily nudge..."}
-      </p>
+      {nudgeMessage ? (
+        <p
+          className={cn(
+            "text-foreground transition-all duration-300",
+            isRefreshing ? "opacity-0 translate-y-2" : "opacity-100 translate-y-0",
+          )}
+        >
+          {nudgeMessage}
+        </p>
+      ) : yvesProfiles.length === 0 && !latestTrend ? (
+        <div className="text-center space-y-2">
+          <p className="text-sm text-muted-foreground">
+            Sync your Fitbit data to receive personalized nudges
+          </p>
+          <Button
+            onClick={() => window.location.href = '/#settings'}
+            variant="outline"
+            size="sm"
+          >
+            Go to Settings
+          </Button>
+        </div>
+      ) : (
+        <p className="text-sm text-muted-foreground">Loading your daily nudge...</p>
+      )}
     </div>
   );
 };

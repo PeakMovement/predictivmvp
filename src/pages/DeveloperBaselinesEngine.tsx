@@ -43,7 +43,13 @@ interface Insight {
 
 export default function DeveloperBaselinesEngine() {
   const [functions, setFunctions] = useState<FunctionStatus[]>([
-    { name: "fetch-fitbit-auto", displayName: "Fetch Fitbit Data", status: "unknown", lastRun: null, isRunning: false },
+    {
+      name: "fetch-fitbit-auto",
+      displayName: "Fetch Fitbit Data",
+      status: "unknown",
+      lastRun: null,
+      isRunning: false,
+    },
     {
       name: "calculate-baseline",
       displayName: "Calculate Baseline",
@@ -64,6 +70,7 @@ export default function DeveloperBaselinesEngine() {
   const [insights, setInsights] = useState<Insight[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // ✅ FETCH DATA
   const fetchData = async () => {
     try {
       const { data: logData } = await supabase
@@ -104,12 +111,11 @@ export default function DeveloperBaselinesEngine() {
     fetchData();
   }, []);
 
+  // ✅ Realtime updates for function executions
   useEffect(() => {
     const channel = supabase
       .channel("function_execution_updates")
-      .on("postgres_changes", { event: "*", schema: "public", table: "function_execution_log" }, () => {
-        fetchData();
-      })
+      .on("postgres_changes", { event: "*", schema: "public", table: "function_execution_log" }, () => fetchData())
       .subscribe();
 
     return () => {
@@ -117,11 +123,25 @@ export default function DeveloperBaselinesEngine() {
     };
   }, []);
 
+  // ✅ STEP 23: Realtime updates for user acknowledgments
+  useEffect(() => {
+    const channel = supabase
+      .channel("insight_action_updates")
+      .on("postgres_changes", { event: "*", schema: "public", table: "user_insight_actions" }, () => fetchData())
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
+  // Auto-refresh every 60s
   useEffect(() => {
     const interval = setInterval(fetchData, 60000);
     return () => clearInterval(interval);
   }, []);
 
+  // ✅ RUN SINGLE FUNCTION
   const runFunction = async (functionName: string) => {
     const funcIndex = functions.findIndex((f) => f.name === functionName);
     const updatedFunctions = [...functions];
@@ -129,7 +149,9 @@ export default function DeveloperBaselinesEngine() {
     setFunctions(updatedFunctions);
 
     try {
-      const response = await supabase.functions.invoke(functionName, { body: {} });
+      const response = await supabase.functions.invoke(functionName, {
+        body: {},
+      });
       if (response.error) throw response.error;
 
       toast({
@@ -150,6 +172,7 @@ export default function DeveloperBaselinesEngine() {
     }
   };
 
+  // ✅ RUN FULL PIPELINE
   const runPipeline = async () => {
     toast({
       title: "Starting pipeline...",
@@ -177,6 +200,7 @@ export default function DeveloperBaselinesEngine() {
     }
   };
 
+  // ✅ UTILITIES
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "success":
@@ -231,6 +255,7 @@ export default function DeveloperBaselinesEngine() {
     );
   }
 
+  // ✅ UI
   return (
     <div className="p-6 space-y-6 max-w-7xl mx-auto">
       {/* Header */}
@@ -286,7 +311,7 @@ export default function DeveloperBaselinesEngine() {
                     className="mt-3 w-full"
                     onClick={async () => {
                       const { error } = await (supabase.from as any)("user_insight_actions").insert({
-                        user_id: "test_user_01", // replace later with auth user
+                        user_id: "test_user_01",
                         metric: insight.metric,
                         insight: insight.insight,
                         suggestion: insight.suggestion,
@@ -309,6 +334,28 @@ export default function DeveloperBaselinesEngine() {
             ))}
           </div>
         )}
+      </div>
+
+      {/* ✅ STEP 24: Insight History */}
+      <div>
+        <h2 className="text-xl font-semibold mt-8 mb-4">📜 Insight History</h2>
+        <Card className="bg-black/40 border-white/10 rounded-2xl">
+          <CardContent>
+            {insights.length === 0 ? (
+              <p className="text-muted-foreground text-center py-4">No insights acknowledged yet</p>
+            ) : (
+              <div className="space-y-2">
+                {insights.map((i, idx) => (
+                  <div key={idx} className="p-3 bg-white/5 rounded-lg">
+                    <p className="text-sm font-medium">{i.metric}</p>
+                    <p className="text-xs text-muted-foreground">{i.insight}</p>
+                    <span className="text-xs text-gray-500">{new Date(i.updated_at).toLocaleString()}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

@@ -62,10 +62,12 @@ export default function DeveloperBaselinesEngine() {
   const [baselines, setBaselines] = useState<BaselineData[]>([]);
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [insights, setInsights] = useState<Insight[]>([]);
+  const [feedback, setFeedback] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   const fetchData = async () => {
     try {
+      // Function execution logs
       const { data: logData } = await supabase
         .from("function_execution_log")
         .select("*")
@@ -83,14 +85,24 @@ export default function DeveloperBaselinesEngine() {
       });
       setFunctions(updatedFunctions);
 
+      // Baselines
       const { data: baselineData } = await supabase
         .from("yves_profiles")
         .select("metric, baseline_value, current_value, deviation_pct, risk_status")
         .limit(10);
       if (baselineData) setBaselines(baselineData as BaselineData[]);
 
+      // Insights
       const { data: insightsData, error: insightsError } = await (supabase.rpc as any)("get_latest_insights");
       if (!insightsError && insightsData) setInsights(insightsData as Insight[]);
+
+      // Feedback
+      const { data: feedbackData, error: feedbackError } = await supabase
+        .from("insight_feedback")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .limit(10);
+      if (!feedbackError && feedbackData) setFeedback(feedbackData);
 
       setLogs((logData || []).slice(0, 10) as LogEntry[]);
     } catch (error) {
@@ -111,10 +123,7 @@ export default function DeveloperBaselinesEngine() {
         fetchData();
       })
       .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
+    return () => supabase.removeChannel(channel);
   }, []);
 
   useEffect(() => {
@@ -132,13 +141,9 @@ export default function DeveloperBaselinesEngine() {
       const response = await supabase.functions.invoke(functionName, { body: {} });
       if (response.error) throw response.error;
 
-      toast({
-        title: "Function executed successfully",
-        description: `${functions[funcIndex].displayName} completed`,
-      });
+      toast({ title: "Function executed successfully", description: `${functions[funcIndex].displayName} completed` });
       setTimeout(fetchData, 1000);
     } catch (error: any) {
-      console.error("Error running function:", error);
       toast({
         title: "Function execution failed",
         description: error.message || "An error occurred",
@@ -151,29 +156,15 @@ export default function DeveloperBaselinesEngine() {
   };
 
   const runPipeline = async () => {
-    toast({
-      title: "Starting pipeline...",
-      description: "Running baseline calculation → deviation calculation → insights generation",
-    });
-
+    toast({ title: "Starting pipeline...", description: "Running baseline → deviation → insights" });
     try {
       await supabase.functions.invoke("calculate-baseline", { body: {} });
       await supabase.functions.invoke("calculate-deviation", { body: {} });
       await supabase.functions.invoke("generate-insights", { body: {} });
-
-      toast({
-        title: "Pipeline completed!",
-        description: "Baselines, deviations, and insights generated",
-      });
-
+      toast({ title: "Pipeline completed!", description: "All functions executed successfully" });
       setTimeout(fetchData, 1000);
     } catch (error: any) {
-      console.error("Pipeline error:", error);
-      toast({
-        title: "Pipeline failed",
-        description: error.message,
-        variant: "destructive",
-      });
+      toast({ title: "Pipeline failed", description: error.message, variant: "destructive" });
     }
   };
 
@@ -243,12 +234,10 @@ export default function DeveloperBaselinesEngine() {
         </div>
         <div className="flex gap-2">
           <Button onClick={runPipeline} variant="default" size="sm" className="bg-primary/20 hover:bg-primary/30">
-            <Play className="w-4 h-4 mr-2" />
-            Run Pipeline
+            <Play className="w-4 h-4 mr-2" /> Run Pipeline
           </Button>
           <Button onClick={fetchData} variant="outline" size="sm">
-            <RefreshCw className="w-4 h-4 mr-2" />
-            Refresh
+            <RefreshCw className="w-4 h-4 mr-2" /> Refresh
           </Button>
         </div>
       </div>
@@ -279,31 +268,58 @@ export default function DeveloperBaselinesEngine() {
                     {insight.risk_status.toUpperCase()}
                   </Badge>
 
-                  {/* Acknowledge Button */}
                   <Button
                     variant="outline"
                     size="sm"
                     className="mt-3 w-full"
                     onClick={async () => {
-                      const { error } = await (supabase.from as any)("user_insight_actions").insert({
-                        user_id: "test_user_01", // replace later with auth user
+                      const { error } = await supabase.from("insight_feedback").insert({
+                        user_id: "675cf687-785f-447b-b4da-42a84ecc0da4", // replace later with auth.user.id
                         metric: insight.metric,
                         insight: insight.insight,
                         suggestion: insight.suggestion,
                         action_taken: "Acknowledged",
+                        feedback_score: 1,
                       });
                       if (error) {
-                        console.error("Error saving acknowledgment:", error);
+                        toast({ title: "Save failed", description: error.message, variant: "destructive" });
                       } else {
-                        toast({
-                          title: "Insight saved!",
-                          description: "Marked as acknowledged.",
-                        });
+                        toast({ title: "Insight saved!", description: "Marked as acknowledged." });
+                        fetchData();
                       }
                     }}
                   >
                     Mark as Acknowledged
                   </Button>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* 💬 User Feedback Log */}
+      <div>
+        <h2 className="text-xl font-semibold mt-8 mb-4">💬 User Feedback Log</h2>
+        {feedback.length === 0 ? (
+          <Card className="bg-black/40 backdrop-blur-xl border-white/10 rounded-2xl p-8 text-center">
+            <p className="text-muted-foreground">No feedback entries yet. Users haven’t responded to insights.</p>
+          </Card>
+        ) : (
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {feedback.map((entry, idx) => (
+              <Card
+                key={idx}
+                className="bg-black/40 backdrop-blur-xl border-white/10 rounded-2xl p-4 hover:scale-[1.02] transition-all"
+              >
+                <CardHeader>
+                  <CardTitle className="capitalize text-lg">{entry.metric}</CardTitle>
+                  <CardDescription>{new Date(entry.created_at).toLocaleString()}</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-gray-300 text-sm mb-1">{entry.insight}</p>
+                  <p className="text-indigo-400 text-sm mb-2">Action: {entry.action_taken}</p>
+                  <Badge className="w-full justify-center">{`Score: ${entry.feedback_score}`}</Badge>
                 </CardContent>
               </Card>
             ))}

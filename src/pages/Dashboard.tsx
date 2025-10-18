@@ -32,6 +32,7 @@ import { generateDynamicTodaysPlan, generateDynamicDailyNudge } from "@/lib/dyna
 import { supabase } from "@/integrations/supabase/client";
 import { useFitbitTrends } from "@/hooks/useFitbitTrends";
 import { FitbitSyncStatus } from "@/components/FitbitSyncStatus";
+import { FeedbackSummaryPanel } from "@/components/dashboard/FeedbackSummaryPanel";
 
 /* -------------------- HELPERS -------------------- */
 
@@ -73,70 +74,6 @@ const getRiskColor = (zone: string, isGlow = false) => {
   return colors[zone as keyof typeof colors] || colors.optimal;
 };
 
-/* -------------------- FEEDBACK SUMMARY PANEL -------------------- */
-
-const FeedbackSummaryPanel = () => {
-  const [feedback, setFeedback] = useState<{ metric: string; avg_score: number; total_feedback: number }[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchFeedbackSummary = async () => {
-      try {
-        const { data, error } = await supabase.from("feedback_summary").select("*");
-        if (error) throw error;
-        setFeedback(data || []);
-      } catch (err) {
-        console.error("Error fetching feedback summary:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchFeedbackSummary();
-  }, []);
-
-  return (
-    <div className="bg-glass backdrop-blur-xl border border-glass-border rounded-2xl p-6 shadow-glass hover:bg-glass-highlight hover:scale-[1.01] transition-all duration-300 ease-out">
-      <div className="flex items-center gap-3 mb-4">
-        <div className="w-8 h-8 bg-primary/20 rounded-lg flex items-center justify-center">
-          <BarChart3 size={16} className="text-primary" />
-        </div>
-        <h3 className="text-lg font-semibold text-foreground">Feedback Summary</h3>
-      </div>
-
-      {loading ? (
-        <p className="text-sm text-muted-foreground">Loading feedback...</p>
-      ) : feedback.length === 0 ? (
-        <p className="text-sm text-muted-foreground">No feedback data available yet.</p>
-      ) : (
-        <div className="space-y-3">
-          {feedback.map((item, idx) => (
-            <div
-              key={idx}
-              className="flex items-center justify-between p-3 rounded-lg border border-glass-border bg-card/30 hover:bg-glass-highlight transition-all duration-200"
-            >
-              <div className="flex flex-col">
-                <span className="text-sm font-medium text-foreground capitalize">{item.metric}</span>
-                <span className="text-xs text-muted-foreground">{item.total_feedback} total responses</span>
-              </div>
-              <div
-                className={cn(
-                  "text-sm font-bold px-3 py-1.5 rounded-lg",
-                  item.avg_score >= 4
-                    ? "bg-green-500/20 text-green-400"
-                    : item.avg_score >= 3
-                      ? "bg-yellow-500/20 text-yellow-400"
-                      : "bg-red-500/20 text-red-400",
-                )}
-              >
-                {item.avg_score?.toFixed(1) ?? "–"}/5
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-};
 
 /* -------------------- EXISTING COMPONENTS (CONDENSED) -------------------- */
 /* Below is the same Dashboard structure you already had — no layout changed. */

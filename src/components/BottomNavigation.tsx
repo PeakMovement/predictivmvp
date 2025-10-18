@@ -31,9 +31,14 @@ export const BottomNavigation = ({ activeTab, onTabChange }: BottomNavigationPro
         "bg-glass backdrop-blur-xl border-t border-glass-border shadow-glass",
         "md:border md:rounded-2xl md:border-t-glass-border",
         "px-2 py-2 md:px-4 md:py-3",
-        "hover-glow"
+        "hover-glow",
+        "overflow-x-auto scrollbar-hide"
       )}>
-        <div className="flex items-center justify-evenly md:justify-center gap-1 md:gap-2">
+        <div className={cn(
+          "flex items-center gap-1 md:gap-2",
+          "md:justify-center",
+          "snap-x snap-mandatory scroll-smooth"
+        )}>
           {visibleTabs.map((tab) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
@@ -44,11 +49,12 @@ export const BottomNavigation = ({ activeTab, onTabChange }: BottomNavigationPro
                 onClick={() => onTabChange(tab.id)}
                 className={cn(
                   "relative flex flex-col items-center justify-center gap-0.5 md:gap-1",
-                  "px-3 py-2 md:px-4 md:py-2 rounded-xl transition-all duration-500 ease-out",
-                  "flex-1 md:flex-initial min-w-[56px]",
-                  "min-h-[44px]", // iOS touch target minimum
+                  "px-2 py-2 md:px-4 md:py-2 rounded-xl transition-all duration-500 ease-out",
+                  "flex-shrink-0 min-w-[60px] md:min-w-[64px]",
+                  "min-h-[48px]",
                   "hover:bg-glass-highlight hover:scale-105 active:scale-95",
                   "transform-gpu will-change-transform",
+                  "snap-center",
                   isActive && "bg-primary/20 scale-105"
                 )}
                 aria-label={tab.label}

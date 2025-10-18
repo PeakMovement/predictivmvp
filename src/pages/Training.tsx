@@ -28,7 +28,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useLiveData } from "@/contexts/LiveDataContext";
 import { HealthDataRow } from "@/lib/healthDataStore";
-import { TrendCarousel } from "@/components/trends/TrendCarousel";
+import { UnifiedTrendCard } from "@/components/trends/UnifiedTrendCard";
 import { useFitbitTrends } from "@/hooks/useFitbitTrends";
 
 
@@ -293,7 +293,7 @@ export const Training = () => {
 
           {/* Trend Analysis Carousel */}
           <div className="mb-6 md:mb-8">
-            <TrendCarousel />
+            <UnifiedTrendCard />
           </div>
         </div>
       </div>

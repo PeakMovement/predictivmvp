@@ -26,6 +26,9 @@ import { useLiveData } from "@/contexts/LiveDataContext";
 import { evolveInsight, HealthDataRow } from "@/lib/healthDataStore";
 import HealthDataChart from "@/components/HealthDataChart";
 import { TrendCarousel } from "@/components/trends/TrendCarousel";
+import { generateDynamicTodaysPlan, generateDynamicDailyNudge } from "@/lib/dynamicPrompts";
+import { supabase } from "@/integrations/supabase/client";
+import { useFitbitTrends } from "@/hooks/useFitbitTrends";
 
 // Helper to parse current day metrics
 const parseMetrics = (data: HealthDataRow | null) => {
@@ -746,48 +749,38 @@ const AlertsCard = () => {
 
 const TodaysPlanCard = () => {
   const { currentDayData } = useLiveData();
-  const [todaysRecommendations, setTodaysRecommendations] = useState(() => generateTodaysPlan(currentDayData));
+  const { latestTrend } = useFitbitTrends({ days: 1 });
+  const [dynamicPlan, setDynamicPlan] = useState<string>("");
+  const [yvesProfiles, setYvesProfiles] = useState<any[]>([]);
   const [acceptedRecommendations, setAcceptedRecommendations] = useState<number[]>([]);
   const healthMetrics = getHealthMetrics(currentDayData);
 
+  // Fetch YVES profiles
   useEffect(() => {
-    setTodaysRecommendations(generateTodaysPlan(currentDayData));
-  }, [currentDayData]);
+    const fetchYvesProfiles = async () => {
+      const { data: user } = await supabase.auth.getUser();
+      if (!user?.user?.id) return;
 
-  const getPriorityAccentColor = (priority: string) => {
-    switch (priority) {
-      case "high":
-        return "bg-red-500";
-      case "medium":
-        return "bg-amber-500";
-      case "low":
-        return "bg-green-500";
-      default:
-        return "bg-primary";
+      const { data, error } = await supabase
+        .from('yves_profiles')
+        .select('*')
+        .eq('user_id', user.user.id);
+
+      if (!error && data) {
+        setYvesProfiles(data);
+      }
+    };
+
+    fetchYvesProfiles();
+  }, []);
+
+  // Generate dynamic plan using YVES + Fitbit trends
+  useEffect(() => {
+    if (yvesProfiles.length > 0 || latestTrend) {
+      const plan = generateDynamicTodaysPlan(yvesProfiles, latestTrend);
+      setDynamicPlan(plan);
     }
-  };
-
-  const getIconColor = (priority: string) => {
-    switch (priority) {
-      case "high":
-        return "text-red-500";
-      case "medium":
-        return "text-amber-500";
-      case "low":
-        return "text-green-500";
-      default:
-        return "text-primary";
-    }
-  };
-
-  const handleAcceptRecommendation = (index: number, actionText: string, category: string) => {
-    saveAcceptedAdjustment(actionText, category);
-    setAcceptedRecommendations([...acceptedRecommendations, index]);
-  };
-
-  const handleDismissRecommendation = (index: number) => {
-    setTodaysRecommendations(todaysRecommendations.filter((_, i) => i !== index));
-  };
+  }, [yvesProfiles, latestTrend]);
 
   return (
     <div className="bg-glass backdrop-blur-xl border border-glass-border rounded-2xl p-6 shadow-glass hover:bg-glass-highlight hover:scale-105 hover:-translate-y-1 transition-all duration-300 ease-out animate-fade-in transform-gpu">
@@ -799,68 +792,24 @@ const TodaysPlanCard = () => {
       </div>
 
       <div className="space-y-4">
-        {todaysRecommendations.map((rec, index) => {
-          const isAccepted = acceptedRecommendations.includes(index);
-          const IconComponent = rec.icon;
-
-          return (
-            <div
-              key={index}
-              className="relative bg-card border border-border rounded-xl overflow-hidden transition-all duration-200 hover:shadow-md"
-            >
-              {/* Left accent bar */}
-              <div
-                className={cn(
-                  "absolute left-0 top-0 bottom-0 w-1",
-                  isAccepted ? "bg-green-500" : getPriorityAccentColor(rec.priority),
-                )}
-              />
-
-              <div className="p-4 pl-5">
-                <div className="flex items-start gap-3">
-                  <div
-                    className={cn("mt-0.5 flex-shrink-0", isAccepted ? "text-green-500" : getIconColor(rec.priority))}
-                  >
-                    {isAccepted ? <CheckCircle size={20} /> : <IconComponent size={20} />}
-                  </div>
-                  <div className="flex-1">
-                    <h4 className="font-bold text-foreground mb-1">{rec.title}</h4>
-                    <p className="text-sm text-muted-foreground/80 leading-relaxed mb-3">
-                      {evolveInsight(rec.message, { strainDelta: healthMetrics.strain.value })}
-                    </p>
-
-                    {!isAccepted ? (
-                      <div className="flex items-center gap-2">
-                        <button
-                          onClick={() => handleAcceptRecommendation(index, rec.actionText, rec.category)}
-                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-green-500/20 hover:bg-green-500/30 text-green-400 text-xs font-medium transition-all duration-200 hover:scale-105 active:scale-95"
-                        >
-                          <CheckCircle size={14} />
-                          Accept Adjustment
-                        </button>
-                        <button
-                          onClick={() => handleDismissRecommendation(index)}
-                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-500/20 hover:bg-red-500/30 text-red-400 text-xs font-medium transition-all duration-200 hover:scale-105 active:scale-95"
-                        >
-                          <X size={14} />
-                          Dismiss
-                        </button>
-                      </div>
-                    ) : (
-                      <p className="text-xs text-green-400 font-medium">Added to Your Plan</p>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
-          );
-        })}
+        {dynamicPlan ? (
+          <div className="bg-card border border-border rounded-xl p-4">
+            <p className="text-sm text-foreground leading-relaxed whitespace-pre-line">
+              {dynamicPlan}
+            </p>
+          </div>
+        ) : (
+          <div className="bg-card border border-border rounded-xl p-4">
+            <p className="text-sm text-muted-foreground">
+              Loading personalized recommendations from your YVES profile...
+            </p>
+          </div>
+        )}
       </div>
 
       <div className="mt-4 pt-4 border-t border-glass-border">
         <p className="text-xs text-muted-foreground/60 text-center italic">
-          Based on HRV ({healthMetrics.hrv.value}ms), Strain ({healthMetrics.strain.value}), Sleep (
-          {healthMetrics.sleep.value}h)
+          Powered by YVES Learning • Personalized to your baselines
         </p>
       </div>
     </div>
@@ -869,17 +818,45 @@ const TodaysPlanCard = () => {
 
 const DailyNudgeCard = () => {
   const { currentDayData } = useLiveData();
-  const [nudgeMessage, setNudgeMessage] = useState(() => generateDailyNudge(currentDayData));
+  const { latestTrend } = useFitbitTrends({ days: 1 });
+  const [nudgeMessage, setNudgeMessage] = useState<string>("");
+  const [yvesProfiles, setYvesProfiles] = useState<any[]>([]);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
+  // Fetch YVES profiles
   useEffect(() => {
-    setNudgeMessage(generateDailyNudge(currentDayData));
-  }, [currentDayData]);
+    const fetchYvesProfiles = async () => {
+      const { data: user } = await supabase.auth.getUser();
+      if (!user?.user?.id) return;
+
+      const { data, error } = await supabase
+        .from('yves_profiles')
+        .select('*')
+        .eq('user_id', user.user.id);
+
+      if (!error && data) {
+        setYvesProfiles(data);
+      }
+    };
+
+    fetchYvesProfiles();
+  }, []);
+
+  // Generate dynamic nudge using YVES + Fitbit trends
+  useEffect(() => {
+    if (yvesProfiles.length > 0 || latestTrend) {
+      const nudge = generateDynamicDailyNudge(yvesProfiles, latestTrend);
+      setNudgeMessage(nudge);
+    }
+  }, [yvesProfiles, latestTrend]);
 
   const refreshNudge = () => {
     setIsRefreshing(true);
     setTimeout(() => {
-      setNudgeMessage(generateDailyNudge(currentDayData));
+      if (yvesProfiles.length > 0 || latestTrend) {
+        const nudge = generateDynamicDailyNudge(yvesProfiles, latestTrend);
+        setNudgeMessage(nudge);
+      }
       setIsRefreshing(false);
     }, 300);
   };
@@ -901,11 +878,11 @@ const DailyNudgeCard = () => {
       </div>
       <p
         className={cn(
-          "text-muted-foreground transition-all duration-300",
+          "text-foreground transition-all duration-300",
           isRefreshing ? "opacity-0 translate-y-2" : "opacity-100 translate-y-0",
         )}
       >
-        {evolveInsight(nudgeMessage)}
+        {nudgeMessage || "Loading your personalized daily nudge..."}
       </p>
     </div>
   );

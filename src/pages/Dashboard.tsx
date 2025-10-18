@@ -30,6 +30,7 @@ import { generateDynamicTodaysPlan, generateDynamicDailyNudge } from "@/lib/dyna
 import { supabase } from "@/integrations/supabase/client";
 import { useFitbitTrends } from "@/hooks/useFitbitTrends";
 import { FitbitSyncStatus } from "@/components/FitbitSyncStatus";
+import { DeveloperPanel } from "@/components/developer/DeveloperPanel";
 
 // ---- Metric Helpers ---- //
 const parseMetrics = (data: HealthDataRow | null) =>
@@ -165,6 +166,7 @@ export const Dashboard = () => {
           <GraphCarousel />
           <WeeklyInsightsCard />
           <EngagementCard />
+          <DeveloperPanel />
         </div>
       </div>
     </TooltipProvider>

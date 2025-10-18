@@ -66,13 +66,11 @@ export default function DeveloperBaselinesEngine() {
 
   const fetchData = async () => {
     try {
-      // Fetch latest function logs
       const { data: logData } = await supabase
         .from("function_execution_log")
         .select("*")
         .order("started_at", { ascending: false });
 
-      // Update function statuses
       const updatedFunctions = functions.map((func) => {
         const latestLog = logData?.find((log) => log.function_name === func.name);
         return {
@@ -85,18 +83,15 @@ export default function DeveloperBaselinesEngine() {
       });
       setFunctions(updatedFunctions);
 
-      // Fetch baseline results
       const { data: baselineData } = await supabase
         .from("yves_profiles")
         .select("metric, baseline_value, current_value, deviation_pct, risk_status")
         .limit(10);
       if (baselineData) setBaselines(baselineData as BaselineData[]);
 
-      // Fetch latest insights
       const { data: insightsData, error: insightsError } = await (supabase.rpc as any)("get_latest_insights");
       if (!insightsError && insightsData) setInsights(insightsData as Insight[]);
 
-      // Set recent logs
       setLogs((logData || []).slice(0, 10) as LogEntry[]);
     } catch (error) {
       console.error("Error fetching data:", error);
@@ -109,7 +104,6 @@ export default function DeveloperBaselinesEngine() {
     fetchData();
   }, []);
 
-  // Real-time subscription
   useEffect(() => {
     const channel = supabase
       .channel("function_execution_updates")
@@ -123,7 +117,6 @@ export default function DeveloperBaselinesEngine() {
     };
   }, []);
 
-  // Auto-refresh every 60s
   useEffect(() => {
     const interval = setInterval(fetchData, 60000);
     return () => clearInterval(interval);
@@ -260,100 +253,6 @@ export default function DeveloperBaselinesEngine() {
         </div>
       </div>
 
-      {/* Function Status Table */}
-      <Card className="bg-black/40 backdrop-blur-xl border-white/10 rounded-2xl">
-        <CardHeader>
-          <CardTitle className="text-xl">📊 Function Status</CardTitle>
-          <CardDescription>Monitor and trigger edge functions</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-white/10">
-                  <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Function Name</th>
-                  <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Status</th>
-                  <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Last Run</th>
-                  <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Duration</th>
-                  <th className="text-right py-3 px-4 text-sm font-medium text-muted-foreground">Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                {functions.map((func) => (
-                  <tr key={func.name} className="border-b border-white/5 hover:bg-white/5 transition-colors">
-                    <td className="py-3 px-4 font-medium">{func.displayName}</td>
-                    <td className="py-3 px-4">{getStatusBadge(func.status)}</td>
-                    <td className="py-3 px-4 text-sm text-muted-foreground">
-                      {func.lastRun ? new Date(func.lastRun).toLocaleString() : "Never"}
-                    </td>
-                    <td className="py-3 px-4 text-sm text-muted-foreground">
-                      {func.duration ? `${func.duration}ms` : "-"}
-                    </td>
-                    <td className="py-3 px-4 text-right">
-                      <Button
-                        onClick={() => runFunction(func.name)}
-                        disabled={func.isRunning}
-                        size="sm"
-                        className="bg-indigo-600 hover:bg-indigo-700"
-                      >
-                        {func.isRunning ? (
-                          <Loader2 className="w-4 h-4 animate-spin" />
-                        ) : (
-                          <>
-                            <Play className="w-4 h-4 mr-1" />
-                            Run Now
-                          </>
-                        )}
-                      </Button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Baseline Results Grid */}
-      <div>
-        <h2 className="text-xl font-semibold mb-4">🎯 Baseline Results</h2>
-        {baselines.length === 0 ? (
-          <Card className="bg-black/40 backdrop-blur-xl border-white/10 rounded-2xl p-8 text-center">
-            <p className="text-muted-foreground">No baseline data available yet. Run the functions to generate data.</p>
-          </Card>
-        ) : (
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {baselines.map((baseline, idx) => (
-              <Card
-                key={idx}
-                className={`bg-black/40 backdrop-blur-xl border rounded-2xl transition-all hover:scale-[1.02] ${getRiskColor(baseline.risk_status)}`}
-              >
-                <CardHeader>
-                  <CardTitle className="text-lg capitalize">{baseline.metric}</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-2">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Baseline:</span>
-                    <span className="font-medium">{baseline.baseline_value.toFixed(2)}</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Current:</span>
-                    <span className="font-medium">{baseline.current_value.toFixed(2)}</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Deviation:</span>
-                    <span className="font-semibold">{baseline.deviation_pct.toFixed(1)}%</span>
-                  </div>
-                  <Badge className={`w-full justify-center ${getRiskColor(baseline.risk_status)}`}>
-                    {baseline.risk_status.toUpperCase()}
-                  </Badge>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        )}
-      </div>
-
       {/* Live Insights Feed */}
       <div>
         <h2 className="text-xl font-semibold mt-8 mb-4">🧩 Live Insights Feed</h2>
@@ -379,41 +278,38 @@ export default function DeveloperBaselinesEngine() {
                   <Badge className={`mt-2 ${getRiskColor(insight.risk_status)}`}>
                     {insight.risk_status.toUpperCase()}
                   </Badge>
+
+                  {/* Acknowledge Button */}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="mt-3 w-full"
+                    onClick={async () => {
+                      const { error } = await supabase.from("user_insight_actions").insert({
+                        user_id: "test_user_01", // replace later with auth user
+                        metric: insight.metric,
+                        insight: insight.insight,
+                        suggestion: insight.suggestion,
+                        action_taken: "Acknowledged",
+                      });
+                      if (error) {
+                        console.error("Error saving acknowledgment:", error);
+                      } else {
+                        toast({
+                          title: "Insight saved!",
+                          description: "Marked as acknowledged.",
+                        });
+                      }
+                    }}
+                  >
+                    Mark as Acknowledged
+                  </Button>
                 </CardContent>
               </Card>
             ))}
           </div>
         )}
       </div>
-
-      {/* Execution Logs */}
-      <Card className="bg-black/40 backdrop-blur-xl border-white/10 rounded-2xl">
-        <CardHeader>
-          <CardTitle className="text-xl">📝 Execution Logs</CardTitle>
-          <CardDescription>Latest 10 function executions</CardDescription>
-        </CardHeader>
-        <CardContent>
-          {logs.length === 0 ? (
-            <p className="text-muted-foreground text-center py-4">No execution logs yet</p>
-          ) : (
-            <div className="space-y-2">
-              {logs.map((log) => (
-                <div
-                  key={log.id}
-                  className="flex items-center justify-between p-3 rounded-lg bg-white/5 hover:bg-white/10 transition-colors"
-                >
-                  <div className="flex items-center gap-3">
-                    {getStatusBadge(log.status)}
-                    <span className="font-medium">{log.function_name}</span>
-                    {log.duration_ms && <span className="text-xs text-muted-foreground">({log.duration_ms}ms)</span>}
-                  </div>
-                  <span className="text-sm text-muted-foreground">{new Date(log.started_at).toLocaleTimeString()}</span>
-                </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
     </div>
   );
 }

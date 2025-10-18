@@ -71,8 +71,6 @@ const handler: Handler = async (event) => {
     }
 
     // Store in Supabase
-    const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
-    
     // Check if today's data already exists
     const todayDate = new Date().toISOString().split('T')[0];
     const { data: existingData } = await supabase

@@ -93,7 +93,7 @@ export default function DeveloperBaselinesEngine() {
       if (baselineData) setBaselines(baselineData as BaselineData[]);
 
       // Fetch latest insights
-      const { data: insightsData, error: insightsError } = await supabase.rpc("get_latest_insights");
+      const { data: insightsData, error: insightsError } = await (supabase.rpc as any)("get_latest_insights");
       if (!insightsError && insightsData) setInsights(insightsData as Insight[]);
 
       // Set recent logs

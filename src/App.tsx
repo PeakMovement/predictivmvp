@@ -21,6 +21,7 @@ import TestSupabase from "@/pages/TestSupabase";
 import FitbitSyncNow from "@/pages/FitbitSyncNow";
 import MyBaselines from "@/pages/MyBaselines";
 import DeveloperBaselinesEngine from "@/pages/DeveloperBaselinesEngine";
+import MyDocuments from "@/pages/MyDocuments";
 import { Settings as SettingsIcon } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
@@ -77,7 +78,7 @@ const App = () => {
       case "dashboard":
         return (
           <div key="dashboard" className="animate-fade-in">
-            <Dashboard />
+            <Dashboard onNavigate={setActiveTab} />
           </div>
         );
       case "training":
@@ -96,6 +97,12 @@ const App = () => {
         return (
           <div key="your-plan" className="animate-fade-in">
             <YourPlan />
+          </div>
+        );
+      case "my-documents":
+        return (
+          <div key="my-documents" className="animate-fade-in">
+            <MyDocuments />
           </div>
         );
       case "mybaselines":
@@ -143,7 +150,7 @@ const App = () => {
       default:
         return (
           <div key="dashboard" className="animate-fade-in">
-            <Dashboard />
+            <Dashboard onNavigate={setActiveTab} />
           </div>
         );
     }

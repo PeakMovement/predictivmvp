@@ -1,4 +1,4 @@
-import { Home, Dumbbell, Heart, ClipboardList, Users, RefreshCw, TrendingUp, Code } from "lucide-react";
+import { Home, Dumbbell, Heart, ClipboardList, Users, RefreshCw, TrendingUp, Code, FileText } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface BottomNavigationProps {
@@ -10,7 +10,8 @@ const tabs = [
   { id: "dashboard", label: "Dashboard", icon: Home, mobile: true },
   { id: "training", label: "Training", icon: Dumbbell, mobile: true },
   { id: "health", label: "Health", icon: Heart, mobile: true },
-  { id: "your-plan", label: "Plan", icon: ClipboardList, mobile: true },
+  { id: "my-documents", label: "Documents", icon: FileText, mobile: true },
+  { id: "your-plan", label: "Plan", icon: ClipboardList, mobile: false },
   { id: "mybaselines", label: "Baselines", icon: TrendingUp, mobile: false },
   { id: "find-help", label: "Help", icon: Users, mobile: false },
   { id: "fitbit-sync-now", label: "Sync", icon: RefreshCw, mobile: false },

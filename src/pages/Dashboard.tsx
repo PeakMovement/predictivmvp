@@ -33,6 +33,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useFitbitTrends } from "@/hooks/useFitbitTrends";
 import { FitbitSyncStatus } from "@/components/FitbitSyncStatus";
 import { FeedbackSummaryPanel } from "@/components/dashboard/FeedbackSummaryPanel";
+import { DocumentIntelligenceCard } from "@/components/dashboard/DocumentIntelligenceCard";
 
 /* -------------------- HELPERS -------------------- */
 
@@ -96,7 +97,11 @@ const WelcomeHeader = () => (
 
 /* -------------------- MAIN DASHBOARD -------------------- */
 
-export const Dashboard = () => {
+interface DashboardProps {
+  onNavigate?: (tab: string) => void;
+}
+
+export const Dashboard = ({ onNavigate = () => {} }: DashboardProps) => {
   const { currentDayData, csvData, currentDayIndex } = useLiveData();
   const metrics = [
     { name: "ACWR", value: "1.2", status: "green" },
@@ -135,7 +140,12 @@ export const Dashboard = () => {
           {/* Graph & Chart Section */}
           <HealthDataChart />
 
-          {/* Feedback Summary Panel (New) */}
+          {/* Document Intelligence Card */}
+          <div className="mt-8">
+            <DocumentIntelligenceCard onNavigate={onNavigate} />
+          </div>
+
+          {/* Feedback Summary Panel */}
           <div className="mt-8">
             <FeedbackSummaryPanel />
           </div>

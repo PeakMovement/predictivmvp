@@ -14,6 +14,36 @@ export type Database = {
   }
   public: {
     Tables: {
+      adaptive_recommendations: {
+        Row: {
+          adaptive_suggestion: string | null
+          deviation_pct: number | null
+          generated_at: string | null
+          id: string
+          metric: string
+          risk_status: string | null
+          user_id: string | null
+        }
+        Insert: {
+          adaptive_suggestion?: string | null
+          deviation_pct?: number | null
+          generated_at?: string | null
+          id?: string
+          metric: string
+          risk_status?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          adaptive_suggestion?: string | null
+          deviation_pct?: number | null
+          generated_at?: string | null
+          id?: string
+          metric?: string
+          risk_status?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       Bookings: {
         Row: {
           clinician_id: string | null
@@ -67,6 +97,74 @@ export type Database = {
           file_url?: string
           id?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      document_insights: {
+        Row: {
+          confidence_score: number | null
+          created_at: string | null
+          document_id: string
+          id: string
+          insight_data: Json
+          insight_type: string
+          user_id: string
+        }
+        Insert: {
+          confidence_score?: number | null
+          created_at?: string | null
+          document_id: string
+          id?: string
+          insight_data: Json
+          insight_type: string
+          user_id: string
+        }
+        Update: {
+          confidence_score?: number | null
+          created_at?: string | null
+          document_id?: string
+          id?: string
+          insight_data?: Json
+          insight_type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "document_insights_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "user_documents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      feedback: {
+        Row: {
+          action_taken: string | null
+          created_at: string | null
+          feedback_score: number | null
+          id: string
+          insight: string | null
+          metric: string
+          user_id: string | null
+        }
+        Insert: {
+          action_taken?: string | null
+          created_at?: string | null
+          feedback_score?: number | null
+          id?: string
+          insight?: string | null
+          metric: string
+          user_id?: string | null
+        }
+        Update: {
+          action_taken?: string | null
+          created_at?: string | null
+          feedback_score?: number | null
+          id?: string
+          insight?: string | null
+          metric?: string
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -367,6 +465,36 @@ export type Database = {
         }
         Relationships: []
       }
+      insight_feedback: {
+        Row: {
+          action_taken: string | null
+          created_at: string | null
+          feedback_score: number | null
+          id: string
+          insight: string | null
+          metric: string | null
+          user_id: string | null
+        }
+        Insert: {
+          action_taken?: string | null
+          created_at?: string | null
+          feedback_score?: number | null
+          id?: string
+          insight?: string | null
+          metric?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          action_taken?: string | null
+          created_at?: string | null
+          feedback_score?: number | null
+          id?: string
+          insight?: string | null
+          metric?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       notification_log: {
         Row: {
           created_at: string
@@ -489,6 +617,72 @@ export type Database = {
         }
         Relationships: []
       }
+      user_context_enhanced: {
+        Row: {
+          last_updated: string | null
+          medical_profile: Json | null
+          nutrition_profile: Json | null
+          training_profile: Json | null
+          user_id: string
+        }
+        Insert: {
+          last_updated?: string | null
+          medical_profile?: Json | null
+          nutrition_profile?: Json | null
+          training_profile?: Json | null
+          user_id: string
+        }
+        Update: {
+          last_updated?: string | null
+          medical_profile?: Json | null
+          nutrition_profile?: Json | null
+          training_profile?: Json | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_documents: {
+        Row: {
+          ai_summary: string | null
+          document_type: string
+          file_name: string
+          file_size: number | null
+          file_url: string
+          id: string
+          parsed_content: Json | null
+          processing_status: string | null
+          tags: string[] | null
+          uploaded_at: string | null
+          user_id: string
+        }
+        Insert: {
+          ai_summary?: string | null
+          document_type: string
+          file_name: string
+          file_size?: number | null
+          file_url: string
+          id?: string
+          parsed_content?: Json | null
+          processing_status?: string | null
+          tags?: string[] | null
+          uploaded_at?: string | null
+          user_id: string
+        }
+        Update: {
+          ai_summary?: string | null
+          document_type?: string
+          file_name?: string
+          file_size?: number | null
+          file_url?: string
+          id?: string
+          parsed_content?: Json | null
+          processing_status?: string | null
+          tags?: string[] | null
+          uploaded_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_fitbit_data: {
         Row: {
           calories: number | null
@@ -542,6 +736,54 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: []
+      }
+      user_insight_actions: {
+        Row: {
+          acknowledged_at: string | null
+          action_taken: string | null
+          feedback_score: number | null
+          id: string
+          insight: string | null
+          metric: string
+          suggestion: string | null
+          user_id: string | null
+        }
+        Insert: {
+          acknowledged_at?: string | null
+          action_taken?: string | null
+          feedback_score?: number | null
+          id?: string
+          insight?: string | null
+          metric: string
+          suggestion?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          acknowledged_at?: string | null
+          action_taken?: string | null
+          feedback_score?: number | null
+          id?: string
+          insight?: string | null
+          metric?: string
+          suggestion?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_insight_actions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "fitbit_dashboard_view"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "user_insight_actions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       users: {
         Row: {
@@ -681,6 +923,14 @@ export type Database = {
       }
     }
     Views: {
+      feedback_summary: {
+        Row: {
+          avg_score: number | null
+          metric: string | null
+          total_feedback: number | null
+        }
+        Relationships: []
+      }
       fitbit_daily_summary: {
         Row: {
           avg_hr: number | null
@@ -729,6 +979,42 @@ export type Database = {
         }
         Relationships: []
       }
+      insight_engagement_summary: {
+        Row: {
+          engagement_rate: number | null
+          feedback_count: number | null
+          insight_count: number | null
+          metric: string | null
+        }
+        Relationships: []
+      }
+      user_insights_view: {
+        Row: {
+          deviation_pct: number | null
+          insight: string | null
+          metric: string | null
+          risk_status: string | null
+          suggestion: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          deviation_pct?: number | null
+          insight?: never
+          metric?: string | null
+          risk_status?: string | null
+          suggestion?: never
+          updated_at?: string | null
+        }
+        Update: {
+          deviation_pct?: number | null
+          insight?: never
+          metric?: string | null
+          risk_status?: string | null
+          suggestion?: never
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       user_training_metrics: {
         Row: {
           acute_load: number | null
@@ -745,7 +1031,21 @@ export type Database = {
       }
     }
     Functions: {
-      [_ in never]: never
+      get_latest_insights: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          deviation_pct: number
+          insight: string
+          metric: string
+          risk_status: string
+          suggestion: string
+          updated_at: string
+        }[]
+      }
+      update_user_context: {
+        Args: { p_data: Json; p_field: string; p_user_id: string }
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never

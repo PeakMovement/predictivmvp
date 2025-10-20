@@ -71,6 +71,22 @@ Deno.serve(async (req) => {
       baselineMap.set(key, b.rolling_avg);
     });
 
+    // Get health profiles for context-aware risk assessment
+    const { data: healthProfiles, error: profileError } = await supabase
+      .from('user_health_profiles')
+      .select('user_id, profile_data')
+      .order('generated_at', { ascending: false });
+
+    if (profileError) console.error('Error fetching health profiles:', profileError);
+
+    // Create profile lookup map (most recent per user)
+    const profileMap = new Map();
+    healthProfiles?.forEach((p: any) => {
+      if (!profileMap.has(p.user_id)) {
+        profileMap.set(p.user_id, p.profile_data);
+      }
+    });
+
     // Calculate deviations
     const deviationRecords: any[] = [];
     const processedUsers = new Set();
@@ -91,10 +107,99 @@ Deno.serve(async (req) => {
       for (const metric of metrics) {
         const baseline = baselineMap.get(`${systemUserId}_${metric}`);
         const currentValue = record[metric];
+        const profile = profileMap.get(systemUserId);
         
         if (baseline && currentValue != null) {
           const deviation = ((currentValue - baseline) / baseline) * 100;
-          const riskStatus = Math.abs(deviation) < 10 ? 'low' : Math.abs(deviation) < 25 ? 'moderate' : 'high';
+          let riskStatus = Math.abs(deviation) < 10 ? 'low' : Math.abs(deviation) < 25 ? 'moderate' : 'high';
+          let reasoning = '';
+
+          // Context-aware risk assessment using health profile
+          if (profile) {
+            const trainingSummary = profile.training_summary;
+            const medicalSummary = profile.medical_summary;
+
+            // Training phase awareness for strain/load metrics
+            if ((metric === 'strain' || metric === 'training_load') && trainingSummary?.current_phase) {
+              const phase = trainingSummary.current_phase.toLowerCase();
+              
+              if (phase.includes('taper') && deviation > 15) {
+                riskStatus = 'high';
+                reasoning = `Elevated ${metric} during taper phase - insufficient recovery before race`;
+              } else if (phase.includes('build') && deviation > 25 && deviation < 40) {
+                riskStatus = 'moderate';
+                reasoning = `Build phase allows higher ${metric}, but approaching overtraining threshold`;
+              } else if (phase.includes('base') && Math.abs(deviation) < 15) {
+                riskStatus = 'low';
+                reasoning = `${metric} is stable during base phase - good foundational work`;
+              }
+            }
+
+            // ACWR-specific training context
+            if (metric === 'acwr' && trainingSummary?.weekly_volume) {
+              if (currentValue > 1.5) {
+                riskStatus = 'high';
+                reasoning = `ACWR above 1.5 with ${trainingSummary.weekly_volume} weekly volume - high injury risk`;
+              } else if (currentValue < 0.8) {
+                riskStatus = 'moderate';
+                reasoning = `ACWR below 0.8 - potential detraining or insufficient stimulus`;
+              }
+            }
+
+            // Medical condition awareness for HRV/recovery metrics
+            if ((metric === 'hrv' || metric === 'monotony') && medicalSummary?.active_conditions) {
+              const conditions = Array.isArray(medicalSummary.active_conditions) 
+                ? medicalSummary.active_conditions 
+                : [];
+              
+              if (metric === 'hrv' && deviation < -20) {
+                const respiratoryConditions = conditions.filter((c: string) => 
+                  c.toLowerCase().includes('asthma') || 
+                  c.toLowerCase().includes('respiratory')
+                );
+                
+                if (respiratoryConditions.length > 0) {
+                  riskStatus = 'high';
+                  reasoning = `Significant HRV drop with ${respiratoryConditions.join(', ')} history - check respiratory stress and recovery`;
+                }
+              }
+
+              if (metric === 'monotony' && currentValue > 2.0) {
+                const fatigueConditions = conditions.filter((c: string) => 
+                  c.toLowerCase().includes('fatigue') || 
+                  c.toLowerCase().includes('chronic')
+                );
+                
+                if (fatigueConditions.length > 0) {
+                  riskStatus = 'high';
+                  reasoning = `High monotony with ${fatigueConditions.join(', ')} - add rest days or cross-training`;
+                }
+              }
+            }
+
+            // Chronic load context for injury-prone users
+            if (metric === 'chronic_load' && medicalSummary?.injury_history) {
+              const injuries = Array.isArray(medicalSummary.injury_history) 
+                ? medicalSummary.injury_history 
+                : [];
+              
+              if (deviation > 30 && injuries.length > 0) {
+                riskStatus = 'high';
+                reasoning = `Rapid chronic load increase with injury history (${injuries.join(', ')}) - high re-injury risk`;
+              }
+            }
+          }
+
+          // Default reasoning if no context-specific reasoning was set
+          if (!reasoning) {
+            if (Math.abs(deviation) < 10) {
+              reasoning = `${metric} is within normal range - no action needed`;
+            } else if (Math.abs(deviation) < 25) {
+              reasoning = `${metric} showing moderate deviation - monitor closely`;
+            } else {
+              reasoning = `${metric} significantly outside baseline - review training/recovery`;
+            }
+          }
           
           deviationRecords.push({
             user_id: systemUserId,
@@ -103,6 +208,7 @@ Deno.serve(async (req) => {
             current_value: currentValue,
             deviation_pct: deviation,
             risk_status: riskStatus,
+            reasoning: reasoning,
           });
         }
       }

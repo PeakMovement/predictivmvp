@@ -100,6 +100,12 @@ const App = () => {
             <YourPlan />
           </div>
         );
+      case "plan-compliance":
+        return (
+          <div key="plan-compliance" className="animate-fade-in">
+            <PlanCompliance />
+          </div>
+        );
       case "my-documents":
         return (
           <div key="my-documents" className="animate-fade-in">

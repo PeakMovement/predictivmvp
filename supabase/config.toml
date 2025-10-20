@@ -26,3 +26,12 @@ verify_jwt = false
 
 [functions.fetch-fitbit-auto]
 verify_jwt = false
+
+[functions.build-health-profile]
+verify_jwt = false
+
+[functions.calculate-plan-adherence]
+verify_jwt = false
+
+[functions.generate-yves-recommendations]
+verify_jwt = false

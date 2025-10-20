@@ -3,6 +3,9 @@ project_id = "ixtwbkikyuexskdgfpfq"
 [functions.analyze-document]
 verify_jwt = false
 
+[functions.yves-tree]
+verify_jwt = false
+
 [functions.test-ping]
 verify_jwt = false
 

@@ -35,6 +35,7 @@ import { FitbitSyncStatus } from "@/components/FitbitSyncStatus";
 import { FeedbackSummaryPanel } from "@/components/dashboard/FeedbackSummaryPanel";
 import { DocumentIntelligenceCard } from "@/components/dashboard/DocumentIntelligenceCard";
 import { HealthProfileViewer } from "@/components/health/HealthProfileViewer";
+import { YvesTreeTimeline } from "@/components/dashboard/YvesTreeTimeline";
 import { useHealthProfile } from "@/hooks/useHealthProfile";
 import { generateYvesRecommendations, YvesRecommendation } from "@/lib/yvesRecommendations";
 import * as LucideIcons from "lucide-react";
@@ -175,6 +176,10 @@ export const Dashboard = ({ onNavigate = () => {} }: DashboardProps) => {
           </div>
 
           {profile && <div className="mt-8"><HealthProfileViewer profile={profile} /></div>}
+
+          <div className="mt-8">
+            <YvesTreeTimeline />
+          </div>
 
           {yvesRecs.length > 0 && (
             <div className="mt-8 space-y-4">

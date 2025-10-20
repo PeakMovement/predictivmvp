@@ -17,29 +17,47 @@ export type Database = {
       adaptive_recommendations: {
         Row: {
           adaptive_suggestion: string | null
+          confidence: number | null
+          created_at: string | null
           deviation_pct: number | null
           generated_at: string | null
           id: string
           metric: string
+          pattern: string | null
+          recommendation: string | null
+          risk_level: string | null
           risk_status: string | null
+          updated_at: string | null
           user_id: string | null
         }
         Insert: {
           adaptive_suggestion?: string | null
+          confidence?: number | null
+          created_at?: string | null
           deviation_pct?: number | null
           generated_at?: string | null
           id?: string
           metric: string
+          pattern?: string | null
+          recommendation?: string | null
+          risk_level?: string | null
           risk_status?: string | null
+          updated_at?: string | null
           user_id?: string | null
         }
         Update: {
           adaptive_suggestion?: string | null
+          confidence?: number | null
+          created_at?: string | null
           deviation_pct?: number | null
           generated_at?: string | null
           id?: string
           metric?: string
+          pattern?: string | null
+          recommendation?: string | null
+          risk_level?: string | null
           risk_status?: string | null
+          updated_at?: string | null
           user_id?: string | null
         }
         Relationships: []
@@ -281,6 +299,7 @@ export type Database = {
           hrv: number | null
           id: string
           monotony: number | null
+          sleep_score: number | null
           strain: number | null
           training_load: number | null
           user_id: string
@@ -295,6 +314,7 @@ export type Database = {
           hrv?: number | null
           id?: string
           monotony?: number | null
+          sleep_score?: number | null
           strain?: number | null
           training_load?: number | null
           user_id: string
@@ -309,6 +329,7 @@ export type Database = {
           hrv?: number | null
           id?: string
           monotony?: number | null
+          sleep_score?: number | null
           strain?: number | null
           training_load?: number | null
           user_id?: string
@@ -848,6 +869,45 @@ export type Database = {
           },
         ]
       }
+      user_profile: {
+        Row: {
+          activity_level: string | null
+          conditions: string[] | null
+          created_at: string | null
+          dob: string | null
+          gender: string | null
+          goals: string[] | null
+          injuries: string[] | null
+          name: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          activity_level?: string | null
+          conditions?: string[] | null
+          created_at?: string | null
+          dob?: string | null
+          gender?: string | null
+          goals?: string[] | null
+          injuries?: string[] | null
+          name?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          activity_level?: string | null
+          conditions?: string[] | null
+          created_at?: string | null
+          dob?: string | null
+          gender?: string | null
+          goals?: string[] | null
+          injuries?: string[] | null
+          name?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       users: {
         Row: {
           connected_at: string | null
@@ -950,6 +1010,55 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "Users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      yves_feedback: {
+        Row: {
+          comment: string | null
+          created_at: string | null
+          feedback: string | null
+          id: string
+          recommendation_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          comment?: string | null
+          created_at?: string | null
+          feedback?: string | null
+          id?: string
+          recommendation_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          comment?: string | null
+          created_at?: string | null
+          feedback?: string | null
+          id?: string
+          recommendation_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "yves_feedback_recommendation_id_fkey"
+            columns: ["recommendation_id"]
+            isOneToOne: false
+            referencedRelation: "adaptive_recommendations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "yves_feedback_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "fitbit_dashboard_view"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "yves_feedback_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
             referencedColumns: ["id"]
           },
         ]
@@ -1091,6 +1200,18 @@ export type Database = {
           day: string | null
           fatigue_index: number | null
           readiness_score_est: number | null
+          user_id: string | null
+        }
+        Relationships: []
+      }
+      yves_timeline_view: {
+        Row: {
+          baseline_value: number | null
+          current_value: number | null
+          deviation: number | null
+          generated_at: string | null
+          metric: string | null
+          recommendation: string | null
           user_id: string | null
         }
         Relationships: []

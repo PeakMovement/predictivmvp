@@ -45,9 +45,12 @@ const handler: Handler = async (event) => {
     const dailyMetrics: any[] = [];
     const dates = Object.keys(grouped).sort();
 
+    logSync("calc-trends:processing-dates", { dateCount: dates.length, dates });
+
     dates.forEach((date) => {
       const entries = grouped[date];
       const activity = entries[0]?.activity?.data?.summary || {};
+      const sleep = entries[0]?.sleep?.data?.summary || {};
       
       // Extract base values with safe defaults
       const fairlyActive = activity.fairlyActiveMinutes || 0;
@@ -66,6 +69,22 @@ const handler: Handler = async (event) => {
       const trainingLoad = activeMinutes > 0 ? (activeMinutes * avgHR) / 10 : 0;
       const hrv = 20 + (60 - restHR); // Recovery readiness proxy
       const strain = (fatBurnMinutes * 1.0) + (cardioMinutes * 1.5) + (peakMinutes * 2.0);
+      
+      // Calculate sleep score from Fitbit sleep data
+      const sleepEfficiency = sleep.efficiency || 0;
+      const sleepDuration = sleep.totalMinutesAsleep || 0;
+      const sleepScore = sleepDuration > 0 
+        ? Math.round((sleepEfficiency * 0.7) + (Math.min(sleepDuration / 480, 1) * 30))
+        : 0;
+
+      logSync("calc-trends:daily-metrics", { 
+        date, 
+        trainingLoad, 
+        strain, 
+        sleepScore,
+        sleepEfficiency,
+        sleepDuration 
+      });
 
       dailyMetrics.push({
         date,
@@ -73,6 +92,7 @@ const handler: Handler = async (event) => {
         trainingLoad,
         hrv,
         strain,
+        sleepScore,
       });
     });
 
@@ -112,6 +132,7 @@ const handler: Handler = async (event) => {
         strain: parseFloat(day.strain.toFixed(2)),
         monotony: parseFloat(monotony.toFixed(2)),
         hrv: parseFloat(day.hrv.toFixed(2)),
+        sleep_score: parseFloat(day.sleepScore.toFixed(2)),
       });
     }
 

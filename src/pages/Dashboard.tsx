@@ -41,6 +41,7 @@ import { generateYvesRecommendations, YvesRecommendation } from "@/lib/yvesRecom
 import * as LucideIcons from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useUnifiedMetrics } from "@/hooks/useUnifiedMetrics";
+import { calculateMetrics } from "@/lib/metricsCalculator";
 
 /* -------------------- HELPERS -------------------- */
 
@@ -110,7 +111,7 @@ interface DashboardProps {
 
 export const Dashboard = ({ onNavigate = () => {} }: DashboardProps) => {
   const { currentDayData } = useLiveData();
-  const { latestTrend } = useFitbitTrends({ days: 7 });
+  const { trends, latestTrend } = useFitbitTrends({ days: 7 });
   const { profile } = useHealthProfile();
   const { sleepScore, dataSource } = useUnifiedMetrics();
   const [yvesRecs, setYvesRecs] = useState<YvesRecommendation[]>([]);
@@ -128,12 +129,13 @@ export const Dashboard = ({ onNavigate = () => {} }: DashboardProps) => {
     fetch();
   }, [latestTrend]);
 
-  // Compute metrics from real data
-  const acwr = latestTrend?.acwr ? latestTrend.acwr.toFixed(2) : "—";
-  const strain = latestTrend?.strain ? Math.round(latestTrend.strain).toString() : "—";
-  const displaySleepScore = typeof sleepScore === 'number' ? sleepScore.toFixed(0) : "—";
+  // Use unified metrics calculator for consistency
+  const metrics = calculateMetrics(trends || []);
+  const acwr = metrics.latest.acwr ? metrics.latest.acwr.toFixed(2) : "—";
+  const strain = metrics.latest.strain ? Math.round(metrics.latest.strain).toString() : "—";
+  const displaySleepScore = metrics.latest.sleepScore ? metrics.latest.sleepScore.toFixed(0) : "—";
 
-  const metrics = [
+  const dashboardMetrics = [
     { name: "ACWR", value: acwr, status: "green" },
     { name: "Strain", value: strain, status: "yellow" },
     { name: "Sleep Score", value: displaySleepScore, status: "green", source: dataSource },
@@ -153,7 +155,7 @@ export const Dashboard = ({ onNavigate = () => {} }: DashboardProps) => {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-            {metrics.map((metric, index) => (
+            {dashboardMetrics.map((metric, index) => (
               <div
                 key={index}
                 className="bg-glass backdrop-blur-xl border border-glass-border rounded-2xl p-4 shadow-glass"

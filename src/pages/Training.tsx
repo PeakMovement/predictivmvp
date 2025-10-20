@@ -30,6 +30,7 @@ import { useLiveData } from "@/contexts/LiveDataContext";
 import { HealthDataRow } from "@/lib/healthDataStore";
 import { UnifiedTrendCard } from "@/components/trends/UnifiedTrendCard";
 import { useFitbitTrends } from "@/hooks/useFitbitTrends";
+import { SessionLogList } from "@/components/dashboard/SessionLogList";
 
 
 // ✅ getSessionLogs, generateSuggestions, getGraphData and helpers remain unchanged
@@ -142,50 +143,6 @@ const SessionLogCard = ({ title, date, load }: { title: string; date: string; lo
     </div>
   </div>
 );
-
-const SessionLogList = () => {
-  const { trends, isLoading } = useFitbitTrends({ days: 7 });
-  
-  const sessions = React.useMemo(() => {
-    if (!trends || trends.length === 0) return [];
-    
-    return trends
-      .filter(t => t.training_load != null)
-      .slice(0, 5)
-      .map(trend => ({
-        title: `Day ${new Date(trend.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`,
-        date: trend.date,
-        load: Math.round(trend.training_load || 0),
-      }));
-  }, [trends]);
-
-  return (
-    <div className="bg-glass backdrop-blur-xl border border-glass-border rounded-2xl p-6 shadow-glass hover:bg-glass-highlight hover:scale-105 hover:-translate-y-1 transition-all duration-300 ease-out animate-fade-in transform-gpu">
-      <div className="flex items-center gap-3 mb-6">
-        <div className="w-8 h-8 bg-primary/20 rounded-lg flex items-center justify-center hover:scale-110 transition-transform duration-200">
-          <Activity size={16} className="text-primary" />
-        </div>
-        <h3 className="text-lg font-semibold text-foreground">Recent Sessions</h3>
-      </div>
-      <div className="space-y-3">
-        {isLoading ? (
-          <div className="text-center py-8 text-muted-foreground">
-            <p className="text-sm">Loading sessions...</p>
-          </div>
-        ) : sessions.length > 0 ? (
-          sessions.map((session, i) => (
-            <SessionLogCard key={i} {...session} />
-          ))
-        ) : (
-          <div className="text-center py-8 text-muted-foreground">
-            <p className="text-sm">No recent sessions</p>
-            <p className="text-xs mt-1">Connect Fitbit and calculate trends in Settings</p>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-};
 
 const CircularGauge = ({
   title,

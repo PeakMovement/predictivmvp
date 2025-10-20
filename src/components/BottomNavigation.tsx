@@ -1,108 +1,53 @@
-import React from "react";
-import { Home, Dumbbell, Heart, ClipboardList, Users, RefreshCw, TrendingUp, Code, FileText, User } from "lucide-react";
+import { Home, Dumbbell, Heart, FileText, User, ClipboardList, TrendingUp, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-interface BottomNavigationProps {
-  activeTab: string;
-  onTabChange: (tab: string) => void;
-}
-
-const tabs = [
-  { id: "dashboard", label: "Dashboard", icon: Home, mobile: true },
-  { id: "training", label: "Training", icon: Dumbbell, mobile: true },
-  { id: "health", label: "Health", icon: Heart, mobile: true },
-  { id: "my-documents", label: "Documents", icon: FileText, mobile: true },
-  { id: "profile-setup", label: "Profile", icon: User, mobile: false },
-  { id: "your-plan", label: "Plan", icon: ClipboardList, mobile: false },
-  { id: "mybaselines", label: "Baselines", icon: TrendingUp, mobile: false },
-  { id: "find-help", label: "Help", icon: Users, mobile: false },
-  { id: "fitbit-sync-now", label: "Sync", icon: RefreshCw, mobile: false },
-  { id: "developer-baselines-engine", label: "Dev", icon: Code, mobile: false },
+const navItems = [
+  { name: "Dashboard", icon: Home },
+  { name: "Training", icon: Dumbbell },
+  { name: "Health", icon: Heart },
+  { name: "Documents", icon: FileText },
+  { name: "Profile", icon: User },
+  { name: "Plan", icon: ClipboardList },
+  { name: "Baselines", icon: TrendingUp },
+  { name: "Help", icon: Users },
 ];
 
-export const BottomNavigation = ({ activeTab, onTabChange }: BottomNavigationProps) => {
-  const [isMobile, setIsMobile] = React.useState(window.innerWidth < 768);
-  
-  React.useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth < 768);
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
-  
-  const visibleTabs = tabs.filter(tab => !isMobile || tab.mobile);
-  
+export const BottomNav = ({
+  activeTab = "Dashboard",
+  onNavigate,
+}: {
+  activeTab?: string;
+  onNavigate?: (tab: string) => void;
+}) => {
   return (
-    <div className={cn(
-      "fixed left-0 right-0 z-50",
-      "bottom-0 pb-[env(safe-area-inset-bottom)]",
-      "md:bottom-6 md:left-1/2 md:right-auto md:transform md:-translate-x-1/2 md:pb-0",
-      "md:w-auto md:animate-float"
-    )}>
-      <nav className={cn(
-        "bg-glass backdrop-blur-xl border-t border-glass-border shadow-glass",
-        "md:border md:rounded-2xl md:border-t-glass-border",
-        "px-2 py-2 md:px-4 md:py-3",
-        "hover-glow",
-        "overflow-x-auto scrollbar-hide"
-      )}>
-        <div className={cn(
-          "flex items-center gap-1 md:gap-2",
-          "md:justify-center",
-          "snap-x snap-mandatory scroll-smooth"
-        )}>
-          {visibleTabs.map((tab) => {
-            const Icon = tab.icon;
-            const isActive = activeTab === tab.id;
-            
-            return (
-              <button
-                key={tab.id}
-                onClick={() => onTabChange(tab.id)}
-                className={cn(
-                  "relative flex flex-col items-center justify-center gap-0.5 md:gap-1",
-                  "px-2 py-2 md:px-4 md:py-2 rounded-xl transition-all duration-500 ease-out",
-                  "flex-shrink-0 min-w-[60px] md:min-w-[64px]",
-                  "min-h-[48px]",
-                  "hover:bg-glass-highlight hover:scale-105 active:scale-95",
-                  "transform-gpu will-change-transform",
-                  "snap-center",
-                  isActive && "bg-primary/20 scale-105"
-                )}
-                aria-label={tab.label}
-              >
-                {isActive && (
-                  <>
-                    <div className="absolute inset-0 bg-primary/10 rounded-xl shadow-glow animate-glow-pulse" />
-                    <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-primary/10 to-primary/5 rounded-xl animate-shimmer" 
-                         style={{
-                           background: 'linear-gradient(90deg, transparent, hsl(var(--primary) / 0.1), transparent)',
-                           backgroundSize: '200% 100%'
-                         }} />
-                  </>
-                )}
-                <Icon 
-                  size={20} 
-                  className={cn(
-                    "transition-all duration-300 transform-gpu flex-shrink-0",
-                    isActive 
-                      ? "text-primary drop-shadow-[0_0_12px_hsl(var(--primary)/0.8)] scale-110" 
-                      : "text-muted-foreground hover:text-foreground hover:scale-110"
-                  )} 
-                />
-                <span 
-                  className={cn(
-                    "text-[10px] md:text-xs font-medium transition-all duration-300 truncate w-full text-center",
-                    "max-w-[60px] md:max-w-none",
-                    isActive ? "text-primary font-semibold" : "text-muted-foreground"
-                  )}
-                >
-                  {tab.label}
-                </span>
-              </button>
-            );
-          })}
-        </div>
-      </nav>
-    </div>
+    <nav
+      className={cn(
+        "fixed bottom-0 left-0 right-0 z-50",
+        "flex justify-around items-center",
+        "h-[72px] sm:h-[80px]",
+        "bg-[#0A0A0A]/90 backdrop-blur-lg border-t border-border/20",
+        "px-3 sm:px-4 pb-[calc(env(safe-area-inset-bottom)+4px)]",
+        "shadow-[0_-4px_20px_rgba(0,0,0,0.4)]",
+      )}
+    >
+      {navItems.map(({ name, icon: Icon }) => {
+        const isActive = activeTab === name;
+        return (
+          <button
+            key={name}
+            onClick={() => onNavigate?.(name)}
+            className={cn(
+              "flex flex-col items-center justify-center transition-all",
+              "text-xs sm:text-sm font-medium",
+              "text-muted-foreground hover:text-primary focus:text-primary",
+              isActive && "text-primary scale-105",
+            )}
+          >
+            <Icon className={cn("h-5 w-5 mb-1 transition-all", isActive ? "text-primary" : "text-muted-foreground")} />
+            {name}
+          </button>
+        );
+      })}
+    </nav>
   );
 };

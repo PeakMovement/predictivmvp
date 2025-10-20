@@ -1,4 +1,4 @@
-import { Home, Dumbbell, Heart, ClipboardList, Users, RefreshCw, TrendingUp, Code, FileText } from "lucide-react";
+import { Home, Dumbbell, Heart, ClipboardList, Users, RefreshCw, TrendingUp, Code, FileText, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface BottomNavigationProps {
@@ -11,6 +11,7 @@ const tabs = [
   { id: "training", label: "Training", icon: Dumbbell, mobile: true },
   { id: "health", label: "Health", icon: Heart, mobile: true },
   { id: "my-documents", label: "Documents", icon: FileText, mobile: true },
+  { id: "profile-setup", label: "Profile", icon: User, mobile: false },
   { id: "your-plan", label: "Plan", icon: ClipboardList, mobile: false },
   { id: "mybaselines", label: "Baselines", icon: TrendingUp, mobile: false },
   { id: "find-help", label: "Help", icon: Users, mobile: false },

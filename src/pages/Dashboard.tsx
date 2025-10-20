@@ -46,7 +46,7 @@ export const Dashboard = () => {
         { name: "Training Load", value: latestTrend.training_load, status: "green" },
         { name: "Strain", value: latestTrend.strain, status: "yellow" },
         { name: "ACWR", value: latestTrend.acwr, status: "green" },
-        { name: "Sleep Score", value: latestTrend.sleep_score ?? "—", status: "green" },
+        { name: "HRV", value: latestTrend.hrv ?? "—", status: "green" },
       ]
     : [];
 
@@ -83,7 +83,7 @@ export const Dashboard = () => {
           )}
 
           <div className="mt-10">
-            <DocumentIntelligenceCard />
+            <DocumentIntelligenceCard onNavigate={() => {}} />
           </div>
 
           <div className="mt-8">

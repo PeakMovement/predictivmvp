@@ -23,7 +23,7 @@ import MyBaselines from "@/pages/MyBaselines";
 import DeveloperBaselinesEngine from "@/pages/DeveloperBaselinesEngine";
 import MyDocuments from "@/pages/MyDocuments";
 import PlanCompliance from "@/pages/PlanCompliance";
-import ProfileSetup from "@/pages/ProfileSetup"; // ✅ corrected import
+import { ProfileSetup } from "@/pages/ProfileSetup";
 import { Settings as SettingsIcon } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";

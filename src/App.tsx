@@ -23,7 +23,7 @@ import MyBaselines from "@/pages/MyBaselines";
 import DeveloperBaselinesEngine from "@/pages/DeveloperBaselinesEngine";
 import MyDocuments from "@/pages/MyDocuments";
 import PlanCompliance from "@/pages/PlanCompliance";
-import { ProfileSetup } from "@/pages/ProfileSetup";
+import ProfileSetup from "@/pages/ProfileSetup"; // ✅ corrected import
 import { Settings as SettingsIcon } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
@@ -33,19 +33,17 @@ const queryClient = new QueryClient();
 const App = () => {
   const [activeTab, setActiveTab] = useState("dashboard");
 
-  // Check if we're on the Fitbit auth callback route
   const currentPath = window.location.pathname;
   const isFitbitAuth = currentPath === "/auth/fitbit";
   const isFitbitCallback = currentPath === "/fitbit/callback";
 
-  // Listen for custom navigation event from the previous-based navigation
   useEffect(() => {
     const handleNavigateInsights = () => setActiveTab("insights-tree");
     window.addEventListener("navigate-insights", handleNavigateInsights);
     return () => window.removeEventListener("navigate-insights", handleNavigateInsights);
   }, []);
 
-  // If on Fitbit auth route, render only that page
+  // Fitbit auth routes
   if (isFitbitAuth) {
     return (
       <ThemeProvider defaultTheme="dark" storageKey="predictiv-theme">
@@ -60,7 +58,6 @@ const App = () => {
     );
   }
 
-  // If on Fitbit callback route, render the new callback page
   if (isFitbitCallback) {
     return (
       <ThemeProvider defaultTheme="dark" storageKey="predictiv-theme">
@@ -75,98 +72,39 @@ const App = () => {
     );
   }
 
+  // Main tab navigation
   const renderContent = () => {
     switch (activeTab) {
       case "dashboard":
-        return (
-          <div key="dashboard" className="animate-fade-in">
-            <Dashboard onNavigate={setActiveTab} />
-          </div>
-        );
+        return <Dashboard onNavigate={setActiveTab} />;
       case "training":
-        return (
-          <div key="training" className="animate-fade-in">
-            <Training />
-          </div>
-        );
+        return <Training />;
       case "health":
-        return (
-          <div key="health" className="animate-fade-in">
-            <Health />
-          </div>
-        );
+        return <Health />;
       case "your-plan":
-        return (
-          <div key="your-plan" className="animate-fade-in">
-            <YourPlan />
-          </div>
-        );
+        return <YourPlan />;
       case "plan-compliance":
-        return (
-          <div key="plan-compliance" className="animate-fade-in">
-            <PlanCompliance />
-          </div>
-        );
+        return <PlanCompliance />;
       case "my-documents":
-        return (
-          <div key="my-documents" className="animate-fade-in">
-            <MyDocuments />
-          </div>
-        );
+        return <MyDocuments />;
       case "mybaselines":
-        return (
-          <div key="mybaselines" className="animate-fade-in">
-            <MyBaselines />
-          </div>
-        );
+        return <MyBaselines />;
       case "find-help":
-        return (
-          <div key="find-help" className="animate-fade-in">
-            <FindHelp />
-          </div>
-        );
+        return <FindHelp />;
       case "settings":
-        return (
-          <div key="settings" className="animate-fade-in">
-            <Settings onNavigate={setActiveTab} />
-          </div>
-        );
+        return <Settings onNavigate={setActiveTab} />;
       case "insights-tree":
-        return (
-          <div key="insights-tree" className="animate-fade-in">
-            <InsightsTree onNavigate={setActiveTab} />
-          </div>
-        );
+        return <InsightsTree onNavigate={setActiveTab} />;
       case "test-supabase":
-        return (
-          <div key="test-supabase" className="animate-fade-in">
-            <TestSupabase />
-          </div>
-        );
+        return <TestSupabase />;
       case "fitbit-sync-now":
-        return (
-          <div key="fitbit-sync-now" className="animate-fade-in">
-            <FitbitSyncNow />
-          </div>
-        );
+        return <FitbitSyncNow />;
       case "developer-baselines-engine":
-        return (
-          <div key="developer-baselines-engine" className="animate-fade-in">
-            <DeveloperBaselinesEngine />
-          </div>
-        );
-      case "profile-setup":
-        return (
-          <div key="profile-setup" className="animate-fade-in">
-            <ProfileSetup />
-          </div>
-        );
+        return <DeveloperBaselinesEngine />;
+      case "profile-setup": // ✅ added profile tab case
+        return <ProfileSetup />;
       default:
-        return (
-          <div key="dashboard" className="animate-fade-in">
-            <Dashboard onNavigate={setActiveTab} />
-          </div>
-        );
+        return <Dashboard onNavigate={setActiveTab} />;
     }
   };
 
@@ -185,12 +123,10 @@ const App = () => {
                     onClick={() => setActiveTab("settings")}
                     className={cn(
                       "fixed top-[80px] right-6 z-50",
-                      "w-12 h-12 rounded-xl",
-                      "bg-glass backdrop-blur-xl border-glass-border",
+                      "w-12 h-12 rounded-xl bg-glass backdrop-blur-xl border-glass-border",
                       "flex items-center justify-center",
                       "hover:bg-glass-highlight hover:scale-110 active:scale-95",
-                      "transition-all duration-300 ease-out transform-gpu",
-                      "animate-fade-in",
+                      "transition-all duration-300 ease-out transform-gpu animate-fade-in",
                     )}
                     aria-label="Settings"
                   >
@@ -201,7 +137,7 @@ const App = () => {
                   <p>Settings</p>
                 </TooltipContent>
               </Tooltip>
-              <div className="transition-all duration-500 ease-out">{renderContent()}</div>
+              <div className="transition-all duration-500 ease-out animate-fade-in">{renderContent()}</div>
               <BottomNavigation activeTab={activeTab} onTabChange={setActiveTab} />
               <SimulationControl />
             </div>

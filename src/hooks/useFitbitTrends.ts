@@ -24,7 +24,6 @@ export const useFitbitTrends = (options: UseFitbitTrendsOptions = {}): UseFitbit
   const [lastUpdate, setLastUpdate] = useState<string | null>(null);
   const [resolvedUserId, setResolvedUserId] = useState<string | null>(null);
 
-  // ✅ Resolve user_id with robust fallbacks
   const resolveUserId = useCallback(async (): Promise<string | null> => {
     if (providedUserId) return providedUserId;
 
@@ -33,7 +32,7 @@ export const useFitbitTrends = (options: UseFitbitTrendsOptions = {}): UseFitbit
     } = await supabase.auth.getUser();
     if (user?.id) return user.id;
 
-    const { data, error } = await supabase
+    const { data } = await supabase
       .from("fitbit_trends")
       .select("user_id")
       .order("date", { ascending: false })
@@ -42,18 +41,14 @@ export const useFitbitTrends = (options: UseFitbitTrendsOptions = {}): UseFitbit
 
     if (data?.user_id) return data.user_id;
 
-    console.warn("[useFitbitTrends] Falling back to test user ID");
-    return "8e3d1538-25f2-4270-9acc-da17b9106aa9"; // fallback UUID
+    return "8e3d1538-25f2-4270-9acc-da17b9106aa9";
   }, [providedUserId]);
 
-  // ✅ Fetch Fitbit trend data
   const fetchTrends = useCallback(async () => {
-    console.log(`[useFitbitTrends] Fetching last ${days} days of trends...`);
     setIsLoading(true);
-
     try {
       const userId = await resolveUserId();
-      if (!userId) throw new Error("Unable to resolve user_id");
+      if (!userId) return;
 
       setResolvedUserId(userId);
 
@@ -69,18 +64,10 @@ export const useFitbitTrends = (options: UseFitbitTrendsOptions = {}): UseFitbit
 
       if (error) throw error;
 
-      if (data && data.length > 0) {
-        console.log(`[useFitbitTrends] Retrieved ${data.length} records for user ${userId}`);
-        setTrends(data as FitbitTrend[]);
-        setLatestTrend(data[0] as FitbitTrend);
-        setLastUpdate(new Date().toISOString());
-      } else {
-        console.warn("[useFitbitTrends] No data found for this user");
-        setTrends([]);
-        setLatestTrend(null);
-      }
-    } catch (err) {
-      console.error("[useFitbitTrends] Fetch failed:", err);
+      setTrends(data || []);
+      setLatestTrend(data?.[0] || null);
+      setLastUpdate(new Date().toISOString());
+    } catch {
       setTrends([]);
       setLatestTrend(null);
     } finally {
@@ -88,12 +75,10 @@ export const useFitbitTrends = (options: UseFitbitTrendsOptions = {}): UseFitbit
     }
   }, [days, resolveUserId]);
 
-  // 🔄 Initial fetch
   useEffect(() => {
     fetchTrends();
   }, [fetchTrends]);
 
-  // 🧠 Real-time updates
   useEffect(() => {
     if (!resolvedUserId) return;
 
@@ -107,29 +92,20 @@ export const useFitbitTrends = (options: UseFitbitTrendsOptions = {}): UseFitbit
           table: "fitbit_trends",
           filter: `user_id=eq.${resolvedUserId}`,
         },
-        () => {
-          console.log("[useFitbitTrends] Real-time update detected, refetching...");
-          fetchTrends();
-        },
+        fetchTrends,
       )
       .subscribe();
 
-    return () => {
-      supabase.removeChannel(channel);
-    };
+    return () => supabase.removeChannel(channel);
   }, [resolvedUserId, fetchTrends]);
 
-  // 🚀 Listen for external refresh triggers
   useEffect(() => {
     const handleRefresh = () => fetchTrends();
-    const handleDataRefreshed = () => fetchTrends();
-
     window.addEventListener("fitbit_trends_refresh", handleRefresh);
-    window.addEventListener("fitbit_data_refreshed", handleDataRefreshed);
-
+    window.addEventListener("fitbit_data_refreshed", handleRefresh);
     return () => {
       window.removeEventListener("fitbit_trends_refresh", handleRefresh);
-      window.removeEventListener("fitbit_data_refreshed", handleDataRefreshed);
+      window.removeEventListener("fitbit_data_refreshed", handleRefresh);
     };
   }, [fetchTrends]);
 

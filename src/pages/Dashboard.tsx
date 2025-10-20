@@ -34,6 +34,11 @@ import { useFitbitTrends } from "@/hooks/useFitbitTrends";
 import { FitbitSyncStatus } from "@/components/FitbitSyncStatus";
 import { FeedbackSummaryPanel } from "@/components/dashboard/FeedbackSummaryPanel";
 import { DocumentIntelligenceCard } from "@/components/dashboard/DocumentIntelligenceCard";
+import { HealthProfileViewer } from "@/components/health/HealthProfileViewer";
+import { useHealthProfile } from "@/hooks/useHealthProfile";
+import { generateYvesRecommendations, YvesRecommendation } from "@/lib/yvesRecommendations";
+import * as LucideIcons from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 /* -------------------- HELPERS -------------------- */
 
@@ -102,8 +107,23 @@ interface DashboardProps {
 }
 
 export const Dashboard = ({ onNavigate = () => {} }: DashboardProps) => {
-  const { currentDayData, csvData, currentDayIndex } = useLiveData();
+  const { currentDayData } = useLiveData();
   const { latestTrend } = useFitbitTrends({ days: 7 });
+  const { profile } = useHealthProfile();
+  const [yvesRecs, setYvesRecs] = useState<YvesRecommendation[]>([]);
+
+  useEffect(() => {
+    const fetch = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const { data: yves } = await supabase.from('yves_profiles').select('*').eq('user_id', user.id);
+      if (yves) {
+        const recs = await generateYvesRecommendations(user.id, yves, latestTrend);
+        setYvesRecs(recs);
+      }
+    };
+    fetch();
+  }, [latestTrend]);
 
   // Compute metrics from real data
   const acwr = latestTrend?.acwr ? latestTrend.acwr.toFixed(2) : "—";
@@ -153,6 +173,27 @@ export const Dashboard = ({ onNavigate = () => {} }: DashboardProps) => {
           <div className="mt-8">
             <FeedbackSummaryPanel />
           </div>
+
+          {profile && <div className="mt-8"><HealthProfileViewer profile={profile} /></div>}
+
+          {yvesRecs.length > 0 && (
+            <div className="mt-8 space-y-4">
+              <h2 className="text-2xl font-bold">Yves Recommendations</h2>
+              <div className="grid md:grid-cols-3 gap-4">
+                {yvesRecs.map((rec, i) => {
+                  const Icon = (LucideIcons as any)[rec.icon || 'Lightbulb'];
+                  return (
+                    <Card key={i} className={rec.priority === 'high' ? 'border-destructive' : ''}>
+                      <CardHeader>
+                        <CardTitle className="text-base flex gap-2"><Icon className="h-4 w-4" />{rec.title}</CardTitle>
+                      </CardHeader>
+                      <CardContent><p className="text-sm">{rec.message}</p></CardContent>
+                    </Card>
+                  );
+                })}
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </TooltipProvider>

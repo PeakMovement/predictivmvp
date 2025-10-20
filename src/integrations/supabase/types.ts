@@ -519,6 +519,42 @@ export type Database = {
         }
         Relationships: []
       }
+      plan_adherence: {
+        Row: {
+          actual_data: Json | null
+          adherence_score: number | null
+          created_at: string | null
+          date: string
+          deviation_reasons: string[] | null
+          expected_data: Json | null
+          id: string
+          plan_type: string | null
+          user_id: string
+        }
+        Insert: {
+          actual_data?: Json | null
+          adherence_score?: number | null
+          created_at?: string | null
+          date: string
+          deviation_reasons?: string[] | null
+          expected_data?: Json | null
+          id?: string
+          plan_type?: string | null
+          user_id: string
+        }
+        Update: {
+          actual_data?: Json | null
+          adherence_score?: number | null
+          created_at?: string | null
+          date?: string
+          deviation_reasons?: string[] | null
+          expected_data?: Json | null
+          id?: string
+          plan_type?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       "Risk Scores": {
         Row: {
           date: string | null
@@ -737,6 +773,33 @@ export type Database = {
         }
         Relationships: []
       }
+      user_health_profiles: {
+        Row: {
+          ai_synthesis: string | null
+          generated_at: string | null
+          id: string
+          profile_data: Json
+          user_id: string
+          version: number | null
+        }
+        Insert: {
+          ai_synthesis?: string | null
+          generated_at?: string | null
+          id?: string
+          profile_data?: Json
+          user_id: string
+          version?: number | null
+        }
+        Update: {
+          ai_synthesis?: string | null
+          generated_at?: string | null
+          id?: string
+          profile_data?: Json
+          user_id?: string
+          version?: number | null
+        }
+        Relationships: []
+      }
       user_insight_actions: {
         Row: {
           acknowledged_at: string | null
@@ -897,6 +960,7 @@ export type Database = {
           current_value: number
           deviation_pct: number
           metric: string
+          reasoning: string | null
           risk_status: string | null
           updated_at: string
           user_id: string
@@ -906,6 +970,7 @@ export type Database = {
           current_value: number
           deviation_pct: number
           metric: string
+          reasoning?: string | null
           risk_status?: string | null
           updated_at?: string
           user_id: string
@@ -915,6 +980,7 @@ export type Database = {
           current_value?: number
           deviation_pct?: number
           metric?: string
+          reasoning?: string | null
           risk_status?: string | null
           updated_at?: string
           user_id?: string

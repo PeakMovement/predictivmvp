@@ -32,35 +32,104 @@ serve(async (req) => {
       .update({ processing_status: 'processing' })
       .eq('id', documentId);
 
-    // Create system prompt based on document type
-    let systemPrompt = '';
-    if (documentType === 'nutrition') {
-      systemPrompt = `You are a nutrition analysis AI. Extract key information from meal plans including:
-- Daily calorie targets
-- Macronutrient breakdown (carbs, protein, fat percentages)
-- Meal timing and frequency
-- Special dietary considerations (allergies, restrictions, supplements)
-- Specific foods and portion sizes
-Return structured JSON with these fields.`;
-    } else if (documentType === 'medical') {
-      systemPrompt = `You are a medical document analysis AI. Extract key information including:
-- Diagnosed conditions and their severity
-- Current medications and dosages
-- Lab results with reference ranges
-- Doctor recommendations
-- Injury history and recovery status
-- Allergies and contraindications
-Return structured JSON with these fields. Mark sensitive information.`;
-    } else if (documentType === 'training') {
-      systemPrompt = `You are a training program analysis AI. Extract key information including:
-- Training phase (base, build, peak, taper, recovery)
-- Weekly volume and intensity
-- Key workouts and their purposes
-- Progression plan and timeline
-- Race/competition dates
-- Recovery protocols
-Return structured JSON with these fields.`;
-    }
+    // Define structured schemas for each document type
+    const nutritionSchema = {
+      type: "object",
+      properties: {
+        daily_calories: { type: "number" },
+        macros: {
+          type: "object",
+          properties: {
+            protein_g: { type: "number" },
+            carbs_g: { type: "number" },
+            fat_g: { type: "number" }
+          }
+        },
+        meal_timing: { type: "array", items: { type: "string" } },
+        special_considerations: { type: "array", items: { type: "string" } },
+        supplements: { type: "array", items: { type: "string" } }
+      },
+      required: ["daily_calories", "macros"]
+    };
+
+    const medicalSchema = {
+      type: "object",
+      properties: {
+        conditions: { 
+          type: "array", 
+          items: { 
+            type: "object",
+            properties: {
+              name: { type: "string" },
+              severity: { type: "string", enum: ["mild", "moderate", "severe"] },
+              diagnosed_date: { type: "string" }
+            }
+          }
+        },
+        medications: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              name: { type: "string" },
+              dosage: { type: "string" },
+              frequency: { type: "string" }
+            }
+          }
+        },
+        allergies: { type: "array", items: { type: "string" } },
+        contraindications: { type: "array", items: { type: "string" } }
+      }
+    };
+
+    const trainingSchema = {
+      type: "object",
+      properties: {
+        program_name: { type: "string" },
+        duration_weeks: { type: "number" },
+        current_phase: { type: "string", enum: ["base", "build", "peak", "taper", "recovery"] },
+        weekly_schedule: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              day: { type: "string" },
+              workout_type: { type: "string" },
+              duration_min: { type: "number" },
+              intensity: { type: "string", enum: ["easy", "moderate", "hard", "max"] }
+            }
+          }
+        },
+        goal_race_date: { type: "string" },
+        weekly_volume_km: { type: "number" }
+      }
+    };
+
+    const schema = documentType === 'nutrition' ? nutritionSchema : 
+                   documentType === 'medical' ? medicalSchema : trainingSchema;
+
+    // Create system prompt
+    let systemPrompt = `You are a ${documentType} document analysis AI. Extract structured information accurately from the document.`;
+
+    // Use tool calling for structured extraction
+    const body: any = {
+      model: 'google/gemini-2.5-flash',
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: `Extract structured data from this ${documentType} document:\n\n${fileContent}` }
+      ],
+      tools: [
+        {
+          type: "function",
+          function: {
+            name: `extract_${documentType}_data`,
+            description: `Extract structured ${documentType} information from the document`,
+            parameters: schema
+          }
+        }
+      ],
+      tool_choice: { type: "function", function: { name: `extract_${documentType}_data` } }
+    };
 
     // Call Lovable AI for analysis
     const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
@@ -69,13 +138,7 @@ Return structured JSON with these fields.`;
         'Authorization': `Bearer ${lovableApiKey}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        model: 'google/gemini-2.5-flash',
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: `Analyze this document content:\n\n${fileContent}` }
-        ],
-      }),
+      body: JSON.stringify(body),
     });
 
     if (!aiResponse.ok) {
@@ -85,15 +148,23 @@ Return structured JSON with these fields.`;
     }
 
     const aiData = await aiResponse.json();
-    const aiSummary = aiData.choices[0].message.content;
-
-    // Parse AI response as JSON
+    
+    // Extract structured data from tool call
+    const toolCall = aiData.choices[0].message.tool_calls?.[0];
     let insightData;
-    try {
-      insightData = JSON.parse(aiSummary);
-    } catch (e) {
-      // If not valid JSON, wrap as text
-      insightData = { raw_analysis: aiSummary };
+    let aiSummary;
+    
+    if (toolCall) {
+      insightData = JSON.parse(toolCall.function.arguments);
+      aiSummary = `Structured ${documentType} data extracted successfully`;
+    } else {
+      // Fallback to content if tool call not present
+      aiSummary = aiData.choices[0].message.content;
+      try {
+        insightData = JSON.parse(aiSummary);
+      } catch (e) {
+        insightData = { raw_analysis: aiSummary };
+      }
     }
 
     // Store insights
@@ -128,6 +199,22 @@ Return structured JSON with these fields.`;
     });
 
     console.log(`Document analysis completed for ${documentId}`);
+
+    // Trigger health profile rebuild
+    try {
+      await fetch(`${supabaseUrl}/functions/v1/build-health-profile`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${supabaseServiceKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ userId })
+      });
+      console.log('Health profile rebuild triggered');
+    } catch (profileError) {
+      console.error('Failed to trigger profile rebuild:', profileError);
+      // Don't fail the main request
+    }
 
     return new Response(
       JSON.stringify({ success: true, insight }),

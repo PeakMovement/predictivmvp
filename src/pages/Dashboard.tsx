@@ -8,6 +8,7 @@ import { HealthProfileViewer } from "@/components/health/HealthProfileViewer";
 import { DocumentIntelligenceCard } from "@/components/dashboard/DocumentIntelligenceCard";
 import { FeedbackSummaryPanel } from "@/components/dashboard/FeedbackSummaryPanel";
 import { YvesTreeTimeline } from "@/components/dashboard/YvesTreeTimeline";
+import { useHealthProfile } from "@/hooks/useHealthProfile";
 
 const getStatusColor = (status: string) => {
   switch (status) {
@@ -40,6 +41,11 @@ const WelcomeHeader = () => (
 export const Dashboard = () => {
   const [latest, setLatest] = useState<any>(null);
   const [averages, setAverages] = useState<any>(null);
+  const { profile } = useHealthProfile();
+
+  const handleNavigate = (tab: string) => {
+    window.dispatchEvent(new CustomEvent('navigate-tab', { detail: tab }));
+  };
 
   // ✅ Fetch latest + average metrics directly from fitbit_trends
   useEffect(() => {
@@ -121,16 +127,18 @@ export const Dashboard = () => {
           )}
 
           <div className="mt-10">
-            <DocumentIntelligenceCard />
+            <DocumentIntelligenceCard onNavigate={handleNavigate} />
           </div>
 
           <div className="mt-8">
             <FeedbackSummaryPanel />
           </div>
 
-          <div className="mt-8">
-            <HealthProfileViewer />
-          </div>
+          {profile && (
+            <div className="mt-8">
+              <HealthProfileViewer profile={profile} />
+            </div>
+          )}
 
           <div className="mt-8">
             <YvesTreeTimeline />

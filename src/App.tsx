@@ -76,7 +76,7 @@ const App = () => {
   const renderContent = () => {
     switch (activeTab) {
       case "dashboard":
-        return <Dashboard onNavigate={setActiveTab} />;
+        return <Dashboard />;
       case "training":
         return <Training />;
       case "health":
@@ -104,7 +104,7 @@ const App = () => {
       case "profile-setup": // ✅ added profile tab case
         return <ProfileSetup />;
       default:
-        return <Dashboard onNavigate={setActiveTab} />;
+        return <Dashboard />;
     }
   };
 

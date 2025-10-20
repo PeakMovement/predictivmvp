@@ -1,14 +1,17 @@
+import { TrendingUp, Target, AlertTriangle, Loader2 } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent } from "@/components/ui/card";
-import { TooltipProvider } from "@/components/ui/tooltip";
+import { useFitbitTrends } from "@/hooks/useFitbitTrends";
+import { calculateMetrics } from "@/lib/metricsCalculator";
 import { FitbitSyncStatus } from "@/components/FitbitSyncStatus";
-import { cn } from "@/lib/utils";
-import { HealthProfileViewer } from "@/components/health/HealthProfileViewer";
-import { DocumentIntelligenceCard } from "@/components/dashboard/DocumentIntelligenceCard";
 import { FeedbackSummaryPanel } from "@/components/dashboard/FeedbackSummaryPanel";
+import { DocumentIntelligenceCard } from "@/components/dashboard/DocumentIntelligenceCard";
+import { HealthProfileViewer } from "@/components/health/HealthProfileViewer";
 import { YvesTreeTimeline } from "@/components/dashboard/YvesTreeTimeline";
 import { useHealthProfile } from "@/hooks/useHealthProfile";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 const getStatusColor = (status: string) => {
   switch (status) {
@@ -25,86 +28,68 @@ const getStatusColor = (status: string) => {
 
 const WelcomeHeader = () => (
   <div className="text-center mb-8 md:mb-12 space-y-3 md:space-y-4 px-4 md:px-0">
-    <div className="animate-fade-in-slow">
-      <h1 className="text-xl md:text-2xl font-light text-muted-foreground mb-1 md:mb-2">Hello,</h1>
-      <h2 className="text-3xl md:text-4xl font-bold text-foreground tracking-tight">Athlete</h2>
-    </div>
-    <div className="animate-slide-in" style={{ animationDelay: "0.2s", animationFillMode: "both" }}>
-      <p className="text-muted-foreground text-base md:text-lg">Here’s your training overview for today</p>
-    </div>
-    <div className="flex justify-center animate-fade-in" style={{ animationDelay: "0.3s" }}>
+    <h1 className="text-xl md:text-2xl font-light text-muted-foreground mb-1 md:mb-2">Hello,</h1>
+    <h2 className="text-3xl md:text-4xl font-bold text-foreground tracking-tight">Athlete</h2>
+    <p className="text-muted-foreground text-base md:text-lg">Here's your training overview for today</p>
+    <div className="flex justify-center mt-2">
       <FitbitSyncStatus />
     </div>
   </div>
 );
 
 export const Dashboard = () => {
-  const [latest, setLatest] = useState<any>(null);
-  const [averages, setAverages] = useState<any>(null);
+  const { trends, latestTrend, isLoading, lastUpdate } = useFitbitTrends({ days: 7 });
   const { profile } = useHealthProfile();
+  const [acwr, setAcwr] = useState<string>("—");
+  const [strain, setStrain] = useState<string>("—");
+  const [sleepScore, setSleepScore] = useState<string>("—");
 
-  const handleNavigate = (tab: string) => {
-    window.dispatchEvent(new CustomEvent('navigate-tab', { detail: tab }));
-  };
-
-  // ✅ Fetch latest + average metrics directly from fitbit_trends
+  // 📈 Calculate Metrics whenever new trends load
   useEffect(() => {
-    const fetchTrends = async () => {
-      const { data, error } = await supabase
-        .from("fitbit_trends")
-        .select("date, acwr, strain, training_load, sleep_score")
-        .eq("user_id", "CTBNRR")
-        .order("date", { ascending: false })
-        .limit(7);
+    if (!latestTrend || trends.length === 0) return;
 
-      if (error) {
-        console.error("❌ Error fetching trends:", error);
-        return;
-      }
+    const metrics = calculateMetrics(trends);
+    setAcwr(metrics.latest.acwr ? metrics.latest.acwr.toFixed(2) : "—");
+    setStrain(metrics.latest.strain ? Math.round(metrics.latest.strain).toString() : "—");
+    setSleepScore(metrics.latest.sleepScore ? metrics.latest.sleepScore.toFixed(0) : "—");
+  }, [latestTrend, trends]);
 
-      if (data && data.length > 0) {
-        setLatest(data[0]);
-        const avg = (field: keyof (typeof data)[0]) =>
-          Math.round(data.reduce((sum, d) => sum + (Number(d[field]) || 0), 0) / data.length);
-        setAverages({
-          acwr: avg("acwr"),
-          strain: avg("strain"),
-          load: avg("training_load"),
-          sleep: avg("sleep_score"),
-        });
-      }
-    };
-
-    fetchTrends();
+  // 🕓 Re-render when Fitbit data is refreshed globally
+  useEffect(() => {
+    const handler = () => window.location.reload();
+    window.addEventListener("fitbit_data_refreshed", handler);
+    return () => window.removeEventListener("fitbit_data_refreshed", handler);
   }, []);
 
-  const dashboardMetrics = latest
-    ? [
-        { name: "Training Load", value: latest.training_load, status: "green" },
-        { name: "Strain", value: latest.strain, status: "yellow" },
-        { name: "ACWR", value: latest.acwr, status: "green" },
-        { name: "Sleep Score", value: latest.sleep_score ?? "—", status: "green" },
-      ]
-    : [];
+  const dashboardMetrics = [
+    { name: "ACWR", value: acwr, status: "green" },
+    { name: "Strain", value: strain, status: "yellow" },
+    { name: "Sleep Score", value: sleepScore, status: "green" },
+  ];
 
   return (
     <TooltipProvider>
       <div className="min-h-screen bg-background pb-[calc(6rem+env(safe-area-inset-bottom))] md:pb-32">
         <div className="container mx-auto px-4 md:px-6 pt-6 md:pt-8">
+          {/* 👋 Welcome Header */}
           <WelcomeHeader />
 
-          <div className="text-center mb-6 md:mb-8 animate-fade-in">
+          {/* 📊 Training Metrics */}
+          <div className="text-center mb-6 md:mb-8">
             <h3 className="text-lg md:text-xl font-semibold text-foreground mb-1 md:mb-2">Training Metrics</h3>
             <p className="text-sm md:text-base text-muted-foreground">Your key performance indicators</p>
           </div>
 
-          {!latest ? (
-            <p className="text-center text-muted-foreground">Loading live metrics...</p>
+          {isLoading ? (
+            <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
+              <Loader2 className="animate-spin w-6 h-6 mb-2" />
+              <p>Loading your metrics...</p>
+            </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-              {dashboardMetrics.map((metric, i) => (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8 animate-fade-in">
+              {dashboardMetrics.map((metric, index) => (
                 <div
-                  key={i}
+                  key={index}
                   className="bg-glass backdrop-blur-xl border border-glass-border rounded-2xl p-4 shadow-glass"
                 >
                   <div className="flex items-start justify-between mb-3">
@@ -117,32 +102,34 @@ export const Dashboard = () => {
             </div>
           )}
 
-          {averages && (
-            <div className="mt-4 text-center">
-              <p className="text-sm text-muted-foreground">
-                7-Day Averages → Load: <strong>{averages.load}</strong>, Strain: <strong>{averages.strain}</strong>,
-                Sleep: <strong>{averages.sleep}</strong>
-              </p>
-            </div>
-          )}
-
-          <div className="mt-10">
-            <DocumentIntelligenceCard onNavigate={handleNavigate} />
+          {/* 🧠 Profile Insights */}
+          <div className="mt-8">
+            <DocumentIntelligenceCard />
           </div>
 
+          {/* 💬 Feedback Summary */}
           <div className="mt-8">
             <FeedbackSummaryPanel />
           </div>
 
+          {/* 🧬 Health Profile */}
           {profile && (
             <div className="mt-8">
               <HealthProfileViewer profile={profile} />
             </div>
           )}
 
+          {/* 🌳 Yves Tree */}
           <div className="mt-8">
             <YvesTreeTimeline />
           </div>
+
+          {/* 🕓 Last Updated */}
+          {lastUpdate && (
+            <p className="text-center text-xs text-muted-foreground mt-6">
+              Data last updated {new Date(lastUpdate).toLocaleString()}
+            </p>
+          )}
         </div>
       </div>
     </TooltipProvider>

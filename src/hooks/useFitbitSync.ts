@@ -28,13 +28,21 @@ export const useFitbitSync = (): FitbitSyncState => {
         }
       }
 
-      // Verify with database
-      const { data, error } = await supabase
+      // Get authenticated user
+      const { data: { user } } = await supabase.auth.getUser();
+      const userId = user?.id;
+
+      // Verify with database, filter by user if available
+      let query = supabase
         .from("fitbit_auto_data" as any)
-        .select("activity, fetched_at")
-        .order("fetched_at", { ascending: false })
-        .limit(1)
-        .maybeSingle();
+        .select("activity, fetched_at, user_id")
+        .order("fetched_at", { ascending: false });
+      
+      if (userId) {
+        query = query.eq("user_id", userId);
+      }
+      
+      const { data, error } = await query.limit(1).maybeSingle();
 
       if (error || !data) {
         setIsConnected(false);
@@ -57,6 +65,7 @@ export const useFitbitSync = (): FitbitSyncState => {
         localStorage.setItem('fitbit_last_sync', syncTime.toISOString());
       }
       
+      console.info('[FitbitSync] Connection check:', { connected, userId: activityData.user_id });
       return connected;
     } catch (error) {
       console.error("Error checking Fitbit connection:", error);
@@ -69,6 +78,7 @@ export const useFitbitSync = (): FitbitSyncState => {
   const syncNow = async () => {
     setIsSyncing(true);
     try {
+      // Try Netlify function first
       const response = await fetch("/.netlify/functions/sync-auto", {
         method: "POST",
       });
@@ -76,36 +86,69 @@ export const useFitbitSync = (): FitbitSyncState => {
       const contentType = response.headers.get("content-type");
       const isJson = contentType?.includes("application/json");
 
-      if (!response.ok) {
-        let errorMessage = "Sync failed";
+      // If Netlify returns HTML (preview environment issue), fallback to Supabase Edge Function
+      if (!isJson || !response.ok) {
+        console.info('[FitbitSync] Netlify sync unavailable, using Supabase Edge Function fallback');
         
-        if (isJson) {
-          try {
-            const errorData = await response.json();
-            errorMessage = errorData.error || errorMessage;
-          } catch {
-            errorMessage = `Server error (${response.status})`;
-          }
-        } else {
-          errorMessage = `Server error (${response.status}). Please try again.`;
-        }
-        
-        throw new Error(errorMessage);
+        const { data: edgeResult, error: edgeError } = await supabase.functions.invoke('fetch-fitbit-auto', {
+          body: {},
+        });
+
+        if (edgeError) throw new Error(edgeError.message);
+
+        // Fetch latest data to show in toast
+        const { data: { user } } = await supabase.auth.getUser();
+        const { data: latestData, error: fetchError } = await supabase
+          .from("fitbit_auto_data" as any)
+          .select("activity")
+          .eq("user_id", user?.id || "CTBNRR")
+          .order("fetched_at", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        const activityRecord = latestData as any;
+        const steps = activityRecord?.activity?.data?.summary?.steps || 0;
+        const calories = activityRecord?.activity?.data?.summary?.caloriesOut || 0;
+
+        const now = new Date();
+        toast({
+          title: "✅ Fitbit Data Updated",
+          description: `Synced ${steps} steps, ${calories} calories`,
+        });
+
+        setLastSync(now);
+        localStorage.setItem('fitbit_last_sync', now.toISOString());
+        await checkConnection();
+        window.dispatchEvent(new CustomEvent('fitbit_data_refreshed'));
+        return;
       }
 
-      const result = isJson ? await response.json() : null;
-      const now = new Date();
+      // Handle successful Netlify response
+      const result = await response.json();
       
+      // Fetch latest data to show actual values
+      const { data: { user } } = await supabase.auth.getUser();
+      const { data: latestData, error: fetchError } = await supabase
+        .from("fitbit_auto_data" as any)
+        .select("activity")
+        .eq("user_id", user?.id || "CTBNRR")
+        .order("fetched_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      const activityRecord = latestData as any;
+      const steps = activityRecord?.activity?.data?.summary?.steps || result?.data?.steps || 0;
+      const calories = activityRecord?.activity?.data?.summary?.caloriesOut || result?.data?.calories || 0;
+
+      const now = new Date();
       toast({
         title: "✅ Fitbit Data Updated",
-        description: `Synced ${result?.data?.steps || 0} steps, ${result?.data?.calories || 0} calories`,
+        description: `Synced ${steps} steps, ${calories} calories`,
       });
 
       setLastSync(now);
       localStorage.setItem('fitbit_last_sync', now.toISOString());
       await checkConnection();
-      
-      // Trigger refresh event for other components
       window.dispatchEvent(new CustomEvent('fitbit_data_refreshed'));
     } catch (error: any) {
       console.error("Sync error:", error);
@@ -122,24 +165,36 @@ export const useFitbitSync = (): FitbitSyncState => {
   useEffect(() => {
     checkConnection();
 
-    // Subscribe to real-time updates
-    const channel = supabase
-      .channel("fitbit-sync-status")
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "fitbit_auto_data",
-        },
-        () => {
-          checkConnection();
-        }
-      )
-      .subscribe();
+    // Get user ID for filtered subscription
+    const setupSubscription = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      const userId = user?.id;
+
+      // Subscribe to real-time updates filtered by user
+      const channel = supabase
+        .channel("fitbit-sync-status")
+        .on(
+          "postgres_changes",
+          {
+            event: "*",
+            schema: "public",
+            table: "fitbit_auto_data",
+            filter: userId ? `user_id=eq.${userId}` : undefined,
+          },
+          () => {
+            checkConnection();
+          }
+        )
+        .subscribe();
+
+      return channel;
+    };
+
+    let channel: any;
+    setupSubscription().then(ch => { channel = ch; });
 
     return () => {
-      supabase.removeChannel(channel);
+      if (channel) supabase.removeChannel(channel);
     };
   }, []);
 

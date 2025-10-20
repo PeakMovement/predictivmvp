@@ -103,10 +103,17 @@ interface DashboardProps {
 
 export const Dashboard = ({ onNavigate = () => {} }: DashboardProps) => {
   const { currentDayData, csvData, currentDayIndex } = useLiveData();
+  const { latestTrend } = useFitbitTrends({ days: 7 });
+
+  // Compute metrics from real data
+  const acwr = latestTrend?.acwr ? latestTrend.acwr.toFixed(2) : "—";
+  const strain = latestTrend?.strain ? Math.round(latestTrend.strain).toString() : "—";
+  const sleepScore = currentDayData?.SleepScore || "—";
+
   const metrics = [
-    { name: "ACWR", value: "1.2", status: "green" },
-    { name: "Strain", value: "142", status: "yellow" },
-    { name: "Sleep Score", value: "78", status: "green" },
+    { name: "ACWR", value: acwr, status: "green" },
+    { name: "Strain", value: strain, status: "yellow" },
+    { name: "Sleep Score", value: sleepScore, status: "green" },
   ];
 
   return (
@@ -136,9 +143,6 @@ export const Dashboard = ({ onNavigate = () => {} }: DashboardProps) => {
               </div>
             ))}
           </div>
-
-          {/* Graph & Chart Section */}
-          <HealthDataChart />
 
           {/* Document Intelligence Card */}
           <div className="mt-8">

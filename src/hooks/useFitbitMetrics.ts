@@ -128,27 +128,33 @@ export const useFitbitMetrics = () => {
 
   const refresh = useCallback(async () => {
     try {
-      toast({
-        title: "Syncing Fitbit data...",
-        description: "Please wait while we fetch your latest metrics",
+      const response = await fetch('/.netlify/functions/sync-auto', {
+        method: 'POST',
       });
 
-      const response = await fetch("/.netlify/functions/sync-auto");
-      const result = await response.json();
+      const contentType = response.headers.get("content-type");
+      const isJson = contentType?.includes("application/json");
 
-      if (result.ok) {
-        await fetchMetrics();
-        toast({
-          title: "Sync complete",
-          description: "Your Fitbit data has been updated",
-        });
-      } else {
-        throw new Error(result.error || "Sync failed");
+      // Fallback to Supabase Edge Function if Netlify returns non-JSON
+      if (!isJson || !response.ok) {
+        console.info('[useFitbitMetrics] Using Supabase Edge Function fallback for refresh');
+        const { error } = await supabase.functions.invoke('fetch-fitbit-auto', { body: {} });
+        if (error) throw new Error(error.message);
       }
-    } catch (error: any) {
+
+      // Wait a moment for DB to update, then fetch new metrics
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      await fetchMetrics();
+
       toast({
-        title: "Sync failed",
-        description: error.message || "Could not sync Fitbit data",
+        title: "Data Refreshed",
+        description: "Fitbit data has been updated successfully",
+      });
+    } catch (error) {
+      console.error('Failed to refresh Fitbit data:', error);
+      toast({
+        title: "Refresh Failed",
+        description: "Could not refresh Fitbit data. Please try again.",
         variant: "destructive",
       });
     }

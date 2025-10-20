@@ -249,8 +249,11 @@ const CircularGauge = ({
 // ✅ Main Page Component
 export const Training = () => {
   const { currentDayData } = useLiveData();
-  const { latestTrend, isLoading: trendsLoading } = useFitbitTrends({ days: 1 });
+  const { trends, isLoading: trendsLoading } = useFitbitTrends({ days: 7 });
   const [suggestions, setSuggestions] = useState<ReturnType<typeof generateSuggestions>>([]);
+
+  // Find latest trend with non-null monotony/strain
+  const latestAvailableTrend = trends?.find(t => t.monotony != null && t.strain != null) || null;
 
   useEffect(() => {
     const newSuggestions = generateSuggestions(currentDayData);
@@ -278,13 +281,13 @@ export const Training = () => {
             <div className="space-y-4 md:space-y-6 w-full">
               <CircularGauge
                 title="Training Monotony"
-                value={latestTrend?.monotony ? parseFloat(latestTrend.monotony.toFixed(1)) : 0}
+                value={latestAvailableTrend?.monotony ? parseFloat(latestAvailableTrend.monotony.toFixed(1)) : 0}
                 maxValue={5}
                 unit="ratio"
               />
               <CircularGauge
                 title="Training Strain"
-                value={latestTrend?.strain ? Math.round(latestTrend.strain) : 0}
+                value={latestAvailableTrend?.strain ? Math.round(latestAvailableTrend.strain) : 0}
                 maxValue={200}
                 unit="TSS"
               />

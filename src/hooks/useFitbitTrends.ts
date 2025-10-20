@@ -96,7 +96,7 @@ export const useFitbitTrends = (options: UseFitbitTrendsOptions = {}): UseFitbit
       )
       .subscribe();
 
-    return () => supabase.removeChannel(channel);
+    return () => { void supabase.removeChannel(channel); };
   }, [resolvedUserId, fetchTrends]);
 
   useEffect(() => {

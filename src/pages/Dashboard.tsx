@@ -1,13 +1,13 @@
 import { useEffect, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { FitbitSyncStatus } from "@/components/FitbitSyncStatus";
-import { cn } from "@/lib/utils";
-import { HealthProfileViewer } from "@/components/health/HealthProfileViewer";
 import { DocumentIntelligenceCard } from "@/components/dashboard/DocumentIntelligenceCard";
 import { FeedbackSummaryPanel } from "@/components/dashboard/FeedbackSummaryPanel";
+import { HealthProfileViewer } from "@/components/health/HealthProfileViewer";
 import { YvesTreeTimeline } from "@/components/dashboard/YvesTreeTimeline";
 import { useHealthProfile } from "@/hooks/useHealthProfile";
+import { useFitbitTrends } from "@/hooks/useFitbitTrends";
+import { cn } from "@/lib/utils";
 
 const getStatusColor = (status: string) => {
   switch (status) {
@@ -38,57 +38,22 @@ const WelcomeHeader = () => (
 );
 
 export const Dashboard = () => {
-  const [latest, setLatest] = useState<any>(null);
-  const [averages, setAverages] = useState<any>(null);
+  const { trends, latestTrend, isLoading } = useFitbitTrends();
   const { profile } = useHealthProfile();
 
-  const handleNavigate = (tab: string) => {
-    window.dispatchEvent(new CustomEvent("navigate-tab", { detail: tab }));
-  };
-
-  useEffect(() => {
-    const fetchTrends = async () => {
-      const { data, error } = await supabase
-        .from("fitbit_trends")
-        .select("date, acwr, strain, training_load, sleep_score")
-        .eq("user_id", "CTBNRR")
-        .order("date", { ascending: false })
-        .limit(7);
-
-      if (error) {
-        console.error("❌ Error fetching trends:", error);
-        return;
-      }
-
-      if (data && data.length > 0) {
-        setLatest(data[0]);
-        const avg = (field: keyof (typeof data)[0]) =>
-          Math.round(data.reduce((sum, d) => sum + (Number(d[field]) || 0), 0) / data.length);
-        setAverages({
-          acwr: avg("acwr"),
-          strain: avg("strain"),
-          load: avg("training_load"),
-          sleep: avg("sleep_score"),
-        });
-      }
-    };
-
-    fetchTrends();
-  }, []);
-
-  const dashboardMetrics = latest
+  const dashboardMetrics = latestTrend
     ? [
-        { name: "Training Load", value: latest.training_load, status: "green" },
-        { name: "Strain", value: latest.strain, status: "yellow" },
-        { name: "ACWR", value: latest.acwr, status: "green" },
-        { name: "Sleep Score", value: latest.sleep_score ?? "—", status: "green" },
+        { name: "Training Load", value: latestTrend.training_load, status: "green" },
+        { name: "Strain", value: latestTrend.strain, status: "yellow" },
+        { name: "ACWR", value: latestTrend.acwr, status: "green" },
+        { name: "Sleep Score", value: latestTrend.sleep_score ?? "—", status: "green" },
       ]
     : [];
 
   return (
     <TooltipProvider>
-      <div className="min-h-screen bg-background pb-[calc(8rem+env(safe-area-inset-bottom))] md:pb-[calc(10rem+env(safe-area-inset-bottom))] overflow-y-auto">
-        <div className="container mx-auto px-4 md:px-6 pt-6 md:pt-8">
+      <div className="min-h-screen bg-background flex flex-col pb-24 md:pb-32">
+        <div className="flex-grow container mx-auto px-4 md:px-6 pt-6 md:pt-8">
           <WelcomeHeader />
 
           <div className="text-center mb-6 md:mb-8 animate-fade-in">
@@ -96,8 +61,10 @@ export const Dashboard = () => {
             <p className="text-sm md:text-base text-muted-foreground">Your key performance indicators</p>
           </div>
 
-          {!latest ? (
+          {isLoading ? (
             <p className="text-center text-muted-foreground">Loading live metrics...</p>
+          ) : dashboardMetrics.length === 0 ? (
+            <p className="text-center text-muted-foreground">No recent data found.</p>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
               {dashboardMetrics.map((metric, i) => (
@@ -115,17 +82,8 @@ export const Dashboard = () => {
             </div>
           )}
 
-          {averages && (
-            <div className="mt-4 text-center">
-              <p className="text-sm text-muted-foreground">
-                7-Day Averages → Load: <strong>{averages.load}</strong>, Strain: <strong>{averages.strain}</strong>,
-                Sleep: <strong>{averages.sleep}</strong>
-              </p>
-            </div>
-          )}
-
           <div className="mt-10">
-            <DocumentIntelligenceCard onNavigate={handleNavigate} />
+            <DocumentIntelligenceCard />
           </div>
 
           <div className="mt-8">
@@ -138,7 +96,7 @@ export const Dashboard = () => {
             </div>
           )}
 
-          <div className="mt-8">
+          <div className="mt-8 mb-10">
             <YvesTreeTimeline />
           </div>
         </div>

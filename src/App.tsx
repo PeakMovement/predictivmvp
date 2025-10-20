@@ -138,7 +138,7 @@ const App = () => {
                 </TooltipContent>
               </Tooltip>
               <div className="transition-all duration-500 ease-out animate-fade-in">{renderContent()}</div>
-              <BottomNavigation activeTab={activeTab} onTabChange={setActiveTab} />
+              <BottomNavigation activeTab={activeTab} onNavigate={setActiveTab} />
               <SimulationControl />
             </div>
           </TooltipProvider>

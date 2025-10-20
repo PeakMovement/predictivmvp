@@ -12,7 +12,7 @@ const navItems = [
   { name: "Help", icon: Users },
 ];
 
-export const BottomNav = ({
+export const BottomNavigation = ({
   activeTab = "Dashboard",
   onNavigate,
 }: {

@@ -77,10 +77,27 @@ export const useDocuments = () => {
   ) => {
     setUploading(true);
     try {
+      console.log('[Upload] Step 1: Starting upload for:', file.name);
+      
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
+      // Validate file type
+      const allowedTypes = ['application/pdf', 'text/plain', 'image/jpeg', 'image/png', 
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+      if (!allowedTypes.includes(file.type)) {
+        throw new Error(`File type ${file.type} is not supported. Please upload PDF, TXT, JPG, PNG, or DOCX files.`);
+      }
+
+      // Validate file size (max 10MB)
+      if (file.size > 10 * 1024 * 1024) {
+        throw new Error('File size must be less than 10MB');
+      }
+
+      console.log('[Upload] Validation passed');
+
       // Upload file to storage
+      console.log('[Upload] Step 2: Uploading to storage...');
       const fileExt = file.name.split('.').pop();
       const fileName = `${user.id}/${Date.now()}.${fileExt}`;
       const { error: uploadError } = await supabase.storage
@@ -89,18 +106,23 @@ export const useDocuments = () => {
 
       if (uploadError) throw uploadError;
 
-      // Get public URL
-      const { data: { publicUrl } } = supabase.storage
+      // Get signed URL (1 hour expiry)
+      const { data: signedUrlData, error: urlError } = await supabase.storage
         .from('user_documents')
-        .getPublicUrl(fileName);
+        .createSignedUrl(fileName, 3600);
+
+      if (urlError) throw urlError;
+      const fileUrl = signedUrlData.signedUrl;
+      console.log('[Upload] Generated signed URL:', fileUrl.substring(0, 50) + '...');
 
       // Create document record
+      console.log('[Upload] Step 3: Creating database record...');
       const { data: document, error: dbError } = await supabase
         .from('user_documents')
         .insert({
           user_id: user.id,
           document_type: documentType,
-          file_url: publicUrl,
+          file_url: fileUrl,
           file_name: file.name,
           file_size: file.size,
           processing_status: 'pending'
@@ -111,17 +133,44 @@ export const useDocuments = () => {
       if (dbError) throw dbError;
 
       // Read file content for AI analysis
-      const fileContent = await file.text();
+      console.log('[Upload] Reading file content...');
+      let fileContent: string;
+      const fileExtension = file.name.split('.').pop()?.toLowerCase();
+
+      // Text files: read directly
+      if (['txt', 'csv', 'md'].includes(fileExtension || '')) {
+        fileContent = await file.text();
+        console.log('[Upload] Read text file, length:', fileContent.length);
+      }
+      // Binary files: convert to base64 + send metadata
+      else {
+        const arrayBuffer = await file.arrayBuffer();
+        const base64 = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
+        fileContent = JSON.stringify({
+          type: 'binary',
+          encoding: 'base64',
+          data: base64.substring(0, 50000), // Limit to ~50KB
+          metadata: {
+            name: file.name,
+            size: file.size,
+            type: file.type
+          }
+        });
+        console.log('[Upload] Converted binary file to base64, size:', base64.length);
+      }
 
       // Trigger AI analysis
+      console.log('[Upload] Step 4: Invoking analyze-document function...');
       const { error: analysisError } = await supabase.functions.invoke('analyze-document', {
         body: {
           documentId: document.id,
           userId: user.id,
           documentType,
-          fileContent: fileContent.substring(0, 10000) // Limit to first 10k chars
+          fileContent: fileContent
         }
       });
+
+      console.log('[Upload] Step 5: Analysis complete, response:', analysisError ? 'FAILED' : 'SUCCESS');
 
       if (analysisError) {
         console.error('Analysis error:', analysisError);

@@ -70,9 +70,12 @@ export const DocumentUploadZone = ({
 
       {uploading && (
         <div className="absolute inset-0 flex items-center justify-center bg-background/80 rounded-lg">
-          <div className="flex flex-col items-center gap-2">
+          <div className="flex flex-col items-center gap-3">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-            <p className="text-sm text-muted-foreground">Processing...</p>
+            <div className="space-y-1 text-center">
+              <p className="text-sm text-muted-foreground font-medium">Processing...</p>
+              <p className="text-xs text-muted-foreground/70">Uploading → AI analyzing → Building profile</p>
+            </div>
           </div>
         </div>
       )}

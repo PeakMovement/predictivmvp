@@ -1,4 +1,4 @@
-import { FileText, Trash2, Clock, CheckCircle, AlertCircle } from 'lucide-react';
+import { FileText, Trash2, Clock, CheckCircle, AlertCircle, RefreshCw } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -22,11 +22,11 @@ const typeLabels = {
   training: 'Training Program'
 };
 
-const statusIcons = {
-  pending: <Clock className="w-4 h-4 text-muted-foreground" />,
-  processing: <Clock className="w-4 h-4 text-primary animate-pulse" />,
-  completed: <CheckCircle className="w-4 h-4 text-green-500" />,
-  failed: <AlertCircle className="w-4 h-4 text-destructive" />
+const statusConfig = {
+  pending: { icon: Clock, color: 'text-yellow-500', label: 'Pending', animate: '' },
+  processing: { icon: RefreshCw, color: 'text-blue-500', label: 'Analyzing...', animate: 'animate-spin' },
+  completed: { icon: CheckCircle, color: 'text-green-500', label: 'Complete', animate: '' },
+  failed: { icon: AlertCircle, color: 'text-red-500', label: 'Failed', animate: '' }
 };
 
 export const DocumentCard = ({ document, onDelete }: DocumentCardProps) => {
@@ -55,10 +55,18 @@ export const DocumentCard = ({ document, onDelete }: DocumentCardProps) => {
 
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                {statusIcons[document.processing_status]}
-                <span className="text-xs text-muted-foreground capitalize">
-                  {document.processing_status}
-                </span>
+                {(() => {
+                  const StatusIcon = statusConfig[document.processing_status].icon;
+                  const config = statusConfig[document.processing_status];
+                  return (
+                    <>
+                      <StatusIcon className={`h-4 w-4 ${config.color} ${config.animate}`} />
+                      <span className={`text-xs ${config.color}`}>
+                        {config.label}
+                      </span>
+                    </>
+                  );
+                })()}
               </div>
               <span className="text-xs text-muted-foreground">
                 {format(new Date(document.uploaded_at), 'MMM d, yyyy')}

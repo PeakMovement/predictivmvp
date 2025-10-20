@@ -40,6 +40,7 @@ import { useHealthProfile } from "@/hooks/useHealthProfile";
 import { generateYvesRecommendations, YvesRecommendation } from "@/lib/yvesRecommendations";
 import * as LucideIcons from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useUnifiedMetrics } from "@/hooks/useUnifiedMetrics";
 
 /* -------------------- HELPERS -------------------- */
 
@@ -111,6 +112,7 @@ export const Dashboard = ({ onNavigate = () => {} }: DashboardProps) => {
   const { currentDayData } = useLiveData();
   const { latestTrend } = useFitbitTrends({ days: 7 });
   const { profile } = useHealthProfile();
+  const { sleepScore, dataSource } = useUnifiedMetrics();
   const [yvesRecs, setYvesRecs] = useState<YvesRecommendation[]>([]);
 
   useEffect(() => {
@@ -129,12 +131,12 @@ export const Dashboard = ({ onNavigate = () => {} }: DashboardProps) => {
   // Compute metrics from real data
   const acwr = latestTrend?.acwr ? latestTrend.acwr.toFixed(2) : "—";
   const strain = latestTrend?.strain ? Math.round(latestTrend.strain).toString() : "—";
-  const sleepScore = currentDayData?.SleepScore || "—";
+  const displaySleepScore = typeof sleepScore === 'number' ? sleepScore.toFixed(0) : "—";
 
   const metrics = [
     { name: "ACWR", value: acwr, status: "green" },
     { name: "Strain", value: strain, status: "yellow" },
-    { name: "Sleep Score", value: sleepScore, status: "green" },
+    { name: "Sleep Score", value: displaySleepScore, status: "green", source: dataSource },
   ];
 
   return (
@@ -161,6 +163,11 @@ export const Dashboard = ({ onNavigate = () => {} }: DashboardProps) => {
                   <div className={cn("w-3 h-3 rounded-full shadow-glow", getStatusColor(metric.status))} />
                 </div>
                 <p className="text-2xl font-bold text-foreground">{metric.value}</p>
+                {'source' in metric && metric.source && (
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {metric.source === 'fitbit' ? '📱 Live Fitbit' : metric.source === 'csv' ? '📊 Simulation' : 'No data'}
+                  </p>
+                )}
               </div>
             ))}
           </div>

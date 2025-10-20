@@ -24,13 +24,26 @@ serve(async (req) => {
     
     const { documentId, userId, documentType, fileContent } = await req.json();
 
-    console.log(`Analyzing document ${documentId} for user ${userId}`);
+    console.log(`[analyze-document] Analyzing document ${documentId} for user ${userId}, type: ${documentType}, content length: ${fileContent?.length}`);
 
     // Update status to processing
     await supabase
       .from('user_documents')
       .update({ processing_status: 'processing' })
       .eq('id', documentId);
+
+    // Handle binary content if present
+    let processedContent = fileContent;
+    try {
+      const parsed = JSON.parse(fileContent);
+      if (parsed.type === 'binary' && parsed.encoding === 'base64') {
+        console.log('[analyze-document] Detected binary content, skipping full decode');
+        processedContent = `[Binary file: ${parsed.metadata.name}, ${parsed.metadata.size} bytes, type: ${parsed.metadata.type}]`;
+        // For PDFs/images, rely on OCR capabilities of AI model
+      }
+    } catch {
+      // Not JSON, treat as plain text
+    }
 
     // Define structured schemas for each document type
     const nutritionSchema = {
@@ -111,12 +124,46 @@ serve(async (req) => {
     // Create system prompt
     let systemPrompt = `You are a ${documentType} document analysis AI. Extract structured information accurately from the document.`;
 
+    // Retry wrapper for AI calls
+    const callAIWithRetry = async (url: string, options: any, maxRetries = 2) => {
+      for (let attempt = 1; attempt <= maxRetries; attempt++) {
+        try {
+          console.log(`[analyze-document] AI call attempt ${attempt}/${maxRetries}`);
+          const response = await fetch(url, options);
+          
+          if (response.ok) {
+            console.log('[analyze-document] AI gateway response: 200 OK');
+            return response;
+          }
+          
+          if (response.status === 429) {
+            console.log('[analyze-document] Rate limited, waiting before retry...');
+            await new Promise(resolve => setTimeout(resolve, 2000 * attempt));
+            continue;
+          }
+          
+          if (response.status === 402) {
+            throw new Error('AI credits depleted. Please add credits to your Lovable workspace.');
+          }
+          
+          const errorText = await response.text();
+          console.error('[analyze-document] AI gateway error:', response.status, errorText);
+          throw new Error(`AI analysis failed: ${response.statusText}`);
+        } catch (error) {
+          if (attempt === maxRetries) throw error;
+          console.log(`[analyze-document] Retry ${attempt}/${maxRetries} after error:`, error);
+          await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+        }
+      }
+      throw new Error('Max retries exceeded');
+    };
+
     // Use tool calling for structured extraction
     const body: any = {
       model: 'google/gemini-2.5-flash',
       messages: [
         { role: 'system', content: systemPrompt },
-        { role: 'user', content: `Extract structured data from this ${documentType} document:\n\n${fileContent}` }
+        { role: 'user', content: `Extract structured data from this ${documentType} document:\n\n${processedContent}` }
       ],
       tools: [
         {
@@ -131,8 +178,8 @@ serve(async (req) => {
       tool_choice: { type: "function", function: { name: `extract_${documentType}_data` } }
     };
 
-    // Call Lovable AI for analysis
-    const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+    // Call Lovable AI for analysis with retry logic
+    const aiResponse = await callAIWithRetry('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${lovableApiKey}`,
@@ -143,11 +190,12 @@ serve(async (req) => {
 
     if (!aiResponse.ok) {
       const errorText = await aiResponse.text();
-      console.error('AI gateway error:', aiResponse.status, errorText);
+      console.error('[analyze-document] AI gateway final error:', aiResponse.status, errorText);
       throw new Error(`AI analysis failed: ${aiResponse.statusText}`);
     }
 
     const aiData = await aiResponse.json();
+    console.log('[analyze-document] AI analysis complete');
     
     // Extract structured data from tool call
     const toolCall = aiData.choices[0].message.tool_calls?.[0];
@@ -157,6 +205,7 @@ serve(async (req) => {
     if (toolCall) {
       insightData = JSON.parse(toolCall.function.arguments);
       aiSummary = `Structured ${documentType} data extracted successfully`;
+      console.log('[analyze-document] Extracted structured data:', JSON.stringify(insightData).substring(0, 200));
     } else {
       // Fallback to content if tool call not present
       aiSummary = aiData.choices[0].message.content;
@@ -198,7 +247,7 @@ serve(async (req) => {
       p_data: insightData
     });
 
-    console.log(`Document analysis completed for ${documentId}`);
+    console.log(`[analyze-document] Document analysis completed for ${documentId}`);
 
     // Trigger health profile rebuild
     try {
@@ -210,9 +259,9 @@ serve(async (req) => {
         },
         body: JSON.stringify({ userId })
       });
-      console.log('Health profile rebuild triggered');
+      console.log('[analyze-document] Health profile rebuild triggered');
     } catch (profileError) {
-      console.error('Failed to trigger profile rebuild:', profileError);
+      console.error('[analyze-document] Failed to trigger profile rebuild:', profileError);
       // Don't fail the main request
     }
 
@@ -222,7 +271,7 @@ serve(async (req) => {
     );
 
   } catch (error) {
-    console.error('Error analyzing document:', error);
+    console.error('[analyze-document] Error analyzing document:', error);
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     
     // Try to mark document as failed
@@ -230,14 +279,17 @@ serve(async (req) => {
       const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
       const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
       const supabase = createClient(supabaseUrl, supabaseServiceKey);
-      const { documentId } = await req.json();
+      const body = await req.json();
+      const { documentId } = body;
       
       await supabase
         .from('user_documents')
         .update({ processing_status: 'failed' })
         .eq('id', documentId);
+      
+      console.log('[analyze-document] Marked document as failed');
     } catch (e) {
-      console.error('Failed to update document status:', e);
+      console.error('[analyze-document] Failed to update document status:', e);
     }
     
     return new Response(

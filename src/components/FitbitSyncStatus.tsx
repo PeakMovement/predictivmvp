@@ -1,55 +1,127 @@
-import { RefreshCw, CheckCircle, AlertCircle, Clock } from "lucide-react";
+import { useEffect, useState } from "react";
+import { RefreshCw, CheckCircle2, Clock, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
-import { useFitbitSync } from "@/hooks/useFitbitSync";
-import { formatDistanceToNow } from "date-fns";
+import { supabase } from "@/integrations/supabase/client";
+import { formatDistanceToNowStrict } from "date-fns";
 
-interface FitbitSyncStatusProps {
-  showDetails?: boolean;
-  className?: string;
+interface SyncState {
+  status: "idle" | "syncing" | "success" | "error";
+  lastSync: Date | null;
 }
 
-export const FitbitSyncStatus = ({ showDetails = true, className }: FitbitSyncStatusProps) => {
-  const { isConnected, isSyncing, lastSync, syncNow } = useFitbitSync();
+export const FitbitSyncStatus = () => {
+  const [state, setState] = useState<SyncState>({
+    status: "idle",
+    lastSync: null,
+  });
 
-  if (!isConnected) {
-    return (
-      <div className={cn("flex items-center gap-2 text-muted-foreground text-sm", className)}>
-        <AlertCircle className="w-4 h-4" />
-        <span>Fitbit not connected</span>
-      </div>
-    );
-  }
+  // 🔍 Fetch latest sync timestamp from fitbit_trends
+  const fetchLastSync = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("fitbit_trends")
+        .select("date")
+        .order("date", { ascending: false })
+        .limit(1)
+        .single();
+
+      if (error) {
+        console.warn("⚠️ FitbitSyncStatus: Could not fetch last sync:", error.message);
+        return;
+      }
+
+      if (data?.date) {
+        setState((prev) => ({ ...prev, lastSync: new Date(data.date) }));
+      }
+    } catch (err) {
+      console.error("❌ FitbitSyncStatus fetch error:", err);
+    }
+  };
+
+  // Initial fetch
+  useEffect(() => {
+    fetchLastSync();
+  }, []);
+
+  // ⏱️ Handle Fitbit manual refresh
+  const handleSync = async () => {
+    try {
+      setState((prev) => ({ ...prev, status: "syncing" }));
+
+      // Trigger backend sync
+      const res = await fetch("https://ixtwbkikyuexskdgfpfq.functions.supabase.co/fetch-fitbit-auto", {
+        method: "POST",
+      });
+
+      if (!res.ok) throw new Error("Sync failed");
+
+      // Fire custom event for UI to auto-refresh
+      window.dispatchEvent(new Event("fitbit_data_refreshed"));
+
+      // ✅ Update status
+      setState({
+        status: "success",
+        lastSync: new Date(),
+      });
+
+      setTimeout(() => setState((s) => ({ ...s, status: "idle" })), 3000);
+    } catch (err) {
+      console.error("❌ Fitbit sync error:", err);
+      setState((prev) => ({ ...prev, status: "error" }));
+      setTimeout(() => setState((s) => ({ ...s, status: "idle" })), 5000);
+    }
+  };
+
+  // 🕓 Format "Updated X minutes ago"
+  const getTimeSinceSync = () => {
+    if (!state.lastSync) return "Never synced";
+    return `Updated ${formatDistanceToNowStrict(state.lastSync)} ago`;
+  };
 
   return (
-    <div className={cn("flex items-center gap-3", className)}>
-      {showDetails && (
-        <div className="flex items-center gap-2 text-sm">
-          <CheckCircle className="w-4 h-4 text-green-500" />
-          <span className="text-muted-foreground">
-            Connected
-          </span>
-          {lastSync && (
-            <div className="flex items-center gap-1.5 text-muted-foreground/70">
-              <Clock className="w-3.5 h-3.5" />
-              <span className="text-xs">
-                {formatDistanceToNow(lastSync, { addSuffix: true })}
-              </span>
-            </div>
-          )}
-        </div>
-      )}
-      
+    <div className="flex flex-col items-center gap-2">
+      {/* 🔄 Sync Button */}
       <Button
-        onClick={syncNow}
-        disabled={isSyncing}
-        size="sm"
         variant="outline"
-        className="gap-2"
+        size="sm"
+        onClick={handleSync}
+        disabled={state.status === "syncing"}
+        className="flex items-center gap-2"
       >
-        <RefreshCw className={cn("w-4 h-4", isSyncing && "animate-spin")} />
-        {isSyncing ? "Updating..." : "Update Now"}
+        {state.status === "syncing" ? (
+          <>
+            <Loader2 className="h-4 w-4 animate-spin" />
+            <span>Syncing…</span>
+          </>
+        ) : (
+          <>
+            <RefreshCw className="h-4 w-4" />
+            <span>Update Now</span>
+          </>
+        )}
       </Button>
+
+      {/* ⏱️ Status Line */}
+      <div className="flex items-center gap-1 text-xs text-muted-foreground">
+        {state.status === "success" && (
+          <>
+            <CheckCircle2 className="h-3 w-3 text-green-500" />
+            <span>Synced just now</span>
+          </>
+        )}
+        {state.status === "error" && (
+          <>
+            <Clock className="h-3 w-3 text-red-500" />
+            <span>Sync failed</span>
+          </>
+        )}
+        {state.status === "idle" && (
+          <>
+            <Clock className="h-3 w-3 text-muted-foreground" />
+            <span>{getTimeSinceSync()}</span>
+          </>
+        )}
+      </div>
     </div>
   );
 };

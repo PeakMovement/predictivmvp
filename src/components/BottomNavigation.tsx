@@ -1,3 +1,4 @@
+import React from "react";
 import { Home, Dumbbell, Heart, ClipboardList, Users, RefreshCw, TrendingUp, Code, FileText, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -20,7 +21,15 @@ const tabs = [
 ];
 
 export const BottomNavigation = ({ activeTab, onTabChange }: BottomNavigationProps) => {
-  const visibleTabs = tabs.filter(tab => window.innerWidth >= 768 || tab.mobile);
+  const [isMobile, setIsMobile] = React.useState(window.innerWidth < 768);
+  
+  React.useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+  
+  const visibleTabs = tabs.filter(tab => !isMobile || tab.mobile);
   
   return (
     <div className={cn(

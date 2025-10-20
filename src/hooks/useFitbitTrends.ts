@@ -125,16 +125,23 @@ export const useFitbitTrends = (options: UseFitbitTrendsOptions = {}): UseFitbit
     };
   }, [fetchTrends, resolvedUserId]);
 
-  // Listen for custom refresh events from Settings
+  // Listen for custom refresh events from Settings and Fitbit sync
   useEffect(() => {
     const handleRefresh = () => {
       console.log("Trends refresh event received");
       fetchTrends();
     };
+    
+    const handleDataRefreshed = () => {
+      console.log("Fitbit data refreshed, reloading trends...");
+      fetchTrends();
+    };
 
     window.addEventListener("fitbit_trends_refresh", handleRefresh);
+    window.addEventListener("fitbit_data_refreshed", handleDataRefreshed);
     return () => {
       window.removeEventListener("fitbit_trends_refresh", handleRefresh);
+      window.removeEventListener("fitbit_data_refreshed", handleDataRefreshed);
     };
   }, [fetchTrends]);
 

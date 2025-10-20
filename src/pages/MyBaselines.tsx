@@ -126,8 +126,8 @@ export default function MyBaselines() {
                 className={`bg-glass backdrop-blur-xl border-glass-border shadow-glass transition-all duration-300 hover:scale-[1.02] hover:shadow-glow ${getRiskBgColor(r.risk_status)}`}
               >
                 <CardHeader className="pb-3">
-                  <h2 className="text-xl font-semibold capitalize text-foreground">
-                    {r.metric.replace(/_/g, " ")}
+                  <h2 className="text-xl font-semibold text-foreground">
+                    {r.metric.toUpperCase().replace(/_/g, " ")}
                   </h2>
                 </CardHeader>
                 <CardContent className="space-y-3">

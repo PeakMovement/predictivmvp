@@ -577,11 +577,11 @@ const WeeklyInsightsSection = () => {
   const generateSummary = () => {
     const parts = [];
     
-    if (avgSleepScore < 70) {
+    if (avgSleepScore !== null && avgSleepScore < 70) {
       parts.push("Your recovery was below target this week");
-    } else if (avgSleepScore > 80) {
+    } else if (avgSleepScore !== null && avgSleepScore > 80) {
       parts.push("Excellent recovery this week");
-    } else {
+    } else if (avgSleepScore !== null) {
       parts.push("Recovery was moderate this week");
     }
     
@@ -616,7 +616,7 @@ const WeeklyInsightsSection = () => {
       });
     }
     
-    if (avgSleepScore < 75) {
+    if (avgSleepScore !== null && avgSleepScore < 75) {
       recommendations.push({
         color: "blue",
         text: "Prioritize sleep quality with 8+ hours per night"
@@ -662,7 +662,9 @@ const WeeklyInsightsSection = () => {
           </div>
           <div className="bg-glass/30 backdrop-blur-sm border border-glass-border rounded-lg p-3 transition-all duration-300 hover:bg-glass-highlight">
             <p className="text-xs text-muted-foreground mb-1">Avg Sleep</p>
-            <p className="text-lg font-bold text-foreground">{avgSleepScore.toFixed(0)}</p>
+            <p className="text-lg font-bold text-foreground">
+              {avgSleepScore !== null ? avgSleepScore.toFixed(0) : "—"}
+            </p>
           </div>
           <div className="bg-glass/30 backdrop-blur-sm border border-glass-border rounded-lg p-3 transition-all duration-300 hover:bg-glass-highlight">
             <p className="text-xs text-muted-foreground mb-1">Avg Strain</p>

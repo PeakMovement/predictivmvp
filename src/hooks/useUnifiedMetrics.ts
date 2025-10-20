@@ -1,9 +1,23 @@
-import { useFitbitMetrics } from './useFitbitMetrics';
-import { useLiveData } from '@/contexts/LiveDataContext';
+import { useMemo, useEffect, useState } from "react";
+import { useFitbitMetrics } from "./useFitbitMetrics";
+import { useLiveData } from "@/contexts/LiveDataContext";
 
 export const useUnifiedMetrics = () => {
-  const { metrics, isLoading: fitbitLoading } = useFitbitMetrics();
+  const { metrics, isLoading: fitbitLoading, refresh } = useFitbitMetrics();
   const { currentDayData } = useLiveData();
+  const [refreshKey, setRefreshKey] = useState(0);
+  
+  // Listen for Fitbit data refresh events
+  useEffect(() => {
+    const handleDataRefreshed = () => {
+      console.log("[useUnifiedMetrics] Fitbit data refreshed, reloading...");
+      refresh();
+      setRefreshKey(prev => prev + 1);
+    };
+    
+    window.addEventListener("fitbit_data_refreshed", handleDataRefreshed);
+    return () => window.removeEventListener("fitbit_data_refreshed", handleDataRefreshed);
+  }, [refresh]);
   
   // Calculate sleep score from Fitbit data
   const calculateSleepScore = (efficiency: number, duration: number): number => {

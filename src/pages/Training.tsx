@@ -249,7 +249,7 @@ const CircularGauge = ({
 // ✅ Main Page Component
 export const Training = () => {
   const { currentDayData } = useLiveData();
-  const { trends, isLoading: trendsLoading } = useFitbitTrends({ days: 7 });
+  const { trends, isLoading: trendsLoading, refresh } = useFitbitTrends({ days: 7 });
   const [suggestions, setSuggestions] = useState<ReturnType<typeof generateSuggestions>>([]);
 
   // Find latest trend with non-null monotony/strain
@@ -259,6 +259,17 @@ export const Training = () => {
     const newSuggestions = generateSuggestions(currentDayData);
     setSuggestions(newSuggestions);
   }, [currentDayData]);
+  
+  // Listen for Fitbit data refresh
+  useEffect(() => {
+    const handleDataRefreshed = () => {
+      console.log("[Training] Fitbit data refreshed, reloading trends...");
+      refresh();
+    };
+    
+    window.addEventListener("fitbit_data_refreshed", handleDataRefreshed);
+    return () => window.removeEventListener("fitbit_data_refreshed", handleDataRefreshed);
+  }, [refresh]);
 
   return (
     <TooltipProvider>

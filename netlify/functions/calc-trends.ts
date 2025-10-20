@@ -126,6 +126,45 @@ const handler: Handler = async (event) => {
 
     logSync("calc-trends:success", { records: trends.length });
 
+    // Trigger baseline calculation after trends are calculated
+    try {
+      logSync("calc-trends:triggering-baseline", { userId });
+      const baselineResponse = await fetch(`${env.SUPABASE_URL}/functions/v1/calculate-baseline`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${env.SUPABASE_SERVICE_ROLE_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ user_id: userId }),
+      });
+      
+      if (baselineResponse.ok) {
+        logSync("calc-trends:baseline-triggered", {});
+        
+        // Trigger deviation calculation after baseline
+        logSync("calc-trends:triggering-deviation", { userId });
+        const deviationResponse = await fetch(`${env.SUPABASE_URL}/functions/v1/calculate-deviation`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${env.SUPABASE_SERVICE_ROLE_KEY}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ user_id: userId }),
+        });
+        
+        if (deviationResponse.ok) {
+          logSync("calc-trends:deviation-triggered", {});
+        } else {
+          logSync("calc-trends:deviation-failed", { status: deviationResponse.status });
+        }
+      } else {
+        logSync("calc-trends:baseline-failed", { status: baselineResponse.status });
+      }
+    } catch (triggerError: any) {
+      logSync("calc-trends:trigger-error", { error: triggerError.message });
+      // Don't fail the whole operation if triggers fail
+    }
+
     return {
       statusCode: 200,
       headers: {

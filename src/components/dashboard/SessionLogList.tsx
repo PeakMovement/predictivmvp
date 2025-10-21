@@ -87,6 +87,15 @@ export const SessionLogList = () => {
     };
 
     fetchFallbackActivities();
+    
+    // Listen for refresh events to refetch sessions
+    const handleRefresh = () => {
+      setIsFetchingFallback(false);
+      setFallbackSessions([]);
+    };
+    window.addEventListener("fitbit_trends_refresh", handleRefresh);
+    
+    return () => window.removeEventListener("fitbit_trends_refresh", handleRefresh);
   }, [trends, isFetchingFallback]);
 
   const sessions = useMemo(() => {

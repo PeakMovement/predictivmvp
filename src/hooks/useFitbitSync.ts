@@ -108,7 +108,7 @@ export const useFitbitSync = (): FitbitSyncState => {
       setLastSync(now);
       localStorage.setItem('fitbit_last_sync', now.toISOString());
       await checkConnection();
-      window.dispatchEvent(new CustomEvent('fitbit_data_refreshed'));
+      window.dispatchEvent(new CustomEvent('fitbit_trends_refresh'));
     } catch (error: any) {
       console.error("Sync error:", error);
       toast({

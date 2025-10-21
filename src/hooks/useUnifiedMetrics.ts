@@ -15,8 +15,8 @@ export const useUnifiedMetrics = () => {
       setRefreshKey(prev => prev + 1);
     };
     
-    window.addEventListener("fitbit_data_refreshed", handleDataRefreshed);
-    return () => window.removeEventListener("fitbit_data_refreshed", handleDataRefreshed);
+    window.addEventListener("fitbit_trends_refresh", handleDataRefreshed);
+    return () => window.removeEventListener("fitbit_trends_refresh", handleDataRefreshed);
   }, [refresh]);
   
   // Calculate sleep score from Fitbit data

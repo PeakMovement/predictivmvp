@@ -91,12 +91,10 @@ export const FitbitStepsCard = () => {
   const handleRefresh = async () => {
     setRefreshing(true);
     try {
-      const response = await fetch("/.netlify/functions/sync-auto", {
-        method: "POST",
-      });
-
-      if (!response.ok) {
-        throw new Error("Sync failed");
+      const { error } = await supabase.functions.invoke('fetch-fitbit-auto', { body: {} });
+      
+      if (error) {
+        throw new Error(error.message || "Sync failed");
       }
 
       toast({

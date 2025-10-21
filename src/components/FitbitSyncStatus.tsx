@@ -15,32 +15,36 @@ const FitbitSyncStatus = () => {
     lastSync: null,
   });
 
-  // 🔍 Fetch latest sync timestamp from fitbit_trends
+  // 🔍 Fetch latest sync timestamp from fitbit_auto_data.fetched_at
   const fetchLastSync = async () => {
     try {
       const { data, error } = await supabase
-        .from("fitbit_trends")
-        .select("date")
-        .order("date", { ascending: false })
+        .from("fitbit_auto_data")
+        .select("fetched_at")
+        .order("fetched_at", { ascending: false })
         .limit(1)
-        .single();
+        .maybeSingle();
 
       if (error) {
         console.warn("⚠️ FitbitSyncStatus: Could not fetch last sync:", error.message);
         return;
       }
 
-      if (data?.date) {
-        setState((prev) => ({ ...prev, lastSync: new Date(data.date) }));
+      if (data?.fetched_at) {
+        setState((prev) => ({ ...prev, lastSync: new Date(data.fetched_at) }));
       }
     } catch (err) {
       console.error("❌ FitbitSyncStatus fetch error:", err);
     }
   };
 
-  // Initial fetch
+  // Initial fetch and listen for refresh events
   useEffect(() => {
     fetchLastSync();
+    
+    const handleRefresh = () => fetchLastSync();
+    window.addEventListener("fitbit_trends_refresh", handleRefresh);
+    return () => window.removeEventListener("fitbit_trends_refresh", handleRefresh);
   }, []);
 
   // ⏱️ Handle Fitbit manual refresh
@@ -48,15 +52,13 @@ const FitbitSyncStatus = () => {
     try {
       setState((prev) => ({ ...prev, status: "syncing" }));
 
-      // Trigger backend sync
-      const res = await fetch("https://ixtwbkikyuexskdgfpfq.functions.supabase.co/fetch-fitbit-auto", {
-        method: "POST",
-      });
+      // Trigger backend sync using Supabase function
+      const { error } = await supabase.functions.invoke('fetch-fitbit-auto', { body: {} });
+      
+      if (error) throw new Error(error.message || "Sync failed");
 
-      if (!res.ok) throw new Error("Sync failed");
-
-      // Fire custom event for UI to auto-refresh
-      window.dispatchEvent(new Event("fitbit_data_refreshed"));
+      // Fire unified custom event for UI to auto-refresh
+      window.dispatchEvent(new Event("fitbit_trends_refresh"));
 
       // ✅ Update status
       setState({

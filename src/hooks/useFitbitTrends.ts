@@ -102,10 +102,8 @@ export const useFitbitTrends = (options: UseFitbitTrendsOptions = {}): UseFitbit
   useEffect(() => {
     const handleRefresh = () => fetchTrends();
     window.addEventListener("fitbit_trends_refresh", handleRefresh);
-    window.addEventListener("fitbit_data_refreshed", handleRefresh);
     return () => {
       window.removeEventListener("fitbit_trends_refresh", handleRefresh);
-      window.removeEventListener("fitbit_data_refreshed", handleRefresh);
     };
   }, [fetchTrends]);
 

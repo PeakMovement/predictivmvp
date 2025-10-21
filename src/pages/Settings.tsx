@@ -71,14 +71,29 @@ export const Settings = ({ onNavigate }: { onNavigate?: (tab: string) => void })
     setSmsEnabled(alertSettings.enableSMS);
     setPhoneNumber(alertSettings.phoneNumber);
     
-    // Load last Fitbit sync time
-    const savedSyncTime = localStorage.getItem("fitbit-last-sync");
-    if (savedSyncTime) {
-      setLastSyncTime(new Date(savedSyncTime));
-    }
+    // Load last Fitbit sync time from fitbit_auto_data
+    const fetchLastSync = async () => {
+      const { data } = await supabase
+        .from("fitbit_auto_data")
+        .select("fetched_at")
+        .order("fetched_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      
+      if (data?.fetched_at) {
+        setLastSyncTime(new Date(data.fetched_at));
+      }
+    };
+    fetchLastSync();
+    
+    // Listen for refresh events to update last sync time
+    const handleRefresh = () => fetchLastSync();
+    window.addEventListener("fitbit_trends_refresh", handleRefresh);
     
     // Load email preferences from Supabase
     loadEmailPreferences();
+    
+    return () => window.removeEventListener("fitbit_trends_refresh", handleRefresh);
   }, []);
   
   const loadEmailPreferences = async () => {

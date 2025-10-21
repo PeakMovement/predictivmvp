@@ -78,55 +78,14 @@ export const useFitbitSync = (): FitbitSyncState => {
   const syncNow = async () => {
     setIsSyncing(true);
     try {
-      // Try Netlify function first
-      const response = await fetch("/.netlify/functions/sync-auto", {
-        method: "POST",
+      // Call Supabase Edge Function (Lovable projects use Supabase, not Netlify)
+      const { data: edgeResult, error: edgeError } = await supabase.functions.invoke('fetch-fitbit-auto', {
+        body: {},
       });
 
-      const contentType = response.headers.get("content-type");
-      const isJson = contentType?.includes("application/json");
+      if (edgeError) throw new Error(edgeError.message);
 
-      // If Netlify returns HTML (preview environment issue), fallback to Supabase Edge Function
-      if (!isJson || !response.ok) {
-        console.info('[FitbitSync] Netlify sync unavailable, using Supabase Edge Function fallback');
-        
-        const { data: edgeResult, error: edgeError } = await supabase.functions.invoke('fetch-fitbit-auto', {
-          body: {},
-        });
-
-        if (edgeError) throw new Error(edgeError.message);
-
-        // Fetch latest data to show in toast
-        const { data: { user } } = await supabase.auth.getUser();
-        const { data: latestData, error: fetchError } = await supabase
-          .from("fitbit_auto_data" as any)
-          .select("activity")
-          .eq("user_id", user?.id || "CTBNRR")
-          .order("fetched_at", { ascending: false })
-          .limit(1)
-          .maybeSingle();
-
-        const activityRecord = latestData as any;
-        const steps = activityRecord?.activity?.data?.summary?.steps || 0;
-        const calories = activityRecord?.activity?.data?.summary?.caloriesOut || 0;
-
-        const now = new Date();
-        toast({
-          title: "✅ Fitbit Data Updated",
-          description: `Synced ${steps} steps, ${calories} calories`,
-        });
-
-        setLastSync(now);
-        localStorage.setItem('fitbit_last_sync', now.toISOString());
-        await checkConnection();
-        window.dispatchEvent(new CustomEvent('fitbit_data_refreshed'));
-        return;
-      }
-
-      // Handle successful Netlify response
-      const result = await response.json();
-      
-      // Fetch latest data to show actual values
+      // Fetch latest data to show in toast
       const { data: { user } } = await supabase.auth.getUser();
       const { data: latestData, error: fetchError } = await supabase
         .from("fitbit_auto_data" as any)
@@ -137,8 +96,8 @@ export const useFitbitSync = (): FitbitSyncState => {
         .maybeSingle();
 
       const activityRecord = latestData as any;
-      const steps = activityRecord?.activity?.data?.summary?.steps || result?.data?.steps || 0;
-      const calories = activityRecord?.activity?.data?.summary?.caloriesOut || result?.data?.calories || 0;
+      const steps = activityRecord?.activity?.data?.summary?.steps || 0;
+      const calories = activityRecord?.activity?.data?.summary?.caloriesOut || 0;
 
       const now = new Date();
       toast({

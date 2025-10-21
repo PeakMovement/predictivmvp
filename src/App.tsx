@@ -38,6 +38,7 @@ const App = () => {
   const isFitbitAuth = currentPath === "/auth/fitbit";
   const isFitbitCallback = currentPath === "/fitbit/callback";
   const isOnboarding = currentPath === "/onboarding";
+  const isDashboardRoute = currentPath === "/dashboard";
 
   useEffect(() => {
     const handleNavigateInsights = () => setActiveTab("insights-tree");
@@ -86,6 +87,14 @@ const App = () => {
         </QueryClientProvider>
       </ThemeProvider>
     );
+  }
+
+  // Handle /dashboard route
+  if (isDashboardRoute) {
+    // Redirect to main app with dashboard tab active
+    if (activeTab !== "dashboard") {
+      setActiveTab("dashboard");
+    }
   }
 
   // Main tab navigation

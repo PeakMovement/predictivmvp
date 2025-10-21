@@ -9,7 +9,7 @@ interface SyncState {
   lastSync: Date | null;
 }
 
-export const FitbitSyncStatus = () => {
+const FitbitSyncStatus = () => {
   const [state, setState] = useState<SyncState>({
     status: "idle",
     lastSync: null,
@@ -125,3 +125,5 @@ export const FitbitSyncStatus = () => {
     </div>
   );
 };
+
+export default FitbitSyncStatus;

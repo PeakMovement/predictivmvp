@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { FitbitSyncStatus } from "@/components/FitbitSyncStatus";
+import FitbitSyncStatus from "@/components/FitbitSyncStatus";
 import { DocumentIntelligenceCard } from "@/components/dashboard/DocumentIntelligenceCard";
 import { FeedbackSummaryPanel } from "@/components/dashboard/FeedbackSummaryPanel";
 import { HealthProfileViewer } from "@/components/health/HealthProfileViewer";

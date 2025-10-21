@@ -16,27 +16,32 @@ export const FitbitSyncStatus = () => {
   });
 
   // 🔍 Fetch latest sync timestamp from fitbit_trends
-  const fetchLastSync = async () => {
-    try {
-      const { data, error } = await supabase
-        .from("fitbit_trends")
-        .select("date")
-        .order("date", { ascending: false })
-        .limit(1)
-        .single();
+  const fetchLastSync = useCallback(async () => {
+    // 1) Try precise timestamp from ingestion table
+    const { data: auto, error: autoErr } = await supabase
+      .from("fitbit_auto_data")
+      .select("fetched_at")
+      .order("fetched_at", { ascending: false })
+      .limit(1)
+      .single();
 
-      if (error) {
-        console.warn("⚠️ FitbitSyncStatus: Could not fetch last sync:", error.message);
-        return;
-      }
-
-      if (data?.date) {
-        setState((prev) => ({ ...prev, lastSync: new Date(data.date) }));
-      }
-    } catch (err) {
-      console.error("❌ FitbitSyncStatus fetch error:", err);
+    if (!autoErr && auto?.fetched_at) {
+      setLastSync(new Date(auto.fetched_at));
+      return;
     }
-  };
+
+    // 2) Fallback to latest trend "date" (daily)
+    const { data: trend, error: trendErr } = await supabase
+      .from("fitbit_trends")
+      .select("date")
+      .order("date", { ascending: false })
+      .limit(1)
+      .single();
+
+    if (!trendErr && trend?.date) {
+      setLastSync(new Date(trend.date));
+    }
+  }, []);
 
   // Initial fetch
   useEffect(() => {

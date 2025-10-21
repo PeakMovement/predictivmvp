@@ -24,6 +24,7 @@ import DeveloperBaselinesEngine from "@/pages/DeveloperBaselinesEngine";
 import MyDocuments from "@/pages/MyDocuments";
 import PlanCompliance from "@/pages/PlanCompliance";
 import { ProfileSetup } from "@/pages/ProfileSetup";
+import Onboarding from "@/pages/Onboarding";
 import { Settings as SettingsIcon } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
@@ -36,6 +37,7 @@ const App = () => {
   const currentPath = window.location.pathname;
   const isFitbitAuth = currentPath === "/auth/fitbit";
   const isFitbitCallback = currentPath === "/fitbit/callback";
+  const isOnboarding = currentPath === "/onboarding";
 
   useEffect(() => {
     const handleNavigateInsights = () => setActiveTab("insights-tree");
@@ -66,6 +68,20 @@ const App = () => {
             <Toaster />
             <Sonner />
             <FitbitCallback />
+          </TooltipProvider>
+        </QueryClientProvider>
+      </ThemeProvider>
+    );
+  }
+
+  if (isOnboarding) {
+    return (
+      <ThemeProvider defaultTheme="dark" storageKey="predictiv-theme">
+        <QueryClientProvider client={queryClient}>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
+            <Onboarding />
           </TooltipProvider>
         </QueryClientProvider>
       </ThemeProvider>

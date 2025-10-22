@@ -698,6 +698,45 @@ export type Database = {
         }
         Relationships: []
       }
+      user_deviations: {
+        Row: {
+          baseline_value: number | null
+          created_at: string | null
+          current_value: number | null
+          date: string | null
+          deviation: number | null
+          id: string
+          metric: string
+          risk_zone: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          baseline_value?: number | null
+          created_at?: string | null
+          current_value?: number | null
+          date?: string | null
+          deviation?: number | null
+          id?: string
+          metric: string
+          risk_zone?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          baseline_value?: number | null
+          created_at?: string | null
+          current_value?: number | null
+          date?: string | null
+          deviation?: number | null
+          id?: string
+          metric?: string
+          risk_zone?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       user_documents: {
         Row: {
           ai_summary: string | null

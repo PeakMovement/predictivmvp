@@ -185,27 +185,20 @@ Deno.serve(async (req) => {
 
     console.log(`✅ Fitbit sync complete in ${duration}ms`);
 
-    // Trigger trend calculation in background
-    EdgeRuntime.waitUntil(
-      (async () => {
-        try {
-          console.log('🔄 Triggering calc-trends...');
-          const trendResponse = await fetch(`https://predictiv.netlify.app/.netlify/functions/calc-trends`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ user_id: userId })
-          });
-          
-          if (trendResponse.ok) {
-            console.log('✅ Calc-trends triggered successfully');
-          } else {
-            console.log(`⚠️ Calc-trends failed: ${trendResponse.status}`);
-          }
-        } catch (trendError: any) {
-          console.error(`❌ Calc-trends trigger error: ${trendError.message}`);
-        }
-      })()
-    );
+    // Trigger trend calculation in background (don't await)
+    fetch(`https://predictiv.netlify.app/.netlify/functions/calc-trends`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ user_id: userId })
+    }).then(response => {
+      if (response.ok) {
+        console.log('✅ Calc-trends triggered successfully');
+      } else {
+        console.log(`⚠️ Calc-trends failed: ${response.status}`);
+      }
+    }).catch(error => {
+      console.error(`❌ Calc-trends trigger error: ${error.message}`);
+    });
 
     return new Response(
       JSON.stringify({ 

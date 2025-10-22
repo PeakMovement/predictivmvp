@@ -54,7 +54,10 @@ const FitbitSyncStatus = () => {
       console.log('🔄 Starting manual Fitbit sync...');
 
       // Trigger backend sync using Supabase function
-      const { data, error } = await supabase.functions.invoke('fetch-fitbit-auto', { body: {} });
+      const { data: { user } } = await supabase.auth.getUser();
+      const { data, error } = await supabase.functions.invoke('fetch-fitbit-auto', { 
+        body: { user_id: user?.id } 
+      });
       
       if (error) {
         console.error('Sync error:', error);

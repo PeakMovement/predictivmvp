@@ -1258,7 +1258,7 @@ export type Database = {
     }
     Functions: {
       get_latest_insights: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: {
           deviation_pct: number
           insight: string

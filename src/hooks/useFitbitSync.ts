@@ -78,19 +78,21 @@ export const useFitbitSync = (): FitbitSyncState => {
   const syncNow = async () => {
     setIsSyncing(true);
     try {
-      // Call Supabase Edge Function (Lovable projects use Supabase, not Netlify)
+      // Get authenticated user to pass to edge function
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      // Call Supabase Edge Function with user_id
       const { data: edgeResult, error: edgeError } = await supabase.functions.invoke('fetch-fitbit-auto', {
-        body: {},
+        body: { user_id: user?.id },
       });
 
       if (edgeError) throw new Error(edgeError.message);
 
       // Fetch latest data to show in toast
-      const { data: { user } } = await supabase.auth.getUser();
       const { data: latestData, error: fetchError } = await supabase
         .from("fitbit_auto_data" as any)
         .select("activity")
-        .eq("user_id", user?.id || "CTBNRR")
+        .eq("user_id", user?.id)
         .order("fetched_at", { ascending: false })
         .limit(1)
         .maybeSingle();

@@ -128,7 +128,9 @@ export const useFitbitMetrics = () => {
 
   const refresh = useCallback(async () => {
     try {
-      const { error } = await supabase.functions.invoke('fetch-fitbit-auto', { body: {} });
+      const { data: { user } } = await supabase.auth.getUser();
+      const body = user?.id ? { user_id: user.id } : {};
+      const { error } = await supabase.functions.invoke('fetch-fitbit-auto', { body });
       
       if (error) throw new Error(error.message);
 

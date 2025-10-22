@@ -34,7 +34,7 @@ const Onboarding = () => {
       setCurrentStep(currentStep + 1);
     } else {
       // Navigate to dashboard on finish
-      window.location.href = "/dashboard";
+      window.location.href = "/";
     }
   };
 

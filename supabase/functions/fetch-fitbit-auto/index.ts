@@ -8,7 +8,7 @@ const corsHeaders = {
 interface TokenData {
   access_token: string;
   refresh_token: string;
-  expires_at: string;
+  expires_at: string | number;
 }
 
 Deno.serve(async (req) => {
@@ -38,11 +38,10 @@ Deno.serve(async (req) => {
     const body = req.body ? await req.json().catch(() => ({})) : {};
     const requestUserId = body.user_id;
 
-    // Resolve user_id: use request body, then auth, then latest from DB
+    // Resolve user_id: use request body, then latest from DB
     let userId: string | null = requestUserId;
 
     if (!userId) {
-      // Try to get from fitbit_auto_data
       const { data: recentData } = await supabase
         .from('fitbit_auto_data')
         .select('user_id')
@@ -50,12 +49,11 @@ Deno.serve(async (req) => {
         .limit(1)
         .maybeSingle();
       
-      userId = recentData?.user_id || null;
+      userId = recentData?.user_id || 'CTBNRR'; // Fallback
     }
 
     if (!userId) {
-      // Fallback to hardcoded user
-      userId = '8e3d1538-25f2-4270-9acc-da17b9106aa9';
+      throw new Error('Could not resolve user_id. Please reconnect Fitbit in Settings.');
     }
 
     console.log(`📍 Resolved user_id: ${userId}`);
@@ -80,6 +78,12 @@ Deno.serve(async (req) => {
     if (!activityResponse.ok) {
       const errorText = await activityResponse.text();
       console.error(`❌ Fitbit API error: ${activityResponse.status} - ${errorText}`);
+      
+      // If token is expired despite refresh attempt, throw specific error
+      if (activityResponse.status === 401) {
+        throw new Error('Fitbit token invalid or expired. Please reconnect your Fitbit account in Settings.');
+      }
+      
       throw new Error(`Fitbit API error: ${activityResponse.status}`);
     }
 
@@ -185,19 +189,19 @@ Deno.serve(async (req) => {
 
     console.log(`✅ Fitbit sync complete in ${duration}ms`);
 
-    // Trigger trend calculation in background (don't await)
+    // Trigger trend calculation asynchronously
     fetch(`https://predictiv.netlify.app/.netlify/functions/calc-trends`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ user_id: userId })
-    }).then(response => {
-      if (response.ok) {
+    }).then(async (trendResponse) => {
+      if (trendResponse.ok) {
         console.log('✅ Calc-trends triggered successfully');
       } else {
-        console.log(`⚠️ Calc-trends failed: ${response.status}`);
+        console.log(`⚠️ Calc-trends failed: ${trendResponse.status}`);
       }
-    }).catch(error => {
-      console.error(`❌ Calc-trends trigger error: ${error.message}`);
+    }).catch((trendError: any) => {
+      console.error(`❌ Calc-trends trigger error: ${trendError.message}`);
     });
 
     return new Response(
@@ -233,7 +237,10 @@ Deno.serve(async (req) => {
       .eq('id', logId);
 
     return new Response(
-      JSON.stringify({ error: errorMessage }),
+      JSON.stringify({ 
+        error: errorMessage,
+        details: 'Please check Supabase edge function logs for more information'
+      }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
@@ -243,6 +250,8 @@ Deno.serve(async (req) => {
  * Get valid access token, refresh if expired
  */
 async function getValidToken(supabase: any, userId: string): Promise<string> {
+  console.log('🔑 Fetching Fitbit tokens...');
+  
   // Get tokens from fitbit_auto_data
   const { data: tokenData, error: tokenError } = await supabase
     .from('fitbit_auto_data')
@@ -253,31 +262,47 @@ async function getValidToken(supabase: any, userId: string): Promise<string> {
     .maybeSingle();
 
   if (tokenError || !tokenData) {
-    throw new Error('No Fitbit tokens found. Please reconnect Fitbit.');
+    throw new Error('No Fitbit tokens found. Please reconnect Fitbit in Settings.');
   }
 
   const tokens = (tokenData.activity as any)?.tokens as TokenData;
   if (!tokens?.access_token) {
-    throw new Error('Invalid token data. Please reconnect Fitbit.');
+    throw new Error('Invalid token data. Please reconnect Fitbit in Settings.');
   }
 
-  // Check if token is expired
-  const expiresAt = new Date(tokens.expires_at);
+  // Parse expiration time - handle both Unix timestamp and ISO string
+  let expiresAt: Date;
+  if (typeof tokens.expires_at === 'number') {
+    // Unix timestamp (seconds)
+    expiresAt = new Date(tokens.expires_at * 1000);
+  } else if (typeof tokens.expires_at === 'string') {
+    expiresAt = new Date(tokens.expires_at);
+  } else {
+    console.warn('⚠️ Invalid expires_at format, assuming expired');
+    expiresAt = new Date(0); // Force refresh
+  }
+
   const now = new Date();
-  const isExpired = expiresAt <= now;
+  const timeUntilExpiry = expiresAt.getTime() - now.getTime();
+  const isExpired = timeUntilExpiry <= 60000; // Refresh if less than 1 minute remaining
+
+  console.log(`🕐 Token expires at: ${expiresAt.toISOString()}`);
+  console.log(`🕐 Current time: ${now.toISOString()}`);
+  console.log(`⏰ Time until expiry: ${Math.round(timeUntilExpiry / 1000)}s`);
+  console.log(`🔍 Is expired: ${isExpired}`);
 
   if (!isExpired) {
-    console.log('✅ Using existing access token');
+    console.log('✅ Token is valid, using existing access token');
     return tokens.access_token;
   }
 
-  // Token expired, refresh it
-  console.log('🔄 Refreshing expired access token...');
+  // Token expired or about to expire, refresh it
+  console.log('🔄 Token expired or expiring soon, refreshing...');
   const clientId = Deno.env.get('FITBIT_CLIENT_ID');
   const clientSecret = Deno.env.get('FITBIT_CLIENT_SECRET');
 
   if (!clientId || !clientSecret) {
-    throw new Error('Missing Fitbit credentials');
+    throw new Error('Missing FITBIT_CLIENT_ID or FITBIT_CLIENT_SECRET environment variables');
   }
 
   const refreshResponse = await fetch('https://api.fitbit.com/oauth2/token', {
@@ -295,11 +320,13 @@ async function getValidToken(supabase: any, userId: string): Promise<string> {
   if (!refreshResponse.ok) {
     const errorText = await refreshResponse.text();
     console.error(`❌ Token refresh failed: ${refreshResponse.status} - ${errorText}`);
-    throw new Error(`Token refresh failed: ${refreshResponse.status}`);
+    throw new Error(`Token refresh failed (${refreshResponse.status}). Please reconnect Fitbit in Settings.`);
   }
 
   const newTokens = await refreshResponse.json();
   const newExpiresAt = new Date(Date.now() + newTokens.expires_in * 1000).toISOString();
+
+  console.log(`✅ Token refreshed successfully. New expiry: ${newExpiresAt}`);
 
   // Update tokens in database
   const updatedActivity = {
@@ -313,13 +340,18 @@ async function getValidToken(supabase: any, userId: string): Promise<string> {
     },
   };
 
-  await supabase
+  // Update the most recent record
+  const { error: updateError } = await supabase
     .from('fitbit_auto_data')
     .update({ activity: updatedActivity })
     .eq('user_id', userId)
     .order('fetched_at', { ascending: false })
     .limit(1);
 
-  console.log('✅ Token refreshed successfully');
+  if (updateError) {
+    console.error(`⚠️ Failed to update tokens in database: ${updateError.message}`);
+    // Don't throw - we have the new token, just couldn't save it
+  }
+
   return newTokens.access_token;
 }

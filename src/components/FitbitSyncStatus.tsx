@@ -58,13 +58,20 @@ const FitbitSyncStatus = () => {
       
       if (error) {
         console.error('Sync error:', error);
-        throw new Error(error.message || "Sync failed");
+        const errorMessage = error.message || "Sync failed";
+        
+        // Check if it's a token issue
+        if (errorMessage.includes('reconnect') || errorMessage.includes('token')) {
+          throw new Error('Please reconnect your Fitbit account in Settings → Connected Devices');
+        }
+        
+        throw new Error(errorMessage);
       }
 
       console.log('✅ Sync complete:', data);
 
-      // Wait a moment for database to update
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      // Wait a moment for database to update and trends to calculate
+      await new Promise(resolve => setTimeout(resolve, 2000));
 
       // Fire unified custom event for UI to auto-refresh
       window.dispatchEvent(new Event("fitbit_trends_refresh"));
@@ -80,9 +87,14 @@ const FitbitSyncStatus = () => {
       }));
 
       setTimeout(() => setState((s) => ({ ...s, status: "idle" })), 3000);
-    } catch (err) {
+    } catch (err: any) {
       console.error("❌ Fitbit sync error:", err);
       setState((prev) => ({ ...prev, status: "error" }));
+      
+      // Show error toast with specific message
+      const errorMsg = err.message || 'Failed to sync Fitbit data';
+      console.error('User-facing error:', errorMsg);
+      
       setTimeout(() => setState((s) => ({ ...s, status: "idle" })), 5000);
     }
   };

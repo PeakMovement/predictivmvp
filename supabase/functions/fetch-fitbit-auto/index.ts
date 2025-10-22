@@ -11,6 +11,12 @@ interface TokenData {
   expires_at: string | number;
 }
 
+// Helper: validate UUID format (simple v4 regex)
+function isValidUUID(value: unknown): value is string {
+  if (typeof value !== 'string') return false;
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -150,10 +156,13 @@ Deno.serve(async (req) => {
     } else {
       // Insert new record
       const insertData: any = {
-        user_id: userId,
         activity: mergedActivity,
         fetched_at: new Date().toISOString(),
       };
+      // Only set typed UUID column if value is a valid UUID
+      if (isValidUUID(userId)) {
+        insertData.user_id = userId;
+      }
       if (mergedSleep) {
         insertData.sleep = mergedSleep;
       }

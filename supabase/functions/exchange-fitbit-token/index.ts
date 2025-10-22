@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -12,8 +13,8 @@ serve(async (req) => {
   }
 
   try {
-    // Get code and code_verifier from request body
-    const { code, code_verifier } = await req.json();
+    // Get code, optional PKCE code_verifier, and optional user_id from request body
+    const { code, code_verifier, user_id } = await req.json();
 
     if (!code) {
       return new Response(JSON.stringify({ success: false, error: "Missing authorization code" }), {
@@ -69,16 +70,73 @@ serve(async (req) => {
       console.error("Fitbit returned non-JSON:", text);
     }
 
+    // If Fitbit exchange failed, return error with details
+    if (!tokenResponse.ok) {
+      return new Response(
+        JSON.stringify({
+          success: false,
+          message: "Fitbit connection failed",
+          data: tokenData,
+        }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Persist tokens to Supabase
+    const supabaseUrl = Deno.env.get('SUPABASE_URL');
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || Deno.env.get('SERVICE_ROLE_KEY');
+
+    if (!supabaseUrl || !supabaseServiceKey) {
+      console.error('Missing Supabase service credentials');
+      return new Response(JSON.stringify({ success: false, error: 'Missing Supabase credentials' }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    const td: any = tokenData;
+    const systemUserId = typeof user_id === 'string' ? user_id : null;
+
+    if (!systemUserId) {
+      console.warn('No system user_id provided; returning tokens without persisting to fitbit_tokens');
+      return new Response(
+        JSON.stringify({ success: true, message: 'Fitbit connection successful (not linked to user)', data: td }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Insert a new token row (latest wins)
+    const { error: insertError } = await supabase.from('fitbit_tokens').insert({
+      user_id: systemUserId,
+      access_token: td.access_token,
+      refresh_token: td.refresh_token,
+      expires_in: td.expires_in,
+      token_type: td.token_type,
+      scope: td.scope,
+    });
+
+    if (insertError) {
+      console.error('Failed to insert into fitbit_tokens:', insertError);
+      return new Response(JSON.stringify({ success: false, error: 'Failed to save tokens' }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Mark user as connected and store Fitbit user id
+    await supabase
+      .from('users')
+      .update({
+        fitbit_connected: true,
+        fitbit_user_id: td.user_id,
+        connected_at: new Date().toISOString(),
+      })
+      .eq('id', systemUserId);
+
     return new Response(
-      JSON.stringify({
-        success: tokenResponse.ok,
-        message: tokenResponse.ok ? "Fitbit connection successful" : "Fitbit connection failed",
-        data: tokenData,
-      }),
-      {
-        status: tokenResponse.ok ? 200 : 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      },
+      JSON.stringify({ success: true, message: 'Fitbit connection successful', data: td }),
+      { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error) {
     console.error("Fitbit exchange error:", error);

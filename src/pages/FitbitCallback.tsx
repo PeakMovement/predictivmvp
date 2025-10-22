@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 export default function FitbitCallback() {
   const [status, setStatus] = useState("Exchanging Fitbit code...");
@@ -18,28 +19,25 @@ export default function FitbitCallback() {
       return;
     }
 
-    // ✅ Send the code (and PKCE code_verifier if available) to your Netlify function
+    // ✅ Send the code (and PKCE code_verifier if available) to Supabase Edge Function
     (async () => {
       try {
         const code_verifier = localStorage.getItem("fitbit_code_verifier") || undefined;
-        // Clear the code_verifier after using it
         if (code_verifier) {
           localStorage.removeItem("fitbit_code_verifier");
         }
-        const response = await fetch("/.netlify/functions/fitbit-token-exchange", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ code, code_verifier }),
+
+        const { data: { user } } = await supabase.auth.getUser();
+        const { data, error } = await supabase.functions.invoke('exchange-fitbit-token', {
+          body: { code, code_verifier, user_id: user?.id },
         });
 
-        const data = await response.json();
-
-        if (response.ok) {
+        if (!error) {
           console.log("✅ Fitbit token exchange success:", data);
           setStatus("✅ Fitbit connection successful!");
           setTimeout(() => window.location.replace("/dashboard"), 1500);
         } else {
-          console.error("❌ Fitbit token exchange error:", data);
+          console.error("❌ Fitbit token exchange error:", error);
           setStatus("❌ Fitbit token exchange failed. Check logs.");
         }
       } catch (err) {

@@ -51,20 +51,33 @@ const FitbitSyncStatus = () => {
   const handleSync = async () => {
     try {
       setState((prev) => ({ ...prev, status: "syncing" }));
+      console.log('🔄 Starting manual Fitbit sync...');
 
       // Trigger backend sync using Supabase function
-      const { error } = await supabase.functions.invoke('fetch-fitbit-auto', { body: {} });
+      const { data, error } = await supabase.functions.invoke('fetch-fitbit-auto', { body: {} });
       
-      if (error) throw new Error(error.message || "Sync failed");
+      if (error) {
+        console.error('Sync error:', error);
+        throw new Error(error.message || "Sync failed");
+      }
+
+      console.log('✅ Sync complete:', data);
+
+      // Wait a moment for database to update
+      await new Promise(resolve => setTimeout(resolve, 1500));
 
       // Fire unified custom event for UI to auto-refresh
       window.dispatchEvent(new Event("fitbit_trends_refresh"));
 
+      // Fetch latest sync time from database
+      await fetchLastSync();
+
       // ✅ Update status
-      setState({
+      setState((s) => ({
+        ...s,
         status: "success",
         lastSync: new Date(),
-      });
+      }));
 
       setTimeout(() => setState((s) => ({ ...s, status: "idle" })), 3000);
     } catch (err) {

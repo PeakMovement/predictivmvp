@@ -206,7 +206,7 @@ const CircularGauge = ({
 // ✅ Main Page Component
 export const Training = () => {
   const { currentDayData } = useLiveData();
-  const { trends, isLoading: trendsLoading, refresh } = useFitbitTrends({ days: 7 });
+  const { trends, isLoading: trendsLoading, refresh, userId } = useFitbitTrends({ days: 7 });
   const [suggestions, setSuggestions] = useState<ReturnType<typeof generateSuggestions>>([]);
 
   // Find latest trend with non-null monotony/strain
@@ -235,37 +235,50 @@ export const Training = () => {
           {/* Header */}
           <div className="text-center mb-6 md:mb-8">
             <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-2">Training Analytics</h1>
-            <p className="text-sm md:text-base text-muted-foreground">Track your workouts and training progression</p>
+            <p className="text-sm md:text-base text-muted-foreground">
+              {userId ? "Track your workouts and training progression" : "Please connect your Fitbit to see your data"}
+            </p>
           </div>
 
-          {/* Accountability Challenges */}
-          <div className="mb-6 md:mb-8">{/* your AccountabilityChallenges component here */}</div>
-
-          {/* Session Logs and Gauges */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6 mb-6 md:mb-8">
-            <div className="lg:col-span-2 w-full">
-              <SessionLogList />
+          {!userId && (
+            <div className="text-center py-12 px-4 bg-glass backdrop-blur-xl border border-glass-border rounded-2xl mb-8">
+              <p className="text-muted-foreground mb-4">No user authenticated</p>
+              <p className="text-sm text-muted-foreground">Please log in to view your training data</p>
             </div>
-            <div className="space-y-4 md:space-y-6 w-full">
-              <CircularGauge
-                title="Training Monotony"
-                value={latestAvailableTrend?.monotony ? parseFloat(latestAvailableTrend.monotony.toFixed(1)) : 0}
-                maxValue={5}
-                unit="ratio"
-              />
-              <CircularGauge
-                title="Training Strain"
-                value={latestAvailableTrend?.strain ? Math.round(latestAvailableTrend.strain) : 0}
-                maxValue={200}
-                unit="TSS"
-              />
-            </div>
-          </div>
+          )}
 
-          {/* Trend Analysis Carousel */}
-          <div className="mb-6 md:mb-8">
-            <UnifiedTrendCard />
-          </div>
+          {userId && (
+            <>
+              {/* Accountability Challenges */}
+              <div className="mb-6 md:mb-8">{/* your AccountabilityChallenges component here */}</div>
+
+              {/* Session Logs and Gauges */}
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6 mb-6 md:mb-8">
+                <div className="lg:col-span-2 w-full">
+                  <SessionLogList />
+                </div>
+                <div className="space-y-4 md:space-y-6 w-full">
+                  <CircularGauge
+                    title="Training Monotony"
+                    value={latestAvailableTrend?.monotony ? parseFloat(latestAvailableTrend.monotony.toFixed(1)) : 0}
+                    maxValue={5}
+                    unit="ratio"
+                  />
+                  <CircularGauge
+                    title="Training Strain"
+                    value={latestAvailableTrend?.strain ? Math.round(latestAvailableTrend.strain) : 0}
+                    maxValue={200}
+                    unit="TSS"
+                  />
+                </div>
+              </div>
+
+              {/* Trend Analysis Carousel */}
+              <div className="mb-6 md:mb-8">
+                <UnifiedTrendCard />
+              </div>
+            </>
+          )}
         </div>
       </div>
     </TooltipProvider>

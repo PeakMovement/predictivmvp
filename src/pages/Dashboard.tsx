@@ -38,7 +38,7 @@ const WelcomeHeader = () => (
 );
 
 export const Dashboard = () => {
-  const { trends, latestTrend, isLoading } = useFitbitTrends();
+  const { trends, latestTrend, isLoading, userId } = useFitbitTrends();
   const { profile } = useHealthProfile();
 
   const dashboardMetrics = latestTrend
@@ -56,49 +56,61 @@ export const Dashboard = () => {
         <div className="flex-grow container mx-auto px-4 md:px-6 pt-6 md:pt-8">
           <WelcomeHeader />
 
-          <div className="text-center mb-6 md:mb-8 animate-fade-in">
-            <h3 className="text-lg md:text-xl font-semibold text-foreground mb-1 md:mb-2">Training Metrics</h3>
-            <p className="text-sm md:text-base text-muted-foreground">Your key performance indicators</p>
-          </div>
-
-          {isLoading ? (
-            <p className="text-center text-muted-foreground">Loading live metrics...</p>
-          ) : dashboardMetrics.length === 0 ? (
-            <p className="text-center text-muted-foreground">No recent data found.</p>
+          {!userId ? (
+            <div className="text-center py-12 px-4 bg-glass backdrop-blur-xl border border-glass-border rounded-2xl">
+              <p className="text-muted-foreground mb-4">Please log in to view your Fitbit data</p>
+              <p className="text-sm text-muted-foreground">Connect your account to see your metrics</p>
+            </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-              {dashboardMetrics.map((metric, i) => (
-                <div
-                  key={i}
-                  className="bg-glass backdrop-blur-xl border border-glass-border rounded-2xl p-4 shadow-glass"
-                >
-                  <div className="flex items-start justify-between mb-3">
-                    <h3 className="text-sm font-medium text-muted-foreground">{metric.name}</h3>
-                    <div className={cn("w-3 h-3 rounded-full shadow-glow", getStatusColor(metric.status))} />
-                  </div>
-                  <p className="text-2xl font-bold text-foreground">{metric.value}</p>
+            <>
+              <div className="text-center mb-6 md:mb-8 animate-fade-in">
+                <h3 className="text-lg md:text-xl font-semibold text-foreground mb-1 md:mb-2">Training Metrics</h3>
+                <p className="text-sm md:text-base text-muted-foreground">Your key performance indicators</p>
+              </div>
+
+              {isLoading ? (
+                <p className="text-center text-muted-foreground">Loading live metrics...</p>
+              ) : dashboardMetrics.length === 0 ? (
+                <div className="text-center py-8 px-4 bg-glass backdrop-blur-xl border border-glass-border rounded-2xl">
+                  <p className="text-muted-foreground mb-2">No recent data found</p>
+                  <p className="text-sm text-muted-foreground">Click the sync button above to update your data</p>
                 </div>
-              ))}
-            </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+                  {dashboardMetrics.map((metric, i) => (
+                    <div
+                      key={i}
+                      className="bg-glass backdrop-blur-xl border border-glass-border rounded-2xl p-4 shadow-glass"
+                    >
+                      <div className="flex items-start justify-between mb-3">
+                        <h3 className="text-sm font-medium text-muted-foreground">{metric.name}</h3>
+                        <div className={cn("w-3 h-3 rounded-full shadow-glow", getStatusColor(metric.status))} />
+                      </div>
+                      <p className="text-2xl font-bold text-foreground">{metric.value}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <div className="mt-10">
+                <DocumentIntelligenceCard onNavigate={() => {}} />
+              </div>
+
+              <div className="mt-8">
+                <FeedbackSummaryPanel />
+              </div>
+
+              {profile && (
+                <div className="mt-8">
+                  <HealthProfileViewer profile={profile} />
+                </div>
+              )}
+
+              <div className="mt-8 mb-10">
+                <YvesTreeTimeline />
+              </div>
+            </>
           )}
-
-          <div className="mt-10">
-            <DocumentIntelligenceCard onNavigate={() => {}} />
-          </div>
-
-          <div className="mt-8">
-            <FeedbackSummaryPanel />
-          </div>
-
-          {profile && (
-            <div className="mt-8">
-              <HealthProfileViewer profile={profile} />
-            </div>
-          )}
-
-          <div className="mt-8 mb-10">
-            <YvesTreeTimeline />
-          </div>
         </div>
       </div>
     </TooltipProvider>

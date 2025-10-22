@@ -30,18 +30,8 @@ export const useFitbitTrends = (options: UseFitbitTrendsOptions = {}): UseFitbit
     const {
       data: { user },
     } = await supabase.auth.getUser();
-    if (user?.id) return user.id;
-
-    const { data } = await supabase
-      .from("fitbit_trends")
-      .select("user_id")
-      .order("date", { ascending: false })
-      .limit(1)
-      .single();
-
-    if (data?.user_id) return data.user_id;
-
-    return "8e3d1538-25f2-4270-9acc-da17b9106aa9";
+    
+    return user?.id || null;
   }, [providedUserId]);
 
   const fetchTrends = useCallback(async () => {

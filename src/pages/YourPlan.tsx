@@ -14,6 +14,7 @@ import { useLiveData } from "@/contexts/LiveDataContext";
 import { useFitbitTrends } from "@/hooks/useFitbitTrends";
 import { useMemo } from "react";
 import { calculateMetrics } from "@/lib/metricsCalculator";
+import FitbitSyncStatus from "@/components/FitbitSyncStatus";
 
 // Load accepted challenges from localStorage
 const getAcceptedChallenges = () => {
@@ -818,6 +819,8 @@ const UpcomingBookingsSection = () => {
 };
 
 export const YourPlan = () => {
+  const { userId } = useFitbitTrends({ days: 7 });
+  
   return (
     <div className="min-h-screen bg-background pb-[calc(6rem+env(safe-area-inset-bottom))] md:pb-32">
       <div className="container mx-auto px-4 md:px-6 pt-6 md:pt-8">
@@ -827,42 +830,60 @@ export const YourPlan = () => {
             <h1 className="text-3xl md:text-4xl font-bold text-foreground tracking-tight">Your Plan</h1>
           </div>
           <div className="animate-slide-in" style={{ animationDelay: '0.2s', animationFillMode: 'both' }}>
-            <p className="text-muted-foreground text-base md:text-lg">Track your active challenges and upcoming appointments</p>
+            <p className="text-muted-foreground text-base md:text-lg">
+              {userId ? "Track your active challenges and upcoming appointments" : "Please connect your Fitbit to see your plan"}
+            </p>
+          </div>
+          
+          {/* Sync Status */}
+          <div className="flex justify-center animate-fade-in" style={{ animationDelay: "0.3s" }}>
+            <FitbitSyncStatus />
           </div>
           
           {/* Generate Report Button */}
-          <div className="flex justify-center mt-6">
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <button
-                    onClick={() => {
-                      const { csvData: data, currentDayIndex: index } = { csvData: [], currentDayIndex: 0 };
-                      // This will be called from the parent component context
-                      generateWeeklyReportPDF(data, index);
-                    }}
-                    className="flex items-center gap-2 px-6 py-3 bg-primary/20 text-primary rounded-lg border border-primary/30 hover:bg-primary/30 hover:scale-105 active:scale-95 transition-all duration-200 font-medium shadow-glow"
-                  >
-                    <Download size={18} />
-                    <span>Generate Weekly Report</span>
-                  </button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Download a PDF summary of your weekly health data</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          </div>
+          {userId && (
+            <div className="flex justify-center mt-6">
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      onClick={() => {
+                        const { csvData: data, currentDayIndex: index } = { csvData: [], currentDayIndex: 0 };
+                        // This will be called from the parent component context
+                        generateWeeklyReportPDF(data, index);
+                      }}
+                      className="flex items-center gap-2 px-6 py-3 bg-primary/20 text-primary rounded-lg border border-primary/30 hover:bg-primary/30 hover:scale-105 active:scale-95 transition-all duration-200 font-medium shadow-glow"
+                    >
+                      <Download size={18} />
+                      <span>Generate Weekly Report</span>
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Download a PDF summary of your weekly health data</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
+          )}
         </div>
 
-        {/* Accepted Challenges */}
-        <AcceptedChallengesSection />
+        {!userId ? (
+          <div className="text-center py-12 px-4 bg-glass backdrop-blur-xl border border-glass-border rounded-2xl">
+            <p className="text-muted-foreground mb-4">No user authenticated</p>
+            <p className="text-sm text-muted-foreground">Please log in to view your plan and challenges</p>
+          </div>
+        ) : (
+          <>
+            {/* Accepted Challenges */}
+            <AcceptedChallengesSection />
 
-        {/* Weekly Insights */}
-        <WeeklyInsightsSection />
+            {/* Weekly Insights */}
+            <WeeklyInsightsSection />
 
-        {/* Upcoming Bookings */}
-        <UpcomingBookingsSection />
+            {/* Upcoming Bookings */}
+            <UpcomingBookingsSection />
+          </>
+        )}
       </div>
     </div>
   );

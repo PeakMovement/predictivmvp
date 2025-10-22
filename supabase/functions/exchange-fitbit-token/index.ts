@@ -99,40 +99,47 @@ serve(async (req) => {
     const systemUserId = typeof user_id === 'string' ? user_id : null;
 
     if (!systemUserId) {
-      console.warn('No system user_id provided; returning tokens without persisting to fitbit_tokens');
+      console.error('❌ No user_id provided for token storage');
       return new Response(
-        JSON.stringify({ success: true, message: 'Fitbit connection successful (not linked to user)', data: td }),
-        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        JSON.stringify({ 
+          success: false, 
+          error: 'user_id is required for token exchange',
+          fitbit_user_id: td.user_id 
+        }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    // Insert a new token row (latest wins)
-    const { error: insertError } = await supabase.from('fitbit_tokens').insert({
+    // Store in fitbit_tokens table
+    const { error: insertError } = await supabase.from('fitbit_tokens').upsert({
       user_id: systemUserId,
       access_token: td.access_token,
       refresh_token: td.refresh_token,
       expires_in: td.expires_in,
-      token_type: td.token_type,
+      fitbit_user_id: td.user_id,
       scope: td.scope,
+      token_type: td.token_type,
+      refreshed_at: new Date().toISOString(),
     });
 
     if (insertError) {
-      console.error('Failed to insert into fitbit_tokens:', insertError);
-      return new Response(JSON.stringify({ success: false, error: 'Failed to save tokens' }), {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
+      console.error('❌ Error storing tokens:', insertError);
+      return new Response(
+        JSON.stringify({ success: false, error: 'Failed to store tokens', details: insertError.message }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
-    // Mark user as connected and store Fitbit user id
-    await supabase
+    console.log('✅ Tokens stored successfully for user:', systemUserId);
+
+    // Update users table
+    const { error: updateError } = await supabase
       .from('users')
-      .update({
-        fitbit_connected: true,
+      .upsert({
+        id: systemUserId,
         fitbit_user_id: td.user_id,
-        connected_at: new Date().toISOString(),
-      })
-      .eq('id', systemUserId);
+        fitbit_connected: true,
+      });
 
     return new Response(
       JSON.stringify({ success: true, message: 'Fitbit connection successful', data: td }),

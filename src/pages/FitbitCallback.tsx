@@ -27,14 +27,34 @@ export default function FitbitCallback() {
           localStorage.removeItem("fitbit_code_verifier");
         }
 
+        // Get or create authenticated user
+        let userId: string | undefined;
         const { data: { user } } = await supabase.auth.getUser();
+        
+        if (user) {
+          userId = user.id;
+        } else {
+          // Create an anonymous session for Fitbit data
+          const { data: anonData, error: anonError } = await supabase.auth.signInAnonymously();
+          if (!anonError && anonData.user) {
+            userId = anonData.user.id;
+            console.log("✅ Created anonymous session for Fitbit:", userId);
+          }
+        }
+
         const { data, error } = await supabase.functions.invoke('exchange-fitbit-token', {
-          body: { code, code_verifier, user_id: user?.id },
+          body: { code, code_verifier, user_id: userId },
         });
 
-        if (!error) {
+        if (!error && data) {
           console.log("✅ Fitbit token exchange success:", data);
           setStatus("✅ Fitbit connection successful!");
+          
+          // Trigger initial sync
+          await supabase.functions.invoke('fetch-fitbit-auto', {
+            body: { user_id: userId }
+          });
+          
           setTimeout(() => window.location.replace("/dashboard"), 1500);
         } else {
           console.error("❌ Fitbit token exchange error:", error);

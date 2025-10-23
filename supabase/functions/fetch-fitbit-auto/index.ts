@@ -5,16 +5,31 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-interface TokenData {
+interface FitbitTokens {
+  user_id: string;
   access_token: string;
   refresh_token: string;
-  expires_at: string | number;
+  expires_in: number;
+  fitbit_user_id?: string;
+  token_type: string;
+  scope: string;
+  updated_at: string;
+  created_at: string;
 }
 
-// Helper: validate UUID format (simple v4 regex)
-function isValidUUID(value: unknown): value is string {
-  if (typeof value !== 'string') return false;
-  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
+interface FitbitActivityData {
+  summary?: {
+    steps?: number;
+    caloriesOut?: number;
+    distance?: number;
+    activeMinutes?: number;
+  };
+  activities?: any[];
+}
+
+interface FitbitSleepData {
+  sleep?: any[];
+  summary?: any;
 }
 
 Deno.serve(async (req) => {
@@ -22,55 +37,57 @@ Deno.serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  const startTime = Date.now();
   const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
   const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
   const supabase = createClient(supabaseUrl, supabaseKey);
 
-  const startTime = Date.now();
-  const logId = crypto.randomUUID();
-
   try {
-    console.log('🔄 Starting Fitbit auto-sync...');
+    console.log('🔄 [fetch-fitbit-auto] Starting Fitbit data fetch...');
 
-    // Log function start
-    await supabase.from('function_execution_log').insert({
-      id: logId,
-      function_name: 'fetch-fitbit-auto',
-      status: 'running',
-      started_at: new Date().toISOString(),
-    });
-
-    // Parse request body for manual user_id override
-    const body = req.body ? await req.json().catch(() => ({})) : {};
-    const requestUserId = body.user_id;
-
-    // Resolve user_id: use request body, then latest from DB
-    let userId: string | null = requestUserId;
+    // Parse and validate user_id from request body
+    const body = await req.json().catch(() => ({}));
+    const userId = body.user_id;
 
     if (!userId) {
-      const { data: recentData } = await supabase
-        .from('fitbit_auto_data')
-        .select('user_id')
-        .order('fetched_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
-      
-      userId = recentData?.user_id || 'CTBNRR'; // Fallback
+      console.error('❌ Missing user_id in request body');
+      return new Response(
+        JSON.stringify({ error: 'user_id is required' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
-    if (!userId) {
-      throw new Error('Could not resolve user_id. Please reconnect Fitbit in Settings.');
+    console.log(`📍 [fetch-fitbit-auto] User ID: ${userId}`);
+
+    // Step 1: Load tokens from fitbit_tokens table
+    console.log('🔑 [fetch-fitbit-auto] Loading tokens from fitbit_tokens table...');
+    const { data: tokenRecord, error: tokenError } = await supabase
+      .from('fitbit_tokens')
+      .select('*')
+      .eq('user_id', userId)
+      .maybeSingle();
+
+    if (tokenError || !tokenRecord) {
+      console.error('❌ [fetch-fitbit-auto] No tokens found in fitbit_tokens table');
+      return new Response(
+        JSON.stringify({ 
+          error: 'No Fitbit tokens found',
+          reconnect: true,
+          message: 'Please reconnect your Fitbit account in Settings'
+        }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
-    console.log(`📍 Resolved user_id: ${userId}`);
+    console.log('✅ [fetch-fitbit-auto] Tokens loaded successfully');
 
-    // Get valid access token with refresh if needed
-    const accessToken = await getValidToken(supabase, userId);
-    
-    // Fetch today's activity data from Fitbit
+    // Step 2: Get valid access token (refresh if needed)
+    const accessToken = await getValidToken(supabase, tokenRecord);
+
+    // Step 3: Fetch activity data from Fitbit API
     const today = new Date().toISOString().split('T')[0];
-    console.log(`📅 Fetching Fitbit data for date: ${today}`);
-    
+    console.log(`📅 [fetch-fitbit-auto] Fetching activity data for ${today}...`);
+
     const activityResponse = await fetch(
       `https://api.fitbit.com/1/user/-/activities/date/${today}.json`,
       {
@@ -83,20 +100,29 @@ Deno.serve(async (req) => {
 
     if (!activityResponse.ok) {
       const errorText = await activityResponse.text();
-      console.error(`❌ Fitbit API error: ${activityResponse.status} - ${errorText}`);
-      
-      // If token is expired despite refresh attempt, throw specific error
+      console.error(`❌ [fetch-fitbit-auto] Fitbit activity API error: ${activityResponse.status} - ${errorText}`);
+
       if (activityResponse.status === 401) {
-        throw new Error('Fitbit token invalid or expired. Please reconnect your Fitbit account in Settings.');
+        // Token might be invalid even after refresh
+        return new Response(
+          JSON.stringify({
+            error: 'Fitbit authentication failed',
+            reconnect: true,
+            message: 'Please reconnect your Fitbit account in Settings'
+          }),
+          { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
       }
-      
+
       throw new Error(`Fitbit API error: ${activityResponse.status}`);
     }
 
-    const activityData = await activityResponse.json();
-    console.log(`✅ Activity data received - Steps: ${activityData.summary?.steps}, Calories: ${activityData.summary?.caloriesOut}`);
+    const activityData: FitbitActivityData = await activityResponse.json();
+    const activityCount = activityData.activities?.length || 0;
+    console.log(`✅ [fetch-fitbit-auto] Activity data fetched - Steps: ${activityData.summary?.steps}, Calories: ${activityData.summary?.caloriesOut}, Activities: ${activityCount}`);
 
-    // Fetch sleep data from Fitbit
+    // Step 4: Fetch sleep data from Fitbit API
+    console.log(`😴 [fetch-fitbit-auto] Fetching sleep data for ${today}...`);
     const sleepResponse = await fetch(
       `https://api.fitbit.com/1.2/user/-/sleep/date/${today}.json`,
       {
@@ -107,27 +133,20 @@ Deno.serve(async (req) => {
       }
     );
 
-    let sleepData = null;
+    let sleepData: FitbitSleepData | null = null;
+    let sleepCount = 0;
     if (sleepResponse.ok) {
       sleepData = await sleepResponse.json();
-      console.log(`✅ Sleep data received - Records: ${sleepData.sleep?.length || 0}`);
+      sleepCount = sleepData?.sleep?.length || 0;
+      console.log(`✅ [fetch-fitbit-auto] Sleep data fetched - Records: ${sleepCount}`);
     } else {
-      console.log(`⚠️ Sleep data unavailable (${sleepResponse.status})`);
+      console.log(`⚠️ [fetch-fitbit-auto] Sleep data unavailable (${sleepResponse.status})`);
     }
 
-    // Check if today's data already exists
-    const { data: existingData } = await supabase
-      .from('fitbit_auto_data')
-      .select('id, activity')
-      .eq('user_id', userId)
-      .gte('fetched_at', `${today}T00:00:00`)
-      .lte('fetched_at', `${today}T23:59:59`)
-      .maybeSingle();
+    // Step 5: Upsert data into fitbit_auto_data
+    console.log('💾 [fetch-fitbit-auto] Upserting data into fitbit_auto_data...');
 
-    // Prepare merged data with proper structure
-    const existingTokens = existingData ? (existingData.activity as any)?.tokens : null;
     const mergedActivity = {
-      tokens: existingTokens || {},
       data: activityData,
       synced_at: new Date().toISOString(),
     };
@@ -136,6 +155,15 @@ Deno.serve(async (req) => {
       data: sleepData,
       synced_at: new Date().toISOString(),
     } : null;
+
+    // Check if today's data already exists
+    const { data: existingData } = await supabase
+      .from('fitbit_auto_data')
+      .select('id')
+      .eq('user_id', userId)
+      .gte('fetched_at', `${today}T00:00:00`)
+      .lte('fetched_at', `${today}T23:59:59`)
+      .maybeSingle();
 
     let dbError;
     if (existingData) {
@@ -152,17 +180,14 @@ Deno.serve(async (req) => {
         .update(updateData)
         .eq('id', existingData.id);
       dbError = error;
-      console.log('📝 Updated existing record');
+      console.log('📝 [fetch-fitbit-auto] Updated existing record');
     } else {
       // Insert new record
       const insertData: any = {
+        user_id: userId,
         activity: mergedActivity,
         fetched_at: new Date().toISOString(),
       };
-      // Only set typed UUID column if value is a valid UUID
-      if (isValidUUID(userId)) {
-        insertData.user_id = userId;
-      }
       if (mergedSleep) {
         insertData.sleep = mergedSleep;
       }
@@ -170,85 +195,67 @@ Deno.serve(async (req) => {
         .from('fitbit_auto_data')
         .insert(insertData);
       dbError = error;
-      console.log('✨ Inserted new record');
+      console.log('✨ [fetch-fitbit-auto] Inserted new record');
     }
 
     if (dbError) {
-      console.error(`❌ Database error: ${dbError.message}`);
+      console.error(`❌ [fetch-fitbit-auto] Database error: ${dbError.message}`);
       throw new Error(`Database error: ${dbError.message}`);
     }
 
     const duration = Date.now() - startTime;
+    console.log(`⏱️ [fetch-fitbit-auto] Data sync completed in ${duration}ms`);
 
-    // Update log with success
-    await supabase
-      .from('function_execution_log')
-      .update({
-        status: 'success',
-        completed_at: new Date().toISOString(),
-        duration_ms: duration,
-        metadata: { 
-          user_id: userId,
-          steps: activityData.summary?.steps,
-          calories: activityData.summary?.caloriesOut,
-          has_sleep: !!sleepData,
-        },
-      })
-      .eq('id', logId);
-
-    console.log(`✅ Fitbit sync complete in ${duration}ms`);
-
-    // Trigger trend calculation asynchronously
-    fetch(`https://predictiv.netlify.app/.netlify/functions/calc-trends`, {
+    // Step 6: Trigger calc-trends function
+    console.log('📊 [fetch-fitbit-auto] Triggering calc-trends...');
+    fetch(`https://ixtwbkikyuexskdgfpfq.supabase.co/functions/v1/calc-trends`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${supabaseKey}`
+      },
       body: JSON.stringify({ user_id: userId })
     }).then(async (trendResponse) => {
       if (trendResponse.ok) {
-        console.log('✅ Calc-trends triggered successfully');
+        console.log('✅ [fetch-fitbit-auto] calc-trends triggered successfully');
       } else {
-        console.log(`⚠️ Calc-trends failed: ${trendResponse.status}`);
+        const errorText = await trendResponse.text();
+        console.log(`⚠️ [fetch-fitbit-auto] calc-trends failed: ${trendResponse.status} - ${errorText}`);
       }
     }).catch((trendError: any) => {
-      console.error(`❌ Calc-trends trigger error: ${trendError.message}`);
+      console.error(`❌ [fetch-fitbit-auto] calc-trends trigger error: ${trendError instanceof Error ? trendError.message : String(trendError)}`);
     });
 
+    console.log(`✅ [fetch-fitbit-auto] Fetch complete - Duration: ${duration}ms`);
+
+    // Return structured response
     return new Response(
-      JSON.stringify({ 
-        success: true,
+      JSON.stringify({
         user_id: userId,
-        data: {
-          steps: activityData.summary?.steps,
-          calories: activityData.summary?.caloriesOut,
-          has_sleep: !!sleepData,
-        },
-        synced_at: new Date().toISOString(),
+        activities: activityCount,
+        sleep_records: sleepCount,
+        status: 'success',
+        timestamp: new Date().toISOString(),
         duration_ms: duration,
+        summary: {
+          steps: activityData.summary?.steps || 0,
+          calories: activityData.summary?.caloriesOut || 0,
+        }
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 
   } catch (error) {
-    console.error('❌ Fitbit sync failed:', error);
-
     const duration = Date.now() - startTime;
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-
-    // Update log with failure
-    await supabase
-      .from('function_execution_log')
-      .update({
-        status: 'failed',
-        completed_at: new Date().toISOString(),
-        duration_ms: duration,
-        error_message: errorMessage,
-      })
-      .eq('id', logId);
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    console.error(`❌ [fetch-fitbit-auto] Error after ${duration}ms:`, errorMessage);
 
     return new Response(
-      JSON.stringify({ 
+      JSON.stringify({
         error: errorMessage,
-        details: 'Please check Supabase edge function logs for more information'
+        status: 'failed',
+        timestamp: new Date().toISOString(),
+        duration_ms: duration,
       }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
@@ -256,57 +263,27 @@ Deno.serve(async (req) => {
 });
 
 /**
- * Get valid access token, refresh if expired
+ * Get valid access token, refresh if needed
  */
-async function getValidToken(supabase: any, userId: string): Promise<string> {
-  console.log('🔑 Fetching Fitbit tokens...');
-  
-  // Get tokens from fitbit_auto_data
-  const { data: tokenData, error: tokenError } = await supabase
-    .from('fitbit_auto_data')
-    .select('activity')
-    .eq('user_id', userId)
-    .order('fetched_at', { ascending: false })
-    .limit(1)
-    .maybeSingle();
+async function getValidToken(supabase: any, tokenRecord: FitbitTokens): Promise<string> {
+  console.log('🔍 [getValidToken] Checking token expiration...');
 
-  if (tokenError || !tokenData) {
-    throw new Error('No Fitbit tokens found. Please reconnect Fitbit in Settings.');
+  const now = Date.now();
+  const tokenAge = now - new Date(tokenRecord.updated_at).getTime();
+  const expiresInMs = tokenRecord.expires_in * 1000;
+  const timeUntilExpiry = expiresInMs - tokenAge;
+  const needsRefresh = timeUntilExpiry < 360000; // Refresh if less than 360 seconds (6 minutes)
+
+  console.log(`⏰ [getValidToken] Token age: ${Math.round(tokenAge / 1000)}s, Expires in: ${tokenRecord.expires_in}s, Time until expiry: ${Math.round(timeUntilExpiry / 1000)}s`);
+
+  if (!needsRefresh) {
+    console.log('✅ [getValidToken] Token is valid, using existing access token');
+    return tokenRecord.access_token;
   }
 
-  const tokens = (tokenData.activity as any)?.tokens as TokenData;
-  if (!tokens?.access_token) {
-    throw new Error('Invalid token data. Please reconnect Fitbit in Settings.');
-  }
+  // Token needs refresh
+  console.log('🔄 [getValidToken] Token expired or expiring soon, refreshing...');
 
-  // Parse expiration time - handle both Unix timestamp and ISO string
-  let expiresAt: Date;
-  if (typeof tokens.expires_at === 'number') {
-    // Unix timestamp (seconds)
-    expiresAt = new Date(tokens.expires_at * 1000);
-  } else if (typeof tokens.expires_at === 'string') {
-    expiresAt = new Date(tokens.expires_at);
-  } else {
-    console.warn('⚠️ Invalid expires_at format, assuming expired');
-    expiresAt = new Date(0); // Force refresh
-  }
-
-  const now = new Date();
-  const timeUntilExpiry = expiresAt.getTime() - now.getTime();
-  const isExpired = timeUntilExpiry <= 60000; // Refresh if less than 1 minute remaining
-
-  console.log(`🕐 Token expires at: ${expiresAt.toISOString()}`);
-  console.log(`🕐 Current time: ${now.toISOString()}`);
-  console.log(`⏰ Time until expiry: ${Math.round(timeUntilExpiry / 1000)}s`);
-  console.log(`🔍 Is expired: ${isExpired}`);
-
-  if (!isExpired) {
-    console.log('✅ Token is valid, using existing access token');
-    return tokens.access_token;
-  }
-
-  // Token expired or about to expire, refresh it
-  console.log('🔄 Token expired or expiring soon, refreshing...');
   const clientId = Deno.env.get('FITBIT_CLIENT_ID');
   const clientSecret = Deno.env.get('FITBIT_CLIENT_SECRET');
 
@@ -322,44 +299,43 @@ async function getValidToken(supabase: any, userId: string): Promise<string> {
     },
     body: new URLSearchParams({
       grant_type: 'refresh_token',
-      refresh_token: tokens.refresh_token,
+      refresh_token: tokenRecord.refresh_token,
     }),
   });
 
   if (!refreshResponse.ok) {
     const errorText = await refreshResponse.text();
-    console.error(`❌ Token refresh failed: ${refreshResponse.status} - ${errorText}`);
+    console.error(`❌ [getValidToken] Token refresh failed: ${refreshResponse.status} - ${errorText}`);
+
+    // Check for invalid_grant error
+    if (errorText.includes('invalid_grant') || errorText.includes('refresh_token') && refreshResponse.status === 400) {
+      throw new Error('refresh_token_invalid');
+    }
+
     throw new Error(`Token refresh failed (${refreshResponse.status}). Please reconnect Fitbit in Settings.`);
   }
 
   const newTokens = await refreshResponse.json();
-  const newExpiresAt = new Date(Date.now() + newTokens.expires_in * 1000).toISOString();
+  console.log(`✅ [getValidToken] Token refreshed successfully, expires in ${newTokens.expires_in}s`);
 
-  console.log(`✅ Token refreshed successfully. New expiry: ${newExpiresAt}`);
-
-  // Update tokens in database
-  const updatedActivity = {
-    ...tokenData.activity,
-    tokens: {
-      access_token: newTokens.access_token,
-      refresh_token: newTokens.refresh_token || tokens.refresh_token,
-      expires_at: newExpiresAt,
-      token_type: newTokens.token_type,
-      scope: newTokens.scope,
-    },
-  };
-
-  // Update the most recent record
+  // Update tokens in fitbit_tokens table
   const { error: updateError } = await supabase
-    .from('fitbit_auto_data')
-    .update({ activity: updatedActivity })
-    .eq('user_id', userId)
-    .order('fetched_at', { ascending: false })
-    .limit(1);
+    .from('fitbit_tokens')
+    .update({
+      access_token: newTokens.access_token,
+      refresh_token: newTokens.refresh_token || tokenRecord.refresh_token,
+      expires_in: newTokens.expires_in,
+      token_type: newTokens.token_type || tokenRecord.token_type,
+      scope: newTokens.scope || tokenRecord.scope,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('user_id', tokenRecord.user_id);
 
   if (updateError) {
-    console.error(`⚠️ Failed to update tokens in database: ${updateError.message}`);
+    console.error(`⚠️ [getValidToken] Failed to update tokens in database: ${updateError.message}`);
     // Don't throw - we have the new token, just couldn't save it
+  } else {
+    console.log('✅ [getValidToken] Tokens updated in database');
   }
 
   return newTokens.access_token;

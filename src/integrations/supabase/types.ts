@@ -1268,6 +1268,7 @@ export type Database = {
           updated_at: string
         }[]
       }
+      strip_tokens_from_activity: { Args: { u_id: string }; Returns: undefined }
       update_user_context: {
         Args: { p_data: Json; p_field: string; p_user_id: string }
         Returns: undefined

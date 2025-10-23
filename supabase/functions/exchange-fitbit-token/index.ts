@@ -57,6 +57,7 @@ serve(async (req) => {
     return new Response(JSON.stringify({ success: true }), { status: 200 });
   } catch (err) {
     console.error("exchange-fitbit-token error:", err);
-    return new Response(JSON.stringify({ error: err.message }), { status: 500 });
+    const message = err instanceof Error ? err.message : 'Unknown error';
+    return new Response(JSON.stringify({ error: message }), { status: 500 });
   }
 });

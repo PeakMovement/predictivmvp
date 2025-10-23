@@ -100,10 +100,11 @@ Deno.serve(async (req) => {
       { status: 200, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
     );
 
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error in send-sms-alert function:', error);
+    const message = error instanceof Error ? error.message : 'Internal server error';
     return new Response(
-      JSON.stringify({ success: false, error: error.message || 'Internal server error' }),
+      JSON.stringify({ success: false, error: message }),
       { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
     );
   }

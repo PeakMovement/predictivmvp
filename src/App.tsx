@@ -125,9 +125,9 @@ const App = () => {
             <Sonner />
             {isRegisterRoute ? (
               <Register />
-            ) : (
-              <Login onLoginSuccess={() => setIsAuthenticated(true)} />
-            )}
+        ) : (
+          <Login />
+        )}
           </TooltipProvider>
         </QueryClientProvider>
       </ThemeProvider>

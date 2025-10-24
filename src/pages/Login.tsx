@@ -18,33 +18,14 @@ export default function Login() {
     setIsLoading(true);
 
     try {
-      let resolvedEmail = identifier;
-
-      // 🧠 Detect username vs email
-      if (!identifier.includes("@")) {
-        const { data: userProfile, error: profileError } = await supabase
-          .from("profiles")
-          .select("email")
-          .eq("username", identifier)
-          .single();
-
-        if (profileError || !userProfile?.email) {
-          setError("No account found with that username.");
-          setIsLoading(false);
-          return;
-        }
-
-        resolvedEmail = userProfile.email;
-      }
-
-      // 🔐 Supabase login
+      // 🔐 Supabase login with email
       const { error: signInError } = await supabase.auth.signInWithPassword({
-        email: resolvedEmail,
+        email: identifier,
         password,
       });
 
       if (signInError) {
-        setError("Invalid email/username or password.");
+        setError("Invalid email or password.");
         toast({
           title: "Login failed",
           description: signInError.message,
@@ -78,13 +59,13 @@ export default function Login() {
 
         <form onSubmit={handleLogin} className="space-y-5">
           <div>
-            <Label htmlFor="identifier">Email or Username</Label>
+            <Label htmlFor="identifier">Email</Label>
             <Input
               id="identifier"
-              type="text"
+              type="email"
               value={identifier}
               onChange={(e) => setIdentifier(e.target.value)}
-              placeholder="you@example.com or username"
+              placeholder="you@example.com"
               className="bg-gray-900 text-white border-gray-700 mt-1"
               required
             />

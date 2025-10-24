@@ -260,6 +260,7 @@ export type Database = {
           access_token: string
           created_at: string | null
           expires_in: number | null
+          fitbit_user_id: string | null
           refresh_token: string | null
           scope: string | null
           token_type: string | null
@@ -270,6 +271,7 @@ export type Database = {
           access_token: string
           created_at?: string | null
           expires_in?: number | null
+          fitbit_user_id?: string | null
           refresh_token?: string | null
           scope?: string | null
           token_type?: string | null
@@ -280,6 +282,7 @@ export type Database = {
           access_token?: string
           created_at?: string | null
           expires_in?: number | null
+          fitbit_user_id?: string | null
           refresh_token?: string | null
           scope?: string | null
           token_type?: string | null

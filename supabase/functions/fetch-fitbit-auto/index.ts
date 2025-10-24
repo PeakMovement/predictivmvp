@@ -88,14 +88,11 @@ Deno.serve(async (req) => {
     const today = new Date().toISOString().split('T')[0];
     console.log(`📅 [fetch-fitbit-auto] Fetching activity data for ${today}...`);
 
-    const activityResponse = await fetch(
+    const activityResponse = await fetchWithTokenRetry(
       `https://api.fitbit.com/1/user/-/activities/date/${today}.json`,
-      {
-        method: 'GET',
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-      }
+      accessToken,
+      supabase,
+      userId
     );
 
     if (!activityResponse.ok) {
@@ -123,14 +120,11 @@ Deno.serve(async (req) => {
 
     // Step 4: Fetch sleep data from Fitbit API
     console.log(`😴 [fetch-fitbit-auto] Fetching sleep data for ${today}...`);
-    const sleepResponse = await fetch(
+    const sleepResponse = await fetchWithTokenRetry(
       `https://api.fitbit.com/1.2/user/-/sleep/date/${today}.json`,
-      {
-        method: 'GET',
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-      }
+      accessToken,
+      supabase,
+      userId
     );
 
     let sleepData: FitbitSleepData | null = null;
@@ -250,6 +244,21 @@ Deno.serve(async (req) => {
     const errorMessage = error instanceof Error ? error.message : String(error);
     console.error(`❌ [fetch-fitbit-auto] Error after ${duration}ms:`, errorMessage);
 
+    // Handle refresh_token_invalid error specially
+    if (errorMessage === 'refresh_token_invalid') {
+      return new Response(
+        JSON.stringify({
+          error: 'refresh_token_invalid',
+          reconnect: true,
+          message: 'Your Fitbit connection has expired. Please reconnect in Settings.',
+          status: 'failed',
+          timestamp: new Date().toISOString(),
+          duration_ms: duration,
+        }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     return new Response(
       JSON.stringify({
         error: errorMessage,
@@ -263,26 +272,21 @@ Deno.serve(async (req) => {
 });
 
 /**
- * Get valid access token, refresh if needed
+ * Refresh Fitbit access token using refresh_token
  */
-async function getValidToken(supabase: any, tokenRecord: FitbitTokens): Promise<string> {
-  console.log('🔍 [getValidToken] Checking token expiration...');
+async function refreshTokenForUser(supabase: any, userId: string): Promise<string> {
+  console.log('🔄 [refreshTokenForUser] Starting token refresh...');
 
-  const now = Date.now();
-  const tokenAge = now - new Date(tokenRecord.updated_at).getTime();
-  const expiresInMs = tokenRecord.expires_in * 1000;
-  const timeUntilExpiry = expiresInMs - tokenAge;
-  const needsRefresh = timeUntilExpiry < 360000; // Refresh if less than 360 seconds (6 minutes)
+  // Load current tokens
+  const { data: tokenRecord, error: tokenError } = await supabase
+    .from('fitbit_tokens')
+    .select('*')
+    .eq('user_id', userId)
+    .maybeSingle();
 
-  console.log(`⏰ [getValidToken] Token age: ${Math.round(tokenAge / 1000)}s, Expires in: ${tokenRecord.expires_in}s, Time until expiry: ${Math.round(timeUntilExpiry / 1000)}s`);
-
-  if (!needsRefresh) {
-    console.log('✅ [getValidToken] Token is valid, using existing access token');
-    return tokenRecord.access_token;
+  if (tokenError || !tokenRecord) {
+    throw new Error('refresh_token_invalid');
   }
-
-  // Token needs refresh
-  console.log('🔄 [getValidToken] Token expired or expiring soon, refreshing...');
 
   const clientId = Deno.env.get('FITBIT_CLIENT_ID');
   const clientSecret = Deno.env.get('FITBIT_CLIENT_SECRET');
@@ -305,10 +309,10 @@ async function getValidToken(supabase: any, tokenRecord: FitbitTokens): Promise<
 
   if (!refreshResponse.ok) {
     const errorText = await refreshResponse.text();
-    console.error(`❌ [getValidToken] Token refresh failed: ${refreshResponse.status} - ${errorText}`);
+    console.error(`❌ [refreshTokenForUser] Token refresh failed: ${refreshResponse.status} - ${errorText}`);
 
     // Check for invalid_grant error
-    if (errorText.includes('invalid_grant') || errorText.includes('refresh_token') && refreshResponse.status === 400) {
+    if (errorText.includes('invalid_grant') || (errorText.includes('refresh_token') && refreshResponse.status === 400)) {
       throw new Error('refresh_token_invalid');
     }
 
@@ -316,7 +320,7 @@ async function getValidToken(supabase: any, tokenRecord: FitbitTokens): Promise<
   }
 
   const newTokens = await refreshResponse.json();
-  console.log(`✅ [getValidToken] Token refreshed successfully, expires in ${newTokens.expires_in}s`);
+  console.log(`✅ [refreshTokenForUser] Token refreshed successfully, expires in ${newTokens.expires_in}s`);
 
   // Update tokens in fitbit_tokens table
   const { error: updateError } = await supabase
@@ -329,14 +333,104 @@ async function getValidToken(supabase: any, tokenRecord: FitbitTokens): Promise<
       scope: newTokens.scope || tokenRecord.scope,
       updated_at: new Date().toISOString(),
     })
-    .eq('user_id', tokenRecord.user_id);
+    .eq('user_id', userId);
 
   if (updateError) {
-    console.error(`⚠️ [getValidToken] Failed to update tokens in database: ${updateError.message}`);
+    console.error(`⚠️ [refreshTokenForUser] Failed to update tokens in database: ${updateError.message}`);
     // Don't throw - we have the new token, just couldn't save it
   } else {
-    console.log('✅ [getValidToken] Tokens updated in database');
+    console.log('✅ [refreshTokenForUser] Tokens updated in database');
   }
 
   return newTokens.access_token;
+}
+
+/**
+ * Fetch with automatic token refresh and retry on expired_token error
+ */
+async function fetchWithTokenRetry(
+  url: string,
+  accessToken: string,
+  supabase: any,
+  userId: string
+): Promise<Response> {
+  console.log(`🌐 [fetchWithTokenRetry] Making request to: ${url}`);
+
+  // Initial fetch attempt
+  let response = await fetch(url, {
+    method: 'GET',
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+    },
+  });
+
+  // If successful, return immediately
+  if (response.ok) {
+    return response;
+  }
+
+  // If 401, check if it's an expired_token error and retry
+  if (response.status === 401) {
+    const errorBody = await response.text();
+    console.log(`⚠️ [fetchWithTokenRetry] Received 401 error: ${errorBody}`);
+
+    // Check if error is expired_token
+    if (errorBody.includes('expired_token') || errorBody.includes('Access token expired')) {
+      console.log('⚠️ [fetchWithTokenRetry] Token expired during API call, refreshing...');
+
+      try {
+        // Refresh the token
+        const newAccessToken = await refreshTokenForUser(supabase, userId);
+        console.log('🔄 [fetchWithTokenRetry] Retrying request with refreshed token...');
+
+        // Retry the same request with new token
+        response = await fetch(url, {
+          method: 'GET',
+          headers: {
+            Authorization: `Bearer ${newAccessToken}`,
+          },
+        });
+
+        if (response.ok) {
+          console.log('✅ [fetchWithTokenRetry] Retry succeeded with new token');
+        } else {
+          const retryErrorText = await response.text();
+          console.error(`❌ [fetchWithTokenRetry] Retry failed: ${response.status} - ${retryErrorText}`);
+        }
+
+        return response;
+      } catch (refreshError) {
+        console.error(`❌ [fetchWithTokenRetry] Token refresh failed: ${refreshError instanceof Error ? refreshError.message : String(refreshError)}`);
+        // Return the original 401 response if refresh fails
+        return new Response(errorBody, { status: 401, headers: response.headers });
+      }
+    }
+  }
+
+  // For any other status, return the original response
+  return response;
+}
+
+/**
+ * Get valid access token, refresh if needed (proactive refresh)
+ */
+async function getValidToken(supabase: any, tokenRecord: FitbitTokens): Promise<string> {
+  console.log('🔍 [getValidToken] Checking token expiration...');
+
+  const now = Date.now();
+  const tokenAge = now - new Date(tokenRecord.updated_at).getTime();
+  const expiresInMs = tokenRecord.expires_in * 1000;
+  const timeUntilExpiry = expiresInMs - tokenAge;
+  const needsRefresh = timeUntilExpiry < 360000; // Refresh if less than 360 seconds (6 minutes)
+
+  console.log(`⏰ [getValidToken] Token age: ${Math.round(tokenAge / 1000)}s, Expires in: ${tokenRecord.expires_in}s, Time until expiry: ${Math.round(timeUntilExpiry / 1000)}s`);
+
+  if (!needsRefresh) {
+    console.log('✅ [getValidToken] Token is valid, using existing access token');
+    return tokenRecord.access_token;
+  }
+
+  // Token needs refresh
+  console.log('🔄 [getValidToken] Token expired or expiring soon, refreshing...');
+  return await refreshTokenForUser(supabase, tokenRecord.user_id);
 }

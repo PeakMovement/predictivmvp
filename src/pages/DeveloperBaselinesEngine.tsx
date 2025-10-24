@@ -43,7 +43,6 @@ interface Insight {
 
 export default function DeveloperBaselinesEngine() {
   const [functions, setFunctions] = useState<FunctionStatus[]>([
-    { name: "fetch-fitbit-auto", displayName: "Fetch Fitbit Data", status: "unknown", lastRun: null, isRunning: false },
     {
       name: "calculate-baseline",
       displayName: "Calculate Baseline",

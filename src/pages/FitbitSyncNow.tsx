@@ -10,68 +10,12 @@ export const FitbitSyncNow = () => {
   const [syncData, setSyncData] = useState<any>(null);
 
   const handleSync = async () => {
-    console.log("Starting Fitbit sync...");
-    setIsLoading(true);
-    setSyncSuccess(false);
-    setSyncData(null);
-
-    try {
-      const response = await fetch("/.netlify/functions/sync-auto", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
-
-      // Check if response is JSON before parsing
-      const contentType = response.headers.get("content-type");
-      const isJson = contentType?.includes("application/json");
-
-      if (!response.ok) {
-        let errorMessage = "Sync failed";
-        
-        if (isJson) {
-          try {
-            const data = await response.json();
-            errorMessage = data.error || errorMessage;
-          } catch {
-            errorMessage = `Server error (${response.status})`;
-          }
-        } else {
-          // HTML error page returned
-          errorMessage = `Server error (${response.status}). Please try again.`;
-        }
-        
-        throw new Error(errorMessage);
-      }
-
-      const data = isJson ? await response.json() : null;
-      console.log("Fitbit sync response:", data);
-
-      console.log("✅ Sync successful!");
-      setSyncSuccess(true);
-      setSyncData(data?.data);
-      toast({
-        title: "Success!",
-        description: data?.message || "Fitbit data synced successfully",
-      });
-      
-      // Reset success message after 5 seconds
-      setTimeout(() => {
-        setSyncSuccess(false);
-        setSyncData(null);
-      }, 5000);
-    } catch (error) {
-      console.error("❌ Sync error:", error);
-      toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "An unexpected error occurred",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-      console.log("Fitbit sync completed.");
-    }
+    console.log("Manual sync disabled - Fitbit OAuth removed");
+    toast({
+      title: "Authentication Removed",
+      description: "Fitbit OAuth has been removed. Data sync requires reimplementation of authentication.",
+      variant: "destructive",
+    });
   };
 
   return (

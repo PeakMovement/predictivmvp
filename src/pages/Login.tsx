@@ -5,11 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 
-interface LoginProps {
-  onLoginSuccess: () => void;
-}
-
-export default function Login({ onLoginSuccess }: LoginProps) {
+export default function Login() {
   const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -24,122 +20,116 @@ export default function Login({ onLoginSuccess }: LoginProps) {
     try {
       let resolvedEmail = identifier;
 
-      // Detect username vs email
+      // 🧠 Detect username vs email
       if (!identifier.includes("@")) {
-        // For username login, we need to query the auth metadata
-        // Since we can't query auth.users directly, use a simpler approach
-        // User should provide email for now
-        setError("Please use your email address to sign in");
-        setIsLoading(false);
-        return;
+        const { data: userProfile, error: profileError } = await supabase
+          .from("profiles")
+          .select("email")
+          .eq("username", identifier)
+          .single();
+
+        if (profileError || !userProfile?.email) {
+          setError("No account found with that username.");
+          setIsLoading(false);
+          return;
+        }
+
+        resolvedEmail = userProfile.email;
       }
 
-      // Sign in with email and password
-      const { data, error: signInError } = await supabase.auth.signInWithPassword({
+      // 🔐 Supabase login
+      const { error: signInError } = await supabase.auth.signInWithPassword({
         email: resolvedEmail,
         password,
       });
 
       if (signInError) {
-        if (signInError.message.includes("Invalid login credentials")) {
-          setError("Incorrect credentials");
-        } else {
-          setError(signInError.message);
-        }
+        setError("Invalid email/username or password.");
+        toast({
+          title: "Login failed",
+          description: signInError.message,
+          variant: "destructive",
+        });
         setIsLoading(false);
         return;
       }
 
-      if (data.session) {
-        toast({
-          title: "Welcome back!",
-          description: "Successfully logged in",
-        });
-        onLoginSuccess();
-      }
-    } catch (err) {
-      setError("An unexpected error occurred");
+      toast({
+        title: "Welcome back",
+        description: "Successfully signed in!",
+      });
+
+      // Optional: redirect to dashboard
+      window.location.href = "/dashboard";
+    } catch (err: any) {
       console.error("Login error:", err);
+      setError("Something went wrong. Please try again.");
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4">
-      <div className="w-full max-w-md">
-        {/* Logo/Title */}
-        <div className="text-center mb-8 animate-fade-in">
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent mb-2">
-            PREDICTIV
-          </h1>
-          <p className="text-muted-foreground">Sign in to your account</p>
+    <div className="min-h-screen flex items-center justify-center bg-[#0B0B0F] text-white px-4">
+      <div className="max-w-md w-full bg-[#111] p-8 rounded-2xl shadow-lg border border-gray-800">
+        <h1 className="text-2xl font-semibold text-center mb-6">
+          Sign into your account
+        </h1>
+
+        <form onSubmit={handleLogin} className="space-y-5">
+          <div>
+            <Label htmlFor="identifier">Email or Username</Label>
+            <Input
+              id="identifier"
+              type="text"
+              value={identifier}
+              onChange={(e) => setIdentifier(e.target.value)}
+              placeholder="you@example.com or username"
+              className="bg-gray-900 text-white border-gray-700 mt-1"
+              required
+            />
+          </div>
+
+          <div>
+            <Label htmlFor="password">Password</Label>
+            <Input
+              id="password"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="••••••••"
+              className="bg-gray-900 text-white border-gray-700 mt-1"
+              required
+            />
+          </div>
+
+          {error && (
+            <p className="text-red-500 text-sm text-center">{error}</p>
+          )}
+
+          <Button
+            type="submit"
+            className="w-full bg-blue-600 hover:bg-blue-700 mt-4"
+            disabled={isLoading}
+          >
+            {isLoading ? "Signing in..." : "Sign In"}
+          </Button>
+        </form>
+
+        <div className="text-center mt-4 text-sm text-gray-400">
+          <p>
+            Don’t have an account?{" "}
+            <a href="/register" className="text-blue-500 hover:underline">
+              Sign up
+            </a>
+          </p>
         </div>
 
-        {/* Login Form */}
-        <div className="predictiv-card p-8 animate-fade-in-slow">
-          <form onSubmit={handleLogin} className="space-y-6">
-            <div className="space-y-2">
-              <Label htmlFor="identifier" className="text-foreground">
-                Email
-              </Label>
-              <Input
-                id="identifier"
-                type="email"
-                placeholder="Enter your email"
-                value={identifier}
-                onChange={(e) => setIdentifier(e.target.value)}
-                required
-                disabled={isLoading}
-                className="bg-secondary border-border focus:border-primary transition-colors"
-              />
-              <p className="text-xs text-muted-foreground">
-                Use your email address to sign in
-              </p>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="password" className="text-foreground">
-                Password
-              </Label>
-              <Input
-                id="password"
-                type="password"
-                placeholder="Enter password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                disabled={isLoading}
-                className="bg-secondary border-border focus:border-primary transition-colors"
-              />
-            </div>
-
-            {error && (
-              <div className="text-destructive text-sm font-medium animate-fade-in">
-                {error}
-              </div>
-            )}
-
-            <Button
-              type="submit"
-              disabled={isLoading}
-              className="w-full btn-primary-gradient hover:scale-105 transition-transform"
-            >
-              {isLoading ? "Signing in..." : "Sign In"}
-            </Button>
-          </form>
-
-          <div className="mt-6 text-center">
-            <p className="text-muted-foreground text-sm">
-              Don't have an account?{" "}
-              <button
-                onClick={() => window.location.href = "/register"}
-                className="text-primary hover:text-accent transition-colors underline"
-              >
-                Create one
-              </button>
-            </p>
-          </div>
+        <div className="text-center mt-2 text-xs text-gray-500">
+          <p>
+            Option to connect your phone for SMS alerts will appear later once
+            Twilio setup is complete.
+          </p>
         </div>
       </div>
     </div>

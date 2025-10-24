@@ -873,6 +873,29 @@ export const Settings = ({ onNavigate }: { onNavigate?: (tab: string) => void })
             </div>
           </div>
 
+          {/* Account Section */}
+          <div className="bg-glass backdrop-blur-xl border border-glass-border rounded-2xl p-6 shadow-glass hover:bg-glass-highlight transition-all duration-300">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-8 h-8 bg-primary/20 rounded-lg flex items-center justify-center">
+                <User size={16} className="text-primary" />
+              </div>
+              <h3 className="text-lg font-semibold text-foreground">Account</h3>
+            </div>
+            <Button
+              onClick={async () => {
+                await supabase.auth.signOut();
+                toast({
+                  title: "Signed out",
+                  description: "You have been successfully signed out",
+                });
+              }}
+              className="w-full flex items-center justify-center p-4 rounded-xl border bg-destructive/10 border-destructive/20 hover:bg-destructive/20 transition-all duration-200"
+              variant="ghost"
+            >
+              <span className="font-medium text-destructive">Sign Out</span>
+            </Button>
+          </div>
+
           {/* Developer Tools Section */}
           <div className="bg-glass backdrop-blur-xl border border-glass-border rounded-2xl p-6 shadow-glass hover:bg-glass-highlight transition-all duration-300">
             <div className="flex items-center gap-3 mb-6">

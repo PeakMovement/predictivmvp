@@ -22,17 +22,33 @@ import DeveloperBaselinesEngine from "@/pages/DeveloperBaselinesEngine";
 import MyDocuments from "@/pages/MyDocuments";
 import PlanCompliance from "@/pages/PlanCompliance";
 import { ProfileSetup } from "@/pages/ProfileSetup";
+import Login from "@/pages/Login";
 import { Settings as SettingsIcon } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
 
 const queryClient = new QueryClient();
 
 const App = () => {
   const [activeTab, setActiveTab] = useState("dashboard");
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
 
   const currentPath = window.location.pathname;
   const isDashboardRoute = currentPath === "/dashboard";
+
+  // Check authentication status
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setIsAuthenticated(!!session);
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setIsAuthenticated(!!session);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
 
   useEffect(() => {
     const handleNavigateInsights = () => setActiveTab("insights-tree");
@@ -83,6 +99,32 @@ const App = () => {
         return <Dashboard />;
     }
   };
+
+  // Show loading while checking auth
+  if (isAuthenticated === null) {
+    return (
+      <ThemeProvider defaultTheme="dark" storageKey="predictiv-theme">
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="animate-glow-pulse text-primary text-xl">Loading...</div>
+        </div>
+      </ThemeProvider>
+    );
+  }
+
+  // Show login if not authenticated
+  if (!isAuthenticated) {
+    return (
+      <ThemeProvider defaultTheme="dark" storageKey="predictiv-theme">
+        <QueryClientProvider client={queryClient}>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
+            <Login onLoginSuccess={() => setIsAuthenticated(true)} />
+          </TooltipProvider>
+        </QueryClientProvider>
+      </ThemeProvider>
+    );
+  }
 
   return (
     <ThemeProvider defaultTheme="dark" storageKey="predictiv-theme">

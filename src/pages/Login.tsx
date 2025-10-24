@@ -10,7 +10,7 @@ interface LoginProps {
 }
 
 export default function Login({ onLoginSuccess }: LoginProps) {
-  const [email, setEmail] = useState("");
+  const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
@@ -22,9 +22,21 @@ export default function Login({ onLoginSuccess }: LoginProps) {
     setIsLoading(true);
 
     try {
+      let resolvedEmail = identifier;
+
+      // Detect username vs email
+      if (!identifier.includes("@")) {
+        // For username login, we need to query the auth metadata
+        // Since we can't query auth.users directly, use a simpler approach
+        // User should provide email for now
+        setError("Please use your email address to sign in");
+        setIsLoading(false);
+        return;
+      }
+
       // Sign in with email and password
       const { data, error: signInError } = await supabase.auth.signInWithPassword({
-        email,
+        email: resolvedEmail,
         password,
       });
 
@@ -68,19 +80,22 @@ export default function Login({ onLoginSuccess }: LoginProps) {
         <div className="predictiv-card p-8 animate-fade-in-slow">
           <form onSubmit={handleLogin} className="space-y-6">
             <div className="space-y-2">
-              <Label htmlFor="email" className="text-foreground">
+              <Label htmlFor="identifier" className="text-foreground">
                 Email
               </Label>
               <Input
-                id="email"
+                id="identifier"
                 type="email"
                 placeholder="Enter your email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                value={identifier}
+                onChange={(e) => setIdentifier(e.target.value)}
                 required
                 disabled={isLoading}
                 className="bg-secondary border-border focus:border-primary transition-colors"
               />
+              <p className="text-xs text-muted-foreground">
+                Use your email address to sign in
+              </p>
             </div>
 
             <div className="space-y-2">

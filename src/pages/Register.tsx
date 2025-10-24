@@ -10,6 +10,7 @@ export default function Register() {
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [phone, setPhone] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
@@ -47,7 +48,10 @@ export default function Register() {
         email,
         password,
         options: {
-          data: { username },
+          data: { 
+            username,
+            phone_number: phone || null,
+          },
           emailRedirectTo: `${window.location.origin}/`,
         },
       });
@@ -140,6 +144,24 @@ export default function Register() {
               />
               <p className="text-xs text-muted-foreground">
                 Password must be at least 8 characters long
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="phone" className="text-foreground">
+                Phone Number <span className="text-muted-foreground">(optional)</span>
+              </Label>
+              <Input
+                id="phone"
+                type="tel"
+                placeholder="+1 (555) 123-4567"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                disabled={isLoading}
+                className="bg-secondary border-border focus:border-primary transition-colors"
+              />
+              <p className="text-xs text-muted-foreground">
+                For SMS notifications via Twilio (optional)
               </p>
             </div>
 

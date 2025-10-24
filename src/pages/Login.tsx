@@ -40,8 +40,8 @@ export default function Login() {
         description: "Successfully signed in!",
       });
 
-      // Optional: redirect to dashboard
-      window.location.href = "/dashboard";
+      // Redirect to root - App.tsx will handle auth state
+      window.location.href = "/";
     } catch (err: any) {
       console.error("Login error:", err);
       setError("Something went wrong. Please try again.");

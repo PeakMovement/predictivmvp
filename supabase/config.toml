@@ -6,9 +6,6 @@ verify_jwt = false
 [functions.fitbit-diagnostics]
 verify_jwt = false
 
-[functions.fitbit-migrate-tokens]
-verify_jwt = false
-
 [functions.yves-tree]
 verify_jwt = false
 
@@ -18,12 +15,6 @@ verify_jwt = false
 [functions.send-sms-alert]
 verify_jwt = false
 
-[functions.exchange-fitbase-token]
-verify_jwt = false
-
-[functions.fetch-fitbit-data]
-verify_jwt = false
-
 [functions.calc-trends]
 verify_jwt = false
 
@@ -31,9 +22,6 @@ verify_jwt = false
 verify_jwt = false
 
 [functions.calculate-deviation]
-verify_jwt = false
-
-[functions.fetch-fitbit-auto]
 verify_jwt = false
 
 [functions.build-health-profile]

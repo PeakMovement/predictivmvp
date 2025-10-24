@@ -15,8 +15,6 @@ import { YourPlan } from "@/pages/YourPlan";
 import { Settings } from "@/pages/Settings";
 import { FindHelp } from "@/pages/FindHelp";
 import { InsightsTree } from "@/pages/InsightsTree";
-import FitbitAuth from "@/pages/FitbitAuth";
-import FitbitCallback from "@/pages/FitbitCallback";
 import TestSupabase from "@/pages/TestSupabase";
 import FitbitSyncNow from "@/pages/FitbitSyncNow";
 import MyBaselines from "@/pages/MyBaselines";
@@ -34,8 +32,6 @@ const App = () => {
   const [activeTab, setActiveTab] = useState("dashboard");
 
   const currentPath = window.location.pathname;
-  const isFitbitAuth = currentPath === "/auth/fitbit";
-  const isFitbitCallback = currentPath === "/fitbit/callback";
   const isDashboardRoute = currentPath === "/dashboard";
 
   useEffect(() => {
@@ -43,35 +39,6 @@ const App = () => {
     window.addEventListener("navigate-insights", handleNavigateInsights);
     return () => window.removeEventListener("navigate-insights", handleNavigateInsights);
   }, []);
-
-  // Fitbit auth routes
-  if (isFitbitAuth) {
-    return (
-      <ThemeProvider defaultTheme="dark" storageKey="predictiv-theme">
-        <QueryClientProvider client={queryClient}>
-          <TooltipProvider>
-            <Toaster />
-            <Sonner />
-            <FitbitAuth />
-          </TooltipProvider>
-        </QueryClientProvider>
-      </ThemeProvider>
-    );
-  }
-
-  if (isFitbitCallback) {
-    return (
-      <ThemeProvider defaultTheme="dark" storageKey="predictiv-theme">
-        <QueryClientProvider client={queryClient}>
-          <TooltipProvider>
-            <Toaster />
-            <Sonner />
-            <FitbitCallback />
-          </TooltipProvider>
-        </QueryClientProvider>
-      </ThemeProvider>
-    );
-  }
 
   // Handle /dashboard route
   if (isDashboardRoute) {

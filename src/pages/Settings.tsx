@@ -11,7 +11,6 @@ import { useLiveData } from "@/contexts/LiveDataContext";
 import { getAlertSettings, saveAlertSettings } from "@/lib/alertConditions";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { startFitbitAuth } from "@/lib/fitbitAuth";
 import { useFitbitSync } from "@/hooks/useFitbitSync";
 
 export const Settings = ({ onNavigate }: { onNavigate?: (tab: string) => void }) => {
@@ -236,7 +235,11 @@ export const Settings = ({ onNavigate }: { onNavigate?: (tab: string) => void })
   }, []);
 
   const handleFitbitSync = () => {
-    startFitbitAuth();
+    toast({
+      title: "Fitbit Auth Removed",
+      description: "Fitbit OAuth has been removed from this project. Use existing data or implement a new auth flow.",
+      variant: "destructive"
+    });
   };
 
   const handleSmsToggle = (enabled: boolean) => {

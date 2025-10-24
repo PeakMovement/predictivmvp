@@ -23,6 +23,7 @@ import MyDocuments from "@/pages/MyDocuments";
 import PlanCompliance from "@/pages/PlanCompliance";
 import { ProfileSetup } from "@/pages/ProfileSetup";
 import Login from "@/pages/Login";
+import Register from "@/pages/Register";
 import { Settings as SettingsIcon } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
@@ -111,15 +112,22 @@ const App = () => {
     );
   }
 
-  // Show login if not authenticated
+  // Show login/register if not authenticated
   if (!isAuthenticated) {
+    const currentPath = window.location.pathname;
+    const isRegisterRoute = currentPath === "/register";
+    
     return (
       <ThemeProvider defaultTheme="dark" storageKey="predictiv-theme">
         <QueryClientProvider client={queryClient}>
           <TooltipProvider>
             <Toaster />
             <Sonner />
-            <Login onLoginSuccess={() => setIsAuthenticated(true)} />
+            {isRegisterRoute ? (
+              <Register />
+            ) : (
+              <Login onLoginSuccess={() => setIsAuthenticated(true)} />
+            )}
           </TooltipProvider>
         </QueryClientProvider>
       </ThemeProvider>

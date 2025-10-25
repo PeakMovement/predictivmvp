@@ -1,15 +1,15 @@
 import { serve } from "https://deno.land/std/http/server.ts";
 
 async function sha256Base64Url(input: string): Promise<string> {
-  const data = new TextEncoder().encode(input);
+  const encoder = new TextEncoder();
+  const data = encoder.encode(input);
   const hashBuffer = await crypto.subtle.digest("SHA-256", data);
-  const bytes = new Uint8Array(hashBuffer);
-  let binary = "";
-  for (const byte of bytes) {
-    binary += String.fromCharCode(byte);
-  }
-  const base64 = btoa(binary);
-  return base64.replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  const base64 = btoa(String.fromCharCode(...hashArray))
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_")
+    .replace(/=+$/, "");
+  return base64;
 }
 
 serve(async (req) => {
@@ -24,6 +24,8 @@ serve(async (req) => {
     scope: "activity heartrate sleep profile",
     code_challenge_method: "S256",
     code_challenge,
+    prompt: "login",
+    state: user_id,
   }).toString();
   return new Response(
     JSON.stringify({ auth_url: authUrl.href, code_verifier }),

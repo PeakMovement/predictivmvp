@@ -234,12 +234,39 @@ export const Settings = ({ onNavigate }: { onNavigate?: (tab: string) => void })
     return () => window.removeEventListener('mouseup', handleGlobalMouseUp);
   }, []);
 
-  const handleFitbitSync = () => {
-    toast({
-      title: "Fitbit Auth Removed",
-      description: "Fitbit OAuth has been removed from this project. Use existing data or implement a new auth flow.",
-      variant: "destructive"
-    });
+  const handleFitbitSync = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+
+      if (!user) {
+        toast({
+          title: "Authentication Required",
+          description: "Please sign in to connect Fitbit",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      const { data, error } = await supabase.functions.invoke("fitbit-auth-initiate", {
+        body: { user_id: user.id }
+      });
+
+      if (error || !data?.auth_url || !data?.code_verifier) {
+        throw new Error(data?.error || error?.message || "Failed to initiate Fitbit connection");
+      }
+
+      sessionStorage.setItem("fitbit_code_verifier", data.code_verifier);
+      sessionStorage.setItem("fitbit_user_id", user.id);
+
+      window.location.href = data.auth_url;
+    } catch (error) {
+      console.error("Fitbit auth error:", error);
+      toast({
+        title: "Connection Failed",
+        description: error instanceof Error ? error.message : "Failed to connect to Fitbit",
+        variant: "destructive"
+      });
+    }
   };
 
   const handleSmsToggle = (enabled: boolean) => {

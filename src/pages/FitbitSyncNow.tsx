@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Loader2, RefreshCw, CheckCircle2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 export const FitbitSyncNow = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -10,12 +11,46 @@ export const FitbitSyncNow = () => {
   const [syncData, setSyncData] = useState<any>(null);
 
   const handleSync = async () => {
-    console.log("Manual sync disabled - Fitbit OAuth removed");
-    toast({
-      title: "Authentication Removed",
-      description: "Fitbit OAuth has been removed. Data sync requires reimplementation of authentication.",
-      variant: "destructive",
-    });
+    setIsLoading(true);
+    setSyncSuccess(false);
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+
+      if (!user) {
+        throw new Error("User not authenticated");
+      }
+
+      const { data, error } = await supabase.functions.invoke('fitbit-fetch-data', {
+        body: { user_id: user.id },
+      });
+
+      if (error || !data?.success) {
+        throw new Error(data?.error || error?.message || "Failed to sync data");
+      }
+
+      setSyncData({
+        steps: data.steps || 0,
+        calories: data.calories || 0,
+        synced_at: new Date().toISOString(),
+      });
+
+      setSyncSuccess(true);
+
+      toast({
+        title: "Success",
+        description: "Fitbit data synced successfully!",
+      });
+    } catch (error) {
+      console.error("Sync error:", error);
+      toast({
+        title: "Sync Failed",
+        description: error instanceof Error ? error.message : "Failed to sync Fitbit data",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (

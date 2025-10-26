@@ -17,6 +17,7 @@ import { FindHelp } from "@/pages/FindHelp";
 import { InsightsTree } from "@/pages/InsightsTree";
 import TestSupabase from "@/pages/TestSupabase";
 import FitbitSyncNow from "@/pages/FitbitSyncNow";
+import FitbitCallback from "@/pages/FitbitCallback";
 import MyBaselines from "@/pages/MyBaselines";
 import DeveloperBaselinesEngine from "@/pages/DeveloperBaselinesEngine";
 import MyDocuments from "@/pages/MyDocuments";
@@ -37,6 +38,7 @@ const App = () => {
 
   const currentPath = window.location.pathname;
   const isDashboardRoute = currentPath === "/dashboard";
+  const isFitbitCallback = currentPath === "/fitbit/callback";
 
   // Check authentication status
   useEffect(() => {
@@ -100,6 +102,21 @@ const App = () => {
         return <Dashboard />;
     }
   };
+
+  // Handle Fitbit callback route (requires auth but separate flow)
+  if (isFitbitCallback) {
+    return (
+      <ThemeProvider defaultTheme="dark" storageKey="predictiv-theme">
+        <QueryClientProvider client={queryClient}>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
+            <FitbitCallback />
+          </TooltipProvider>
+        </QueryClientProvider>
+      </ThemeProvider>
+    );
+  }
 
   // Show loading while checking auth
   if (isAuthenticated === null) {

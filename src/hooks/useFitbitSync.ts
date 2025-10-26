@@ -17,10 +17,9 @@ export const useFitbitSync = (): FitbitSyncState => {
 
   const checkConnection = async (): Promise<boolean> => {
     try {
-      // Check localStorage first for instant feedback
       const cachedStatus = localStorage.getItem('fitbit_connected');
       const cachedSync = localStorage.getItem('fitbit_last_sync');
-      
+
       if (cachedStatus === 'true') {
         setIsConnected(true);
         if (cachedSync) {
@@ -28,45 +27,45 @@ export const useFitbitSync = (): FitbitSyncState => {
         }
       }
 
-      // Get authenticated user
       const { data: { user } } = await supabase.auth.getUser();
-      const userId = user?.id;
-
-      // Verify with database, filter by user if available
-      let query = supabase
-        .from("fitbit_auto_data" as any)
-        .select("activity, fetched_at, user_id")
-        .order("fetched_at", { ascending: false });
-      
-      if (userId) {
-        query = query.eq("user_id", userId);
-      }
-      
-      const { data, error } = await query.limit(1).maybeSingle();
-
-      if (error || !data) {
+      if (!user) {
         setIsConnected(false);
         localStorage.setItem('fitbit_connected', 'false');
         return false;
       }
 
-      const activityData = data as any;
-      const hasTokens = !!activityData?.activity?.tokens?.access_token;
-      const expiresAt = activityData?.activity?.tokens?.expires_at;
-      const isExpired = expiresAt ? new Date(expiresAt) < new Date() : false;
-      
-      const connected = hasTokens && !isExpired;
-      setIsConnected(connected);
-      localStorage.setItem('fitbit_connected', String(connected));
-      
-      if (activityData.fetched_at) {
-        const syncTime = new Date(activityData.fetched_at);
+      const { data: tokenData, error: tokenError } = await supabase
+        .from("fitbit_tokens" as any)
+        .select("access_token, expires_in, updated_at")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      if (tokenError || !tokenData) {
+        setIsConnected(false);
+        localStorage.setItem('fitbit_connected', 'false');
+        return false;
+      }
+
+      const hasValidToken = !!tokenData.access_token;
+      setIsConnected(hasValidToken);
+      localStorage.setItem('fitbit_connected', String(hasValidToken));
+
+      const { data: syncData } = await supabase
+        .from("fitbit_auto_data" as any)
+        .select("fetched_at")
+        .eq("user_id", user.id)
+        .order("fetched_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (syncData?.fetched_at) {
+        const syncTime = new Date(syncData.fetched_at);
         setLastSync(syncTime);
         localStorage.setItem('fitbit_last_sync', syncTime.toISOString());
       }
-      
-      console.info('[FitbitSync] Connection check:', { connected, userId: activityData.user_id });
-      return connected;
+
+      console.info('[FitbitSync] Connection check:', { connected: hasValidToken, userId: user.id });
+      return hasValidToken;
     } catch (error) {
       console.error("Error checking Fitbit connection:", error);
       setIsConnected(false);
@@ -78,32 +77,27 @@ export const useFitbitSync = (): FitbitSyncState => {
   const syncNow = async () => {
     setIsSyncing(true);
     try {
-      // Get authenticated user to pass to edge function
       const { data: { user } } = await supabase.auth.getUser();
-      
-      // Call Supabase Edge Function with user_id
-      const { data: edgeResult, error: edgeError } = await supabase.functions.invoke('fetch-fitbit-auto', {
-        body: { user_id: user?.id },
+
+      if (!user) {
+        throw new Error("User not authenticated");
+      }
+
+      const { data: edgeResult, error: edgeError } = await supabase.functions.invoke('fitbit-fetch-data', {
+        body: { user_id: user.id },
       });
 
       if (edgeError) throw new Error(edgeError.message);
+      if (!edgeResult?.success) {
+        throw new Error(edgeResult?.error || "Failed to sync data");
+      }
 
-      // Fetch latest data to show in toast
-      const { data: latestData, error: fetchError } = await supabase
-        .from("fitbit_auto_data" as any)
-        .select("activity")
-        .eq("user_id", user?.id)
-        .order("fetched_at", { ascending: false })
-        .limit(1)
-        .maybeSingle();
-
-      const activityRecord = latestData as any;
-      const steps = activityRecord?.activity?.data?.summary?.steps || 0;
-      const calories = activityRecord?.activity?.data?.summary?.caloriesOut || 0;
+      const steps = edgeResult.steps || 0;
+      const calories = edgeResult.calories || 0;
 
       const now = new Date();
       toast({
-        title: "✅ Fitbit Data Updated",
+        title: "Fitbit Data Updated",
         description: `Synced ${steps} steps, ${calories} calories`,
       });
 

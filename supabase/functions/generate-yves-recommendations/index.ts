@@ -1,27 +1,22 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import "jsr:@supabase/functions-js/edge-runtime.d.ts";
+import { getAIProvider } from "../_shared/ai-provider.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Client-Info, Apikey',
 };
 
-serve(async (req) => {
+Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { headers: corsHeaders, status: 200 });
   }
 
   try {
-    const lovableApiKey = Deno.env.get('LOVABLE_API_KEY');
-
-    if (!lovableApiKey) {
-      throw new Error('LOVABLE_API_KEY not configured');
-    }
-
     const { context, userId } = await req.json();
 
     console.log(`Generating Yves recommendations for user ${userId}`);
 
-    // Define recommendation schema
     const recommendationSchema = {
       type: "object",
       properties: {
@@ -46,48 +41,32 @@ serve(async (req) => {
       required: ["recommendations"]
     };
 
-    // Call Lovable AI
-    const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${lovableApiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'google/gemini-2.5-flash',
-        messages: [
-          { 
-            role: 'system', 
-            content: 'You are Yves, an AI health coach for the Predictiv platform. Generate actionable, specific, personalized recommendations based on the user\'s complete health profile and current metrics. Be concise but specific. Use Lucide icon names for the icon field (e.g., "Activity", "Heart", "Moon", "Apple", "AlertTriangle").' 
-          },
-          { role: 'user', content: context }
-        ],
-        tools: [
-          {
-            type: "function",
-            function: {
-              name: "generate_recommendations",
-              description: "Generate 3 personalized health recommendations",
-              parameters: recommendationSchema
-            }
+    const ai = getAIProvider();
+
+    const aiResponse = await ai.chat({
+      messages: [
+        {
+          role: 'system',
+          content: 'You are Yves, an AI health coach for the Predictiv platform. Generate actionable, specific, personalized recommendations based on the user\'s complete health profile and current metrics. Be concise but specific. Use Lucide icon names for the icon field (e.g., "Activity", "Heart", "Moon", "Apple", "AlertTriangle").'
+        },
+        { role: 'user', content: context }
+      ],
+      tools: [
+        {
+          type: "function",
+          function: {
+            name: "generate_recommendations",
+            description: "Generate 3 personalized health recommendations",
+            parameters: recommendationSchema
           }
-        ],
-        tool_choice: { type: "function", function: { name: "generate_recommendations" } }
-      }),
+        }
+      ],
+      toolChoice: { type: "function", function: { name: "generate_recommendations" } }
     });
 
-    if (!aiResponse.ok) {
-      const errorText = await aiResponse.text();
-      console.error('AI gateway error:', aiResponse.status, errorText);
-      throw new Error(`AI recommendation generation failed: ${aiResponse.statusText}`);
-    }
-
-    const aiData = await aiResponse.json();
-    const toolCall = aiData.choices[0].message.tool_calls?.[0];
-    
     let recommendations = [];
-    if (toolCall) {
-      const parsed = JSON.parse(toolCall.function.arguments);
+    if (aiResponse.toolCalls && aiResponse.toolCalls.length > 0) {
+      const parsed = JSON.parse(aiResponse.toolCalls[0].arguments);
       recommendations = parsed.recommendations || [];
     }
 
@@ -95,13 +74,13 @@ serve(async (req) => {
 
     return new Response(
       JSON.stringify({ success: true, recommendations }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
     );
 
   } catch (error) {
     console.error('Error generating recommendations:', error);
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    
+
     return new Response(
       JSON.stringify({ error: errorMessage }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

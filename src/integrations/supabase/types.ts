@@ -188,24 +188,27 @@ export type Database = {
       }
       fitbit_auto_data: {
         Row: {
-          activity: Json | null
+          activity_data: Json | null
+          date: string | null
           fetched_at: string | null
           id: number
-          sleep: Json | null
+          sleep_data: Json | null
           user_id: string | null
         }
         Insert: {
-          activity?: Json | null
+          activity_data?: Json | null
+          date?: string | null
           fetched_at?: string | null
           id?: number
-          sleep?: Json | null
+          sleep_data?: Json | null
           user_id?: string | null
         }
         Update: {
-          activity?: Json | null
+          activity_data?: Json | null
+          date?: string | null
           fetched_at?: string | null
           id?: number
-          sleep?: Json | null
+          sleep_data?: Json | null
           user_id?: string | null
         }
         Relationships: []
@@ -259,6 +262,7 @@ export type Database = {
         Row: {
           access_token: string
           created_at: string | null
+          expires_at: string | null
           expires_in: number | null
           fitbit_user_id: string | null
           refresh_token: string | null
@@ -270,6 +274,7 @@ export type Database = {
         Insert: {
           access_token: string
           created_at?: string | null
+          expires_at?: string | null
           expires_in?: number | null
           fitbit_user_id?: string | null
           refresh_token?: string | null
@@ -281,6 +286,7 @@ export type Database = {
         Update: {
           access_token?: string
           created_at?: string | null
+          expires_at?: string | null
           expires_in?: number | null
           fitbit_user_id?: string | null
           refresh_token?: string | null
@@ -576,6 +582,30 @@ export type Database = {
           id?: string
           plan_type?: string | null
           user_id?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          full_name: string | null
+          id: string
+          updated_at: string | null
+          username: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          full_name?: string | null
+          id: string
+          updated_at?: string | null
+          username?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          full_name?: string | null
+          id?: string
+          updated_at?: string | null
+          username?: string | null
         }
         Relationships: []
       }
@@ -955,6 +985,7 @@ export type Database = {
           connected_at: string | null
           created_at: string | null
           email: string | null
+          email_preferences: Json | null
           fitbit_connected: boolean | null
           fitbit_user_id: string | null
           id: string
@@ -964,6 +995,7 @@ export type Database = {
           connected_at?: string | null
           created_at?: string | null
           email?: string | null
+          email_preferences?: Json | null
           fitbit_connected?: boolean | null
           fitbit_user_id?: string | null
           id?: string
@@ -973,6 +1005,7 @@ export type Database = {
           connected_at?: string | null
           created_at?: string | null
           email?: string | null
+          email_preferences?: Json | null
           fitbit_connected?: boolean | null
           fitbit_user_id?: string | null
           id?: string

@@ -101,18 +101,23 @@ export const Settings = ({ onNavigate }: { onNavigate?: (tab: string) => void })
       if (!user) return;
       
       const { data, error } = await supabase
-        .from('Users')
-        .select('email_preferences' as any)
+        .from('users')
+        .select('email_preferences')
         .eq('id', user.id)
-        .single();
+        .maybeSingle();
       
       if (error) {
         console.error('Error loading email preferences:', error);
+        toast({
+          title: "Error",
+          description: "Could not load email preferences",
+          variant: "destructive",
+        });
         return;
       }
       
-      if (data && (data as any).email_preferences) {
-        const prefs = (data as any).email_preferences;
+      if (data?.email_preferences) {
+        const prefs = data.email_preferences;
         setEmailPreferences({
           weeklySummary: prefs.weeklySummary ?? true,
           riskAlerts: prefs.riskAlerts ?? true,
@@ -135,8 +140,8 @@ export const Settings = ({ onNavigate }: { onNavigate?: (tab: string) => void })
       if (!user) return;
       
       const { error } = await supabase
-        .from('Users')
-        .update({ email_preferences: prefs } as any)
+        .from('users')
+        .update({ email_preferences: prefs })
         .eq('id', user.id);
       
       if (error) {

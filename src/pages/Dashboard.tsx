@@ -72,8 +72,8 @@ export const Dashboard = () => {
                 <p className="text-center text-muted-foreground">Loading live metrics...</p>
               ) : dashboardMetrics.length === 0 ? (
                 <div className="text-center py-8 px-4 bg-glass backdrop-blur-xl border border-glass-border rounded-2xl">
-                  <p className="text-muted-foreground mb-2">No recent data found</p>
-                  <p className="text-sm text-muted-foreground">Click the sync button above to update your data</p>
+                  <p className="text-muted-foreground mb-2">No Fitbit data found yet</p>
+                  <p className="text-sm text-muted-foreground">Connect your Fitbit device above and sync to start tracking your training metrics</p>
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">

@@ -2,6 +2,17 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 
+// Explicit types for Fitbit data from Supabase
+type FitbitTokenRow = {
+  access_token: string | null;
+  expires_in: number | null;
+  updated_at: string | null;
+};
+
+type FitbitAutoDataRow = {
+  fetched_at: string | null;
+};
+
 interface FitbitSyncState {
   isConnected: boolean;
   isSyncing: boolean;
@@ -46,11 +57,12 @@ export const useFitbitSync = (): FitbitSyncState => {
         return false;
       }
 
-      const hasValidToken = !!tokenData.access_token;
+      const token = tokenData as unknown as FitbitTokenRow;
+      const hasValidToken = !!token.access_token;
       setIsConnected(hasValidToken);
       localStorage.setItem('fitbit_connected', String(hasValidToken));
 
-      const { data: syncData } = await supabase
+      const { data: syncData, error: syncError } = await supabase
         .from("fitbit_auto_data" as any)
         .select("fetched_at")
         .eq("user_id", user.id)
@@ -58,10 +70,13 @@ export const useFitbitSync = (): FitbitSyncState => {
         .limit(1)
         .maybeSingle();
 
-      if (syncData?.fetched_at) {
-        const syncTime = new Date(syncData.fetched_at);
-        setLastSync(syncTime);
-        localStorage.setItem('fitbit_last_sync', syncTime.toISOString());
+      if (!syncError && syncData) {
+        const sync = syncData as unknown as FitbitAutoDataRow;
+        if (sync.fetched_at) {
+          const syncTime = new Date(sync.fetched_at);
+          setLastSync(syncTime);
+          localStorage.setItem('fitbit_last_sync', syncTime.toISOString());
+        }
       }
 
       console.info('[FitbitSync] Connection check:', { connected: hasValidToken, userId: user.id });

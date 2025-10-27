@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { User, Smartphone, Bell, Palette, Info, ChevronRight, PlayCircle, PauseCircle, SkipForward, RotateCcw, Database, Mail, HelpCircle, RefreshCw } from "lucide-react";
+import { User, Smartphone, Bell, Palette, Info, ChevronRight, PlayCircle, PauseCircle, SkipForward, RotateCcw, Database, Mail, HelpCircle, RefreshCw, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
@@ -12,11 +12,19 @@ import { getAlertSettings, saveAlertSettings } from "@/lib/alertConditions";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useFitbitSync } from "@/hooks/useFitbitSync";
+import { getUserContext, updateUserContext } from "@/api/yves";
 
 export const Settings = ({ onNavigate }: { onNavigate?: (tab: string) => void }) => {
   const [notifications, setNotifications] = useState(true);
   const [primaryHue, setPrimaryHue] = useState(263);
   const [isDragging, setIsDragging] = useState(false);
+
+  // Yves preferences
+  const [yvesPreferences, setYvesPreferences] = useState({
+    sleepGoalHours: 8,
+    trainingFocus: '',
+    recoveryPriority: false
+  });
   
   // Fitbit sync state
   const [lastSyncTime, setLastSyncTime] = useState<Date | null>(null);
@@ -91,9 +99,44 @@ export const Settings = ({ onNavigate }: { onNavigate?: (tab: string) => void })
     
     // Load email preferences from Supabase
     loadEmailPreferences();
-    
+
+    // Load Yves preferences
+    loadYvesPreferences();
+
     return () => window.removeEventListener("fitbit_trends_refresh", handleRefresh);
   }, []);
+
+  const loadYvesPreferences = async () => {
+    try {
+      const context = await getUserContext();
+      if (context?.preferences) {
+        setYvesPreferences({
+          sleepGoalHours: context.preferences.sleepGoalHours || 8,
+          trainingFocus: context.preferences.trainingFocus || '',
+          recoveryPriority: context.preferences.recoveryPriority || false
+        });
+      }
+    } catch (error) {
+      console.error('Error loading Yves preferences:', error);
+    }
+  };
+
+  const saveYvesPreferences = async (prefs: typeof yvesPreferences) => {
+    try {
+      await updateUserContext({ preferences: prefs });
+      toast({
+        title: "Saved",
+        description: "Yves preferences updated successfully"
+      });
+    } catch (error) {
+      console.error('Error saving Yves preferences:', error);
+      toast({
+        title: "Error",
+        description: "Failed to save Yves preferences",
+        variant: "destructive"
+      });
+    }
+  };
   
   const loadEmailPreferences = async () => {
     try {
@@ -396,6 +439,68 @@ export const Settings = ({ onNavigate }: { onNavigate?: (tab: string) => void })
                     />
                   </div>
                 </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Yves AI Preferences Section */}
+          <div className="bg-glass backdrop-blur-xl border border-glass-border rounded-2xl p-6 shadow-glass hover:bg-glass-highlight transition-all duration-300">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-8 h-8 bg-green-500/20 rounded-lg flex items-center justify-center">
+                <Sparkles size={16} className="text-green-600" />
+              </div>
+              <h3 className="text-lg font-semibold text-foreground">Yves AI Preferences</h3>
+            </div>
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="sleepGoal" className="text-sm text-muted-foreground">
+                  Sleep Goal (hours per night)
+                </Label>
+                <Input
+                  id="sleepGoal"
+                  type="number"
+                  min="6"
+                  max="12"
+                  value={yvesPreferences.sleepGoalHours}
+                  onChange={(e) => {
+                    const newPrefs = { ...yvesPreferences, sleepGoalHours: parseInt(e.target.value) };
+                    setYvesPreferences(newPrefs);
+                  }}
+                  onBlur={() => saveYvesPreferences(yvesPreferences)}
+                  className="mt-1 bg-glass/30 border-glass-border"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="trainingFocus" className="text-sm text-muted-foreground">
+                  Training Focus
+                </Label>
+                <Input
+                  id="trainingFocus"
+                  placeholder="e.g., Marathon preparation, Weight loss, General fitness"
+                  value={yvesPreferences.trainingFocus}
+                  onChange={(e) => {
+                    const newPrefs = { ...yvesPreferences, trainingFocus: e.target.value };
+                    setYvesPreferences(newPrefs);
+                  }}
+                  onBlur={() => saveYvesPreferences(yvesPreferences)}
+                  className="mt-1 bg-glass/30 border-glass-border"
+                />
+              </div>
+
+              <div className="flex items-center justify-between pt-2">
+                <div>
+                  <p className="font-medium text-foreground">Prioritize Recovery</p>
+                  <p className="text-sm text-muted-foreground">Yves will emphasize rest and recovery recommendations</p>
+                </div>
+                <Switch
+                  checked={yvesPreferences.recoveryPriority}
+                  onCheckedChange={(checked) => {
+                    const newPrefs = { ...yvesPreferences, recoveryPriority: checked };
+                    setYvesPreferences(newPrefs);
+                    saveYvesPreferences(newPrefs);
+                  }}
+                />
               </div>
             </div>
           </div>

@@ -15,6 +15,7 @@ import { YourPlan } from "@/pages/YourPlan";
 import { Settings } from "@/pages/Settings";
 import { FindHelp } from "@/pages/FindHelp";
 import { InsightsTree } from "@/pages/InsightsTree";
+import YvesInsights from "@/pages/YvesInsights";
 import TestSupabase from "@/pages/TestSupabase";
 import FitbitSyncNow from "@/pages/FitbitSyncNow";
 import FitbitCallback from "@/pages/FitbitCallback";
@@ -90,6 +91,8 @@ const App = () => {
         return <Settings onNavigate={setActiveTab} />;
       case "insights-tree":
         return <InsightsTree onNavigate={setActiveTab} />;
+      case "yves-insights":
+        return <YvesInsights />;
       case "test-supabase":
         return <TestSupabase />;
       case "fitbit-sync-now":

@@ -1,0 +1,119 @@
+import "jsr:@supabase/functions-js/edge-runtime.d.ts";
+import { createClient } from "npm:@supabase/supabase-js@2";
+import { getAIProvider } from "../_shared/ai-provider.ts";
+
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Client-Info, Apikey',
+};
+
+Deno.serve(async (req) => {
+  if (req.method === 'OPTIONS') {
+    return new Response(null, { headers: corsHeaders, status: 200 });
+  }
+
+  try {
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      return new Response(
+        JSON.stringify({ error: 'No authorization header' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const token = authHeader.replace('Bearer ', '');
+    const { data: { user }, error: userError } = await supabase.auth.getUser(token);
+
+    if (userError || !user) {
+      return new Response(
+        JSON.stringify({ error: 'Invalid token' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const { query } = await req.json();
+
+    if (!query || typeof query !== 'string') {
+      return new Response(
+        JSON.stringify({ error: 'Query is required' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    console.log(`[yves-chat] Processing query for user ${user.id}`);
+
+    const { data: userContext } = await supabase
+      .from('user_context')
+      .select('*')
+      .eq('user_id', user.id)
+      .maybeSingle();
+
+    const { data: healthProfile } = await supabase
+      .from('user_health_profiles')
+      .select('profile_data, ai_synthesis')
+      .eq('user_id', user.id)
+      .order('generated_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    const contextInfo = `
+USER CONTEXT:
+Preferences: ${JSON.stringify(userContext?.preferences || {}, null, 2)}
+Profile: ${JSON.stringify(userContext?.profile || {}, null, 2)}
+Injuries: ${JSON.stringify(userContext?.injuries || [], null, 2)}
+
+HEALTH PROFILE:
+${healthProfile?.ai_synthesis || 'No comprehensive health profile available yet.'}
+
+USER QUESTION:
+${query}
+`;
+
+    const ai = getAIProvider();
+
+    const aiResponse = await ai.chat({
+      messages: [
+        {
+          role: 'system',
+          content: `You are Yves, an AI health intelligence coach for the Predictiv platform. You provide personalized, actionable advice based on the user's complete health context including their training program, nutrition plan, medical conditions, current metrics, and personal preferences.
+
+Be conversational but professional. Provide specific, actionable recommendations. Reference their specific health data when relevant. If you don't have enough context to give specific advice, ask clarifying questions.`
+        },
+        { role: 'user', content: contextInfo }
+      ],
+      temperature: 0.7,
+      maxTokens: 1000
+    });
+
+    const response = aiResponse.content || 'I apologize, but I was unable to generate a response. Please try again.';
+
+    await supabase
+      .from('insight_history')
+      .insert({
+        user_id: user.id,
+        query,
+        response
+      });
+
+    console.log(`[yves-chat] Response generated and saved for user ${user.id}`);
+
+    return new Response(
+      JSON.stringify({ success: true, response }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
+    );
+
+  } catch (error) {
+    console.error('[yves-chat] Error:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+
+    return new Response(
+      JSON.stringify({ error: errorMessage }),
+      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+  }
+});

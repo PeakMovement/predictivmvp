@@ -1,8 +1,9 @@
-import { Home, Dumbbell, Heart, FileText, User, ClipboardList, TrendingUp, Users } from "lucide-react";
+import { Home, Dumbbell, Heart, FileText, User, ClipboardList, TrendingUp, Users, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const navItems = [
   { name: "dashboard", icon: Home, label: "Dashboard" },
+  { name: "yves-insights", icon: Sparkles, label: "Yves AI" },
   { name: "training", icon: Dumbbell, label: "Training" },
   { name: "health", icon: Heart, label: "Health" },
   { name: "my-documents", icon: FileText, label: "Documents" },

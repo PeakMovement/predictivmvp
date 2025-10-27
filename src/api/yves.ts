@@ -30,20 +30,27 @@ export async function queryYves(query: string): Promise<YvesQueryResponse> {
       };
     }
 
-    const response = await supabase.functions.invoke('yves-chat', {
-      body: { query }
+    const response = await fetch('/.netlify/functions/yves-chat', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${session.access_token}`
+      },
+      body: JSON.stringify({ query })
     });
 
-    if (response.error) {
-      console.error('Yves API error:', response.error);
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      console.error('Yves API error:', errorData);
       return {
         success: false,
         response: '',
-        error: response.error.message || 'Failed to get response from Yves'
+        error: errorData.error || `HTTP ${response.status}: Failed to get response from Yves`
       };
     }
 
-    return response.data as YvesQueryResponse;
+    const data = await response.json();
+    return data as YvesQueryResponse;
   } catch (error) {
     console.error('Error querying Yves:', error);
     return {

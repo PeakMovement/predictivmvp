@@ -193,7 +193,7 @@ export type Database = {
           fetched_at: string | null
           id: number
           sleep_data: Json | null
-          user_id: string | null
+          user_id: string
         }
         Insert: {
           activity_data?: Json | null
@@ -201,7 +201,7 @@ export type Database = {
           fetched_at?: string | null
           id?: number
           sleep_data?: Json | null
-          user_id?: string | null
+          user_id: string
         }
         Update: {
           activity_data?: Json | null
@@ -209,7 +209,7 @@ export type Database = {
           fetched_at?: string | null
           id?: number
           sleep_data?: Json | null
-          user_id?: string | null
+          user_id?: string
         }
         Relationships: []
       }
@@ -462,13 +462,6 @@ export type Database = {
             foreignKeyName: "health_daily_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
-            referencedRelation: "fitbit_dashboard_view"
-            referencedColumns: ["user_id"]
-          },
-          {
-            foreignKeyName: "health_daily_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
             referencedRelation: "users"
             referencedColumns: ["id"]
           },
@@ -688,13 +681,6 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: [
-          {
-            foreignKeyName: "terra_connections_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "fitbit_dashboard_view"
-            referencedColumns: ["user_id"]
-          },
           {
             foreignKeyName: "terra_connections_user_id_fkey"
             columns: ["user_id"]
@@ -953,13 +939,6 @@ export type Database = {
             foreignKeyName: "user_insight_actions_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
-            referencedRelation: "fitbit_dashboard_view"
-            referencedColumns: ["user_id"]
-          },
-          {
-            foreignKeyName: "user_insight_actions_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
             referencedRelation: "users"
             referencedColumns: ["id"]
           },
@@ -1150,13 +1129,6 @@ export type Database = {
             foreignKeyName: "yves_feedback_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
-            referencedRelation: "fitbit_dashboard_view"
-            referencedColumns: ["user_id"]
-          },
-          {
-            foreignKeyName: "yves_feedback_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
             referencedRelation: "users"
             referencedColumns: ["id"]
           },
@@ -1237,19 +1209,6 @@ export type Database = {
           fetched_at?: string | null
           sleep?: Json | null
           user_id?: string | null
-        }
-        Relationships: []
-      }
-      fitbit_dashboard_view: {
-        Row: {
-          avg_hr: number | null
-          calories: number | null
-          date: string | null
-          email: string | null
-          floors: number | null
-          sleep_hours: number | null
-          steps: number | null
-          user_id: string | null
         }
         Relationships: []
       }

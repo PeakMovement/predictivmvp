@@ -26,10 +26,13 @@ export const CaloriesBurnedCard = () => {
 
   const fetchCalorieData = async () => {
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
       const { data, error } = await supabase
         .from("fitbit_auto_data" as any)
         .select("*")
-        .eq("user_id", "CTBNRR")
+        .eq("user_id", user.id)
         .order("fetched_at", { ascending: false })
         .limit(1)
         .maybeSingle();
@@ -54,25 +57,30 @@ export const CaloriesBurnedCard = () => {
     fetchCalorieData();
 
     // Set up real-time subscription
-    const channel = supabase
-      .channel("fitbit-calories-changes")
-      .on(
-        "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "fitbit_auto_data",
-          filter: `user_id=eq.CTBNRR`,
-        },
-        () => {
-          fetchCalorieData();
-        }
-      )
-      .subscribe();
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (!user) return;
 
-    return () => {
-      supabase.removeChannel(channel);
-    };
+      const channel = supabase
+        .channel("fitbit-calories-changes")
+        .on(
+          "postgres_changes",
+          {
+            event: "INSERT",
+            schema: "public",
+            table: "fitbit_auto_data",
+            filter: `user_id=eq.${user.id}`,
+          },
+          () => {
+            fetchCalorieData();
+          }
+        )
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(channel);
+      };
+    });
+
   }, []);
 
   const handleRefresh = async () => {

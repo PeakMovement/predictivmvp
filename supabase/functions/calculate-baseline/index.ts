@@ -32,21 +32,7 @@ Deno.serve(async (req) => {
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-    // First, get the user mapping from fitbit_user_id to UUID
-    const { data: usersData, error: usersError } = await supabase
-      .from('users')
-      .select('id, fitbit_user_id');
-
-    if (usersError) throw usersError;
-
-    // Create a map of fitbit_user_id -> UUID
-    const userIdMap = new Map();
-    usersData?.forEach((user: any) => {
-      if (user.fitbit_user_id) {
-        userIdMap.set(user.fitbit_user_id, user.id);
-      }
-    });
-
+    // Fetch fitbit_trends data (user_id is now UUID)
     const { data: fitbitData, error: fetchError } = await supabase
       .from('fitbit_trends')
       .select('user_id, hrv, acwr, ewma, strain, monotony, training_load, acute_load, chronic_load, date')
@@ -57,19 +43,14 @@ Deno.serve(async (req) => {
 
     console.log(`Fetched ${fitbitData?.length || 0} records for baseline calculation`);
 
-    // Group by user_id and calculate averages (using mapped UUIDs)
+    // Group by user_id and calculate averages
     const userBaselines = new Map();
     
     fitbitData?.forEach((record: any) => {
-      // Map Fitbit user_id to system UUID
-      const systemUserId = userIdMap.get(record.user_id);
-      if (!systemUserId) {
-        console.log(`Skipping record for unmapped Fitbit user: ${record.user_id}`);
-        return;
-      }
+      const userId = record.user_id;
 
-      if (!userBaselines.has(systemUserId)) {
-        userBaselines.set(systemUserId, {
+      if (!userBaselines.has(userId)) {
+        userBaselines.set(userId, {
           hrv: [],
           acwr: [],
           ewma: [],
@@ -81,7 +62,7 @@ Deno.serve(async (req) => {
         });
       }
       
-      const user = userBaselines.get(systemUserId);
+      const user = userBaselines.get(userId);
       if (record.hrv) user.hrv.push(record.hrv);
       if (record.acwr) user.acwr.push(record.acwr);
       if (record.ewma) user.ewma.push(record.ewma);

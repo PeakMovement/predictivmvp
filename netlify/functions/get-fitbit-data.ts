@@ -25,8 +25,17 @@ const handler: Handler = async (event) => {
     
     // Get query parameters
     const params = event.queryStringParameters || {};
-    const userId = params.user_id || "CTBNRR"; // Default user ID
+    const userId = params.user_id; // Required - no default
     const days = parseInt(params.days || "7"); // Default to last 7 days
+    
+    if (!userId) {
+      logSync("fitbit:get-data:missing-user-id", {});
+      return {
+        statusCode: 400,
+        headers: corsHeaders,
+        body: JSON.stringify({ ok: false, error: 'user_id parameter is required' }),
+      };
+    }
     
     logSync("fitbit:get-data:start", { userId, days });
 

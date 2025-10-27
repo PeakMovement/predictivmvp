@@ -28,22 +28,7 @@ Deno.serve(async (req) => {
       started_at: new Date().toISOString(),
     });
 
-    // Get user ID mapping first
-    const { data: usersData, error: usersError } = await supabase
-      .from('users')
-      .select('id, fitbit_user_id');
-
-    if (usersError) throw usersError;
-
-    // Create a map of fitbit_user_id -> UUID
-    const userIdMap = new Map();
-    usersData?.forEach((user: any) => {
-      if (user.fitbit_user_id) {
-        userIdMap.set(user.fitbit_user_id, user.id);
-      }
-    });
-
-    // Get latest Fitbit data (last 7 days)
+    // Get latest Fitbit data (last 7 days) - user_id is now UUID
     const sevenDaysAgo = new Date();
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
@@ -93,21 +78,16 @@ Deno.serve(async (req) => {
     const metrics = ['hrv', 'acwr', 'ewma', 'strain', 'monotony', 'training_load', 'acute_load', 'chronic_load'];
 
     recentData?.forEach((record: any) => {
-      // Map Fitbit user_id to system UUID
-      const systemUserId = userIdMap.get(record.user_id);
-      if (!systemUserId) {
-        console.log(`Skipping record for unmapped Fitbit user: ${record.user_id}`);
-        return;
-      }
+      const userId = record.user_id;
 
       // Only process most recent record per user
-      if (processedUsers.has(systemUserId)) return;
-      processedUsers.add(systemUserId);
+      if (processedUsers.has(userId)) return;
+      processedUsers.add(userId);
 
       for (const metric of metrics) {
-        const baseline = baselineMap.get(`${systemUserId}_${metric}`);
+        const baseline = baselineMap.get(`${userId}_${metric}`);
         const currentValue = record[metric];
-        const profile = profileMap.get(systemUserId);
+        const profile = profileMap.get(userId);
         
         if (baseline && currentValue != null) {
           const deviation = ((currentValue - baseline) / baseline) * 100;
@@ -202,7 +182,7 @@ Deno.serve(async (req) => {
           }
           
           deviationRecords.push({
-            user_id: systemUserId,
+            user_id: userId,
             metric: metric,
             baseline_value: baseline,
             current_value: currentValue,

@@ -31,18 +31,7 @@ export const useFitbitTrends = (options: UseFitbitTrendsOptions = {}): UseFitbit
       data: { user },
     } = await supabase.auth.getUser();
     
-    if (user?.id) return user.id;
-
-    // Fallback: Find most recent user_id from fitbit_trends
-    const { data } = await supabase
-      .from("fitbit_trends")
-      .select("user_id")
-      .not("user_id", "is", null)
-      .order("date", { ascending: false })
-      .limit(1)
-      .single();
-    
-    return data?.user_id || null;
+    return user?.id || null;
   }, [providedUserId]);
 
   const fetchTrends = useCallback(async () => {

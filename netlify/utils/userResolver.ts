@@ -47,9 +47,9 @@ export async function resolveUserId(
       return data.user_id;
     }
 
-    // Final fallback
-    console.log('⚠ Using default user_id: CTBNRR');
-    return 'CTBNRR';
+    // No fallback - require authenticated user
+    console.log('⚠ Could not resolve user_id');
+    return null;
   } catch (error) {
     console.error('Error resolving user ID:', error);
     return 'CTBNRR';

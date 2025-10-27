@@ -15,7 +15,7 @@ VITE_AI_MOCK_MODE=false  # set to 'true' to use mock responses
 
 ### 2. Get an API Key
 
-#### OpenAI (Recommended for Simplicity)
+#### OpenAI (Recommended for SimPleplicity)
 1. Visit https://platform.openai.com/api-keys
 2. Sign up or log in
 3. Click "Create new secret key"

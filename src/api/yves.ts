@@ -83,7 +83,7 @@ export async function getUserContext() {
     }
 
     const { data, error } = await supabase
-      .from('user_context')
+      .from('user_context_enhanced')
       .select('*')
       .eq('user_id', user.id)
       .maybeSingle();
@@ -101,9 +101,9 @@ export async function getUserContext() {
 }
 
 export async function updateUserContext(updates: {
-  profile?: any;
-  preferences?: any;
-  injuries?: any;
+  nutrition_profile?: any;
+  medical_profile?: any;
+  training_profile?: any;
 }) {
   try {
     const { data: { user } } = await supabase.auth.getUser();
@@ -113,21 +113,21 @@ export async function updateUserContext(updates: {
     }
 
     const { data: existing } = await supabase
-      .from('user_context')
+      .from('user_context_enhanced')
       .select('*')
       .eq('user_id', user.id)
       .maybeSingle();
 
     if (existing) {
       const { error } = await supabase
-        .from('user_context')
+        .from('user_context_enhanced')
         .update(updates)
         .eq('user_id', user.id);
 
       if (error) throw error;
     } else {
       const { error } = await supabase
-        .from('user_context')
+        .from('user_context_enhanced')
         .insert({
           user_id: user.id,
           ...updates

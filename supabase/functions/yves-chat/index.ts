@@ -48,7 +48,7 @@ Deno.serve(async (req) => {
     console.log(`[yves-chat] Processing query for user ${user.id}`);
 
     const { data: userContext } = await supabase
-      .from('user_context')
+      .from('user_context_enhanced')
       .select('*')
       .eq('user_id', user.id)
       .maybeSingle();
@@ -63,9 +63,9 @@ Deno.serve(async (req) => {
 
     const contextInfo = `
 USER CONTEXT:
-Preferences: ${JSON.stringify(userContext?.preferences || {}, null, 2)}
-Profile: ${JSON.stringify(userContext?.profile || {}, null, 2)}
-Injuries: ${JSON.stringify(userContext?.injuries || [], null, 2)}
+Nutrition Profile: ${JSON.stringify(userContext?.nutrition_profile || {}, null, 2)}
+Medical Profile: ${JSON.stringify(userContext?.medical_profile || {}, null, 2)}
+Training Profile: ${JSON.stringify(userContext?.training_profile || {}, null, 2)}
 
 HEALTH PROFILE:
 ${healthProfile?.ai_synthesis || 'No comprehensive health profile available yet.'}

@@ -6,8 +6,8 @@ import { toast } from "@/hooks/use-toast";
 interface FitbitAutoDataRow {
   id: number;
   user_id: string;
-  activity: any;
-  sleep?: any;
+  activity_data: any;
+  sleep_data?: any;
   fetched_at: string;
 }
 
@@ -17,8 +17,8 @@ export const useFitbitMetrics = () => {
   const [lastSync, setLastSync] = useState<string | null>(null);
 
   const parseMetrics = useCallback((data: FitbitAutoDataRow): ParsedFitbitMetrics => {
-    const activity = data.activity?.data;
-    const sleep = data.sleep?.data?.sleep?.[0]; // Get main sleep
+    const activity = data.activity_data?.data;
+    const sleep = data.sleep_data?.data?.sleep?.[0]; // Get main sleep
     const summary = activity?.summary;
 
     // Calculate average heart rate from zones

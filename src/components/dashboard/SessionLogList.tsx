@@ -59,14 +59,14 @@ export const SessionLogList = () => {
         
         const { data, error } = await supabase
           .from('fitbit_auto_data')
-          .select('fetched_at, activity')
+          .select('fetched_at, activity_data')
           .gte('fetched_at', sevenDaysAgo.toISOString())
           .order('fetched_at', { ascending: false });
 
         if (!error && data) {
           const activities: Session[] = [];
           data.forEach(record => {
-            const activityData = record.activity as any; // Cast to any for JSON access
+            const activityData = record.activity_data as any; // Cast to any for JSON access
             const acts = activityData?.data?.activities || [];
             acts.forEach((act: any) => {
               activities.push({

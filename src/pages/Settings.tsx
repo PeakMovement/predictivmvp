@@ -109,11 +109,12 @@ export const Settings = ({ onNavigate }: { onNavigate?: (tab: string) => void })
   const loadYvesPreferences = async () => {
     try {
       const context = await getUserContext();
-      if (context?.preferences) {
+      if (context?.training_profile) {
+        const prefs = context.training_profile as any;
         setYvesPreferences({
-          sleepGoalHours: context.preferences.sleepGoalHours || 8,
-          trainingFocus: context.preferences.trainingFocus || '',
-          recoveryPriority: context.preferences.recoveryPriority || false
+          sleepGoalHours: prefs.sleepGoalHours || 8,
+          trainingFocus: prefs.trainingFocus || '',
+          recoveryPriority: prefs.recoveryPriority || false
         });
       }
     } catch (error) {
@@ -123,7 +124,7 @@ export const Settings = ({ onNavigate }: { onNavigate?: (tab: string) => void })
 
   const saveYvesPreferences = async (prefs: typeof yvesPreferences) => {
     try {
-      await updateUserContext({ preferences: prefs });
+      await updateUserContext({ training_profile: prefs });
       toast({
         title: "Saved",
         description: "Yves preferences updated successfully"
@@ -160,14 +161,14 @@ export const Settings = ({ onNavigate }: { onNavigate?: (tab: string) => void })
       }
       
       if (data?.email_preferences) {
-        const prefs = data.email_preferences;
+        const prefs = data.email_preferences as any;
         setEmailPreferences({
-          weeklySummary: prefs.weeklySummary ?? true,
-          riskAlerts: prefs.riskAlerts ?? true,
-          aiCoachRecommendations: prefs.aiCoachRecommendations ?? true
+          weeklySummary: prefs?.weeklySummary ?? true,
+          riskAlerts: prefs?.riskAlerts ?? true,
+          aiCoachRecommendations: prefs?.aiCoachRecommendations ?? true
         });
         // If all preferences are false, consider master toggle as disabled
-        const allDisabled = !prefs.weeklySummary && !prefs.riskAlerts && !prefs.aiCoachRecommendations;
+        const allDisabled = !prefs?.weeklySummary && !prefs?.riskAlerts && !prefs?.aiCoachRecommendations;
         if (allDisabled) {
           setEmailNotificationsEnabled(false);
         }

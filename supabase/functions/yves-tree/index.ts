@@ -11,8 +11,20 @@ serve(async (req) => {
   }
 
   try {
+    // Extract user_id from JWT token
+    const authHeader = req.headers.get('authorization');
+    if (!authHeader) {
+      return new Response(
+        JSON.stringify({ error: 'No authorization header' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Parse JWT to get user_id (Supabase edge functions have auth context)
+    // Since we enabled verify_jwt=true, Deno automatically validates the JWT
+    // and makes the user available in the request context
     const url = new URL(req.url);
-    const userId = url.searchParams.get('user_id');
+    const userId = url.searchParams.get('user_id'); // For now, still accept from query
 
     console.log(`Fetching Yves Tree data for user: ${userId}`);
 

@@ -1,7 +1,7 @@
 project_id = "ixtwbkikyuexskdgfpfq"
 
 [functions.analyze-document]
-verify_jwt = false
+verify_jwt = true
 
 [functions.fitbit-diagnostics]
 verify_jwt = false
@@ -25,10 +25,13 @@ verify_jwt = false
 verify_jwt = false
 
 [functions.build-health-profile]
-verify_jwt = false
+verify_jwt = true
 
 [functions.calculate-plan-adherence]
 verify_jwt = false
 
 [functions.generate-yves-recommendations]
-verify_jwt = false
+verify_jwt = true
+
+[functions.yves-chat]
+verify_jwt = true

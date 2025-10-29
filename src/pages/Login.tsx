@@ -42,7 +42,7 @@ export default function Login() {
 
       // Redirect to root - App.tsx will handle auth state
       window.location.href = "/";
-    } catch (err: any) {
+    } catch (err) {
       console.error("Login error:", err);
       setError("Something went wrong. Please try again.");
     } finally {

@@ -74,7 +74,7 @@ export default function Register() {
           navigate("/login");
         }, 3000);
       }
-    } catch (err: any) {
+    } catch (err) {
       setError(err.message || "An unexpected error occurred");
       console.error("Registration error:", err);
     } finally {

@@ -1,0 +1,22 @@
+{
+  "folders": [
+    {
+      "path": "."
+    }
+  ],
+  "settings": {
+    "eslint.enable": true,
+    "editor.codeActionsOnSave": {
+      "source.fixAll.eslint": "always",
+      "source.organizeImports": "always"
+    },
+    "editor.formatOnSave": true,
+    "editor.autoIndent": "full",
+    "eslint.validate": ["javascript", "typescript"],
+    "javascript.referencesCodeLens.enabled": true,
+    "typescript.referencesCodeLens.enabled": true,
+    "typescript.suggest.jsdoc.generateReturns": true,
+    "javascript.suggest.jsdoc.generateReturns": true,
+    "chat.commandCenter.enabled": true
+  }
+}

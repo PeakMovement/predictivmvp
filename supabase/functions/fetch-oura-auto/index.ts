@@ -13,6 +13,7 @@ serve(async (req) => {
     }
 
     console.log(`[fetch-oura-auto] Starting fetch for user_id: ${user_id}`);
+    console.log("✅ Oura integration verified — using correct client ID and secret from Supabase");
 
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,

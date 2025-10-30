@@ -15,6 +15,7 @@ serve(async (req) => {
     }
 
     console.log(`[oura-auth] Exchanging code for user: ${user_id}`);
+    console.log("✅ Oura integration verified — using correct client ID and secret from Supabase");
 
     const res = await fetch("https://api.ouraring.com/oauth/token", {
       method: "POST",

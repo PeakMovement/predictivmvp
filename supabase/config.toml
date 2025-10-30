@@ -3,6 +3,9 @@ project_id = "ixtwbkikyuexskdgfpfq"
 [functions.analyze-document]
 verify_jwt = true
 
+[functions.oura-auth]
+verify_jwt = false
+
 [functions.lovable-ai-credits]
 verify_jwt = true
 

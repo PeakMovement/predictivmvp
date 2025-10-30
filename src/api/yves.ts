@@ -172,3 +172,30 @@ export async function updateRecommendationFeedback(
 
   if (error) throw error;
 }
+
+export interface LovableAICredits {
+  available: boolean;
+  message?: string;
+  credits?: {
+    remaining?: number;
+    total?: number;
+    used?: number;
+    reset_date?: string;
+  };
+}
+
+export async function getLovableAICredits(): Promise<LovableAICredits> {
+  try {
+    const { data, error } = await supabase.functions.invoke('lovable-ai-credits');
+
+    if (error) {
+      console.error('Error fetching Lovable AI credits:', error);
+      return { available: false, message: 'Unable to fetch credits' };
+    }
+
+    return data as LovableAICredits;
+  } catch (error) {
+    console.error('Error fetching Lovable AI credits:', error);
+    return { available: false, message: 'Unable to fetch credits' };
+  }
+}

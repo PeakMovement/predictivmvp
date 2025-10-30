@@ -76,19 +76,50 @@ ${query}
 
     const ai = getAIProvider();
 
-    const aiResponse = await ai.chat({
-      messages: [
-        {
-          role: 'system',
-          content: `You are Yves, an AI health intelligence coach for the Predictiv platform. You provide personalized, actionable advice based on the user's complete health context including their training program, nutrition plan, medical conditions, current metrics, and personal preferences.
+    let aiResponse;
+    try {
+      aiResponse = await ai.chat({
+        messages: [
+          {
+            role: 'system',
+            content: `You are Yves, an AI health intelligence coach for the Predictiv platform. You provide personalized, actionable advice based on the user's complete health context including their training program, nutrition plan, medical conditions, current metrics, and personal preferences.
 
 Be conversational but professional. Provide specific, actionable recommendations. Reference their specific health data when relevant. If you don't have enough context to give specific advice, ask clarifying questions.`
-        },
-        { role: 'user', content: contextInfo }
-      ],
-      temperature: 0.7,
-      maxTokens: 1000
-    });
+          },
+          { role: 'user', content: contextInfo }
+        ],
+        temperature: 0.7,
+        maxTokens: 1000
+      });
+    } catch (aiError) {
+      console.error('[yves-chat] AI Provider error:', aiError);
+      const errorMessage = aiError instanceof Error ? aiError.message : 'Unknown error';
+      
+      // Check for rate limiting or payment errors
+      if (errorMessage.includes('429') || errorMessage.toLowerCase().includes('rate limit')) {
+        return new Response(
+          JSON.stringify({ 
+            success: false,
+            error: 'Rate limit exceeded. Please wait a moment before trying again.',
+            errorCode: 'RATE_LIMIT'
+          }),
+          { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      
+      if (errorMessage.includes('402') || errorMessage.toLowerCase().includes('payment required')) {
+        return new Response(
+          JSON.stringify({ 
+            success: false,
+            error: 'AI credits exhausted. Please add more credits to your workspace.',
+            errorCode: 'PAYMENT_REQUIRED'
+          }),
+          { status: 402, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      
+      throw aiError;
+    }
 
     const response = aiResponse.content || 'I apologize, but I was unable to generate a response. Please try again.';
 

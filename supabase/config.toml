@@ -3,6 +3,9 @@ project_id = "ixtwbkikyuexskdgfpfq"
 [functions.analyze-document]
 verify_jwt = true
 
+[functions.lovable-ai-credits]
+verify_jwt = true
+
 [functions.fitbit-diagnostics]
 verify_jwt = false
 

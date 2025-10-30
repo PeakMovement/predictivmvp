@@ -288,7 +288,7 @@ export const Settings = ({ onNavigate }: { onNavigate?: (tab: string) => void })
   }, []);
 
   const connectOura = () => {
-    const CLIENT_ID = "DTSFEJEXMRBLYLC7";
+    const CLIENT_ID = "3cf9ade7-6b80-4c03-8176-bf36ddd628e4";
     const REDIRECT_URI = "https://predictiv.netlify.app/oauth/callback/oura";
     const SCOPES = "email personal daily_activity daily_readiness daily_sleep heartrate session tag workout";
 

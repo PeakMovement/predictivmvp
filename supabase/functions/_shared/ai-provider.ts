@@ -336,8 +336,8 @@ export function getAIProvider(): AIProviderService {
   if (!mockMode) {
     switch (provider) {
       case 'openai':
-        apiKey = Deno.env.get('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') || '';
-        break;ΩΩ
+        apiKey = Deno.env.get('OPENAI_API_KEY') || '';
+        break;
       case 'anthropic':
         apiKey = Deno.env.get('ANTHROPIC_API_KEY') || '';
         break;
@@ -347,8 +347,7 @@ export function getAIProvider(): AIProviderService {
     }
 
     if (!apiKey) {
-      console.warn(`[AI Provider] No API key found for ${provider}, falling back to mock mode`);
-      return new AIProviderService(provider, '', true);
+      throw new Error(`[AI Provider] No API key found for ${provider}. Please set ${provider.toUpperCase()}_API_KEY environment variable.`);
     }
   }
 

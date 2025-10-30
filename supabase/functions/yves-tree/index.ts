@@ -1,18 +1,22 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "npm:@supabase/supabase-js@2";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Client-Info, Apikey',
 };
 
-serve(async (req) => {
+Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { headers: corsHeaders, status: 200 });
   }
 
   try {
-    // Extract user_id from JWT token
-    const authHeader = req.headers.get('authorization');
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+    const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
       return new Response(
         JSON.stringify({ error: 'No authorization header' }),
@@ -20,34 +24,85 @@ serve(async (req) => {
       );
     }
 
-    // Parse JWT to get user_id (Supabase edge functions have auth context)
-    // Since we enabled verify_jwt=true, Deno automatically validates the JWT
-    // and makes the user available in the request context
-    const url = new URL(req.url);
-    const userId = url.searchParams.get('user_id'); // For now, still accept from query
+    const token = authHeader.replace('Bearer ', '');
+    const { data: { user }, error: userError } = await supabase.auth.getUser(token);
 
-    console.log(`Fetching Yves Tree data for user: ${userId}`);
+    if (userError || !user) {
+      return new Response(
+        JSON.stringify({ error: 'Invalid token' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
 
-    // Mock data as fallback
-    const mockData = [
-      { date: "2025-10-14", value: 0.12, label: "Stable", color: "#22c55e" },
-      { date: "2025-10-15", value: 0.35, label: "Elevated strain", color: "#ef4444" },
-      { date: "2025-10-16", value: 0.18, label: "Recovered", color: "#22c55e" }
-    ];
+    console.log(`[yves-tree] Fetching tree data for user ${user.id}`);
 
-    // TODO: Replace with live queries to yves_profiles, plan_adherence, health_data
-    // For now, return mock data
-    console.log(`Returning ${mockData.length} mock data points`);
+    const { data: trendData, error: trendError } = await supabase
+      .from('fitbit_trends')
+      .select('date, strain, hrv_score, sleep_efficiency, resting_heart_rate')
+      .eq('user_id', user.id)
+      .order('date', { ascending: true })
+      .limit(30);
+
+    if (trendError) {
+      console.error('[yves-tree] Error fetching trends:', trendError);
+    }
+
+    const { data: profileData } = await supabase
+      .from('yves_profiles')
+      .select('risk_score, recommended_actions, generated_at')
+      .eq('user_id', user.id)
+      .order('generated_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    const chartData = (trendData || []).map((row) => {
+      const strain = row.strain || 0;
+      const hrv = row.hrv_score || 0;
+      const sleep = row.sleep_efficiency || 0;
+
+      const value = strain > 15 ? strain / 100 : (100 - hrv) / 100;
+
+      let label = 'Stable';
+      let color = '#22c55e';
+
+      if (strain > 15 || hrv < 50) {
+        label = 'Elevated strain';
+        color = '#ef4444';
+      } else if (sleep < 75) {
+        label = 'Poor recovery';
+        color = '#f59e0b';
+      } else if (hrv > 70 && sleep > 85) {
+        label = 'Optimal';
+        color = '#3b82f6';
+      }
+
+      return {
+        date: row.date,
+        value: Math.min(value, 1),
+        label,
+        color,
+        strain: row.strain,
+        hrv: row.hrv_score,
+        sleep: row.sleep_efficiency,
+        rhr: row.resting_heart_rate
+      };
+    });
+
+    console.log(`[yves-tree] Returning ${chartData.length} data points`);
 
     return new Response(
-      JSON.stringify({ chart: mockData }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      JSON.stringify({
+        chart: chartData,
+        profile: profileData,
+        dataPoints: chartData.length
+      }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
     );
 
   } catch (error) {
-    console.error('Error fetching Yves Tree data:', error);
+    console.error('[yves-tree] Error:', error);
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    
+
     return new Response(
       JSON.stringify({ error: errorMessage }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

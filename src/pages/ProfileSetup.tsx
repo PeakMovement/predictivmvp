@@ -23,6 +23,19 @@ interface SectionStatus {
   mindset: boolean;
 }
 
+interface SectionTimestamp {
+  personal?: string;
+  injuries?: string;
+  lifestyle?: string;
+  interests?: string;
+  nutrition?: string;
+  training?: string;
+  medical?: string;
+  wellness?: string;
+  recovery?: string;
+  mindset?: string;
+}
+
 export const ProfileSetup = () => {
   const [currentSection, setCurrentSection] = useState("personal");
   const [sectionStatus, setSectionStatus] = useState<SectionStatus>({
@@ -37,6 +50,7 @@ export const ProfileSetup = () => {
     recovery: false,
     mindset: false,
   });
+  const [sectionTimestamps, setSectionTimestamps] = useState<SectionTimestamp>({});
 
   // Form states
   const [personalData, setPersonalData] = useState({ name: "", dob: "", gender: "", activity_level: "" });
@@ -78,6 +92,7 @@ export const ProfileSetup = () => {
       if (personal.data) {
         setPersonalData(personal.data);
         setSectionStatus(prev => ({ ...prev, personal: true }));
+        setSectionTimestamps(prev => ({ ...prev, personal: personal.data.updated_at || personal.data.created_at }));
       }
       if (injuries.data) {
         setInjuriesData({ 
@@ -85,10 +100,12 @@ export const ProfileSetup = () => {
           injury_details: JSON.stringify(injuries.data.injury_details || {})
         });
         setSectionStatus(prev => ({ ...prev, injuries: true }));
+        setSectionTimestamps(prev => ({ ...prev, injuries: injuries.data.updated_at || injuries.data.created_at }));
       }
       if (lifestyle.data) {
         setLifestyleData(lifestyle.data);
         setSectionStatus(prev => ({ ...prev, lifestyle: true }));
+        setSectionTimestamps(prev => ({ ...prev, lifestyle: lifestyle.data.updated_at || lifestyle.data.created_at }));
       }
       if (interests.data) {
         setInterestsData({
@@ -96,6 +113,7 @@ export const ProfileSetup = () => {
           interests: interests.data.interests?.join(', ') || ''
         });
         setSectionStatus(prev => ({ ...prev, interests: true }));
+        setSectionTimestamps(prev => ({ ...prev, interests: interests.data.updated_at || interests.data.created_at }));
       }
       if (nutrition.data) {
         setNutritionData({
@@ -103,6 +121,7 @@ export const ProfileSetup = () => {
           allergies: nutrition.data.allergies?.join(', ') || ''
         });
         setSectionStatus(prev => ({ ...prev, nutrition: true }));
+        setSectionTimestamps(prev => ({ ...prev, nutrition: nutrition.data.updated_at || nutrition.data.created_at }));
       }
       if (training.data) {
         setTrainingData({
@@ -110,6 +129,7 @@ export const ProfileSetup = () => {
           preferred_activities: training.data.preferred_activities?.join(', ') || ''
         });
         setSectionStatus(prev => ({ ...prev, training: true }));
+        setSectionTimestamps(prev => ({ ...prev, training: training.data.updated_at || training.data.created_at }));
       }
       if (medical.data) {
         setMedicalData({
@@ -118,6 +138,7 @@ export const ProfileSetup = () => {
           medical_notes: medical.data.medical_notes || ''
         });
         setSectionStatus(prev => ({ ...prev, medical: true }));
+        setSectionTimestamps(prev => ({ ...prev, medical: medical.data.updated_at || medical.data.created_at }));
       }
       if (wellness.data) {
         setWellnessData({
@@ -126,6 +147,7 @@ export const ProfileSetup = () => {
           priority: wellness.data.priority || ''
         });
         setSectionStatus(prev => ({ ...prev, wellness: true }));
+        setSectionTimestamps(prev => ({ ...prev, wellness: wellness.data.updated_at || wellness.data.created_at }));
       }
       if (recovery.data) {
         setRecoveryData({
@@ -134,6 +156,7 @@ export const ProfileSetup = () => {
           recovery_methods: recovery.data.recovery_methods?.join(', ') || ''
         });
         setSectionStatus(prev => ({ ...prev, recovery: true }));
+        setSectionTimestamps(prev => ({ ...prev, recovery: recovery.data.updated_at || recovery.data.created_at }));
       }
       if (mindset.data) {
         setMindsetData({
@@ -142,6 +165,7 @@ export const ProfileSetup = () => {
           stress_management: mindset.data.stress_management || ''
         });
         setSectionStatus(prev => ({ ...prev, mindset: true }));
+        setSectionTimestamps(prev => ({ ...prev, mindset: mindset.data.updated_at || mindset.data.created_at }));
       }
     } catch (error) {
       console.error("Error loading profile data:", error);
@@ -303,6 +327,7 @@ export const ProfileSetup = () => {
       }
 
       setSectionStatus(prev => ({ ...prev, [section]: true }));
+      setSectionTimestamps(prev => ({ ...prev, [section]: new Date().toISOString() }));
       toast.success("✅ Section saved successfully");
       setCurrentSection("");
     } catch (error) {
@@ -311,6 +336,17 @@ export const ProfileSetup = () => {
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const formatTimestamp = (timestamp?: string) => {
+    if (!timestamp) return null;
+    const date = new Date(timestamp);
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  };
+
+  const getStatusIcon = (status: boolean) => {
+    if (!status) return <span className="text-muted-foreground text-sm">➕</span>;
+    return currentSection ? <span className="text-primary text-sm">✏️</span> : <span className="text-green-500 text-sm">✅</span>;
   };
 
   return (
@@ -324,15 +360,23 @@ export const ProfileSetup = () => {
             </CardTitle>
             <CardDescription>Fill out each section to personalize your wellness journey</CardDescription>
           </CardHeader>
-          <CardContent>
-            <Accordion type="single" collapsible value={currentSection} onValueChange={setCurrentSection}>
+          <CardContent className="space-y-3">
+            <Accordion type="single" collapsible value={currentSection} onValueChange={setCurrentSection} className="space-y-3">
               {/* Personal Information */}
-              <AccordionItem value="personal" className="border-glass-border">
-                <AccordionTrigger className="hover:no-underline">
-                  <div className="flex items-center gap-3">
-                    <User className="h-5 w-5 text-primary" />
-                    <span>Personal Information</span>
-                    {sectionStatus.personal && <Check className="h-5 w-5 text-green-500 ml-2" />}
+              <AccordionItem 
+                value="personal" 
+                className="border-glass-border bg-gradient-to-br from-background/50 to-background/30 backdrop-blur-sm rounded-lg px-4 transition-all duration-300 hover:shadow-lg"
+              >
+                <AccordionTrigger className="hover:no-underline py-4">
+                  <div className="flex items-center justify-between w-full pr-4">
+                    <div className="flex items-center gap-3">
+                      <User className="h-5 w-5 text-primary" />
+                      <span className="font-medium">Personal Information</span>
+                    </div>
+                    <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                      {sectionTimestamps.personal && <span>{formatTimestamp(sectionTimestamps.personal)}</span>}
+                      {getStatusIcon(sectionStatus.personal)}
+                    </div>
                   </div>
                 </AccordionTrigger>
                 <AccordionContent>
@@ -375,12 +419,20 @@ export const ProfileSetup = () => {
               </AccordionItem>
 
               {/* Injury History */}
-              <AccordionItem value="injuries" className="border-glass-border">
-                <AccordionTrigger className="hover:no-underline">
-                  <div className="flex items-center gap-3">
-                    <AlertCircle className="h-5 w-5 text-primary" />
-                    <span>Injury History</span>
-                    {sectionStatus.injuries && <Check className="h-5 w-5 text-green-500 ml-2" />}
+              <AccordionItem 
+                value="injuries" 
+                className="border-glass-border bg-gradient-to-br from-background/50 to-background/30 backdrop-blur-sm rounded-lg px-4 transition-all duration-300 hover:shadow-lg"
+              >
+                <AccordionTrigger className="hover:no-underline py-4">
+                  <div className="flex items-center justify-between w-full pr-4">
+                    <div className="flex items-center gap-3">
+                      <AlertCircle className="h-5 w-5 text-primary" />
+                      <span className="font-medium">Injury History</span>
+                    </div>
+                    <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                      {sectionTimestamps.injuries && <span>{formatTimestamp(sectionTimestamps.injuries)}</span>}
+                      {getStatusIcon(sectionStatus.injuries)}
+                    </div>
                   </div>
                 </AccordionTrigger>
                 <AccordionContent>
@@ -401,12 +453,20 @@ export const ProfileSetup = () => {
               </AccordionItem>
 
               {/* Lifestyle & Routine */}
-              <AccordionItem value="lifestyle" className="border-glass-border">
-                <AccordionTrigger className="hover:no-underline">
-                  <div className="flex items-center gap-3">
-                    <Coffee className="h-5 w-5 text-primary" />
-                    <span>Lifestyle & Routine</span>
-                    {sectionStatus.lifestyle && <Check className="h-5 w-5 text-green-500 ml-2" />}
+              <AccordionItem 
+                value="lifestyle" 
+                className="border-glass-border bg-gradient-to-br from-background/50 to-background/30 backdrop-blur-sm rounded-lg px-4 transition-all duration-300 hover:shadow-lg"
+              >
+                <AccordionTrigger className="hover:no-underline py-4">
+                  <div className="flex items-center justify-between w-full pr-4">
+                    <div className="flex items-center gap-3">
+                      <Coffee className="h-5 w-5 text-primary" />
+                      <span className="font-medium">Lifestyle & Routine</span>
+                    </div>
+                    <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                      {sectionTimestamps.lifestyle && <span>{formatTimestamp(sectionTimestamps.lifestyle)}</span>}
+                      {getStatusIcon(sectionStatus.lifestyle)}
+                    </div>
                   </div>
                 </AccordionTrigger>
                 <AccordionContent>
@@ -438,12 +498,20 @@ export const ProfileSetup = () => {
               </AccordionItem>
 
               {/* Interests & Hobbies */}
-              <AccordionItem value="interests" className="border-glass-border">
-                <AccordionTrigger className="hover:no-underline">
-                  <div className="flex items-center gap-3">
-                    <Heart className="h-5 w-5 text-primary" />
-                    <span>Interests & Hobbies</span>
-                    {sectionStatus.interests && <Check className="h-5 w-5 text-green-500 ml-2" />}
+              <AccordionItem 
+                value="interests" 
+                className="border-glass-border bg-gradient-to-br from-background/50 to-background/30 backdrop-blur-sm rounded-lg px-4 transition-all duration-300 hover:shadow-lg"
+              >
+                <AccordionTrigger className="hover:no-underline py-4">
+                  <div className="flex items-center justify-between w-full pr-4">
+                    <div className="flex items-center gap-3">
+                      <Heart className="h-5 w-5 text-primary" />
+                      <span className="font-medium">Interests & Hobbies</span>
+                    </div>
+                    <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                      {sectionTimestamps.interests && <span>{formatTimestamp(sectionTimestamps.interests)}</span>}
+                      {getStatusIcon(sectionStatus.interests)}
+                    </div>
                   </div>
                 </AccordionTrigger>
                 <AccordionContent>
@@ -464,12 +532,20 @@ export const ProfileSetup = () => {
               </AccordionItem>
 
               {/* Nutrition Habits */}
-              <AccordionItem value="nutrition" className="border-glass-border">
-                <AccordionTrigger className="hover:no-underline">
-                  <div className="flex items-center gap-3">
-                    <HeartPulse className="h-5 w-5 text-primary" />
-                    <span>Nutrition Habits</span>
-                    {sectionStatus.nutrition && <Check className="h-5 w-5 text-green-500 ml-2" />}
+              <AccordionItem 
+                value="nutrition" 
+                className="border-glass-border bg-gradient-to-br from-background/50 to-background/30 backdrop-blur-sm rounded-lg px-4 transition-all duration-300 hover:shadow-lg"
+              >
+                <AccordionTrigger className="hover:no-underline py-4">
+                  <div className="flex items-center justify-between w-full pr-4">
+                    <div className="flex items-center gap-3">
+                      <HeartPulse className="h-5 w-5 text-primary" />
+                      <span className="font-medium">Nutrition Habits</span>
+                    </div>
+                    <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                      {sectionTimestamps.nutrition && <span>{formatTimestamp(sectionTimestamps.nutrition)}</span>}
+                      {getStatusIcon(sectionStatus.nutrition)}
+                    </div>
                   </div>
                 </AccordionTrigger>
                 <AccordionContent>
@@ -494,12 +570,20 @@ export const ProfileSetup = () => {
               </AccordionItem>
 
               {/* Training Preferences */}
-              <AccordionItem value="training" className="border-glass-border">
-                <AccordionTrigger className="hover:no-underline">
-                  <div className="flex items-center gap-3">
-                    <Activity className="h-5 w-5 text-primary" />
-                    <span>Training Preferences</span>
-                    {sectionStatus.training && <Check className="h-5 w-5 text-green-500 ml-2" />}
+              <AccordionItem 
+                value="training" 
+                className="border-glass-border bg-gradient-to-br from-background/50 to-background/30 backdrop-blur-sm rounded-lg px-4 transition-all duration-300 hover:shadow-lg"
+              >
+                <AccordionTrigger className="hover:no-underline py-4">
+                  <div className="flex items-center justify-between w-full pr-4">
+                    <div className="flex items-center gap-3">
+                      <Activity className="h-5 w-5 text-primary" />
+                      <span className="font-medium">Training Preferences</span>
+                    </div>
+                    <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                      {sectionTimestamps.training && <span>{formatTimestamp(sectionTimestamps.training)}</span>}
+                      {getStatusIcon(sectionStatus.training)}
+                    </div>
                   </div>
                 </AccordionTrigger>
                 <AccordionContent>
@@ -540,12 +624,20 @@ export const ProfileSetup = () => {
               </AccordionItem>
 
               {/* Medical Background */}
-              <AccordionItem value="medical" className="border-glass-border">
-                <AccordionTrigger className="hover:no-underline">
-                  <div className="flex items-center gap-3">
-                    <Stethoscope className="h-5 w-5 text-primary" />
-                    <span>Medical Background</span>
-                    {sectionStatus.medical && <Check className="h-5 w-5 text-green-500 ml-2" />}
+              <AccordionItem 
+                value="medical" 
+                className="border-glass-border bg-gradient-to-br from-background/50 to-background/30 backdrop-blur-sm rounded-lg px-4 transition-all duration-300 hover:shadow-lg"
+              >
+                <AccordionTrigger className="hover:no-underline py-4">
+                  <div className="flex items-center justify-between w-full pr-4">
+                    <div className="flex items-center gap-3">
+                      <Stethoscope className="h-5 w-5 text-primary" />
+                      <span className="font-medium">Medical Background</span>
+                    </div>
+                    <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                      {sectionTimestamps.medical && <span>{formatTimestamp(sectionTimestamps.medical)}</span>}
+                      {getStatusIcon(sectionStatus.medical)}
+                    </div>
                   </div>
                 </AccordionTrigger>
                 <AccordionContent>
@@ -570,12 +662,20 @@ export const ProfileSetup = () => {
               </AccordionItem>
 
               {/* Wellness Goals */}
-              <AccordionItem value="wellness" className="border-glass-border">
-                <AccordionTrigger className="hover:no-underline">
-                  <div className="flex items-center gap-3">
-                    <Trophy className="h-5 w-5 text-primary" />
-                    <span>Wellness Goals</span>
-                    {sectionStatus.wellness && <Check className="h-5 w-5 text-green-500 ml-2" />}
+              <AccordionItem 
+                value="wellness" 
+                className="border-glass-border bg-gradient-to-br from-background/50 to-background/30 backdrop-blur-sm rounded-lg px-4 transition-all duration-300 hover:shadow-lg"
+              >
+                <AccordionTrigger className="hover:no-underline py-4">
+                  <div className="flex items-center justify-between w-full pr-4">
+                    <div className="flex items-center gap-3">
+                      <Trophy className="h-5 w-5 text-primary" />
+                      <span className="font-medium">Wellness Goals</span>
+                    </div>
+                    <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                      {sectionTimestamps.wellness && <span>{formatTimestamp(sectionTimestamps.wellness)}</span>}
+                      {getStatusIcon(sectionStatus.wellness)}
+                    </div>
                   </div>
                 </AccordionTrigger>
                 <AccordionContent>
@@ -607,12 +707,20 @@ export const ProfileSetup = () => {
               </AccordionItem>
 
               {/* Recovery & Sleep */}
-              <AccordionItem value="recovery" className="border-glass-border">
-                <AccordionTrigger className="hover:no-underline">
-                  <div className="flex items-center gap-3">
-                    <Moon className="h-5 w-5 text-primary" />
-                    <span>Recovery & Sleep</span>
-                    {sectionStatus.recovery && <Check className="h-5 w-5 text-green-500 ml-2" />}
+              <AccordionItem 
+                value="recovery" 
+                className="border-glass-border bg-gradient-to-br from-background/50 to-background/30 backdrop-blur-sm rounded-lg px-4 transition-all duration-300 hover:shadow-lg"
+              >
+                <AccordionTrigger className="hover:no-underline py-4">
+                  <div className="flex items-center justify-between w-full pr-4">
+                    <div className="flex items-center gap-3">
+                      <Moon className="h-5 w-5 text-primary" />
+                      <span className="font-medium">Recovery & Sleep</span>
+                    </div>
+                    <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                      {sectionTimestamps.recovery && <span>{formatTimestamp(sectionTimestamps.recovery)}</span>}
+                      {getStatusIcon(sectionStatus.recovery)}
+                    </div>
                   </div>
                 </AccordionTrigger>
                 <AccordionContent>
@@ -645,12 +753,20 @@ export const ProfileSetup = () => {
               </AccordionItem>
 
               {/* Mindset & Motivation */}
-              <AccordionItem value="mindset" className="border-glass-border">
-                <AccordionTrigger className="hover:no-underline">
-                  <div className="flex items-center gap-3">
-                    <Brain className="h-5 w-5 text-primary" />
-                    <span>Mindset & Motivation</span>
-                    {sectionStatus.mindset && <Check className="h-5 w-5 text-green-500 ml-2" />}
+              <AccordionItem 
+                value="mindset" 
+                className="border-glass-border bg-gradient-to-br from-background/50 to-background/30 backdrop-blur-sm rounded-lg px-4 transition-all duration-300 hover:shadow-lg"
+              >
+                <AccordionTrigger className="hover:no-underline py-4">
+                  <div className="flex items-center justify-between w-full pr-4">
+                    <div className="flex items-center gap-3">
+                      <Brain className="h-5 w-5 text-primary" />
+                      <span className="font-medium">Mindset & Motivation</span>
+                    </div>
+                    <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                      {sectionTimestamps.mindset && <span>{formatTimestamp(sectionTimestamps.mindset)}</span>}
+                      {getStatusIcon(sectionStatus.mindset)}
+                    </div>
                   </div>
                 </AccordionTrigger>
                 <AccordionContent>

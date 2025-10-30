@@ -6,6 +6,9 @@ verify_jwt = true
 [functions.oura-auth]
 verify_jwt = false
 
+[functions.fetch-oura-auto]
+verify_jwt = false
+
 [functions.lovable-ai-credits]
 verify_jwt = true
 

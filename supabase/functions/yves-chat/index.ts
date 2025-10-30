@@ -17,7 +17,7 @@ Deno.serve(async (req) => {
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // ─── AUTH VALIDATION ───────────────────────────────────────────────────────
+    // ─── AUTH ────────────────────────────────────────────────────────────────
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
       return new Response(JSON.stringify({ error: "No authorization header" }), {
@@ -39,7 +39,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    // ─── PARSE BODY ───────────────────────────────────────────────────────────
+    // ─── INPUT ───────────────────────────────────────────────────────────────
     const { query } = await req.json();
     if (!query || typeof query !== "string") {
       return new Response(JSON.stringify({ error: "Query is required" }), {
@@ -50,7 +50,7 @@ Deno.serve(async (req) => {
 
     console.log(`[yves-chat] Processing query for user ${user.id}`);
 
-    // ─── LOAD CONTEXT DATA ────────────────────────────────────────────────────
+    // ─── LOAD USER CONTEXT ───────────────────────────────────────────────────
     const { data: userContext } = await supabase
       .from("user_context_enhanced")
       .select("*")
@@ -65,14 +65,35 @@ Deno.serve(async (req) => {
       .limit(1)
       .maybeSingle();
 
-    // 🔹 NEW: Fetch user_profile questionnaire data
     const { data: userProfile } = await supabase
       .from("user_profile")
       .select("goals, activity_level, injuries, notes")
       .eq("user_id", user.id)
       .maybeSingle();
 
-    // ─── BUILD CONTEXT PROMPT ─────────────────────────────────────────────────
+    // ─── LOAD RECENT CONVERSATION HISTORY (last 5) ────────────────────────────
+    const { data: recentHistory } = await supabase
+      .from("insight_history")
+      .select("query, response")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false })
+      .limit(5);
+
+    const conversationHistory = recentHistory?.length
+      ? recentHistory.map((h) => `User: ${h.query}\nYves: ${h.response}`).join("\n\n")
+      : "No prior conversation history found.";
+
+    // ─── LOAD LONG-TERM MEMORY BANK ──────────────────────────────────────────
+    const { data: memoryBank } = await supabase
+      .from("yves_memory_bank")
+      .select("memory_key, memory_value")
+      .eq("user_id", user.id);
+
+    const memoryContext = memoryBank?.length
+      ? memoryBank.map((m) => `${m.memory_key}: ${m.memory_value}`).join("\n")
+      : "No long-term memory stored yet.";
+
+    // ─── BUILD PROMPT CONTEXT ────────────────────────────────────────────────
     const contextInfo = `
 USER PROFILE CONTEXT:
 Goals: ${userProfile?.goals || "Not provided"}
@@ -88,6 +109,12 @@ Training Profile: ${JSON.stringify(userContext?.training_profile || {}, null, 2)
 HEALTH PROFILE:
 ${healthProfile?.ai_synthesis || "No comprehensive health profile available yet."}
 
+RECENT CONVERSATION HISTORY:
+${conversationHistory}
+
+LONG-TERM MEMORY:
+${memoryContext}
+
 USER QUESTION:
 ${query}
 `;
@@ -101,12 +128,10 @@ ${query}
         messages: [
           {
             role: "system",
-            content: `You are Yves, an AI health intelligence coach for the Predictiv platform. 
-You provide personalized, actionable advice based on the user's complete health context including 
-their training program, nutrition plan, medical conditions, current metrics, and personal preferences.
-Be conversational but professional. Provide specific, actionable recommendations. 
-Reference their specific health data when relevant. 
-If you don't have enough context to give specific advice, ask clarifying questions.`,
+            content: `You are Yves, an AI health intelligence coach for the Predictiv platform.
+You provide personalized, actionable advice using all available context (profile, history, memory).
+If new permanent facts arise (preferences, chronic conditions, long-term goals),
+suggest saving them with memory_key and memory_value so they can be stored via yves-memory-update.`,
           },
           { role: "user", content: contextInfo },
         ],
@@ -150,6 +175,7 @@ If you don't have enough context to give specific advice, ask clarifying questio
 
     const response = aiResponse.content || "I apologize, but I was unable to generate a response. Please try again.";
 
+    // ─── STORE INSIGHT HISTORY ───────────────────────────────────────────────
     await supabase.from("insight_history").insert({
       user_id: user.id,
       query,
@@ -157,6 +183,10 @@ If you don't have enough context to give specific advice, ask clarifying questio
     });
 
     console.log(`[yves-chat] Response generated and saved for user ${user.id}`);
+
+    // ─── OPTIONAL: MEMORY AUTO-CAPTURE (scaffold) ─────────────────────────────
+    // Future extension: parse AI metadata for new memory entries
+    // await supabase.rpc('update_yves_memory', { user_id: user.id, ... })
 
     return new Response(JSON.stringify({ success: true, response }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },

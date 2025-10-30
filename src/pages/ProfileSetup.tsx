@@ -298,7 +298,7 @@ export const ProfileSetup = () => {
                       </Select>
                     </div>
                     <Button type="submit" disabled={isSubmitting} className="w-full">
-                      {isSubmitting ? "Saving..." : "Save Section"}
+                      {isSubmitting ? "Saving..." : sectionStatus.personal ? "Update Section" : "Save Section"}
                     </Button>
                   </form>
                 </AccordionContent>
@@ -324,7 +324,7 @@ export const ProfileSetup = () => {
                       <Textarea id="injury_details" value={injuriesData.injury_details} onChange={(e) => setInjuriesData({ ...injuriesData, injury_details: e.target.value })} placeholder='{"knee": "2023-01"}' />
                     </div>
                     <Button type="submit" disabled={isSubmitting} className="w-full">
-                      {isSubmitting ? "Saving..." : "Save Section"}
+                      {isSubmitting ? "Saving..." : sectionStatus.injuries ? "Update Section" : "Save Section"}
                     </Button>
                   </form>
                 </AccordionContent>
@@ -361,7 +361,7 @@ export const ProfileSetup = () => {
                       </Select>
                     </div>
                     <Button type="submit" disabled={isSubmitting} className="w-full">
-                      {isSubmitting ? "Saving..." : "Save Section"}
+                      {isSubmitting ? "Saving..." : sectionStatus.lifestyle ? "Update Section" : "Save Section"}
                     </Button>
                   </form>
                 </AccordionContent>
@@ -387,7 +387,7 @@ export const ProfileSetup = () => {
                       <Input id="interests" value={interestsData.interests} onChange={(e) => setInterestsData({ ...interestsData, interests: e.target.value })} placeholder="e.g., Technology, Nature, Art" />
                     </div>
                     <Button type="submit" disabled={isSubmitting} className="w-full">
-                      {isSubmitting ? "Saving..." : "Save Section"}
+                      {isSubmitting ? "Saving..." : sectionStatus.interests ? "Update Section" : "Save Section"}
                     </Button>
                   </form>
                 </AccordionContent>
@@ -417,7 +417,7 @@ export const ProfileSetup = () => {
                       <Input id="eating_pattern" value={nutritionData.eating_pattern} onChange={(e) => setNutritionData({ ...nutritionData, eating_pattern: e.target.value })} placeholder="e.g., 3 meals, Intermittent fasting" />
                     </div>
                     <Button type="submit" disabled={isSubmitting} className="w-full">
-                      {isSubmitting ? "Saving..." : "Save Section"}
+                      {isSubmitting ? "Saving..." : sectionStatus.nutrition ? "Update Section" : "Save Section"}
                     </Button>
                   </form>
                 </AccordionContent>
@@ -463,7 +463,7 @@ export const ProfileSetup = () => {
                       </Select>
                     </div>
                     <Button type="submit" disabled={isSubmitting} className="w-full">
-                      {isSubmitting ? "Saving..." : "Save Section"}
+                      {isSubmitting ? "Saving..." : sectionStatus.training ? "Update Section" : "Save Section"}
                     </Button>
                   </form>
                 </AccordionContent>
@@ -493,7 +493,7 @@ export const ProfileSetup = () => {
                       <Textarea id="medical_notes" value={medicalData.medical_notes} onChange={(e) => setMedicalData({ ...medicalData, medical_notes: e.target.value })} placeholder="Any additional medical information" />
                     </div>
                     <Button type="submit" disabled={isSubmitting} className="w-full">
-                      {isSubmitting ? "Saving..." : "Save Section"}
+                      {isSubmitting ? "Saving..." : sectionStatus.medical ? "Update Section" : "Save Section"}
                     </Button>
                   </form>
                 </AccordionContent>
@@ -530,7 +530,7 @@ export const ProfileSetup = () => {
                       </Select>
                     </div>
                     <Button type="submit" disabled={isSubmitting} className="w-full">
-                      {isSubmitting ? "Saving..." : "Save Section"}
+                      {isSubmitting ? "Saving..." : sectionStatus.wellness ? "Update Section" : "Save Section"}
                     </Button>
                   </form>
                 </AccordionContent>
@@ -568,7 +568,7 @@ export const ProfileSetup = () => {
                       <Input id="recovery_methods" value={recoveryData.recovery_methods} onChange={(e) => setRecoveryData({ ...recoveryData, recovery_methods: e.target.value })} placeholder="e.g., Stretching, Massage, Ice baths" />
                     </div>
                     <Button type="submit" disabled={isSubmitting} className="w-full">
-                      {isSubmitting ? "Saving..." : "Save Section"}
+                      {isSubmitting ? "Saving..." : sectionStatus.recovery ? "Update Section" : "Save Section"}
                     </Button>
                   </form>
                 </AccordionContent>
@@ -598,7 +598,7 @@ export const ProfileSetup = () => {
                       <Textarea id="stress_management" value={mindsetData.stress_management} onChange={(e) => setMindsetData({ ...mindsetData, stress_management: e.target.value })} placeholder="e.g., Meditation, Exercise, Journaling" />
                     </div>
                     <Button type="submit" disabled={isSubmitting} className="w-full">
-                      {isSubmitting ? "Saving..." : "Save Section"}
+                      {isSubmitting ? "Saving..." : sectionStatus.mindset ? "Update Section" : "Save Section"}
                     </Button>
                   </form>
                 </AccordionContent>

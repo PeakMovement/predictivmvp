@@ -232,6 +232,76 @@ export const ProfileSetup = () => {
 
       if (error) throw error;
 
+      // Update Yves memory bank
+      const memoryKeyMap: Record<keyof SectionStatus, string> = {
+        personal: "personal_info",
+        injuries: "injury_history",
+        lifestyle: "lifestyle_profile",
+        interests: "interests_hobbies",
+        nutrition: "nutrition_habits",
+        training: "training_preferences",
+        medical: "medical_background",
+        wellness: "wellness_goals",
+        recovery: "recovery_sleep",
+        mindset: "mindset_motivation"
+      };
+
+      const memoryValueMap: Record<keyof SectionStatus, any> = {
+        personal: personalData,
+        injuries: {
+          injuries: injuriesData.injuries.split(',').map(i => i.trim()).filter(Boolean),
+          injury_details: injuriesData.injury_details ? JSON.parse(injuriesData.injury_details) : {}
+        },
+        lifestyle: lifestyleData,
+        interests: {
+          hobbies: interestsData.hobbies.split(',').map(h => h.trim()).filter(Boolean),
+          interests: interestsData.interests.split(',').map(i => i.trim()).filter(Boolean)
+        },
+        nutrition: {
+          diet_type: nutritionData.diet_type,
+          allergies: nutritionData.allergies.split(',').map(a => a.trim()).filter(Boolean),
+          eating_pattern: nutritionData.eating_pattern
+        },
+        training: {
+          preferred_activities: trainingData.preferred_activities.split(',').map(a => a.trim()).filter(Boolean),
+          training_frequency: trainingData.training_frequency,
+          intensity_preference: trainingData.intensity_preference
+        },
+        medical: {
+          conditions: medicalData.conditions.split(',').map(c => c.trim()).filter(Boolean),
+          medications: medicalData.medications.split(',').map(m => m.trim()).filter(Boolean),
+          medical_notes: medicalData.medical_notes
+        },
+        wellness: {
+          goals: wellnessData.goals.split(',').map(g => g.trim()).filter(Boolean),
+          target_date: wellnessData.target_date,
+          priority: wellnessData.priority
+        },
+        recovery: {
+          sleep_hours: recoveryData.sleep_hours ? parseFloat(recoveryData.sleep_hours) : null,
+          sleep_quality: recoveryData.sleep_quality,
+          recovery_methods: recoveryData.recovery_methods.split(',').map(r => r.trim()).filter(Boolean)
+        },
+        mindset: {
+          motivation_factors: mindsetData.motivation_factors.split(',').map(m => m.trim()).filter(Boolean),
+          mental_health_focus: mindsetData.mental_health_focus,
+          stress_management: mindsetData.stress_management
+        }
+      };
+
+      try {
+        await supabase.functions.invoke('yves-memory-update', {
+          body: {
+            user_id: user.id,
+            memory_key: memoryKeyMap[section],
+            memory_value: JSON.stringify(memoryValueMap[section])
+          }
+        });
+      } catch (memoryError) {
+        console.error("Failed to update Yves memory:", memoryError);
+        // Don't fail the save if memory update fails
+      }
+
       setSectionStatus(prev => ({ ...prev, [section]: true }));
       toast.success("✅ Section saved successfully");
       setCurrentSection("");

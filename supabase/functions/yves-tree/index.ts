@@ -38,7 +38,7 @@ Deno.serve(async (req) => {
 
     const { data: trendData, error: trendError } = await supabase
       .from('fitbit_trends')
-      .select('date, strain, hrv_score, sleep_efficiency, resting_heart_rate')
+      .select('date, strain, hrv, sleep_score')
       .eq('user_id', user.id)
       .order('date', { ascending: true })
       .limit(30);
@@ -57,8 +57,8 @@ Deno.serve(async (req) => {
 
     const chartData = (trendData || []).map((row) => {
       const strain = row.strain || 0;
-      const hrv = row.hrv_score || 0;
-      const sleep = row.sleep_efficiency || 0;
+      const hrv = row.hrv || 0;
+      const sleep = row.sleep_score || 0;
 
       const value = strain > 15 ? strain / 100 : (100 - hrv) / 100;
 
@@ -82,9 +82,8 @@ Deno.serve(async (req) => {
         label,
         color,
         strain: row.strain,
-        hrv: row.hrv_score,
-        sleep: row.sleep_efficiency,
-        rhr: row.resting_heart_rate
+        hrv: row.hrv,
+        sleep: row.sleep_score
       };
     });
 

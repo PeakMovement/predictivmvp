@@ -261,51 +261,6 @@ export type Database = {
         }
         Relationships: []
       }
-      fitbit_data: {
-        Row: {
-          data: Json
-          fetched_at: string
-          id: string
-          user_id: string | null
-        }
-        Insert: {
-          data: Json
-          fetched_at: string
-          id?: string
-          user_id?: string | null
-        }
-        Update: {
-          data?: Json
-          fetched_at?: string
-          id?: string
-          user_id?: string | null
-        }
-        Relationships: []
-      }
-      fitbit_sleep: {
-        Row: {
-          date: string
-          fetched_at: string | null
-          heart_data: Json | null
-          id: string
-          sleep_data: Json | null
-        }
-        Insert: {
-          date: string
-          fetched_at?: string | null
-          heart_data?: Json | null
-          id?: string
-          sleep_data?: Json | null
-        }
-        Update: {
-          date?: string
-          fetched_at?: string | null
-          heart_data?: Json | null
-          id?: string
-          sleep_data?: Json | null
-        }
-        Relationships: []
-      }
       fitbit_tokens: {
         Row: {
           access_token: string
@@ -390,51 +345,6 @@ export type Database = {
           strain?: number | null
           training_load?: number | null
           user_id?: string
-        }
-        Relationships: []
-      }
-      fitbit_trends_backup: {
-        Row: {
-          acute_load: number | null
-          acwr: number | null
-          chronic_load: number | null
-          created_at: string | null
-          date: string | null
-          ewma: number | null
-          hrv: number | null
-          id: string | null
-          monotony: number | null
-          strain: number | null
-          training_load: number | null
-          user_id: string | null
-        }
-        Insert: {
-          acute_load?: number | null
-          acwr?: number | null
-          chronic_load?: number | null
-          created_at?: string | null
-          date?: string | null
-          ewma?: number | null
-          hrv?: number | null
-          id?: string | null
-          monotony?: number | null
-          strain?: number | null
-          training_load?: number | null
-          user_id?: string | null
-        }
-        Update: {
-          acute_load?: number | null
-          acwr?: number | null
-          chronic_load?: number | null
-          created_at?: string | null
-          date?: string | null
-          ewma?: number | null
-          hrv?: number | null
-          id?: string | null
-          monotony?: number | null
-          strain?: number | null
-          training_load?: number | null
-          user_id?: string | null
         }
         Relationships: []
       }
@@ -870,60 +780,6 @@ export type Database = {
         }
         Relationships: []
       }
-      user_fitbit_data: {
-        Row: {
-          calories: number | null
-          collected_at: string | null
-          distance: number | null
-          heart_rate: number | null
-          hrv: number | null
-          id: string
-          readiness_score: number | null
-          resting_hr: number | null
-          sleep_duration: number | null
-          sleep_efficiency: number | null
-          source: string | null
-          spo2: number | null
-          steps: number | null
-          training_load: number | null
-          user_id: string | null
-        }
-        Insert: {
-          calories?: number | null
-          collected_at?: string | null
-          distance?: number | null
-          heart_rate?: number | null
-          hrv?: number | null
-          id?: string
-          readiness_score?: number | null
-          resting_hr?: number | null
-          sleep_duration?: number | null
-          sleep_efficiency?: number | null
-          source?: string | null
-          spo2?: number | null
-          steps?: number | null
-          training_load?: number | null
-          user_id?: string | null
-        }
-        Update: {
-          calories?: number | null
-          collected_at?: string | null
-          distance?: number | null
-          heart_rate?: number | null
-          hrv?: number | null
-          id?: string
-          readiness_score?: number | null
-          resting_hr?: number | null
-          sleep_duration?: number | null
-          sleep_efficiency?: number | null
-          source?: string | null
-          spo2?: number | null
-          steps?: number | null
-          training_load?: number | null
-          user_id?: string | null
-        }
-        Relationships: []
-      }
       user_health_profiles: {
         Row: {
           ai_synthesis: string | null
@@ -1261,41 +1117,6 @@ export type Database = {
         }
         Relationships: []
       }
-      fitbit_daily_summary: {
-        Row: {
-          avg_hr: number | null
-          calories: number | null
-          date: string | null
-          distance: number | null
-          email: string | null
-          floors: number | null
-          sleep_hours: number | null
-          steps: number | null
-          user_id: string | null
-        }
-        Relationships: []
-      }
-      fitbit_dashboard: {
-        Row: {
-          activity: Json | null
-          fetched_at: string | null
-          sleep: Json | null
-          user_id: string | null
-        }
-        Insert: {
-          activity?: Json | null
-          fetched_at?: string | null
-          sleep?: Json | null
-          user_id?: string | null
-        }
-        Update: {
-          activity?: Json | null
-          fetched_at?: string | null
-          sleep?: Json | null
-          user_id?: string | null
-        }
-        Relationships: []
-      }
       insight_engagement_summary: {
         Row: {
           engagement_rate: number | null
@@ -1329,20 +1150,6 @@ export type Database = {
           risk_status?: string | null
           suggestion?: never
           updated_at?: string | null
-        }
-        Relationships: []
-      }
-      user_training_metrics: {
-        Row: {
-          acute_load: number | null
-          acwr: number | null
-          acwr_status: string | null
-          chronic_load: number | null
-          daily_load: number | null
-          day: string | null
-          fatigue_index: number | null
-          readiness_score_est: number | null
-          user_id: string | null
         }
         Relationships: []
       }

@@ -142,3 +142,33 @@ export async function updateUserContext(updates: {
     throw error;
   }
 }
+
+export async function getYvesRecommendations(limit: number = 10): Promise<any[]> {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('Not authenticated');
+
+  const { data, error } = await supabase
+    .from('yves_recommendations')
+    .select('*')
+    .eq('user_id', user.id)
+    .order('created_at', { ascending: false })
+    .limit(limit);
+
+  if (error) throw error;
+  return data || [];
+}
+
+export async function updateRecommendationFeedback(
+  recommendationId: string,
+  feedbackScore: number
+): Promise<void> {
+  const { error } = await supabase
+    .from('yves_recommendations')
+    .update({ 
+      feedback_score: feedbackScore,
+      acknowledged_at: new Date().toISOString()
+    })
+    .eq('id', recommendationId);
+
+  if (error) throw error;
+}

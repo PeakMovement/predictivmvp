@@ -156,6 +156,54 @@ export type Database = {
           },
         ]
       }
+      document_processing_log: {
+        Row: {
+          completed_at: string | null
+          document_id: string
+          error_message: string | null
+          id: string
+          processing_steps: Json | null
+          started_at: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          document_id: string
+          error_message?: string | null
+          id?: string
+          processing_steps?: Json | null
+          started_at?: string
+          status: string
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          document_id?: string
+          error_message?: string | null
+          id?: string
+          processing_steps?: Json | null
+          started_at?: string
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "document_processing_log_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "user_documents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_document"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "user_documents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       feedback: {
         Row: {
           action_taken: string | null
@@ -1163,6 +1211,42 @@ export type Database = {
           reasoning?: string | null
           risk_status?: string | null
           updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      yves_recommendations: {
+        Row: {
+          acknowledged_at: string | null
+          category: string
+          created_at: string
+          feedback_score: number | null
+          id: string
+          priority: string | null
+          recommendation_text: string
+          source: string | null
+          user_id: string
+        }
+        Insert: {
+          acknowledged_at?: string | null
+          category: string
+          created_at?: string
+          feedback_score?: number | null
+          id?: string
+          priority?: string | null
+          recommendation_text: string
+          source?: string | null
+          user_id: string
+        }
+        Update: {
+          acknowledged_at?: string | null
+          category?: string
+          created_at?: string
+          feedback_score?: number | null
+          id?: string
+          priority?: string | null
+          recommendation_text?: string
+          source?: string | null
           user_id?: string
         }
         Relationships: []

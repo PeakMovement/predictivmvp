@@ -22,6 +22,18 @@ Deno.serve(async (req) => {
 
     console.log(`[analyze-document] Analyzing document ${documentId} for user ${userId}, type: ${documentType}, content length: ${fileContent?.length}`);
 
+    // Create processing log entry
+    const { data: logEntry } = await supabase
+      .from('document_processing_log')
+      .insert({
+        user_id: userId,
+        document_id: documentId,
+        status: 'processing',
+        processing_steps: [{ step: 'started', timestamp: new Date().toISOString() }]
+      })
+      .select()
+      .single();
+
     await supabase
       .from('user_documents')
       .update({ processing_status: 'processing' })
@@ -183,6 +195,19 @@ Deno.serve(async (req) => {
 
     console.log(`[analyze-document] Document analysis completed for ${documentId}`);
 
+    // Update processing log with analysis step
+    if (logEntry) {
+      await supabase
+        .from('document_processing_log')
+        .update({
+          processing_steps: [
+            ...(logEntry.processing_steps || []),
+            { step: 'analysis_complete', timestamp: new Date().toISOString() }
+          ]
+        })
+        .eq('id', logEntry.id);
+    }
+
     try {
       await fetch(`${supabaseUrl}/functions/v1/build-health-profile`, {
         method: 'POST',
@@ -193,8 +218,90 @@ Deno.serve(async (req) => {
         body: JSON.stringify({ userId })
       });
       console.log('[analyze-document] Health profile rebuild triggered');
+
+      // Update processing log with profile rebuild step
+      if (logEntry) {
+        await supabase
+          .from('document_processing_log')
+          .update({
+            processing_steps: [
+              ...(logEntry.processing_steps || []),
+              { step: 'profile_rebuild_triggered', timestamp: new Date().toISOString() }
+            ]
+          })
+          .eq('id', logEntry.id);
+      }
     } catch (profileError) {
       console.error('[analyze-document] Failed to trigger profile rebuild:', profileError);
+    }
+
+    // Generate recommendations based on document type
+    try {
+      const recommendationPrompt = `Based on this ${documentType} document analysis, generate 3 actionable recommendations for the user:\n${JSON.stringify(insightData)}`;
+      
+      const recommendationResponse = await ai.chat({
+        messages: [
+          { role: 'system', content: 'You are a health coach generating actionable recommendations.' },
+          { role: 'user', content: recommendationPrompt }
+        ],
+        tools: [{
+          type: "function",
+          function: {
+            name: "generate_recommendations",
+            description: "Generate personalized health recommendations",
+            parameters: {
+              type: "object",
+              properties: {
+                recommendations: {
+                  type: "array",
+                  items: {
+                    type: "object",
+                    properties: {
+                      text: { type: "string" },
+                      priority: { type: "string", enum: ["low", "medium", "high"] }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }],
+        toolChoice: { type: "function", function: { name: "generate_recommendations" } }
+      });
+
+      if (recommendationResponse.toolCalls && recommendationResponse.toolCalls.length > 0) {
+        const recommendations = JSON.parse(recommendationResponse.toolCalls[0].arguments).recommendations;
+        
+        for (const rec of recommendations) {
+          await supabase
+            .from('yves_recommendations')
+            .insert({
+              user_id: userId,
+              recommendation_text: rec.text,
+              category: documentType,
+              priority: rec.priority || 'medium',
+              source: 'document_analysis'
+            });
+        }
+        console.log(`[analyze-document] Generated ${recommendations.length} recommendations`);
+      }
+    } catch (recError) {
+      console.error('[analyze-document] Failed to generate recommendations:', recError);
+    }
+
+    // Mark processing as complete
+    if (logEntry) {
+      await supabase
+        .from('document_processing_log')
+        .update({
+          status: 'completed',
+          completed_at: new Date().toISOString(),
+          processing_steps: [
+            ...(logEntry.processing_steps || []),
+            { step: 'completed', timestamp: new Date().toISOString() }
+          ]
+        })
+        .eq('id', logEntry.id);
     }
 
     return new Response(
@@ -211,12 +318,23 @@ Deno.serve(async (req) => {
       const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
       const supabase = createClient(supabaseUrl, supabaseServiceKey);
       const body = await req.json();
-      const { documentId } = body;
+      const { documentId, userId } = body;
 
       await supabase
         .from('user_documents')
         .update({ processing_status: 'failed' })
         .eq('id', documentId);
+
+      // Update processing log with error
+      await supabase
+        .from('document_processing_log')
+        .update({
+          status: 'failed',
+          completed_at: new Date().toISOString(),
+          error_message: errorMessage
+        })
+        .eq('document_id', documentId)
+        .eq('user_id', userId);
 
       console.log('[analyze-document] Marked document as failed');
     } catch (e) {

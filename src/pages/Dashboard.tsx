@@ -5,6 +5,7 @@ import { DocumentIntelligenceCard } from "@/components/dashboard/DocumentIntelli
 import { FeedbackSummaryPanel } from "@/components/dashboard/FeedbackSummaryPanel";
 import { HealthProfileViewer } from "@/components/health/HealthProfileViewer";
 import { YvesTreeTimeline } from "@/components/dashboard/YvesTreeTimeline";
+import { YvesRecommendationsCard } from "@/components/dashboard/YvesRecommendationsCard";
 import { useHealthProfile } from "@/hooks/useHealthProfile";
 import { useFitbitTrends } from "@/hooks/useFitbitTrends";
 import { cn } from "@/lib/utils";
@@ -93,6 +94,10 @@ export const Dashboard = () => {
               )}
 
               <div className="mt-10">
+                <YvesRecommendationsCard />
+              </div>
+
+              <div className="mt-8">
                 <DocumentIntelligenceCard onNavigate={() => {}} />
               </div>
 

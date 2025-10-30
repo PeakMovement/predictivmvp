@@ -741,6 +741,33 @@ export type Database = {
         }
         Relationships: []
       }
+      user_injuries: {
+        Row: {
+          created_at: string | null
+          id: string
+          injuries: string[] | null
+          injury_details: Json | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          injuries?: string[] | null
+          injury_details?: Json | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          injuries?: string[] | null
+          injury_details?: Json | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_insight_actions: {
         Row: {
           acknowledged_at: string | null
@@ -782,6 +809,153 @@ export type Database = {
           },
         ]
       }
+      user_interests: {
+        Row: {
+          created_at: string | null
+          hobbies: string[] | null
+          id: string
+          interests: string[] | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          hobbies?: string[] | null
+          id?: string
+          interests?: string[] | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          hobbies?: string[] | null
+          id?: string
+          interests?: string[] | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_lifestyle: {
+        Row: {
+          created_at: string | null
+          daily_routine: string | null
+          id: string
+          stress_level: string | null
+          updated_at: string | null
+          user_id: string
+          work_schedule: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          daily_routine?: string | null
+          id?: string
+          stress_level?: string | null
+          updated_at?: string | null
+          user_id: string
+          work_schedule?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          daily_routine?: string | null
+          id?: string
+          stress_level?: string | null
+          updated_at?: string | null
+          user_id?: string
+          work_schedule?: string | null
+        }
+        Relationships: []
+      }
+      user_medical: {
+        Row: {
+          conditions: string[] | null
+          created_at: string | null
+          id: string
+          medical_notes: string | null
+          medications: string[] | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          conditions?: string[] | null
+          created_at?: string | null
+          id?: string
+          medical_notes?: string | null
+          medications?: string[] | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          conditions?: string[] | null
+          created_at?: string | null
+          id?: string
+          medical_notes?: string | null
+          medications?: string[] | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_mindset: {
+        Row: {
+          created_at: string | null
+          id: string
+          mental_health_focus: string | null
+          motivation_factors: string[] | null
+          stress_management: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          mental_health_focus?: string | null
+          motivation_factors?: string[] | null
+          stress_management?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          mental_health_focus?: string | null
+          motivation_factors?: string[] | null
+          stress_management?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_nutrition: {
+        Row: {
+          allergies: string[] | null
+          created_at: string | null
+          diet_type: string | null
+          eating_pattern: string | null
+          id: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          allergies?: string[] | null
+          created_at?: string | null
+          diet_type?: string | null
+          eating_pattern?: string | null
+          id?: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          allergies?: string[] | null
+          created_at?: string | null
+          diet_type?: string | null
+          eating_pattern?: string | null
+          id?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_profile: {
         Row: {
           activity_level: string | null
@@ -816,6 +990,96 @@ export type Database = {
           goals?: string[] | null
           injuries?: string[] | null
           name?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_recovery: {
+        Row: {
+          created_at: string | null
+          id: string
+          recovery_methods: string[] | null
+          sleep_hours: number | null
+          sleep_quality: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          recovery_methods?: string[] | null
+          sleep_hours?: number | null
+          sleep_quality?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          recovery_methods?: string[] | null
+          sleep_hours?: number | null
+          sleep_quality?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_training: {
+        Row: {
+          created_at: string | null
+          id: string
+          intensity_preference: string | null
+          preferred_activities: string[] | null
+          training_frequency: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          intensity_preference?: string | null
+          preferred_activities?: string[] | null
+          training_frequency?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          intensity_preference?: string | null
+          preferred_activities?: string[] | null
+          training_frequency?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_wellness_goals: {
+        Row: {
+          created_at: string | null
+          goals: string[] | null
+          id: string
+          priority: string | null
+          target_date: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          goals?: string[] | null
+          id?: string
+          priority?: string | null
+          target_date?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          goals?: string[] | null
+          id?: string
+          priority?: string | null
+          target_date?: string | null
           updated_at?: string | null
           user_id?: string
         }

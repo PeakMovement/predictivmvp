@@ -19,6 +19,7 @@ import YvesInsights from "@/pages/YvesInsights";
 import TestSupabase from "@/pages/TestSupabase";
 import FitbitSyncNow from "@/pages/FitbitSyncNow";
 import FitbitCallback from "@/pages/FitbitCallback";
+import { OuraCallback } from "@/pages/OuraCallback";
 import MyBaselines from "@/pages/MyBaselines";
 import DeveloperBaselinesEngine from "@/pages/DeveloperBaselinesEngine";
 import MyDocuments from "@/pages/MyDocuments";
@@ -40,6 +41,7 @@ const App = () => {
   const currentPath = window.location.pathname;
   const isDashboardRoute = currentPath === "/dashboard";
   const isFitbitCallback = currentPath === "/fitbit/callback";
+  const isOuraCallback = currentPath === "/oauth/callback/oura";
 
   // Check authentication status
   useEffect(() => {
@@ -122,6 +124,21 @@ const App = () => {
             <Toaster />
             <Sonner />
             <FitbitCallback />
+          </TooltipProvider>
+        </QueryClientProvider>
+      </ThemeProvider>
+    );
+  }
+
+  // Handle Ōura callback route
+  if (isOuraCallback) {
+    return (
+      <ThemeProvider defaultTheme="dark" storageKey="predictiv-theme">
+        <QueryClientProvider client={queryClient}>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
+            <OuraCallback />
           </TooltipProvider>
         </QueryClientProvider>
       </ThemeProvider>

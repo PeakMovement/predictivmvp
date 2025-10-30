@@ -26,7 +26,7 @@ export const Settings = ({ onNavigate }: { onNavigate?: (tab: string) => void })
     recoveryPriority: false
   });
   
-  // Fitbit sync state
+  // Ōura sync state
   const [lastSyncTime, setLastSyncTime] = useState<Date | null>(null);
   const [isCalculatingTrends, setIsCalculatingTrends] = useState(false);
   
@@ -96,7 +96,7 @@ export const Settings = ({ onNavigate }: { onNavigate?: (tab: string) => void })
     // Listen for refresh events to update last sync time
     const handleRefresh = () => fetchLastSync();
     window.addEventListener("wearable_trends_refresh", handleRefresh);
-    window.addEventListener("fitbit_trends_refresh", handleRefresh); // Backwards compat
+    window.addEventListener("oura_trends_refresh", handleRefresh);
     
     // Load email preferences from Supabase
     loadEmailPreferences();
@@ -106,7 +106,7 @@ export const Settings = ({ onNavigate }: { onNavigate?: (tab: string) => void })
 
     return () => {
       window.removeEventListener("wearable_trends_refresh", handleRefresh);
-      window.removeEventListener("fitbit_trends_refresh", handleRefresh);
+      window.removeEventListener("oura_trends_refresh", handleRefresh);
     };
   }, []);
 
@@ -287,39 +287,15 @@ export const Settings = ({ onNavigate }: { onNavigate?: (tab: string) => void })
     return () => window.removeEventListener('mouseup', handleGlobalMouseUp);
   }, []);
 
-  const handleFitbitSync = async () => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
+  const connectOura = () => {
+    const CLIENT_ID = "DTSFEJEXMRBLYLC7";
+    const REDIRECT_URI = "https://predictiv.netlify.app/oauth/callback/oura";
+    const SCOPES = "email personal daily_activity daily_readiness daily_sleep heartrate session tag workout";
 
-      if (!user) {
-        toast({
-          title: "Authentication Required",
-          description: "Please sign in to connect Fitbit",
-          variant: "destructive"
-        });
-        return;
-      }
-
-      const { data, error } = await supabase.functions.invoke("fitbit-auth-initiate", {
-        body: { user_id: user.id }
-      });
-
-      if (error || !data?.auth_url || !data?.code_verifier) {
-        throw new Error(data?.error || error?.message || "Failed to initiate Fitbit connection");
-      }
-
-      sessionStorage.setItem("fitbit_code_verifier", data.code_verifier);
-      sessionStorage.setItem("fitbit_user_id", user.id);
-
-      window.location.href = data.auth_url;
-    } catch (error) {
-      console.error("Fitbit auth error:", error);
-      toast({
-        title: "Connection Failed",
-        description: error instanceof Error ? error.message : "Failed to connect to Fitbit",
-        variant: "destructive"
-      });
-    }
+    window.location.href =
+      `https://cloud.ouraring.com/oauth/authorize?client_id=${CLIENT_ID}` +
+      `&response_type=code&redirect_uri=${encodeURIComponent(REDIRECT_URI)}` +
+      `&scope=${encodeURIComponent(SCOPES)}`;
   };
 
   const handleSmsToggle = (enabled: boolean) => {
@@ -531,17 +507,12 @@ export const Settings = ({ onNavigate }: { onNavigate?: (tab: string) => void })
                 className="w-full flex items-center justify-between p-4 rounded-xl border bg-glass/30 border-glass-border hover:bg-glass-highlight transition-all duration-200"
               >
                 <div className="flex items-center gap-3 flex-1">
-                  <div className="w-10 h-10 bg-gradient-to-br from-cyan-500 to-blue-500 rounded-full flex items-center justify-center">
-                    <div className="grid grid-cols-2 gap-0.5">
-                      <div className="w-1 h-1 bg-white rounded-full"></div>
-                      <div className="w-1 h-1 bg-white rounded-full"></div>
-                      <div className="w-1 h-1 bg-white rounded-full"></div>
-                      <div className="w-1 h-1 bg-white rounded-full"></div>
-                    </div>
+                  <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-indigo-500 rounded-full flex items-center justify-center">
+                    <div className="w-4 h-4 rounded-full border-2 border-white"></div>
                   </div>
                   <div className="text-left flex-1">
                     <p className="font-medium text-foreground flex items-center gap-2">
-                      Fitbit
+                      Ōura Ring
                       {isConnected && (
                         <span className="text-xs px-2 py-0.5 rounded-full bg-green-500/20 text-green-400 border border-green-500/30">
                           ✓ Connected
@@ -550,8 +521,8 @@ export const Settings = ({ onNavigate }: { onNavigate?: (tab: string) => void })
                     </p>
                     <p className="text-xs text-muted-foreground">
                       {isConnected 
-                        ? "Auto-syncing every hour • Click Update for latest data"
-                        : "Connect and sync your Fitbit data"
+                        ? "Auto-syncing daily • Click Update for latest data"
+                        : "Connect and sync your Ōura data"
                       }
                     </p>
                   </div>
@@ -570,11 +541,11 @@ export const Settings = ({ onNavigate }: { onNavigate?: (tab: string) => void })
                     </Button>
                   ) : (
                     <Button
-                      onClick={handleFitbitSync}
+                      onClick={connectOura}
                       size="sm"
                       className="bg-primary/80 hover:bg-primary text-primary-foreground hover:scale-105 active:scale-95 transition-all duration-200"
                     >
-                      Connect Fitbit
+                      Connect Ōura Ring
                     </Button>
                   )}
                 </div>

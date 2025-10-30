@@ -46,8 +46,8 @@ export const useWearableSync = (): WearableSyncState => {
       }
 
       const { data: tokenData, error: tokenError } = await supabase
-        .from("wearable_tokens" as any)
-        .select("access_token, expires_in, updated_at")
+        .from("oura_tokens" as any)
+        .select("access_token, expires_at")
         .eq("user_id", user.id)
         .maybeSingle();
 
@@ -98,7 +98,7 @@ export const useWearableSync = (): WearableSyncState => {
         throw new Error("User not authenticated");
       }
 
-      const { data: edgeResult, error: edgeError } = await supabase.functions.invoke('wearable-fetch-data', {
+      const { data: edgeResult, error: edgeError } = await supabase.functions.invoke('fetch-oura-auto', {
         body: { user_id: user.id },
       });
 
@@ -107,13 +107,13 @@ export const useWearableSync = (): WearableSyncState => {
         throw new Error(edgeResult?.error || "Failed to sync data");
       }
 
-      const steps = edgeResult.steps || 0;
-      const calories = edgeResult.calories || 0;
+      const fetchedEndpoints = edgeResult.fetched_endpoints || [];
+      const date = edgeResult.date || 'today';
 
       const now = new Date();
       toast({
-        title: "Wearable Data Updated",
-        description: `Synced ${steps} steps, ${calories} calories`,
+        title: "Ōura Data Updated",
+        description: `Successfully synced ${fetchedEndpoints.length} data types for ${date}`,
       });
 
       setLastSync(now);

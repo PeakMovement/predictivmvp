@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { ThumbsUp, ThumbsDown, ExternalLink } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Link } from "react-router-dom";
+
 import { formatDistanceToNow } from "date-fns";
 
 interface Recommendation {
@@ -150,10 +150,8 @@ export const YvesRecommendationsCard = () => {
             <p className="text-muted-foreground">
               Yves will generate your first set of insights once you upload a document or ask a question.
             </p>
-            <Button variant="outline" className="mt-4" asChild>
-              <Link to="/yves-insights">
-                Chat with Yves <ExternalLink className="ml-2 h-4 w-4" />
-              </Link>
+            <Button variant="outline" className="mt-4" onClick={() => window.dispatchEvent(new Event('navigate-yves-insights'))}>
+              Chat with Yves <ExternalLink className="ml-2 h-4 w-4" />
             </Button>
           </div>
         ) : (
@@ -205,10 +203,8 @@ export const YvesRecommendationsCard = () => {
               </div>
             ))}
 
-            <Button variant="outline" className="w-full mt-4" asChild>
-              <Link to="/yves-insights">
-                View All & Chat with Yves <ExternalLink className="ml-2 h-4 w-4" />
-              </Link>
+            <Button variant="outline" className="w-full mt-4" onClick={() => window.dispatchEvent(new Event('navigate-yves-insights'))}>
+              View All & Chat with Yves <ExternalLink className="ml-2 h-4 w-4" />
             </Button>
           </>
         )}

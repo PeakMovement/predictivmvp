@@ -56,8 +56,15 @@ const App = () => {
 
   useEffect(() => {
     const handleNavigateInsights = () => setActiveTab("insights-tree");
-    window.addEventListener("navigate-insights", handleNavigateInsights);
-    return () => window.removeEventListener("navigate-insights", handleNavigateInsights);
+    const handleNavigateYves = () => setActiveTab("yves-insights");
+
+    window.addEventListener("navigate-insights", handleNavigateInsights as EventListener);
+    window.addEventListener("navigate-yves-insights", handleNavigateYves as EventListener);
+
+    return () => {
+      window.removeEventListener("navigate-insights", handleNavigateInsights as EventListener);
+      window.removeEventListener("navigate-yves-insights", handleNavigateYves as EventListener);
+    };
   }, []);
 
   // Handle /dashboard route

@@ -150,14 +150,11 @@ export const YvesRecommendationsCard = () => {
             <p className="text-muted-foreground">
               Yves will generate your first set of insights once you upload a document or ask a question.
             </p>
-            <Link to="/yves-insights">
-              <Button 
-                variant="outline" 
-                className="mt-4"
-              >
+            <Button variant="outline" className="mt-4" asChild>
+              <Link to="/yves-insights">
                 Chat with Yves <ExternalLink className="ml-2 h-4 w-4" />
-              </Button>
-            </Link>
+              </Link>
+            </Button>
           </div>
         ) : (
           <>
@@ -208,14 +205,11 @@ export const YvesRecommendationsCard = () => {
               </div>
             ))}
 
-            <Link to="/yves-insights" className="block">
-              <Button 
-                variant="outline" 
-                className="w-full mt-4"
-              >
+            <Button variant="outline" className="w-full mt-4" asChild>
+              <Link to="/yves-insights">
                 View All & Chat with Yves <ExternalLink className="ml-2 h-4 w-4" />
-              </Button>
-            </Link>
+              </Link>
+            </Button>
           </>
         )}
       </CardContent>

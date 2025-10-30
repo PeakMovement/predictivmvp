@@ -361,30 +361,38 @@ export const Settings = ({ onNavigate }: { onNavigate?: (tab: string) => void })
   const handleCalculateTrends = async () => {
     setIsCalculatingTrends(true);
     try {
-      const response = await fetch('/.netlify/functions/calc-trends', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ user_id: 'CTBNRR' })
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        toast({
+          title: "Authentication Required",
+          description: "Please sign in to calculate trends",
+          variant: "destructive"
+        });
+        setIsCalculatingTrends(false);
+        return;
+      }
+
+      const { data, error } = await supabase.functions.invoke('calc-trends', {
+        body: { user_id: user.id }
       });
       
-      const result = await response.json();
-      
-      if (result.ok) {
-        toast({
-          title: "Success",
-          description: `Calculated trends for ${result.count} days`,
-        });
-        
-        // Dispatch custom event to refresh trends in other components
-        window.dispatchEvent(new CustomEvent('fitbit_trends_refresh'));
-      } else {
-        throw new Error(result.error || 'Unknown error');
+      if (error || !data?.ok) {
+        throw new Error(data?.error || error?.message || 'Unknown error');
       }
+      
+      toast({
+        title: "Success",
+        description: `Calculated trends for ${data.count} days`,
+      });
+      
+      // Dispatch custom event to refresh trends in other components
+      window.dispatchEvent(new CustomEvent('fitbit_trends_refresh'));
     } catch (error) {
       console.error('Failed to calculate trends:', error);
       toast({
         title: "Error",
-        description: "Failed to calculate trends. Check console for details.",
+        description: error instanceof Error ? error.message : "Failed to calculate trends",
         variant: "destructive"
       });
     } finally {

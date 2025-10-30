@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { ThumbsUp, ThumbsDown, ExternalLink } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { formatDistanceToNow } from "date-fns";
 
 interface Recommendation {
@@ -21,7 +21,6 @@ export const YvesRecommendationsCard = () => {
   const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
-  const navigate = useNavigate();
 
   const fetchRecommendations = async () => {
     try {
@@ -151,13 +150,14 @@ export const YvesRecommendationsCard = () => {
             <p className="text-muted-foreground">
               Yves will generate your first set of insights once you upload a document or ask a question.
             </p>
-            <Button 
-              variant="outline" 
-              onClick={() => navigate('/yves-insights')}
-              className="mt-4"
-            >
-              Chat with Yves <ExternalLink className="ml-2 h-4 w-4" />
-            </Button>
+            <Link to="/yves-insights">
+              <Button 
+                variant="outline" 
+                className="mt-4"
+              >
+                Chat with Yves <ExternalLink className="ml-2 h-4 w-4" />
+              </Button>
+            </Link>
           </div>
         ) : (
           <>
@@ -208,13 +208,14 @@ export const YvesRecommendationsCard = () => {
               </div>
             ))}
 
-            <Button 
-              variant="outline" 
-              onClick={() => navigate('/yves-insights')}
-              className="w-full mt-4"
-            >
-              View All & Chat with Yves <ExternalLink className="ml-2 h-4 w-4" />
-            </Button>
+            <Link to="/yves-insights" className="block">
+              <Button 
+                variant="outline" 
+                className="w-full mt-4"
+              >
+                View All & Chat with Yves <ExternalLink className="ml-2 h-4 w-4" />
+              </Button>
+            </Link>
           </>
         )}
       </CardContent>

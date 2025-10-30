@@ -410,6 +410,63 @@ export type Database = {
         }
         Relationships: []
       }
+      oura_sync_log: {
+        Row: {
+          data: Json | null
+          date_used: string | null
+          endpoint: string | null
+          fetched_at: string | null
+          id: number
+          user_id: string | null
+        }
+        Insert: {
+          data?: Json | null
+          date_used?: string | null
+          endpoint?: string | null
+          fetched_at?: string | null
+          id?: number
+          user_id?: string | null
+        }
+        Update: {
+          data?: Json | null
+          date_used?: string | null
+          endpoint?: string | null
+          fetched_at?: string | null
+          id?: number
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      oura_tokens: {
+        Row: {
+          access_token: string
+          expires_at: string
+          fetched_at: string | null
+          refresh_token: string
+          scope: string | null
+          token_type: string | null
+          user_id: string
+        }
+        Insert: {
+          access_token: string
+          expires_at: string
+          fetched_at?: string | null
+          refresh_token: string
+          scope?: string | null
+          token_type?: string | null
+          user_id: string
+        }
+        Update: {
+          access_token?: string
+          expires_at?: string
+          fetched_at?: string | null
+          refresh_token?: string
+          scope?: string | null
+          token_type?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       plan_adherence: {
         Row: {
           actual_data: Json | null

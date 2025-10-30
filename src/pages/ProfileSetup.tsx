@@ -7,9 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-
-const USER_ID = "675cf687-785f-447b-b4da-42a8437bb69c";
-const ENDPOINT = "https://ixtwbkikyuexskdgfpfq.functions.supabase.co/save-profile";
+import { supabase } from "@/integrations/supabase/client";
 
 export const ProfileSetup = () => {
   const [isEditing, setIsEditing] = useState(true);
@@ -29,19 +27,35 @@ export const ProfileSetup = () => {
     setIsSubmitting(true);
 
     try {
-      const response = await fetch(ENDPOINT, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          user_id: USER_ID,
-          ...formData,
-          goals: formData.goals.split(",").map(g => g.trim()).filter(Boolean),
-          injuries: formData.injuries.split(",").map(i => i.trim()).filter(Boolean),
-          conditions: formData.conditions.split(",").map(c => c.trim()).filter(Boolean)
-        })
-      });
+      // Get authenticated user
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      
+      if (authError || !user) {
+        toast.error("You must be logged in to save your profile");
+        return;
+      }
 
-      if (!response.ok) throw new Error("Failed to save profile");
+      // Prepare data for upsert
+      const profileData = {
+        user_id: user.id,
+        name: formData.name,
+        dob: formData.dob,
+        gender: formData.gender,
+        activity_level: formData.activity_level,
+        goals: formData.goals.split(",").map(g => g.trim()).filter(Boolean),
+        injuries: formData.injuries.split(",").map(i => i.trim()).filter(Boolean),
+        conditions: formData.conditions.split(",").map(c => c.trim()).filter(Boolean)
+      };
+
+      // Upsert to user_profile table
+      const { error } = await supabase
+        .from('user_profile')
+        .upsert(profileData, { onConflict: 'user_id' });
+
+      if (error) {
+        console.error("Database error:", error);
+        throw error;
+      }
 
       toast.success("✅ Profile saved successfully");
       setIsEditing(false);

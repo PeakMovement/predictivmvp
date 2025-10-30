@@ -1,6 +1,8 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { formatDistanceToNow } from 'date-fns';
 import { MessageSquare, Bot } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
+import { formatYvesResponse } from '@/lib/formatYvesResponse';
 
 interface InsightBoxProps {
   query: string;
@@ -10,6 +12,7 @@ interface InsightBoxProps {
 
 export function InsightBox({ query, response, timestamp }: InsightBoxProps) {
   const timeAgo = formatDistanceToNow(new Date(timestamp), { addSuffix: true });
+  const formattedResponse = formatYvesResponse(response);
 
   return (
     <Card className="mb-4">
@@ -33,9 +36,19 @@ export function InsightBox({ query, response, timestamp }: InsightBoxProps) {
           </div>
           <div className="flex-1">
             <div className="rounded-lg bg-gray-50 dark:bg-gray-800 p-4">
-              <p className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap leading-relaxed">
-                {response}
-              </p>
+              <div className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed prose prose-sm dark:prose-invert max-w-none">
+                <ReactMarkdown
+                  components={{
+                    p: ({ children }) => <p className="mb-3 last:mb-0">{children}</p>,
+                    ul: ({ children }) => <ul className="my-2 space-y-1 list-disc list-inside">{children}</ul>,
+                    ol: ({ children }) => <ol className="my-2 space-y-1 list-decimal list-inside">{children}</ol>,
+                    li: ({ children }) => <li className="ml-2">{children}</li>,
+                    strong: ({ children }) => <strong className="font-semibold text-gray-900 dark:text-gray-100">{children}</strong>,
+                  }}
+                >
+                  {formattedResponse}
+                </ReactMarkdown>
+              </div>
             </div>
           </div>
         </div>

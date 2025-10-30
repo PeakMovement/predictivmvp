@@ -1302,6 +1302,33 @@ export type Database = {
           },
         ]
       }
+      yves_memory_bank: {
+        Row: {
+          created_at: string
+          id: string
+          last_updated: string
+          memory_key: string
+          memory_value: Json
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          last_updated?: string
+          memory_key: string
+          memory_value: Json
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          last_updated?: string
+          memory_key?: string
+          memory_value?: Json
+          user_id?: string
+        }
+        Relationships: []
+      }
       yves_profiles: {
         Row: {
           baseline_value: number

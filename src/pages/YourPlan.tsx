@@ -541,7 +541,7 @@ const AcceptedChallengesSection = () => {
 const WeeklyInsightsSection = () => {
   const [isInfoDialogOpen, setIsInfoDialogOpen] = useState(false);
   const { csvData, currentDayIndex } = useLiveData();
-  const { trends, isLoading } = useFitbitTrends({ days: 7 });
+  const { trends, isLoading } = useTrainingTrends({ days: 7 });
   
   // Calculate 7-day rolling averages from fitbit_trends using unified calculator
   const calculate7DayAverages = useMemo(() => {
@@ -819,7 +819,7 @@ const UpcomingBookingsSection = () => {
 };
 
 export const YourPlan = () => {
-  const { userId } = useFitbitTrends({ days: 7 });
+  const { userId } = useTrainingTrends({ days: 7 });
   
   return (
     <div className="min-h-screen bg-background pb-[calc(6rem+env(safe-area-inset-bottom))] md:pb-32">

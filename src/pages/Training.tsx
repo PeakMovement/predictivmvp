@@ -206,7 +206,7 @@ const CircularGauge = ({
 // ✅ Main Page Component
 export const Training = () => {
   const { currentDayData } = useLiveData();
-  const { trends, isLoading: trendsLoading, refresh, userId } = useFitbitTrends({ days: 7 });
+  const { trends, isLoading: trendsLoading, refresh, userId } = useTrainingTrends({ days: 7 });
   const [suggestions, setSuggestions] = useState<ReturnType<typeof generateSuggestions>>([]);
 
   // Find latest trend with non-null monotony/strain

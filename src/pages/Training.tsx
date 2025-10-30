@@ -29,7 +29,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useLiveData } from "@/contexts/LiveDataContext";
 import { HealthDataRow } from "@/lib/healthDataStore";
 import { UnifiedTrendCard } from "@/components/trends/UnifiedTrendCard";
-import { useFitbitTrends } from "@/hooks/useFitbitTrends";
+import { useTrainingTrends } from "@/hooks/useTrainingTrends";
 import { SessionLogList } from "@/components/dashboard/SessionLogList";
 
 

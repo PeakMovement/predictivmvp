@@ -234,120 +234,6 @@ export type Database = {
         }
         Relationships: []
       }
-      fitbit_auto_data: {
-        Row: {
-          activity_data: Json | null
-          date: string | null
-          fetched_at: string | null
-          id: number
-          sleep_data: Json | null
-          user_id: string
-        }
-        Insert: {
-          activity_data?: Json | null
-          date?: string | null
-          fetched_at?: string | null
-          id?: number
-          sleep_data?: Json | null
-          user_id: string
-        }
-        Update: {
-          activity_data?: Json | null
-          date?: string | null
-          fetched_at?: string | null
-          id?: number
-          sleep_data?: Json | null
-          user_id?: string
-        }
-        Relationships: []
-      }
-      fitbit_tokens: {
-        Row: {
-          access_token: string
-          created_at: string | null
-          expires_at: string | null
-          expires_in: number | null
-          fitbit_user_id: string | null
-          refresh_token: string | null
-          scope: string | null
-          token_type: string | null
-          updated_at: string | null
-          user_id: string
-        }
-        Insert: {
-          access_token: string
-          created_at?: string | null
-          expires_at?: string | null
-          expires_in?: number | null
-          fitbit_user_id?: string | null
-          refresh_token?: string | null
-          scope?: string | null
-          token_type?: string | null
-          updated_at?: string | null
-          user_id: string
-        }
-        Update: {
-          access_token?: string
-          created_at?: string | null
-          expires_at?: string | null
-          expires_in?: number | null
-          fitbit_user_id?: string | null
-          refresh_token?: string | null
-          scope?: string | null
-          token_type?: string | null
-          updated_at?: string | null
-          user_id?: string
-        }
-        Relationships: []
-      }
-      fitbit_trends: {
-        Row: {
-          acute_load: number | null
-          acwr: number | null
-          chronic_load: number | null
-          created_at: string | null
-          date: string
-          ewma: number | null
-          hrv: number | null
-          id: string
-          monotony: number | null
-          sleep_score: number | null
-          strain: number | null
-          training_load: number | null
-          user_id: string
-        }
-        Insert: {
-          acute_load?: number | null
-          acwr?: number | null
-          chronic_load?: number | null
-          created_at?: string | null
-          date: string
-          ewma?: number | null
-          hrv?: number | null
-          id?: string
-          monotony?: number | null
-          sleep_score?: number | null
-          strain?: number | null
-          training_load?: number | null
-          user_id: string
-        }
-        Update: {
-          acute_load?: number | null
-          acwr?: number | null
-          chronic_load?: number | null
-          created_at?: string | null
-          date?: string
-          ewma?: number | null
-          hrv?: number | null
-          id?: string
-          monotony?: number | null
-          sleep_score?: number | null
-          strain?: number | null
-          training_load?: number | null
-          user_id?: string
-        }
-        Relationships: []
-      }
       function_execution_log: {
         Row: {
           completed_at: string | null
@@ -647,6 +533,54 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      training_trends: {
+        Row: {
+          acute_load: number | null
+          acwr: number | null
+          chronic_load: number | null
+          created_at: string | null
+          date: string
+          ewma: number | null
+          hrv: number | null
+          id: string
+          monotony: number | null
+          sleep_score: number | null
+          strain: number | null
+          training_load: number | null
+          user_id: string
+        }
+        Insert: {
+          acute_load?: number | null
+          acwr?: number | null
+          chronic_load?: number | null
+          created_at?: string | null
+          date: string
+          ewma?: number | null
+          hrv?: number | null
+          id?: string
+          monotony?: number | null
+          sleep_score?: number | null
+          strain?: number | null
+          training_load?: number | null
+          user_id: string
+        }
+        Update: {
+          acute_load?: number | null
+          acwr?: number | null
+          chronic_load?: number | null
+          created_at?: string | null
+          date?: string
+          ewma?: number | null
+          hrv?: number | null
+          id?: string
+          monotony?: number | null
+          sleep_score?: number | null
+          strain?: number | null
+          training_load?: number | null
+          user_id?: string
+        }
+        Relationships: []
       }
       user_baselines: {
         Row: {
@@ -954,6 +888,72 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      wearable_auto_data: {
+        Row: {
+          activity: Json | null
+          date: string | null
+          fetched_at: string | null
+          id: number
+          sleep: Json | null
+          user_id: string
+        }
+        Insert: {
+          activity?: Json | null
+          date?: string | null
+          fetched_at?: string | null
+          id?: number
+          sleep?: Json | null
+          user_id: string
+        }
+        Update: {
+          activity?: Json | null
+          date?: string | null
+          fetched_at?: string | null
+          id?: number
+          sleep?: Json | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      wearable_tokens: {
+        Row: {
+          access_token: string
+          created_at: string | null
+          expires_at: string | null
+          expires_in: number | null
+          fitbit_user_id: string | null
+          refresh_token: string | null
+          scope: string | null
+          token_type: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          access_token: string
+          created_at?: string | null
+          expires_at?: string | null
+          expires_in?: number | null
+          fitbit_user_id?: string | null
+          refresh_token?: string | null
+          scope?: string | null
+          token_type?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          access_token?: string
+          created_at?: string | null
+          expires_at?: string | null
+          expires_in?: number | null
+          fitbit_user_id?: string | null
+          refresh_token?: string | null
+          scope?: string | null
+          token_type?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
       }
       Wearables: {
         Row: {

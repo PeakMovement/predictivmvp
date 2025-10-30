@@ -1,6 +1,6 @@
 import React, { useMemo, useState, useEffect } from "react";
 import { Activity, Calendar } from "lucide-react";
-import { useFitbitTrends } from "@/hooks/useFitbitTrends";
+import { useTrainingTrends } from "@/hooks/useTrainingTrends";
 import { supabase } from "@/integrations/supabase/client";
 import { estimateTrainingLoad } from "@/lib/metricsCalculator";
 import { format } from "date-fns";
@@ -45,11 +45,11 @@ const SessionLogCard = ({ title, date, time, load, calories, distance, duration 
 );
 
 export const SessionLogList = () => {
-  const { trends, isLoading } = useFitbitTrends({ days: 7 });
+  const { trends, isLoading } = useTrainingTrends({ days: 7 });
   const [fallbackSessions, setFallbackSessions] = useState<Session[]>([]);
   const [isFetchingFallback, setIsFetchingFallback] = useState(false);
 
-  // Fetch from fitbit_auto_data if trends are empty
+  // Fetch from wearable_auto_data if trends are empty
   useEffect(() => {
     const fetchFallbackActivities = async () => {
       if (trends && trends.length === 0 && !isFetchingFallback) {
@@ -58,15 +58,15 @@ export const SessionLogList = () => {
         sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
         
         const { data, error } = await supabase
-          .from('fitbit_auto_data')
-          .select('fetched_at, activity_data')
+          .from('wearable_auto_data')
+          .select('fetched_at, activity')
           .gte('fetched_at', sevenDaysAgo.toISOString())
           .order('fetched_at', { ascending: false });
 
         if (!error && data) {
           const activities: Session[] = [];
           data.forEach(record => {
-            const activityData = record.activity_data as any; // Cast to any for JSON access
+            const activityData = record.activity as any; // Cast to any for JSON access
             const acts = activityData?.data?.activities || [];
             acts.forEach((act: any) => {
               activities.push({
@@ -93,9 +93,13 @@ export const SessionLogList = () => {
       setIsFetchingFallback(false);
       setFallbackSessions([]);
     };
-    window.addEventListener("fitbit_trends_refresh", handleRefresh);
+    window.addEventListener("wearable_trends_refresh", handleRefresh);
+    window.addEventListener("fitbit_trends_refresh", handleRefresh); // Backwards compat
     
-    return () => window.removeEventListener("fitbit_trends_refresh", handleRefresh);
+    return () => {
+      window.removeEventListener("wearable_trends_refresh", handleRefresh);
+      window.removeEventListener("fitbit_trends_refresh", handleRefresh);
+    };
   }, [trends, isFetchingFallback]);
 
   const sessions = useMemo(() => {

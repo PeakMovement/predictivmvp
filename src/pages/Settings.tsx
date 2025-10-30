@@ -11,7 +11,7 @@ import { useLiveData } from "@/contexts/LiveDataContext";
 import { getAlertSettings, saveAlertSettings } from "@/lib/alertConditions";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { useFitbitSync } from "@/hooks/useFitbitSync";
+import { useWearableSync } from "@/hooks/useWearableSync";
 import { getUserContext, updateUserContext } from "@/api/yves";
 
 export const Settings = ({ onNavigate }: { onNavigate?: (tab: string) => void }) => {
@@ -44,7 +44,7 @@ export const Settings = ({ onNavigate }: { onNavigate?: (tab: string) => void })
   
   const { theme, setTheme } = useTheme();
   const { toast } = useToast();
-  const { isConnected, isSyncing, syncNow } = useFitbitSync();
+  const { isConnected, isSyncing, syncNow } = useWearableSync();
   const {
     currentDayIndex, 
     totalDays, 
@@ -78,10 +78,10 @@ export const Settings = ({ onNavigate }: { onNavigate?: (tab: string) => void })
     setSmsEnabled(alertSettings.enableSMS);
     setPhoneNumber(alertSettings.phoneNumber);
     
-    // Load last Fitbit sync time from fitbit_auto_data
+    // Load last wearable sync time from wearable_auto_data
     const fetchLastSync = async () => {
       const { data } = await supabase
-        .from("fitbit_auto_data")
+        .from("wearable_auto_data")
         .select("fetched_at")
         .order("fetched_at", { ascending: false })
         .limit(1)
@@ -95,7 +95,8 @@ export const Settings = ({ onNavigate }: { onNavigate?: (tab: string) => void })
     
     // Listen for refresh events to update last sync time
     const handleRefresh = () => fetchLastSync();
-    window.addEventListener("fitbit_trends_refresh", handleRefresh);
+    window.addEventListener("wearable_trends_refresh", handleRefresh);
+    window.addEventListener("fitbit_trends_refresh", handleRefresh); // Backwards compat
     
     // Load email preferences from Supabase
     loadEmailPreferences();
@@ -103,7 +104,10 @@ export const Settings = ({ onNavigate }: { onNavigate?: (tab: string) => void })
     // Load Yves preferences
     loadYvesPreferences();
 
-    return () => window.removeEventListener("fitbit_trends_refresh", handleRefresh);
+    return () => {
+      window.removeEventListener("wearable_trends_refresh", handleRefresh);
+      window.removeEventListener("fitbit_trends_refresh", handleRefresh);
+    };
   }, []);
 
   const loadYvesPreferences = async () => {
@@ -387,7 +391,7 @@ export const Settings = ({ onNavigate }: { onNavigate?: (tab: string) => void })
       });
       
       // Dispatch custom event to refresh trends in other components
-      window.dispatchEvent(new CustomEvent('fitbit_trends_refresh'));
+      window.dispatchEvent(new CustomEvent('wearable_trends_refresh'));
     } catch (error) {
       console.error('Failed to calculate trends:', error);
       toast({

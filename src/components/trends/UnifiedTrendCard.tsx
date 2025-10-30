@@ -5,11 +5,11 @@ import { ChevronLeft, ChevronRight, RefreshCw } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
-import { useFitbitTrends } from "@/hooks/useFitbitTrends";
+import { useTrainingTrends } from "@/hooks/useTrainingTrends";
 import { TrendMetric } from "@/types/fitbit";
 
 export const UnifiedTrendCard = () => {
-  const { trends, isLoading, refresh } = useFitbitTrends({ days: 30 });
+  const { trends, isLoading, refresh } = useTrainingTrends({ days: 30 });
   const [currentMetricIndex, setCurrentMetricIndex] = useState(0);
   const [timeRange, setTimeRange] = useState<"7d" | "14d" | "30d">("7d");
   const [isPaused, setIsPaused] = useState(false);

@@ -34,17 +34,17 @@ Deno.serve(async (req: Request) => {
     );
 
     const { data: tokenRow, error: tokenError } = await supabase
-      .from("fitbit_tokens")
+      .from("wearable_tokens")
       .select("*")
       .eq("user_id", user_id)
       .maybeSingle();
 
     if (tokenError || !tokenRow) {
-      console.error("[fitbit-fetch-data] Token error:", tokenError);
+      console.error("[wearable-fetch-data] Token error:", tokenError);
       return new Response(
         JSON.stringify({
-          error: "Fitbit not connected",
-          message: "Please connect your Fitbit account first"
+          error: "Wearable not connected",
+          message: "Please connect your wearable device first"
         }),
         {
           status: 404,
@@ -59,14 +59,14 @@ Deno.serve(async (req: Request) => {
     const oneHour = 60 * 60 * 1000;
 
     if (tokenAge > oneHour || !tokenRow.expires_in || tokenRow.expires_in < 3600) {
-      console.log(`[fitbit-fetch-data] Token may be expired, refreshing...`);
+      console.log(`[wearable-fetch-data] Token may be expired, refreshing...`);
 
       const clientId = Deno.env.get("FITBIT_CLIENT_ID");
       const clientSecret = Deno.env.get("FITBIT_CLIENT_SECRET");
 
       if (!clientId || !clientSecret) {
         return new Response(
-          JSON.stringify({ error: "Fitbit OAuth not configured" }),
+          JSON.stringify({ error: "Wearable OAuth not configured" }),
           {
             status: 500,
             headers: { ...corsHeaders, "Content-Type": "application/json" }
@@ -93,7 +93,7 @@ Deno.serve(async (req: Request) => {
         accessToken = refreshData.access_token;
 
         await supabase
-          .from("fitbit_tokens")
+          .from("wearable_tokens")
           .update({
             access_token: refreshData.access_token,
             refresh_token: refreshData.refresh_token,
@@ -104,14 +104,14 @@ Deno.serve(async (req: Request) => {
           })
           .eq("user_id", user_id);
 
-        console.log(`[fitbit-fetch-data] Token refreshed successfully`);
+        console.log(`[wearable-fetch-data] Token refreshed successfully`);
       } else {
         const errorText = await refreshResp.text();
-        console.error("[fitbit-fetch-data] Token refresh failed:", errorText);
+        console.error("[wearable-fetch-data] Token refresh failed:", errorText);
         return new Response(
           JSON.stringify({
             error: "Token refresh failed",
-            message: "Please reconnect your Fitbit account"
+            message: "Please reconnect your wearable device"
           }),
           {
             status: 401,
@@ -123,7 +123,7 @@ Deno.serve(async (req: Request) => {
 
     const day = date || new Date().toISOString().split("T")[0];
 
-    console.log(`[fitbit-fetch-data] Fetching data for user ${user_id} on ${day}`);
+    console.log(`[wearable-fetch-data] Fetching data for user ${user_id} on ${day}`);
 
     const [actResp, sleepResp] = await Promise.all([
       fetch(`https://api.fitbit.com/1/user/-/activities/date/${day}.json`, {
@@ -136,7 +136,7 @@ Deno.serve(async (req: Request) => {
 
     if (!actResp.ok) {
       const actError = await actResp.text();
-      console.error("[fitbit-fetch-data] Activity fetch failed:", actError);
+      console.error("[wearable-fetch-data] Activity fetch failed:", actError);
       return new Response(
         JSON.stringify({
           error: "Failed to fetch activity data",
@@ -153,7 +153,7 @@ Deno.serve(async (req: Request) => {
     const sleepData = sleepResp.ok ? await sleepResp.json() : null;
 
     const { error: insertError } = await supabase
-      .from("fitbit_auto_data")
+      .from("wearable_auto_data")
       .insert({
         user_id,
         activity: activity,
@@ -162,10 +162,10 @@ Deno.serve(async (req: Request) => {
       });
 
     if (insertError) {
-      console.error("[fitbit-fetch-data] Insert error:", insertError);
+      console.error("[wearable-fetch-data] Insert error:", insertError);
       return new Response(
         JSON.stringify({
-          error: "Failed to store Fitbit data",
+          error: "Failed to store wearable data",
           details: insertError.message
         }),
         {
@@ -175,7 +175,7 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    console.log(`[fitbit-fetch-data] Data fetched and stored successfully for ${day}`);
+    console.log(`[wearable-fetch-data] Data fetched and stored successfully for ${day}`);
 
     return new Response(
       JSON.stringify({
@@ -194,7 +194,7 @@ Deno.serve(async (req: Request) => {
       }
     );
   } catch (error) {
-    console.error("[fitbit-fetch-data] Error:", error);
+    console.error("[wearable-fetch-data] Error:", error);
     return new Response(
       JSON.stringify({
         error: error instanceof Error ? error.message : "Unknown error occurred"

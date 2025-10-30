@@ -6,7 +6,7 @@ verify_jwt = true
 [functions.lovable-ai-credits]
 verify_jwt = true
 
-[functions.fitbit-diagnostics]
+[functions.wearable-diagnostics]
 verify_jwt = false
 
 [functions.yves-tree]
@@ -38,3 +38,6 @@ verify_jwt = true
 
 [functions.yves-memory-update]
 verify_jwt = true
+
+[functions.wearable-fetch-data]
+verify_jwt = false

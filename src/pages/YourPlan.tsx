@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import jsPDF from "jspdf";
 import { useLiveData } from "@/contexts/LiveDataContext";
-import { useFitbitTrends } from "@/hooks/useFitbitTrends";
+import { useTrainingTrends } from "@/hooks/useTrainingTrends";
 import { useMemo } from "react";
 import { calculateMetrics } from "@/lib/metricsCalculator";
 import FitbitSyncStatus from "@/components/FitbitSyncStatus";

@@ -43,7 +43,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    console.log(`🔍 [fitbit-diagnostics] Starting health check for user: ${user_id}`);
+    console.log(`🔍 [wearable-diagnostics] Starting health check for user: ${user_id}`);
 
     const result: DiagnosticResult = {
       status: 'pass',
@@ -55,10 +55,10 @@ Deno.serve(async (req) => {
       },
     };
 
-    // ✅ CHECK 1: Fitbit Token Validity
-    console.log('🔑 Checking fitbit_tokens...');
+    // ✅ CHECK 1: Wearable Token Validity
+    console.log('🔑 Checking wearable_tokens...');
     const { data: tokenData, error: tokenError } = await supabase
-      .from('fitbit_tokens')
+      .from('wearable_tokens')
       .select('access_token, expires_in, updated_at')
       .eq('user_id', user_id)
       .maybeSingle();
@@ -67,25 +67,25 @@ Deno.serve(async (req) => {
       result.checks.token.message = `Token query error: ${tokenError.message}`;
       result.status = 'fail';
     } else if (!tokenData) {
-      result.checks.token.message = 'No Fitbit token found for this user';
+      result.checks.token.message = 'No wearable token found for this user';
       result.status = 'fail';
-      result.fixSuggestion = 'User needs to connect Fitbit account in Settings';
+      result.fixSuggestion = 'User needs to connect wearable device in Settings';
     } else if (!tokenData.expires_in || tokenData.expires_in <= 0) {
       result.checks.token.message = `Token expired (expires_in: ${tokenData.expires_in})`;
       result.status = 'fail';
-      result.fixSuggestion = 'Token expired — trigger refresh via fetch-fitbit-auto';
+      result.fixSuggestion = 'Token expired — trigger refresh via wearable-fetch-data';
     } else {
       result.checks.token.pass = true;
       result.checks.token.message = `Token valid (expires in ${tokenData.expires_in}s)`;
       result.token_expires_in = tokenData.expires_in;
     }
 
-    // ✅ CHECK 2: Today's Fitbit Data
-    console.log('📊 Checking fitbit_auto_data for today...');
+    // ✅ CHECK 2: Today's Wearable Data
+    console.log('📊 Checking wearable_auto_data for today...');
     const today = new Date().toISOString().split('T')[0];
     
     const { data: autoData, error: dataError } = await supabase
-      .from('fitbit_auto_data')
+      .from('wearable_auto_data')
       .select('activity, sleep, fetched_at')
       .eq('user_id', user_id)
       .gte('fetched_at', `${today}T00:00:00Z`)
@@ -97,9 +97,9 @@ Deno.serve(async (req) => {
       result.checks.data.message = `Data query error: ${dataError.message}`;
       result.status = 'fail';
     } else if (!autoData) {
-      result.checks.data.message = 'No Fitbit data found for today';
+      result.checks.data.message = 'No wearable data found for today';
       result.status = 'fail';
-      result.fixSuggestion = 'No Fitbit data today — trigger manual sync or check cron job';
+      result.fixSuggestion = 'No wearable data today — trigger manual sync or check cron job';
     } else {
       result.checks.data.pass = true;
       result.checks.data.message = `Data synced at ${autoData.fetched_at}`;
@@ -114,11 +114,11 @@ Deno.serve(async (req) => {
     }
 
     // ✅ CHECK 3: Recent Trends Update
-    console.log('📈 Checking fitbit_trends for recent updates...');
+    console.log('📈 Checking training_trends for recent updates...');
     const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
     
     const { data: trendsData, error: trendsError } = await supabase
-      .from('fitbit_trends')
+      .from('training_trends')
       .select('created_at, date')
       .eq('user_id', user_id)
       .gte('created_at', twentyFourHoursAgo)
@@ -145,7 +145,7 @@ Deno.serve(async (req) => {
     const { data: cronData, error: cronError } = await supabase
       .from('function_execution_log')
       .select('started_at, status, completed_at')
-      .eq('function_name', 'fetch-fitbit-auto')
+      .eq('function_name', 'wearable-fetch-data')
       .gte('started_at', ninetyMinutesAgo)
       .order('started_at', { ascending: false })
       .limit(1)
@@ -157,7 +157,7 @@ Deno.serve(async (req) => {
     } else if (!cronData) {
       result.checks.cron.message = 'No cron execution found in the past 90 minutes';
       result.status = 'fail';
-      result.fixSuggestion = 'Cron job not running — verify fetch-fitbit-auto-hourly schedule';
+      result.fixSuggestion = 'Cron job not running — verify wearable-fetch-data schedule';
     } else {
       result.checks.cron.pass = true;
       result.checks.cron.message = `Cron ran at ${cronData.started_at} (status: ${cronData.status})`;
@@ -169,7 +169,7 @@ Deno.serve(async (req) => {
 
     // Log to function_execution_log
     await supabase.from('function_execution_log').insert({
-      function_name: 'fitbit-diagnostics',
+      function_name: 'wearable-diagnostics',
       user_id,
       status: result.status === 'pass' ? 'success' : 'failed',
       started_at: new Date(startTime).toISOString(),
@@ -187,7 +187,7 @@ Deno.serve(async (req) => {
       },
     });
 
-    console.log(`✅ [fitbit-diagnostics] Completed in ${executionTime}ms - Status: ${result.status}`);
+    console.log(`✅ [wearable-diagnostics] Completed in ${executionTime}ms - Status: ${result.status}`);
 
     return new Response(JSON.stringify(result, null, 2), {
       status: 200,
@@ -198,12 +198,12 @@ Deno.serve(async (req) => {
     const executionTime = Date.now() - startTime;
     const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
     
-    console.error('❌ [fitbit-diagnostics] Error:', errorMessage);
+    console.error('❌ [wearable-diagnostics] Error:', errorMessage);
 
     // Log error to function_execution_log
     try {
       await supabase.from('function_execution_log').insert({
-        function_name: 'fitbit-diagnostics',
+        function_name: 'wearable-diagnostics',
         status: 'failed',
         started_at: new Date(startTime).toISOString(),
         completed_at: new Date().toISOString(),

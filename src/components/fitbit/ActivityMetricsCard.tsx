@@ -1,9 +1,9 @@
 import { Activity, Footprints, Mountain, TrendingUp, Zap, Clock } from "lucide-react";
-import { useFitbitMetrics } from "@/hooks/useFitbitMetrics";
+import { useWearableMetrics } from "@/hooks/useWearableMetrics";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export const ActivityMetricsCard = () => {
-  const { metrics, isLoading } = useFitbitMetrics();
+  const { metrics, isLoading } = useWearableMetrics();
 
   if (isLoading) {
     return (

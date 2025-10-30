@@ -1,4 +1,4 @@
-import { useFitbitTrends } from "@/hooks/useFitbitTrends";
+import { useTrainingTrends } from "@/hooks/useTrainingTrends";
 import { TrendCard } from "./TrendCard";
 import { TrendMetric } from "@/types/fitbit";
 import {
@@ -11,7 +11,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 
 export const TrendCarousel = () => {
-  const { trends, isLoading, refresh } = useFitbitTrends({ days: 30 });
+  const { trends, isLoading, refresh } = useTrainingTrends({ days: 30 });
 
   // Transform trends data into metrics for display
   const getMetrics = (): TrendMetric[] => {

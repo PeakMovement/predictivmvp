@@ -15,11 +15,11 @@ const FitbitSyncStatus = () => {
     lastSync: null,
   });
 
-  // 🔍 Fetch latest sync timestamp from fitbit_auto_data.fetched_at
+  // 🔍 Fetch latest sync timestamp from wearable_auto_data.fetched_at
   const fetchLastSync = async () => {
     try {
       const { data, error } = await supabase
-        .from("fitbit_auto_data")
+        .from("wearable_auto_data")
         .select("fetched_at")
         .order("fetched_at", { ascending: false })
         .limit(1)
@@ -55,7 +55,7 @@ const FitbitSyncStatus = () => {
 
       // Trigger backend sync using Supabase function
       const { data: { user } } = await supabase.auth.getUser();
-      const { data, error } = await supabase.functions.invoke('fetch-fitbit-auto', { 
+      const { data, error } = await supabase.functions.invoke('wearable-fetch-data', { 
         body: { user_id: user?.id } 
       });
       
@@ -77,7 +77,7 @@ const FitbitSyncStatus = () => {
       await new Promise(resolve => setTimeout(resolve, 2000));
 
       // Fire unified custom event for UI to auto-refresh
-      window.dispatchEvent(new Event("fitbit_trends_refresh"));
+      window.dispatchEvent(new Event("wearable_trends_refresh"));
 
       // Fetch latest sync time from database
       await fetchLastSync();

@@ -2,12 +2,12 @@ import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { FitbitTrend } from "@/types/fitbit";
 
-interface UseFitbitTrendsOptions {
+interface UseTrainingTrendsOptions {
   days?: number;
   userId?: string | null;
 }
 
-interface UseFitbitTrendsReturn {
+interface UseTrainingTrendsReturn {
   trends: FitbitTrend[];
   latestTrend: FitbitTrend | null;
   isLoading: boolean;
@@ -16,7 +16,7 @@ interface UseFitbitTrendsReturn {
   userId: string | null;
 }
 
-export const useFitbitTrends = (options: UseFitbitTrendsOptions = {}): UseFitbitTrendsReturn => {
+export const useTrainingTrends = (options: UseTrainingTrendsOptions = {}): UseTrainingTrendsReturn => {
   const { days = 30, userId: providedUserId } = options;
   const [trends, setTrends] = useState<FitbitTrend[]>([]);
   const [latestTrend, setLatestTrend] = useState<FitbitTrend | null>(null);
@@ -46,7 +46,7 @@ export const useFitbitTrends = (options: UseFitbitTrendsOptions = {}): UseFitbit
       cutoffDate.setDate(cutoffDate.getDate() - days);
 
       const { data, error } = await supabase
-        .from("fitbit_trends")
+        .from("training_trends")
         .select("*")
         .eq("user_id", userId)
         .gte("date", cutoffDate.toISOString().split("T")[0])
@@ -73,13 +73,13 @@ export const useFitbitTrends = (options: UseFitbitTrendsOptions = {}): UseFitbit
     if (!resolvedUserId) return;
 
     const channel = supabase
-      .channel("fitbit_trends_changes")
+      .channel("training_trends_changes")
       .on(
         "postgres_changes",
         {
           event: "*",
           schema: "public",
-          table: "fitbit_trends",
+          table: "training_trends",
           filter: `user_id=eq.${resolvedUserId}`,
         },
         fetchTrends,
@@ -91,8 +91,11 @@ export const useFitbitTrends = (options: UseFitbitTrendsOptions = {}): UseFitbit
 
   useEffect(() => {
     const handleRefresh = () => fetchTrends();
+    window.addEventListener("wearable_trends_refresh", handleRefresh);
+    // Backwards compatibility
     window.addEventListener("fitbit_trends_refresh", handleRefresh);
     return () => {
+      window.removeEventListener("wearable_trends_refresh", handleRefresh);
       window.removeEventListener("fitbit_trends_refresh", handleRefresh);
     };
   }, [fetchTrends]);

@@ -7,7 +7,7 @@ import { HealthProfileViewer } from "@/components/health/HealthProfileViewer";
 import { YvesTreeTimeline } from "@/components/dashboard/YvesTreeTimeline";
 import { YvesRecommendationsCard } from "@/components/dashboard/YvesRecommendationsCard";
 import { useHealthProfile } from "@/hooks/useHealthProfile";
-import { useFitbitTrends } from "@/hooks/useFitbitTrends";
+import { useTrainingTrends } from "@/hooks/useTrainingTrends";
 import { cn } from "@/lib/utils";
 
 const getStatusColor = (status: string) => {
@@ -39,7 +39,7 @@ const WelcomeHeader = () => (
 );
 
 export const Dashboard = () => {
-  const { trends, latestTrend, isLoading, userId } = useFitbitTrends();
+  const { trends, latestTrend, isLoading, userId } = useTrainingTrends();
   const { profile } = useHealthProfile();
 
   const dashboardMetrics = latestTrend

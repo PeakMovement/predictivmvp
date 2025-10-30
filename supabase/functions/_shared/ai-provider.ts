@@ -1,4 +1,4 @@
-export type AIProvider = 'openai' | 'anthropic' | 'google' | 'mock';
+export type AIProvider = 'openai' | 'anthropic' | 'google' | 'lovable' | 'mock';
 
 export interface AIMessage {
   role: 'system' | 'user' | 'assistant';
@@ -49,6 +49,8 @@ export class AIProviderService {
     }
 
     switch (this.provider) {
+      case 'lovable':
+        return this.chatLovable(options);
       case 'openai':
         return this.chatOpenAI(options);
       case 'anthropic':
@@ -58,6 +60,47 @@ export class AIProviderService {
       default:
         throw new Error(`Unsupported AI provider: ${this.provider}`);
     }
+  }
+
+  private async chatLovable(options: AIRequestOptions): Promise<AIResponse> {
+    const body: any = {
+      model: 'google/gemini-2.5-flash',
+      messages: options.messages,
+      temperature: options.temperature ?? 0.7,
+      max_tokens: options.maxTokens ?? 4096
+    };
+
+    if (options.tools && options.tools.length > 0) {
+      body.tools = options.tools;
+      if (options.toolChoice) {
+        body.tool_choice = options.toolChoice;
+      }
+    }
+
+    const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${this.apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(body),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Lovable AI API error: ${response.status} - ${errorText}`);
+    }
+
+    const data = await response.json();
+    const message = data.choices[0].message;
+
+    return {
+      content: message.content || '',
+      toolCalls: message.tool_calls?.map((tc: any) => ({
+        name: tc.function.name,
+        arguments: tc.function.arguments
+      }))
+    };
   }
 
   private async chatOpenAI(options: AIRequestOptions): Promise<AIResponse> {
@@ -328,28 +371,64 @@ export class AIProviderService {
 }
 
 export function getAIProvider(): AIProviderService {
-  const provider = (Deno.env.get('AI_PROVIDER') || 'openai') as AIProvider;
   const mockMode = Deno.env.get('AI_MOCK_MODE') === 'true';
+  
+  // Check available API keys
+  const lovableKey = Deno.env.get('LOVABLE_API_KEY');
+  const openaiKey = Deno.env.get('OPENAI_API_KEY');
+  const anthropicKey = Deno.env.get('ANTHROPIC_API_KEY');
+  const googleKey = Deno.env.get('GOOGLE_AI_API_KEY');
 
-  let apiKey = '';
+  console.log('[AI Provider] Available keys:', {
+    lovable: !!lovableKey,
+    openai: !!openaiKey,
+    anthropic: !!anthropicKey,
+    google: !!googleKey
+  });
 
-  if (!mockMode) {
-    switch (provider) {
-      case 'openai':
-        apiKey = Deno.env.get('OPENAI_API_KEY') || '';
-        break;
-      case 'anthropic':
-        apiKey = Deno.env.get('ANTHROPIC_API_KEY') || '';
-        break;
-      case 'google':
-        apiKey = Deno.env.get('GOOGLE_AI_API_KEY') || '';
-        break;
-    }
-
-    if (!apiKey) {
-      throw new Error(`[AI Provider] No API key found for ${provider}. Please set ${provider.toUpperCase()}_API_KEY environment variable.`);
-    }
+  if (mockMode) {
+    return new AIProviderService('mock', '', true);
   }
 
-  return new AIProviderService(provider, apiKey, mockMode);
+  // Prioritize Lovable AI (pre-configured, no billing issues)
+  if (lovableKey) {
+    console.log('[AI Provider] Using Lovable AI (google/gemini-2.5-flash)');
+    return new AIProviderService('lovable', lovableKey, false);
+  }
+
+  // Fall back to other providers
+  const explicitProvider = Deno.env.get('AI_PROVIDER') as AIProvider;
+  
+  if (explicitProvider === 'openai' && openaiKey) {
+    console.log('[AI Provider] Using OpenAI');
+    return new AIProviderService('openai', openaiKey, false);
+  }
+  
+  if (explicitProvider === 'anthropic' && anthropicKey) {
+    console.log('[AI Provider] Using Anthropic');
+    return new AIProviderService('anthropic', anthropicKey, false);
+  }
+  
+  if (explicitProvider === 'google' && googleKey) {
+    console.log('[AI Provider] Using Google');
+    return new AIProviderService('google', googleKey, false);
+  }
+
+  // Auto-detect available provider
+  if (openaiKey) {
+    console.log('[AI Provider] Auto-detected OpenAI');
+    return new AIProviderService('openai', openaiKey, false);
+  }
+  
+  if (anthropicKey) {
+    console.log('[AI Provider] Auto-detected Anthropic');
+    return new AIProviderService('anthropic', anthropicKey, false);
+  }
+  
+  if (googleKey) {
+    console.log('[AI Provider] Auto-detected Google');
+    return new AIProviderService('google', googleKey, false);
+  }
+
+  throw new Error('[AI Provider] No API key found. Please configure LOVABLE_API_KEY or another provider.');
 }

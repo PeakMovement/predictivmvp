@@ -184,9 +184,21 @@ suggest saving them with memory_key and memory_value so they can be stored via y
 
     console.log(`[yves-chat] Response generated and saved for user ${user.id}`);
 
-    // ─── OPTIONAL: MEMORY AUTO-CAPTURE (scaffold) ─────────────────────────────
-    // Future extension: parse AI metadata for new memory entries
-    // await supabase.rpc('update_yves_memory', { user_id: user.id, ... })
+    // ─── MEMORY AUTO-CAPTURE ─────────────────────────────────────────────────
+    if (response.includes("memory_key:") && response.includes("memory_value:")) {
+      try {
+        const match = response.match(/memory_key:\s*(.+?)\s*memory_value:\s*(.+?)(?:$|\n)/);
+        if (match) {
+          const [, memory_key, memory_value] = match;
+          await supabase.functions.invoke("yves-memory-update", {
+            body: { user_id: user.id, memory_key: memory_key.trim(), memory_value: memory_value.trim() },
+          });
+          console.log(`[yves-chat] Memory updated: ${memory_key.trim()}`);
+        }
+      } catch (err) {
+        console.warn("[yves-chat] Memory update skipped:", err);
+      }
+    }
 
     return new Response(JSON.stringify({ success: true, response }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },

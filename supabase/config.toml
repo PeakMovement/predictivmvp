@@ -35,3 +35,6 @@ verify_jwt = true
 
 [functions.yves-chat]
 verify_jwt = true
+
+[functions.yves-memory-update]
+verify_jwt = true

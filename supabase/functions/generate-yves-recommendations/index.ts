@@ -1,4 +1,4 @@
-import "jsr:@supabase/functions-js/edge-runtime.d.ts";
+
 import { getAIProvider } from "../_shared/ai-provider.ts";
 
 const corsHeaders = {

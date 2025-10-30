@@ -1,4 +1,4 @@
-import "jsr:@supabase/functions-js/edge-runtime.d.ts";
+
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { getAIProvider } from "../_shared/ai-provider.ts";
 

@@ -20,6 +20,7 @@ import TestSupabase from "@/pages/TestSupabase";
 import FitbitSyncNow from "@/pages/FitbitSyncNow";
 import FitbitCallback from "@/pages/FitbitCallback";
 import { OuraCallback } from "@/pages/OuraCallback";
+import OuraDiagnostics from "@/pages/OuraDiagnostics";
 import MyBaselines from "@/pages/MyBaselines";
 import DeveloperBaselinesEngine from "@/pages/DeveloperBaselinesEngine";
 import MyDocuments from "@/pages/MyDocuments";
@@ -106,6 +107,8 @@ const App = () => {
         return <TestSupabase />;
       case "fitbit-sync-now":
         return <FitbitSyncNow />;
+      case "oura-diagnostics":
+        return <OuraDiagnostics />;
       case "developer-baselines-engine":
         return <DeveloperBaselinesEngine />;
       case "profile-setup": // ✅ added profile tab case

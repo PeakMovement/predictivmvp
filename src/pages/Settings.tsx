@@ -1078,6 +1078,22 @@ export const Settings = ({ onNavigate }: { onNavigate?: (tab: string) => void })
                 <ChevronRight size={16} className="text-muted-foreground" />
               </button>
 
+              <button
+                onClick={() => onNavigate?.("oura-diagnostics")}
+                className="w-full flex items-center justify-between p-4 rounded-xl border bg-glass/30 border-glass-border hover:bg-glass-highlight transition-all duration-200"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 bg-purple-500/20 rounded-lg flex items-center justify-center">
+                    <div className="w-4 h-4 rounded-full border-2 border-purple-400"></div>
+                  </div>
+                  <div className="text-left">
+                    <p className="font-medium text-foreground">Ōura Ring Diagnostics</p>
+                    <p className="text-xs text-muted-foreground">Test Ōura connection and view token status</p>
+                  </div>
+                </div>
+                <ChevronRight size={16} className="text-muted-foreground" />
+              </button>
+
               <Button
                 onClick={handleCalculateTrends}
                 disabled={isCalculatingTrends}

@@ -18,7 +18,10 @@ export const OuraCallback = () => {
         const params = new URLSearchParams(window.location.search);
         const code = params.get("code");
         const state = params.get("state");
+        const iss = params.get("iss");
 
+        console.log("[OuraCallback] Full URL:", window.location.href);
+        console.log("[OuraCallback] Parsed params:", { code, state, iss });
         console.log("[OuraCallback] Received authorization code");
         console.log("[OuraCallback] State parameter:", state);
 
@@ -64,7 +67,7 @@ export const OuraCallback = () => {
 
         // Redirect to dashboard after a short delay
         setTimeout(() => {
-          navigate("/");
+          window.location.href = "/dashboard";
         }, 1500);
       } catch (error) {
         console.error("[OuraCallback] Error:", error);

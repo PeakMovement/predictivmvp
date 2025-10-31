@@ -1,7 +1,9 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Heart, Activity, Zap, Moon, Brain, Footprints, ArrowLeft, TrendingUp } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useLiveData } from "@/contexts/LiveDataContext";
+import { useWearableSessions } from "@/hooks/useWearableSessions";
+import { supabase } from "@/integrations/supabase/client";
 import { ActivityMetricsCard } from "@/components/fitbit/ActivityMetricsCard";
 import { HeartRateMetricsCard } from "@/components/fitbit/HeartRateMetricsCard";
 import { SleepMetricsCard } from "@/components/fitbit/SleepMetricsCard";
@@ -205,6 +207,22 @@ const DetailView = ({ metric, onBack }: { metric: typeof healthMetrics[0]; onBac
 export const Health = () => {
   const { currentDayData, csvData, currentDayIndex } = useLiveData();
   const [selectedMetric, setSelectedMetric] = useState<any>(null);
+  const [userId, setUserId] = useState<string | null>(null);
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      setUserId(user?.id || null);
+    });
+  }, []);
+
+  const { data: session, isLoading } = useWearableSessions(userId || undefined);
+
+  // Extract values from wearable_sessions
+  const heartRate = session?.resting_hr ?? "—";
+  const hrv = session?.hrv_avg ?? "—";
+  const spo2 = session?.spo2_avg ?? "—";
+
+  console.log("Health wearable data:", { heartRate, hrv, spo2, session });
 
   // Generate health metrics from live data
   const dynamicHealthMetrics = useMemo(() => {
@@ -327,6 +345,39 @@ export const Health = () => {
           <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-2">Health Metrics</h1>
           <p className="text-sm md:text-base text-muted-foreground">Monitor your health and wellness indicators</p>
         </div>
+
+        {/* Wearable Sessions Overview */}
+        {session && (
+          <div className="bg-glass backdrop-blur-xl border border-glass-border rounded-2xl p-6 mb-8 shadow-glass animate-fade-in">
+            <h2 className="text-xl font-semibold text-foreground mb-4">Latest Wearable Data (Oura)</h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="bg-background/50 backdrop-blur border border-glass-border rounded-xl p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <Heart className="w-5 h-5 text-red-400" />
+                  <p className="text-sm text-muted-foreground">Resting HR</p>
+                </div>
+                <p className="text-2xl font-bold text-foreground">{heartRate}</p>
+                <p className="text-xs text-muted-foreground">bpm</p>
+              </div>
+              <div className="bg-background/50 backdrop-blur border border-glass-border rounded-xl p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <Activity className="w-5 h-5 text-blue-400" />
+                  <p className="text-sm text-muted-foreground">HRV</p>
+                </div>
+                <p className="text-2xl font-bold text-foreground">{hrv}</p>
+                <p className="text-xs text-muted-foreground">ms</p>
+              </div>
+              <div className="bg-background/50 backdrop-blur border border-glass-border rounded-xl p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <Zap className="w-5 h-5 text-purple-400" />
+                  <p className="text-sm text-muted-foreground">SpO₂</p>
+                </div>
+                <p className="text-2xl font-bold text-foreground">{spo2}</p>
+                <p className="text-xs text-muted-foreground">%</p>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Fitbit Metrics Section */}
         <div className="space-y-6 mb-8">

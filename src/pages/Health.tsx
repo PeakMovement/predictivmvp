@@ -22,7 +22,7 @@ export const Health = () => {
   const hrv = session?.hrv_avg ?? "—";
   const spo2 = session?.spo2_avg ?? "—";
 
-  console.log("Health wearable data:", { heartRate, hrv, spo2, session });
+  console.log("✅ Health live data:", { heartRate, hrv, spo2 });
 
   return (
     <div className="min-h-screen bg-background pb-[calc(6rem+env(safe-area-inset-bottom))] md:pb-32">

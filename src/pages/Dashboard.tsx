@@ -52,7 +52,7 @@ export const Dashboard = () => {
 
   const { data: session, isLoading } = useWearableSessions(userId || undefined);
 
-  console.log("Dashboard wearable data:", session);
+  console.log("✅ Dashboard live data:", session);
 
   const dashboardMetrics = session
     ? [

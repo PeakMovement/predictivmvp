@@ -1237,6 +1237,90 @@ export type Database = {
         }
         Relationships: []
       }
+      wearable_sessions: {
+        Row: {
+          activity_score: number | null
+          date: string
+          fetched_at: string | null
+          hrv_avg: number | null
+          id: string
+          readiness_score: number | null
+          resting_hr: number | null
+          sleep_score: number | null
+          source: string
+          spo2_avg: number | null
+          total_calories: number | null
+          total_steps: number | null
+          user_id: string
+        }
+        Insert: {
+          activity_score?: number | null
+          date: string
+          fetched_at?: string | null
+          hrv_avg?: number | null
+          id?: string
+          readiness_score?: number | null
+          resting_hr?: number | null
+          sleep_score?: number | null
+          source: string
+          spo2_avg?: number | null
+          total_calories?: number | null
+          total_steps?: number | null
+          user_id: string
+        }
+        Update: {
+          activity_score?: number | null
+          date?: string
+          fetched_at?: string | null
+          hrv_avg?: number | null
+          id?: string
+          readiness_score?: number | null
+          resting_hr?: number | null
+          sleep_score?: number | null
+          source?: string
+          spo2_avg?: number | null
+          total_calories?: number | null
+          total_steps?: number | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      wearable_summary: {
+        Row: {
+          acwr: number | null
+          date: string
+          id: string
+          monotony: number | null
+          readiness_index: number | null
+          source: string
+          strain: number | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          acwr?: number | null
+          date: string
+          id?: string
+          monotony?: number | null
+          readiness_index?: number | null
+          source: string
+          strain?: number | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          acwr?: number | null
+          date?: string
+          id?: string
+          monotony?: number | null
+          readiness_index?: number | null
+          source?: string
+          strain?: number | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       wearable_tokens: {
         Row: {
           access_token: string

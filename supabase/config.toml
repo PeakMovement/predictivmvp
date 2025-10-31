@@ -47,3 +47,9 @@ verify_jwt = true
 
 [functions.wearable-fetch-data]
 verify_jwt = false
+
+[functions.fetch-oura-data]
+verify_jwt = false
+
+[functions.oura-auth-initiate]
+verify_jwt = false

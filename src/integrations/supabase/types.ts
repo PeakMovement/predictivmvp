@@ -446,6 +446,33 @@ export type Database = {
         }
         Relationships: []
       }
+      oura_logs: {
+        Row: {
+          created_at: string | null
+          entries_synced: number | null
+          error_message: string | null
+          id: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          entries_synced?: number | null
+          error_message?: string | null
+          id?: string
+          status: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          entries_synced?: number | null
+          error_message?: string | null
+          id?: string
+          status?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       oura_sync_log: {
         Row: {
           data: Json | null

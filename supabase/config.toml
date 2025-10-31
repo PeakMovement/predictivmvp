@@ -9,6 +9,9 @@ verify_jwt = false
 [functions.fetch-oura-auto]
 verify_jwt = false
 
+[functions.generate-daily-briefing]
+verify_jwt = false
+
 [functions.lovable-ai-credits]
 verify_jwt = true
 
@@ -52,7 +55,4 @@ verify_jwt = false
 verify_jwt = false
 
 [functions.oura-auth-initiate]
-verify_jwt = false
-
-[functions.generate-daily-briefing]
 verify_jwt = false

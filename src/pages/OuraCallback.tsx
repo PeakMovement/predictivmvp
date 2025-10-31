@@ -48,7 +48,22 @@ export const OuraCallback = () => {
           throw new Error(exchangeError.message || "Failed to authenticate with Ōura");
         }
 
-        console.log("[OuraCallback] Successfully authenticated with Ōura");
+        console.log("[OuraCallback] Edge function returned success, verifying database...");
+
+        // Verify tokens were actually saved in the database
+        const { data: verifyData, error: verifyError } = await supabase
+          .from("oura_tokens")
+          .select("user_id")
+          .eq("user_id", user_id)
+          .maybeSingle();
+
+        if (verifyError || !verifyData) {
+          throw new Error(
+            "Tokens were not saved to database. Please check Edge Function secrets (SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY) in Supabase Dashboard."
+          );
+        }
+
+        console.log("[OuraCallback] Successfully authenticated with Ōura and verified DB write");
         setStatus("success");
 
         toast({

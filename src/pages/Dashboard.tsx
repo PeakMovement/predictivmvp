@@ -8,7 +8,8 @@ import { YvesTreeTimeline } from "@/components/dashboard/YvesTreeTimeline";
 import { YvesRecommendationsCard } from "@/components/dashboard/YvesRecommendationsCard";
 import { DailyBriefingCard } from "@/components/dashboard/DailyBriefingCard";
 import { useHealthProfile } from "@/hooks/useHealthProfile";
-import { useTrainingTrends } from "@/hooks/useTrainingTrends";
+import { useWearableSessions } from "@/hooks/useWearableSessions";
+import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 
 const getStatusColor = (status: string) => {
@@ -40,15 +41,26 @@ const WelcomeHeader = () => (
 );
 
 export const Dashboard = () => {
-  const { trends, latestTrend, isLoading, userId } = useTrainingTrends();
+  const [userId, setUserId] = useState<string | null>(null);
   const { profile } = useHealthProfile();
 
-  const dashboardMetrics = latestTrend
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      setUserId(user?.id || null);
+    });
+  }, []);
+
+  const { data: session, isLoading } = useWearableSessions(userId || undefined);
+
+  console.log("Dashboard wearable data:", session);
+
+  const dashboardMetrics = session
     ? [
-        { name: "Training Load", value: latestTrend.training_load, status: "green" },
-        { name: "Strain", value: latestTrend.strain, status: "yellow" },
-        { name: "ACWR", value: latestTrend.acwr, status: "green" },
-        { name: "HRV", value: latestTrend.hrv ?? "—", status: "green" },
+        { name: "Readiness", value: session.readiness_score ?? "—", status: "green" },
+        { name: "Sleep", value: session.sleep_score ?? "—", status: "green" },
+        { name: "Activity", value: session.activity_score ?? "—", status: "green" },
+        { name: "Steps", value: session.total_steps ?? "—", status: "green" },
+        { name: "Calories", value: session.total_calories ?? "—", status: "green" },
       ]
     : [];
 

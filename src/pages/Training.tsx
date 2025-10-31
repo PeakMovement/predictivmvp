@@ -224,8 +224,8 @@ export const Training = () => {
       refresh();
     };
     
-    window.addEventListener("fitbit_trends_refresh", handleDataRefreshed);
-    return () => window.removeEventListener("fitbit_trends_refresh", handleDataRefreshed);
+    window.addEventListener("wearable_trends_refresh", handleDataRefreshed);
+    return () => window.removeEventListener("wearable_trends_refresh", handleDataRefreshed);
   }, [refresh]);
 
   return (

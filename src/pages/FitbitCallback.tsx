@@ -31,8 +31,8 @@ export const FitbitCallback = () => {
           return;
         }
 
-        const codeVerifier = sessionStorage.getItem("fitbit_code_verifier");
-        const userId = state || sessionStorage.getItem("fitbit_user_id");
+        const codeVerifier = sessionStorage.getItem("wearable_code_verifier");
+        const userId = state || sessionStorage.getItem("wearable_user_id");
 
         if (!codeVerifier || !userId) {
           setStatus("error");
@@ -41,8 +41,8 @@ export const FitbitCallback = () => {
           return;
         }
 
-        sessionStorage.removeItem("fitbit_code_verifier");
-        sessionStorage.removeItem("fitbit_user_id");
+        sessionStorage.removeItem("wearable_code_verifier");
+        sessionStorage.removeItem("wearable_user_id");
 
         setMessage("Exchanging authorization code for tokens...");
 

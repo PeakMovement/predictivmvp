@@ -16,10 +16,8 @@ export const useUnifiedMetrics = () => {
     };
     
     window.addEventListener("wearable_trends_refresh", handleDataRefreshed);
-    window.addEventListener("fitbit_trends_refresh", handleDataRefreshed); // Backwards compat
     return () => {
       window.removeEventListener("wearable_trends_refresh", handleDataRefreshed);
-      window.removeEventListener("fitbit_trends_refresh", handleDataRefreshed);
     };
   }, [refresh]);
   

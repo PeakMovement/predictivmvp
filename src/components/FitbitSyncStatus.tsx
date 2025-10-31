@@ -43,8 +43,8 @@ const FitbitSyncStatus = () => {
     fetchLastSync();
     
     const handleRefresh = () => fetchLastSync();
-    window.addEventListener("fitbit_trends_refresh", handleRefresh);
-    return () => window.removeEventListener("fitbit_trends_refresh", handleRefresh);
+    window.addEventListener("wearable_trends_refresh", handleRefresh);
+    return () => window.removeEventListener("wearable_trends_refresh", handleRefresh);
   }, []);
 
   // ⏱️ Handle Fitbit manual refresh

@@ -543,7 +543,7 @@ const WeeklyInsightsSection = () => {
   const { csvData, currentDayIndex } = useLiveData();
   const { trends, isLoading } = useTrainingTrends({ days: 7 });
   
-  // Calculate 7-day rolling averages from fitbit_trends using unified calculator
+  // Calculate 7-day rolling averages from wearable_auto_data using unified calculator
   const calculate7DayAverages = useMemo(() => {
     if (trends.length === 0) {
       return {
@@ -557,7 +557,7 @@ const WeeklyInsightsSection = () => {
     const avgHRV = trends.reduce((sum, t) => sum + (t.hrv || 0), 0) / trends.length;
     const avgACWR = trends.reduce((sum, t) => sum + (t.acwr || 0), 0) / trends.length;
     
-    // Use sleep_score from fitbit_trends (now calculated in calc-trends)
+    // Use sleep_score from wearable trends (calculated in calc-trends)
     const sleepScores = trends
       .filter((t: any) => t.sleep_score != null && t.sleep_score > 0)
       .map((t: any) => t.sleep_score);

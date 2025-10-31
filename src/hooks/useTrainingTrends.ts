@@ -92,11 +92,8 @@ export const useTrainingTrends = (options: UseTrainingTrendsOptions = {}): UseTr
   useEffect(() => {
     const handleRefresh = () => fetchTrends();
     window.addEventListener("wearable_trends_refresh", handleRefresh);
-    // Backwards compatibility
-    window.addEventListener("fitbit_trends_refresh", handleRefresh);
     return () => {
       window.removeEventListener("wearable_trends_refresh", handleRefresh);
-      window.removeEventListener("fitbit_trends_refresh", handleRefresh);
     };
   }, [fetchTrends]);
 

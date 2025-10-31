@@ -17,7 +17,6 @@ Deno.serve(async (req) => {
     storage: false,
     ai_provider: false,
     ai_provider_name: 'none',
-    ai_mock_mode: false,
     secrets: false
   };
 
@@ -32,27 +31,24 @@ Deno.serve(async (req) => {
     const { error: storageError } = await supabaseAdmin.storage.listBuckets();
     checks.storage = !storageError;
 
-    const aiProvider = Deno.env.get('AI_PROVIDER') || 'openai';
-    const mockMode = Deno.env.get('AI_MOCK_MODE') === 'true';
+    const aiProvider = Deno.env.get('AI_PROVIDER') || 'lovable';
     checks.ai_provider_name = aiProvider;
-    checks.ai_mock_mode = mockMode;
 
-    if (mockMode) {
-      checks.ai_provider = true;
-    } else {
-      switch (aiProvider) {
-        case 'openai':
-          checks.ai_provider = !!Deno.env.get('OPENAI_API_KEY');
-          break;
-        case 'anthropic':
-          checks.ai_provider = !!Deno.env.get('ANTHROPIC_API_KEY');
-          break;
-        case 'google':
-          checks.ai_provider = !!Deno.env.get('GOOGLE_AI_API_KEY');
-          break;
-        default:
-          checks.ai_provider = false;
-      }
+    switch (aiProvider) {
+      case 'lovable':
+        checks.ai_provider = !!Deno.env.get('LOVABLE_API_KEY');
+        break;
+      case 'openai':
+        checks.ai_provider = !!Deno.env.get('OPENAI_API_KEY');
+        break;
+      case 'anthropic':
+        checks.ai_provider = !!Deno.env.get('ANTHROPIC_API_KEY');
+        break;
+      case 'google':
+        checks.ai_provider = !!Deno.env.get('GOOGLE_AI_API_KEY');
+        break;
+      default:
+        checks.ai_provider = false;
     }
 
     checks.secrets = !!Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');

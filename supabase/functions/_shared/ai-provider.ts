@@ -35,19 +35,13 @@ export interface AIRequestOptions {
 export class AIProviderService {
   private provider: AIProvider;
   private apiKey: string;
-  private mockMode: boolean;
 
-  constructor(provider: AIProvider = 'openai', apiKey: string = '', mockMode: boolean = false) {
+  constructor(provider: AIProvider = 'openai', apiKey: string = '') {
     this.provider = provider;
     this.apiKey = apiKey;
-    this.mockMode = mockMode;
   }
 
   async chat(options: AIRequestOptions): Promise<AIResponse> {
-    if (this.mockMode) {
-      return this.getMockResponse(options);
-    }
-
     switch (this.provider) {
       case 'lovable':
         return this.chatLovable(options);
@@ -274,105 +268,9 @@ export class AIProviderService {
 
     return { content, toolCalls: toolCalls.length > 0 ? toolCalls : undefined };
   }
-
-  private getMockResponse(options: AIRequestOptions): AIResponse {
-    console.log('[AI Mock Mode] Generating mock response');
-
-    if (options.tools && options.tools.length > 0) {
-      const tool = options.tools[0];
-      const mockData = this.generateMockToolData(tool.function.name, tool.function.parameters);
-
-      return {
-        content: '',
-        toolCalls: [{
-          name: tool.function.name,
-          arguments: JSON.stringify(mockData)
-        }]
-      };
-    }
-
-    return {
-      content: 'This is a mock AI response. Enable a real AI provider to get actual analysis.'
-    };
-  }
-
-  private generateMockToolData(toolName: string, schema: any): any {
-    if (toolName.includes('nutrition')) {
-      return {
-        daily_calories: 2500,
-        macros: { protein_g: 150, carbs_g: 300, fat_g: 80 },
-        meal_timing: ['7:00 AM - Breakfast', '12:00 PM - Lunch', '7:00 PM - Dinner'],
-        special_considerations: ['High protein for recovery'],
-        supplements: ['Whey protein', 'Creatine']
-      };
-    }
-
-    if (toolName.includes('medical')) {
-      return {
-        conditions: [
-          { name: 'Exercise-induced asthma', severity: 'mild', diagnosed_date: '2020-01' }
-        ],
-        medications: [
-          { name: 'Albuterol inhaler', dosage: '2 puffs', frequency: 'As needed before exercise' }
-        ],
-        allergies: ['Pollen'],
-        contraindications: ['Avoid high-intensity training during high pollen count']
-      };
-    }
-
-    if (toolName.includes('training')) {
-      return {
-        program_name: 'Marathon Training Plan',
-        duration_weeks: 16,
-        current_phase: 'build',
-        weekly_schedule: [
-          { day: 'Monday', workout_type: 'Easy run', duration_min: 45, intensity: 'easy' },
-          { day: 'Wednesday', workout_type: 'Tempo run', duration_min: 60, intensity: 'moderate' },
-          { day: 'Saturday', workout_type: 'Long run', duration_min: 120, intensity: 'easy' }
-        ],
-        goal_race_date: '2025-04-15',
-        weekly_volume_km: 55
-      };
-    }
-
-    if (toolName.includes('recommendation')) {
-      return {
-        recommendations: [
-          {
-            priority: 'high',
-            title: 'Monitor Training Load',
-            message: 'Your recent metrics suggest increased fatigue. Consider a recovery day.',
-            actionText: 'View Trends',
-            category: 'training',
-            icon: 'Activity'
-          },
-          {
-            priority: 'medium',
-            title: 'Nutrition Check',
-            message: 'Ensure adequate protein intake for recovery.',
-            actionText: 'Review Meal Plan',
-            category: 'nutrition',
-            icon: 'Apple'
-          },
-          {
-            priority: 'low',
-            title: 'Stay Consistent',
-            message: 'Your training is progressing well. Keep up the good work!',
-            actionText: 'Continue',
-            category: 'general',
-            icon: 'Check'
-          }
-        ]
-      };
-    }
-
-    return {};
-  }
 }
 
 export function getAIProvider(): AIProviderService {
-  const mockMode = Deno.env.get('AI_MOCK_MODE') === 'true';
-  
   // Check available API keys
   const lovableKey = Deno.env.get('LOVABLE_API_KEY');
   const openaiKey = Deno.env.get('OPENAI_API_KEY');
@@ -386,14 +284,10 @@ export function getAIProvider(): AIProviderService {
     google: !!googleKey
   });
 
-  if (mockMode) {
-    return new AIProviderService('mock', '', true);
-  }
-
   // Prioritize Lovable AI (pre-configured, no billing issues)
   if (lovableKey) {
     console.log('[AI Provider] Using Lovable AI (google/gemini-2.5-flash)');
-    return new AIProviderService('lovable', lovableKey, false);
+    return new AIProviderService('lovable', lovableKey);
   }
 
   // Fall back to other providers
@@ -401,33 +295,33 @@ export function getAIProvider(): AIProviderService {
   
   if (explicitProvider === 'openai' && openaiKey) {
     console.log('[AI Provider] Using OpenAI');
-    return new AIProviderService('openai', openaiKey, false);
+    return new AIProviderService('openai', openaiKey);
   }
   
   if (explicitProvider === 'anthropic' && anthropicKey) {
     console.log('[AI Provider] Using Anthropic');
-    return new AIProviderService('anthropic', anthropicKey, false);
+    return new AIProviderService('anthropic', anthropicKey);
   }
   
   if (explicitProvider === 'google' && googleKey) {
     console.log('[AI Provider] Using Google');
-    return new AIProviderService('google', googleKey, false);
+    return new AIProviderService('google', googleKey);
   }
 
   // Auto-detect available provider
   if (openaiKey) {
     console.log('[AI Provider] Auto-detected OpenAI');
-    return new AIProviderService('openai', openaiKey, false);
+    return new AIProviderService('openai', openaiKey);
   }
   
   if (anthropicKey) {
     console.log('[AI Provider] Auto-detected Anthropic');
-    return new AIProviderService('anthropic', anthropicKey, false);
+    return new AIProviderService('anthropic', anthropicKey);
   }
   
   if (googleKey) {
     console.log('[AI Provider] Auto-detected Google');
-    return new AIProviderService('google', googleKey, false);
+    return new AIProviderService('google', googleKey);
   }
 
   throw new Error('[AI Provider] No API key found. Please configure LOVABLE_API_KEY or another provider.');

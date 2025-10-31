@@ -94,11 +94,9 @@ export const SessionLogList = () => {
       setFallbackSessions([]);
     };
     window.addEventListener("wearable_trends_refresh", handleRefresh);
-    window.addEventListener("fitbit_trends_refresh", handleRefresh); // Backwards compat
     
     return () => {
       window.removeEventListener("wearable_trends_refresh", handleRefresh);
-      window.removeEventListener("fitbit_trends_refresh", handleRefresh);
     };
   }, [trends, isFetchingFallback]);
 

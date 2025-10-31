@@ -54,8 +54,8 @@ Deno.serve(async (req) => {
 
     return new Response(
       JSON.stringify({ 
-        authUrl,
-        message: "✅ Oura integration verified — using correct client ID from Supabase"
+        auth_url: authUrl,
+        message: "Oura authorization URL generated successfully"
       }),
       {
         status: 200,

@@ -55,9 +55,21 @@ serve(async (req) => {
 
     console.log("[oura-auth] Successfully received tokens from Oura");
 
+    const supabaseUrl = Deno.env.get("SUPABASE_URL");
+    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+
+    console.log("[oura-auth] Environment check:");
+    console.log(`  SUPABASE_URL: ${supabaseUrl}`);
+    if (supabaseKey) {
+      const masked = `${supabaseKey.substring(0, 10)}...${supabaseKey.substring(supabaseKey.length - 4)}`;
+      console.log(`  SUPABASE_SERVICE_ROLE_KEY: ${masked}`);
+    } else {
+      console.log("  SUPABASE_SERVICE_ROLE_KEY: undefined");
+    }
+
     const supabase = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+      supabaseUrl!,
+      supabaseKey!
     );
 
     const expiresAtTimestamp = Math.floor(Date.now() / 1000) + data.expires_in;

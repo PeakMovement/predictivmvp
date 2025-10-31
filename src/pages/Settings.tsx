@@ -304,12 +304,16 @@ export const Settings = ({ onNavigate }: { onNavigate?: (tab: string) => void })
 
   const connectOura = async () => {
     try {
-      // Use your real user UUID for now (you can swap to supabase.auth.getUser later)
-      const user_id = "125ca6dd-715f-4c65-9d83-39ea06978884";
+      // Get the authenticated user's ID
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      
+      if (authError || !user) {
+        throw new Error("You must be logged in to connect your Ōura Ring");
+      }
 
       // Ask the backend to build the correct authorize URL (keeps client_id out of the browser)
       const { data, error } = await supabase.functions.invoke("oura-auth-initiate", {
-        body: { user_id },
+        body: { user_id: user.id },
       });
 
       if (error || !data?.auth_url) throw new Error(data?.error || "Failed to build Oura auth URL");

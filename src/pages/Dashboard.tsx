@@ -6,6 +6,7 @@ import { FeedbackSummaryPanel } from "@/components/dashboard/FeedbackSummaryPane
 import { HealthProfileViewer } from "@/components/health/HealthProfileViewer";
 import { YvesTreeTimeline } from "@/components/dashboard/YvesTreeTimeline";
 import { YvesRecommendationsCard } from "@/components/dashboard/YvesRecommendationsCard";
+import { DailyBriefingCard } from "@/components/dashboard/DailyBriefingCard";
 import { useHealthProfile } from "@/hooks/useHealthProfile";
 import { useTrainingTrends } from "@/hooks/useTrainingTrends";
 import { cn } from "@/lib/utils";
@@ -93,7 +94,11 @@ export const Dashboard = () => {
                 </div>
               )}
 
-              <div className="mt-10">
+              <div className="mt-8">
+                <DailyBriefingCard />
+              </div>
+
+              <div className="mt-8">
                 <YvesRecommendationsCard />
               </div>
 

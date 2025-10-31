@@ -53,3 +53,6 @@ verify_jwt = false
 
 [functions.oura-auth-initiate]
 verify_jwt = false
+
+[functions.generate-daily-briefing]
+verify_jwt = false

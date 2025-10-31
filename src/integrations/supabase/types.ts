@@ -118,6 +118,33 @@ export type Database = {
         }
         Relationships: []
       }
+      daily_briefings: {
+        Row: {
+          content: string
+          context_used: Json | null
+          created_at: string | null
+          date: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          context_used?: Json | null
+          created_at?: string | null
+          date: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          context_used?: Json | null
+          created_at?: string | null
+          date?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       document_insights: {
         Row: {
           confidence_score: number | null

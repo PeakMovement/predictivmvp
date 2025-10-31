@@ -42,13 +42,15 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
+    const expiresAtTimestamp = Math.floor(Date.now() / 1000) + data.expires_in;
+    
+    console.log("[oura-auth] Saving tokens to database with expires_at:", expiresAtTimestamp);
+
     const { error } = await supabase.from("oura_tokens").upsert({
       user_id,
       access_token: data.access_token,
       refresh_token: data.refresh_token,
-      expires_at: new Date(Date.now() + data.expires_in * 1000).toISOString(),
-      scope: data.scope,
-      token_type: data.token_type,
+      expires_at: expiresAtTimestamp,
     });
 
     if (error) {

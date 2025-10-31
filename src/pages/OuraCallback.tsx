@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 export const OuraCallback = () => {
   const [status, setStatus] = useState<"loading" | "success" | "error">("loading");
@@ -13,18 +14,27 @@ export const OuraCallback = () => {
   useEffect(() => {
     const handleOuraCallback = async () => {
       try {
-        // Extract the code from URL query params
+        // Extract the code and state from URL query params
         const params = new URLSearchParams(window.location.search);
         const code = params.get("code");
+        const state = params.get("state");
+
+        console.log("[OuraCallback] Received authorization code");
+        console.log("[OuraCallback] State parameter:", state);
 
         if (!code) {
           throw new Error("Authorization code not found in URL");
         }
 
-        console.log("[OuraCallback] Received authorization code");
+        // Get the authenticated user's ID
+        const { data: { user }, error: authError } = await supabase.auth.getUser();
+        
+        if (authError || !user) {
+          throw new Error("User not authenticated. Please log in first.");
+        }
 
-        // Use hardcoded user_id for now (temporary for testing)
-        const user_id = "125ca6dd-715f-4c65-9d83-39ea06978884";
+        const user_id = user.id;
+        console.log("[OuraCallback] Authenticated user ID:", user_id);
 
         // Call the oura-auth edge function
         const response = await fetch(

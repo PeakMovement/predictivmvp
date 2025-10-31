@@ -93,6 +93,101 @@ Deno.serve(async (req) => {
       ? memoryBank.map((m) => `${m.memory_key}: ${m.memory_value}`).join("\n")
       : "No long-term memory stored yet.";
 
+    // ─── LOAD WEARABLE DATA CONTEXT ──────────────────────────────────────────
+    const fourteenDaysAgo = new Date();
+    fourteenDaysAgo.setDate(fourteenDaysAgo.getDate() - 14);
+    const fourteenDaysAgoStr = fourteenDaysAgo.toISOString().split("T")[0];
+
+    // Query wearable_summary for last 14 days
+    const { data: wearableSummary } = await supabase
+      .from("wearable_summary")
+      .select("*")
+      .eq("user_id", user.id)
+      .gte("date", fourteenDaysAgoStr)
+      .order("date", { ascending: false });
+
+    // Query wearable_sessions for last 7 entries
+    const { data: wearableSessions } = await supabase
+      .from("wearable_sessions")
+      .select("*")
+      .eq("user_id", user.id)
+      .order("date", { ascending: false })
+      .limit(7);
+
+    // Build wearable context string
+    let wearableContext = "";
+    let hasWearableData = false;
+
+    if (wearableSummary && wearableSummary.length > 0) {
+      hasWearableData = true;
+      const avgStrain = wearableSummary.reduce((sum, s) => sum + (s.strain || 0), 0) / wearableSummary.length;
+      const avgMonotony = wearableSummary.reduce((sum, s) => sum + (s.monotony || 0), 0) / wearableSummary.length;
+      const avgAcwr = wearableSummary.reduce((sum, s) => sum + (s.acwr || 0), 0) / wearableSummary.length;
+
+      // Calculate trends from last 3 entries
+      const last3 = wearableSummary.slice(0, 3);
+      let strainTrend = "stable";
+      if (last3.length >= 2) {
+        const strainDiff = (last3[0]?.strain || 0) - (last3[last3.length - 1]?.strain || 0);
+        strainTrend = strainDiff > 0.5 ? "↑ increasing" : strainDiff < -0.5 ? "↓ decreasing" : "stable";
+      }
+
+      const latestSource = wearableSummary[0]?.source || "unknown";
+      const latestDate = wearableSummary[0]?.date || "unknown";
+
+      wearableContext = `\nWEARABLE DATA SUMMARY (Last 14 days):
+- Avg Training Strain: ${avgStrain.toFixed(1)} (${strainTrend})
+- Avg Monotony: ${avgMonotony.toFixed(2)}
+- Avg ACWR (Acute:Chronic Workload): ${avgAcwr.toFixed(2)}
+- Last Synced: ${latestDate} via ${latestSource}`;
+    }
+
+    if (wearableSessions && wearableSessions.length > 0) {
+      hasWearableData = true;
+      const sessionsWithReadiness = wearableSessions.filter(s => s.readiness_score !== null);
+      const sessionsWithSleep = wearableSessions.filter(s => s.sleep_score !== null);
+
+      if (sessionsWithReadiness.length > 0) {
+        const avgReadiness = sessionsWithReadiness.reduce((sum, s) => sum + (s.readiness_score || 0), 0) / sessionsWithReadiness.length;
+        
+        // Calculate readiness trend from last 3
+        const last3Readiness = sessionsWithReadiness.slice(0, 3);
+        let readinessTrend = "stable";
+        if (last3Readiness.length >= 2) {
+          const readinessDiff = (last3Readiness[0]?.readiness_score || 0) - (last3Readiness[last3Readiness.length - 1]?.readiness_score || 0);
+          readinessTrend = readinessDiff > 5 ? "↑ improving" : readinessDiff < -5 ? "↓ declining" : "stable";
+        }
+
+        wearableContext += `\n- Avg Readiness Score: ${avgReadiness.toFixed(0)} (${readinessTrend})`;
+      }
+
+      if (sessionsWithSleep.length > 0) {
+        const avgSleep = sessionsWithSleep.reduce((sum, s) => sum + (s.sleep_score || 0), 0) / sessionsWithSleep.length;
+        
+        // Calculate sleep trend from last 3
+        const last3Sleep = sessionsWithSleep.slice(0, 3);
+        let sleepTrend = "stable";
+        if (last3Sleep.length >= 2) {
+          const sleepDiff = (last3Sleep[0]?.sleep_score || 0) - (last3Sleep[last3Sleep.length - 1]?.sleep_score || 0);
+          sleepTrend = sleepDiff > 5 ? "↑ improving" : sleepDiff < -5 ? "↓ declining" : "stable";
+        }
+
+        wearableContext += `\n- Avg Sleep Score: ${avgSleep.toFixed(0)} (${sleepTrend})`;
+      }
+
+      // Add recent activity metrics
+      const latestSession = wearableSessions[0];
+      if (latestSession) {
+        wearableContext += `\n- Latest Activity: ${latestSession.total_steps || 0} steps, ${latestSession.total_calories || 0} cal`;
+        if (latestSession.resting_hr) wearableContext += `, HR: ${latestSession.resting_hr}`;
+        if (latestSession.hrv_avg) wearableContext += `, HRV: ${latestSession.hrv_avg}`;
+      }
+    }
+
+    if (!hasWearableData) {
+      wearableContext = "\nWEARABLE DATA: No wearable data available yet. User may need to connect a device.";
+    }
+
     // ─── BUILD PROMPT CONTEXT ────────────────────────────────────────────────
     const contextInfo = `
 USER PROFILE CONTEXT:
@@ -108,6 +203,7 @@ Training Profile: ${JSON.stringify(userContext?.training_profile || {}, null, 2)
 
 HEALTH PROFILE:
 ${healthProfile?.ai_synthesis || "No comprehensive health profile available yet."}
+${wearableContext}
 
 RECENT CONVERSATION HISTORY:
 ${conversationHistory}
@@ -185,6 +281,8 @@ suggest saving them with memory_key and memory_value so they can be stored via y
       user_id: user.id,
       query,
       response,
+      context_used: hasWearableData ? wearableContext : null,
+      provider: "openai", // Default provider, update if using different AI
     });
 
     console.log(`[yves-chat] Response generated and saved for user ${user.id}`);
@@ -205,7 +303,11 @@ suggest saving them with memory_key and memory_value so they can be stored via y
       }
     }
 
-    return new Response(JSON.stringify({ success: true, response }), {
+    return new Response(JSON.stringify({ 
+      success: true, 
+      response,
+      has_wearable_data: hasWearableData 
+    }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,
     });

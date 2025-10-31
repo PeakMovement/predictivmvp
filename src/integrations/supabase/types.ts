@@ -364,24 +364,33 @@ export type Database = {
       }
       insight_history: {
         Row: {
+          context_used: string | null
           created_at: string
           id: string
+          provider: string | null
           query: string
           response: string
+          response_quality: number | null
           user_id: string
         }
         Insert: {
+          context_used?: string | null
           created_at?: string
           id?: string
+          provider?: string | null
           query: string
           response: string
+          response_quality?: number | null
           user_id: string
         }
         Update: {
+          context_used?: string | null
           created_at?: string
           id?: string
+          provider?: string | null
           query?: string
           response?: string
+          response_quality?: number | null
           user_id?: string
         }
         Relationships: []

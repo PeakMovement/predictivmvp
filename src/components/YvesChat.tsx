@@ -7,7 +7,7 @@ import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/h
 import { InsightBox } from './InsightBox';
 import { queryYves, getInsightHistory, getLovableAICredits, type InsightHistoryItem, type LovableAICredits } from '@/api/yves';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Send, Sparkles, Info } from 'lucide-react';
+import { Loader2, Send, Sparkles, Info, Activity } from 'lucide-react';
 
 export function YvesChat() {
   const [query, setQuery] = useState('');
@@ -16,6 +16,7 @@ export function YvesChat() {
   const [fetchingHistory, setFetchingHistory] = useState(true);
   const [credits, setCredits] = useState<LovableAICredits | null>(null);
   const [loadingCredits, setLoadingCredits] = useState(false);
+  const [hasWearableData, setHasWearableData] = useState<boolean | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -63,9 +64,14 @@ export function YvesChat() {
       const result = await queryYves(query);
 
       if (result.success && result.response) {
+        // Update wearable data status
+        setHasWearableData(result.has_wearable_data || false);
+
         toast({
           title: 'Response received',
-          description: 'Yves has analyzed your question'
+          description: result.has_wearable_data 
+            ? 'Yves analyzed your question with latest health data'
+            : 'Yves has analyzed your question'
         });
 
         setQuery('');
@@ -191,10 +197,23 @@ export function YvesChat() {
               <Sparkles className="h-5 w-5 text-green-600" />
               <CardTitle>Chat with Yves</CardTitle>
             </div>
-            {renderCreditsBadge()}
+            <div className="flex items-center gap-2">
+              {hasWearableData !== null && (
+                <Badge 
+                  variant={hasWearableData ? "default" : "secondary"} 
+                  className="gap-1"
+                >
+                  <Activity className="h-3 w-3" />
+                  <span className="text-xs">
+                    {hasWearableData ? "Using latest health data ✓" : "No wearable data available"}
+                  </span>
+                </Badge>
+              )}
+              {renderCreditsBadge()}
+            </div>
           </div>
           <CardDescription>
-            Ask me anything about your health, training, nutrition, or recovery. I have access to your complete health profile.
+            Ask me anything about your health, training, nutrition, or recovery. I have access to your complete health profile and recent wearable data.
           </CardDescription>
         </CardHeader>
         <CardContent>

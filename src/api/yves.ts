@@ -8,6 +8,7 @@ export interface YvesQueryResponse {
   success: boolean;
   response: string;
   error?: string;
+  has_wearable_data?: boolean;
 }
 
 export interface InsightHistoryItem {

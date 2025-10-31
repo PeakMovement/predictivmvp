@@ -41,7 +41,7 @@ const App = () => {
   const currentPath = window.location.pathname;
   const isDashboardRoute = currentPath === "/dashboard";
   const isFitbitCallback = currentPath === "/fitbit/callback";
-  const isOuraCallback = currentPath === "/oauth/callback/oura";
+  const isOuraCallback = currentPath.startsWith("/oauth/callback/oura");
 
   // Check authentication status
   useEffect(() => {

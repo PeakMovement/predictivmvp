@@ -39,22 +39,13 @@ export const OuraCallback = () => {
         const user_id = user.id;
         console.log("[OuraCallback] Authenticated user ID:", user_id);
 
-        // Call the oura-auth edge function
-        const response = await fetch(
-          "https://ixtwbkikyuexskdgfpfq.supabase.co/functions/v1/oura-auth",
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ code, user_id }),
-          }
-        );
+        // Call the oura-auth edge function using Supabase client (adds required auth headers)
+        const { data: exchangeData, error: exchangeError } = await supabase.functions.invoke("oura-auth", {
+          body: { code, state, user_id },
+        });
 
-        const data = await response.json();
-
-        if (!response.ok) {
-          throw new Error(data.error || "Failed to authenticate with Ōura");
+        if (exchangeError) {
+          throw new Error(exchangeError.message || "Failed to authenticate with Ōura");
         }
 
         console.log("[OuraCallback] Successfully authenticated with Ōura");

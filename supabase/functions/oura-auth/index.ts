@@ -55,40 +55,76 @@ serve(async (req) => {
 
     console.log("[oura-auth] Successfully received tokens from Oura");
 
+    // Get Supabase credentials - these are automatically provided by Supabase Edge Runtime
     const supabaseUrl = Deno.env.get("SUPABASE_URL");
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 
+    // Detailed environment diagnostics
     console.log("[oura-auth] Environment check:");
-    console.log(`  SUPABASE_URL: ${supabaseUrl}`);
+    console.log(`  SUPABASE_URL present: ${!!supabaseUrl}`);
+    console.log(`  SUPABASE_URL value: ${supabaseUrl || 'MISSING'}`);
+    console.log(`  SUPABASE_SERVICE_ROLE_KEY present: ${!!supabaseKey}`);
     if (supabaseKey) {
       const masked = `${supabaseKey.substring(0, 10)}...${supabaseKey.substring(supabaseKey.length - 4)}`;
       console.log(`  SUPABASE_SERVICE_ROLE_KEY: ${masked}`);
     } else {
-      console.log("  SUPABASE_SERVICE_ROLE_KEY: undefined");
+      console.log(`  SUPABASE_SERVICE_ROLE_KEY: MISSING`);
     }
 
-    const supabase = createClient(
-      supabaseUrl!,
-      supabaseKey!
-    );
+    // Verify we have the required environment variables
+    if (!supabaseUrl || !supabaseKey) {
+      const missing = [];
+      if (!supabaseUrl) missing.push('SUPABASE_URL');
+      if (!supabaseKey) missing.push('SUPABASE_SERVICE_ROLE_KEY');
 
+      console.error(`[oura-auth] Missing required environment variables: ${missing.join(', ')}`);
+      throw new Error(
+        `Missing required environment variables: ${missing.join(', ')}. ` +
+        `These should be automatically provided by Supabase Edge Runtime. ` +
+        `Please redeploy the function or check Supabase Dashboard settings.`
+      );
+    }
+
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
+    // Calculate expiration timestamp (Unix timestamp in seconds)
     const expiresAtTimestamp = Math.floor(Date.now() / 1000) + data.expires_in;
-    
-    console.log("[oura-auth] Saving tokens to database with expires_at:", expiresAtTimestamp);
 
-    const { error } = await supabase.from("oura_tokens").upsert({
-      user_id,
-      access_token: data.access_token,
-      refresh_token: data.refresh_token,
-      expires_at: expiresAtTimestamp,
-    });
+    console.log("[oura-auth] Preparing to save tokens to database");
+    console.log(`  User ID: ${user_id}`);
+    console.log(`  Expires at: ${expiresAtTimestamp} (${new Date(expiresAtTimestamp * 1000).toISOString()})`);
+    console.log(`  Access token present: ${!!data.access_token}`);
+    console.log(`  Refresh token present: ${!!data.refresh_token}`);
+
+    // Verify we have all required token data
+    if (!data.access_token || !data.refresh_token) {
+      throw new Error(`Incomplete token data from Oura API: missing ${!data.access_token ? 'access_token' : 'refresh_token'}`);
+    }
+
+    // Upsert tokens to database (insert or update if exists)
+    const { data: upsertData, error } = await supabase
+      .from("oura_tokens")
+      .upsert({
+        user_id,
+        access_token: data.access_token,
+        refresh_token: data.refresh_token,
+        expires_at: expiresAtTimestamp,
+      }, {
+        onConflict: 'user_id'
+      })
+      .select();
 
     if (error) {
-      console.error("[oura-auth] Database error:", error);
-      throw new Error(`Database error: ${error.message}`);
+      console.error("[oura-auth] Database upsert error:", error);
+      console.error("  Error details:", JSON.stringify(error, null, 2));
+      throw new Error(
+        `Failed to save tokens to database: ${error.message}. ` +
+        `This usually indicates missing Supabase environment variables in Edge Function.`
+      );
     }
 
     console.log("[oura-auth] Successfully saved tokens to database");
+    console.log("  Upserted record:", upsertData ? 'success' : 'no data returned');
 
     return new Response(
       JSON.stringify({ success: true }),

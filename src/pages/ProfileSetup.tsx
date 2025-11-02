@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { MedicalDocumentsSection } from "@/components/profile/MedicalDocumentsSection";
 
 interface SectionStatus {
   personal: boolean;
@@ -436,7 +437,7 @@ export const ProfileSetup = () => {
                   </div>
                 </AccordionTrigger>
                 <AccordionContent>
-                  <form onSubmit={(e) => { e.preventDefault(); saveSection('injuries'); }} className="space-y-4 pt-4">
+                  <form onSubmit={(e) => { e.preventDefault(); saveSection('injuries'); }} className="space-y-6 pt-4">
                     <div className="space-y-2">
                       <Label htmlFor="injuries">Current or Past Injuries (comma-separated)</Label>
                       <Textarea id="injuries" value={injuriesData.injuries} onChange={(e) => setInjuriesData({ ...injuriesData, injuries: e.target.value })} placeholder="e.g., Knee sprain, Shoulder pain" />
@@ -445,6 +446,12 @@ export const ProfileSetup = () => {
                       <Label htmlFor="injury_details">Injury Details (optional JSON)</Label>
                       <Textarea id="injury_details" value={injuriesData.injury_details} onChange={(e) => setInjuriesData({ ...injuriesData, injury_details: e.target.value })} placeholder='{"knee": "2023-01"}' />
                     </div>
+                    
+                    {/* Medical Documents Section */}
+                    <div className="pt-4 border-t border-muted">
+                      <MedicalDocumentsSection />
+                    </div>
+                    
                     <Button type="submit" disabled={isSubmitting} className="w-full">
                       {isSubmitting ? "Saving..." : sectionStatus.injuries ? "Update Section" : "Save Section"}
                     </Button>

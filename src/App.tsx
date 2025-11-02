@@ -70,13 +70,12 @@ const App = () => {
     };
   }, []);
 
-  // Handle /dashboard route
-  if (isDashboardRoute) {
-    // Redirect to main app with dashboard tab active
-    if (activeTab !== "dashboard") {
+  // Sync tab when navigating directly to /dashboard
+  useEffect(() => {
+    if (isDashboardRoute && activeTab !== "dashboard") {
       setActiveTab("dashboard");
     }
-  }
+  }, [isDashboardRoute, activeTab]);
 
   // Main tab navigation
   const renderContent = () => {

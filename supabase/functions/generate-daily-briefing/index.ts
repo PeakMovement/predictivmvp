@@ -1,5 +1,5 @@
-import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { getAIProvider } from "../_shared/ai-provider.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -19,8 +19,8 @@ Deno.serve(async (req) => {
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const openaiApiKey = Deno.env.get("OPENAI_API_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    const aiProvider = getAIProvider();
 
     // Parse request - support both manual invocation and cron
     let userId: string | null = null;
@@ -94,11 +94,26 @@ Deno.serve(async (req) => {
           .select("memory_key, memory_value")
           .eq("user_id", uid);
 
+        // ─── LOAD USER PROFILE DATA ──────────────────────────────────────────
+        const { data: userProfile } = await supabase
+          .from("user_profile")
+          .select("*")
+          .eq("user_id", uid)
+          .maybeSingle();
+
+        const { data: userContext } = await supabase
+          .from("user_context_enhanced")
+          .select("*")
+          .eq("user_id", uid)
+          .maybeSingle();
+
         // ─── BUILD CONTEXT DATA ──────────────────────────────────────────────
         const contextData: any = {
           wearable_summary: wearableSummary || [],
           wearable_sessions: wearableSessions || [],
           memory_bank: memoryBank || [],
+          user_profile: userProfile || null,
+          user_context: userContext || null,
         };
 
         const hasWearableData = (wearableSummary && wearableSummary.length > 0) || 
@@ -145,7 +160,15 @@ Deno.serve(async (req) => {
           });
         }
 
-        // ─── CALL OPENAI GPT-4O-MINI ─────────────────────────────────────────
+        // Add user profile info if available
+        if (!hasWearableData && userProfile) {
+          promptContext += `\nUser Profile:\n`;
+          if (userProfile.name) promptContext += `- Name: ${userProfile.name}\n`;
+          if (userProfile.goals?.length > 0) promptContext += `- Goals: ${userProfile.goals.join(", ")}\n`;
+          if (userProfile.activity_level) promptContext += `- Activity Level: ${userProfile.activity_level}\n`;
+        }
+
+        // ─── CALL AI PROVIDER ────────────────────────────────────────────────
         const systemPrompt = `You are Yves, an AI health intelligence coach. Generate a concise daily briefing (~150 words) with 4 sections:
 
 1️⃣ Recovery: Readiness score trend and assessment
@@ -155,35 +178,30 @@ Deno.serve(async (req) => {
 
 Use emoji bullets, be warm and encouraging, keep it brief and actionable.`;
 
-        const userPrompt = hasWearableData 
-          ? `Generate today's briefing based on:\n\n${promptContext}`
-          : `Generate a motivational briefing for a user with no recent wearable data. Encourage them to connect a device and stay consistent with their health tracking.`;
+        let userPrompt = "";
+        if (hasWearableData) {
+          userPrompt = `Generate today's briefing based on:\n\n${promptContext}`;
+        } else if (userProfile) {
+          userPrompt = `Generate a welcoming briefing for a new user. ${promptContext}\n\nProvide encouragement to connect a wearable device and start tracking their health journey.`;
+        } else {
+          userPrompt = `Generate a brief welcome message encouraging the user to complete their profile and connect a wearable device to unlock personalized health insights.`;
+        }
 
-        const openaiResponse = await fetch("https://api.openai.com/v1/chat/completions", {
-          method: "POST",
-          headers: {
-            "Authorization": `Bearer ${openaiApiKey}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            model: "gpt-4o-mini",
-            messages: [
-              { role: "system", content: systemPrompt },
-              { role: "user", content: userPrompt }
-            ],
-            max_tokens: 300,
-            temperature: 0.7,
-          }),
+        const aiResponse = await aiProvider.chat({
+          messages: [
+            { role: "system", content: systemPrompt },
+            { role: "user", content: userPrompt }
+          ],
+          maxTokens: 300,
         });
 
-        if (!openaiResponse.ok) {
-          const errorText = await openaiResponse.text();
-          console.error(`[generate-daily-briefing] OpenAI error for user ${uid}:`, errorText);
+        if (!aiResponse.content) {
+          console.error(`[generate-daily-briefing] AI returned no content for user ${uid}`);
+          results.push({ user_id: uid, success: false, error: "AI returned no content" });
           continue;
         }
 
-        const openaiData = await openaiResponse.json();
-        const briefingContent = openaiData.choices[0]?.message?.content || "Unable to generate briefing.";
+        const briefingContent = aiResponse.content;
 
         // ─── SAVE TO DATABASE ────────────────────────────────────────────────
         const { error: insertError } = await supabase
@@ -209,15 +227,20 @@ Use emoji bullets, be warm and encouraging, keep it brief and actionable.`;
       }
     }
 
+    const successCount = results.filter(r => r.success).length;
+    const allFailed = successCount === 0 && results.length > 0;
+
     return new Response(
       JSON.stringify({
-        success: true,
-        message: `Generated ${results.filter(r => r.success).length} briefings`,
+        success: !allFailed,
+        message: allFailed 
+          ? `Failed to generate briefings: ${results[0]?.error || "Unknown error"}`
+          : `Generated ${successCount} briefing${successCount !== 1 ? 's' : ''}`,
         results,
       }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 200,
+        status: allFailed ? 500 : 200,
       }
     );
   } catch (error) {

@@ -41,23 +41,35 @@ export const OuraCallback = () => {
 
         // Call the oura-auth edge function using Supabase client (adds required auth headers)
         const { data: exchangeData, error: exchangeError } = await supabase.functions.invoke("oura-auth", {
-          body: { code, state, user_id },
+          body: { code, user_id },
         });
 
         if (exchangeError) {
+          console.error("[OuraCallback] Edge function error:", exchangeError);
           throw new Error(exchangeError.message || "Failed to authenticate with Ōura");
         }
 
-        console.log("[OuraCallback] Edge function returned success, verifying database...");
+        console.log("[OuraCallback] Edge function returned success:", exchangeData);
+
+        // Wait a moment for database to commit the transaction
+        await new Promise(resolve => setTimeout(resolve, 1000));
+
+        console.log("[OuraCallback] Verifying tokens were saved to database...");
 
         // Verify tokens were actually saved in the database
         const { data: verifyData, error: verifyError } = await supabase
           .from("oura_tokens")
-          .select("user_id")
+          .select("user_id, access_token, expires_at")
           .eq("user_id", user_id)
           .maybeSingle();
 
-        if (verifyError || !verifyData) {
+        console.log("[OuraCallback] Database verification result:", { verifyData, verifyError });
+
+        if (verifyError) {
+          throw new Error(`Database verification failed: ${verifyError.message}`);
+        }
+
+        if (!verifyData) {
           throw new Error(
             "Tokens were not saved to database. Please check Edge Function secrets (SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY) in Supabase Dashboard."
           );

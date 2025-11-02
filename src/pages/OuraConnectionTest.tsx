@@ -76,7 +76,36 @@ export const OuraConnectionTest = () => {
         updateResult("tokens", "success", "No existing tokens found");
       }
 
-      // Test 4: Check oura-auth-initiate function
+      // Test 4: Check oura-auth-test function (backend diagnostics)
+      updateResult("backend", "running", "Running backend diagnostics...");
+      const { data: backendData, error: backendError } = await supabase.functions.invoke("oura-auth-test", {
+        body: {},
+      });
+
+      if (backendError) {
+        updateResult("backend", "error", "Backend diagnostics failed", backendError.message);
+      } else if (backendData?.diagnostics) {
+        const diag = backendData.diagnostics as Record<string, any>;
+        const envStatus = [
+          `OURA_CLIENT_ID: ${diag.env?.OURA_CLIENT_ID ? '✓' : '✗'}`,
+          `OURA_CLIENT_SECRET: ${diag.env?.OURA_CLIENT_SECRET ? '✓' : '✗'}`,
+          `SUPABASE_URL: ${diag.env?.SUPABASE_URL ? '✓' : '✗'}`,
+          `SUPABASE_SERVICE_ROLE_KEY: ${diag.env?.SUPABASE_SERVICE_ROLE_KEY ? '✓' : '✗'}`,
+          `Database Access: ${diag.database_access}`,
+        ].join('\n');
+
+        const allGood = diag.env?.OURA_CLIENT_ID && diag.env?.OURA_CLIENT_SECRET &&
+                       diag.env?.SUPABASE_URL && diag.env?.SUPABASE_SERVICE_ROLE_KEY &&
+                       String(diag.database_access).includes('SUCCESS');
+
+        updateResult("backend", allGood ? "success" : "error",
+          allGood ? "All backend checks passed" : "Some backend checks failed",
+          envStatus);
+      } else {
+        updateResult("backend", "error", "Invalid response from backend", JSON.stringify(backendData));
+      }
+
+      // Test 5: Check oura-auth-initiate function
       updateResult("initiate", "running", "Testing oura-auth-initiate function...");
       const { data: initiateData, error: initiateError } = await supabase.functions.invoke("oura-auth-initiate", {
         body: { user_id: user.id },
@@ -90,12 +119,12 @@ export const OuraConnectionTest = () => {
         updateResult("initiate", "error", "No auth URL returned", JSON.stringify(initiateData));
       }
 
-      // Test 5: Check Edge Function logs (simulated)
+      // Test 6: Check Edge Function logs (simulated)
       updateResult("logs", "running", "Checking for recent errors...");
       // In production, you'd query function logs, but we'll just mark as complete
       updateResult("logs", "success", "Check Supabase Dashboard > Edge Functions > oura-auth for detailed logs");
 
-      // Test 6: Environment check
+      // Test 7: Environment check
       updateResult("env", "running", "Verifying environment configuration...");
       const envChecks = [];
 

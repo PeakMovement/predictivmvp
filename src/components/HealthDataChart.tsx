@@ -16,7 +16,7 @@ export default function HealthDataChart() {
   const { toast } = useToast();
 
   useEffect(() => {
-    fetchHealthData();
+    void fetchHealthData();
   }, []);
 
   const fetchHealthData = async () => {
@@ -49,7 +49,7 @@ export default function HealthDataChart() {
 
       data.forEach((row) => {
         if (row.samples && Array.isArray(row.samples)) {
-          row.samples.forEach((sample: any) => {
+          row.samples.forEach((sample: Record<string, unknown>) => {
             const dataPoint: ChartDataPoint = {
               date: new Date(sample.date).toLocaleDateString('en-US', { 
                 month: 'short', 
@@ -78,7 +78,7 @@ export default function HealthDataChart() {
 
       setChartData(parsedData);
       setMetrics(Array.from(metricSet));
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast({
         title: "Unexpected error",
         description: err.message || "Failed to fetch health data.",

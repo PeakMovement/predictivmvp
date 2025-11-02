@@ -19,7 +19,7 @@ interface HealthProfileViewerProps {
       };
       medical_summary?: {
         active_conditions?: string[];
-        medications?: any[];
+        medications?: Array<{ name: string; dosage: string }>;
         allergies?: string[];
         contraindications?: string[];
       };
@@ -27,7 +27,7 @@ interface HealthProfileViewerProps {
         program_name?: string;
         current_phase?: string;
         weekly_volume_km?: number;
-        weekly_schedule?: any[];
+        weekly_schedule?: unknown[];
         goal_race_date?: string;
       };
     };
@@ -138,7 +138,7 @@ export function HealthProfileViewer({ profile }: HealthProfileViewerProps) {
                     <div>
                       <p className="text-xs text-muted-foreground mb-1">Medications</p>
                       <div className="space-y-1">
-                        {medical_summary.medications.map((med: any, i) => (
+                        {medical_summary.medications.map((med, i) => (
                           <p key={i} className="text-xs">{med.name} - {med.dosage}</p>
                         ))}
                       </div>

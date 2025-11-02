@@ -66,17 +66,19 @@ export const SessionLogList = () => {
         if (!error && data) {
           const activities: Session[] = [];
           data.forEach(record => {
-            const activityData = record.activity as any; // Cast to any for JSON access
-            const acts = activityData?.data?.activities || [];
-            acts.forEach((act: any) => {
+            const activityData = record.activity as Record<string, unknown>;
+            const dataObj = activityData?.data as Record<string, unknown> | undefined;
+            const acts = (dataObj?.activities as unknown[]) || [];
+            acts.forEach((act: unknown) => {
+              const activity = act as Record<string, unknown>;
               activities.push({
-                title: act.name || 'Workout',
-                date: format(new Date(act.startDate || record.fetched_at), 'MMM dd'),
-                time: act.startTime,
-                load: estimateTrainingLoad(act),
-                calories: act.calories,
-                distance: act.distance,
-                duration: Math.round((act.activeDuration || act.duration) / 1000 / 60), // Convert to minutes
+                title: (activity.name as string) || 'Workout',
+                date: format(new Date((activity.startDate as string) || record.fetched_at), 'MMM dd'),
+                time: activity.startTime as string | undefined,
+                load: estimateTrainingLoad(activity),
+                calories: activity.calories as number | undefined,
+                distance: activity.distance as number | undefined,
+                duration: Math.round(((activity.activeDuration as number) || (activity.duration as number) || 0) / 1000 / 60), // Convert to minutes
               });
             });
           });

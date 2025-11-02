@@ -28,7 +28,7 @@ export const FitbitHealthCard = () => {
   const fetchHealthData = async () => {
     try {
       const { data, error } = await supabase
-        .from("fitbit_auto_data" as any)
+        .from("fitbit_auto_data")
         .select("user_id, activity, sleep")
         .order("fetched_at", { ascending: false })
         .limit(1)
@@ -37,7 +37,7 @@ export const FitbitHealthCard = () => {
       if (error) throw error;
       
       if (data) {
-        setHealthData(data as any as FitbitActivityData);
+        setHealthData(data as unknown as FitbitActivityData);
       }
     } catch (error) {
       console.error("Error fetching Fitbit health data:", error);

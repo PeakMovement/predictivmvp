@@ -10,7 +10,7 @@ export interface UserDocument {
   file_name: string;
   file_size: number | null;
   uploaded_at: string;
-  parsed_content: any;
+  parsed_content: Record<string, unknown>;
   ai_summary: string | null;
   tags: string[] | null;
   processing_status: 'pending' | 'processing' | 'completed' | 'failed';
@@ -48,7 +48,7 @@ export const useDocuments = () => {
   };
 
   useEffect(() => {
-    fetchDocuments();
+    void fetchDocuments();
 
     // Subscribe to real-time updates
     const channel = supabase

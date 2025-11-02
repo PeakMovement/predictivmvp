@@ -5,7 +5,7 @@ import { useToast } from '@/hooks/use-toast';
 export interface HealthProfile {
   id: string;
   user_id: string;
-  profile_data: any;
+  profile_data: Record<string, unknown>;
   ai_synthesis: string | null;
   generated_at: string;
   version: number;
@@ -86,7 +86,7 @@ export const useHealthProfile = () => {
   };
 
   useEffect(() => {
-    fetchProfile();
+    void fetchProfile();
 
     // Subscribe to profile changes
     const channel = supabase

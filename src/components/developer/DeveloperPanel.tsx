@@ -19,7 +19,7 @@ export const DeveloperPanel = () => {
   const [isLoading, setIsLoading] = useState(false);
 
   const fetchLogs = async () => {
-    const { data, error } = await (supabase.from as any)("function_execution_log")
+    const { data, error } = await supabase.from("function_execution_log")
       .select("function_name, status, started_at, completed_at, duration_ms, error_message")
       .order("started_at", { ascending: false })
       .limit(10);
@@ -56,7 +56,7 @@ export const DeveloperPanel = () => {
       
       console.log(`${functionName} result:`, data);
       fetchLogs();
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: `${displayName} failed`,
         description: error.message || "Unknown error",

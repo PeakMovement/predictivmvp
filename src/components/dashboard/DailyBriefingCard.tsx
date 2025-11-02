@@ -8,7 +8,7 @@ import { formatDistanceToNow } from "date-fns";
 import { getLatestBriefing, generateBriefing, type DailyBriefing, type BriefingCategory } from "@/api/dailyBriefing";
 import { cn } from "@/lib/utils";
 
-const categories: Array<{ key: BriefingCategory; label: string; icon: any; emoji: string }> = [
+const categories: Array<{ key: BriefingCategory; label: string; icon: React.ComponentType<{ className?: string }>; emoji: string }> = [
   { key: 'recovery', label: 'Recovery', icon: Heart, emoji: '🏃' },
   { key: 'sleep', label: 'Sleep', icon: Moon, emoji: '😴' },
   { key: 'activity', label: 'Activity', icon: Zap, emoji: '💪' },

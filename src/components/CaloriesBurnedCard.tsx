@@ -30,7 +30,7 @@ export const CaloriesBurnedCard = () => {
       if (!user) return;
 
       const { data, error } = await supabase
-        .from("fitbit_auto_data" as any)
+        .from("fitbit_auto_data")
         .select("*")
         .eq("user_id", user.id)
         .order("fetched_at", { ascending: false })
@@ -54,7 +54,7 @@ export const CaloriesBurnedCard = () => {
   };
 
   useEffect(() => {
-    fetchCalorieData();
+    void fetchCalorieData();
 
     // Set up real-time subscription
     supabase.auth.getUser().then(({ data: { user } }) => {

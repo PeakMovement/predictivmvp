@@ -131,7 +131,7 @@ async function getLegacyTrainingTrends(
     if (error) throw error;
 
     // Map legacy structure to new format
-    return (data || []).map((trend: any) => ({
+    return (data || []).map((trend: Record<string, unknown>) => ({
       id: trend.id,
       user_id: trend.user_id,
       date: trend.date,

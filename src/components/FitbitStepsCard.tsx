@@ -35,7 +35,7 @@ export const FitbitStepsCard = () => {
   const fetchActivityData = async () => {
     try {
       const { data, error } = await supabase
-        .from("fitbit_auto_data" as any)
+        .from("fitbit_auto_data")
         .select("user_id, activity, fetched_at")
         .order("fetched_at", { ascending: false })
         .limit(1)
@@ -44,7 +44,7 @@ export const FitbitStepsCard = () => {
       if (error) throw error;
       
       if (data) {
-        setActivityData(data as any as FitbitActivityData);
+        setActivityData(data as unknown as FitbitActivityData);
       }
     } catch (error) {
       console.error("Error fetching Fitbit activity data:", error);

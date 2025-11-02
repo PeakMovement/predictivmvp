@@ -90,7 +90,7 @@ const FitbitSyncStatus = () => {
       }));
 
       setTimeout(() => setState((s) => ({ ...s, status: "idle" })), 3000);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("❌ Fitbit sync error:", err);
       setState((prev) => ({ ...prev, status: "error" }));
       

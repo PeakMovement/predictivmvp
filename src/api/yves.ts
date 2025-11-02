@@ -102,9 +102,9 @@ export async function getUserContext() {
 }
 
 export async function updateUserContext(updates: {
-  nutrition_profile?: any;
-  medical_profile?: any;
-  training_profile?: any;
+  nutrition_profile?: Record<string, unknown>;
+  medical_profile?: Record<string, unknown>;
+  training_profile?: Record<string, unknown>;
 }) {
   try {
     const { data: { user } } = await supabase.auth.getUser();
@@ -144,7 +144,7 @@ export async function updateUserContext(updates: {
   }
 }
 
-export async function getYvesRecommendations(limit: number = 10): Promise<any[]> {
+export async function getYvesRecommendations(limit: number = 10): Promise<Record<string, unknown>[]> {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error('Not authenticated');
 

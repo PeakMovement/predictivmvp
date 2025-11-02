@@ -19,7 +19,7 @@ export const useFeedbackSummary = () => {
   useEffect(() => {
     const fetchSummary = async () => {
       try {
-        const { data, error } = await (supabase.from as any)("feedback_summary").select("*");
+        const { data, error } = await supabase.from("feedback_summary").select("*");
         if (error) {
           setError(error.message);
         } else if (data) {

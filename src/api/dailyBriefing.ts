@@ -7,7 +7,7 @@ export interface DailyBriefing {
   user_id: string;
   date: string;
   content: string;
-  context_used: any;
+  context_used: Record<string, unknown>;
   created_at: string;
   category?: string;
 }

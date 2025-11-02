@@ -44,7 +44,7 @@ export function YvesTreeTimeline() {
 
         // 🧩 Parse Data
         if (Array.isArray(data?.chart)) {
-          const enhanced = data.chart.map((d: any) => ({
+          const enhanced = data.chart.map((d: Record<string, unknown>) => ({
             ...d,
             color:
               d.value > 0.8
@@ -73,7 +73,7 @@ export function YvesTreeTimeline() {
   }, []);
 
   /** 🧠 Custom Tooltip */
-  const CustomTooltip = ({ active, payload }: any) => {
+  const CustomTooltip = ({ active, payload }: { active?: boolean; payload?: Array<{ payload: ChartDataPoint }> }) => {
     if (active && payload && payload.length) {
       const { date, label, color, value } = payload[0].payload;
       return (

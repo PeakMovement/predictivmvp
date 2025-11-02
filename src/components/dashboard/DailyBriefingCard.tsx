@@ -129,99 +129,56 @@ export function DailyBriefingCard() {
         )}
       </CardHeader>
       <CardContent>
-        {briefing ? (
-          <div className="space-y-6">
-            <div className="prose prose-sm dark:prose-invert max-w-none">
-              <div className="whitespace-pre-wrap text-sm leading-relaxed">
-                {briefing.content}
-              </div>
-            </div>
-            {briefing.context_used && (
-              <div className="flex items-center gap-2 pt-2">
-                <Badge variant="secondary" className="text-xs">
-                  Based on {briefing.context_used.wearable_sessions?.length || 0} recent sessions
-                </Badge>
-                {briefing.context_used.memory_bank && briefing.context_used.memory_bank.length > 0 && (
-                  <Badge variant="secondary" className="text-xs">
-                    {briefing.context_used.memory_bank.length} context items
-                  </Badge>
+        <div className="space-y-4">
+          <p className="text-sm text-muted-foreground mb-4">Choose a focus area for your daily briefing:</p>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+            {categories.map(({ key, label, icon: Icon, emoji }) => (
+              <div key={key} className="space-y-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full justify-between gap-2 text-xs"
+                  onClick={() => {
+                    if (!categoryBriefings[key]) {
+                      handleGenerateBriefing(key);
+                    }
+                    setOpenCategories(prev => ({ ...prev, [key]: !prev[key] }));
+                  }}
+                >
+                  <div className="flex items-center gap-2">
+                    {generatingCategories[key] ? (
+                      <Loader2 className="h-3 w-3 animate-spin" />
+                    ) : (
+                      <span>{emoji}</span>
+                    )}
+                    <span className="truncate">{label}</span>
+                  </div>
+                  <ChevronDown className={cn(
+                    "h-3 w-3 transition-transform",
+                    openCategories[key] && "transform rotate-180"
+                  )} />
+                </Button>
+                {openCategories[key] && (
+                  <Card className="bg-muted/50 animate-fade-in">
+                    <CardContent className="p-3">
+                      {categoryBriefings[key] ? (
+                        <p className="text-xs leading-relaxed whitespace-pre-wrap">
+                          {categoryBriefings[key]?.content}
+                        </p>
+                      ) : generatingCategories[key] ? (
+                        <div className="flex items-center justify-center py-2">
+                          <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                        </div>
+                      ) : (
+                        <p className="text-xs text-muted-foreground">Click to generate</p>
+                      )}
+                    </CardContent>
+                  </Card>
                 )}
               </div>
-            )}
-
-            {/* Category-specific mini briefings */}
-            <div className="border-t pt-4 space-y-2">
-              <p className="text-xs text-muted-foreground mb-3">Get focused insights:</p>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                {categories.map(({ key, label, icon: Icon, emoji }) => (
-                  <div key={key} className="space-y-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="w-full justify-between gap-2 text-xs"
-                      onClick={() => {
-                        if (!categoryBriefings[key]) {
-                          handleGenerateBriefing(key);
-                        }
-                        setOpenCategories(prev => ({ ...prev, [key]: !prev[key] }));
-                      }}
-                    >
-                      <div className="flex items-center gap-2">
-                        {generatingCategories[key] ? (
-                          <Loader2 className="h-3 w-3 animate-spin" />
-                        ) : (
-                          <span>{emoji}</span>
-                        )}
-                        <span className="truncate">{label}</span>
-                      </div>
-                      <ChevronDown className={cn(
-                        "h-3 w-3 transition-transform",
-                        openCategories[key] && "transform rotate-180"
-                      )} />
-                    </Button>
-                    {openCategories[key] && (
-                      <Card className="bg-muted/50 animate-fade-in">
-                        <CardContent className="p-3">
-                          {categoryBriefings[key] ? (
-                            <p className="text-xs leading-relaxed whitespace-pre-wrap">
-                              {categoryBriefings[key]?.content}
-                            </p>
-                          ) : generatingCategories[key] ? (
-                            <div className="flex items-center justify-center py-2">
-                              <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-                            </div>
-                          ) : (
-                            <p className="text-xs text-muted-foreground">Click to generate</p>
-                          )}
-                        </CardContent>
-                      </Card>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
+            ))}
           </div>
-        ) : (
-          <div className="flex flex-col items-center justify-center py-8 space-y-4">
-            <Sparkles className="h-12 w-12 text-muted-foreground/50" />
-            <p className="text-sm text-muted-foreground text-center">
-              No daily briefing yet — generate one to see your personalized health summary
-            </p>
-            <Button onClick={() => handleGenerateBriefing('full')} disabled={generating} className="gap-2">
-              {generating ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  Generating...
-                </>
-              ) : (
-                <>
-                  <Sparkles className="h-4 w-4" />
-                  Generate Briefing
-                </>
-              )}
-            </Button>
-          </div>
-        )}
+        </div>
       </CardContent>
     </Card>
   );

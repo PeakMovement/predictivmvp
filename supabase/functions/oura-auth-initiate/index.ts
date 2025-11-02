@@ -1,13 +1,17 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Client-Info, Apikey",
 };
 
-Deno.serve(async (req) => {
+Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, {
+      status: 200,
+      headers: corsHeaders,
+    });
   }
 
   try {
@@ -29,7 +33,7 @@ Deno.serve(async (req) => {
     if (!clientId) {
       console.error("OURA_CLIENT_ID is not configured");
       return new Response(
-        JSON.stringify({ error: "Ōura OAuth not configured" }),
+        JSON.stringify({ error: "Ōura OAuth not configured. Please set OURA_CLIENT_ID in Edge Function secrets." }),
         {
           status: 500,
           headers: { ...corsHeaders, "Content-Type": "application/json" }

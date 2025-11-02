@@ -22,6 +22,7 @@ import FitbitSyncNow from "@/pages/FitbitSyncNow";
 import FitbitCallback from "@/pages/FitbitCallback";
 import { OuraCallback } from "@/pages/OuraCallback";
 import OuraDiagnostics from "@/pages/OuraDiagnostics";
+import { OuraConnectionTest } from "@/pages/OuraConnectionTest";
 import MyBaselines from "@/pages/MyBaselines";
 import DeveloperBaselinesEngine from "@/pages/DeveloperBaselinesEngine";
 import MyDocuments from "@/pages/MyDocuments";
@@ -44,6 +45,7 @@ const App = () => {
   const isDashboardRoute = currentPath === "/dashboard";
   const isFitbitCallback = currentPath === "/fitbit/callback";
   const isOuraCallback = currentPath.startsWith("/oauth/callback/oura");
+  const isOuraTest = currentPath === "/oura-test";
   const isAuthTest = currentPath === "/auth-test";
 
   // Check authentication status
@@ -145,6 +147,21 @@ const App = () => {
             <Toaster />
             <Sonner />
             <OuraCallback />
+          </TooltipProvider>
+        </QueryClientProvider>
+      </ThemeProvider>
+    );
+  }
+
+  // Handle Ōura connection test route
+  if (isOuraTest) {
+    return (
+      <ThemeProvider defaultTheme="dark" storageKey="predictiv-theme">
+        <QueryClientProvider client={queryClient}>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
+            <OuraConnectionTest />
           </TooltipProvider>
         </QueryClientProvider>
       </ThemeProvider>

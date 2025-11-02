@@ -247,8 +247,18 @@ serve(async (req) => {
           }
         }
 
-        // Compute and insert wearable_summary
-        // Get last 35 days of data for ACWR calculation
+        // ═══════════════════════════════════════════════════════════════════════════
+        // COMPUTE CALCULATED METRICS & STORE IN wearable_summary TABLE
+        // ═══════════════════════════════════════════════════════════════════════════
+        // This section calculates advanced training metrics that require historical data:
+        // - Training Load: Combines intensity (activity score) with volume (steps)
+        // - Strain: Cumulative training stress over 7 days
+        // - Monotony: Training variety indicator (high = injury risk)
+        // - ACWR: Acute:Chronic Workload Ratio (injury risk predictor)
+        // - Readiness Index: 7-day average readiness
+        // - Average Sleep Score: 7-day sleep quality average
+
+        // Fetch 35 days of historical data (needed for 28-day chronic load calculation)
         const { data: historicalSessions } = await supabase
           .from("wearable_sessions")
           .select("*")
@@ -258,53 +268,138 @@ serve(async (req) => {
           .order("date", { ascending: true });
 
         if (historicalSessions && historicalSessions.length > 0) {
-          // Calculate metrics for each date
+          // Calculate metrics for each date in the current sync batch
           for (const [date, dayData] of Object.entries(dataByDate)) {
-            // Calculate training load (activity_score * steps / 10000)
+            // ───────────────────────────────────────────────────────────────────────
+            // 1. TRAINING LOAD CALCULATION
+            // ───────────────────────────────────────────────────────────────────────
+            // Formula: Training Load = Activity Score × (Steps / 10,000)
+            //
+            // Why this formula?
+            // - Activity Score: Oura's 0-100 intensity metric (higher = more intense)
+            // - Steps normalized to 10,000: Provides volume component
+            // - Combined: Captures both intensity AND volume of training
+            //
+            // Examples:
+            // - Easy day: 70 score × (8000 / 10000) = 56 load
+            // - Hard day: 90 score × (15000 / 10000) = 135 load
+            // - Rest day: 30 score × (2000 / 10000) = 6 load
             const activityScore = dayData.activity?.score || 0;
             const steps = dayData.activity?.steps || 0;
             const trainingLoad = activityScore * (steps / 10000);
 
-            // Get last 7 days of data for strain and monotony
+            // Get last 7 days of data (inclusive of current date) for rolling calculations
+            // Filtered to dates <= current date to enable historical recalculation
             const last7Days = historicalSessions
               .filter(s => s.date <= date)
               .slice(-7);
 
-            // Calculate strain (7-day training load sum)
+            // ───────────────────────────────────────────────────────────────────────
+            // 2. TRAINING STRAIN CALCULATION
+            // ───────────────────────────────────────────────────────────────────────
+            // Formula: Strain = Sum of Training Loads over 7 days
+            //
+            // Purpose: Measures cumulative training stress
+            //
+            // Interpretation:
+            // - < 500: Light training week
+            // - 500-800: Moderate training week
+            // - 800-1200: Heavy training week
+            // - > 1200: Very heavy week (monitor closely)
+            //
+            // Example: [100, 110, 105, 95, 106, 108, 102] → Strain = 726
             const strain = last7Days.reduce((sum, s) => {
               const load = (s.activity_score || 0) * ((s.total_steps || 0) / 10000);
               return sum + load;
             }, 0);
 
-            // Calculate monotony (mean / std of last 7 days)
+            // ───────────────────────────────────────────────────────────────────────
+            // 3. TRAINING MONOTONY CALCULATION
+            // ───────────────────────────────────────────────────────────────────────
+            // Only calculate if we have full 7 days of data
             if (last7Days.length >= 7) {
+              // Recalculate training load for each of the 7 days
               const loads = last7Days.map(s => (s.activity_score || 0) * ((s.total_steps || 0) / 10000));
+
+              // Calculate mean (average) training load
               const mean = loads.reduce((a, b) => a + b, 0) / loads.length;
+
+              // Calculate variance: average of squared differences from mean
+              // Variance measures how spread out the loads are
               const variance = loads.reduce((sum, load) => sum + Math.pow(load - mean, 2), 0) / loads.length;
+
+              // Calculate standard deviation: square root of variance
+              // Measures variability in training loads
               const std = Math.sqrt(variance);
+
+              // Formula: Monotony = Mean / Standard Deviation
+              //
+              // Purpose: Detects lack of training variety
+              //
+              // Interpretation:
+              // - < 15: Good variety (varying intensities and volumes)
+              // - 15-25: Moderate variety
+              // - > 25: High monotony (very similar training daily) → INJURY RISK
+              //
+              // Example:
+              // Varied week: [50, 100, 80, 120, 60, 110, 90] → Low monotony (~12)
+              // Monotonous week: [100, 105, 102, 98, 103, 101, 100] → High monotony (~50)
+              //
+              // Why it matters: Studies show high monotony + high strain = injury risk spike
               const monotony = std > 0 ? mean / std : 0;
 
-              // Calculate ACWR (acute / chronic)
+              // ───────────────────────────────────────────────────────────────────────
+              // 4. ACWR (ACUTE:CHRONIC WORKLOAD RATIO) CALCULATION
+              // ───────────────────────────────────────────────────────────────────────
+              // Get last 28 days of data for chronic load calculation
               const last28Days = historicalSessions
                 .filter(s => s.date <= date)
                 .slice(-28);
 
               let acwr = null;
+
+              // Only calculate ACWR if we have sufficient data (28+ days)
               if (last28Days.length >= 28) {
+                // ACUTE LOAD: Average training load over last 7 days
+                // Represents recent training stress
                 const acuteLoad = last7Days.reduce((sum, s) => {
                   const load = (s.activity_score || 0) * ((s.total_steps || 0) / 10000);
                   return sum + load;
                 }, 0) / 7;
 
+                // CHRONIC LOAD: Average training load over last 28 days (4 weeks)
+                // Represents fitness/preparedness baseline
                 const chronicLoad = last28Days.reduce((sum, s) => {
                   const load = (s.activity_score || 0) * ((s.total_steps || 0) / 10000);
                   return sum + load;
                 }, 0) / 28;
 
+                // Formula: ACWR = Acute Load / Chronic Load
+                //
+                // Purpose: Compares recent training to established fitness baseline
+                //
+                // Research-backed interpretation (Gabbett 2016):
+                // - < 0.8: Undertraining (detraining, fitness loss)
+                // - 0.8-1.3: OPTIMAL ZONE (lowest injury risk)
+                // - 1.3-1.5: Elevated risk (monitor closely)
+                // - > 1.5: HIGH INJURY RISK (acute spike without chronic fitness)
+                //
+                // Example:
+                // - Acute: 110 (heavy week)
+                // - Chronic: 100 (typical fitness)
+                // - ACWR: 1.10 → Optimal zone (challenging but safe)
+                //
+                // - Acute: 150 (very heavy week)
+                // - Chronic: 100 (typical fitness)
+                // - ACWR: 1.50 → Dangerous spike (injury risk)
                 acwr = chronicLoad > 0 ? acuteLoad / chronicLoad : null;
               }
 
-              // Calculate average readiness and sleep
+              // ───────────────────────────────────────────────────────────────────────
+              // 5. READINESS & SLEEP AVERAGES
+              // ───────────────────────────────────────────────────────────────────────
+              // Calculate 7-day averages for trending/smoothing
+              // These provide a more stable view of recovery status than single-day values
               const avgReadiness = last7Days.reduce((sum, s) => sum + (s.readiness_score || 0), 0) / last7Days.length;
               const avgSleep = last7Days.reduce((sum, s) => sum + (s.sleep_score || 0), 0) / last7Days.length;
 

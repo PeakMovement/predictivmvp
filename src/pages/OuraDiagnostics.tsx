@@ -29,12 +29,11 @@ export const OuraDiagnostics = () => {
         console.error("Error checking token:", error);
         setTokenStatus({ exists: false, error: error.message });
       } else if (data) {
+        const expiresAt = data.expires_at ? Number(data.expires_at) : 0;
         setTokenStatus({
           exists: true,
-          created_at: data.created_at,
-          updated_at: data.updated_at,
-          expires_at: data.expires_at,
-          expiresInDays: Math.floor((data.expires_at * 1000 - Date.now()) / (1000 * 60 * 60 * 24)),
+          expires_at: expiresAt,
+          expiresInDays: expiresAt ? Math.floor((expiresAt * 1000 - Date.now()) / (1000 * 60 * 60 * 24)) : 0,
         });
       } else {
         setTokenStatus({ exists: false });

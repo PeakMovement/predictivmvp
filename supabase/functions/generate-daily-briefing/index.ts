@@ -1,5 +1,4 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
-import { getAIProvider } from "../_shared/ai-provider.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -19,8 +18,8 @@ Deno.serve(async (req) => {
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const lovableApiKey = Deno.env.get("LOVABLE_API_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
-    const aiProvider = getAIProvider();
 
     // Parse request - support both manual invocation and cron
     let userId: string | null = null;
@@ -168,7 +167,7 @@ Deno.serve(async (req) => {
           if (userProfile.activity_level) promptContext += `- Activity Level: ${userProfile.activity_level}\n`;
         }
 
-        // ─── CALL AI PROVIDER ────────────────────────────────────────────────
+        // ─── CALL LOVABLE AI ────────────────────────────────────────────────
         const systemPrompt = `You are Yves, an AI health intelligence coach. Generate a concise daily briefing (~150 words) with 4 sections:
 
 1️⃣ Recovery: Readiness score trend and assessment
@@ -187,21 +186,37 @@ Use emoji bullets, be warm and encouraging, keep it brief and actionable.`;
           userPrompt = `Generate a brief welcome message encouraging the user to complete their profile and connect a wearable device to unlock personalized health insights.`;
         }
 
-        const aiResponse = await aiProvider.chat({
-          messages: [
-            { role: "system", content: systemPrompt },
-            { role: "user", content: userPrompt }
-          ],
-          maxTokens: 300,
+        const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${lovableApiKey}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            model: "google/gemini-2.5-flash",
+            messages: [
+              { role: "system", content: systemPrompt },
+              { role: "user", content: userPrompt }
+            ],
+            max_tokens: 300,
+          }),
         });
 
-        if (!aiResponse.content) {
+        if (!aiResponse.ok) {
+          const errorText = await aiResponse.text();
+          console.error(`[generate-daily-briefing] AI error for user ${uid}:`, errorText);
+          results.push({ user_id: uid, success: false, error: `AI error: ${aiResponse.status}` });
+          continue;
+        }
+
+        const aiData = await aiResponse.json();
+        const briefingContent = aiData.choices[0]?.message?.content;
+
+        if (!briefingContent) {
           console.error(`[generate-daily-briefing] AI returned no content for user ${uid}`);
           results.push({ user_id: uid, success: false, error: "AI returned no content" });
           continue;
         }
-
-        const briefingContent = aiResponse.content;
 
         // ─── SAVE TO DATABASE ────────────────────────────────────────────────
         const { error: insertError } = await supabase
@@ -215,6 +230,7 @@ Use emoji bullets, be warm and encouraging, keep it brief and actionable.`;
 
         if (insertError) {
           console.error(`[generate-daily-briefing] DB error for user ${uid}:`, insertError);
+          results.push({ user_id: uid, success: false, error: insertError.message });
           continue;
         }
 
@@ -247,7 +263,7 @@ Use emoji bullets, be warm and encouraging, keep it brief and actionable.`;
     console.error("[generate-daily-briefing] Error:", error);
     const errorMessage = error instanceof Error ? error.message : "Unknown error";
     return new Response(
-      JSON.stringify({ error: errorMessage }),
+      JSON.stringify({ success: false, error: errorMessage }),
       {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },

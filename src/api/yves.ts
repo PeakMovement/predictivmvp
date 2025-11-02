@@ -200,3 +200,40 @@ export async function getLovableAICredits(): Promise<LovableAICredits> {
     return { available: false, message: 'Unable to fetch credits' };
   }
 }
+
+/**
+ * Clear all chat history for the current user
+ */
+export async function clearChatHistory(): Promise<{ success: boolean; error?: string }> {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) {
+      return {
+        success: false,
+        error: 'You must be logged in to clear chat history'
+      };
+    }
+
+    const { error } = await supabase
+      .from('insight_history')
+      .delete()
+      .eq('user_id', user.id);
+
+    if (error) {
+      console.error('Error clearing chat history:', error);
+      return {
+        success: false,
+        error: error.message || 'Failed to clear chat history'
+      };
+    }
+
+    return { success: true };
+  } catch (error) {
+    console.error('Error clearing chat history:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error occurred'
+    };
+  }
+}

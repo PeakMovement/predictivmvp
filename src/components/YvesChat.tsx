@@ -5,9 +5,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card';
 import { InsightBox } from './InsightBox';
-import { queryYves, getInsightHistory, getLovableAICredits, type InsightHistoryItem, type LovableAICredits } from '@/api/yves';
+import { queryYves, getInsightHistory, getLovableAICredits, clearChatHistory, type InsightHistoryItem, type LovableAICredits } from '@/api/yves';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Send, Sparkles, Info, Activity } from 'lucide-react';
+import { Loader2, Send, Sparkles, Info, Activity, RefreshCw } from 'lucide-react';
 
 export function YvesChat() {
   const [query, setQuery] = useState('');
@@ -17,6 +17,7 @@ export function YvesChat() {
   const [credits, setCredits] = useState<LovableAICredits | null>(null);
   const [loadingCredits, setLoadingCredits] = useState(false);
   const [hasWearableData, setHasWearableData] = useState<boolean | null>(null);
+  const [clearingHistory, setClearingHistory] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -100,6 +101,36 @@ export function YvesChat() {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSubmit();
+    }
+  };
+
+  const handleClearHistory = async () => {
+    try {
+      setClearingHistory(true);
+      const result = await clearChatHistory();
+
+      if (result.success) {
+        setInsights([]);
+        toast({
+          title: 'Chat cleared',
+          description: 'All conversation history has been deleted'
+        });
+      } else {
+        toast({
+          title: 'Error',
+          description: result.error || 'Failed to clear chat history',
+          variant: 'destructive'
+        });
+      }
+    } catch (error) {
+      console.error('Error clearing history:', error);
+      toast({
+        title: 'Error',
+        description: error instanceof Error ? error.message : 'Unknown error occurred',
+        variant: 'destructive'
+      });
+    } finally {
+      setClearingHistory(false);
     }
   };
 
@@ -255,9 +286,30 @@ export function YvesChat() {
         </div>
       ) : insights.length > 0 ? (
         <div className="space-y-4">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-            Recent Conversations
-          </h2>
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+              Recent Conversations
+            </h2>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleClearHistory}
+              disabled={clearingHistory}
+              className="gap-2"
+            >
+              {clearingHistory ? (
+                <>
+                  <Loader2 className="h-3 w-3 animate-spin" />
+                  Clearing...
+                </>
+              ) : (
+                <>
+                  <RefreshCw className="h-3 w-3" />
+                  Clear Chat
+                </>
+              )}
+            </Button>
+          </div>
           {insights.map((insight) => (
             <InsightBox
               key={insight.id}

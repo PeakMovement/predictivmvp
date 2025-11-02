@@ -3,14 +3,26 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, RefreshCw, Sparkles, Calendar } from "lucide-react";
+import { Loader2, RefreshCw, Sparkles, Calendar, Heart, Moon, Zap, Target, Lightbulb } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
-import { getLatestBriefing, generateBriefing, type DailyBriefing } from "@/api/dailyBriefing";
+import { getLatestBriefing, generateBriefing, type DailyBriefing, type BriefingCategory } from "@/api/dailyBriefing";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+
+const categories: Array<{ key: BriefingCategory; label: string; icon: any; emoji: string }> = [
+  { key: 'recovery', label: 'Recovery', icon: Heart, emoji: '🏃' },
+  { key: 'sleep', label: 'Sleep', icon: Moon, emoji: '😴' },
+  { key: 'activity', label: 'Activity', icon: Zap, emoji: '💪' },
+  { key: 'goals', label: 'Goals', icon: Target, emoji: '🎯' },
+  { key: 'tip', label: 'Quick Tip', icon: Lightbulb, emoji: '💡' },
+];
 
 export function DailyBriefingCard() {
   const [briefing, setBriefing] = useState<DailyBriefing | null>(null);
+  const [categoryBriefings, setCategoryBriefings] = useState<Record<string, DailyBriefing | null>>({});
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
+  const [generatingCategories, setGeneratingCategories] = useState<Record<string, boolean>>({});
+  const [openCategories, setOpenCategories] = useState<Record<string, boolean>>({});
   const { toast } = useToast();
 
   useEffect(() => {
@@ -29,18 +41,29 @@ export function DailyBriefingCard() {
     }
   };
 
-  const handleGenerateBriefing = async () => {
+  const handleGenerateBriefing = async (category: BriefingCategory = 'full') => {
     try {
-      setGenerating(true);
+      if (category === 'full') {
+        setGenerating(true);
+      } else {
+        setGeneratingCategories(prev => ({ ...prev, [category]: true }));
+      }
       
-      const result = await generateBriefing();
+      const result = await generateBriefing(category);
 
       if (result.success) {
         toast({
-          title: "Briefing generated",
-          description: "Your daily health briefing is ready",
+          title: category === 'full' ? "Briefing generated" : `${category} briefing ready`,
+          description: category === 'full' ? "Your daily health briefing is ready" : `Your ${category} insights are ready`,
         });
-        await loadBriefing();
+        
+        if (category === 'full') {
+          await loadBriefing();
+        } else {
+          const data = await getLatestBriefing(category);
+          setCategoryBriefings(prev => ({ ...prev, [category]: data }));
+          setOpenCategories(prev => ({ ...prev, [category]: true }));
+        }
       } else {
         throw new Error(result.error || "Failed to generate briefing");
       }
@@ -52,7 +75,11 @@ export function DailyBriefingCard() {
         variant: "destructive",
       });
     } finally {
-      setGenerating(false);
+      if (category === 'full') {
+        setGenerating(false);
+      } else {
+        setGeneratingCategories(prev => ({ ...prev, [category]: false }));
+      }
     }
   };
 
@@ -83,7 +110,7 @@ export function DailyBriefingCard() {
           <Button
             variant="ghost"
             size="icon"
-            onClick={handleGenerateBriefing}
+            onClick={() => handleGenerateBriefing('full')}
             disabled={generating}
             title="Generate new briefing"
           >
@@ -103,7 +130,7 @@ export function DailyBriefingCard() {
       </CardHeader>
       <CardContent>
         {briefing ? (
-          <div className="space-y-4">
+          <div className="space-y-6">
             <div className="prose prose-sm dark:prose-invert max-w-none">
               <div className="whitespace-pre-wrap text-sm leading-relaxed">
                 {briefing.content}
@@ -121,6 +148,57 @@ export function DailyBriefingCard() {
                 )}
               </div>
             )}
+
+            {/* Category-specific mini briefings */}
+            <div className="border-t pt-4 space-y-2">
+              <p className="text-xs text-muted-foreground mb-3">Get focused insights:</p>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                {categories.map(({ key, label, icon: Icon, emoji }) => (
+                  <Collapsible
+                    key={key}
+                    open={openCategories[key]}
+                    onOpenChange={(open) => setOpenCategories(prev => ({ ...prev, [key]: open }))}
+                  >
+                    <CollapsibleTrigger asChild>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="w-full justify-start gap-2 text-xs"
+                        onClick={() => {
+                          if (!categoryBriefings[key] && !openCategories[key]) {
+                            handleGenerateBriefing(key);
+                          }
+                        }}
+                      >
+                        {generatingCategories[key] ? (
+                          <Loader2 className="h-3 w-3 animate-spin" />
+                        ) : (
+                          <span>{emoji}</span>
+                        )}
+                        <span className="truncate">{label}</span>
+                      </Button>
+                    </CollapsibleTrigger>
+                    <CollapsibleContent className="mt-2">
+                      {categoryBriefings[key] ? (
+                        <Card className="bg-muted/50">
+                          <CardContent className="p-3">
+                            <p className="text-xs leading-relaxed whitespace-pre-wrap">
+                              {categoryBriefings[key]?.content}
+                            </p>
+                          </CardContent>
+                        </Card>
+                      ) : (
+                        <Card className="bg-muted/50">
+                          <CardContent className="p-3 flex items-center justify-center">
+                            <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                          </CardContent>
+                        </Card>
+                      )}
+                    </CollapsibleContent>
+                  </Collapsible>
+                ))}
+              </div>
+            </div>
           </div>
         ) : (
           <div className="flex flex-col items-center justify-center py-8 space-y-4">
@@ -128,7 +206,7 @@ export function DailyBriefingCard() {
             <p className="text-sm text-muted-foreground text-center">
               No daily briefing yet — generate one to see your personalized health summary
             </p>
-            <Button onClick={handleGenerateBriefing} disabled={generating} className="gap-2">
+            <Button onClick={() => handleGenerateBriefing('full')} disabled={generating} className="gap-2">
               {generating ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin" />

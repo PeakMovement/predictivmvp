@@ -1,5 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
 
+export type BriefingCategory = 'full' | 'recovery' | 'sleep' | 'activity' | 'goals' | 'tip';
+
 export interface DailyBriefing {
   id: string;
   user_id: string;
@@ -7,12 +9,13 @@ export interface DailyBriefing {
   content: string;
   context_used: any;
   created_at: string;
+  category?: string;
 }
 
 /**
  * Fetch the latest daily briefing for the current user
  */
-export async function getLatestBriefing(): Promise<DailyBriefing | null> {
+export async function getLatestBriefing(category: BriefingCategory = 'full'): Promise<DailyBriefing | null> {
   try {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return null;
@@ -24,6 +27,7 @@ export async function getLatestBriefing(): Promise<DailyBriefing | null> {
       .select("*")
       .eq("user_id", user.id)
       .eq("date", today)
+      .eq("category", category)
       .maybeSingle();
 
     if (error) throw error;
@@ -37,7 +41,7 @@ export async function getLatestBriefing(): Promise<DailyBriefing | null> {
 /**
  * Generate a new daily briefing for the current user
  */
-export async function generateBriefing(): Promise<{ success: boolean; error?: string }> {
+export async function generateBriefing(category: BriefingCategory = 'full'): Promise<{ success: boolean; error?: string }> {
   try {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
@@ -45,7 +49,7 @@ export async function generateBriefing(): Promise<{ success: boolean; error?: st
     }
 
     const { data, error } = await supabase.functions.invoke("generate-daily-briefing", {
-      body: { user_id: user.id },
+      body: { user_id: user.id, category },
     });
 
     if (error) throw error;

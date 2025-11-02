@@ -7,6 +7,7 @@ const corsHeaders = {
 
 interface BriefingRequest {
   user_id?: string;
+  category?: 'full' | 'recovery' | 'sleep' | 'activity' | 'goals' | 'tip';
 }
 
 Deno.serve(async (req) => {
@@ -23,9 +24,11 @@ Deno.serve(async (req) => {
 
     // Parse request - support both manual invocation and cron
     let userId: string | null = null;
+    let category: 'full' | 'recovery' | 'sleep' | 'activity' | 'goals' | 'tip' = 'full';
     try {
       const body = await req.json() as BriefingRequest;
       userId = body.user_id || null;
+      category = body.category || 'full';
     } catch {
       // No body provided - cron job will generate for all users
     }
@@ -60,10 +63,11 @@ Deno.serve(async (req) => {
           .select("id")
           .eq("user_id", uid)
           .eq("date", today)
+          .eq("category", category)
           .maybeSingle();
 
         if (existingBriefing) {
-          console.log(`[generate-daily-briefing] Briefing already exists for user ${uid}`);
+          console.log(`[generate-daily-briefing] Briefing already exists for user ${uid}, category ${category}`);
           continue;
         }
 
@@ -168,22 +172,62 @@ Deno.serve(async (req) => {
         }
 
         // ─── CALL LOVABLE AI ────────────────────────────────────────────────
-        const systemPrompt = `You are Yves, an AI health intelligence coach. Generate a concise daily briefing (~150 words) with 4 sections:
+        let systemPrompt: string;
+        let userPrompt: string;
+        let maxTokens = 300;
 
-1️⃣ Recovery: Readiness score trend and assessment
-2️⃣ Sleep: Sleep quality and recommendations
-3️⃣ Activity: Training strain and load balance
-4️⃣ Tip: One actionable health tip for today
+        if (category === 'full') {
+          systemPrompt = `You are Yves, an AI health intelligence coach. Generate a concise daily briefing (about 150 words) with 4 sections:
 
-Use emoji bullets, be warm and encouraging, keep it brief and actionable.`;
+1. Recovery: Readiness score trend and assessment
+2. Training Load: ACWR and strain balance status  
+3. Recommendations: 1-2 specific adjustments based on recent wearable data
+4. Motivation: Brief encouragement aligned with their activity level
 
-        let userPrompt = "";
-        if (hasWearableData) {
-          userPrompt = `Generate today's briefing based on:\n\n${promptContext}`;
-        } else if (userProfile) {
-          userPrompt = `Generate a welcoming briefing for a new user. ${promptContext}\n\nProvide encouragement to connect a wearable device and start tracking their health journey.`;
+Use emoji section markers (like 🏃, 💪, 💡, 🎯). Be specific with numbers when available. Keep it actionable and motivational.
+
+CRITICAL FORMATTING RULES:
+- Use plain text only with emoji bullets
+- DO NOT use markdown syntax (no asterisks, no bold, no underscores)
+- Separate sections with a single blank line
+- Use proper grammar and punctuation`;
+
+          if (hasWearableData) {
+            userPrompt = `Generate today's briefing based on:\n\n${promptContext}`;
+          } else if (userProfile) {
+            userPrompt = `Generate a welcoming briefing for a new user. ${promptContext}\n\nProvide encouragement to connect a wearable device and start tracking their health journey.`;
+          } else {
+            userPrompt = `Generate a brief welcome message encouraging the user to complete their profile and connect a wearable device to unlock personalized health insights.`;
+          }
         } else {
-          userPrompt = `Generate a brief welcome message encouraging the user to complete their profile and connect a wearable device to unlock personalized health insights.`;
+          // Category-specific mini-briefings
+          maxTokens = 150;
+          const categoryPrompts = {
+            recovery: {
+              system: `You are Yves, a health coach. Create a focused 60-word briefing about recovery status. Include readiness scores, HRV trends, and recovery advice. Use emoji 🏃 at the start. Plain text only, no markdown.`,
+              user: `${promptContext}\n\nFocus only on recovery metrics and advice.`
+            },
+            sleep: {
+              system: `You are Yves, a health coach. Create a focused 60-word briefing about sleep quality. Include deep sleep percentage, sleep efficiency, and sleep recommendations. Use emoji 😴 at the start. Plain text only, no markdown.`,
+              user: `${promptContext}\n\nFocus only on sleep metrics and advice.`
+            },
+            activity: {
+              system: `You are Yves, a health coach. Create a focused 60-word briefing about training load. Include training load, ACWR, and strain balance. Use emoji 💪 at the start. Plain text only, no markdown.`,
+              user: `${promptContext}\n\nFocus only on activity metrics and training advice.`
+            },
+            goals: {
+              system: `You are Yves, a health coach. Create a focused 60-word briefing about goal progress. Mention progress toward stated goals and provide encouragement. Use emoji 🎯 at the start. Plain text only, no markdown.`,
+              user: `${promptContext}\n\nFocus on progress and goals.`
+            },
+            tip: {
+              system: `You are Yves, a health coach. Create a focused 40-word actionable health tip based on recent data. Use emoji 💡 at the start. Plain text only, no markdown.`,
+              user: `${promptContext}\n\nGive one specific, personalized tip.`
+            }
+          };
+
+          const prompt = categoryPrompts[category];
+          systemPrompt = prompt.system;
+          userPrompt = (hasWearableData || userProfile) ? prompt.user : `Generate a brief message encouraging the user to connect wearable data for personalized ${category} insights.`;
         }
 
         const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
@@ -198,7 +242,7 @@ Use emoji bullets, be warm and encouraging, keep it brief and actionable.`;
               { role: "system", content: systemPrompt },
               { role: "user", content: userPrompt }
             ],
-            max_tokens: 300,
+            max_tokens: maxTokens,
           }),
         });
 
@@ -210,7 +254,7 @@ Use emoji bullets, be warm and encouraging, keep it brief and actionable.`;
         }
 
         const aiData = await aiResponse.json();
-        const briefingContent = aiData.choices[0]?.message?.content;
+        let briefingContent = aiData.choices[0]?.message?.content;
 
         if (!briefingContent) {
           console.error(`[generate-daily-briefing] AI returned no content for user ${uid}`);
@@ -218,14 +262,23 @@ Use emoji bullets, be warm and encouraging, keep it brief and actionable.`;
           continue;
         }
 
+        // Clean up formatting - remove all markdown syntax
+        briefingContent = briefingContent
+          .replace(/\*\*/g, '')     // Remove bold markdown
+          .replace(/\*/g, '')       // Remove asterisks
+          .replace(/_/g, '')        // Remove underscores
+          .replace(/#{1,6}\s/g, '') // Remove markdown headers
+          .trim();
+
         // ─── SAVE TO DATABASE ────────────────────────────────────────────────
         const { error: insertError } = await supabase
           .from("daily_briefings")
-          .insert({
+          .upsert({
             user_id: uid,
             date: today,
             content: briefingContent,
             context_used: contextData,
+            category: category,
           });
 
         if (insertError) {

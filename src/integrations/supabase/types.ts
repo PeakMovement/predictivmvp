@@ -120,6 +120,7 @@ export type Database = {
       }
       daily_briefings: {
         Row: {
+          category: string | null
           content: string
           context_used: Json | null
           created_at: string | null
@@ -128,6 +129,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          category?: string | null
           content: string
           context_used?: Json | null
           created_at?: string | null
@@ -136,6 +138,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          category?: string | null
           content?: string
           context_used?: Json | null
           created_at?: string | null
@@ -497,36 +500,6 @@ export type Database = {
           fetched_at?: string | null
           id?: number
           user_id?: string | null
-        }
-        Relationships: []
-      }
-      oura_tokens: {
-        Row: {
-          access_token: string
-          expires_at: string
-          fetched_at: string | null
-          refresh_token: string
-          scope: string | null
-          token_type: string | null
-          user_id: string
-        }
-        Insert: {
-          access_token: string
-          expires_at: string
-          fetched_at?: string | null
-          refresh_token: string
-          scope?: string | null
-          token_type?: string | null
-          user_id: string
-        }
-        Update: {
-          access_token?: string
-          expires_at?: string
-          fetched_at?: string | null
-          refresh_token?: string
-          scope?: string | null
-          token_type?: string | null
-          user_id?: string
         }
         Relationships: []
       }
@@ -1351,6 +1324,7 @@ export type Database = {
       wearable_summary: {
         Row: {
           acwr: number | null
+          avg_sleep_score: number | null
           date: string
           id: string
           monotony: number | null
@@ -1362,6 +1336,7 @@ export type Database = {
         }
         Insert: {
           acwr?: number | null
+          avg_sleep_score?: number | null
           date: string
           id?: string
           monotony?: number | null
@@ -1373,6 +1348,7 @@ export type Database = {
         }
         Update: {
           acwr?: number | null
+          avg_sleep_score?: number | null
           date?: string
           id?: string
           monotony?: number | null
@@ -1618,6 +1594,27 @@ export type Database = {
           feedback_count: number | null
           insight_count: number | null
           metric: string | null
+        }
+        Relationships: []
+      }
+      oura_tokens: {
+        Row: {
+          access_token: string | null
+          expires_at: number | null
+          refresh_token: string | null
+          user_id: string | null
+        }
+        Insert: {
+          access_token?: string | null
+          expires_at?: number | null
+          refresh_token?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          access_token?: string | null
+          expires_at?: number | null
+          refresh_token?: string | null
+          user_id?: string | null
         }
         Relationships: []
       }

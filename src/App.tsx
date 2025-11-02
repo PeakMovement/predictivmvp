@@ -17,6 +17,7 @@ import { FindHelp } from "@/pages/FindHelp";
 import { InsightsTree } from "@/pages/InsightsTree";
 import YvesInsights from "@/pages/YvesInsights";
 import TestSupabase from "@/pages/TestSupabase";
+import AuthTest from "@/pages/AuthTest";
 import FitbitSyncNow from "@/pages/FitbitSyncNow";
 import FitbitCallback from "@/pages/FitbitCallback";
 import { OuraCallback } from "@/pages/OuraCallback";
@@ -43,6 +44,7 @@ const App = () => {
   const isDashboardRoute = currentPath === "/dashboard";
   const isFitbitCallback = currentPath === "/fitbit/callback";
   const isOuraCallback = currentPath.startsWith("/oauth/callback/oura");
+  const isAuthTest = currentPath === "/auth-test";
 
   // Check authentication status
   useEffect(() => {
@@ -104,6 +106,8 @@ const App = () => {
         return <YvesInsights />;
       case "test-supabase":
         return <TestSupabase />;
+      case "auth-test":
+        return <AuthTest />;
       case "fitbit-sync-now":
         return <FitbitSyncNow />;
       case "oura-diagnostics":
@@ -141,6 +145,21 @@ const App = () => {
             <Toaster />
             <Sonner />
             <OuraCallback />
+          </TooltipProvider>
+        </QueryClientProvider>
+      </ThemeProvider>
+    );
+  }
+
+  // Handle Auth Test route (accessible without auth for testing)
+  if (isAuthTest) {
+    return (
+      <ThemeProvider defaultTheme="dark" storageKey="predictiv-theme">
+        <QueryClientProvider client={queryClient}>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
+            <AuthTest />
           </TooltipProvider>
         </QueryClientProvider>
       </ThemeProvider>

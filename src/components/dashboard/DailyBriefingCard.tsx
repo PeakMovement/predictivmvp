@@ -3,10 +3,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, RefreshCw, Sparkles, Calendar, Heart, Moon, Zap, Target, Lightbulb } from "lucide-react";
+import { Loader2, RefreshCw, Sparkles, Calendar, Heart, Moon, Zap, Target, Lightbulb, ChevronDown } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { getLatestBriefing, generateBriefing, type DailyBriefing, type BriefingCategory } from "@/api/dailyBriefing";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { cn } from "@/lib/utils";
 
 const categories: Array<{ key: BriefingCategory; label: string; icon: any; emoji: string }> = [
   { key: 'recovery', label: 'Recovery', icon: Heart, emoji: '🏃' },
@@ -154,48 +154,49 @@ export function DailyBriefingCard() {
               <p className="text-xs text-muted-foreground mb-3">Get focused insights:</p>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
                 {categories.map(({ key, label, icon: Icon, emoji }) => (
-                  <Collapsible
-                    key={key}
-                    open={openCategories[key]}
-                    onOpenChange={(open) => setOpenCategories(prev => ({ ...prev, [key]: open }))}
-                  >
-                    <CollapsibleTrigger asChild>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="w-full justify-start gap-2 text-xs"
-                        onClick={() => {
-                          if (!categoryBriefings[key] && !openCategories[key]) {
-                            handleGenerateBriefing(key);
-                          }
-                        }}
-                      >
+                  <div key={key} className="space-y-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full justify-between gap-2 text-xs"
+                      onClick={() => {
+                        if (!categoryBriefings[key]) {
+                          handleGenerateBriefing(key);
+                        }
+                        setOpenCategories(prev => ({ ...prev, [key]: !prev[key] }));
+                      }}
+                    >
+                      <div className="flex items-center gap-2">
                         {generatingCategories[key] ? (
                           <Loader2 className="h-3 w-3 animate-spin" />
                         ) : (
                           <span>{emoji}</span>
                         )}
                         <span className="truncate">{label}</span>
-                      </Button>
-                    </CollapsibleTrigger>
-                    <CollapsibleContent className="mt-2">
-                      {categoryBriefings[key] ? (
-                        <Card className="bg-muted/50">
-                          <CardContent className="p-3">
+                      </div>
+                      <ChevronDown className={cn(
+                        "h-3 w-3 transition-transform",
+                        openCategories[key] && "transform rotate-180"
+                      )} />
+                    </Button>
+                    {openCategories[key] && (
+                      <Card className="bg-muted/50 animate-fade-in">
+                        <CardContent className="p-3">
+                          {categoryBriefings[key] ? (
                             <p className="text-xs leading-relaxed whitespace-pre-wrap">
                               {categoryBriefings[key]?.content}
                             </p>
-                          </CardContent>
-                        </Card>
-                      ) : (
-                        <Card className="bg-muted/50">
-                          <CardContent className="p-3 flex items-center justify-center">
-                            <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-                          </CardContent>
-                        </Card>
-                      )}
-                    </CollapsibleContent>
-                  </Collapsible>
+                          ) : generatingCategories[key] ? (
+                            <div className="flex items-center justify-center py-2">
+                              <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                            </div>
+                          ) : (
+                            <p className="text-xs text-muted-foreground">Click to generate</p>
+                          )}
+                        </CardContent>
+                      </Card>
+                    )}
+                  </div>
                 ))}
               </div>
             </div>

@@ -77,8 +77,8 @@ Deno.serve(async (req: Request) => {
 
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Calculate expiration timestamp
-    const expiresAtTimestamp = Math.floor(Date.now() / 1000) + tokenData.expires_in;
+    // Calculate expiration timestamp as ISO string (timestamptz format)
+    const expiresAtTimestamp = new Date(Date.now() + tokenData.expires_in * 1000).toISOString();
 
     console.log("[oura-auth] Saving tokens to database...");
 
@@ -87,7 +87,7 @@ Deno.serve(async (req: Request) => {
       throw new Error(`Incomplete token data from Oura: missing ${!tokenData.access_token ? 'access_token' : 'refresh_token'}`);
     }
 
-    // Upsert tokens to database
+    // Upsert tokens to database with proper scope
     const { data: upsertData, error } = await supabase
       .from("oura_tokens")
       .upsert({
@@ -95,6 +95,7 @@ Deno.serve(async (req: Request) => {
         access_token: tokenData.access_token,
         refresh_token: tokenData.refresh_token,
         expires_at: expiresAtTimestamp,
+        scope: tokenData.scope || "daily personal",
       }, {
         onConflict: 'user_id'
       })

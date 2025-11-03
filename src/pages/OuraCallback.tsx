@@ -14,30 +14,36 @@ export const OuraCallback = () => {
   useEffect(() => {
     const handleOuraCallback = async () => {
       try {
-        // Extract the code and state from URL query params
         const params = new URLSearchParams(window.location.search);
         const code = params.get("code");
         const state = params.get("state");
-        const iss = params.get("iss");
+        const error = params.get("error");
+        const errorDescription = params.get("error_description");
 
         console.log("[OuraCallback] Full URL:", window.location.href);
-        console.log("[OuraCallback] Parsed params:", { code, state, iss });
-        console.log("[OuraCallback] Received authorization code");
-        console.log("[OuraCallback] State parameter:", state);
+        console.log("[OuraCallback] Parsed params:", { code, state, error, errorDescription });
 
-        if (!code) {
-          throw new Error("Authorization code not found in URL");
+        if (error) {
+          throw new Error(
+            errorDescription || `Authorization failed: ${error}`
+          );
         }
 
-        // Get the authenticated user's ID
+        if (!code) {
+          throw new Error(
+            "Authorization code not found. The OAuth flow may have been cancelled or interrupted."
+          );
+        }
+
         const { data: { user }, error: authError } = await supabase.auth.getUser();
-        
+
         if (authError || !user) {
-          throw new Error("User not authenticated. Please log in first.");
+          throw new Error("User not authenticated. Please log in and try connecting your Oura Ring again.");
         }
 
         const user_id = user.id;
         console.log("[OuraCallback] Authenticated user ID:", user_id);
+        console.log("[OuraCallback] Exchanging authorization code for access tokens...");
 
         // Call the oura-auth edge function using Supabase client (adds required auth headers)
         const { data: exchangeData, error: exchangeError } = await supabase.functions.invoke("oura-auth", {
@@ -46,36 +52,54 @@ export const OuraCallback = () => {
 
         if (exchangeError) {
           console.error("[OuraCallback] Edge function error:", exchangeError);
-          throw new Error(exchangeError.message || "Failed to authenticate with Ōura");
+          const errorMsg = exchangeError.message || "Failed to authenticate with Oura";
+
+          if (errorMsg.includes("redirect_uri")) {
+            throw new Error(
+              "OAuth redirect URI mismatch. Please ensure your Oura Developer Portal settings match your application URL."
+            );
+          } else if (errorMsg.includes("invalid_grant")) {
+            throw new Error(
+              "Authorization code expired or invalid. Please try connecting again."
+            );
+          } else if (errorMsg.includes("OURA_CLIENT")) {
+            throw new Error(
+              "Oura API credentials not configured. Please contact support."
+            );
+          }
+
+          throw new Error(errorMsg);
         }
 
-        console.log("[OuraCallback] Edge function returned success:", exchangeData);
+        console.log("[OuraCallback] Token exchange successful:", exchangeData);
 
-        // Wait a moment for database to commit the transaction
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        await new Promise(resolve => setTimeout(resolve, 1500));
 
-        console.log("[OuraCallback] Verifying tokens were saved to database...");
+        console.log("[OuraCallback] Verifying token storage...");
 
-        // Verify tokens were actually saved in the database
         const { data: verifyData, error: verifyError } = await supabase
           .from("oura_tokens")
           .select("user_id, access_token, expires_at")
           .eq("user_id", user_id)
           .maybeSingle();
 
-        console.log("[OuraCallback] Database verification result:", { verifyData, verifyError });
+        console.log("[OuraCallback] Verification result:", {
+          hasData: !!verifyData,
+          hasError: !!verifyError
+        });
 
         if (verifyError) {
-          throw new Error(`Database verification failed: ${verifyError.message}`);
+          console.error("[OuraCallback] Verification error:", verifyError);
+          throw new Error(`Token verification failed: ${verifyError.message}`);
         }
 
-        if (!verifyData) {
+        if (!verifyData || !verifyData.access_token) {
           throw new Error(
-            "Tokens were not saved to database. Please check Edge Function secrets (SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY) in Supabase Dashboard."
+            "Tokens were not properly saved. This may be a temporary issue - please try reconnecting your Oura Ring."
           );
         }
 
-        console.log("[OuraCallback] Successfully authenticated with Ōura and verified DB write");
+        console.log("[OuraCallback] Oura Ring connected successfully!");
         setStatus("success");
 
         toast({

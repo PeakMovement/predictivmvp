@@ -29,6 +29,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useWearableSync } from "@/hooks/useWearableSync";
 import { getUserContext, updateUserContext } from "@/api/yves";
+import { ConnectPolarButton } from "@/components/ConnectPolarButton";
 
 export const Settings = ({ onNavigate }: { onNavigate?: (tab: string) => void }) => {
   const [notifications, setNotifications] = useState(true);
@@ -45,6 +46,9 @@ export const Settings = ({ onNavigate }: { onNavigate?: (tab: string) => void })
   // Ōura sync state
   const [lastSyncTime, setLastSyncTime] = useState<Date | null>(null);
   const [isCalculatingTrends, setIsCalculatingTrends] = useState(false);
+
+  // Polar connection state
+  const [isPolarConnected, setIsPolarConnected] = useState(false);
 
   // SMS Alert settings
   const [smsEnabled, setSmsEnabled] = useState(false);
@@ -120,11 +124,31 @@ export const Settings = ({ onNavigate }: { onNavigate?: (tab: string) => void })
     // Load Yves preferences
     loadYvesPreferences();
 
+    // Check Polar connection status
+    checkPolarConnection();
+
     return () => {
       window.removeEventListener("wearable_trends_refresh", handleRefresh);
       window.removeEventListener("oura_trends_refresh", handleRefresh);
     };
   }, []);
+
+  const checkPolarConnection = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data } = await supabase
+        .from("polar_tokens")
+        .select("id")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      setIsPolarConnected(!!data);
+    } catch (error) {
+      console.error("Error checking Polar connection:", error);
+    }
+  };
 
   const loadYvesPreferences = async () => {
     try {
@@ -578,6 +602,51 @@ export const Settings = ({ onNavigate }: { onNavigate?: (tab: string) => void })
                       Connect Ōura Ring
                     </Button>
                   )}
+                </div>
+              </div>
+
+              <div className="w-full flex items-center justify-between p-4 rounded-xl border bg-glass/30 border-glass-border hover:bg-glass-highlight transition-all duration-200">
+                <div className="flex items-center gap-3 flex-1">
+                  <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-full flex items-center justify-center">
+                    <svg
+                      width="20"
+                      height="20"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="text-white"
+                    >
+                      <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="2" />
+                      <path
+                        d="M12 6v6l4 2"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                  </div>
+                  <div className="text-left flex-1">
+                    <p className="font-medium text-foreground flex items-center gap-2">
+                      Polar
+                      {isPolarConnected && (
+                        <span className="text-xs px-2 py-0.5 rounded-full bg-green-500/20 text-green-400 border border-green-500/30">
+                          ✓ Connected
+                        </span>
+                      )}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {isPolarConnected
+                        ? "Connect your Polar fitness device"
+                        : "Track training, sleep, and recovery data"}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  <ConnectPolarButton
+                    isConnected={isPolarConnected}
+                    onConnectionChange={checkPolarConnection}
+                  />
                 </div>
               </div>
             </div>

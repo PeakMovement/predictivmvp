@@ -30,6 +30,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useWearableSync } from "@/hooks/useWearableSync";
 import { getUserContext, updateUserContext } from "@/api/yves";
 import { ConnectPolarButton } from "@/components/ConnectPolarButton";
+import { PolarSyncButton } from "@/components/PolarSyncButton";
 
 export const Settings = ({ onNavigate }: { onNavigate?: (tab: string) => void }) => {
   const [notifications, setNotifications] = useState(true);
@@ -643,6 +644,12 @@ export const Settings = ({ onNavigate }: { onNavigate?: (tab: string) => void })
                   </div>
                 </div>
                 <div className="flex gap-2">
+                  {isPolarConnected && (
+                    <PolarSyncButton
+                      isConnected={isPolarConnected}
+                      onSyncComplete={checkPolarConnection}
+                    />
+                  )}
                   <ConnectPolarButton
                     isConnected={isPolarConnected}
                     onConnectionChange={checkPolarConnection}

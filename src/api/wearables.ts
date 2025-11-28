@@ -9,9 +9,9 @@ export interface WearableSession {
   readiness_score: number | null;
   activity_score: number | null;
   total_steps: number | null;
-  total_calories: number | null;
+  active_calories: number | null;
   resting_hr: number | null;
-  hrv_avg: number | null;
+  hrv: number | null;
   spo2_avg: number | null;
   fetched_at: string;
 }

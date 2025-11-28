@@ -205,7 +205,7 @@ Deno.serve(async (req: Request) => {
             total_steps: dayData.activity?.steps || null,
             active_calories: dayData.activity?.active_calories || null,
             resting_hr: dayData.sleep?.lowest_heart_rate || dayData.sleep?.average_heart_rate || null,
-            hrv_avg: dayData.sleep?.average_hrv || null,
+            hrv: dayData.sleep?.average_hrv || null,
             spo2_avg: null,
           };
 

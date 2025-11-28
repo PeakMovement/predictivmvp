@@ -9,7 +9,7 @@ interface WearableSession {
   readiness_score: number | null;
   sleep_score: number | null;
   activity_score: number | null;
-  hrv_avg: number | null;
+  hrv: number | null;
   resting_hr: number | null;
   spo2_avg: number | null;
   total_steps: number | null;
@@ -54,6 +54,29 @@ export const useWearableSessions = (userId: string | undefined) => {
     };
 
     fetchWearableSession();
+
+    if (!userId) return;
+
+    const channel = supabase
+      .channel("wearable_sessions_changes")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "wearable_sessions",
+          filter: `user_id=eq.${userId}`,
+        },
+        () => {
+          console.log("🔴 Live update detected - refetching wearable session");
+          fetchWearableSession();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [userId]);
 
   return { data, isLoading, error };

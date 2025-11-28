@@ -19,7 +19,7 @@ export const Health = () => {
 
   // Extract values from wearable_sessions
   const heartRate = session?.resting_hr ?? "—";
-  const hrv = session?.hrv_avg ?? "—";
+  const hrv = session?.hrv ?? "—";
   const spo2 = session?.spo2_avg ?? "—";
 
   console.log("✅ Health live data:", { heartRate, hrv, spo2 });

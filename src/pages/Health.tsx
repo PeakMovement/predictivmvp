@@ -1,10 +1,11 @@
 import { useState, useEffect } from "react";
-import { Heart, Activity, Zap } from "lucide-react";
 import { useWearableSessions } from "@/hooks/useWearableSessions";
 import { supabase } from "@/integrations/supabase/client";
-import { ActivityMetricsCard } from "@/components/fitbit/ActivityMetricsCard";
-import { HeartRateMetricsCard } from "@/components/fitbit/HeartRateMetricsCard";
-import { SleepMetricsCard } from "@/components/fitbit/SleepMetricsCard";
+import { OuraReadinessCard } from "@/components/oura/OuraReadinessCard";
+import { OuraSleepCard } from "@/components/oura/OuraSleepCard";
+import { OuraActivityCard } from "@/components/oura/OuraActivityCard";
+import { OuraHRVCard } from "@/components/oura/OuraHRVCard";
+import OuraSyncStatus from "@/components/OuraSyncStatus";
 
 export const Health = () => {
   const [userId, setUserId] = useState<string | null>(null);
@@ -17,69 +18,84 @@ export const Health = () => {
 
   const { data: session, isLoading } = useWearableSessions(userId || undefined);
 
-  // Extract values from wearable_sessions
-  const heartRate = session?.resting_hr ?? "—";
-  const hrv = session?.hrv ?? "—";
-  const spo2 = session?.spo2_avg ?? "—";
-
-  console.log("✅ Health live data:", { heartRate, hrv, spo2 });
+  console.log("✅ Health page Oura data:", session);
 
   return (
     <div className="min-h-screen bg-background pb-[calc(6rem+env(safe-area-inset-bottom))] md:pb-32">
-      <div className="container mx-auto px-4 md:px-6 pt-6 md:pt-8">
+      <div className="container mx-auto px-4 md:px-6 pt-6 md:pt-8 max-w-7xl">
         {/* Header */}
         <div className="text-center mb-6 md:mb-8 animate-fade-in">
-          <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-2">Health Metrics</h1>
-          <p className="text-sm md:text-base text-muted-foreground">Monitor your health and wellness indicators</p>
-        </div>
-
-        {/* Wearable Sessions Overview */}
-        {session && (
-          <div className="bg-glass backdrop-blur-xl border border-glass-border rounded-2xl p-6 mb-8 shadow-glass animate-fade-in">
-            <h2 className="text-xl font-semibold text-foreground mb-4">Latest Wearable Data (Oura)</h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="bg-background/50 backdrop-blur border border-glass-border rounded-xl p-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <Heart className="w-5 h-5 text-red-400" />
-                  <p className="text-sm text-muted-foreground">Resting HR</p>
-                </div>
-                <p className="text-2xl font-bold text-foreground">{heartRate}</p>
-                <p className="text-xs text-muted-foreground">bpm</p>
-              </div>
-              <div className="bg-background/50 backdrop-blur border border-glass-border rounded-xl p-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <Activity className="w-5 h-5 text-blue-400" />
-                  <p className="text-sm text-muted-foreground">HRV</p>
-                </div>
-                <p className="text-2xl font-bold text-foreground">{hrv}</p>
-                <p className="text-xs text-muted-foreground">ms</p>
-              </div>
-              <div className="bg-background/50 backdrop-blur border border-glass-border rounded-xl p-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <Zap className="w-5 h-5 text-purple-400" />
-                  <p className="text-sm text-muted-foreground">SpO₂</p>
-                </div>
-                <p className="text-2xl font-bold text-foreground">{spo2}</p>
-                <p className="text-xs text-muted-foreground">%</p>
-              </div>
-            </div>
+          <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-2">Ōura Ring Metrics</h1>
+          <p className="text-sm md:text-base text-muted-foreground mb-4">
+            Real-time health and wellness data from your Ōura Ring
+          </p>
+          <div className="flex justify-center">
+            <OuraSyncStatus />
           </div>
-        )}
-
-        {/* Ōura Ring Metrics Section */}
-        <div className="space-y-6 mb-8">
-          <h2 className="text-xl font-semibold text-foreground">Ōura Ring Metrics</h2>
-
-          {/* Activity & Movement */}
-          <ActivityMetricsCard />
-
-          {/* Heart Rate */}
-          <HeartRateMetricsCard />
-
-          {/* Sleep Stages */}
-          <SleepMetricsCard />
         </div>
 
+        {!userId ? (
+          <div className="text-center py-12 px-4 bg-glass backdrop-blur-xl border border-glass-border rounded-2xl">
+            <p className="text-muted-foreground mb-4">Please log in to view your Ōura Ring data</p>
+            <p className="text-sm text-muted-foreground">Connect your account to see your metrics</p>
+          </div>
+        ) : (
+          <>
+            {/* Three Main Score Cards */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+              <OuraReadinessCard
+                score={session?.readiness_score ?? null}
+                restingHR={session?.resting_hr ?? null}
+                hrv={session?.hrv ?? null}
+                isLoading={isLoading}
+              />
+              <OuraSleepCard
+                score={session?.sleep_score ?? null}
+                totalSleep={session?.sleep_duration_hours ?? null}
+                deepSleep={session?.deep_sleep_hours ?? null}
+                remSleep={session?.rem_sleep_hours ?? null}
+                lightSleep={session?.light_sleep_hours ?? null}
+                efficiency={session?.efficiency ?? null}
+                isLoading={isLoading}
+              />
+              <OuraActivityCard
+                score={session?.activity_score ?? null}
+                steps={session?.total_steps ?? null}
+                activeCalories={session?.active_calories ?? null}
+                totalCalories={session?.total_calories ?? null}
+                isLoading={isLoading}
+              />
+            </div>
+
+            {/* Detailed Metrics Section */}
+            <div className="space-y-6 mb-8">
+              <h2 className="text-xl font-semibold text-foreground">Detailed Metrics</h2>
+
+              {/* HRV & Heart Rate Card */}
+              <OuraHRVCard
+                hrv={session?.hrv ?? null}
+                restingHR={session?.resting_hr ?? null}
+                avgHR={session?.avg_hr_bpm ?? null}
+                spo2={session?.spo2_avg ?? null}
+                isLoading={isLoading}
+              />
+            </div>
+
+            {/* Data Source Info */}
+            {session && (
+              <div className="bg-glass/50 backdrop-blur-xl border border-glass-border rounded-xl p-4 mb-8 text-center">
+                <p className="text-xs text-muted-foreground">
+                  Last updated: {session.date ? new Date(session.date).toLocaleDateString('en-US', {
+                    weekday: 'long',
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                  }) : 'Unknown'} • Source: Ōura Ring
+                </p>
+              </div>
+            )}
+          </>
+        )}
 
         {/* View Insights Button */}
         <div className="bg-glass backdrop-blur-xl border border-glass-border rounded-2xl p-6 md:p-8 shadow-glass hover:bg-glass-highlight hover-glow transition-all duration-300 ease-out animate-fade-in">

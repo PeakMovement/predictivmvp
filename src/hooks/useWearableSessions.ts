@@ -14,7 +14,18 @@ interface WearableSession {
   spo2_avg: number | null;
   total_steps: number | null;
   active_calories: number | null;
+  total_calories: number | null;
+  sleep_duration_hours: number | null;
+  deep_sleep_hours: number | null;
+  rem_sleep_hours: number | null;
+  light_sleep_hours: number | null;
+  awake_time: number | null;
+  efficiency: number | null;
+  start_time: string | null;
+  end_time: string | null;
+  avg_hr_bpm: number | null;
   fetched_at: string | null;
+  created_at: string | null;
 }
 
 export const useWearableSessions = (userId: string | undefined) => {

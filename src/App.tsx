@@ -23,6 +23,7 @@ import FitbitCallback from "@/pages/FitbitCallback";
 import { OuraCallback } from "@/pages/OuraCallback";
 import OuraDiagnostics from "@/pages/OuraDiagnostics";
 import { OuraConnectionTest } from "@/pages/OuraConnectionTest";
+import { OuraDataTest } from "@/pages/OuraDataTest";
 import PolarCallback from "@/pages/auth/polar";
 import MyBaselines from "@/pages/MyBaselines";
 import DeveloperBaselinesEngine from "@/pages/DeveloperBaselinesEngine";
@@ -48,6 +49,7 @@ const App = () => {
   const isOuraCallback = currentPath.startsWith("/oauth/callback/oura");
   const isPolarCallback = currentPath === "/auth/polar";
   const isOuraTest = currentPath === "/oura-test";
+  const isOuraDataTest = currentPath === "/oura-data-test";
   const isAuthTest = currentPath === "/auth-test";
 
   // Check authentication status
@@ -179,6 +181,21 @@ const App = () => {
             <Toaster />
             <Sonner />
             <OuraConnectionTest />
+          </TooltipProvider>
+        </QueryClientProvider>
+      </ThemeProvider>
+    );
+  }
+
+  // Handle Oura Data Test route
+  if (isOuraDataTest) {
+    return (
+      <ThemeProvider defaultTheme="dark" storageKey="predictiv-theme">
+        <QueryClientProvider client={queryClient}>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
+            <OuraDataTest />
           </TooltipProvider>
         </QueryClientProvider>
       </ThemeProvider>

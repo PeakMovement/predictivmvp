@@ -17,7 +17,7 @@ const Index = () => {
               <p className="text-sm">✅ Trend Calculation: Ready</p>
               <p className="text-sm">✅ Baseline Detection: Operational</p>
               <p className="text-sm">✅ Yves AI Coach: Online</p>
-              <p className="text-sm text-muted-foreground">⚠️ Fitbit OAuth: Removed (awaiting new auth system)</p>
+              <p className="text-sm">✅ Ōura Ring Integration: Connected</p>
             </div>
           </div>
         </Card>

@@ -30,8 +30,8 @@ export const SleepMetricsCard = () => {
           <h2 className="text-xl font-semibold text-foreground">Sleep Stages</h2>
         </div>
         <div className="text-center py-8">
-          <p className="text-muted-foreground">Sleep data will be available after 8 AM</p>
-          <p className="text-sm text-muted-foreground mt-2">Fitbit processes sleep data in the morning</p>
+          <p className="text-muted-foreground">No sleep data available</p>
+          <p className="text-sm text-muted-foreground mt-2">Sync your Ōura app to see sleep data</p>
         </div>
       </div>
     );

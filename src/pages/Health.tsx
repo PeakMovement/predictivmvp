@@ -66,16 +66,16 @@ export const Health = () => {
           </div>
         )}
 
-        {/* Fitbit Metrics Section */}
+        {/* Ōura Ring Metrics Section */}
         <div className="space-y-6 mb-8">
-          <h2 className="text-xl font-semibold text-foreground">Fitbit Inspire HR Metrics</h2>
-          
+          <h2 className="text-xl font-semibold text-foreground">Ōura Ring Metrics</h2>
+
           {/* Activity & Movement */}
           <ActivityMetricsCard />
-          
+
           {/* Heart Rate */}
           <HeartRateMetricsCard />
-          
+
           {/* Sleep Stages */}
           <SleepMetricsCard />
         </div>

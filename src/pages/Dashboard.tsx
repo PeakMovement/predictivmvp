@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import FitbitSyncStatus from "@/components/FitbitSyncStatus";
+import OuraSyncStatus from "@/components/OuraSyncStatus";
 import { DocumentIntelligenceCard } from "@/components/dashboard/DocumentIntelligenceCard";
 import { FeedbackSummaryPanel } from "@/components/dashboard/FeedbackSummaryPanel";
 import { HealthProfileViewer } from "@/components/health/HealthProfileViewer";
@@ -35,7 +35,7 @@ const WelcomeHeader = () => (
       <p className="text-muted-foreground text-base md:text-lg">Here’s your training overview for today</p>
     </div>
     <div className="flex justify-center animate-fade-in" style={{ animationDelay: "0.3s" }}>
-      <FitbitSyncStatus />
+      <OuraSyncStatus />
     </div>
   </div>
 );
@@ -72,7 +72,7 @@ export const Dashboard = () => {
 
           {!userId ? (
             <div className="text-center py-12 px-4 bg-glass backdrop-blur-xl border border-glass-border rounded-2xl">
-              <p className="text-muted-foreground mb-4">Please log in to view your Fitbit data</p>
+              <p className="text-muted-foreground mb-4">Please log in to view your Ōura Ring data</p>
               <p className="text-sm text-muted-foreground">Connect your account to see your metrics</p>
             </div>
           ) : (
@@ -86,8 +86,8 @@ export const Dashboard = () => {
                 <p className="text-center text-muted-foreground">Loading live metrics...</p>
               ) : dashboardMetrics.length === 0 ? (
                 <div className="text-center py-8 px-4 bg-glass backdrop-blur-xl border border-glass-border rounded-2xl">
-                  <p className="text-muted-foreground mb-2">No Fitbit data found yet</p>
-                  <p className="text-sm text-muted-foreground">Connect your Fitbit device above and sync to start tracking your training metrics</p>
+                  <p className="text-muted-foreground mb-2">No Ōura Ring data found yet</p>
+                  <p className="text-sm text-muted-foreground">Connect your Ōura Ring above and sync to start tracking your training metrics</p>
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">

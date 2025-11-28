@@ -14,7 +14,7 @@ import { useLiveData } from "@/contexts/LiveDataContext";
 import { useTrainingTrends } from "@/hooks/useTrainingTrends";
 import { useMemo } from "react";
 import { calculateMetrics } from "@/lib/metricsCalculator";
-import FitbitSyncStatus from "@/components/FitbitSyncStatus";
+import OuraSyncStatus from "@/components/OuraSyncStatus";
 
 // Load accepted challenges from localStorage
 const getAcceptedChallenges = () => {
@@ -831,13 +831,13 @@ export const YourPlan = () => {
           </div>
           <div className="animate-slide-in" style={{ animationDelay: '0.2s', animationFillMode: 'both' }}>
             <p className="text-muted-foreground text-base md:text-lg">
-              {userId ? "Track your active challenges and upcoming appointments" : "Please connect your Fitbit to see your plan"}
+              {userId ? "Track your active challenges and upcoming appointments" : "Please connect your Ōura Ring to see your plan"}
             </p>
           </div>
           
           {/* Sync Status */}
           <div className="flex justify-center animate-fade-in" style={{ animationDelay: "0.3s" }}>
-            <FitbitSyncStatus />
+            <OuraSyncStatus />
           </div>
           
           {/* Generate Report Button */}

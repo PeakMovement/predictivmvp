@@ -217,10 +217,10 @@ export const Training = () => {
     setSuggestions(newSuggestions);
   }, [currentDayData]);
   
-  // Listen for Fitbit data refresh
+  // Listen for Ōura data refresh
   useEffect(() => {
     const handleDataRefreshed = () => {
-      console.log("[Training] Fitbit data refreshed, reloading trends...");
+      console.log("[Training] Ōura Ring data refreshed, reloading trends...");
       refresh();
     };
     
@@ -236,7 +236,7 @@ export const Training = () => {
           <div className="text-center mb-6 md:mb-8">
             <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-2">Training Analytics</h1>
             <p className="text-sm md:text-base text-muted-foreground">
-              {userId ? "Track your workouts and training progression" : "Please connect your Fitbit to see your data"}
+              {userId ? "Track your workouts and training progression" : "Please connect your Ōura Ring to see your data"}
             </p>
           </div>
 

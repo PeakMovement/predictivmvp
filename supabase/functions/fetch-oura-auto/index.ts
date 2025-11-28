@@ -95,11 +95,13 @@ Deno.serve(async (req: Request) => {
 
     let totalUsersProcessed = 0;
     let totalEntriesInserted = 0;
+    const fetchedEndpoints: string[] = [];
+    let lastSyncDate = 'today';
 
     for (const token of tokens) {
       try {
         console.log(`[fetch-oura-auto] Processing user ${token.user_id}`);
-        
+
         let accessToken = token.access_token;
         if (new Date(token.expires_at) < new Date()) {
           console.log(`[fetch-oura-auto] Token expired for user ${token.user_id}, refreshing...`);
@@ -142,9 +144,10 @@ Deno.serve(async (req: Request) => {
         const endDate = new Date();
         const startDate = new Date();
         startDate.setDate(startDate.getDate() - 14);
-        
+
         const startDateStr = startDate.toISOString().split("T")[0];
         const endDateStr = endDate.toISOString().split("T")[0];
+        lastSyncDate = endDateStr;
 
         console.log(`[fetch-oura-auto] Fetching data from ${startDateStr} to ${endDateStr}`);
 
@@ -155,7 +158,7 @@ Deno.serve(async (req: Request) => {
         ];
 
         const fetchedData: Record<string, any> = {};
-        
+
         for (const endpoint of endpoints) {
           const res = await fetch(endpoint.url, {
             headers: { Authorization: `Bearer ${accessToken}` },
@@ -169,6 +172,11 @@ Deno.serve(async (req: Request) => {
           const data = await res.json();
           fetchedData[endpoint.name] = data.data || [];
           console.log(`[fetch-oura-auto] Fetched ${fetchedData[endpoint.name].length} entries from ${endpoint.name}`);
+
+          // Track successfully fetched endpoints
+          if (fetchedData[endpoint.name].length > 0 && !fetchedEndpoints.includes(endpoint.name)) {
+            fetchedEndpoints.push(endpoint.name);
+          }
         }
 
         const readinessData = fetchedData.daily_readiness || [];
@@ -328,6 +336,8 @@ Deno.serve(async (req: Request) => {
         success: true,
         users_processed: totalUsersProcessed,
         total_entries: totalEntriesInserted,
+        fetched_endpoints: fetchedEndpoints,
+        date: lastSyncDate,
       }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );

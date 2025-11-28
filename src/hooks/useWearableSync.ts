@@ -28,20 +28,11 @@ export const useWearableSync = (): WearableSyncState => {
 
   const checkConnection = async (): Promise<boolean> => {
     try {
-      const cachedStatus = localStorage.getItem('wearable_connected');
-      const cachedSync = localStorage.getItem('wearable_last_sync');
-
-      if (cachedStatus === 'true') {
-        setIsConnected(true);
-        if (cachedSync) {
-          setLastSync(new Date(cachedSync));
-        }
-      }
-
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         setIsConnected(false);
-        localStorage.setItem('wearable_connected', 'false');
+        localStorage.removeItem('wearable_connected');
+        localStorage.removeItem('wearable_last_sync');
         return false;
       }
 
@@ -53,14 +44,24 @@ export const useWearableSync = (): WearableSyncState => {
 
       if (tokenError || !tokenData) {
         setIsConnected(false);
-        localStorage.setItem('wearable_connected', 'false');
+        localStorage.removeItem('wearable_connected');
+        localStorage.removeItem('wearable_last_sync');
+        console.info('[WearableSync] No Oura token found for user:', user.id);
         return false;
       }
 
       const token = tokenData as unknown as WearableTokenRow;
       const hasValidToken = !!token.access_token;
       setIsConnected(hasValidToken);
-      localStorage.setItem('wearable_connected', String(hasValidToken));
+
+      if (!hasValidToken) {
+        localStorage.removeItem('wearable_connected');
+        localStorage.removeItem('wearable_last_sync');
+        console.info('[WearableSync] Token exists but is invalid');
+        return false;
+      }
+
+      localStorage.setItem('wearable_connected', 'true');
 
       const { data: syncData, error: syncError } = await supabase
         .from("wearable_auto_data" as any)
@@ -109,13 +110,26 @@ export const useWearableSync = (): WearableSyncState => {
 
       const fetchedEndpoints = edgeResult.fetched_endpoints || [];
       const date = edgeResult.date || 'today';
+      const usersProcessed = edgeResult.users_processed || 0;
+
+      if (usersProcessed === 0) {
+        throw new Error("No Oura token found. Please connect your Oura Ring first.");
+      }
+
+      if (fetchedEndpoints.length === 0) {
+        toast({
+          title: "No New Data",
+          description: "Your Oura Ring has no new data to sync. This could mean data is still processing on Oura's servers.",
+          variant: "default",
+        });
+      } else {
+        toast({
+          title: "Ōura Data Updated",
+          description: `Successfully synced ${fetchedEndpoints.length} data types for ${date}`,
+        });
+      }
 
       const now = new Date();
-      toast({
-        title: "Ōura Data Updated",
-        description: `Successfully synced ${fetchedEndpoints.length} data types for ${date}`,
-      });
-
       setLastSync(now);
       localStorage.setItem('wearable_last_sync', now.toISOString());
       await checkConnection();

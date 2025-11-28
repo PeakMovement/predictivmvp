@@ -577,9 +577,15 @@ export const Settings = ({ onNavigate }: { onNavigate?: (tab: string) => void })
                     </p>
                     <p className="text-xs text-muted-foreground">
                       {isConnected
-                        ? "Auto-syncing daily • Click Update for latest data"
-                        : "Connect and sync your Ōura data"}
+                        ? "Open your Oura app to sync, then click Update to fetch latest data"
+                        : "Connect and sync your Ōura Ring data"}
                     </p>
+                    {isConnected && (
+                      <p className="text-xs text-amber-400/80 mt-1 flex items-center gap-1">
+                        <Info size={12} />
+                        Sleep data requires syncing the Oura mobile app first
+                      </p>
+                    )}
                   </div>
                 </div>
                 <div className="flex gap-2">

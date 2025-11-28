@@ -151,30 +151,67 @@ Deno.serve(async (req: Request) => {
 
         console.log(`[fetch-oura-auto] Fetching data from ${startDateStr} to ${endDateStr}`);
 
+        // Comprehensive Oura API endpoints per official documentation
         const endpoints = [
+          // Daily summaries - core metrics
           { name: "daily_readiness", url: `https://api.ouraring.com/v2/usercollection/daily_readiness?start_date=${startDateStr}&end_date=${endDateStr}` },
           { name: "daily_sleep", url: `https://api.ouraring.com/v2/usercollection/daily_sleep?start_date=${startDateStr}&end_date=${endDateStr}` },
           { name: "daily_activity", url: `https://api.ouraring.com/v2/usercollection/daily_activity?start_date=${startDateStr}&end_date=${endDateStr}` },
+
+          // Additional health metrics
+          { name: "daily_spo2", url: `https://api.ouraring.com/v2/usercollection/daily_spo2?start_date=${startDateStr}&end_date=${endDateStr}` },
+          { name: "daily_stress", url: `https://api.ouraring.com/v2/usercollection/daily_stress?start_date=${startDateStr}&end_date=${endDateStr}` },
+          { name: "daily_resilience", url: `https://api.ouraring.com/v2/usercollection/daily_resilience?start_date=${startDateStr}&end_date=${endDateStr}` },
+          { name: "daily_cardiovascular_age", url: `https://api.ouraring.com/v2/usercollection/daily_cardiovascular_age?start_date=${startDateStr}&end_date=${endDateStr}` },
+          { name: "vo2_max", url: `https://api.ouraring.com/v2/usercollection/vO2_max?start_date=${startDateStr}&end_date=${endDateStr}` },
+
+          // Detailed data
+          { name: "sleep", url: `https://api.ouraring.com/v2/usercollection/sleep?start_date=${startDateStr}&end_date=${endDateStr}` },
+          { name: "workout", url: `https://api.ouraring.com/v2/usercollection/workout?start_date=${startDateStr}&end_date=${endDateStr}` },
+          { name: "session", url: `https://api.ouraring.com/v2/usercollection/session?start_date=${startDateStr}&end_date=${endDateStr}` },
+          { name: "tag", url: `https://api.ouraring.com/v2/usercollection/tag?start_date=${startDateStr}&end_date=${endDateStr}` },
         ];
 
         const fetchedData: Record<string, any> = {};
 
+        // Fetch data from all endpoints with pagination support
         for (const endpoint of endpoints) {
-          const res = await fetch(endpoint.url, {
-            headers: { Authorization: `Bearer ${accessToken}` },
-          });
+          let allData: any[] = [];
+          let currentUrl = endpoint.url;
+          let hasMore = true;
 
-          if (!res.ok) {
-            console.error(`[fetch-oura-auto] Failed to fetch ${endpoint.name} for user ${token.user_id}: ${res.status}`);
-            continue;
+          // Handle pagination with next_token
+          while (hasMore) {
+            const res = await fetch(currentUrl, {
+              headers: { Authorization: `Bearer ${accessToken}` },
+            });
+
+            if (!res.ok) {
+              console.error(`[fetch-oura-auto] Failed to fetch ${endpoint.name} for user ${token.user_id}: ${res.status}`);
+              break;
+            }
+
+            const data = await res.json();
+            const pageData = data.data || [];
+            allData = allData.concat(pageData);
+
+            // Check for pagination token
+            if (data.next_token) {
+              // Add next_token to URL for next page
+              const url = new URL(currentUrl);
+              url.searchParams.set("next_token", data.next_token);
+              currentUrl = url.toString();
+              console.log(`[fetch-oura-auto] Fetching next page for ${endpoint.name}...`);
+            } else {
+              hasMore = false;
+            }
           }
 
-          const data = await res.json();
-          fetchedData[endpoint.name] = data.data || [];
-          console.log(`[fetch-oura-auto] Fetched ${fetchedData[endpoint.name].length} entries from ${endpoint.name}`);
+          fetchedData[endpoint.name] = allData;
+          console.log(`[fetch-oura-auto] Fetched ${allData.length} total entries from ${endpoint.name}`);
 
           // Track successfully fetched endpoints
-          if (fetchedData[endpoint.name].length > 0 && !fetchedEndpoints.includes(endpoint.name)) {
+          if (allData.length > 0 && !fetchedEndpoints.includes(endpoint.name)) {
             fetchedEndpoints.push(endpoint.name);
           }
         }

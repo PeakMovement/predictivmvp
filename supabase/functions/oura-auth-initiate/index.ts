@@ -43,9 +43,11 @@ Deno.serve(async (req: Request) => {
 
     console.log(`[oura-auth-initiate] Initiating Ōura OAuth for user: ${user_id}`);
 
-    // Ōura OAuth URL with required scopes
+    // Ōura OAuth URL with comprehensive scopes for full data access
+    // Scopes: daily (summaries), personal (profile), heartrate (time-series),
+    // workout (sessions), tag (user tags), session (guided sessions), spo2Daily (blood oxygen)
     const redirectUri = "https://predictiv.netlify.app/oauth/callback/oura";
-    const scope = "daily personal";
+    const scope = "email personal daily heartrate workout tag session spo2Daily";
     
     const authUrl = `https://cloud.ouraring.com/oauth/authorize?` +
       `response_type=code&` +

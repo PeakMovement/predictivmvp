@@ -13,7 +13,7 @@ interface WearableSession {
   resting_hr: number | null;
   spo2_avg: number | null;
   total_steps: number | null;
-  total_calories: number | null;
+  active_calories: number | null;
   fetched_at: string | null;
 }
 

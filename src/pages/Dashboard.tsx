@@ -60,7 +60,7 @@ export const Dashboard = () => {
         { name: "Sleep", value: session.sleep_score ?? "—", status: "green" },
         { name: "Activity", value: session.activity_score ?? "—", status: "green" },
         { name: "Steps", value: session.total_steps ?? "—", status: "green" },
-        { name: "Calories", value: session.total_calories ?? "—", status: "green" },
+        { name: "Calories", value: session.active_calories ?? "—", status: "green" },
       ]
     : [];
 

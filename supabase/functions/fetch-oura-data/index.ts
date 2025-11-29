@@ -148,6 +148,8 @@ interface OuraActivityData {
   score?: number;
   steps?: number;
   active_calories?: number;
+  total_calories?: number;
+  equivalent_walking_distance?: number;
 }
 
 Deno.serve(async (req: Request) => {
@@ -268,7 +270,7 @@ Deno.serve(async (req: Request) => {
         activity_score: dayData.activity?.score || null,
         total_steps: dayData.activity?.steps || null,
         active_calories: dayData.activity?.active_calories || null,
-        total_calories: null,
+        total_calories: dayData.activity?.total_calories || null,
         resting_hr: dayData.sleep?.lowest_heart_rate || dayData.sleep?.average_heart_rate || null,
         hrv_avg: dayData.sleep?.average_hrv || null,
         spo2_avg: null,
@@ -284,6 +286,33 @@ Deno.serve(async (req: Request) => {
         console.error(`[fetch-oura-data] Error inserting session for ${date}:`, sessionError);
       } else {
         entriesInserted++;
+      }
+
+      // Also save detailed activity data to oura_activity table if available
+      if (dayData.activity) {
+        const activityData = {
+          user_id,
+          oura_id: dayData.activity.id,
+          day: date,
+          score: dayData.activity.score || null,
+          active_calories: dayData.activity.active_calories || null,
+          total_calories: dayData.activity.total_calories || null,
+          steps: dayData.activity.steps || null,
+          equivalent_walking_distance: dayData.activity.equivalent_walking_distance || null,
+          raw_data: dayData.activity,
+        };
+
+        const { error: activityError } = await supabase
+          .from("oura_activity")
+          .upsert(activityData, {
+            onConflict: "user_id,oura_id",
+          });
+
+        if (activityError) {
+          console.error(`[fetch-oura-data] Error inserting activity data for ${date}:`, activityError);
+        } else {
+          console.log(`[fetch-oura-data] Saved activity data for ${date}: ${activityData.active_calories || 0} active cals, ${activityData.total_calories || 0} total cals, ${activityData.steps || 0} steps`);
+        }
       }
     }
 

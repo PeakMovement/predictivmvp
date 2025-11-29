@@ -22,6 +22,7 @@ export const OuraCallback = () => {
 
         console.log("[OuraCallback] Full URL:", window.location.href);
         console.log("[OuraCallback] Parsed params:", { code, state, error, errorDescription });
+        console.log("[OuraCallback] All URL params:", Object.fromEntries(params.entries()));
 
         if (error) {
           throw new Error(
@@ -30,6 +31,20 @@ export const OuraCallback = () => {
         }
 
         if (!code) {
+          const troubleshootingInfo = `
+URL: ${window.location.href}
+Has query params: ${window.location.search ? 'Yes' : 'No'}
+Params found: ${Array.from(params.keys()).join(', ') || 'None'}
+
+Common causes:
+1. Redirect URI mismatch in Oura Developer Portal
+2. User cancelled the authorization
+3. OAuth flow timed out
+
+Expected redirect URI: https://predictiv.netlify.app/oauth/callback/oura`;
+
+          console.error("[OuraCallback] Missing auth code. Details:", troubleshootingInfo);
+
           throw new Error(
             "Authorization code not found. The OAuth flow may have been cancelled or interrupted."
           );
@@ -201,6 +216,22 @@ export const OuraCallback = () => {
                 Connection Failed
               </h2>
               <p className="text-sm text-muted-foreground">{errorMessage}</p>
+              {errorMessage.includes("Authorization code not found") && (
+                <div className="mt-4 p-4 bg-yellow-500/10 border border-yellow-500/30 rounded-lg text-left">
+                  <p className="text-xs font-semibold text-yellow-600 dark:text-yellow-400 mb-2">
+                    Troubleshooting Steps:
+                  </p>
+                  <ol className="text-xs text-muted-foreground space-y-1 list-decimal list-inside">
+                    <li>Check browser console for detailed logs</li>
+                    <li>Verify Oura Developer Portal redirect URI matches:<br/>
+                    <code className="text-xs bg-black/20 px-1 py-0.5 rounded mt-1 inline-block">
+                      https://predictiv.netlify.app/oauth/callback/oura
+                    </code>
+                    </li>
+                    <li>Try connecting again and approve all permissions</li>
+                  </ol>
+                </div>
+              )}
             </div>
             <div className="flex gap-3">
               <Button

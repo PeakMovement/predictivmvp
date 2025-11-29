@@ -37,6 +37,7 @@ interface OuraActivityData {
   class_5_min?: string;
   score?: number;
   active_calories?: number;
+  total_calories?: number;
   steps?: number;
   equivalent_walking_distance?: number;
   high_activity_time?: number;
@@ -65,7 +66,7 @@ Deno.serve(async (req: Request) => {
     const body = await req.json().catch(() => ({}));
     const targetUserId = body.user_id;
 
-    console.log(`[fetch-oura-auto] Starting sync${targetUserId ? ` for user ${targetUserId}` : " for all users"}`);
+    console.log(`[fetch-oura-auto] [START] Starting sync${targetUserId ? ` for user ${targetUserId}` : " for all users"}`);
 
     let query = supabase.from("oura_tokens").select("*");
     
@@ -76,7 +77,8 @@ Deno.serve(async (req: Request) => {
     const { data: tokens, error: tokenError } = await query;
 
     if (tokenError) {
-      console.error("[fetch-oura-auto] Error fetching tokens:", tokenError);
+      console.error("[fetch-oura-auto] [ERROR] Failed to fetch tokens from database:", tokenError);
+      console.error("[fetch-oura-auto] [DEBUG] Token error details:", JSON.stringify(tokenError));
       return new Response(
         JSON.stringify({ error: "Failed to fetch tokens", details: tokenError }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -119,8 +121,10 @@ Deno.serve(async (req: Request) => {
 
           if (!refreshRes.ok) {
             const errorData = await refreshRes.json();
-            console.error(`[fetch-oura-auto] Token refresh failed for user ${token.user_id}:`, errorData);
-            
+            console.error(`[fetch-oura-auto] [ERROR] Token refresh failed for user ${token.user_id}`);
+            console.error(`[fetch-oura-auto] [DEBUG] Refresh error details:`, JSON.stringify(errorData));
+            console.error(`[fetch-oura-auto] [DEBUG] HTTP Status: ${refreshRes.status}`);
+
             await supabase.from("oura_logs").insert({
               user_id: token.user_id,
               status: "error",
@@ -187,7 +191,15 @@ Deno.serve(async (req: Request) => {
             });
 
             if (!res.ok) {
-              console.error(`[fetch-oura-auto] Failed to fetch ${endpoint.name} for user ${token.user_id}: ${res.status}`);
+              console.error(`[fetch-oura-auto] [ERROR] Failed to fetch ${endpoint.name} for user ${token.user_id}`);
+              console.error(`[fetch-oura-auto] [DEBUG] HTTP Status: ${res.status}`);
+              console.error(`[fetch-oura-auto] [DEBUG] Endpoint URL: ${currentUrl}`);
+
+              await supabase.from("oura_logs").insert({
+                user_id: token.user_id,
+                status: "error",
+                error_message: `Failed to fetch ${endpoint.name}: HTTP ${res.status}`,
+              });
               break;
             }
 
@@ -249,6 +261,7 @@ Deno.serve(async (req: Request) => {
             activity_score: dayData.activity?.score || null,
             total_steps: dayData.activity?.steps || null,
             active_calories: dayData.activity?.active_calories || null,
+            total_calories: dayData.activity?.total_calories || null,
             resting_hr: dayData.sleep?.lowest_heart_rate || dayData.sleep?.average_heart_rate || null,
             hrv: dayData.sleep?.average_hrv || null,
             spo2_avg: null,
@@ -261,9 +274,12 @@ Deno.serve(async (req: Request) => {
             });
 
           if (sessionError) {
-            console.error(`[fetch-oura-auto] Error inserting session for ${date}:`, sessionError);
+            console.error(`[fetch-oura-auto] [ERROR] Failed to insert session for ${date}`);
+            console.error(`[fetch-oura-auto] [DEBUG] Session error details:`, JSON.stringify(sessionError));
+            console.error(`[fetch-oura-auto] [DEBUG] Session data:`, JSON.stringify(sessionData));
           } else {
             entriesInserted++;
+            console.log(`[fetch-oura-auto] [SUCCESS] Inserted session for ${date}`);
           }
         }
 
@@ -338,7 +354,11 @@ Deno.serve(async (req: Request) => {
                 });
 
               if (summaryError) {
-                console.error(`[fetch-oura-auto] Error inserting summary for ${date}:`, summaryError);
+                console.error(`[fetch-oura-auto] [ERROR] Failed to insert summary for ${date}`);
+                console.error(`[fetch-oura-auto] [DEBUG] Summary error details:`, JSON.stringify(summaryError));
+                console.error(`[fetch-oura-auto] [DEBUG] Summary data:`, JSON.stringify(summaryData));
+              } else {
+                console.log(`[fetch-oura-auto] [SUCCESS] Inserted summary for ${date}`);
               }
             }
           }
@@ -353,11 +373,13 @@ Deno.serve(async (req: Request) => {
           entries_synced: entriesInserted,
         });
 
-        console.log(`[fetch-oura-auto] Successfully processed ${entriesInserted} entries for user ${token.user_id}`);
+        console.log(`[fetch-oura-auto] [SUCCESS] Completed processing for user ${token.user_id}: ${entriesInserted} entries synced`);
 
       } catch (userError) {
-        console.error(`[fetch-oura-auto] Error processing user ${token.user_id}:`, userError);
-        
+        console.error(`[fetch-oura-auto] [ERROR] Failed to process user ${token.user_id}`);
+        console.error(`[fetch-oura-auto] [DEBUG] Error message:`, userError instanceof Error ? userError.message : String(userError));
+        console.error(`[fetch-oura-auto] [DEBUG] Error stack:`, userError instanceof Error ? userError.stack : 'No stack trace');
+
         await supabase.from("oura_logs").insert({
           user_id: token.user_id,
           status: "error",
@@ -366,7 +388,7 @@ Deno.serve(async (req: Request) => {
       }
     }
 
-    console.log(`[fetch-oura-auto] Completed. Processed ${totalUsersProcessed} users, inserted ${totalEntriesInserted} entries`);
+    console.log(`[fetch-oura-auto] [COMPLETE] Sync finished: ${totalUsersProcessed} users processed, ${totalEntriesInserted} total entries synced`);
 
     return new Response(
       JSON.stringify({
@@ -380,7 +402,9 @@ Deno.serve(async (req: Request) => {
     );
 
   } catch (err) {
-    console.error("[fetch-oura-auto] Fatal error:", err);
+    console.error("[fetch-oura-auto] [FATAL] Unhandled error in main execution");
+    console.error("[fetch-oura-auto] [DEBUG] Fatal error message:", err instanceof Error ? err.message : String(err));
+    console.error("[fetch-oura-auto] [DEBUG] Fatal error stack:", err instanceof Error ? err.stack : 'No stack trace');
     return new Response(
       JSON.stringify({
         error: err instanceof Error ? err.message : "Unknown error",

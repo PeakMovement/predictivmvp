@@ -65,17 +65,45 @@ Expected redirect URI: https://predictiv.netlify.app/oauth/callback/oura`;
           body: { code, user_id },
         });
 
-        if (exchangeError) {
-          console.error("[OuraCallback] Edge function error:", exchangeError);
-          const errorMsg = exchangeError.message || "Failed to authenticate with Oura";
+        console.log("[OuraCallback] Edge function response:", { exchangeData, exchangeError });
 
-          if (errorMsg.includes("redirect_uri")) {
+        if (exchangeError) {
+          console.error("[OuraCallback] Edge function error:", {
+            name: exchangeError.name,
+            message: exchangeError.message,
+            context: exchangeError.context,
+            details: exchangeError
+          });
+
+          let errorMsg = exchangeError.message || "Failed to authenticate with Oura";
+
+          if (exchangeError.context?.body) {
+            try {
+              const errorBody = typeof exchangeError.context.body === 'string'
+                ? JSON.parse(exchangeError.context.body)
+                : exchangeError.context.body;
+
+              if (errorBody.error) {
+                errorMsg = errorBody.error;
+              }
+
+              console.error("[OuraCallback] Parsed error body:", errorBody);
+            } catch (e) {
+              console.error("[OuraCallback] Could not parse error body:", e);
+            }
+          }
+
+          if (errorMsg.includes("redirect_uri") || errorMsg.includes("Redirect URI")) {
             throw new Error(
-              "OAuth redirect URI mismatch. Please ensure your Oura Developer Portal settings match your application URL."
+              "OAuth redirect URI mismatch. Verify your Oura Developer Portal has: https://predictiv.netlify.app/oauth/callback/oura"
             );
-          } else if (errorMsg.includes("invalid_grant")) {
+          } else if (errorMsg.includes("invalid_grant") || errorMsg.includes("expired")) {
             throw new Error(
               "Authorization code expired or invalid. Please try connecting again."
+            );
+          } else if (errorMsg.includes("invalid_client") || errorMsg.includes("credentials")) {
+            throw new Error(
+              "Invalid Oura API credentials. Please verify OURA_CLIENT_ID and OURA_CLIENT_SECRET are correctly configured."
             );
           } else if (errorMsg.includes("OURA_CLIENT")) {
             throw new Error(
@@ -84,6 +112,11 @@ Expected redirect URI: https://predictiv.netlify.app/oauth/callback/oura`;
           }
 
           throw new Error(errorMsg);
+        }
+
+        if (!exchangeData || !exchangeData.success) {
+          console.error("[OuraCallback] Unexpected response from edge function:", exchangeData);
+          throw new Error("Token exchange completed but did not return success status");
         }
 
         console.log("[OuraCallback] Token exchange successful:", exchangeData);
@@ -216,18 +249,24 @@ Expected redirect URI: https://predictiv.netlify.app/oauth/callback/oura`;
                 Connection Failed
               </h2>
               <p className="text-sm text-muted-foreground">{errorMessage}</p>
-              {errorMessage.includes("Authorization code not found") && (
+              {(errorMessage.includes("Authorization code not found") ||
+                errorMessage.includes("redirect_uri") ||
+                errorMessage.includes("Redirect URI") ||
+                errorMessage.includes("credentials") ||
+                errorMessage.includes("Edge Function")) && (
                 <div className="mt-4 p-4 bg-yellow-500/10 border border-yellow-500/30 rounded-lg text-left">
                   <p className="text-xs font-semibold text-yellow-600 dark:text-yellow-400 mb-2">
                     Troubleshooting Steps:
                   </p>
                   <ol className="text-xs text-muted-foreground space-y-1 list-decimal list-inside">
-                    <li>Check browser console for detailed logs</li>
-                    <li>Verify Oura Developer Portal redirect URI matches:<br/>
+                    <li>Open browser console (F12) to see detailed error logs</li>
+                    <li>Verify Oura Developer Portal redirect URI is exactly:<br/>
                     <code className="text-xs bg-black/20 px-1 py-0.5 rounded mt-1 inline-block">
                       https://predictiv.netlify.app/oauth/callback/oura
                     </code>
                     </li>
+                    <li>Check OURA_CLIENT_ID and OURA_CLIENT_SECRET are set in Supabase Edge Functions</li>
+                    <li>Verify Client ID matches between Oura Portal and Supabase secrets</li>
                     <li>Try connecting again and approve all permissions</li>
                   </ol>
                 </div>

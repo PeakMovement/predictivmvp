@@ -36,33 +36,70 @@ Deno.serve(async (req: Request) => {
     }
 
     console.log(`[oura-auth] Exchanging code for user: ${user_id}`);
+    console.log(`[oura-auth] Code length: ${code.length}`);
 
     // Get Oura credentials from environment
     const ouraClientId = Deno.env.get("OURA_CLIENT_ID");
     const ouraClientSecret = Deno.env.get("OURA_CLIENT_SECRET");
 
     if (!ouraClientId || !ouraClientSecret) {
-      throw new Error("Oura credentials not configured. Please set OURA_CLIENT_ID and OURA_CLIENT_SECRET in Supabase Edge Function secrets.");
+      const missingCreds = [];
+      if (!ouraClientId) missingCreds.push("OURA_CLIENT_ID");
+      if (!ouraClientSecret) missingCreds.push("OURA_CLIENT_SECRET");
+
+      console.error(`[oura-auth] Missing credentials: ${missingCreds.join(", ")}`);
+      throw new Error(`Oura credentials not configured. Missing: ${missingCreds.join(", ")}`);
     }
 
+    console.log(`[oura-auth] Using Client ID: ${ouraClientId.substring(0, 8)}...`);
+
     // Exchange authorization code for tokens
+    const redirectUri = "https://predictiv.netlify.app/oauth/callback/oura";
+    const tokenRequestBody = {
+      grant_type: "authorization_code",
+      code,
+      redirect_uri: redirectUri,
+      client_id: ouraClientId,
+      client_secret: ouraClientSecret,
+    };
+
+    console.log(`[oura-auth] Token exchange request:`, {
+      grant_type: tokenRequestBody.grant_type,
+      redirect_uri: tokenRequestBody.redirect_uri,
+      client_id: `${ouraClientId.substring(0, 8)}...`,
+      code_length: code.length
+    });
+
     const tokenResponse = await fetch("https://api.ouraring.com/oauth/token", {
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: new URLSearchParams({
-        grant_type: "authorization_code",
-        code,
-        redirect_uri: "https://predictiv.netlify.app/oauth/callback/oura",
-        client_id: ouraClientId,
-        client_secret: ouraClientSecret,
-      }),
+      body: new URLSearchParams(tokenRequestBody),
     });
 
+    console.log(`[oura-auth] Token response status: ${tokenResponse.status}`);
+
     const tokenData = await tokenResponse.json();
-    
+
     if (!tokenResponse.ok) {
-      console.error("[oura-auth] Oura API error:", tokenData);
-      throw new Error(`Oura API error: ${JSON.stringify(tokenData)}`);
+      console.error("[oura-auth] Oura API error response:", {
+        status: tokenResponse.status,
+        statusText: tokenResponse.statusText,
+        error: tokenData
+      });
+
+      let errorMessage = `Oura API error (${tokenResponse.status})`;
+
+      if (tokenData.error === "invalid_grant") {
+        errorMessage = "Authorization code expired or invalid. Please try connecting again.";
+      } else if (tokenData.error === "invalid_client") {
+        errorMessage = "Invalid Oura API credentials. Please verify OURA_CLIENT_ID and OURA_CLIENT_SECRET.";
+      } else if (tokenData.error === "redirect_uri_mismatch") {
+        errorMessage = `Redirect URI mismatch. Expected: ${redirectUri}. Check Oura Developer Portal settings.`;
+      } else if (tokenData.error_description) {
+        errorMessage = tokenData.error_description;
+      }
+
+      throw new Error(errorMessage);
     }
 
     console.log("[oura-auth] Successfully received tokens from Oura");

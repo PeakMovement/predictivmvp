@@ -148,16 +148,33 @@ Expected redirect URI: https://predictiv.netlify.app/oauth/callback/oura`;
         }
 
         console.log("[OuraCallback] Oura Ring connected successfully!");
+
+        // Trigger initial data fetch
+        console.log("[OuraCallback] Triggering initial Oura data fetch...");
+        try {
+          const { data: fetchData, error: fetchError } = await supabase.functions.invoke("fetch-oura-data", {
+            body: { user_id, start_date: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] },
+          });
+
+          if (fetchError) {
+            console.error("[OuraCallback] Initial data fetch failed:", fetchError);
+          } else {
+            console.log("[OuraCallback] Initial data fetch triggered successfully:", fetchData);
+          }
+        } catch (fetchErr) {
+          console.error("[OuraCallback] Error triggering initial data fetch:", fetchErr);
+        }
+
         setStatus("success");
 
         toast({
           title: "Ōura Ring Connected",
-          description: "Your Ōura Ring has been successfully connected",
+          description: "Your Ōura Ring has been successfully connected. Fetching your health data...",
         });
 
-        // Redirect to dashboard after a short delay
+        // Redirect to root path (which will load dashboard by default) after a short delay
         setTimeout(() => {
-          window.location.href = "/dashboard";
+          window.location.href = "/";
         }, 1500);
       } catch (error) {
         console.error("[OuraCallback] Error:", error);

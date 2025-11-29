@@ -132,7 +132,7 @@ Deno.serve(async (req: Request) => {
         access_token: tokenData.access_token,
         refresh_token: tokenData.refresh_token,
         expires_at: expiresAtTimestamp,
-        scope: tokenData.scope || "email personal daily heartrate workout tag session spo2Daily",
+        scope: tokenData.scope || "email personal daily heartrate workout tag session spo2",
       }, {
         onConflict: 'user_id'
       })

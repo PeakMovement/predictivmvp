@@ -19,9 +19,14 @@ Deno.serve(async (req: Request) => {
     const diagnostics: Record<string, unknown> = {};
 
     // Check environment variables
+    const clientId = Deno.env.get("OURA_CLIENT_ID");
+    const clientSecret = Deno.env.get("OURA_CLIENT_SECRET");
+
     diagnostics.env = {
-      OURA_CLIENT_ID: !!Deno.env.get("OURA_CLIENT_ID"),
-      OURA_CLIENT_SECRET: !!Deno.env.get("OURA_CLIENT_SECRET"),
+      OURA_CLIENT_ID: !!clientId,
+      OURA_CLIENT_ID_PREVIEW: clientId ? `${clientId.substring(0, 8)}...${clientId.substring(clientId.length - 4)}` : "MISSING",
+      OURA_CLIENT_SECRET: !!clientSecret,
+      OURA_CLIENT_SECRET_LENGTH: clientSecret ? clientSecret.length : 0,
       SUPABASE_URL: !!Deno.env.get("SUPABASE_URL"),
       SUPABASE_SERVICE_ROLE_KEY: !!Deno.env.get("SUPABASE_SERVICE_ROLE_KEY"),
       SUPABASE_URL_VALUE: Deno.env.get("SUPABASE_URL") || "MISSING",

@@ -114,7 +114,21 @@ export const OuraConnectionTest = () => {
       if (initiateError) {
         updateResult("initiate", "error", "Function invocation failed", initiateError.message);
       } else if (initiateData?.auth_url) {
-        updateResult("initiate", "success", "Auth URL generated", `URL: ${initiateData.auth_url.substring(0, 100)}...`);
+        const authUrl = initiateData.auth_url as string;
+        const urlObj = new URL(authUrl);
+        const redirectUri = urlObj.searchParams.get('redirect_uri');
+        const clientId = urlObj.searchParams.get('client_id');
+
+        const details = [
+          `Full URL: ${authUrl}`,
+          `\nRedirect URI: ${redirectUri}`,
+          `Client ID: ${clientId?.substring(0, 8)}...`,
+          `\n⚠️ VERIFY THIS MATCHES YOUR OURA PORTAL:`,
+          `Expected Redirect URI: https://predictiv.netlify.app/oauth/callback/oura`,
+          `\nIf these don't match EXACTLY, OAuth will fail!`
+        ].join('\n');
+
+        updateResult("initiate", "success", "Auth URL generated - CHECK REDIRECT URI BELOW", details);
       } else {
         updateResult("initiate", "error", "No auth URL returned", JSON.stringify(initiateData));
       }
@@ -242,22 +256,40 @@ export const OuraConnectionTest = () => {
               </div>
             )}
 
-            <div className="mt-8 p-4 bg-muted rounded-lg">
-              <h4 className="font-semibold mb-2">Quick Fix Guide:</h4>
-              <ol className="list-decimal list-inside space-y-2 text-sm">
-                <li>
-                  <strong>If "oura-auth" fails:</strong> Check Supabase Dashboard → Edge Functions →
-                  Secrets and ensure OURA_CLIENT_ID and OURA_CLIENT_SECRET are set
-                </li>
-                <li>
-                  <strong>If tokens don't save:</strong> The Edge Function needs SUPABASE_URL and
-                  SUPABASE_SERVICE_ROLE_KEY (these are auto-provided by Supabase)
-                </li>
-                <li>
-                  <strong>If callback fails:</strong> Verify the redirect URI in your Oura Developer
-                  Portal matches: https://predictiv.netlify.app/oauth/callback/oura
-                </li>
-              </ol>
+            <div className="mt-8 space-y-4">
+              <div className="p-4 bg-amber-500/10 border border-amber-500/30 rounded-lg">
+                <h4 className="font-semibold mb-2 text-amber-600 dark:text-amber-400">🔍 Critical Check: Oura Developer Portal</h4>
+                <div className="space-y-2 text-sm">
+                  <p className="font-medium">Go to: <a href="https://cloud.ouraring.com/oauth/applications" target="_blank" rel="noopener noreferrer" className="underline text-blue-600 dark:text-blue-400">https://cloud.ouraring.com/oauth/applications</a></p>
+                  <p className="font-medium">Verify these EXACT values:</p>
+                  <ol className="list-decimal list-inside space-y-1 ml-2">
+                    <li><strong>Redirect URI:</strong> <code className="bg-black/20 px-2 py-0.5 rounded">https://predictiv.netlify.app/oauth/callback/oura</code></li>
+                    <li><strong>Client ID:</strong> Must match the Client ID in the "initiate" test above</li>
+                    <li><strong>Client Secret:</strong> Must match what's set in Supabase Edge Function secrets</li>
+                  </ol>
+                  <p className="text-xs text-amber-600/80 dark:text-amber-400/80 mt-2">⚠️ Even a single character difference will cause OAuth to fail!</p>
+                </div>
+              </div>
+
+              <div className="p-4 bg-muted rounded-lg">
+                <h4 className="font-semibold mb-2">Quick Fix Guide:</h4>
+                <ol className="list-decimal list-inside space-y-2 text-sm">
+                  <li>
+                    <strong>If "oura-auth" fails:</strong> Check Supabase Dashboard → Edge Functions →
+                    Secrets and ensure OURA_CLIENT_ID and OURA_CLIENT_SECRET are set
+                  </li>
+                  <li>
+                    <strong>If tokens don't save:</strong> The Edge Function needs SUPABASE_URL and
+                    SUPABASE_SERVICE_ROLE_KEY (these are auto-provided by Supabase)
+                  </li>
+                  <li>
+                    <strong>If callback returns NO CODE:</strong> This means redirect URI mismatch - verify in Oura Portal
+                  </li>
+                  <li>
+                    <strong>If callback has code but fails:</strong> Check Edge Function logs for token exchange errors
+                  </li>
+                </ol>
+              </div>
             </div>
           </CardContent>
         </Card>

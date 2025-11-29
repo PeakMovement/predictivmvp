@@ -116,16 +116,18 @@ export const useWearableSync = (): WearableSyncState => {
         throw new Error("No Oura token found. Please connect your Oura Ring first.");
       }
 
-      if (fetchedEndpoints.length === 0) {
+      const entriesSynced = edgeResult.total_entries || 0;
+
+      if (fetchedEndpoints.length === 0 || entriesSynced === 0) {
         toast({
-          title: "No New Data",
-          description: "Your Oura Ring has no new data to sync. This could mean data is still processing on Oura's servers.",
+          title: "No New Data Available",
+          description: "Oura has no new data to sync. If you just connected, wear your ring tonight and sync tomorrow morning. Sleep data processes around 8 AM local time.",
           variant: "default",
         });
       } else {
         toast({
-          title: "Ōura Data Updated",
-          description: `Successfully synced ${fetchedEndpoints.length} data types for ${date}`,
+          title: "✅ Ōura Data Synced",
+          description: `Successfully synced ${entriesSynced} day(s) of data across ${fetchedEndpoints.length} metrics`,
         });
       }
 

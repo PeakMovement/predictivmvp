@@ -6,6 +6,8 @@ import { OuraSleepCard } from "@/components/oura/OuraSleepCard";
 import { OuraActivityCard } from "@/components/oura/OuraActivityCard";
 import { OuraHRVCard } from "@/components/oura/OuraHRVCard";
 import OuraSyncStatus from "@/components/OuraSyncStatus";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { InfoIcon } from "lucide-react";
 
 export const Health = () => {
   const [userId, setUserId] = useState<string | null>(null);
@@ -41,6 +43,25 @@ export const Health = () => {
           </div>
         ) : (
           <>
+            {/* No Data Alert */}
+            {!isLoading && !session && (
+              <Alert className="mb-6 border-blue-500/50 bg-blue-500/10">
+                <InfoIcon className="h-4 w-4 text-blue-500" />
+                <AlertTitle className="text-blue-500">No Oura Data Yet</AlertTitle>
+                <AlertDescription className="text-sm text-muted-foreground">
+                  <p className="mb-2">Your Oura Ring is connected, but no data has synced yet. Here's what to do:</p>
+                  <ol className="list-decimal list-inside space-y-1 ml-2">
+                    <li>Wear your Oura Ring tonight</li>
+                    <li>Open the Oura mobile app in the morning to sync</li>
+                    <li>Return here and click "Update Now" after 8 AM local time</li>
+                  </ol>
+                  <p className="mt-3 text-xs">
+                    💡 <strong>Tip:</strong> Sleep data processes around 8 AM. Activity data updates throughout the day.
+                  </p>
+                </AlertDescription>
+              </Alert>
+            )}
+
             {/* Three Main Score Cards */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
               <OuraReadinessCard

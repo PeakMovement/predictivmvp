@@ -1275,6 +1275,7 @@ export type Database = {
       }
       wearable_sessions: {
         Row: {
+          active_calories: number | null
           activity_score: number | null
           date: string
           fetched_at: string | null
@@ -1290,6 +1291,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          active_calories?: number | null
           activity_score?: number | null
           date: string
           fetched_at?: string | null
@@ -1305,6 +1307,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          active_calories?: number | null
           activity_score?: number | null
           date?: string
           fetched_at?: string | null
@@ -1600,20 +1603,26 @@ export type Database = {
       oura_tokens: {
         Row: {
           access_token: string | null
-          expires_at: number | null
+          created_at: string | null
+          expires_at: string | null
           refresh_token: string | null
+          scope: string | null
           user_id: string | null
         }
         Insert: {
           access_token?: string | null
-          expires_at?: number | null
+          created_at?: string | null
+          expires_at?: string | null
           refresh_token?: string | null
+          scope?: string | null
           user_id?: string | null
         }
         Update: {
           access_token?: string | null
-          expires_at?: number | null
+          created_at?: string | null
+          expires_at?: string | null
           refresh_token?: string | null
+          scope?: string | null
           user_id?: string | null
         }
         Relationships: []

@@ -14,6 +14,54 @@ export type Database = {
   }
   public: {
     Tables: {
+      activity_trends: {
+        Row: {
+          activity_score_avg: number | null
+          calories_avg_7d: number | null
+          calories_baseline: number | null
+          calories_delta: number | null
+          created_at: string | null
+          id: string
+          period_date: string
+          steps_avg_7d: number | null
+          steps_baseline: number | null
+          steps_delta: number | null
+          trend_direction: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          activity_score_avg?: number | null
+          calories_avg_7d?: number | null
+          calories_baseline?: number | null
+          calories_delta?: number | null
+          created_at?: string | null
+          id?: string
+          period_date: string
+          steps_avg_7d?: number | null
+          steps_baseline?: number | null
+          steps_delta?: number | null
+          trend_direction?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          activity_score_avg?: number | null
+          calories_avg_7d?: number | null
+          calories_baseline?: number | null
+          calories_delta?: number | null
+          created_at?: string | null
+          id?: string
+          period_date?: string
+          steps_avg_7d?: number | null
+          steps_baseline?: number | null
+          steps_delta?: number | null
+          trend_direction?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       adaptive_recommendations: {
         Row: {
           adaptive_suggestion: string | null
@@ -362,6 +410,90 @@ export type Database = {
         }
         Relationships: []
       }
+      health_trends_daily: {
+        Row: {
+          baseline: number | null
+          created_at: string | null
+          delta: number | null
+          id: string
+          metric_name: string
+          period_date: string
+          trend_direction: string | null
+          updated_at: string | null
+          user_id: string
+          value: number | null
+        }
+        Insert: {
+          baseline?: number | null
+          created_at?: string | null
+          delta?: number | null
+          id?: string
+          metric_name: string
+          period_date: string
+          trend_direction?: string | null
+          updated_at?: string | null
+          user_id: string
+          value?: number | null
+        }
+        Update: {
+          baseline?: number | null
+          created_at?: string | null
+          delta?: number | null
+          id?: string
+          metric_name?: string
+          period_date?: string
+          trend_direction?: string | null
+          updated_at?: string | null
+          user_id?: string
+          value?: number | null
+        }
+        Relationships: []
+      }
+      health_trends_weekly: {
+        Row: {
+          baseline: number | null
+          created_at: string | null
+          delta: number | null
+          id: string
+          metric_name: string
+          period_end: string
+          period_start: string
+          trend_direction: string | null
+          updated_at: string | null
+          user_id: string
+          value: number | null
+          week_over_week_pct: number | null
+        }
+        Insert: {
+          baseline?: number | null
+          created_at?: string | null
+          delta?: number | null
+          id?: string
+          metric_name: string
+          period_end: string
+          period_start: string
+          trend_direction?: string | null
+          updated_at?: string | null
+          user_id: string
+          value?: number | null
+          week_over_week_pct?: number | null
+        }
+        Update: {
+          baseline?: number | null
+          created_at?: string | null
+          delta?: number | null
+          id?: string
+          metric_name?: string
+          period_end?: string
+          period_start?: string
+          trend_direction?: string | null
+          updated_at?: string | null
+          user_id?: string
+          value?: number | null
+          week_over_week_pct?: number | null
+        }
+        Relationships: []
+      }
       insight_feedback: {
         Row: {
           action_taken: string | null
@@ -560,6 +692,51 @@ export type Database = {
           id?: string
           updated_at?: string | null
           username?: string | null
+        }
+        Relationships: []
+      }
+      recovery_trends: {
+        Row: {
+          acute_load: number | null
+          acwr: number | null
+          acwr_trend: string | null
+          chronic_load: number | null
+          created_at: string | null
+          id: string
+          monotony: number | null
+          period_date: string
+          recovery_score: number | null
+          strain: number | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          acute_load?: number | null
+          acwr?: number | null
+          acwr_trend?: string | null
+          chronic_load?: number | null
+          created_at?: string | null
+          id?: string
+          monotony?: number | null
+          period_date: string
+          recovery_score?: number | null
+          strain?: number | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          acute_load?: number | null
+          acwr?: number | null
+          acwr_trend?: string | null
+          chronic_load?: number | null
+          created_at?: string | null
+          id?: string
+          monotony?: number | null
+          period_date?: string
+          recovery_score?: number | null
+          strain?: number | null
+          updated_at?: string | null
+          user_id?: string
         }
         Relationships: []
       }

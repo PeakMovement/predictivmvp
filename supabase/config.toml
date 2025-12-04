@@ -56,3 +56,6 @@ verify_jwt = false
 
 [functions.oura-auth-initiate]
 verify_jwt = false
+
+[functions.calculate-oura-trends]
+verify_jwt = false

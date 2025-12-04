@@ -75,25 +75,40 @@ async function fetchWithAuth(functionName: string, params?: Record<string, strin
     throw new Error("Not authenticated");
   }
 
-  const url = new URL(`${import.meta.env.VITE_SUPABASE_URL || "https://ixtwbkikyuexskdgfpfq.supabase.co"}/functions/v1/${functionName}`);
+  const url = new URL(`https://ixtwbkikyuexskdgfpfq.supabase.co/functions/v1/${functionName}`);
   if (params) {
     Object.entries(params).forEach(([key, value]) => {
       if (value) url.searchParams.set(key, value);
     });
   }
 
-  const response = await fetch(url.toString(), {
-    headers: {
-      Authorization: `Bearer ${session.access_token}`,
-      "Content-Type": "application/json",
-    },
-  });
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 30000); // 30s timeout
 
-  if (!response.ok) {
-    throw new Error(`API error: ${response.status}`);
+  try {
+    const response = await fetch(url.toString(), {
+      headers: {
+        Authorization: `Bearer ${session.access_token}`,
+        "Content-Type": "application/json",
+      },
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      const errorText = await response.text().catch(() => "Unknown error");
+      throw new Error(`API error: ${response.status} - ${errorText}`);
+    }
+
+    return response.json();
+  } catch (error) {
+    clearTimeout(timeoutId);
+    if (error instanceof Error && error.name === "AbortError") {
+      throw new Error("Request timeout - please try again");
+    }
+    throw error;
   }
-
-  return response.json();
 }
 
 export function useDailyHealthTrends(startDate?: string, endDate?: string) {

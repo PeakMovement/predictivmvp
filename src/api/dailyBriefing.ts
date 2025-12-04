@@ -7,9 +7,9 @@ export interface DailyBriefing {
   user_id: string;
   date: string;
   content: string;
-  context_used: Record<string, unknown>;
-  created_at: string;
-  category?: string;
+  context_used: Record<string, unknown> | null;
+  created_at: string | null;
+  category?: string | null;
 }
 
 /**
@@ -31,7 +31,13 @@ export async function getLatestBriefing(category: BriefingCategory = 'full'): Pr
       .maybeSingle();
 
     if (error) throw error;
-    return data;
+    
+    if (!data) return null;
+    
+    return {
+      ...data,
+      context_used: data.context_used as Record<string, unknown> | null,
+    };
   } catch (error) {
     console.error("[getLatestBriefing] Error:", error);
     return null;
@@ -84,7 +90,11 @@ export async function getBriefingHistory(limit = 7): Promise<DailyBriefing[]> {
       .limit(limit);
 
     if (error) throw error;
-    return data || [];
+    
+    return (data || []).map(item => ({
+      ...item,
+      context_used: item.context_used as Record<string, unknown> | null,
+    }));
   } catch (error) {
     console.error("[getBriefingHistory] Error:", error);
     return [];

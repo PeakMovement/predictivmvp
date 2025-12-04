@@ -1,4 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
+import { Json } from '@/integrations/supabase/types';
 
 export interface YvesQueryRequest {
   query: string;
@@ -119,10 +120,17 @@ export async function updateUserContext(updates: {
       .eq('user_id', user.id)
       .maybeSingle();
 
+    // Cast to Json type for Supabase compatibility
+    const dbUpdates = {
+      nutrition_profile: updates.nutrition_profile as Json,
+      medical_profile: updates.medical_profile as Json,
+      training_profile: updates.training_profile as Json,
+    };
+
     if (existing) {
       const { error } = await supabase
         .from('user_context_enhanced')
-        .update(updates)
+        .update(dbUpdates)
         .eq('user_id', user.id);
 
       if (error) throw error;
@@ -131,7 +139,7 @@ export async function updateUserContext(updates: {
         .from('user_context_enhanced')
         .insert({
           user_id: user.id,
-          ...updates
+          ...dbUpdates
         });
 
       if (error) throw error;

@@ -66,11 +66,12 @@ export const OuraConnectionTest = () => {
       if (tokenError) {
         updateResult("tokens", "error", "Failed to query tokens", tokenError.message);
       } else if (tokenData) {
-        const expiresDate = new Date(tokenData.expires_at * 1000);
-        const isExpired = expiresDate < new Date();
+        // expires_at is a timestamp string, not unix seconds
+        const expiresDate = tokenData.expires_at ? new Date(tokenData.expires_at) : null;
+        const isExpired = expiresDate ? expiresDate < new Date() : true;
         updateResult("tokens", "success",
           `Token found - ${isExpired ? "EXPIRED" : "Valid"}`,
-          `Created: ${tokenData.created_at}, Expires: ${expiresDate.toISOString()}`
+          `Created: ${tokenData.created_at}, Expires: ${expiresDate?.toISOString() || 'Unknown'}`
         );
       } else {
         updateResult("tokens", "success", "No existing tokens found");
@@ -85,17 +86,18 @@ export const OuraConnectionTest = () => {
       if (backendError) {
         updateResult("backend", "error", "Backend diagnostics failed", backendError.message);
       } else if (backendData?.diagnostics) {
-        const diag = backendData.diagnostics as Record<string, any>;
+        const diag = backendData.diagnostics as Record<string, unknown>;
+        const env = diag.env as Record<string, boolean> | undefined;
         const envStatus = [
-          `OURA_CLIENT_ID: ${diag.env?.OURA_CLIENT_ID ? '✓' : '✗'}`,
-          `OURA_CLIENT_SECRET: ${diag.env?.OURA_CLIENT_SECRET ? '✓' : '✗'}`,
-          `SUPABASE_URL: ${diag.env?.SUPABASE_URL ? '✓' : '✗'}`,
-          `SUPABASE_SERVICE_ROLE_KEY: ${diag.env?.SUPABASE_SERVICE_ROLE_KEY ? '✓' : '✗'}`,
+          `OURA_CLIENT_ID: ${env?.OURA_CLIENT_ID ? '✓' : '✗'}`,
+          `OURA_CLIENT_SECRET: ${env?.OURA_CLIENT_SECRET ? '✓' : '✗'}`,
+          `SUPABASE_URL: ${env?.SUPABASE_URL ? '✓' : '✗'}`,
+          `SUPABASE_SERVICE_ROLE_KEY: ${env?.SUPABASE_SERVICE_ROLE_KEY ? '✓' : '✗'}`,
           `Database Access: ${diag.database_access}`,
         ].join('\n');
 
-        const allGood = diag.env?.OURA_CLIENT_ID && diag.env?.OURA_CLIENT_SECRET &&
-                       diag.env?.SUPABASE_URL && diag.env?.SUPABASE_SERVICE_ROLE_KEY &&
+        const allGood = env?.OURA_CLIENT_ID && env?.OURA_CLIENT_SECRET &&
+                       env?.SUPABASE_URL && env?.SUPABASE_SERVICE_ROLE_KEY &&
                        String(diag.database_access).includes('SUCCESS');
 
         updateResult("backend", allGood ? "success" : "error",

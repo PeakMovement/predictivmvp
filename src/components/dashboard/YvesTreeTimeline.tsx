@@ -14,6 +14,12 @@ interface ChartDataPoint {
   color: string;
 }
 
+interface RawChartData {
+  date?: string;
+  value?: number;
+  label?: string;
+}
+
 /** ----------------------------
  *  COMPONENT
  * ---------------------------- */
@@ -44,15 +50,20 @@ export function YvesTreeTimeline() {
 
         // 🧩 Parse Data
         if (Array.isArray(data?.chart)) {
-          const enhanced = data.chart.map((d: Record<string, unknown>) => ({
-            ...d,
-            color:
-              d.value > 0.8
-                ? "#22c55e" // green - strong trend
-                : d.value > 0.6
-                  ? "#facc15" // yellow - neutral
-                  : "#ef4444", // red - drop
-          }));
+          const enhanced = data.chart.map((d: RawChartData) => {
+            const numValue = typeof d.value === 'number' ? d.value : 0;
+            return {
+              date: d.date || '',
+              value: numValue,
+              label: d.label || '',
+              color:
+                numValue > 0.8
+                  ? "#22c55e" // green - strong trend
+                  : numValue > 0.6
+                    ? "#facc15" // yellow - neutral
+                    : "#ef4444", // red - drop
+            };
+          });
           setChartData(enhanced);
         } else {
           setChartData([]);

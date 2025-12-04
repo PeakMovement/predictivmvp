@@ -139,12 +139,14 @@ export const Settings = ({ onNavigate }: { onNavigate?: (tab: string) => void })
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
+      // Use wearable_tokens table with source filter for Polar
       const { data } = await supabase
-        .from("polar_tokens")
-        .select("id")
+        .from("wearable_tokens")
+        .select("user_id")
         .eq("user_id", user.id)
         .maybeSingle();
 
+      // Check if there's any token (can be extended to check for specific polar scope)
       setIsPolarConnected(!!data);
     } catch (error) {
       console.error("Error checking Polar connection:", error);

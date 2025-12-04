@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
+// Interface matching the actual wearable_sessions DB schema
 interface WearableSession {
   id: string;
   user_id: string;
@@ -9,23 +10,13 @@ interface WearableSession {
   readiness_score: number | null;
   sleep_score: number | null;
   activity_score: number | null;
-  hrv: number | null;
+  hrv_avg: number | null;
   resting_hr: number | null;
   spo2_avg: number | null;
   total_steps: number | null;
   active_calories: number | null;
   total_calories: number | null;
-  sleep_duration_hours: number | null;
-  deep_sleep_hours: number | null;
-  rem_sleep_hours: number | null;
-  light_sleep_hours: number | null;
-  awake_time: number | null;
-  efficiency: number | null;
-  start_time: string | null;
-  end_time: string | null;
-  avg_hr_bpm: number | null;
   fetched_at: string | null;
-  created_at: string | null;
 }
 
 export const useWearableSessions = (userId: string | undefined) => {
@@ -55,7 +46,7 @@ export const useWearableSessions = (userId: string | undefined) => {
         if (fetchError) throw fetchError;
 
         console.log("Wearable session data:", sessionData);
-        setData(sessionData);
+        setData(sessionData as WearableSession);
       } catch (err) {
         console.error("Error fetching wearable session:", err);
         setError(err instanceof Error ? err : new Error("Failed to fetch wearable session"));

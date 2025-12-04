@@ -7,19 +7,15 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 
-interface FitbitCalorieData {
+interface WearableCalorieData {
   user_id: string;
-  activity: {
-    "activities-calories": Array<{
-      dateTime: string;
-      value: string;
-    }>;
-  };
-  fetched_at: string;
+  active_calories: number | null;
+  total_calories: number | null;
+  fetched_at: string | null;
 }
 
 export const CaloriesBurnedCard = () => {
-  const [calorieData, setCalorieData] = useState<FitbitCalorieData | null>(null);
+  const [calorieData, setCalorieData] = useState<WearableCalorieData | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const { toast } = useToast();
@@ -29,17 +25,18 @@ export const CaloriesBurnedCard = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
+      // Use wearable_sessions instead of non-existent fitbit_auto_data
       const { data, error } = await supabase
-        .from("fitbit_auto_data")
-        .select("*")
+        .from("wearable_sessions")
+        .select("user_id, active_calories, total_calories, fetched_at")
         .eq("user_id", user.id)
-        .order("fetched_at", { ascending: false })
+        .order("date", { ascending: false })
         .limit(1)
         .maybeSingle();
 
       if (error) throw error;
 
-      setCalorieData(data as unknown as FitbitCalorieData | null);
+      setCalorieData(data as WearableCalorieData | null);
     } catch (error) {
       console.error("Error fetching calorie data:", error);
       toast({
@@ -61,13 +58,13 @@ export const CaloriesBurnedCard = () => {
       if (!user) return;
 
       const channel = supabase
-        .channel("fitbit-calories-changes")
+        .channel("wearable-calories-changes")
         .on(
           "postgres_changes",
           {
-            event: "INSERT",
+            event: "*",
             schema: "public",
-            table: "fitbit_auto_data",
+            table: "wearable_sessions",
             filter: `user_id=eq.${user.id}`,
           },
           () => {
@@ -89,10 +86,8 @@ export const CaloriesBurnedCard = () => {
   };
 
   const getCalories = () => {
-    if (!calorieData?.activity?.["activities-calories"]?.[0]?.value) {
-      return "0";
-    }
-    return calorieData.activity["activities-calories"][0].value;
+    if (!calorieData) return "0";
+    return String(calorieData.total_calories || calorieData.active_calories || 0);
   };
 
   const getLastSyncTime = () => {

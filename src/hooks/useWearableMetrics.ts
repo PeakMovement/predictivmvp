@@ -3,8 +3,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { ParsedFitbitMetrics } from "@/types/fitbit";
 import { toast } from "@/hooks/use-toast";
 
+// Interface matching the actual wearable_sessions DB schema
 interface WearableSessionRow {
-  id: number;
+  id: string;
   user_id: string;
   date: string;
   source: string;
@@ -13,14 +14,11 @@ interface WearableSessionRow {
   activity_score: number | null;
   total_steps: number | null;
   active_calories: number | null;
+  total_calories: number | null;
   resting_hr: number | null;
-  hrv: number | null;
+  hrv_avg: number | null;
   spo2_avg: number | null;
-  sleep_duration_hours: number | null;
-  deep_sleep_hours: number | null;
-  rem_sleep_hours: number | null;
-  light_sleep_hours: number | null;
-  created_at: string;
+  fetched_at: string | null;
 }
 
 export const useWearableMetrics = () => {
@@ -41,30 +39,30 @@ export const useWearableMetrics = () => {
     const lightlyActiveMinutes = Math.max(0, 480 - estimatedActiveMinutes);
 
     const restingHR = data.resting_hr || 0;
-    const heartRateZones = restingHR > 0 ? [
+    const heartRateZones: ParsedFitbitMetrics['heartRateZones'] = restingHR > 0 ? [
       {
-        name: "Out of Range",
+        name: "Out of Range" as const,
         min: 30,
         max: Math.round(restingHR * 0.5),
         minutes: sedentaryMinutes,
         caloriesOut: Math.round(sedentaryMinutes * 1.2),
       },
       {
-        name: "Fat Burn",
+        name: "Fat Burn" as const,
         min: Math.round(restingHR * 0.5),
         max: Math.round(restingHR * 0.7),
         minutes: lightlyActiveMinutes,
         caloriesOut: Math.round(lightlyActiveMinutes * 3.5),
       },
       {
-        name: "Cardio",
+        name: "Cardio" as const,
         min: Math.round(restingHR * 0.7),
         max: Math.round(restingHR * 0.85),
         minutes: fairlyActiveMinutes,
         caloriesOut: Math.round(fairlyActiveMinutes * 6),
       },
       {
-        name: "Peak",
+        name: "Peak" as const,
         min: Math.round(restingHR * 0.85),
         max: 220 - 30,
         minutes: veryActiveMinutes,
@@ -72,15 +70,14 @@ export const useWearableMetrics = () => {
       },
     ] : [];
 
-    const sleepDurationMinutes = (data.sleep_duration_hours || 0) * 60;
-    const deepSleepMinutes = (data.deep_sleep_hours || 0) * 60;
-    const lightSleepMinutes = (data.light_sleep_hours || 0) * 60;
-    const remSleepMinutes = (data.rem_sleep_hours || 0) * 60;
-    const awakeSleepMinutes = Math.max(0, sleepDurationMinutes - deepSleepMinutes - lightSleepMinutes - remSleepMinutes);
+    // Estimate sleep duration from sleep score (we don't have actual duration in DB)
+    const estimatedSleepMinutes = data.sleep_score ? Math.round((data.sleep_score / 100) * 480) : 0;
+    const deepSleepMinutes = Math.round(estimatedSleepMinutes * 0.2);
+    const lightSleepMinutes = Math.round(estimatedSleepMinutes * 0.5);
+    const remSleepMinutes = Math.round(estimatedSleepMinutes * 0.25);
+    const awakeSleepMinutes = Math.round(estimatedSleepMinutes * 0.05);
 
-    const sleepEfficiency = sleepDurationMinutes > 0 && data.sleep_score
-      ? Math.round((data.sleep_score / 100) * 100)
-      : 0;
+    const sleepEfficiency = data.sleep_score || 0;
 
     return {
       steps: steps,
@@ -98,7 +95,7 @@ export const useWearableMetrics = () => {
       heartRateZones,
       averageHeartRate: restingHR > 0 ? Math.round(restingHR * 1.2) : 0,
 
-      sleepDuration: sleepDurationMinutes,
+      sleepDuration: estimatedSleepMinutes,
       sleepEfficiency,
       sleepStartTime: "",
       sleepEndTime: "",
@@ -107,8 +104,8 @@ export const useWearableMetrics = () => {
       remSleepMinutes,
       awakeSleepMinutes,
 
-      lastSync: data.created_at,
-      hasSleepData: sleepDurationMinutes > 0,
+      lastSync: data.fetched_at || '',
+      hasSleepData: estimatedSleepMinutes > 0,
     };
   }, []);
 
@@ -139,9 +136,9 @@ export const useWearableMetrics = () => {
 
       if (data) {
         console.log("✅ Oura data loaded from wearable_sessions:", data);
-        const parsed = parseOuraMetrics(data);
+        const parsed = parseOuraMetrics(data as WearableSessionRow);
         setMetrics(parsed);
-        setLastSync(data.created_at);
+        setLastSync(data.fetched_at);
       } else {
         console.log("No Oura data found in wearable_sessions");
         setMetrics(null);

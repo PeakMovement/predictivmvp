@@ -3,10 +3,16 @@ import { supabase } from "@/integrations/supabase/client";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
+import { Json } from "@/integrations/supabase/types";
 
 interface ChartDataPoint {
   date: string;
   [key: string]: string | number;
+}
+
+interface SampleData {
+  date: unknown;
+  metrics?: Record<string, unknown>;
 }
 
 export default function HealthDataChart() {
@@ -49,25 +55,36 @@ export default function HealthDataChart() {
 
       data.forEach((row) => {
         if (row.samples && Array.isArray(row.samples)) {
-          row.samples.forEach((sample: Record<string, unknown>) => {
+          (row.samples as Json[]).forEach((sample) => {
+            const sampleData = sample as SampleData;
+            if (!sampleData || typeof sampleData !== 'object') return;
+            
+            const dateValue = sampleData.date;
+            if (!dateValue) return;
+            
             const dataPoint: ChartDataPoint = {
-              date: new Date(sample.date).toLocaleDateString('en-US', { 
+              date: new Date(String(dateValue)).toLocaleDateString('en-US', { 
                 month: 'short', 
                 day: 'numeric' 
               }),
             };
 
             // Extract metrics from the sample
-            Object.keys(sample.metrics || {}).forEach((metricKey) => {
-              const metric = sample.metrics[metricKey];
-              const value = typeof metric === 'object' ? metric.value : metric;
-              const numericValue = parseFloat(value);
-              
-              if (!isNaN(numericValue)) {
-                dataPoint[metricKey] = numericValue;
-                metricSet.add(metricKey);
-              }
-            });
+            const metricsObj = sampleData.metrics;
+            if (metricsObj && typeof metricsObj === 'object') {
+              Object.keys(metricsObj).forEach((metricKey) => {
+                const metric = metricsObj[metricKey];
+                const value = typeof metric === 'object' && metric !== null 
+                  ? (metric as Record<string, unknown>).value 
+                  : metric;
+                const numericValue = parseFloat(String(value));
+                
+                if (!isNaN(numericValue)) {
+                  dataPoint[metricKey] = numericValue;
+                  metricSet.add(metricKey);
+                }
+              });
+            }
 
             if (Object.keys(dataPoint).length > 1) {
               parsedData.push(dataPoint);
@@ -79,9 +96,10 @@ export default function HealthDataChart() {
       setChartData(parsedData);
       setMetrics(Array.from(metricSet));
     } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : "Failed to fetch health data.";
       toast({
         title: "Unexpected error",
-        description: err.message || "Failed to fetch health data.",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {

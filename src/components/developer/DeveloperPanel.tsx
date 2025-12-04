@@ -57,9 +57,10 @@ export const DeveloperPanel = () => {
       console.log(`${functionName} result:`, data);
       fetchLogs();
     } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : "Unknown error";
       toast({
         title: `${displayName} failed`,
-        description: error.message || "Unknown error",
+        description: errorMessage,
         variant: "destructive",
       });
       console.error(`${functionName} error:`, error);

@@ -1,124 +1,12 @@
 /// <reference types="https://esm.sh/@supabase/functions-js/src/edge-runtime.d.ts" />
-import { createClient, SupabaseClient } from "npm:@supabase/supabase-js@2";
+import { createClient } from "npm:@supabase/supabase-js@2";
+import { getValidOuraToken } from "../_shared/oura-token-refresh.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
   "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Client-Info, Apikey",
 };
-
-interface OuraToken {
-  user_id: string;
-  access_token: string;
-  refresh_token: string;
-  expires_at: string;
-}
-
-interface RefreshResult {
-  success: boolean;
-  access_token?: string;
-  error?: string;
-}
-
-async function refreshOuraToken(
-  supabase: SupabaseClient,
-  token: OuraToken
-): Promise<RefreshResult> {
-  try {
-    console.log(`[oura-token-refresh] Refreshing token for user ${token.user_id}`);
-
-    const clientId = Deno.env.get("OURA_CLIENT_ID");
-    const clientSecret = Deno.env.get("OURA_CLIENT_SECRET");
-
-    if (!clientId || !clientSecret) {
-      throw new Error("Oura credentials not configured");
-    }
-
-    const refreshRes = await fetch("https://api.ouraring.com/oauth/token", {
-      method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: new URLSearchParams({
-        grant_type: "refresh_token",
-        refresh_token: token.refresh_token,
-        client_id: clientId,
-        client_secret: clientSecret,
-      }),
-    });
-
-    if (!refreshRes.ok) {
-      const errorData = await refreshRes.json();
-      console.error(`[oura-token-refresh] Refresh failed:`, errorData);
-      return {
-        success: false,
-        error: `Token refresh failed: ${errorData.error_description || errorData.error}`,
-      };
-    }
-
-    const refreshed = await refreshRes.json();
-
-    const expiresAt = new Date(Date.now() + refreshed.expires_in * 1000).toISOString();
-
-    const { error: updateError } = await supabase
-      .from("oura_tokens")
-      .update({
-        access_token: refreshed.access_token,
-        refresh_token: refreshed.refresh_token ?? token.refresh_token,
-        expires_at: expiresAt,
-      })
-      .eq("user_id", token.user_id);
-
-    if (updateError) {
-      console.error(`[oura-token-refresh] Database update failed:`, updateError);
-      return {
-        success: false,
-        error: `Failed to save refreshed token: ${updateError.message}`,
-      };
-    }
-
-    console.log(`[oura-token-refresh] Token refreshed successfully for user ${token.user_id}`);
-
-    return {
-      success: true,
-      access_token: refreshed.access_token,
-    };
-  } catch (error) {
-    console.error(`[oura-token-refresh] Unexpected error:`, error);
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : "Unknown error",
-    };
-  }
-}
-
-async function getValidOuraToken(
-  supabase: SupabaseClient,
-  userId: string
-): Promise<{ success: boolean; access_token?: string; error?: string }> {
-  const { data: token, error: tokenError } = await supabase
-    .from("oura_tokens")
-    .select("*")
-    .eq("user_id", userId)
-    .maybeSingle();
-
-  if (tokenError || !token) {
-    return {
-      success: false,
-      error: "No Oura token found. Please connect your Oura Ring first.",
-    };
-  }
-
-  const expiresAt = new Date(token.expires_at);
-  const now = new Date();
-
-  if (expiresAt > now) {
-    return {
-      success: true,
-      access_token: token.access_token,
-    };
-  }
-
-  return await refreshOuraToken(supabase, token);
-}
 
 interface OuraDataRequest {
   user_id: string;
@@ -164,6 +52,7 @@ Deno.serve(async (req: Request) => {
     const { user_id, start_date, end_date } = await req.json() as OuraDataRequest;
 
     if (!user_id) {
+      console.error("[fetch-oura-data] [ERROR] Missing user_id in request");
       return new Response(
         JSON.stringify({ error: "user_id is required" }),
         {
@@ -173,20 +62,23 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    console.log(`[fetch-oura-data] Fetching data for user: ${user_id}`);
+    console.log(`[fetch-oura-data] [START] Fetching data for user: ${user_id}`);
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL");
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 
     if (!supabaseUrl || !supabaseKey) {
+      console.error("[fetch-oura-data] [ERROR] Supabase credentials not available");
       throw new Error("Supabase credentials not available");
     }
 
     const supabase = createClient(supabaseUrl, supabaseKey);
 
+    // Use shared token refresh utility
     const tokenResult = await getValidOuraToken(supabase, user_id);
 
     if (!tokenResult.success || !tokenResult.access_token) {
+      console.error(`[fetch-oura-data] [ERROR] Token validation failed for user ${user_id}: ${tokenResult.error}`);
       return new Response(
         JSON.stringify({ error: tokenResult.error || "Failed to get valid token" }),
         {
@@ -217,7 +109,7 @@ Deno.serve(async (req: Request) => {
       });
 
       if (!res.ok) {
-        console.error(`[fetch-oura-data] Failed to fetch ${endpoint.name}: ${res.status}`);
+        console.error(`[fetch-oura-data] [ERROR] Failed to fetch ${endpoint.name}: HTTP ${res.status}`);
 
         if (res.status === 401) {
           return new Response(
@@ -283,14 +175,14 @@ Deno.serve(async (req: Request) => {
         });
 
       if (sessionError) {
-        console.error(`[fetch-oura-data] Error inserting session for ${date}:`, sessionError);
+        console.error(`[fetch-oura-data] [ERROR] Failed to insert session for ${date}:`, sessionError.message);
       } else {
         entriesInserted++;
       }
 
       // Also save detailed activity data to oura_activity table if available
       if (dayData.activity) {
-        const activityData = {
+        const activityDataRecord = {
           user_id,
           oura_id: dayData.activity.id,
           day: date,
@@ -304,14 +196,14 @@ Deno.serve(async (req: Request) => {
 
         const { error: activityError } = await supabase
           .from("oura_activity")
-          .upsert(activityData, {
+          .upsert(activityDataRecord, {
             onConflict: "user_id,oura_id",
           });
 
         if (activityError) {
-          console.error(`[fetch-oura-data] Error inserting activity data for ${date}:`, activityError);
+          console.error(`[fetch-oura-data] [ERROR] Failed to insert activity data for ${date}:`, activityError.message);
         } else {
-          console.log(`[fetch-oura-data] Saved activity data for ${date}: ${activityData.active_calories || 0} active cals, ${activityData.total_calories || 0} total cals, ${activityData.steps || 0} steps`);
+          console.log(`[fetch-oura-data] Saved activity data for ${date}: ${activityDataRecord.active_calories || 0} active cals, ${activityDataRecord.total_calories || 0} total cals, ${activityDataRecord.steps || 0} steps`);
         }
       }
     }
@@ -322,7 +214,7 @@ Deno.serve(async (req: Request) => {
       entries_synced: entriesInserted,
     });
 
-    console.log(`[fetch-oura-data] Successfully processed ${entriesInserted} entries for user ${user_id}`);
+    console.log(`[fetch-oura-data] [SUCCESS] Processed ${entriesInserted} entries for user ${user_id}`);
 
     return new Response(
       JSON.stringify({
@@ -337,12 +229,12 @@ Deno.serve(async (req: Request) => {
       }
     );
   } catch (error) {
-    console.error("[fetch-oura-data] Error:", error);
+    console.error("[fetch-oura-data] [ERROR] Unhandled exception:", error instanceof Error ? error.message : String(error));
 
     const message = error instanceof Error ? error.message : "Internal server error";
 
     return new Response(
-      JSON.stringify({ error: message }),
+      JSON.stringify({ error: message, success: false }),
       {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" }

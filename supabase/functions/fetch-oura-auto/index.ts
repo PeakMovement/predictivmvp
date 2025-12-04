@@ -1,18 +1,12 @@
 /// <reference types="https://esm.sh/@supabase/functions-js/src/edge-runtime.d.ts" />
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { getValidOuraToken } from "../_shared/oura-token-refresh.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
   "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Client-Info, Apikey",
 };
-
-interface OuraToken {
-  user_id: string;
-  access_token: string;
-  refresh_token: string;
-  expires_at: string;
-}
 
 interface OuraDataPoint {
   day: string;
@@ -58,6 +52,7 @@ Deno.serve(async (req: Request) => {
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 
     if (!supabaseUrl || !supabaseKey) {
+      console.error("[fetch-oura-auto] [ERROR] Supabase credentials not available");
       throw new Error("Supabase credentials not available");
     }
 
@@ -77,10 +72,9 @@ Deno.serve(async (req: Request) => {
     const { data: tokens, error: tokenError } = await query;
 
     if (tokenError) {
-      console.error("[fetch-oura-auto] [ERROR] Failed to fetch tokens from database:", tokenError);
-      console.error("[fetch-oura-auto] [DEBUG] Token error details:", JSON.stringify(tokenError));
+      console.error("[fetch-oura-auto] [ERROR] Failed to fetch tokens from database:", tokenError.message);
       return new Response(
-        JSON.stringify({ error: "Failed to fetch tokens", details: tokenError }),
+        JSON.stringify({ error: "Failed to fetch tokens", details: tokenError.message, success: false }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -104,46 +98,20 @@ Deno.serve(async (req: Request) => {
       try {
         console.log(`[fetch-oura-auto] Processing user ${token.user_id}`);
 
-        let accessToken = token.access_token;
-        if (new Date(token.expires_at) < new Date()) {
-          console.log(`[fetch-oura-auto] Token expired for user ${token.user_id}, refreshing...`);
-          
-          const refreshRes = await fetch("https://api.ouraring.com/oauth/token", {
-            method: "POST",
-            headers: { "Content-Type": "application/x-www-form-urlencoded" },
-            body: new URLSearchParams({
-              grant_type: "refresh_token",
-              refresh_token: token.refresh_token,
-              client_id: Deno.env.get("OURA_CLIENT_ID")!,
-              client_secret: Deno.env.get("OURA_CLIENT_SECRET")!,
-            }),
+        // Use shared token refresh utility
+        const tokenResult = await getValidOuraToken(supabase, token.user_id);
+
+        if (!tokenResult.success || !tokenResult.access_token) {
+          console.error(`[fetch-oura-auto] [ERROR] Token validation failed for user ${token.user_id}: ${tokenResult.error}`);
+          await supabase.from("oura_logs").insert({
+            user_id: token.user_id,
+            status: "error",
+            error_message: `Token validation failed: ${tokenResult.error}`,
           });
-
-          if (!refreshRes.ok) {
-            const errorData = await refreshRes.json();
-            console.error(`[fetch-oura-auto] [ERROR] Token refresh failed for user ${token.user_id}`);
-            console.error(`[fetch-oura-auto] [DEBUG] Refresh error details:`, JSON.stringify(errorData));
-            console.error(`[fetch-oura-auto] [DEBUG] HTTP Status: ${refreshRes.status}`);
-
-            await supabase.from("oura_logs").insert({
-              user_id: token.user_id,
-              status: "error",
-              error_message: `Token refresh failed: ${JSON.stringify(errorData)}`,
-            });
-            continue;
-          }
-
-          const refreshed = await refreshRes.json();
-          
-          await supabase.from("oura_tokens").update({
-            access_token: refreshed.access_token,
-            refresh_token: refreshed.refresh_token ?? token.refresh_token,
-            expires_at: new Date(Date.now() + refreshed.expires_in * 1000).toISOString(),
-          }).eq("user_id", token.user_id);
-          
-          accessToken = refreshed.access_token;
-          console.log(`[fetch-oura-auto] Token refreshed successfully for user ${token.user_id}`);
+          continue;
         }
+
+        const accessToken = tokenResult.access_token;
 
         const endDate = new Date();
         const startDate = new Date();
@@ -191,10 +159,7 @@ Deno.serve(async (req: Request) => {
             });
 
             if (!res.ok) {
-              console.error(`[fetch-oura-auto] [ERROR] Failed to fetch ${endpoint.name} for user ${token.user_id}`);
-              console.error(`[fetch-oura-auto] [DEBUG] HTTP Status: ${res.status}`);
-              console.error(`[fetch-oura-auto] [DEBUG] Endpoint URL: ${currentUrl}`);
-
+              console.error(`[fetch-oura-auto] [ERROR] Failed to fetch ${endpoint.name} for user ${token.user_id}: HTTP ${res.status}`);
               await supabase.from("oura_logs").insert({
                 user_id: token.user_id,
                 status: "error",
@@ -209,7 +174,6 @@ Deno.serve(async (req: Request) => {
 
             // Check for pagination token
             if (data.next_token) {
-              // Add next_token to URL for next page
               const url = new URL(currentUrl);
               url.searchParams.set("next_token", data.next_token);
               currentUrl = url.toString();
@@ -274,9 +238,7 @@ Deno.serve(async (req: Request) => {
             });
 
           if (sessionError) {
-            console.error(`[fetch-oura-auto] [ERROR] Failed to insert session for ${date}`);
-            console.error(`[fetch-oura-auto] [DEBUG] Session error details:`, JSON.stringify(sessionError));
-            console.error(`[fetch-oura-auto] [DEBUG] Session data:`, JSON.stringify(sessionData));
+            console.error(`[fetch-oura-auto] [ERROR] Failed to insert session for ${date}:`, sessionError.message);
           } else {
             entriesInserted++;
             console.log(`[fetch-oura-auto] [SUCCESS] Inserted session for ${date}`);
@@ -354,9 +316,7 @@ Deno.serve(async (req: Request) => {
                 });
 
               if (summaryError) {
-                console.error(`[fetch-oura-auto] [ERROR] Failed to insert summary for ${date}`);
-                console.error(`[fetch-oura-auto] [DEBUG] Summary error details:`, JSON.stringify(summaryError));
-                console.error(`[fetch-oura-auto] [DEBUG] Summary data:`, JSON.stringify(summaryData));
+                console.error(`[fetch-oura-auto] [ERROR] Failed to insert summary for ${date}:`, summaryError.message);
               } else {
                 console.log(`[fetch-oura-auto] [SUCCESS] Inserted summary for ${date}`);
               }
@@ -376,9 +336,7 @@ Deno.serve(async (req: Request) => {
         console.log(`[fetch-oura-auto] [SUCCESS] Completed processing for user ${token.user_id}: ${entriesInserted} entries synced`);
 
       } catch (userError) {
-        console.error(`[fetch-oura-auto] [ERROR] Failed to process user ${token.user_id}`);
-        console.error(`[fetch-oura-auto] [DEBUG] Error message:`, userError instanceof Error ? userError.message : String(userError));
-        console.error(`[fetch-oura-auto] [DEBUG] Error stack:`, userError instanceof Error ? userError.stack : 'No stack trace');
+        console.error(`[fetch-oura-auto] [ERROR] Failed to process user ${token.user_id}:`, userError instanceof Error ? userError.message : String(userError));
 
         await supabase.from("oura_logs").insert({
           user_id: token.user_id,
@@ -402,9 +360,7 @@ Deno.serve(async (req: Request) => {
     );
 
   } catch (err) {
-    console.error("[fetch-oura-auto] [FATAL] Unhandled error in main execution");
-    console.error("[fetch-oura-auto] [DEBUG] Fatal error message:", err instanceof Error ? err.message : String(err));
-    console.error("[fetch-oura-auto] [DEBUG] Fatal error stack:", err instanceof Error ? err.stack : 'No stack trace');
+    console.error("[fetch-oura-auto] [FATAL] Unhandled error:", err instanceof Error ? err.message : String(err));
     return new Response(
       JSON.stringify({
         error: err instanceof Error ? err.message : "Unknown error",

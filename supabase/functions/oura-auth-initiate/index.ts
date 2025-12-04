@@ -45,7 +45,19 @@ Deno.serve(async (req: Request) => {
 
     // Ōura OAuth URL with comprehensive scopes for full data access
     // Valid scopes per official docs: email, personal, daily, heartrate, workout, tag, session, spo2
-    const redirectUri = "https://predictiv.netlify.app/oauth/callback/oura";
+    const redirectUri = Deno.env.get("OURA_REDIRECT_URI");
+    
+    if (!redirectUri) {
+      console.error("OURA_REDIRECT_URI is not configured");
+      return new Response(
+        JSON.stringify({ error: "Ōura OAuth not configured. Please set OURA_REDIRECT_URI in Edge Function secrets." }),
+        {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" }
+        }
+      );
+    }
+    
     const scope = "email personal daily heartrate workout tag session spo2";
     
     const authUrl = `https://cloud.ouraring.com/oauth/authorize?` +

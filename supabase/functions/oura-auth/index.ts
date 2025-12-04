@@ -54,7 +54,13 @@ Deno.serve(async (req: Request) => {
     console.log(`[oura-auth] Using Client ID: ${ouraClientId.substring(0, 8)}...`);
 
     // Exchange authorization code for tokens
-    const redirectUri = "https://predictiv.netlify.app/oauth/callback/oura";
+    const redirectUri = Deno.env.get("OURA_REDIRECT_URI");
+    
+    if (!redirectUri) {
+      console.error("[oura-auth] OURA_REDIRECT_URI is not configured");
+      throw new Error("Oura redirect URI not configured. Please set OURA_REDIRECT_URI in Edge Function secrets.");
+    }
+    
     const tokenRequestBody = {
       grant_type: "authorization_code",
       code,

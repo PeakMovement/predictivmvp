@@ -92,18 +92,27 @@ serve(async (req) => {
           continue;
         }
 
-        if (!sessions || sessions.length < 7) {
-          console.log(`[calculate-oura-trends] [INFO] Not enough data for ${userId} (${sessions?.length || 0} days)`);
-          results.push({ userId, status: "skipped", error: "Insufficient data" });
+        if (!sessions || sessions.length < 4) {
+          console.log(`[calculate-oura-trends] [INFO] Not enough data for ${userId} (${sessions?.length || 0} days, need at least 4)`);
+          results.push({ userId, status: "skipped", error: "Need at least 4 days of data" });
           continue;
+        }
+
+        // Warn if limited data (less than 14 days for full baseline comparison)
+        const hasLimitedData = sessions.length < 14;
+        if (hasLimitedData) {
+          console.log(`[calculate-oura-trends] [INFO] Limited data for ${userId} (${sessions.length} days), using available baseline`);
         }
 
         const typedSessions = sessions as WearableSession[];
         const today = new Date().toISOString().split("T")[0];
 
         // === DAILY TRENDS ===
-        const last7Days = typedSessions.slice(-7);
-        const prev7Days = typedSessions.slice(-14, -7);
+        // Use available data, adapting to what exists
+        const dataLength = typedSessions.length;
+        const recentDays = Math.min(7, Math.ceil(dataLength / 2)); // Use up to 7 days or half of available data
+        const last7Days = typedSessions.slice(-recentDays);
+        const prev7Days = typedSessions.slice(0, -recentDays);
 
         const dailyTrends: Array<{
           user_id: string;

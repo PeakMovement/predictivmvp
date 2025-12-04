@@ -40,6 +40,15 @@ interface OuraActivityData {
   equivalent_walking_distance?: number;
 }
 
+interface OuraSpo2Data {
+  id: string;
+  day: string;
+  spo2_percentage?: {
+    average?: number;
+  };
+  breathing_disturbance_index?: number;
+}
+
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     return new Response(null, {
@@ -95,13 +104,15 @@ Deno.serve(async (req: Request) => {
 
     console.log(`[fetch-oura-data] Fetching data from ${startDate} to ${endDate}`);
 
+    // All core Oura endpoints for comprehensive data sync
     const endpoints = [
       { name: "daily_readiness", url: `https://api.ouraring.com/v2/usercollection/daily_readiness?start_date=${startDate}&end_date=${endDate}` },
       { name: "daily_sleep", url: `https://api.ouraring.com/v2/usercollection/daily_sleep?start_date=${startDate}&end_date=${endDate}` },
       { name: "daily_activity", url: `https://api.ouraring.com/v2/usercollection/daily_activity?start_date=${startDate}&end_date=${endDate}` },
+      { name: "daily_spo2", url: `https://api.ouraring.com/v2/usercollection/daily_spo2?start_date=${startDate}&end_date=${endDate}` },
     ];
 
-    const fetchedData: Record<string, any> = {};
+    const fetchedData: Record<string, any[]> = {};
 
     for (const endpoint of endpoints) {
       const res = await fetch(endpoint.url, {
@@ -121,19 +132,27 @@ Deno.serve(async (req: Request) => {
           );
         }
 
+        fetchedData[endpoint.name] = [];
         continue;
       }
 
       const data = await res.json();
       fetchedData[endpoint.name] = data.data || [];
-      console.log(`[fetch-oura-data] Fetched ${fetchedData[endpoint.name].length} entries from ${endpoint.name}`);
+      console.log(`[fetch-oura-data] [SUCCESS] Fetched ${fetchedData[endpoint.name].length} entries from ${endpoint.name}`);
     }
 
     const readinessData = fetchedData.daily_readiness || [];
     const sleepData = fetchedData.daily_sleep || [];
     const activityData = fetchedData.daily_activity || [];
+    const spo2Data = fetchedData.daily_spo2 || [];
 
-    const dataByDate: Record<string, { readiness?: OuraReadinessData; sleep?: OuraSleepData; activity?: OuraActivityData }> = {};
+    // Aggregate data by date for consistent storage
+    const dataByDate: Record<string, { 
+      readiness?: OuraReadinessData; 
+      sleep?: OuraSleepData; 
+      activity?: OuraActivityData;
+      spo2?: OuraSpo2Data;
+    }> = {};
 
     readinessData.forEach((item: OuraReadinessData) => {
       if (!dataByDate[item.day]) dataByDate[item.day] = {};
@@ -150,9 +169,15 @@ Deno.serve(async (req: Request) => {
       dataByDate[item.day].activity = item;
     });
 
+    spo2Data.forEach((item: OuraSpo2Data) => {
+      if (!dataByDate[item.day]) dataByDate[item.day] = {};
+      dataByDate[item.day].spo2 = item;
+    });
+
     let entriesInserted = 0;
 
     for (const [date, dayData] of Object.entries(dataByDate)) {
+      // Upsert to wearable_sessions (idempotent via onConflict)
       const sessionData = {
         user_id,
         date,
@@ -165,7 +190,7 @@ Deno.serve(async (req: Request) => {
         total_calories: dayData.activity?.total_calories || null,
         resting_hr: dayData.sleep?.lowest_heart_rate || dayData.sleep?.average_heart_rate || null,
         hrv_avg: dayData.sleep?.average_hrv || null,
-        spo2_avg: null,
+        spo2_avg: dayData.spo2?.spo2_percentage?.average || null,
       };
 
       const { error: sessionError } = await supabase
@@ -180,7 +205,7 @@ Deno.serve(async (req: Request) => {
         entriesInserted++;
       }
 
-      // Also save detailed activity data to oura_activity table if available
+      // Save detailed activity data to oura_activity table if available
       if (dayData.activity) {
         const activityDataRecord = {
           user_id,
@@ -203,7 +228,7 @@ Deno.serve(async (req: Request) => {
         if (activityError) {
           console.error(`[fetch-oura-data] [ERROR] Failed to insert activity data for ${date}:`, activityError.message);
         } else {
-          console.log(`[fetch-oura-data] Saved activity data for ${date}: ${activityDataRecord.active_calories || 0} active cals, ${activityDataRecord.total_calories || 0} total cals, ${activityDataRecord.steps || 0} steps`);
+          console.log(`[fetch-oura-data] [SUCCESS] Saved activity for ${date}: ${activityDataRecord.steps || 0} steps, ${activityDataRecord.active_calories || 0} active cals`);
         }
       }
     }
@@ -222,6 +247,7 @@ Deno.serve(async (req: Request) => {
         entries_synced: entriesInserted,
         start_date: startDate,
         end_date: endDate,
+        endpoints_synced: Object.keys(fetchedData).filter(k => fetchedData[k].length > 0),
       }),
       {
         status: 200,

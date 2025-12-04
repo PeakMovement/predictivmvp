@@ -42,6 +42,22 @@ interface OuraActivityData {
   timestamp?: string;
 }
 
+interface OuraSpo2Data {
+  id: string;
+  day: string;
+  spo2_percentage?: {
+    average?: number;
+  };
+  breathing_disturbance_index?: number;
+}
+
+interface DayData {
+  readiness?: OuraDataPoint;
+  sleep?: OuraSleepData;
+  activity?: OuraActivityData;
+  spo2?: OuraSpo2Data;
+}
+
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { status: 200, headers: corsHeaders });
@@ -91,6 +107,7 @@ Deno.serve(async (req: Request) => {
 
     let totalUsersProcessed = 0;
     let totalEntriesInserted = 0;
+    let totalTrendsInserted = 0;
     const fetchedEndpoints: string[] = [];
     let lastSyncDate = 'today';
 
@@ -115,7 +132,7 @@ Deno.serve(async (req: Request) => {
 
         const endDate = new Date();
         const startDate = new Date();
-        startDate.setDate(startDate.getDate() - 14);
+        startDate.setDate(startDate.getDate() - 30); // Fetch 30 days for trend calculations
 
         const startDateStr = startDate.toISOString().split("T")[0];
         const endDateStr = endDate.toISOString().split("T")[0];
@@ -129,22 +146,17 @@ Deno.serve(async (req: Request) => {
           { name: "daily_readiness", url: `https://api.ouraring.com/v2/usercollection/daily_readiness?start_date=${startDateStr}&end_date=${endDateStr}` },
           { name: "daily_sleep", url: `https://api.ouraring.com/v2/usercollection/daily_sleep?start_date=${startDateStr}&end_date=${endDateStr}` },
           { name: "daily_activity", url: `https://api.ouraring.com/v2/usercollection/daily_activity?start_date=${startDateStr}&end_date=${endDateStr}` },
-
-          // Additional health metrics
           { name: "daily_spo2", url: `https://api.ouraring.com/v2/usercollection/daily_spo2?start_date=${startDateStr}&end_date=${endDateStr}` },
+
+          // Additional health metrics (optional, may not be available for all users)
           { name: "daily_stress", url: `https://api.ouraring.com/v2/usercollection/daily_stress?start_date=${startDateStr}&end_date=${endDateStr}` },
           { name: "daily_resilience", url: `https://api.ouraring.com/v2/usercollection/daily_resilience?start_date=${startDateStr}&end_date=${endDateStr}` },
-          { name: "daily_cardiovascular_age", url: `https://api.ouraring.com/v2/usercollection/daily_cardiovascular_age?start_date=${startDateStr}&end_date=${endDateStr}` },
-          { name: "vo2_max", url: `https://api.ouraring.com/v2/usercollection/vO2_max?start_date=${startDateStr}&end_date=${endDateStr}` },
 
           // Detailed data
-          { name: "sleep", url: `https://api.ouraring.com/v2/usercollection/sleep?start_date=${startDateStr}&end_date=${endDateStr}` },
           { name: "workout", url: `https://api.ouraring.com/v2/usercollection/workout?start_date=${startDateStr}&end_date=${endDateStr}` },
-          { name: "session", url: `https://api.ouraring.com/v2/usercollection/session?start_date=${startDateStr}&end_date=${endDateStr}` },
-          { name: "tag", url: `https://api.ouraring.com/v2/usercollection/tag?start_date=${startDateStr}&end_date=${endDateStr}` },
         ];
 
-        const fetchedData: Record<string, any> = {};
+        const fetchedData: Record<string, any[]> = {};
 
         // Fetch data from all endpoints with pagination support
         for (const endpoint of endpoints) {
@@ -159,12 +171,10 @@ Deno.serve(async (req: Request) => {
             });
 
             if (!res.ok) {
-              console.error(`[fetch-oura-auto] [ERROR] Failed to fetch ${endpoint.name} for user ${token.user_id}: HTTP ${res.status}`);
-              await supabase.from("oura_logs").insert({
-                user_id: token.user_id,
-                status: "error",
-                error_message: `Failed to fetch ${endpoint.name}: HTTP ${res.status}`,
-              });
+              // Don't log error for optional endpoints that may return 403/404
+              if (res.status !== 403 && res.status !== 404) {
+                console.error(`[fetch-oura-auto] [ERROR] Failed to fetch ${endpoint.name} for user ${token.user_id}: HTTP ${res.status}`);
+              }
               break;
             }
 
@@ -184,19 +194,23 @@ Deno.serve(async (req: Request) => {
           }
 
           fetchedData[endpoint.name] = allData;
-          console.log(`[fetch-oura-auto] Fetched ${allData.length} total entries from ${endpoint.name}`);
 
           // Track successfully fetched endpoints
-          if (allData.length > 0 && !fetchedEndpoints.includes(endpoint.name)) {
-            fetchedEndpoints.push(endpoint.name);
+          if (allData.length > 0) {
+            console.log(`[fetch-oura-auto] [SUCCESS] Fetched ${allData.length} entries from ${endpoint.name}`);
+            if (!fetchedEndpoints.includes(endpoint.name)) {
+              fetchedEndpoints.push(endpoint.name);
+            }
           }
         }
 
         const readinessData = fetchedData.daily_readiness || [];
         const sleepData = fetchedData.daily_sleep || [];
         const activityData = fetchedData.daily_activity || [];
+        const spo2Data = fetchedData.daily_spo2 || [];
 
-        const dataByDate: Record<string, { readiness?: any; sleep?: any; activity?: any }> = {};
+        // Aggregate data by date
+        const dataByDate: Record<string, DayData> = {};
 
         readinessData.forEach((item: OuraDataPoint) => {
           if (!dataByDate[item.day]) dataByDate[item.day] = {};
@@ -213,8 +227,14 @@ Deno.serve(async (req: Request) => {
           dataByDate[item.day].activity = item;
         });
 
+        spo2Data.forEach((item: OuraSpo2Data) => {
+          if (!dataByDate[item.day]) dataByDate[item.day] = {};
+          dataByDate[item.day].spo2 = item;
+        });
+
         let entriesInserted = 0;
 
+        // Insert wearable sessions (idempotent via onConflict)
         for (const [date, dayData] of Object.entries(dataByDate)) {
           const sessionData = {
             user_id: token.user_id,
@@ -227,8 +247,8 @@ Deno.serve(async (req: Request) => {
             active_calories: dayData.activity?.active_calories || null,
             total_calories: dayData.activity?.total_calories || null,
             resting_hr: dayData.sleep?.lowest_heart_rate || dayData.sleep?.average_heart_rate || null,
-            hrv: dayData.sleep?.average_hrv || null,
-            spo2_avg: null,
+            hrv_avg: dayData.sleep?.average_hrv || null,
+            spo2_avg: dayData.spo2?.spo2_percentage?.average || null,
           };
 
           const { error: sessionError } = await supabase
@@ -241,10 +261,10 @@ Deno.serve(async (req: Request) => {
             console.error(`[fetch-oura-auto] [ERROR] Failed to insert session for ${date}:`, sessionError.message);
           } else {
             entriesInserted++;
-            console.log(`[fetch-oura-auto] [SUCCESS] Inserted session for ${date}`);
           }
         }
 
+        // Fetch historical sessions for trend calculations
         const { data: historicalSessions } = await supabase
           .from("wearable_sessions")
           .select("*")
@@ -253,78 +273,140 @@ Deno.serve(async (req: Request) => {
           .gte("date", new Date(Date.now() - 35 * 24 * 60 * 60 * 1000).toISOString().split("T")[0])
           .order("date", { ascending: true });
 
-        if (historicalSessions && historicalSessions.length > 0) {
+        // Calculate and insert trends to training_trends table
+        let trendsInserted = 0;
+        if (historicalSessions && historicalSessions.length >= 7) {
+          const sortedDates = Object.keys(dataByDate).sort();
+
+          for (const date of sortedDates) {
+            const dayData = dataByDate[date];
+            
+            // Get sessions up to this date
+            const sessionsUpToDate = historicalSessions.filter(s => s.date <= date);
+            const last7Days = sessionsUpToDate.slice(-7);
+            const last28Days = sessionsUpToDate.slice(-28);
+
+            if (last7Days.length < 7) continue;
+
+            // Calculate training load (activity score * normalized steps)
+            const calculateLoad = (s: any) => {
+              const actScore = s.activity_score || 0;
+              const steps = s.total_steps || 0;
+              return actScore * (steps / 10000);
+            };
+
+            // Acute load (7-day average)
+            const acuteLoad = last7Days.reduce((sum, s) => sum + calculateLoad(s), 0) / 7;
+
+            // Chronic load (28-day average, if available)
+            let chronicLoad = null;
+            let acwr = null;
+            if (last28Days.length >= 28) {
+              chronicLoad = last28Days.reduce((sum, s) => sum + calculateLoad(s), 0) / 28;
+              acwr = chronicLoad > 0 ? acuteLoad / chronicLoad : null;
+            }
+
+            // Strain (7-day total load)
+            const strain = last7Days.reduce((sum, s) => sum + calculateLoad(s), 0);
+
+            // Monotony (mean / std deviation of 7-day loads)
+            const loads = last7Days.map(calculateLoad);
+            const mean = loads.reduce((a, b) => a + b, 0) / loads.length;
+            const variance = loads.reduce((sum, load) => sum + Math.pow(load - mean, 2), 0) / loads.length;
+            const std = Math.sqrt(variance);
+            const monotony = std > 0 ? mean / std : 0;
+
+            // HRV and sleep score from current day
+            const hrv = dayData.sleep?.average_hrv || null;
+            const sleepScore = dayData.sleep?.score || null;
+
+            // Training load for today
+            const trainingLoad = calculateLoad({
+              activity_score: dayData.activity?.score || 0,
+              total_steps: dayData.activity?.steps || 0,
+            });
+
+            // Insert to training_trends table
+            const trendData = {
+              user_id: token.user_id,
+              date,
+              training_load: Math.round(trainingLoad * 100) / 100,
+              acute_load: Math.round(acuteLoad * 100) / 100,
+              chronic_load: chronicLoad ? Math.round(chronicLoad * 100) / 100 : null,
+              acwr: acwr ? Math.round(acwr * 100) / 100 : null,
+              strain: Math.round(strain * 100) / 100,
+              monotony: Math.round(monotony * 100) / 100,
+              hrv: hrv,
+              sleep_score: sleepScore,
+            };
+
+            const { error: trendError } = await supabase
+              .from("training_trends")
+              .upsert(trendData, {
+                onConflict: "user_id,date",
+              });
+
+            if (trendError) {
+              console.error(`[fetch-oura-auto] [ERROR] Failed to insert trend for ${date}:`, trendError.message);
+            } else {
+              trendsInserted++;
+            }
+          }
+        }
+
+        // Also update wearable_summary for backward compatibility
+        if (historicalSessions && historicalSessions.length >= 7) {
           for (const [date, dayData] of Object.entries(dataByDate)) {
-            const activityScore = dayData.activity?.score || 0;
-            const steps = dayData.activity?.steps || 0;
-            const trainingLoad = activityScore * (steps / 10000);
+            const sessionsUpToDate = historicalSessions.filter(s => s.date <= date);
+            const last7Days = sessionsUpToDate.slice(-7);
+            const last28Days = sessionsUpToDate.slice(-28);
 
-            const last7Days = historicalSessions
-              .filter(s => s.date <= date)
-              .slice(-7);
+            if (last7Days.length < 7) continue;
 
-            const strain = last7Days.reduce((sum, s) => {
-              const load = (s.activity_score || 0) * ((s.total_steps || 0) / 10000);
-              return sum + load;
-            }, 0);
+            const calculateLoad = (s: any) => (s.activity_score || 0) * ((s.total_steps || 0) / 10000);
 
-            if (last7Days.length >= 7) {
-              const loads = last7Days.map(s => (s.activity_score || 0) * ((s.total_steps || 0) / 10000));
-              const mean = loads.reduce((a, b) => a + b, 0) / loads.length;
-              const variance = loads.reduce((sum, load) => sum + Math.pow(load - mean, 2), 0) / loads.length;
-              const std = Math.sqrt(variance);
-              const monotony = std > 0 ? mean / std : 0;
+            const strain = last7Days.reduce((sum, s) => sum + calculateLoad(s), 0);
+            const loads = last7Days.map(calculateLoad);
+            const mean = loads.reduce((a, b) => a + b, 0) / loads.length;
+            const variance = loads.reduce((sum, load) => sum + Math.pow(load - mean, 2), 0) / loads.length;
+            const std = Math.sqrt(variance);
+            const monotony = std > 0 ? mean / std : 0;
 
-              const last28Days = historicalSessions
-                .filter(s => s.date <= date)
-                .slice(-28);
+            let acwr = null;
+            if (last28Days.length >= 28) {
+              const acuteLoad = last7Days.reduce((sum, s) => sum + calculateLoad(s), 0) / 7;
+              const chronicLoad = last28Days.reduce((sum, s) => sum + calculateLoad(s), 0) / 28;
+              acwr = chronicLoad > 0 ? acuteLoad / chronicLoad : null;
+            }
 
-              let acwr = null;
+            const avgReadiness = last7Days.reduce((sum, s) => sum + (s.readiness_score || 0), 0) / last7Days.length;
+            const avgSleep = last7Days.reduce((sum, s) => sum + (s.sleep_score || 0), 0) / last7Days.length;
 
-              if (last28Days.length >= 28) {
-                const acuteLoad = last7Days.reduce((sum, s) => {
-                  const load = (s.activity_score || 0) * ((s.total_steps || 0) / 10000);
-                  return sum + load;
-                }, 0) / 7;
+            const summaryData = {
+              user_id: token.user_id,
+              date,
+              source: "oura",
+              strain: Math.round(strain * 100) / 100,
+              monotony: Math.round(monotony * 100) / 100,
+              acwr: acwr ? Math.round(acwr * 100) / 100 : null,
+              readiness_index: Math.round(avgReadiness * 100) / 100,
+              avg_sleep_score: Math.round(avgSleep * 100) / 100,
+            };
 
-                const chronicLoad = last28Days.reduce((sum, s) => {
-                  const load = (s.activity_score || 0) * ((s.total_steps || 0) / 10000);
-                  return sum + load;
-                }, 0) / 28;
+            const { error: summaryError } = await supabase
+              .from("wearable_summary")
+              .upsert(summaryData, {
+                onConflict: "user_id,source,date",
+              });
 
-                acwr = chronicLoad > 0 ? acuteLoad / chronicLoad : null;
-              }
-
-              const avgReadiness = last7Days.reduce((sum, s) => sum + (s.readiness_score || 0), 0) / last7Days.length;
-              const avgSleep = last7Days.reduce((sum, s) => sum + (s.sleep_score || 0), 0) / last7Days.length;
-
-              const summaryData = {
-                user_id: token.user_id,
-                date,
-                source: "oura",
-                strain: Math.round(strain * 100) / 100,
-                monotony: Math.round(monotony * 100) / 100,
-                acwr: acwr ? Math.round(acwr * 100) / 100 : null,
-                readiness_index: Math.round(avgReadiness * 100) / 100,
-                avg_sleep_score: Math.round(avgSleep * 100) / 100,
-              };
-
-              const { error: summaryError } = await supabase
-                .from("wearable_summary")
-                .upsert(summaryData, {
-                  onConflict: "user_id,source,date",
-                });
-
-              if (summaryError) {
-                console.error(`[fetch-oura-auto] [ERROR] Failed to insert summary for ${date}:`, summaryError.message);
-              } else {
-                console.log(`[fetch-oura-auto] [SUCCESS] Inserted summary for ${date}`);
-              }
+            if (summaryError) {
+              console.error(`[fetch-oura-auto] [ERROR] Failed to insert summary for ${date}:`, summaryError.message);
             }
           }
         }
 
         totalEntriesInserted += entriesInserted;
+        totalTrendsInserted += trendsInserted;
         totalUsersProcessed++;
 
         await supabase.from("oura_logs").insert({
@@ -333,7 +415,7 @@ Deno.serve(async (req: Request) => {
           entries_synced: entriesInserted,
         });
 
-        console.log(`[fetch-oura-auto] [SUCCESS] Completed processing for user ${token.user_id}: ${entriesInserted} entries synced`);
+        console.log(`[fetch-oura-auto] [SUCCESS] Completed user ${token.user_id}: ${entriesInserted} sessions, ${trendsInserted} trends`);
 
       } catch (userError) {
         console.error(`[fetch-oura-auto] [ERROR] Failed to process user ${token.user_id}:`, userError instanceof Error ? userError.message : String(userError));
@@ -346,13 +428,14 @@ Deno.serve(async (req: Request) => {
       }
     }
 
-    console.log(`[fetch-oura-auto] [COMPLETE] Sync finished: ${totalUsersProcessed} users processed, ${totalEntriesInserted} total entries synced`);
+    console.log(`[fetch-oura-auto] [COMPLETE] Sync finished: ${totalUsersProcessed} users, ${totalEntriesInserted} sessions, ${totalTrendsInserted} trends`);
 
     return new Response(
       JSON.stringify({
         success: true,
         users_processed: totalUsersProcessed,
         total_entries: totalEntriesInserted,
+        total_trends: totalTrendsInserted,
         fetched_endpoints: fetchedEndpoints,
         date: lastSyncDate,
       }),

@@ -58,6 +58,45 @@ interface DayData {
   spo2?: OuraSpo2Data;
 }
 
+// Add retry delay helper for rate limits
+async function delay(ms: number) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+// Rate limit handler with exponential backoff
+async function fetchWithRetry(
+  url: string,
+  accessToken: string,
+  maxRetries = 3
+): Promise<Response> {
+  let lastError: Error | null = null;
+  
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    try {
+      const res = await fetch(url, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+
+      // Handle rate limiting with backoff
+      if (res.status === 429) {
+        const retryAfter = parseInt(res.headers.get("Retry-After") || "5", 10);
+        console.log(`[fetch-oura-auto] Rate limited, waiting ${retryAfter}s...`);
+        await delay(retryAfter * 1000);
+        continue;
+      }
+
+      return res;
+    } catch (err) {
+      lastError = err instanceof Error ? err : new Error(String(err));
+      if (attempt < maxRetries - 1) {
+        await delay(Math.pow(2, attempt) * 1000); // Exponential backoff
+      }
+    }
+  }
+  
+  throw lastError || new Error("Max retries exceeded");
+}
+
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { status: 200, headers: corsHeaders });

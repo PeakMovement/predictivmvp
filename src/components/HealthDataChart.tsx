@@ -56,7 +56,7 @@ export default function HealthDataChart() {
       data.forEach((row) => {
         if (row.samples && Array.isArray(row.samples)) {
           (row.samples as Json[]).forEach((sample) => {
-            const sampleData = sample as SampleData;
+            const sampleData = sample as unknown as SampleData;
             if (!sampleData || typeof sampleData !== 'object') return;
             
             const dateValue = sampleData.date;

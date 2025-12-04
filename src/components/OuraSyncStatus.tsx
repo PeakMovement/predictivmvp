@@ -21,12 +21,13 @@ const OuraSyncStatus = () => {
 
       if (!user?.id) return;
 
+      // Use fetched_at instead of created_at (which doesn't exist on wearable_sessions)
       const { data, error } = await supabase
         .from("wearable_sessions")
-        .select("created_at")
+        .select("fetched_at")
         .eq("user_id", user.id)
         .eq("source", "oura")
-        .order("created_at", { ascending: false })
+        .order("date", { ascending: false })
         .limit(1)
         .maybeSingle();
 
@@ -35,8 +36,8 @@ const OuraSyncStatus = () => {
         return;
       }
 
-      if (data?.created_at) {
-        setState((prev) => ({ ...prev, lastSync: new Date(data.created_at) }));
+      if (data?.fetched_at) {
+        setState((prev) => ({ ...prev, lastSync: new Date(data.fetched_at) }));
       }
     } catch (err) {
       console.error("❌ OuraSyncStatus fetch error:", err);
@@ -92,11 +93,11 @@ const OuraSyncStatus = () => {
       }));
 
       setTimeout(() => setState((s) => ({ ...s, status: "idle" })), 3000);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("❌ Ōura sync error:", err);
       setState((prev) => ({ ...prev, status: "error" }));
 
-      const errorMsg = err.message || 'Failed to sync Ōura Ring data';
+      const errorMsg = err instanceof Error ? err.message : 'Failed to sync Ōura Ring data';
       console.error('User-facing error:', errorMsg);
 
       setTimeout(() => setState((s) => ({ ...s, status: "idle" })), 5000);

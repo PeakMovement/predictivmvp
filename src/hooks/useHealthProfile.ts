@@ -1,14 +1,15 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { Json } from '@/integrations/supabase/types';
 
 export interface HealthProfile {
   id: string;
   user_id: string;
   profile_data: Record<string, unknown>;
   ai_synthesis: string | null;
-  generated_at: string;
-  version: number;
+  generated_at: string | null;
+  version: number | null;
 }
 
 export const useHealthProfile = () => {
@@ -36,7 +37,14 @@ export const useHealthProfile = () => {
 
       if (error) throw error;
 
-      setProfile(data);
+      if (data) {
+        setProfile({
+          ...data,
+          profile_data: (data.profile_data as Record<string, unknown>) || {},
+        });
+      } else {
+        setProfile(null);
+      }
     } catch (error) {
       console.error('Error fetching health profile:', error);
       toast({

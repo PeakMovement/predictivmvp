@@ -10,7 +10,7 @@ interface DiagnosticResult {
   step: string;
   status: "success" | "error" | "warning" | "pending";
   message: string;
-  data?: any;
+  data?: Record<string, unknown>;
 }
 
 export const OuraDataDiagnostics = () => {
@@ -76,7 +76,7 @@ export const OuraDataDiagnostics = () => {
           message: "❌ No Oura token found. You need to connect your Oura Ring in Settings.",
         });
       } else {
-        const isExpired = new Date(tokenData.expires_at) <= new Date();
+        const isExpired = tokenData.expires_at ? new Date(tokenData.expires_at) <= new Date() : false;
         addResult({
           step: "Oura Tokens",
           status: isExpired ? "warning" : "success",
@@ -128,7 +128,7 @@ export const OuraDataDiagnostics = () => {
             sleep_score: sessions[0].sleep_score,
             activity_score: sessions[0].activity_score,
             resting_hr: sessions[0].resting_hr,
-            hrv: sessions[0].hrv,
+            hrv_avg: sessions[0].hrv_avg,
             total_steps: sessions[0].total_steps,
           },
         });
@@ -186,25 +186,24 @@ export const OuraDataDiagnostics = () => {
 
       if (sessions && sessions.length > 0) {
         const latest = sessions[0];
-        const populatedFields = [];
-        const missingFields = [];
+        const populatedFields: string[] = [];
+        const missingFields: string[] = [];
 
         const fieldsToCheck = [
           "readiness_score",
           "sleep_score",
           "activity_score",
           "resting_hr",
-          "hrv",
+          "hrv_avg",
           "total_steps",
           "active_calories",
-          "total_sleep_duration",
-          "deep_sleep_duration",
-          "rem_sleep_duration",
-          "light_sleep_duration",
+          "total_calories",
+          "spo2_avg",
         ];
 
         fieldsToCheck.forEach((field) => {
-          if (latest[field] !== null && latest[field] !== undefined) {
+          const value = latest[field as keyof typeof latest];
+          if (value !== null && value !== undefined) {
             populatedFields.push(field);
           } else {
             missingFields.push(field);

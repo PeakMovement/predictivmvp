@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 
+// Interface matching the actual wearable_sessions DB schema
 export interface WearableSession {
   id: string;
   user_id: string;
@@ -10,10 +11,11 @@ export interface WearableSession {
   activity_score: number | null;
   total_steps: number | null;
   active_calories: number | null;
+  total_calories: number | null;
   resting_hr: number | null;
-  hrv: number | null;
+  hrv_avg: number | null;
   spo2_avg: number | null;
-  fetched_at: string;
+  fetched_at: string | null;
 }
 
 export interface WearableSummary {
@@ -25,7 +27,7 @@ export interface WearableSummary {
   acwr: number | null;
   readiness_index: number | null;
   source: string;
-  updated_at: string;
+  updated_at: string | null;
 }
 
 interface DateRange {
@@ -131,16 +133,16 @@ async function getLegacyTrainingTrends(
     if (error) throw error;
 
     // Map legacy structure to new format
-    return (data || []).map((trend: Record<string, unknown>) => ({
-      id: trend.id,
-      user_id: trend.user_id,
-      date: trend.date,
-      strain: trend.strain,
-      monotony: trend.monotony,
-      acwr: trend.acwr,
+    return (data || []).map((trend) => ({
+      id: trend.id as string,
+      user_id: trend.user_id as string,
+      date: trend.date as string,
+      strain: trend.strain as number | null,
+      monotony: trend.monotony as number | null,
+      acwr: trend.acwr as number | null,
       readiness_index: null, // Not in legacy data
       source: "fitbit", // Assume legacy data is from Fitbit
-      updated_at: trend.created_at || new Date().toISOString(),
+      updated_at: (trend.created_at as string) || new Date().toISOString(),
     }));
   } catch (error) {
     console.error("[getLegacyTrainingTrends] Error:", error);

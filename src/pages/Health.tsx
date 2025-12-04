@@ -67,16 +67,16 @@ export const Health = () => {
               <OuraReadinessCard
                 score={session?.readiness_score ?? null}
                 restingHR={session?.resting_hr ?? null}
-                hrv={session?.hrv ?? null}
+                hrv={session?.hrv_avg ?? null}
                 isLoading={isLoading}
               />
               <OuraSleepCard
                 score={session?.sleep_score ?? null}
-                totalSleep={session?.sleep_duration_hours ?? null}
-                deepSleep={session?.deep_sleep_hours ?? null}
-                remSleep={session?.rem_sleep_hours ?? null}
-                lightSleep={session?.light_sleep_hours ?? null}
-                efficiency={session?.efficiency ?? null}
+                totalSleep={null}
+                deepSleep={null}
+                remSleep={null}
+                lightSleep={null}
+                efficiency={null}
                 isLoading={isLoading}
               />
               <OuraActivityCard
@@ -94,9 +94,9 @@ export const Health = () => {
 
               {/* HRV & Heart Rate Card */}
               <OuraHRVCard
-                hrv={session?.hrv ?? null}
+                hrv={session?.hrv_avg ?? null}
                 restingHR={session?.resting_hr ?? null}
-                avgHR={session?.avg_hr_bpm ?? null}
+                avgHR={null}
                 spo2={session?.spo2_avg ?? null}
                 isLoading={isLoading}
               />

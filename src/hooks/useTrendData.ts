@@ -62,8 +62,10 @@ interface ActivitySummary {
   current_steps_avg: number | null;
   steps_change: number | null;
   steps_trend: string;
+  steps_baseline: number | null;
   current_calories_avg: number | null;
   calories_change: number | null;
+  calories_baseline: number | null;
   activity_score: number | null;
 }
 

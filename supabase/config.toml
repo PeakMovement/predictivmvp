@@ -59,3 +59,15 @@ verify_jwt = false
 
 [functions.calculate-oura-trends]
 verify_jwt = false
+
+[functions.get-daily-health-trends]
+verify_jwt = true
+
+[functions.get-weekly-health-trends]
+verify_jwt = true
+
+[functions.get-recovery-trends]
+verify_jwt = true
+
+[functions.get-activity-trends]
+verify_jwt = true

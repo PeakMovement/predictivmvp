@@ -37,7 +37,7 @@ Deno.serve(async (req) => {
     console.log(`[yves-tree] Fetching tree data for user ${user.id}`);
 
     const { data: trendData, error: trendError } = await supabase
-      .from('fitbit_trends')
+      .from('training_trends')
       .select('date, strain, hrv, sleep_score')
       .eq('user_id', user.id)
       .order('date', { ascending: true })

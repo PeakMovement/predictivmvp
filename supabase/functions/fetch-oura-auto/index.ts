@@ -430,6 +430,31 @@ Deno.serve(async (req: Request) => {
 
     console.log(`[fetch-oura-auto] [COMPLETE] Sync finished: ${totalUsersProcessed} users, ${totalEntriesInserted} sessions, ${totalTrendsInserted} trends`);
 
+    // Trigger comprehensive trend calculations after sync
+    try {
+      const supabaseUrl = Deno.env.get("SUPABASE_URL");
+      const anonKey = Deno.env.get("SUPABASE_ANON_KEY");
+      
+      if (supabaseUrl && anonKey) {
+        const trendResponse = await fetch(`${supabaseUrl}/functions/v1/calculate-oura-trends`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${anonKey}`,
+          },
+          body: JSON.stringify(targetUserId ? { user_id: targetUserId } : {}),
+        });
+
+        if (trendResponse.ok) {
+          console.log("[fetch-oura-auto] [SUCCESS] Triggered calculate-oura-trends");
+        } else {
+          console.error("[fetch-oura-auto] [WARNING] Failed to trigger calculate-oura-trends:", trendResponse.status);
+        }
+      }
+    } catch (trendError) {
+      console.error("[fetch-oura-auto] [WARNING] Could not trigger trend calculation:", trendError);
+    }
+
     return new Response(
       JSON.stringify({
         success: true,
@@ -438,6 +463,7 @@ Deno.serve(async (req: Request) => {
         total_trends: totalTrendsInserted,
         fetched_endpoints: fetchedEndpoints,
         date: lastSyncDate,
+        trend_calculation_triggered: true,
       }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );

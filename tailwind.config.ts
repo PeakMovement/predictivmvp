@@ -156,6 +156,57 @@ export default {
             backgroundPosition: "200% 0",
           },
         },
+        "gauge-fill": {
+          "0%": {
+            strokeDashoffset: "100",
+          },
+          "100%": {
+            strokeDashoffset: "var(--gauge-value)",
+          },
+        },
+        "bar-grow": {
+          "0%": {
+            transform: "scaleX(0)",
+            opacity: "0",
+          },
+          "100%": {
+            transform: "scaleX(1)",
+            opacity: "1",
+          },
+        },
+        "number-pop": {
+          "0%": {
+            transform: "scale(0.8)",
+            opacity: "0",
+          },
+          "50%": {
+            transform: "scale(1.1)",
+          },
+          "100%": {
+            transform: "scale(1)",
+            opacity: "1",
+          },
+        },
+        "panel-enter": {
+          "0%": {
+            opacity: "0",
+            transform: "translateY(16px) scale(0.96)",
+          },
+          "100%": {
+            opacity: "1",
+            transform: "translateY(0) scale(1)",
+          },
+        },
+        "pulse-ring": {
+          "0%": {
+            transform: "scale(0.95)",
+            opacity: "1",
+          },
+          "100%": {
+            transform: "scale(1.5)",
+            opacity: "0",
+          },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -167,6 +218,11 @@ export default {
         "slide-in": "slide-in 0.4s ease-out forwards",
         "bounce-subtle": "bounce-subtle 2s infinite",
         "shimmer": "shimmer 2s linear infinite",
+        "gauge-fill": "gauge-fill 1s cubic-bezier(0.34, 1.56, 0.64, 1) forwards",
+        "bar-grow": "bar-grow 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards",
+        "number-pop": "number-pop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards",
+        "panel-enter": "panel-enter 0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards",
+        "pulse-ring": "pulse-ring 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite",
       },
       boxShadow: {
         "glow": "0 0 20px hsl(var(--glow-primary) / 0.5)",

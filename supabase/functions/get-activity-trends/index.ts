@@ -75,8 +75,10 @@ serve(async (req) => {
       current_steps_avg: latestRecord.steps_avg_7d,
       steps_change: latestRecord.steps_delta,
       steps_trend: latestRecord.trend_direction,
+      steps_baseline: latestRecord.steps_baseline,
       current_calories_avg: latestRecord.calories_avg_7d,
       calories_change: latestRecord.calories_delta,
+      calories_baseline: latestRecord.calories_baseline,
       activity_score: latestRecord.activity_score_avg,
     } : null;
 

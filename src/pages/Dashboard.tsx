@@ -7,8 +7,14 @@ import { HealthProfileViewer } from "@/components/health/HealthProfileViewer";
 import { YvesTreeTimeline } from "@/components/dashboard/YvesTreeTimeline";
 import { YvesRecommendationsCard } from "@/components/dashboard/YvesRecommendationsCard";
 import { DailyBriefingCard } from "@/components/dashboard/DailyBriefingCard";
+import { DailyHealthPanel } from "@/components/dashboard/DailyHealthPanel";
+import { RecoveryPanel } from "@/components/dashboard/RecoveryPanel";
+import { ActivityPanel } from "@/components/dashboard/ActivityPanel";
+import { WeeklyTrendChart } from "@/components/dashboard/WeeklyTrendChart";
+import { TrendRefreshButton } from "@/components/dashboard/TrendRefreshButton";
 import { useHealthProfile } from "@/hooks/useHealthProfile";
 import { useWearableSessions } from "@/hooks/useWearableSessions";
+import { useRefreshTrends } from "@/hooks/useTrendData";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 
@@ -32,10 +38,11 @@ const WelcomeHeader = () => (
       <h2 className="text-3xl md:text-4xl font-bold text-foreground tracking-tight">Athlete</h2>
     </div>
     <div className="animate-slide-in" style={{ animationDelay: "0.2s", animationFillMode: "both" }}>
-      <p className="text-muted-foreground text-base md:text-lg">Here’s your training overview for today</p>
+      <p className="text-muted-foreground text-base md:text-lg">Here's your training overview for today</p>
     </div>
-    <div className="flex justify-center animate-fade-in" style={{ animationDelay: "0.3s" }}>
+    <div className="flex justify-center gap-3 animate-fade-in" style={{ animationDelay: "0.3s" }}>
       <OuraSyncStatus />
+      <TrendRefreshButton />
     </div>
   </div>
 );
@@ -43,6 +50,7 @@ const WelcomeHeader = () => (
 export const Dashboard = () => {
   const [userId, setUserId] = useState<string | null>(null);
   const { profile } = useHealthProfile();
+  const { refreshAll } = useRefreshTrends();
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
@@ -50,9 +58,33 @@ export const Dashboard = () => {
     });
   }, []);
 
-  const { data: session, isLoading } = useWearableSessions(userId || undefined);
+  // Listen for sync events and refresh trends
+  useEffect(() => {
+    const channel = supabase
+      .channel("oura-sync-refresh")
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "oura_logs",
+        },
+        (payload) => {
+          if (payload.new && (payload.new as any).status === "success") {
+            console.log("Oura sync completed, refreshing trends...");
+            // Small delay to allow trend calculation to complete
+            setTimeout(() => refreshAll(), 2000);
+          }
+        }
+      )
+      .subscribe();
 
-  console.log("✅ Dashboard live data:", session);
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [refreshAll]);
+
+  const { data: session, isLoading } = useWearableSessions(userId || undefined);
 
   const dashboardMetrics = session
     ? [
@@ -77,8 +109,9 @@ export const Dashboard = () => {
             </div>
           ) : (
             <>
+              {/* Today's Metrics - Quick Glance */}
               <div className="text-center mb-6 md:mb-8 animate-fade-in">
-                <h3 className="text-lg md:text-xl font-semibold text-foreground mb-1 md:mb-2">Training Metrics</h3>
+                <h3 className="text-lg md:text-xl font-semibold text-foreground mb-1 md:mb-2">Today's Metrics</h3>
                 <p className="text-sm md:text-base text-muted-foreground">Your key performance indicators</p>
               </div>
 
@@ -90,7 +123,7 @@ export const Dashboard = () => {
                   <p className="text-sm text-muted-foreground">Connect your Ōura Ring above and sync to start tracking your training metrics</p>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-8">
                   {dashboardMetrics.map((metric, i) => (
                     <div
                       key={i}
@@ -106,28 +139,51 @@ export const Dashboard = () => {
                 </div>
               )}
 
+              {/* Health Trends Section */}
+              <div className="mb-8">
+                <h3 className="text-lg md:text-xl font-semibold text-foreground mb-4">Health Trends</h3>
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <DailyHealthPanel />
+                  <RecoveryPanel />
+                </div>
+              </div>
+
+              {/* Activity & Weekly Trends */}
+              <div className="mb-8">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <ActivityPanel />
+                  <WeeklyTrendChart />
+                </div>
+              </div>
+
+              {/* Daily Briefing */}
               <div className="mt-8">
                 <DailyBriefingCard />
               </div>
 
+              {/* Recommendations */}
               <div className="mt-8">
                 <YvesRecommendationsCard />
               </div>
 
+              {/* Document Intelligence */}
               <div className="mt-8">
                 <DocumentIntelligenceCard onNavigate={() => {}} />
               </div>
 
+              {/* Feedback */}
               <div className="mt-8">
                 <FeedbackSummaryPanel />
               </div>
 
+              {/* Health Profile */}
               {profile && (
                 <div className="mt-8">
                   <HealthProfileViewer profile={profile} />
                 </div>
               )}
 
+              {/* Yves Timeline */}
               <div className="mt-8 mb-10">
                 <YvesTreeTimeline />
               </div>

@@ -1,5 +1,6 @@
 /// <reference types="https://esm.sh/@supabase/functions-js/src/edge-runtime.d.ts" />
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { getValidOuraToken } from "../_shared/oura-token-refresh.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -46,7 +47,7 @@ Deno.serve(async (req: Request) => {
         );
       }
 
-      console.error("[oura-webhook] Verification failed: invalid token");
+      console.error("[oura-webhook] [ERROR] Verification failed: invalid token");
       return new Response(
         JSON.stringify({ error: "Invalid verification token" }),
         {
@@ -94,7 +95,7 @@ Deno.serve(async (req: Request) => {
           .toUpperCase();
 
         if (calculatedHex !== signature.toUpperCase()) {
-          console.error("[oura-webhook] Invalid signature");
+          console.error("[oura-webhook] [ERROR] Invalid signature");
           return new Response(
             JSON.stringify({ error: "Invalid signature" }),
             {
@@ -111,6 +112,7 @@ Deno.serve(async (req: Request) => {
       const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 
       if (!supabaseUrl || !supabaseKey) {
+        console.error("[oura-webhook] [ERROR] Supabase credentials not available");
         throw new Error("Supabase credentials not available");
       }
 
@@ -135,7 +137,7 @@ Deno.serve(async (req: Request) => {
 
       // Process event asynchronously (don't await)
       processWebhookEvent(body, supabase).catch(error => {
-        console.error("[oura-webhook] Error processing event:", error);
+        console.error("[oura-webhook] [ERROR] Error processing event:", error instanceof Error ? error.message : String(error));
       });
 
       return responsePromise;
@@ -147,10 +149,11 @@ Deno.serve(async (req: Request) => {
     });
 
   } catch (err) {
-    console.error("[oura-webhook] Error:", err);
+    console.error("[oura-webhook] [ERROR] Unhandled exception:", err instanceof Error ? err.message : String(err));
     return new Response(
       JSON.stringify({
-        error: err instanceof Error ? err.message : "Unknown error"
+        error: err instanceof Error ? err.message : "Unknown error",
+        success: false
       }),
       {
         status: 500,
@@ -168,49 +171,20 @@ async function processWebhookEvent(event: WebhookEvent, supabase: any) {
   console.log(`[oura-webhook] Processing ${event.event_type} for ${event.data_type}`);
 
   try {
-    // Get user's access token
-    const { data: tokenData, error: tokenError } = await supabase
-      .from("oura_tokens")
-      .select("access_token, refresh_token, expires_at")
-      .eq("user_id", event.user_id)
-      .maybeSingle();
+    // Use shared token refresh utility
+    const tokenResult = await getValidOuraToken(supabase, event.user_id);
 
-    if (tokenError || !tokenData) {
-      console.error("[oura-webhook] No token found for user:", event.user_id);
+    if (!tokenResult.success || !tokenResult.access_token) {
+      console.error(`[oura-webhook] [ERROR] Token validation failed for user ${event.user_id}: ${tokenResult.error}`);
+      await supabase.from("oura_logs").insert({
+        user_id: event.user_id,
+        status: "error",
+        error_message: `Webhook processing failed: ${tokenResult.error}`,
+      });
       return;
     }
 
-    // Check if token is expired and refresh if needed
-    let accessToken = tokenData.access_token;
-    if (new Date(tokenData.expires_at) < new Date()) {
-      console.log("[oura-webhook] Token expired, refreshing...");
-
-      const refreshRes = await fetch("https://api.ouraring.com/oauth/token", {
-        method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: new URLSearchParams({
-          grant_type: "refresh_token",
-          refresh_token: tokenData.refresh_token,
-          client_id: Deno.env.get("OURA_CLIENT_ID")!,
-          client_secret: Deno.env.get("OURA_CLIENT_SECRET")!,
-        }),
-      });
-
-      if (!refreshRes.ok) {
-        console.error("[oura-webhook] Token refresh failed");
-        return;
-      }
-
-      const refreshed = await refreshRes.json();
-      accessToken = refreshed.access_token;
-
-      // Update token in database
-      await supabase.from("oura_tokens").update({
-        access_token: refreshed.access_token,
-        refresh_token: refreshed.refresh_token ?? tokenData.refresh_token,
-        expires_at: new Date(Date.now() + refreshed.expires_in * 1000).toISOString(),
-      }).eq("user_id", event.user_id);
-    }
+    const accessToken = tokenResult.access_token;
 
     // Fetch the specific updated data using object_id
     const dataTypeEndpoint = event.data_type.replace("_", "-");
@@ -223,16 +197,19 @@ async function processWebhookEvent(event: WebhookEvent, supabase: any) {
     });
 
     if (!dataRes.ok) {
-      console.error(`[oura-webhook] Failed to fetch data: ${dataRes.status}`);
+      console.error(`[oura-webhook] [ERROR] Failed to fetch data: HTTP ${dataRes.status}`);
+      await supabase.from("oura_logs").insert({
+        user_id: event.user_id,
+        status: "error",
+        error_message: `Failed to fetch ${event.data_type}: HTTP ${dataRes.status}`,
+      });
       return;
     }
 
     const data = await dataRes.json();
-    console.log(`[oura-webhook] Successfully fetched updated ${event.data_type} data`);
+    console.log(`[oura-webhook] [SUCCESS] Successfully fetched updated ${event.data_type} data`);
 
     // Store the data in appropriate table
-    // This would need to be customized based on your data model
-    // For now, just log success
     await supabase.from("oura_logs").insert({
       user_id: event.user_id,
       status: "success",
@@ -240,7 +217,7 @@ async function processWebhookEvent(event: WebhookEvent, supabase: any) {
     });
 
   } catch (error) {
-    console.error("[oura-webhook] Error processing event:", error);
+    console.error("[oura-webhook] [ERROR] Error processing event:", error instanceof Error ? error.message : String(error));
     await supabase.from("oura_logs").insert({
       user_id: event.user_id,
       status: "error",

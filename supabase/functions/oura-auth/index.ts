@@ -26,8 +26,9 @@ Deno.serve(async (req: Request) => {
     const { code, user_id } = await req.json();
 
     if (!code || !user_id) {
+      console.error("[oura-auth] [ERROR] Missing code or user_id in request");
       return new Response(
-        JSON.stringify({ error: "Missing code or user_id" }),
+        JSON.stringify({ error: "Missing code or user_id", success: false }),
         { 
           status: 400, 
           headers: { ...corsHeaders, "Content-Type": "application/json" } 
@@ -35,7 +36,7 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    console.log(`[oura-auth] Exchanging code for user: ${user_id}`);
+    console.log(`[oura-auth] [START] Exchanging code for user: ${user_id}`);
     console.log(`[oura-auth] Code length: ${code.length}`);
 
     // Get Oura credentials from environment
@@ -47,7 +48,7 @@ Deno.serve(async (req: Request) => {
       if (!ouraClientId) missingCreds.push("OURA_CLIENT_ID");
       if (!ouraClientSecret) missingCreds.push("OURA_CLIENT_SECRET");
 
-      console.error(`[oura-auth] Missing credentials: ${missingCreds.join(", ")}`);
+      console.error(`[oura-auth] [ERROR] Missing credentials: ${missingCreds.join(", ")}`);
       throw new Error(`Oura credentials not configured. Missing: ${missingCreds.join(", ")}`);
     }
 
@@ -57,7 +58,7 @@ Deno.serve(async (req: Request) => {
     const redirectUri = Deno.env.get("OURA_REDIRECT_URI");
     
     if (!redirectUri) {
-      console.error("[oura-auth] OURA_REDIRECT_URI is not configured");
+      console.error("[oura-auth] [ERROR] OURA_REDIRECT_URI is not configured");
       throw new Error("Oura redirect URI not configured. Please set OURA_REDIRECT_URI in Edge Function secrets.");
     }
     
@@ -87,7 +88,7 @@ Deno.serve(async (req: Request) => {
     const tokenData = await tokenResponse.json();
 
     if (!tokenResponse.ok) {
-      console.error("[oura-auth] Oura API error response:", {
+      console.error("[oura-auth] [ERROR] Oura API error response:", {
         status: tokenResponse.status,
         statusText: tokenResponse.statusText,
         error: tokenData
@@ -115,6 +116,7 @@ Deno.serve(async (req: Request) => {
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 
     if (!supabaseUrl || !supabaseKey) {
+      console.error("[oura-auth] [ERROR] Supabase credentials not available");
       throw new Error("Supabase credentials not available in Edge Runtime environment");
     }
 
@@ -128,6 +130,16 @@ Deno.serve(async (req: Request) => {
     // Verify we have all required token data
     if (!tokenData.access_token || !tokenData.refresh_token) {
       throw new Error(`Incomplete token data from Oura: missing ${!tokenData.access_token ? 'access_token' : 'refresh_token'}`);
+    }
+
+    // NOTE: token_type is returned by Oura (typically "Bearer") but is intentionally NOT stored.
+    // The oura_tokens view schema does not include a token_type column.
+    // This is acceptable because:
+    // 1. Oura API always uses Bearer token authentication
+    // 2. The token_type is implicit and doesn't need to be persisted
+    // 3. Adding it would require a schema migration with no functional benefit
+    if (tokenData.token_type) {
+      console.log(`[oura-auth] token_type received: "${tokenData.token_type}" (not stored - always Bearer)`);
     }
 
     // Upsert tokens to database with proper scope
@@ -145,11 +157,11 @@ Deno.serve(async (req: Request) => {
       .select();
 
     if (error) {
-      console.error("[oura-auth] Database error:", error);
+      console.error("[oura-auth] [ERROR] Database error:", error.message);
       throw new Error(`Failed to save tokens: ${error.message}`);
     }
 
-    console.log("[oura-auth] Successfully saved tokens to database");
+    console.log("[oura-auth] [SUCCESS] Tokens saved to database");
 
     return new Response(
       JSON.stringify({ success: true }),
@@ -159,9 +171,9 @@ Deno.serve(async (req: Request) => {
       }
     );
   } catch (err) {
-    console.error("[oura-auth] Error:", err);
+    console.error("[oura-auth] [ERROR] Unhandled exception:", err instanceof Error ? err.message : String(err));
     return new Response(
-      JSON.stringify({ error: err instanceof Error ? err.message : "Unknown error" }),
+      JSON.stringify({ error: err instanceof Error ? err.message : "Unknown error", success: false }),
       { 
         status: 500, 
         headers: { ...corsHeaders, "Content-Type": "application/json" } 

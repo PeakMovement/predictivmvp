@@ -10,6 +10,7 @@ import { DailyBriefingCard } from "@/components/dashboard/DailyBriefingCard";
 import { DailyHealthPanel } from "@/components/dashboard/DailyHealthPanel";
 import { RecoveryPanel } from "@/components/dashboard/RecoveryPanel";
 import { TrendRefreshButton } from "@/components/dashboard/TrendRefreshButton";
+import { RiskScoreCard } from "@/components/dashboard/RiskScoreCard";
 import { useHealthProfile } from "@/hooks/useHealthProfile";
 import { useRefreshTrends } from "@/hooks/useTrendData";
 import { supabase } from "@/integrations/supabase/client";
@@ -82,6 +83,11 @@ export const Dashboard = () => {
             </div>
           ) : (
             <>
+              {/* Risk Score - Prominent Position */}
+              <div className="mb-8">
+                <RiskScoreCard />
+              </div>
+
               {/* Health Trends Section */}
               <div className="mb-8">
                 <h3 className="text-lg md:text-xl font-semibold text-foreground mb-4">Health Trends</h3>

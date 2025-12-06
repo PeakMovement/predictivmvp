@@ -1,20 +1,16 @@
 import { useEffect, useState } from "react";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import OuraSyncStatus from "@/components/OuraSyncStatus";
-import { DocumentIntelligenceCard } from "@/components/dashboard/DocumentIntelligenceCard";
-import { FeedbackSummaryPanel } from "@/components/dashboard/FeedbackSummaryPanel";
-import { HealthProfileViewer } from "@/components/health/HealthProfileViewer";
-import { YvesTreeTimeline } from "@/components/dashboard/YvesTreeTimeline";
 import { YvesRecommendationsCard } from "@/components/dashboard/YvesRecommendationsCard";
 import { DailyBriefingCard } from "@/components/dashboard/DailyBriefingCard";
-import { DailyHealthPanel } from "@/components/dashboard/DailyHealthPanel";
-import { RecoveryPanel } from "@/components/dashboard/RecoveryPanel";
 import { TrendRefreshButton } from "@/components/dashboard/TrendRefreshButton";
 import { RiskScoreCard } from "@/components/dashboard/RiskScoreCard";
-import { useHealthProfile } from "@/hooks/useHealthProfile";
 import { useRefreshTrends } from "@/hooks/useTrendData";
 import { supabase } from "@/integrations/supabase/client";
-
+import { useWearableSessions } from "@/hooks/useWearableSessions";
+import { OuraReadinessCard } from "@/components/oura/OuraReadinessCard";
+import { OuraSleepCard } from "@/components/oura/OuraSleepCard";
+import { OuraActivityCard } from "@/components/oura/OuraActivityCard";
 
 const WelcomeHeader = () => (
   <div className="text-center mb-8 md:mb-12 space-y-3 md:space-y-4 px-4 md:px-0">
@@ -34,7 +30,6 @@ const WelcomeHeader = () => (
 
 export const Dashboard = () => {
   const [userId, setUserId] = useState<string | null>(null);
-  const { profile } = useHealthProfile();
   const { refreshAll } = useRefreshTrends();
 
   useEffect(() => {
@@ -42,6 +37,8 @@ export const Dashboard = () => {
       setUserId(user?.id || null);
     });
   }, []);
+
+  const { data: session, isLoading } = useWearableSessions(userId || undefined);
 
   // Listen for sync events and refresh trends
   useEffect(() => {
@@ -57,7 +54,6 @@ export const Dashboard = () => {
         (payload) => {
           if (payload.new && (payload.new as any).status === "success") {
             console.log("Oura sync completed, refreshing trends...");
-            // Small delay to allow trend calculation to complete
             setTimeout(() => refreshAll(), 2000);
           }
         }
@@ -68,7 +64,6 @@ export const Dashboard = () => {
       supabase.removeChannel(channel);
     };
   }, [refreshAll]);
-
 
   return (
     <TooltipProvider>
@@ -88,45 +83,43 @@ export const Dashboard = () => {
                 <RiskScoreCard />
               </div>
 
-              {/* Health Trends Section */}
+              {/* Core Metrics: Sleep, Readiness, Activity */}
               <div className="mb-8">
-                <h3 className="text-lg md:text-xl font-semibold text-foreground mb-4">Health Trends</h3>
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  <DailyHealthPanel />
-                  <RecoveryPanel />
+                <h3 className="text-lg md:text-xl font-semibold text-foreground mb-4">Today's Scores</h3>
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                  <OuraReadinessCard
+                    score={session?.readiness_score ?? null}
+                    restingHR={session?.resting_hr ?? null}
+                    hrv={session?.hrv_avg ?? null}
+                    isLoading={isLoading}
+                  />
+                  <OuraSleepCard
+                    score={session?.sleep_score ?? null}
+                    totalSleep={null}
+                    deepSleep={null}
+                    remSleep={null}
+                    lightSleep={null}
+                    efficiency={null}
+                    isLoading={isLoading}
+                  />
+                  <OuraActivityCard
+                    score={session?.activity_score ?? null}
+                    steps={session?.total_steps ?? null}
+                    activeCalories={session?.active_calories ?? null}
+                    totalCalories={session?.total_calories ?? null}
+                    isLoading={isLoading}
+                  />
                 </div>
               </div>
 
               {/* Daily Briefing */}
-              <div className="mt-8">
+              <div className="mb-8">
                 <DailyBriefingCard />
               </div>
 
               {/* Recommendations */}
-              <div className="mt-8">
+              <div className="mb-10">
                 <YvesRecommendationsCard />
-              </div>
-
-              {/* Document Intelligence */}
-              <div className="mt-8">
-                <DocumentIntelligenceCard onNavigate={() => {}} />
-              </div>
-
-              {/* Feedback */}
-              <div className="mt-8">
-                <FeedbackSummaryPanel />
-              </div>
-
-              {/* Health Profile */}
-              {profile && (
-                <div className="mt-8">
-                  <HealthProfileViewer profile={profile} />
-                </div>
-              )}
-
-              {/* Yves Timeline */}
-              <div className="mt-8 mb-10">
-                <YvesTreeTimeline />
               </div>
             </>
           )}

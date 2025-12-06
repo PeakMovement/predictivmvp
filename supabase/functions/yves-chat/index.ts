@@ -67,9 +67,45 @@ Deno.serve(async (req) => {
 
     const { data: userProfile } = await supabase
       .from("user_profile")
-      .select("goals, activity_level, injuries, notes")
+      .select("name, goals, activity_level, injuries, conditions, gender, dob")
       .eq("user_id", user.id)
       .maybeSingle();
+
+    // ─── LOAD USER UPLOADED DOCUMENTS ────────────────────────────────────────
+    const { data: userDocuments } = await supabase
+      .from("user_documents")
+      .select("document_type, file_name, parsed_content, ai_summary, tags")
+      .eq("user_id", user.id)
+      .eq("processing_status", "completed")
+      .order("uploaded_at", { ascending: false })
+      .limit(10);
+
+    let documentsContext = "";
+    if (userDocuments && userDocuments.length > 0) {
+      documentsContext = "\nUPLOADED DOCUMENTS:\n";
+      for (const doc of userDocuments) {
+        documentsContext += `\n📄 ${doc.document_type.toUpperCase()} (${doc.file_name}):\n`;
+        if (doc.ai_summary) {
+          documentsContext += `Summary: ${doc.ai_summary}\n`;
+        }
+        if (doc.parsed_content && typeof doc.parsed_content === 'object') {
+          // Include key parsed data without overwhelming the context
+          const content = doc.parsed_content as Record<string, unknown>;
+          const keys = Object.keys(content).slice(0, 5);
+          keys.forEach(key => {
+            const value = content[key];
+            if (value && typeof value === 'string' && value.length < 200) {
+              documentsContext += `- ${key}: ${value}\n`;
+            } else if (Array.isArray(value) && value.length > 0) {
+              documentsContext += `- ${key}: ${value.slice(0, 5).join(", ")}\n`;
+            }
+          });
+        }
+        if (doc.tags && doc.tags.length > 0) {
+          documentsContext += `Tags: ${doc.tags.join(", ")}\n`;
+        }
+      }
+    }
 
     // ─── LOAD RECENT CONVERSATION HISTORY (last 5) ────────────────────────────
     const { data: recentHistory } = await supabase
@@ -93,7 +129,7 @@ Deno.serve(async (req) => {
       ? memoryBank.map((m) => `${m.memory_key}: ${m.memory_value}`).join("\n")
       : "No long-term memory stored yet.";
 
-    // ─── LOAD WEARABLE DATA CONTEXT ──────────────────────────────────────────
+    // ─── LOAD WEARABLE DATA CONTEXT (Oura Ring) ──────────────────────────────
     const fourteenDaysAgo = new Date();
     fourteenDaysAgo.setDate(fourteenDaysAgo.getDate() - 14);
     const fourteenDaysAgoStr = fourteenDaysAgo.toISOString().split("T")[0];
@@ -114,7 +150,7 @@ Deno.serve(async (req) => {
       .order("date", { ascending: false })
       .limit(7);
 
-    // Build wearable context string
+    // Build wearable context string - ONLY reference populated fields
     let wearableContext = "";
     let hasWearableData = false;
 
@@ -132,10 +168,10 @@ Deno.serve(async (req) => {
         strainTrend = strainDiff > 0.5 ? "↑ increasing" : strainDiff < -0.5 ? "↓ decreasing" : "stable";
       }
 
-      const latestSource = wearableSummary[0]?.source || "unknown";
+      const latestSource = wearableSummary[0]?.source || "Oura Ring";
       const latestDate = wearableSummary[0]?.date || "unknown";
 
-      wearableContext = `\nWEARABLE DATA SUMMARY (Last 14 days):
+      wearableContext = `\nOURA RING DATA (Last 14 days):
 - Avg Training Strain: ${avgStrain.toFixed(1)} (${strainTrend})
 - Avg Monotony: ${avgMonotony.toFixed(2)}
 - Avg ACWR (Acute:Chronic Workload): ${avgAcwr.toFixed(2)}
@@ -144,13 +180,15 @@ Deno.serve(async (req) => {
 
     if (wearableSessions && wearableSessions.length > 0) {
       hasWearableData = true;
+      
+      // Only use fields that are actually populated
       const sessionsWithReadiness = wearableSessions.filter(s => s.readiness_score !== null);
       const sessionsWithSleep = wearableSessions.filter(s => s.sleep_score !== null);
+      const sessionsWithActivity = wearableSessions.filter(s => s.activity_score !== null);
 
       if (sessionsWithReadiness.length > 0) {
         const avgReadiness = sessionsWithReadiness.reduce((sum, s) => sum + (s.readiness_score || 0), 0) / sessionsWithReadiness.length;
         
-        // Calculate readiness trend from last 3
         const last3Readiness = sessionsWithReadiness.slice(0, 3);
         let readinessTrend = "stable";
         if (last3Readiness.length >= 2) {
@@ -164,7 +202,6 @@ Deno.serve(async (req) => {
       if (sessionsWithSleep.length > 0) {
         const avgSleep = sessionsWithSleep.reduce((sum, s) => sum + (s.sleep_score || 0), 0) / sessionsWithSleep.length;
         
-        // Calculate sleep trend from last 3
         const last3Sleep = sessionsWithSleep.slice(0, 3);
         let sleepTrend = "stable";
         if (last3Sleep.length >= 2) {
@@ -175,34 +212,49 @@ Deno.serve(async (req) => {
         wearableContext += `\n- Avg Sleep Score: ${avgSleep.toFixed(0)} (${sleepTrend})`;
       }
 
-      // Add recent activity metrics
+      if (sessionsWithActivity.length > 0) {
+        const avgActivity = sessionsWithActivity.reduce((sum, s) => sum + (s.activity_score || 0), 0) / sessionsWithActivity.length;
+        wearableContext += `\n- Avg Activity Score: ${avgActivity.toFixed(0)}`;
+      }
+
+      // Add recent activity metrics - only include populated fields
       const latestSession = wearableSessions[0];
       if (latestSession) {
-        wearableContext += `\n- Latest Activity: ${latestSession.total_steps || 0} steps, ${latestSession.total_calories || 0} cal`;
-        if (latestSession.resting_hr) wearableContext += `, HR: ${latestSession.resting_hr}`;
-        if (latestSession.hrv_avg) wearableContext += `, HRV: ${latestSession.hrv_avg}`;
+        const activityParts: string[] = [];
+        if (latestSession.total_steps) activityParts.push(`${latestSession.total_steps} steps`);
+        if (latestSession.active_calories) activityParts.push(`${latestSession.active_calories} active cal`);
+        if (latestSession.total_calories) activityParts.push(`${latestSession.total_calories} total cal`);
+        if (latestSession.spo2_avg) activityParts.push(`SpO2: ${latestSession.spo2_avg}%`);
+        
+        if (activityParts.length > 0) {
+          wearableContext += `\n- Latest Activity (${latestSession.date}): ${activityParts.join(", ")}`;
+        }
       }
     }
 
     if (!hasWearableData) {
-      wearableContext = "\nWEARABLE DATA: No wearable data available yet. User may need to connect a device.";
+      wearableContext = "\nOURA RING DATA: No wearable data available yet. User may need to connect their Oura Ring.";
     }
 
     // ─── BUILD PROMPT CONTEXT ────────────────────────────────────────────────
     const contextInfo = `
-USER PROFILE CONTEXT:
-Goals: ${userProfile?.goals || "Not provided"}
+USER PROFILE:
+Name: ${userProfile?.name || "Not provided"}
+Goals: ${userProfile?.goals?.join(", ") || "Not provided"}
 Activity Level: ${userProfile?.activity_level || "Not specified"}
-Injuries: ${userProfile?.injuries || "None listed"}
-Lifestyle Notes: ${userProfile?.notes || "None provided"}
+Injuries: ${userProfile?.injuries?.join(", ") || "None listed"}
+Medical Conditions: ${userProfile?.conditions?.join(", ") || "None listed"}
+Gender: ${userProfile?.gender || "Not specified"}
+Date of Birth: ${userProfile?.dob || "Not provided"}
 
 USER CONTEXT:
 Nutrition Profile: ${JSON.stringify(userContext?.nutrition_profile || {}, null, 2)}
 Medical Profile: ${JSON.stringify(userContext?.medical_profile || {}, null, 2)}
 Training Profile: ${JSON.stringify(userContext?.training_profile || {}, null, 2)}
 
-HEALTH PROFILE:
+HEALTH PROFILE FROM DOCUMENTS:
 ${healthProfile?.ai_synthesis || "No comprehensive health profile available yet."}
+${documentsContext}
 ${wearableContext}
 
 RECENT CONVERSATION HISTORY:
@@ -224,13 +276,20 @@ ${query}
         messages: [
           {
             role: "system",
-            content: `You are Yves, an AI health intelligence coach. Always respond in full sentences with clear grammar, natural pacing, and friendly professionalism. Use markdown formatting for readability:
+            content: `You are Yves, an AI health intelligence coach for the Predictiv platform. Always respond in full sentences with clear grammar, natural pacing, and friendly professionalism. Use markdown formatting for readability:
 • Bold important keywords or section titles.
 • Keep responses concise and conversational.
 • Ensure lists are consistently formatted and punctuated.
 • Maintain a warm, coaching tone — never robotic.
 
-You provide personalized, actionable advice using all available context (profile, history, memory).
+You provide personalized, actionable advice using ALL available context:
+- User's profile (goals, activity level, injuries, conditions)
+- Uploaded documents (nutrition plans, medical records, training programs)
+- Oura Ring data (sleep, readiness, activity scores, steps, calories)
+- Conversation history and long-term memory
+
+When referencing health data, use the specific metrics available. If certain metrics are not available, focus on what IS available rather than mentioning missing data.
+
 If new permanent facts arise (preferences, chronic conditions, long-term goals),
 suggest saving them with memory_key and memory_value so they can be stored via yves-memory-update.`,
           },
@@ -282,7 +341,7 @@ suggest saving them with memory_key and memory_value so they can be stored via y
       query,
       response,
       context_used: hasWearableData ? wearableContext : null,
-      provider: "openai", // Default provider, update if using different AI
+      provider: "lovable-ai",
     });
 
     console.log(`[yves-chat] Response generated and saved for user ${user.id}`);
@@ -306,7 +365,8 @@ suggest saving them with memory_key and memory_value so they can be stored via y
     return new Response(JSON.stringify({ 
       success: true, 
       response,
-      has_wearable_data: hasWearableData 
+      has_wearable_data: hasWearableData,
+      has_documents: userDocuments && userDocuments.length > 0,
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,

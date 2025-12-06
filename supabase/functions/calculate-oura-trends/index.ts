@@ -310,6 +310,21 @@ serve(async (req) => {
         }
 
         console.log(`[calculate-oura-trends] [SUCCESS] Trends calculated for user ${userId}`);
+        
+        // Trigger recommendation regeneration with fresh data
+        try {
+          const { error: recsError } = await supabase.functions.invoke('generate-yves-recommendations', {
+            body: { userId }
+          });
+          if (recsError) {
+            console.error(`[calculate-oura-trends] [WARN] Failed to regenerate recommendations:`, recsError);
+          } else {
+            console.log(`[calculate-oura-trends] [SUCCESS] Recommendations regenerated for user ${userId}`);
+          }
+        } catch (recsErr) {
+          console.error(`[calculate-oura-trends] [WARN] Recommendations trigger failed:`, recsErr);
+        }
+        
         results.push({ userId, status: "success" });
 
       } catch (userError) {

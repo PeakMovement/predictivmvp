@@ -1,20 +1,59 @@
 import { AlertTriangle, Shield, ShieldCheck, ShieldAlert } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useTrainingTrends } from "@/hooks/useTrainingTrends";
-import { useMemo } from "react";
+import { useMemo, useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
+
+interface RecoveryTrend {
+  acwr: number | null;
+  strain: number | null;
+  monotony: number | null;
+  recovery_score: number | null;
+  period_date: string;
+}
 
 export const RiskScoreCard = () => {
-  const { trends, isLoading } = useTrainingTrends({ days: 7 });
+  const [trends, setTrends] = useState<RecoveryTrend[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchRecoveryTrends = async () => {
+      setIsLoading(true);
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        setIsLoading(false);
+        return;
+      }
+      
+      const cutoffDate = new Date();
+      cutoffDate.setDate(cutoffDate.getDate() - 7);
+      
+      const { data } = await supabase
+        .from("recovery_trends")
+        .select("acwr, strain, monotony, recovery_score, period_date")
+        .eq("user_id", user.id)
+        .gte("period_date", cutoffDate.toISOString().split("T")[0])
+        .order("period_date", { ascending: false });
+      
+      setTrends(data || []);
+      setIsLoading(false);
+    };
+    
+    fetchRecoveryTrends();
+  }, []);
   
-  // Calculate Risk Score from 7-day averages
+  // Calculate Risk Score from 7-day averages using recovery_trends (correct ACWR data)
   const { riskScore, riskLevel, metrics } = useMemo(() => {
     if (trends.length === 0) {
       return { riskScore: 0, riskLevel: "unknown", metrics: { acwr: 0, strain: 0, fatigueIndex: 0 } };
     }
     
-    const avgACWR = trends.reduce((sum, t) => sum + (t.acwr || 0), 0) / trends.length;
-    const avgStrain = trends.reduce((sum, t) => sum + (t.strain || 0), 0) / trends.length;
-    const avgMonotony = trends.reduce((sum, t) => sum + (t.monotony || 0), 0) / trends.length;
+    const validAcwr = trends.filter(t => t.acwr !== null);
+    const validStrain = trends.filter(t => t.strain !== null);
+    const validMonotony = trends.filter(t => t.monotony !== null);
+    
+    const avgACWR = validAcwr.length > 0 ? validAcwr.reduce((sum, t) => sum + (t.acwr || 0), 0) / validAcwr.length : 0;
+    const avgStrain = validStrain.length > 0 ? validStrain.reduce((sum, t) => sum + (t.strain || 0), 0) / validStrain.length : 0;
+    const avgMonotony = validMonotony.length > 0 ? validMonotony.reduce((sum, t) => sum + (t.monotony || 0), 0) / validMonotony.length : 0;
     
     // Fatigue Index: (Strain / 200) × 50 + (Monotony / 3) × 50
     const fatigueIndex = Math.min(100, Math.round((avgStrain / 200) * 50 + (avgMonotony / 3) * 50));

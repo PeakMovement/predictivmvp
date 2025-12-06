@@ -290,12 +290,17 @@ serve(async (req) => {
 
         // === TRAINING TRENDS (for graphs) ===
         // Also upsert to training_trends for the UnifiedTrendCard graphs
+        // Use the properly calculated ACWR from recovery trends
+        const trainingAcwr = acwr !== null ? acwr : (chronicLoadAvg && chronicLoadAvg > 0 && acuteLoadAvg !== null ? acuteLoadAvg / chronicLoadAvg : null);
+        
+        console.log(`[calculate-oura-trends] [DEBUG] Training trends for ${userId}: acwr=${trainingAcwr}, acute=${acuteLoadAvg}, chronic=${chronicLoadAvg}, strain=${strain}, monotony=${monotony}`);
+        
         const { error: trainingError } = await supabase
           .from("training_trends")
           .upsert({
             user_id: userId,
             date: today,
-            acwr: safeNumber(acwr),
+            acwr: safeNumber(trainingAcwr),
             ewma: safeNumber(acuteLoadAvg), // EWMA approximated by acute load average
             strain: safeNumber(strain),
             monotony: safeNumber(monotony),

@@ -541,23 +541,28 @@ const AcceptedChallengesSection = () => {
 const WeeklyInsightsSection = () => {
   const [isInfoDialogOpen, setIsInfoDialogOpen] = useState(false);
   const { csvData, currentDayIndex } = useLiveData();
-  const { trends, isLoading } = useTrainingTrends({ days: 7 });
+  const { trends, latestTrend, isLoading } = useTrainingTrends({ days: 7 });
   
-  // Calculate 7-day rolling averages from wearable_auto_data using unified calculator
-  const calculate7DayAverages = useMemo(() => {
+  // Calculate 7-day rolling averages using unified calculator
+  const metrics = useMemo(() => {
     if (trends.length === 0) {
       return {
         avgHRV: 0,
         avgACWR: 0,
         avgSleepScore: null,
-        avgStrain: 0
+        avgStrain: 0,
+        avgMonotony: 0,
+        avgEWMA: 0,
+        recoveryScore: null,
+        fatigueIndex: null,
+        riskScore: null
       };
     }
     
     const avgHRV = trends.reduce((sum, t) => sum + (t.hrv || 0), 0) / trends.length;
     const avgACWR = trends.reduce((sum, t) => sum + (t.acwr || 0), 0) / trends.length;
     
-    // Use sleep_score from wearable trends (calculated in calc-trends)
+    // Sleep score from wearable trends
     const sleepScores = trends
       .filter((t: any) => t.sleep_score != null && t.sleep_score > 0)
       .map((t: any) => t.sleep_score);
@@ -565,65 +570,150 @@ const WeeklyInsightsSection = () => {
       ? sleepScores.reduce((sum: number, score: number) => sum + score, 0) / sleepScores.length
       : null;
     
+    // Training Strain: Weekly Load × Monotony (from calculate-oura-trends)
     const avgStrain = trends.reduce((sum, t) => sum + (t.strain || 0), 0) / trends.length;
+    
+    // Training Monotony: Mean Daily Load ÷ SD of Daily Load
+    const avgMonotony = trends.reduce((sum, t) => sum + (t.monotony || 0), 0) / trends.length;
+    
+    // EWMA Load (Exponentially Weighted Moving Average)
+    const avgEWMA = trends.reduce((sum, t) => sum + (t.ewma || 0), 0) / trends.length;
+    
+    // Recovery Score: Based on sleep score and HRV (higher = better recovery)
+    // Formula: (Sleep Score × 0.6) + (HRV normalized × 0.4)
+    const recoveryScore = avgSleepScore !== null && avgHRV > 0
+      ? Math.round((avgSleepScore * 0.6) + (Math.min(avgHRV / 100, 1) * 40))
+      : null;
+    
+    // Fatigue Index: Inversely related to recovery, based on strain and monotony
+    // Formula: (Strain / 200) × 50 + (Monotony / 3) × 50, capped at 100
+    const fatigueIndex = avgStrain > 0 || avgMonotony > 0
+      ? Math.min(100, Math.round((avgStrain / 200) * 50 + (avgMonotony / 3) * 50))
+      : null;
+    
+    // Risk Score: Composite based on ACWR, strain, and fatigue
+    // Higher ACWR (>1.3) or high fatigue = higher risk
+    let riskScore = 0;
+    if (avgACWR > 1.5) riskScore += 40;
+    else if (avgACWR > 1.3) riskScore += 25;
+    else if (avgACWR > 1.0) riskScore += 10;
+    
+    if (avgStrain > 150) riskScore += 30;
+    else if (avgStrain > 100) riskScore += 15;
+    
+    if (fatigueIndex && fatigueIndex > 70) riskScore += 30;
+    else if (fatigueIndex && fatigueIndex > 50) riskScore += 15;
     
     return {
       avgHRV,
       avgACWR,
       avgSleepScore,
-      avgStrain
+      avgStrain,
+      avgMonotony,
+      avgEWMA,
+      recoveryScore,
+      fatigueIndex,
+      riskScore: Math.min(100, riskScore)
     };
   }, [trends]);
   
-  const { avgHRV, avgACWR, avgSleepScore, avgStrain } = calculate7DayAverages;
+  const { avgHRV, avgACWR, avgSleepScore, avgStrain, avgMonotony, avgEWMA, recoveryScore, fatigueIndex, riskScore } = metrics;
   
-  // Generate dynamic summary based on averages
+  // Generate dynamic summary based on all metrics
   const generateSummary = () => {
     const parts = [];
     
-    if (avgSleepScore !== null && avgSleepScore < 70) {
+    // Recovery assessment
+    if (recoveryScore !== null && recoveryScore < 60) {
       parts.push("Your recovery was below target this week");
-    } else if (avgSleepScore !== null && avgSleepScore > 80) {
+    } else if (recoveryScore !== null && recoveryScore > 75) {
       parts.push("Excellent recovery this week");
-    } else if (avgSleepScore !== null) {
+    } else if (recoveryScore !== null) {
       parts.push("Recovery was moderate this week");
     }
     
-    if (avgACWR > 1.3) {
+    // Training load assessment
+    if (avgACWR > 1.5) {
+      parts.push("Training load was very high, increasing injury risk");
+    } else if (avgACWR > 1.3) {
       parts.push("Training load was elevated, causing increased strain");
     } else if (avgACWR < 0.8) {
       parts.push("Training load was light, allowing for good recovery");
     }
     
-    if (avgStrain > 150) {
-      parts.push("Consider adjusting your upcoming sessions to allow for better recovery");
+    // Risk assessment
+    if (riskScore > 60) {
+      parts.push("High risk detected - consider reducing training intensity");
+    } else if (fatigueIndex && fatigueIndex > 70) {
+      parts.push("Fatigue levels are elevated - prioritize rest");
+    }
+    
+    if (parts.length === 0) {
+      parts.push("Training and recovery are well balanced this week");
     }
     
     return parts.join(". ") + ".";
   };
   
-  // Generate dynamic recommendations
+  // Generate dynamic recommendations based on all metrics
   const generateRecommendations = () => {
     const recommendations = [];
     
-    if (avgHRV < 60) {
+    // Risk-based recommendations (highest priority)
+    if (riskScore > 60) {
       recommendations.push({
-        color: "green",
-        text: "Add 2 recovery sessions focusing on mobility and light stretching"
+        color: "red",
+        text: "High risk detected: Reduce training intensity by 30-40% this week"
       });
     }
     
-    if (avgACWR > 1.3) {
+    // Fatigue-based recommendations
+    if (fatigueIndex && fatigueIndex > 70) {
+      recommendations.push({
+        color: "yellow",
+        text: "Fatigue is high: Add extra rest day and focus on active recovery"
+      });
+    }
+    
+    // ACWR-based recommendations
+    if (avgACWR > 1.5) {
+      recommendations.push({
+        color: "red",
+        text: "ACWR in danger zone: Significantly reduce training volume to prevent injury"
+      });
+    } else if (avgACWR > 1.3) {
       recommendations.push({
         color: "yellow",
         text: "Reduce training volume by 15-20% to prevent overtraining"
       });
     }
     
-    if (avgSleepScore !== null && avgSleepScore < 75) {
+    // Monotony recommendations
+    if (avgMonotony > 2.0) {
+      recommendations.push({
+        color: "yellow",
+        text: "Training monotony is high: Vary your workout intensity more throughout the week"
+      });
+    }
+    
+    // HRV-based recommendations
+    if (avgHRV < 50) {
+      recommendations.push({
+        color: "red",
+        text: "Low HRV indicates stress: Prioritize sleep and consider lighter workouts"
+      });
+    } else if (avgHRV < 60) {
+      recommendations.push({
+        color: "green",
+        text: "Add recovery sessions focusing on mobility and light stretching"
+      });
+    }
+    
+    // Recovery score recommendations
+    if (recoveryScore !== null && recoveryScore < 60) {
       recommendations.push({
         color: "blue",
-        text: "Prioritize sleep quality with 8+ hours per night"
+        text: "Prioritize sleep quality with 8+ hours per night to improve recovery"
       });
     }
     
@@ -654,25 +744,63 @@ const WeeklyInsightsSection = () => {
           </button>
         </div>
 
-        {/* 7-Day Averages */}
+        {/* Primary Metrics - 4 columns */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+          <div className="bg-glass/30 backdrop-blur-sm border border-glass-border rounded-lg p-3 transition-all duration-300 hover:bg-glass-highlight">
+            <p className="text-xs text-muted-foreground mb-1">ACWR</p>
+            <p className={cn(
+              "text-lg font-bold",
+              avgACWR > 1.5 ? "text-red-400" : avgACWR > 1.3 ? "text-yellow-400" : "text-green-400"
+            )}>{avgACWR.toFixed(2)}</p>
+          </div>
+          <div className="bg-glass/30 backdrop-blur-sm border border-glass-border rounded-lg p-3 transition-all duration-300 hover:bg-glass-highlight">
+            <p className="text-xs text-muted-foreground mb-1">Training Strain</p>
+            <p className={cn(
+              "text-lg font-bold",
+              avgStrain > 150 ? "text-red-400" : avgStrain > 100 ? "text-yellow-400" : "text-foreground"
+            )}>{avgStrain.toFixed(0)}</p>
+          </div>
+          <div className="bg-glass/30 backdrop-blur-sm border border-glass-border rounded-lg p-3 transition-all duration-300 hover:bg-glass-highlight">
+            <p className="text-xs text-muted-foreground mb-1">Monotony</p>
+            <p className={cn(
+              "text-lg font-bold",
+              avgMonotony > 2.0 ? "text-yellow-400" : "text-foreground"
+            )}>{avgMonotony.toFixed(2)}</p>
+          </div>
+          <div className="bg-glass/30 backdrop-blur-sm border border-glass-border rounded-lg p-3 transition-all duration-300 hover:bg-glass-highlight">
+            <p className="text-xs text-muted-foreground mb-1">EWMA Load</p>
+            <p className="text-lg font-bold text-foreground">{avgEWMA.toFixed(0)}</p>
+          </div>
+        </div>
+        
+        {/* Secondary Metrics - 4 columns */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+          <div className="bg-glass/30 backdrop-blur-sm border border-glass-border rounded-lg p-3 transition-all duration-300 hover:bg-glass-highlight">
+            <p className="text-xs text-muted-foreground mb-1">Recovery Score</p>
+            <p className={cn(
+              "text-lg font-bold",
+              recoveryScore !== null && recoveryScore < 60 ? "text-red-400" : 
+              recoveryScore !== null && recoveryScore < 75 ? "text-yellow-400" : "text-green-400"
+            )}>{recoveryScore !== null ? recoveryScore : "—"}</p>
+          </div>
+          <div className="bg-glass/30 backdrop-blur-sm border border-glass-border rounded-lg p-3 transition-all duration-300 hover:bg-glass-highlight">
+            <p className="text-xs text-muted-foreground mb-1">Fatigue Index</p>
+            <p className={cn(
+              "text-lg font-bold",
+              fatigueIndex !== null && fatigueIndex > 70 ? "text-red-400" : 
+              fatigueIndex !== null && fatigueIndex > 50 ? "text-yellow-400" : "text-green-400"
+            )}>{fatigueIndex !== null ? fatigueIndex : "—"}</p>
+          </div>
+          <div className="bg-glass/30 backdrop-blur-sm border border-glass-border rounded-lg p-3 transition-all duration-300 hover:bg-glass-highlight">
+            <p className="text-xs text-muted-foreground mb-1">Risk Score</p>
+            <p className={cn(
+              "text-lg font-bold",
+              riskScore > 60 ? "text-red-400" : riskScore > 30 ? "text-yellow-400" : "text-green-400"
+            )}>{riskScore}</p>
+          </div>
           <div className="bg-glass/30 backdrop-blur-sm border border-glass-border rounded-lg p-3 transition-all duration-300 hover:bg-glass-highlight">
             <p className="text-xs text-muted-foreground mb-1">Avg HRV</p>
             <p className="text-lg font-bold text-foreground">{avgHRV.toFixed(1)}</p>
-          </div>
-          <div className="bg-glass/30 backdrop-blur-sm border border-glass-border rounded-lg p-3 transition-all duration-300 hover:bg-glass-highlight">
-            <p className="text-xs text-muted-foreground mb-1">Avg ACWR</p>
-            <p className="text-lg font-bold text-foreground">{avgACWR.toFixed(2)}</p>
-          </div>
-          <div className="bg-glass/30 backdrop-blur-sm border border-glass-border rounded-lg p-3 transition-all duration-300 hover:bg-glass-highlight">
-            <p className="text-xs text-muted-foreground mb-1">Avg Sleep</p>
-            <p className="text-lg font-bold text-foreground">
-              {avgSleepScore !== null ? avgSleepScore.toFixed(0) : "—"}
-            </p>
-          </div>
-          <div className="bg-glass/30 backdrop-blur-sm border border-glass-border rounded-lg p-3 transition-all duration-300 hover:bg-glass-highlight">
-            <p className="text-xs text-muted-foreground mb-1">Avg Strain</p>
-            <p className="text-lg font-bold text-foreground">{avgStrain.toFixed(0)}</p>
           </div>
         </div>
 

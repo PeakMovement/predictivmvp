@@ -41,7 +41,7 @@ export const useWearableSessions = (userId: string | undefined) => {
           .eq("user_id", userId)
           .order("date", { ascending: false })
           .limit(1)
-          .single();
+          .maybeSingle();
 
         if (fetchError) throw fetchError;
 

@@ -50,7 +50,7 @@ Deno.serve(async (req) => {
       }
     }
 
-    console.log(`[generate-daily-briefing] Processing ${userIds.length} users`);
+    console.log(`[generate-daily-briefing] Processing ${userIds.length} users for category: ${category}`);
 
     const results = [];
     const today = new Date().toISOString().split("T")[0];
@@ -91,6 +91,15 @@ Deno.serve(async (req) => {
           .order("date", { ascending: false })
           .limit(3);
 
+        // ─── LOAD USER UPLOADED DOCUMENTS ────────────────────────────────────
+        const { data: userDocuments } = await supabase
+          .from("user_documents")
+          .select("document_type, file_name, parsed_content, ai_summary, tags")
+          .eq("user_id", uid)
+          .eq("processing_status", "completed")
+          .order("uploaded_at", { ascending: false })
+          .limit(5);
+
         // ─── LOAD USER MEMORY ────────────────────────────────────────────────
         const { data: memoryBank } = await supabase
           .from("yves_memory_bank")
@@ -111,9 +120,10 @@ Deno.serve(async (req) => {
           .maybeSingle();
 
         // ─── BUILD CONTEXT DATA ──────────────────────────────────────────────
-        const contextData: any = {
+        const contextData: Record<string, unknown> = {
           wearable_summary: wearableSummary || [],
           wearable_sessions: wearableSessions || [],
+          user_documents: userDocuments || [],
           memory_bank: memoryBank || [],
           user_profile: userProfile || null,
           user_context: userContext || null,
@@ -122,53 +132,98 @@ Deno.serve(async (req) => {
         const hasWearableData = (wearableSummary && wearableSummary.length > 0) || 
                                 (wearableSessions && wearableSessions.length > 0);
 
-        // ─── BUILD PROMPT ────────────────────────────────────────────────────
+        // ─── BUILD PROMPT CONTEXT ────────────────────────────────────────────
         let promptContext = "";
 
+        // Add Oura Ring data - ONLY reference populated fields
         if (hasWearableData) {
           if (wearableSummary && wearableSummary.length > 0) {
             const avgStrain = wearableSummary.reduce((sum, s) => sum + (s.strain || 0), 0) / wearableSummary.length;
             const avgAcwr = wearableSummary.reduce((sum, s) => sum + (s.acwr || 0), 0) / wearableSummary.length;
             const latestDate = wearableSummary[0]?.date;
             
-            promptContext += `Training Load (7 days):
+            promptContext += `Oura Ring Training Load (7 days):
 - Avg Strain: ${avgStrain.toFixed(1)}
 - Avg ACWR: ${avgAcwr.toFixed(2)}
-- Latest: ${latestDate}\n\n`;
+- Latest Sync: ${latestDate}\n\n`;
           }
 
           if (wearableSessions && wearableSessions.length > 0) {
-            const avgReadiness = wearableSessions
-              .filter(s => s.readiness_score !== null)
-              .reduce((sum, s) => sum + (s.readiness_score || 0), 0) / 
-              wearableSessions.filter(s => s.readiness_score !== null).length;
+            // Only calculate averages for fields that have data
+            const sessionsWithReadiness = wearableSessions.filter(s => s.readiness_score !== null);
+            const sessionsWithSleep = wearableSessions.filter(s => s.sleep_score !== null);
+            const sessionsWithActivity = wearableSessions.filter(s => s.activity_score !== null);
 
-            const avgSleep = wearableSessions
-              .filter(s => s.sleep_score !== null)
-              .reduce((sum, s) => sum + (s.sleep_score || 0), 0) / 
-              wearableSessions.filter(s => s.sleep_score !== null).length;
+            promptContext += `Oura Ring Recovery (3 days):\n`;
 
-            promptContext += `Recent Recovery (3 days):
-- Avg Readiness: ${avgReadiness.toFixed(0)}
-- Avg Sleep Score: ${avgSleep.toFixed(0)}
-- Latest Steps: ${wearableSessions[0]?.total_steps || 0}
-- Latest HR: ${wearableSessions[0]?.resting_hr || "N/A"}\n\n`;
+            if (sessionsWithReadiness.length > 0) {
+              const avgReadiness = sessionsWithReadiness.reduce((sum, s) => sum + (s.readiness_score || 0), 0) / sessionsWithReadiness.length;
+              promptContext += `- Avg Readiness: ${avgReadiness.toFixed(0)}\n`;
+            }
+
+            if (sessionsWithSleep.length > 0) {
+              const avgSleep = sessionsWithSleep.reduce((sum, s) => sum + (s.sleep_score || 0), 0) / sessionsWithSleep.length;
+              promptContext += `- Avg Sleep Score: ${avgSleep.toFixed(0)}\n`;
+            }
+
+            if (sessionsWithActivity.length > 0) {
+              const avgActivity = sessionsWithActivity.reduce((sum, s) => sum + (s.activity_score || 0), 0) / sessionsWithActivity.length;
+              promptContext += `- Avg Activity Score: ${avgActivity.toFixed(0)}\n`;
+            }
+
+            // Add latest session activity metrics - only populated fields
+            const latestSession = wearableSessions[0];
+            if (latestSession) {
+              const activityParts: string[] = [];
+              if (latestSession.total_steps) activityParts.push(`${latestSession.total_steps} steps`);
+              if (latestSession.active_calories) activityParts.push(`${latestSession.active_calories} active cal`);
+              if (latestSession.spo2_avg) activityParts.push(`SpO2: ${latestSession.spo2_avg}%`);
+              
+              if (activityParts.length > 0) {
+                promptContext += `- Latest (${latestSession.date}): ${activityParts.join(", ")}\n`;
+              }
+            }
+            promptContext += "\n";
           }
         }
 
-        if (memoryBank && memoryBank.length > 0) {
-          promptContext += `User Context:\n`;
-          memoryBank.slice(0, 5).forEach(m => {
-            promptContext += `- ${m.memory_key}: ${JSON.stringify(m.memory_value).slice(0, 100)}\n`;
-          });
+        // Add user documents context
+        if (userDocuments && userDocuments.length > 0) {
+          promptContext += `User Documents:\n`;
+          for (const doc of userDocuments) {
+            promptContext += `- ${doc.document_type}: `;
+            if (doc.ai_summary) {
+              promptContext += `${doc.ai_summary.slice(0, 150)}...\n`;
+            } else if (doc.tags && doc.tags.length > 0) {
+              promptContext += `Tags: ${doc.tags.join(", ")}\n`;
+            } else {
+              promptContext += `${doc.file_name}\n`;
+            }
+          }
+          promptContext += "\n";
         }
 
-        // Add user profile info if available
-        if (!hasWearableData && userProfile) {
-          promptContext += `\nUser Profile:\n`;
+        // Add memory bank context
+        if (memoryBank && memoryBank.length > 0) {
+          promptContext += `User Preferences:\n`;
+          memoryBank.slice(0, 5).forEach(m => {
+            const valueStr = typeof m.memory_value === 'string' 
+              ? m.memory_value 
+              : JSON.stringify(m.memory_value).slice(0, 100);
+            promptContext += `- ${m.memory_key}: ${valueStr}\n`;
+          });
+          promptContext += "\n";
+        }
+
+        // Add user profile info
+        if (userProfile) {
+          promptContext += `User Profile:\n`;
           if (userProfile.name) promptContext += `- Name: ${userProfile.name}\n`;
           if (userProfile.goals?.length > 0) promptContext += `- Goals: ${userProfile.goals.join(", ")}\n`;
           if (userProfile.activity_level) promptContext += `- Activity Level: ${userProfile.activity_level}\n`;
+          if (userProfile.injuries?.length > 0) promptContext += `- Injuries: ${userProfile.injuries.join(", ")}\n`;
+          if (userProfile.conditions?.length > 0) promptContext += `- Conditions: ${userProfile.conditions.join(", ")}\n`;
+          promptContext += "\n";
         }
 
         // ─── CALL LOVABLE AI ────────────────────────────────────────────────
@@ -179,55 +234,58 @@ Deno.serve(async (req) => {
         if (category === 'full') {
           systemPrompt = `You are Yves, an AI health intelligence coach. Generate a concise daily briefing (about 150 words) with 4 sections:
 
-1. Recovery: Readiness score trend and assessment
+1. Recovery: Readiness and sleep score trends from Oura Ring
 2. Training Load: ACWR and strain balance status  
-3. Recommendations: 1-2 specific adjustments based on recent wearable data
-4. Motivation: Brief encouragement aligned with their activity level
+3. Recommendations: 1-2 specific adjustments based on Oura data and any uploaded documents
+4. Motivation: Brief encouragement aligned with their goals
 
-Use emoji section markers (like 🏃, 💪, 💡, 🎯). Be specific with numbers when available. Keep it actionable and motivational.
+Use emoji section markers (🏃, 💪, 💡, 🎯). Be specific with actual numbers from the data. Keep it actionable and motivational.
 
 CRITICAL FORMATTING RULES:
 - Use plain text only with emoji bullets
 - DO NOT use markdown syntax (no asterisks, no bold, no underscores)
 - Separate sections with a single blank line
-- Use proper grammar and punctuation`;
+- Use proper grammar and punctuation
+- Only reference metrics that have actual data provided`;
 
           if (hasWearableData) {
-            userPrompt = `Generate today's briefing based on:\n\n${promptContext}`;
+            userPrompt = `Generate today's briefing based on the user's Oura Ring data and profile:\n\n${promptContext}`;
           } else if (userProfile) {
-            userPrompt = `Generate a welcoming briefing for a new user. ${promptContext}\n\nProvide encouragement to connect a wearable device and start tracking their health journey.`;
+            userPrompt = `Generate a welcoming briefing for a new user. ${promptContext}\n\nProvide encouragement to connect their Oura Ring and start tracking their health journey.`;
           } else {
-            userPrompt = `Generate a brief welcome message encouraging the user to complete their profile and connect a wearable device to unlock personalized health insights.`;
+            userPrompt = `Generate a brief welcome message encouraging the user to complete their profile and connect their Oura Ring to unlock personalized health insights.`;
           }
         } else {
           // Category-specific mini-briefings
           maxTokens = 150;
-          const categoryPrompts = {
+          const categoryPrompts: Record<string, { system: string; user: string }> = {
             recovery: {
-              system: `You are Yves, a health coach. Create a focused 60-word briefing about recovery status. Include readiness scores, HRV trends, and recovery advice. Use emoji 🏃 at the start. Plain text only, no markdown.`,
-              user: `${promptContext}\n\nFocus only on recovery metrics and advice.`
+              system: `You are Yves, a health coach. Create a focused 60-word briefing about recovery status using Oura Ring data. Include readiness scores and recovery advice. Use emoji 🏃 at the start. Plain text only, no markdown. Only mention metrics that have actual data.`,
+              user: `${promptContext}\n\nFocus only on recovery metrics and advice based on Oura data.`
             },
             sleep: {
-              system: `You are Yves, a health coach. Create a focused 60-word briefing about sleep quality. Include deep sleep percentage, sleep efficiency, and sleep recommendations. Use emoji 😴 at the start. Plain text only, no markdown.`,
-              user: `${promptContext}\n\nFocus only on sleep metrics and advice.`
+              system: `You are Yves, a health coach. Create a focused 60-word briefing about sleep quality using Oura Ring data. Include sleep score and recommendations. Use emoji 😴 at the start. Plain text only, no markdown. Only mention metrics that have actual data.`,
+              user: `${promptContext}\n\nFocus only on sleep metrics and advice based on Oura data.`
             },
             activity: {
-              system: `You are Yves, a health coach. Create a focused 60-word briefing about training load. Include training load, ACWR, and strain balance. Use emoji 💪 at the start. Plain text only, no markdown.`,
-              user: `${promptContext}\n\nFocus only on activity metrics and training advice.`
+              system: `You are Yves, a health coach. Create a focused 60-word briefing about activity using Oura Ring data. Include activity score, steps, and training advice. Use emoji 💪 at the start. Plain text only, no markdown. Only mention metrics that have actual data.`,
+              user: `${promptContext}\n\nFocus only on activity metrics and training advice based on Oura data.`
             },
             goals: {
-              system: `You are Yves, a health coach. Create a focused 60-word briefing about goal progress. Mention progress toward stated goals and provide encouragement. Use emoji 🎯 at the start. Plain text only, no markdown.`,
-              user: `${promptContext}\n\nFocus on progress and goals.`
+              system: `You are Yves, a health coach. Create a focused 60-word briefing about goal progress based on user profile and Oura data. Mention progress toward stated goals and provide encouragement. Use emoji 🎯 at the start. Plain text only, no markdown.`,
+              user: `${promptContext}\n\nFocus on progress toward the user's stated goals.`
             },
             tip: {
-              system: `You are Yves, a health coach. Create a focused 40-word actionable health tip based on recent data. Use emoji 💡 at the start. Plain text only, no markdown.`,
-              user: `${promptContext}\n\nGive one specific, personalized tip.`
+              system: `You are Yves, a health coach. Create a focused 40-word actionable health tip based on the user's Oura data and any uploaded documents. Use emoji 💡 at the start. Plain text only, no markdown.`,
+              user: `${promptContext}\n\nGive one specific, personalized tip based on their data.`
             }
           };
 
           const prompt = categoryPrompts[category];
           systemPrompt = prompt.system;
-          userPrompt = (hasWearableData || userProfile) ? prompt.user : `Generate a brief message encouraging the user to connect wearable data for personalized ${category} insights.`;
+          userPrompt = (hasWearableData || userProfile || (userDocuments && userDocuments.length > 0)) 
+            ? prompt.user 
+            : `Generate a brief message encouraging the user to connect their Oura Ring for personalized ${category} insights.`;
         }
 
         const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
@@ -287,7 +345,7 @@ CRITICAL FORMATTING RULES:
           continue;
         }
 
-        console.log(`[generate-daily-briefing] Briefing generated for user ${uid}`);
+        console.log(`[generate-daily-briefing] Briefing generated for user ${uid}, category: ${category}`);
         results.push({ user_id: uid, success: true });
 
       } catch (userError) {

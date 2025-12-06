@@ -247,16 +247,21 @@ serve(async (req) => {
         const acuteData = last7Days.map((s) => s.activity_score || 0);
         const chronicData = last28Days.map((s) => s.activity_score || 0);
 
-        const acuteLoad = calculateAverage(acuteData);
-        const chronicLoad = calculateAverage(chronicData);
-        const acwr = chronicLoad && chronicLoad !== 0 ? (acuteLoad || 0) / chronicLoad : null;
+        // Calculate daily averages for ACWR
+        const acuteLoadAvg = calculateAverage(acuteData);
+        const chronicLoadAvg = calculateAverage(chronicData);
+        const acwr = chronicLoadAvg && chronicLoadAvg !== 0 ? (acuteLoadAvg || 0) / chronicLoadAvg : null;
 
-        // Calculate monotony (stddev of last 7 days)
+        // Calculate weekly load (sum of 7 days) for monotony & strain
+        const weeklyLoad = acuteData.reduce((sum, v) => sum + v, 0);
+        const meanDailyLoad = weeklyLoad / (acuteData.length || 1);
+        
+        // Monotony = Mean Daily Load ÷ Standard Deviation of Daily Load
         const monotonyStdDev = calculateStdDev(acuteData);
-        const monotony = monotonyStdDev && acuteLoad ? acuteLoad / (monotonyStdDev || 1) : null;
+        const monotony = monotonyStdDev && monotonyStdDev > 0 ? meanDailyLoad / monotonyStdDev : null;
 
-        // Calculate strain
-        const strain = monotony && acuteLoad ? acuteLoad * monotony : null;
+        // Strain = Weekly Load × Monotony
+        const strain = monotony && weeklyLoad ? weeklyLoad * monotony : null;
 
         // Determine ACWR trend
         const prev7DaysAcute = calculateAverage(prev7Days.map((s) => s.activity_score || 0));
@@ -270,8 +275,8 @@ serve(async (req) => {
           .upsert({
             user_id: userId,
             period_date: today,
-            chronic_load: safeNumber(chronicLoad),
-            acute_load: safeNumber(acuteLoad),
+            chronic_load: safeNumber(chronicLoadAvg),
+            acute_load: safeNumber(acuteLoadAvg),
             acwr: safeNumber(acwr),
             acwr_trend: acwrTrend,
             monotony: safeNumber(monotony),

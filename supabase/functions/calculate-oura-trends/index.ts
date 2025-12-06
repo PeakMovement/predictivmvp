@@ -288,6 +288,28 @@ serve(async (req) => {
           console.error(`[calculate-oura-trends] [ERROR] Failed to upsert recovery trend:`, recoveryError);
         }
 
+        // === TRAINING TRENDS (for graphs) ===
+        // Also upsert to training_trends for the UnifiedTrendCard graphs
+        const { error: trainingError } = await supabase
+          .from("training_trends")
+          .upsert({
+            user_id: userId,
+            date: today,
+            acwr: safeNumber(acwr),
+            ewma: safeNumber(acuteLoadAvg), // EWMA approximated by acute load average
+            strain: safeNumber(strain),
+            monotony: safeNumber(monotony),
+            hrv: safeNumber(hrvCurrent),
+            sleep_score: safeNumber(sleepCurrent),
+            training_load: safeNumber(weeklyLoad),
+            acute_load: safeNumber(acuteLoadAvg),
+            chronic_load: safeNumber(chronicLoadAvg),
+          }, { onConflict: "user_id,date" });
+
+        if (trainingError) {
+          console.error(`[calculate-oura-trends] [ERROR] Failed to upsert training trend:`, trainingError);
+        }
+
         // === ACTIVITY TRENDS ===
         const stepsAvg7d = calculateAverage(last7Days.map((s) => s.total_steps));
         const stepsBaseline = calculateAverage(prev7Days.map((s) => s.total_steps));

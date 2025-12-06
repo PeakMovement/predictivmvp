@@ -96,7 +96,6 @@ export const Health = () => {
               <OuraHRVCard
                 hrv={session?.hrv_avg ?? null}
                 restingHR={session?.resting_hr ?? null}
-                avgHR={null}
                 spo2={session?.spo2_avg ?? null}
                 isLoading={isLoading}
               />
@@ -117,25 +116,6 @@ export const Health = () => {
             )}
           </>
         )}
-
-        {/* View Insights Button */}
-        <div className="bg-glass backdrop-blur-xl border border-glass-border rounded-2xl p-6 md:p-8 shadow-glass hover:bg-glass-highlight hover-glow transition-all duration-300 ease-out animate-fade-in">
-          <div className="text-center space-y-4">
-            <div className="flex items-center justify-center gap-3 mb-4">
-              <span className="text-4xl">🌿</span>
-            </div>
-            <h3 className="text-xl md:text-2xl font-bold text-foreground">View Your Insights</h3>
-            <p className="text-sm md:text-base text-muted-foreground max-w-2xl mx-auto">
-              Explore your progress and training patterns over time in an interactive visual journey.
-            </p>
-            <button
-              onClick={() => window.dispatchEvent(new CustomEvent('navigate-insights'))}
-              className="w-full md:w-auto mt-4 bg-primary/80 hover:bg-primary text-primary-foreground border border-glass-border rounded-xl px-8 py-4 text-base md:text-lg font-semibold shadow-glow hover:scale-[1.02] active:scale-95 transition-all duration-200"
-            >
-              🌿 Open Insight Tree
-            </button>
-          </div>
-        </div>
       </div>
     </div>
   );

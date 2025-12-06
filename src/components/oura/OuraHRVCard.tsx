@@ -4,7 +4,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 interface OuraHRVCardProps {
   hrv: number | null;
   restingHR: number | null;
-  avgHR: number | null;
   spo2: number | null;
   isLoading?: boolean;
 }
@@ -12,7 +11,6 @@ interface OuraHRVCardProps {
 export const OuraHRVCard = ({
   hrv,
   restingHR,
-  avgHR,
   spo2,
   isLoading = false,
 }: OuraHRVCardProps) => {
@@ -20,8 +18,7 @@ export const OuraHRVCard = ({
     return (
       <div className="bg-glass backdrop-blur-xl border border-glass-border rounded-2xl p-6 shadow-glass">
         <Skeleton className="h-8 w-48 mb-6" />
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <Skeleton className="h-24" />
+        <div className="grid grid-cols-3 gap-4">
           <Skeleton className="h-24" />
           <Skeleton className="h-24" />
           <Skeleton className="h-24" />
@@ -30,7 +27,7 @@ export const OuraHRVCard = ({
     );
   }
 
-  const hasAnyData = hrv !== null || restingHR !== null || avgHR !== null || spo2 !== null;
+  const hasAnyData = hrv !== null || restingHR !== null || spo2 !== null;
 
   if (!hasAnyData) {
     return (
@@ -58,42 +55,27 @@ export const OuraHRVCard = ({
         <h2 className="text-xl font-semibold text-foreground">Heart & Body Signals</h2>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {hrv !== null && (
-          <div className="bg-background/50 backdrop-blur border border-glass-border rounded-xl p-4 text-center">
-            <Activity className="w-6 h-6 text-blue-400 mx-auto mb-2" />
-            <p className="text-2xl font-bold text-foreground mb-1">{hrv}</p>
-            <p className="text-sm text-muted-foreground">HRV Balance</p>
-            <p className="text-xs text-muted-foreground mt-1">ms</p>
-          </div>
-        )}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className={`bg-background/50 backdrop-blur border border-glass-border rounded-xl p-5 text-center ${hrv === null ? 'opacity-50' : ''}`}>
+          <Activity className="w-7 h-7 text-blue-400 mx-auto mb-3" />
+          <p className="text-3xl font-bold text-foreground mb-1">{hrv ?? '—'}</p>
+          <p className="text-sm text-muted-foreground">HRV</p>
+          <p className="text-xs text-muted-foreground mt-1">ms</p>
+        </div>
 
-        {restingHR !== null && (
-          <div className="bg-background/50 backdrop-blur border border-glass-border rounded-xl p-4 text-center">
-            <Heart className="w-6 h-6 text-red-400 mx-auto mb-2" />
-            <p className="text-2xl font-bold text-foreground mb-1">{restingHR}</p>
-            <p className="text-sm text-muted-foreground">Resting HR</p>
-            <p className="text-xs text-muted-foreground mt-1">bpm</p>
-          </div>
-        )}
+        <div className={`bg-background/50 backdrop-blur border border-glass-border rounded-xl p-5 text-center ${restingHR === null ? 'opacity-50' : ''}`}>
+          <Heart className="w-7 h-7 text-red-400 mx-auto mb-3" />
+          <p className="text-3xl font-bold text-foreground mb-1">{restingHR ?? '—'}</p>
+          <p className="text-sm text-muted-foreground">Resting HR</p>
+          <p className="text-xs text-muted-foreground mt-1">bpm</p>
+        </div>
 
-        {avgHR !== null && (
-          <div className="bg-background/50 backdrop-blur border border-glass-border rounded-xl p-4 text-center">
-            <Heart className="w-6 h-6 text-pink-400 mx-auto mb-2" />
-            <p className="text-2xl font-bold text-foreground mb-1">{avgHR}</p>
-            <p className="text-sm text-muted-foreground">Average HR</p>
-            <p className="text-xs text-muted-foreground mt-1">bpm</p>
-          </div>
-        )}
-
-        {spo2 !== null && (
-          <div className="bg-background/50 backdrop-blur border border-glass-border rounded-xl p-4 text-center">
-            <Droplets className="w-6 h-6 text-cyan-400 mx-auto mb-2" />
-            <p className="text-2xl font-bold text-foreground mb-1">{spo2.toFixed(1)}</p>
-            <p className="text-sm text-muted-foreground">Blood Oxygen</p>
-            <p className="text-xs text-muted-foreground mt-1">SpO₂ %</p>
-          </div>
-        )}
+        <div className={`bg-background/50 backdrop-blur border border-glass-border rounded-xl p-5 text-center ${spo2 === null ? 'opacity-50' : ''}`}>
+          <Droplets className="w-7 h-7 text-cyan-400 mx-auto mb-3" />
+          <p className="text-3xl font-bold text-foreground mb-1">{spo2 !== null ? spo2.toFixed(1) : '—'}</p>
+          <p className="text-sm text-muted-foreground">Blood Oxygen</p>
+          <p className="text-xs text-muted-foreground mt-1">SpO₂ %</p>
+        </div>
       </div>
 
       <div className="mt-6 pt-6 border-t border-glass-border">

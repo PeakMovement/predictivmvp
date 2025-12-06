@@ -211,6 +211,14 @@ export const Training = () => {
 
   // Find latest trend with non-null monotony/strain
   const latestAvailableTrend = trends?.find(t => t.monotony != null && t.strain != null) || null;
+  
+  // Calculate Fatigue Index: (Strain / 200) × 50 + (Monotony / 3) × 50, capped at 100
+  const fatigueIndex = latestAvailableTrend 
+    ? Math.min(100, Math.round(
+        ((latestAvailableTrend.strain || 0) / 200) * 50 + 
+        ((latestAvailableTrend.monotony || 0) / 3) * 50
+      ))
+    : 0;
 
   useEffect(() => {
     const newSuggestions = generateSuggestions(currentDayData);
@@ -269,6 +277,12 @@ export const Training = () => {
                     value={latestAvailableTrend?.strain ? Math.round(latestAvailableTrend.strain) : 0}
                     maxValue={200}
                     unit="TSS"
+                  />
+                  <CircularGauge
+                    title="Fatigue Index"
+                    value={fatigueIndex}
+                    maxValue={100}
+                    unit="%"
                   />
                 </div>
               </div>

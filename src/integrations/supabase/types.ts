@@ -1815,18 +1815,18 @@ export type Database = {
         }
         Insert: {
           deviation_pct?: number | null
-          insight?: never
+          insight?: string | null
           metric?: string | null
           risk_status?: string | null
-          suggestion?: never
+          suggestion?: string | null
           updated_at?: string | null
         }
         Update: {
           deviation_pct?: number | null
-          insight?: never
+          insight?: string | null
           metric?: string | null
           risk_status?: string | null
-          suggestion?: never
+          suggestion?: string | null
           updated_at?: string | null
         }
         Relationships: []

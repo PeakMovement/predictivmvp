@@ -150,32 +150,82 @@ Deno.serve(async (req) => {
       .order("date", { ascending: false })
       .limit(7);
 
+    // Query training_trends for calculated metrics
+    const { data: trainingTrends } = await supabase
+      .from("training_trends")
+      .select("*")
+      .eq("user_id", user.id)
+      .order("date", { ascending: false })
+      .limit(7);
+
+    // Query recovery_trends for ACWR and load data
+    const { data: recoveryTrends } = await supabase
+      .from("recovery_trends")
+      .select("*")
+      .eq("user_id", user.id)
+      .order("period_date", { ascending: false })
+      .limit(7);
+
     // Build wearable context string - ONLY reference populated fields
     let wearableContext = "";
     let hasWearableData = false;
 
-    if (wearableSummary && wearableSummary.length > 0) {
+    // Calculate derived metrics from training trends
+    let fatigueIndex: number | null = null;
+    let riskScore = 0;
+    
+    if (trainingTrends && trainingTrends.length > 0) {
       hasWearableData = true;
-      const avgStrain = wearableSummary.reduce((sum, s) => sum + (s.strain || 0), 0) / wearableSummary.length;
-      const avgMonotony = wearableSummary.reduce((sum, s) => sum + (s.monotony || 0), 0) / wearableSummary.length;
-      const avgAcwr = wearableSummary.reduce((sum, s) => sum + (s.acwr || 0), 0) / wearableSummary.length;
-
-      // Calculate trends from last 3 entries
-      const last3 = wearableSummary.slice(0, 3);
+      
+      // Get averages from training trends
+      const avgStrain = trainingTrends.reduce((sum, t) => sum + (t.strain || 0), 0) / trainingTrends.length;
+      const avgMonotony = trainingTrends.reduce((sum, t) => sum + (t.monotony || 0), 0) / trainingTrends.length;
+      const avgACWR = trainingTrends.reduce((sum, t) => sum + (t.acwr || 0), 0) / trainingTrends.length;
+      const avgHRV = trainingTrends.reduce((sum, t) => sum + (t.hrv || 0), 0) / trainingTrends.length;
+      const avgSleepScore = trainingTrends.reduce((sum, t) => sum + (t.sleep_score || 0), 0) / trainingTrends.length;
+      
+      // Calculate Fatigue Index: (Strain / 200) × 50 + (Monotony / 3) × 50
+      fatigueIndex = Math.min(100, Math.round((avgStrain / 200) * 50 + (avgMonotony / 3) * 50));
+      
+      // Calculate Risk Score
+      if (avgACWR > 1.5) riskScore += 40;
+      else if (avgACWR > 1.3) riskScore += 25;
+      else if (avgACWR > 1.0) riskScore += 10;
+      
+      if (avgStrain > 150) riskScore += 30;
+      else if (avgStrain > 100) riskScore += 15;
+      
+      if (fatigueIndex > 70) riskScore += 30;
+      else if (fatigueIndex > 50) riskScore += 15;
+      
+      riskScore = Math.min(100, riskScore);
+      
+      // Risk level assessment
+      const riskLevel = riskScore > 60 ? "HIGH" : riskScore > 30 ? "MODERATE" : "LOW";
+      
+      // Trend calculation
+      const last3 = trainingTrends.slice(0, 3);
       let strainTrend = "stable";
       if (last3.length >= 2) {
         const strainDiff = (last3[0]?.strain || 0) - (last3[last3.length - 1]?.strain || 0);
         strainTrend = strainDiff > 0.5 ? "↑ increasing" : strainDiff < -0.5 ? "↓ decreasing" : "stable";
       }
 
+      wearableContext = `\nTRAINING ANALYTICS (Last 7 days):
+- **ACWR (Acute:Chronic Workload)**: ${avgACWR.toFixed(2)} ${avgACWR > 1.5 ? "(⚠️ High injury risk)" : avgACWR > 1.3 ? "(Elevated)" : "(Optimal)"}
+- **Training Strain**: ${avgStrain.toFixed(0)} TSS (${strainTrend})
+- **Training Monotony**: ${avgMonotony.toFixed(2)} ${avgMonotony > 2.0 ? "(⚠️ Too repetitive)" : "(Good variety)"}
+- **Fatigue Index**: ${fatigueIndex}% ${fatigueIndex > 70 ? "(⚠️ High fatigue)" : fatigueIndex > 50 ? "(Moderate)" : "(Low)"}
+- **Risk Score**: ${riskScore}/100 (${riskLevel} risk)
+- **Avg HRV**: ${avgHRV.toFixed(1)} ms
+- **Avg Sleep Score**: ${avgSleepScore.toFixed(0)}`;
+    }
+
+    if (wearableSummary && wearableSummary.length > 0) {
+      hasWearableData = true;
       const latestSource = wearableSummary[0]?.source || "Oura Ring";
       const latestDate = wearableSummary[0]?.date || "unknown";
-
-      wearableContext = `\nOURA RING DATA (Last 14 days):
-- Avg Training Strain: ${avgStrain.toFixed(1)} (${strainTrend})
-- Avg Monotony: ${avgMonotony.toFixed(2)}
-- Avg ACWR (Acute:Chronic Workload): ${avgAcwr.toFixed(2)}
-- Last Synced: ${latestDate} via ${latestSource}`;
+      wearableContext += `\n- Last Synced: ${latestDate} via ${latestSource}`;
     }
 
     if (wearableSessions && wearableSessions.length > 0) {
@@ -196,7 +246,8 @@ Deno.serve(async (req) => {
           readinessTrend = readinessDiff > 5 ? "↑ improving" : readinessDiff < -5 ? "↓ declining" : "stable";
         }
 
-        wearableContext += `\n- Avg Readiness Score: ${avgReadiness.toFixed(0)} (${readinessTrend})`;
+        wearableContext += `\n\nOURA RING SCORES:
+- Avg Readiness Score: ${avgReadiness.toFixed(0)} (${readinessTrend})`;
       }
 
       if (sessionsWithSleep.length > 0) {
@@ -225,6 +276,8 @@ Deno.serve(async (req) => {
         if (latestSession.active_calories) activityParts.push(`${latestSession.active_calories} active cal`);
         if (latestSession.total_calories) activityParts.push(`${latestSession.total_calories} total cal`);
         if (latestSession.spo2_avg) activityParts.push(`SpO2: ${latestSession.spo2_avg}%`);
+        if (latestSession.hrv_avg) activityParts.push(`HRV: ${latestSession.hrv_avg}ms`);
+        if (latestSession.resting_hr) activityParts.push(`RHR: ${latestSession.resting_hr}bpm`);
         
         if (activityParts.length > 0) {
           wearableContext += `\n- Latest Activity (${latestSession.date}): ${activityParts.join(", ")}`;
@@ -233,7 +286,7 @@ Deno.serve(async (req) => {
     }
 
     if (!hasWearableData) {
-      wearableContext = "\nOURA RING DATA: No wearable data available yet. User may need to connect their Oura Ring.";
+      wearableContext = "\nWEARABLE DATA: No wearable data available yet. User may need to connect their Oura Ring.";
     }
 
     // ─── BUILD PROMPT CONTEXT ────────────────────────────────────────────────

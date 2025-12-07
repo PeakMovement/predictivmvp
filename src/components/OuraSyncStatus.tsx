@@ -76,36 +76,33 @@ const OuraSyncStatus = () => {
         };
       }
 
-      const { data, error } = await supabase.functions.invoke('fetch-oura-data', {
-        body: { user_id: user.id }
-      });
-
-      if (error) {
-        console.error('[OuraSyncStatus] Edge function error:', error);
-        
-        // Parse error from edge function response
-        let errorMessage = error.message || "Sync failed";
-        let errorCode = "SYNC_FAILED";
-
-        // Try to get more specific error from context
-        if (error.context?.body) {
-          try {
-            const errorBody = typeof error.context.body === 'string'
-              ? JSON.parse(error.context.body)
-              : error.context.body;
-            if (errorBody.error) {
-              errorMessage = errorBody.error;
-            }
-          } catch (e) {
-            // Ignore parse errors
-          }
+      // Use fetch directly to properly handle non-2xx responses
+      const response = await fetch(
+        `https://ixtwbkikyuexskdgfpfq.supabase.co/functions/v1/fetch-oura-data`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
+            'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml4dHdia2lreXVleHNrZGdmcGZxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc3MjU4NDgsImV4cCI6MjA3MzMwMTg0OH0.c0w5R1_eKeNytHJgdxUJ2VPkQcnxE1KlyqXPCuJ77Fg',
+          },
+          body: JSON.stringify({ user_id: user.id }),
         }
+      );
+
+      const data = await response.json();
+      
+      if (!response.ok || !data.success) {
+        console.error('[OuraSyncStatus] Edge function error:', data);
+        
+        let errorMessage = data.error || "Sync failed";
+        let errorCode = data.error_code || "SYNC_FAILED";
 
         // Map common errors to user-friendly messages
-        if (errorMessage.includes("No Oura") || errorMessage.includes("reconnect")) {
+        if (errorCode === "NO_TOKEN" || errorMessage.includes("No Oura") || errorMessage.includes("connect")) {
           errorCode = "NO_TOKEN";
           errorMessage = "Please connect your Oura Ring in Settings";
-        } else if (errorMessage.includes("expired") || errorMessage.includes("invalid")) {
+        } else if (errorCode === "TOKEN_EXPIRED" || errorMessage.includes("expired") || errorMessage.includes("reconnect")) {
           errorCode = "TOKEN_EXPIRED";
           errorMessage = "Your Oura authorization expired. Please reconnect.";
         }
@@ -113,43 +110,35 @@ const OuraSyncStatus = () => {
         throw { message: errorMessage, code: errorCode };
       }
 
-      // Check for success with potential issues
-      if (data?.success) {
-        const entriesSynced = data.entries_synced || 0;
-        
-        console.log('[OuraSyncStatus] Sync complete:', data);
-        
-        // Dispatch refresh event
-        window.dispatchEvent(new Event("wearable_trends_refresh"));
-        await fetchLastSync();
+      // Success case
+      const entriesSynced = data.entries_synced || 0;
+      
+      console.log('[OuraSyncStatus] Sync complete:', data);
+      
+      // Dispatch refresh event
+      window.dispatchEvent(new Event("wearable_trends_refresh"));
 
-        setState((s) => ({
-          ...s,
-          status: "success",
-          lastSync: new Date(),
-          errorMessage: null,
-          errorCode: null,
-        }));
+      setState((s) => ({
+        ...s,
+        status: "success",
+        lastSync: new Date(),
+        errorMessage: null,
+        errorCode: null,
+      }));
 
-        if (entriesSynced > 0) {
-          toast({
-            title: "Sync Complete",
-            description: `Synced ${entriesSynced} day(s) of Oura data`,
-          });
-        } else {
-          toast({
-            title: "No New Data",
-            description: "Your Oura data is up to date",
-          });
-        }
-
-        setTimeout(() => setState((s) => ({ ...s, status: "idle" })), 3000);
+      if (entriesSynced > 0) {
+        toast({
+          title: "Sync Complete",
+          description: `Synced ${entriesSynced} day(s) of Oura data`,
+        });
       } else {
-        throw { 
-          message: data?.error || "Sync failed with unknown error", 
-          code: "UNKNOWN_ERROR" 
-        };
+        toast({
+          title: "No New Data",
+          description: "Your Oura data is up to date",
+        });
       }
+
+      setTimeout(() => setState((s) => ({ ...s, status: "idle" })), 3000);
     } catch (err: any) {
       console.error("[OuraSyncStatus] Sync error:", err);
       

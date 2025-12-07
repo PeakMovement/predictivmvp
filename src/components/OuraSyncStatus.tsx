@@ -1,19 +1,25 @@
 import { useEffect, useState } from "react";
-import { RefreshCw, CheckCircle2, Clock, Loader2 } from "lucide-react";
+import { RefreshCw, CheckCircle2, Clock, Loader2, AlertCircle, WifiOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { formatDistanceToNowStrict } from "date-fns";
+import { useToast } from "@/hooks/use-toast";
 
 interface SyncState {
   status: "idle" | "syncing" | "success" | "error";
   lastSync: Date | null;
+  errorMessage: string | null;
+  errorCode: string | null;
 }
 
 const OuraSyncStatus = () => {
   const [state, setState] = useState<SyncState>({
     status: "idle",
     lastSync: null,
+    errorMessage: null,
+    errorCode: null,
   });
+  const { toast } = useToast();
 
   const fetchLastSync = async () => {
     try {
@@ -21,7 +27,6 @@ const OuraSyncStatus = () => {
 
       if (!user?.id) return;
 
-      // Use fetched_at instead of created_at (which doesn't exist on wearable_sessions)
       const { data, error } = await supabase
         .from("wearable_sessions")
         .select("fetched_at")
@@ -32,7 +37,7 @@ const OuraSyncStatus = () => {
         .maybeSingle();
 
       if (error) {
-        console.warn("⚠️ OuraSyncStatus: Could not fetch last sync:", error.message);
+        console.warn("[OuraSyncStatus] Could not fetch last sync:", error.message);
         return;
       }
 
@@ -40,7 +45,7 @@ const OuraSyncStatus = () => {
         setState((prev) => ({ ...prev, lastSync: new Date(data.fetched_at) }));
       }
     } catch (err) {
-      console.error("❌ OuraSyncStatus fetch error:", err);
+      console.error("[OuraSyncStatus] Fetch error:", err);
     }
   };
 
@@ -54,13 +59,21 @@ const OuraSyncStatus = () => {
 
   const handleSync = async () => {
     try {
-      setState((prev) => ({ ...prev, status: "syncing" }));
-      console.log('🔄 Starting manual Ōura sync...');
+      setState((prev) => ({ 
+        ...prev, 
+        status: "syncing", 
+        errorMessage: null, 
+        errorCode: null 
+      }));
+      console.log('[OuraSyncStatus] Starting manual sync...');
 
       const { data: { user } } = await supabase.auth.getUser();
 
       if (!user?.id) {
-        throw new Error('Not authenticated');
+        throw { 
+          message: "Please log in to sync your Oura Ring data",
+          code: "NOT_AUTHENTICATED"
+        };
       }
 
       const { data, error } = await supabase.functions.invoke('fetch-oura-data', {
@@ -68,45 +81,133 @@ const OuraSyncStatus = () => {
       });
 
       if (error) {
-        console.error('Oura sync error:', error);
-        const errorMessage = error.message || "Sync failed";
+        console.error('[OuraSyncStatus] Edge function error:', error);
+        
+        // Parse error from edge function response
+        let errorMessage = error.message || "Sync failed";
+        let errorCode = "SYNC_FAILED";
 
-        if (errorMessage.includes('reconnect') || errorMessage.includes('token')) {
-          throw new Error('Please reconnect your Ōura Ring in Settings');
+        // Try to get more specific error from context
+        if (error.context?.body) {
+          try {
+            const errorBody = typeof error.context.body === 'string'
+              ? JSON.parse(error.context.body)
+              : error.context.body;
+            if (errorBody.error) {
+              errorMessage = errorBody.error;
+            }
+          } catch (e) {
+            // Ignore parse errors
+          }
         }
 
-        throw new Error(errorMessage);
+        // Map common errors to user-friendly messages
+        if (errorMessage.includes("No Oura") || errorMessage.includes("reconnect")) {
+          errorCode = "NO_TOKEN";
+          errorMessage = "Please connect your Oura Ring in Settings";
+        } else if (errorMessage.includes("expired") || errorMessage.includes("invalid")) {
+          errorCode = "TOKEN_EXPIRED";
+          errorMessage = "Your Oura authorization expired. Please reconnect.";
+        }
+
+        throw { message: errorMessage, code: errorCode };
       }
 
-      console.log('✅ Oura sync complete:', data);
+      // Check for success with potential issues
+      if (data?.success) {
+        const entriesSynced = data.entries_synced || 0;
+        
+        console.log('[OuraSyncStatus] Sync complete:', data);
+        
+        // Dispatch refresh event
+        window.dispatchEvent(new Event("wearable_trends_refresh"));
+        await fetchLastSync();
 
-      await new Promise(resolve => setTimeout(resolve, 2000));
+        setState((s) => ({
+          ...s,
+          status: "success",
+          lastSync: new Date(),
+          errorMessage: null,
+          errorCode: null,
+        }));
 
-      window.dispatchEvent(new Event("wearable_trends_refresh"));
+        if (entriesSynced > 0) {
+          toast({
+            title: "Sync Complete",
+            description: `Synced ${entriesSynced} day(s) of Oura data`,
+          });
+        } else {
+          toast({
+            title: "No New Data",
+            description: "Your Oura data is up to date",
+          });
+        }
 
-      await fetchLastSync();
-
-      setState((s) => ({
-        ...s,
-        status: "success",
-        lastSync: new Date(),
+        setTimeout(() => setState((s) => ({ ...s, status: "idle" })), 3000);
+      } else {
+        throw { 
+          message: data?.error || "Sync failed with unknown error", 
+          code: "UNKNOWN_ERROR" 
+        };
+      }
+    } catch (err: any) {
+      console.error("[OuraSyncStatus] Sync error:", err);
+      
+      const errorMessage = err?.message || "Failed to sync Oura data";
+      const errorCode = err?.code || "SYNC_FAILED";
+      
+      setState((prev) => ({ 
+        ...prev, 
+        status: "error",
+        errorMessage,
+        errorCode,
       }));
 
-      setTimeout(() => setState((s) => ({ ...s, status: "idle" })), 3000);
-    } catch (err: unknown) {
-      console.error("❌ Ōura sync error:", err);
-      setState((prev) => ({ ...prev, status: "error" }));
+      toast({
+        title: "Sync Failed",
+        description: errorMessage,
+        variant: "destructive",
+      });
 
-      const errorMsg = err instanceof Error ? err.message : 'Failed to sync Ōura Ring data';
-      console.error('User-facing error:', errorMsg);
-
-      setTimeout(() => setState((s) => ({ ...s, status: "idle" })), 5000);
+      setTimeout(() => setState((s) => ({ ...s, status: "idle" })), 8000);
     }
   };
 
   const getTimeSinceSync = () => {
     if (!state.lastSync) return "Never synced";
     return `Updated ${formatDistanceToNowStrict(state.lastSync)} ago`;
+  };
+
+  const getStatusIcon = () => {
+    switch (state.status) {
+      case "syncing":
+        return <Loader2 className="h-4 w-4 animate-spin" />;
+      case "success":
+        return <CheckCircle2 className="h-3 w-3 text-green-500" />;
+      case "error":
+        if (state.errorCode === "NO_TOKEN" || state.errorCode === "NOT_AUTHENTICATED") {
+          return <WifiOff className="h-3 w-3 text-amber-500" />;
+        }
+        return <AlertCircle className="h-3 w-3 text-red-500" />;
+      default:
+        return <Clock className="h-3 w-3 text-muted-foreground" />;
+    }
+  };
+
+  const getStatusText = () => {
+    switch (state.status) {
+      case "syncing":
+        return "Syncing...";
+      case "success":
+        return "Synced just now";
+      case "error":
+        if (state.errorCode === "NO_TOKEN") {
+          return "Connect Oura Ring";
+        }
+        return state.errorMessage || "Sync failed";
+      default:
+        return getTimeSinceSync();
+    }
   };
 
   return (
@@ -131,25 +232,11 @@ const OuraSyncStatus = () => {
         )}
       </Button>
 
-      <div className="flex items-center gap-1 text-xs text-muted-foreground">
-        {state.status === "success" && (
-          <>
-            <CheckCircle2 className="h-3 w-3 text-green-500" />
-            <span>Synced just now</span>
-          </>
-        )}
-        {state.status === "error" && (
-          <>
-            <Clock className="h-3 w-3 text-red-500" />
-            <span>Sync failed</span>
-          </>
-        )}
-        {state.status === "idle" && (
-          <>
-            <Clock className="h-3 w-3 text-muted-foreground" />
-            <span>{getTimeSinceSync()}</span>
-          </>
-        )}
+      <div className="flex items-center gap-1 text-xs text-muted-foreground max-w-[200px] text-center">
+        {getStatusIcon()}
+        <span className={state.status === "error" ? "text-red-500" : ""}>
+          {getStatusText()}
+        </span>
       </div>
     </div>
   );

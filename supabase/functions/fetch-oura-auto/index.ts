@@ -154,17 +154,26 @@ Deno.serve(async (req: Request) => {
       try {
         console.log(`[fetch-oura-auto] Processing user ${token.user_id}`);
 
-        // Use shared token refresh utility
+        // Use shared token refresh utility with enhanced error handling
         const tokenResult = await getValidOuraToken(supabase, token.user_id);
 
         if (!tokenResult.success || !tokenResult.access_token) {
-          console.error(`[fetch-oura-auto] [ERROR] Token validation failed for user ${token.user_id}: ${tokenResult.error}`);
+          const errorCode = (tokenResult as any).error_code || "TOKEN_ERROR";
+          console.error(`[fetch-oura-auto] [ERROR] Token validation failed for user ${token.user_id}:`, {
+            error: tokenResult.error,
+            code: errorCode,
+          });
+          
           await supabase.from("oura_logs").insert({
             user_id: token.user_id,
             status: "error",
-            error_message: `Token validation failed: ${tokenResult.error}`,
+            error_message: `Token validation failed: ${tokenResult.error} (${errorCode})`,
           });
           continue;
+        }
+
+        if (tokenResult.refreshed) {
+          console.log(`[fetch-oura-auto] Token was proactively refreshed for user ${token.user_id}`);
         }
 
         const accessToken = tokenResult.access_token;

@@ -83,18 +83,41 @@ Deno.serve(async (req: Request) => {
 
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Use shared token refresh utility
+    // Use shared token refresh utility with enhanced error handling
     const tokenResult = await getValidOuraToken(supabase, user_id);
 
     if (!tokenResult.success || !tokenResult.access_token) {
-      console.error(`[fetch-oura-data] [ERROR] Token validation failed for user ${user_id}: ${tokenResult.error}`);
+      const errorMessage = tokenResult.error || "Failed to get valid token";
+      const errorCode = (tokenResult as any).error_code || "TOKEN_ERROR";
+      
+      console.error(`[fetch-oura-data] [ERROR] Token validation failed for user ${user_id}:`, {
+        error: errorMessage,
+        code: errorCode,
+        refreshed: tokenResult.refreshed,
+      });
+
+      // Log the error for debugging
+      await supabase.from("oura_logs").insert({
+        user_id,
+        status: "error",
+        error_message: `Token validation failed: ${errorMessage} (${errorCode})`,
+      });
+
       return new Response(
-        JSON.stringify({ error: tokenResult.error || "Failed to get valid token" }),
+        JSON.stringify({ 
+          error: errorMessage,
+          error_code: errorCode,
+          success: false,
+        }),
         {
           status: 401,
           headers: { ...corsHeaders, "Content-Type": "application/json" }
         }
       );
+    }
+
+    if (tokenResult.refreshed) {
+      console.log(`[fetch-oura-data] Token was refreshed for user ${user_id}`);
     }
 
     const accessToken = tokenResult.access_token;
@@ -115,30 +138,50 @@ Deno.serve(async (req: Request) => {
     const fetchedData: Record<string, any[]> = {};
 
     for (const endpoint of endpoints) {
-      const res = await fetch(endpoint.url, {
-        headers: { Authorization: `Bearer ${accessToken}` },
-      });
+      try {
+        const res = await fetch(endpoint.url, {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        });
 
-      if (!res.ok) {
-        console.error(`[fetch-oura-data] [ERROR] Failed to fetch ${endpoint.name}: HTTP ${res.status}`);
+        if (!res.ok) {
+          console.error(`[fetch-oura-data] [ERROR] Failed to fetch ${endpoint.name}: HTTP ${res.status}`);
 
-        if (res.status === 401) {
-          return new Response(
-            JSON.stringify({ error: "Oura token expired or invalid. Please reconnect your Oura Ring." }),
-            {
-              status: 401,
-              headers: { ...corsHeaders, "Content-Type": "application/json" }
-            }
-          );
+          if (res.status === 401) {
+            // Token became invalid during request - needs reconnection
+            await supabase.from("oura_logs").insert({
+              user_id,
+              status: "error",
+              error_message: `Token invalid during API call (HTTP 401) at ${endpoint.name}`,
+            });
+
+            return new Response(
+              JSON.stringify({ 
+                error: "Oura token expired or invalid. Please reconnect your Oura Ring.",
+                error_code: "TOKEN_EXPIRED",
+                success: false,
+              }),
+              {
+                status: 401,
+                headers: { ...corsHeaders, "Content-Type": "application/json" }
+              }
+            );
+          }
+
+          if (res.status === 429) {
+            console.warn(`[fetch-oura-data] Rate limited on ${endpoint.name}, skipping...`);
+          }
+
+          fetchedData[endpoint.name] = [];
+          continue;
         }
 
+        const data = await res.json();
+        fetchedData[endpoint.name] = data.data || [];
+        console.log(`[fetch-oura-data] [SUCCESS] Fetched ${fetchedData[endpoint.name].length} entries from ${endpoint.name}`);
+      } catch (fetchErr) {
+        console.error(`[fetch-oura-data] [ERROR] Exception fetching ${endpoint.name}:`, fetchErr);
         fetchedData[endpoint.name] = [];
-        continue;
       }
-
-      const data = await res.json();
-      fetchedData[endpoint.name] = data.data || [];
-      console.log(`[fetch-oura-data] [SUCCESS] Fetched ${fetchedData[endpoint.name].length} entries from ${endpoint.name}`);
     }
 
     const readinessData = fetchedData.daily_readiness || [];

@@ -16,6 +16,7 @@ import {
   RefreshCw,
   Sparkles,
   Shield,
+  Zap,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Switch } from "@/components/ui/switch";
@@ -66,7 +67,7 @@ export const Settings = ({ onNavigate }: { onNavigate?: (tab: string) => void })
 
   const { theme, setTheme } = useTheme();
   const { toast } = useToast();
-  const { isConnected, isSyncing, syncNow } = useWearableSync();
+  const { isConnected } = useWearableSync();
   const {
     currentDayIndex,
     totalDays,
@@ -578,32 +579,27 @@ export const Settings = ({ onNavigate }: { onNavigate?: (tab: string) => void })
                         </span>
                       )}
                     </p>
-                    <p className="text-xs text-muted-foreground">
-                      {isConnected
-                        ? "Open your Oura app to sync, then click Update to fetch latest data"
-                        : "Connect and sync your Ōura Ring data"}
-                    </p>
-                    {isConnected && (
-                      <p className="text-xs text-amber-400/80 mt-1 flex items-center gap-1">
-                        <Info size={12} />
-                        Sleep data requires syncing the Oura mobile app first
+                    {isConnected ? (
+                      <div className="space-y-1">
+                        <p className="text-xs text-muted-foreground flex items-center gap-1">
+                          <Zap size={12} className="text-green-500" />
+                          Auto-sync enabled • Data updates automatically
+                        </p>
+                        {lastSyncTime && (
+                          <p className="text-xs text-muted-foreground">
+                            Last synced: {new Date(lastSyncTime).toLocaleString()}
+                          </p>
+                        )}
+                      </div>
+                    ) : (
+                      <p className="text-xs text-muted-foreground">
+                        Connect and sync your Ōura Ring data
                       </p>
                     )}
                   </div>
                 </div>
                 <div className="flex gap-2">
-                  {isConnected ? (
-                    <Button
-                      onClick={syncNow}
-                      disabled={isSyncing}
-                      size="sm"
-                      variant="outline"
-                      className="bg-glass/30 border-glass-border hover:bg-glass-highlight hover:scale-105 active:scale-95 transition-all duration-200"
-                    >
-                      <RefreshCw size={14} className={cn("mr-2", isSyncing && "animate-spin")} />
-                      {isSyncing ? "Updating..." : "Update Now"}
-                    </Button>
-                  ) : (
+                  {!isConnected && (
                     <Button
                       onClick={connectOura}
                       size="sm"

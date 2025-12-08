@@ -4,7 +4,6 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import OuraSyncStatus from "@/components/OuraSyncStatus";
 import { YvesRecommendationsCard } from "@/components/dashboard/YvesRecommendationsCard";
 import { DailyBriefingCard } from "@/components/dashboard/DailyBriefingCard";
-import { TrendRefreshButton } from "@/components/dashboard/TrendRefreshButton";
 import { RiskScoreCard } from "@/components/dashboard/RiskScoreCard";
 import { useRefreshTrends } from "@/hooks/useTrendData";
 import { supabase } from "@/integrations/supabase/client";
@@ -24,9 +23,8 @@ const WelcomeHeader = () => (
     <div className="animate-slide-in" style={{ animationDelay: "0.2s", animationFillMode: "both" }}>
       <p className="text-muted-foreground text-base md:text-lg">Here's your training overview for today</p>
     </div>
-    <div className="flex justify-center gap-3 animate-fade-in" style={{ animationDelay: "0.3s" }}>
+    <div className="flex justify-center animate-fade-in" style={{ animationDelay: "0.3s" }}>
       <OuraSyncStatus />
-      <TrendRefreshButton />
     </div>
   </div>
 );

@@ -30,6 +30,7 @@ import DeveloperBaselinesEngine from "@/pages/DeveloperBaselinesEngine";
 import MyDocuments from "@/pages/MyDocuments";
 import PlanCompliance from "@/pages/PlanCompliance";
 import { ProfileSetup } from "@/pages/ProfileSetup";
+import { AdminDashboard } from "@/pages/AdminDashboard";
 import Login from "@/pages/Login";
 import Register from "@/pages/Register";
 import { Settings as SettingsIcon } from "lucide-react";
@@ -120,8 +121,10 @@ const App = () => {
         return <OuraDiagnostics />;
       case "developer-baselines-engine":
         return <DeveloperBaselinesEngine />;
-      case "profile-setup": // ✅ added profile tab case
+      case "profile-setup":
         return <ProfileSetup />;
+      case "admin-dashboard":
+        return <AdminDashboard />;
       default:
         return <Dashboard />;
     }

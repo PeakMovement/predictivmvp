@@ -15,6 +15,7 @@ import {
   HelpCircle,
   RefreshCw,
   Sparkles,
+  Shield,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Switch } from "@/components/ui/switch";
@@ -1146,6 +1147,22 @@ export const Settings = ({ onNavigate }: { onNavigate?: (tab: string) => void })
               <h3 className="text-lg font-semibold text-foreground">Developer Tools</h3>
             </div>
             <div className="space-y-3">
+              <button
+                onClick={() => onNavigate?.("admin-dashboard")}
+                className="w-full flex items-center justify-between p-4 rounded-xl border bg-glass/30 border-glass-border hover:bg-glass-highlight transition-all duration-200"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 bg-primary/20 rounded-lg flex items-center justify-center">
+                    <Shield size={16} className="text-primary" />
+                  </div>
+                  <div className="text-left">
+                    <p className="font-medium text-foreground">Admin Dashboard</p>
+                    <p className="text-xs text-muted-foreground">System health, sync status & anomaly alerts</p>
+                  </div>
+                </div>
+                <ChevronRight size={16} className="text-muted-foreground" />
+              </button>
+
               <button
                 onClick={() => onNavigate?.("test-supabase")}
                 className="w-full flex items-center justify-between p-4 rounded-xl border bg-glass/30 border-glass-border hover:bg-glass-highlight transition-all duration-200"

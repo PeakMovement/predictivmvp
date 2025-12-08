@@ -14,14 +14,28 @@ interface OuraDataRequest {
   end_date?: string;
 }
 
-interface OuraSleepData {
+// Detailed sleep endpoint - contains HR and HRV time series
+interface OuraSleepDetailed {
   id: string;
   day: string;
-  score?: number;
-  total_sleep_duration?: number;
   average_heart_rate?: number;
   average_hrv?: number;
   lowest_heart_rate?: number;
+  efficiency?: number;
+  total_sleep_duration?: number;
+  deep_sleep_duration?: number;
+  light_sleep_duration?: number;
+  rem_sleep_duration?: number;
+  awake_time?: number;
+  bedtime_start?: string;
+  bedtime_end?: string;
+}
+
+// Daily sleep summary - score only
+interface OuraDailySleep {
+  id: string;
+  day: string;
+  score?: number;
 }
 
 interface OuraReadinessData {
@@ -47,6 +61,13 @@ interface OuraSpo2Data {
     average?: number;
   };
   breathing_disturbance_index?: number;
+}
+
+// Heart rate time series data
+interface OuraHeartRateData {
+  bpm: number;
+  source: string;
+  timestamp: string;
 }
 
 Deno.serve(async (req: Request) => {
@@ -96,7 +117,6 @@ Deno.serve(async (req: Request) => {
         refreshed: tokenResult.refreshed,
       });
 
-      // Log the error for debugging
       await supabase.from("oura_logs").insert({
         user_id,
         status: "error",
@@ -127,12 +147,20 @@ Deno.serve(async (req: Request) => {
 
     console.log(`[fetch-oura-data] Fetching data from ${startDate} to ${endDate}`);
 
-    // All core Oura endpoints for comprehensive data sync
+    // Convert dates to ISO datetime for heartrate endpoint
+    const startDatetime = `${startDate}T00:00:00+00:00`;
+    const endDatetime = `${endDate}T23:59:59+00:00`;
+
+    // UPGRADED: Now includes detailed sleep endpoint and heartrate for HR/HRV data
     const endpoints = [
       { name: "daily_readiness", url: `https://api.ouraring.com/v2/usercollection/daily_readiness?start_date=${startDate}&end_date=${endDate}` },
       { name: "daily_sleep", url: `https://api.ouraring.com/v2/usercollection/daily_sleep?start_date=${startDate}&end_date=${endDate}` },
       { name: "daily_activity", url: `https://api.ouraring.com/v2/usercollection/daily_activity?start_date=${startDate}&end_date=${endDate}` },
       { name: "daily_spo2", url: `https://api.ouraring.com/v2/usercollection/daily_spo2?start_date=${startDate}&end_date=${endDate}` },
+      // CRITICAL: Detailed sleep endpoint contains actual HR and HRV values
+      { name: "sleep", url: `https://api.ouraring.com/v2/usercollection/sleep?start_date=${startDate}&end_date=${endDate}` },
+      // High-resolution heartrate endpoint for resting HR calculation
+      { name: "heartrate", url: `https://api.ouraring.com/v2/usercollection/heartrate?start_datetime=${encodeURIComponent(startDatetime)}&end_datetime=${encodeURIComponent(endDatetime)}` },
     ];
 
     const fetchedData: Record<string, any[]> = {};
@@ -147,7 +175,6 @@ Deno.serve(async (req: Request) => {
           console.error(`[fetch-oura-data] [ERROR] Failed to fetch ${endpoint.name}: HTTP ${res.status}`);
 
           if (res.status === 401) {
-            // Token became invalid during request - needs reconnection
             await supabase.from("oura_logs").insert({
               user_id,
               status: "error",
@@ -185,16 +212,47 @@ Deno.serve(async (req: Request) => {
     }
 
     const readinessData = fetchedData.daily_readiness || [];
-    const sleepData = fetchedData.daily_sleep || [];
+    const dailySleepData = fetchedData.daily_sleep || [];
     const activityData = fetchedData.daily_activity || [];
     const spo2Data = fetchedData.daily_spo2 || [];
+    const detailedSleepData = fetchedData.sleep || [];
+    const heartrateData = fetchedData.heartrate || [];
+
+    // Process heartrate data to get daily averages/resting HR
+    const hrByDate: Record<string, { total: number; count: number; min: number }> = {};
+    for (const hr of heartrateData as OuraHeartRateData[]) {
+      const date = hr.timestamp?.split('T')[0];
+      if (date && hr.bpm > 0) {
+        if (!hrByDate[date]) {
+          hrByDate[date] = { total: 0, count: 0, min: 999 };
+        }
+        hrByDate[date].total += hr.bpm;
+        hrByDate[date].count++;
+        if (hr.bpm < hrByDate[date].min) {
+          hrByDate[date].min = hr.bpm;
+        }
+      }
+    }
+
+    // Process detailed sleep data to get HR and HRV by date
+    const sleepDetailsByDate: Record<string, OuraSleepDetailed> = {};
+    for (const sleep of detailedSleepData as OuraSleepDetailed[]) {
+      const date = sleep.day;
+      // Use the longest sleep period for each day (primary sleep)
+      if (!sleepDetailsByDate[date] || 
+          (sleep.total_sleep_duration || 0) > (sleepDetailsByDate[date].total_sleep_duration || 0)) {
+        sleepDetailsByDate[date] = sleep;
+      }
+    }
 
     // Aggregate data by date for consistent storage
     const dataByDate: Record<string, { 
       readiness?: OuraReadinessData; 
-      sleep?: OuraSleepData; 
+      dailySleep?: OuraDailySleep;
+      sleepDetails?: OuraSleepDetailed;
       activity?: OuraActivityData;
       spo2?: OuraSpo2Data;
+      hrData?: { avg: number; min: number };
     }> = {};
 
     readinessData.forEach((item: OuraReadinessData) => {
@@ -202,9 +260,9 @@ Deno.serve(async (req: Request) => {
       dataByDate[item.day].readiness = item;
     });
 
-    sleepData.forEach((item: OuraSleepData) => {
+    dailySleepData.forEach((item: OuraDailySleep) => {
       if (!dataByDate[item.day]) dataByDate[item.day] = {};
-      dataByDate[item.day].sleep = item;
+      dataByDate[item.day].dailySleep = item;
     });
 
     activityData.forEach((item: OuraActivityData) => {
@@ -217,24 +275,54 @@ Deno.serve(async (req: Request) => {
       dataByDate[item.day].spo2 = item;
     });
 
+    // Add detailed sleep data
+    for (const [date, sleepDetails] of Object.entries(sleepDetailsByDate)) {
+      if (!dataByDate[date]) dataByDate[date] = {};
+      dataByDate[date].sleepDetails = sleepDetails;
+    }
+
+    // Add HR data
+    for (const [date, hrInfo] of Object.entries(hrByDate)) {
+      if (!dataByDate[date]) dataByDate[date] = {};
+      dataByDate[date].hrData = {
+        avg: Math.round(hrInfo.total / hrInfo.count),
+        min: hrInfo.min < 999 ? hrInfo.min : 0,
+      };
+    }
+
     let entriesInserted = 0;
+    let hrHrvPopulated = 0;
 
     for (const [date, dayData] of Object.entries(dataByDate)) {
-      // Upsert to wearable_sessions (idempotent via onConflict)
+      // Priority for HR: detailed sleep (lowest_heart_rate) > heartrate endpoint (min) > heartrate endpoint (avg)
+      const restingHr = dayData.sleepDetails?.lowest_heart_rate 
+        || dayData.hrData?.min 
+        || dayData.hrData?.avg 
+        || null;
+
+      // HRV comes from detailed sleep endpoint
+      const hrvAvg = dayData.sleepDetails?.average_hrv || null;
+
+      if (restingHr || hrvAvg) {
+        hrHrvPopulated++;
+      }
+
       const sessionData = {
         user_id,
         date,
         source: "oura",
         readiness_score: dayData.readiness?.score || null,
-        sleep_score: dayData.sleep?.score || null,
+        sleep_score: dayData.dailySleep?.score || null,
         activity_score: dayData.activity?.score || null,
         total_steps: dayData.activity?.steps || null,
         active_calories: dayData.activity?.active_calories || null,
         total_calories: dayData.activity?.total_calories || null,
-        resting_hr: dayData.sleep?.lowest_heart_rate || dayData.sleep?.average_heart_rate || null,
-        hrv_avg: dayData.sleep?.average_hrv || null,
+        resting_hr: restingHr,
+        hrv_avg: hrvAvg,
         spo2_avg: dayData.spo2?.spo2_percentage?.average || null,
       };
+
+      console.log(`[fetch-oura-data] Date ${date}: resting_hr=${restingHr}, hrv_avg=${hrvAvg}`);
 
       const { error: sessionError } = await supabase
         .from("wearable_sessions")
@@ -270,8 +358,6 @@ Deno.serve(async (req: Request) => {
 
         if (activityError) {
           console.error(`[fetch-oura-data] [ERROR] Failed to insert activity data for ${date}:`, activityError.message);
-        } else {
-          console.log(`[fetch-oura-data] [SUCCESS] Saved activity for ${date}: ${activityDataRecord.steps || 0} steps, ${activityDataRecord.active_calories || 0} active cals`);
         }
       }
     }
@@ -282,12 +368,13 @@ Deno.serve(async (req: Request) => {
       entries_synced: entriesInserted,
     });
 
-    console.log(`[fetch-oura-data] [SUCCESS] Processed ${entriesInserted} entries for user ${user_id}`);
+    console.log(`[fetch-oura-data] [SUCCESS] Processed ${entriesInserted} entries for user ${user_id}, HR/HRV populated: ${hrHrvPopulated}`);
 
     return new Response(
       JSON.stringify({
         success: true,
         entries_synced: entriesInserted,
+        hr_hrv_populated: hrHrvPopulated,
         start_date: startDate,
         end_date: endDate,
         endpoints_synced: Object.keys(fetchedData).filter(k => fetchedData[k].length > 0),

@@ -348,6 +348,48 @@ export type Database = {
         }
         Relationships: []
       }
+      health_anomalies: {
+        Row: {
+          acknowledged_at: string | null
+          anomaly_type: string
+          baseline_value: number | null
+          current_value: number | null
+          detected_at: string | null
+          deviation_percent: number | null
+          id: string
+          metric_name: string
+          notes: string | null
+          severity: string
+          user_id: string
+        }
+        Insert: {
+          acknowledged_at?: string | null
+          anomaly_type: string
+          baseline_value?: number | null
+          current_value?: number | null
+          detected_at?: string | null
+          deviation_percent?: number | null
+          id?: string
+          metric_name: string
+          notes?: string | null
+          severity: string
+          user_id: string
+        }
+        Update: {
+          acknowledged_at?: string | null
+          anomaly_type?: string
+          baseline_value?: number | null
+          current_value?: number | null
+          detected_at?: string | null
+          deviation_percent?: number | null
+          id?: string
+          metric_name?: string
+          notes?: string | null
+          severity?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       health_daily: {
         Row: {
           active_energy_kcal: number | null
@@ -695,6 +737,39 @@ export type Database = {
         }
         Relationships: []
       }
+      rate_limit_state: {
+        Row: {
+          is_throttled: boolean | null
+          last_request_at: string | null
+          provider: string
+          request_count: number | null
+          throttle_until: string | null
+          updated_at: string | null
+          user_id: string
+          window_start: string | null
+        }
+        Insert: {
+          is_throttled?: boolean | null
+          last_request_at?: string | null
+          provider?: string
+          request_count?: number | null
+          throttle_until?: string | null
+          updated_at?: string | null
+          user_id: string
+          window_start?: string | null
+        }
+        Update: {
+          is_throttled?: boolean | null
+          last_request_at?: string | null
+          provider?: string
+          request_count?: number | null
+          throttle_until?: string | null
+          updated_at?: string | null
+          user_id?: string
+          window_start?: string | null
+        }
+        Relationships: []
+      }
       recovery_trends: {
         Row: {
           acute_load: number | null
@@ -771,6 +846,87 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      sync_health_log: {
+        Row: {
+          created_at: string | null
+          entries_processed: number | null
+          error_code: string | null
+          error_message: string | null
+          id: string
+          latency_ms: number | null
+          retry_count: number | null
+          status: string
+          sync_type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          entries_processed?: number | null
+          error_code?: string | null
+          error_message?: string | null
+          id?: string
+          latency_ms?: number | null
+          retry_count?: number | null
+          status: string
+          sync_type?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          entries_processed?: number | null
+          error_code?: string | null
+          error_message?: string | null
+          id?: string
+          latency_ms?: number | null
+          retry_count?: number | null
+          status?: string
+          sync_type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      sync_retry_queue: {
+        Row: {
+          created_at: string | null
+          id: string
+          last_error: string | null
+          max_retries: number | null
+          next_retry_at: string | null
+          operation: string
+          payload: Json | null
+          retry_count: number | null
+          status: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          last_error?: string | null
+          max_retries?: number | null
+          next_retry_at?: string | null
+          operation: string
+          payload?: Json | null
+          retry_count?: number | null
+          status?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          last_error?: string | null
+          max_retries?: number | null
+          next_retry_at?: string | null
+          operation?: string
+          payload?: Json | null
+          retry_count?: number | null
+          status?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
       }
       terra_connections: {
         Row: {
@@ -1543,11 +1699,14 @@ export type Database = {
       wearable_tokens: {
         Row: {
           access_token: string
+          access_token_encrypted: string | null
           created_at: string | null
+          encryption_version: number | null
           expires_at: string | null
           expires_in: number | null
           fitbit_user_id: string | null
           refresh_token: string | null
+          refresh_token_encrypted: string | null
           scope: string | null
           token_type: string | null
           updated_at: string | null
@@ -1555,11 +1714,14 @@ export type Database = {
         }
         Insert: {
           access_token: string
+          access_token_encrypted?: string | null
           created_at?: string | null
+          encryption_version?: number | null
           expires_at?: string | null
           expires_in?: number | null
           fitbit_user_id?: string | null
           refresh_token?: string | null
+          refresh_token_encrypted?: string | null
           scope?: string | null
           token_type?: string | null
           updated_at?: string | null
@@ -1567,11 +1729,14 @@ export type Database = {
         }
         Update: {
           access_token?: string
+          access_token_encrypted?: string | null
           created_at?: string | null
+          encryption_version?: number | null
           expires_at?: string | null
           expires_in?: number | null
           fitbit_user_id?: string | null
           refresh_token?: string | null
+          refresh_token_encrypted?: string | null
           scope?: string | null
           token_type?: string | null
           updated_at?: string | null

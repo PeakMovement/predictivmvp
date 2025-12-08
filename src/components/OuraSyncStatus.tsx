@@ -1,18 +1,16 @@
-import { useState, useEffect } from "react";
-import { CheckCircle2, Clock, Loader2, AlertCircle, WifiOff, Zap } from "lucide-react";
+import { Clock, AlertCircle, WifiOff, Zap } from "lucide-react";
 import { formatDistanceToNowStrict } from "date-fns";
 import { useOuraTokenStatus } from "@/hooks/useOuraTokenStatus";
 
 const OuraSyncStatus = () => {
-  const { isConnected, isLoading: tokenLoading, lastSync, error: tokenError, errorCode: tokenErrorCode } = useOuraTokenStatus();
+  const { isConnected, lastSync, error: tokenError, errorCode: tokenErrorCode } = useOuraTokenStatus();
 
   const getTimeSinceSync = () => {
-    if (!lastSync) return "Auto-sync active";
-    return `Last synced ${formatDistanceToNowStrict(lastSync)} ago`;
+    if (!lastSync) return "Auto-sync enabled";
+    return `Synced ${formatDistanceToNowStrict(lastSync)} ago`;
   };
 
   const getStatusIcon = () => {
-    if (tokenLoading) return <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />;
     if (tokenErrorCode === "NO_TOKEN" || tokenErrorCode === "NOT_AUTHENTICATED") {
       return <WifiOff className="h-3 w-3 text-amber-500" />;
     }
@@ -25,21 +23,11 @@ const OuraSyncStatus = () => {
   };
 
   const getStatusText = () => {
-    if (tokenLoading) return "Checking sync status...";
-    if (tokenErrorCode === "NO_TOKEN") return "Connect Oura Ring in Settings";
+    if (tokenErrorCode === "NO_TOKEN") return "Connect Oura in Settings";
     if (tokenErrorCode === "TOKEN_EXPIRED") return "Reconnect Oura in Settings";
     if (tokenError) return tokenError;
     return getTimeSinceSync();
   };
-
-  if (tokenLoading) {
-    return (
-      <div className="flex items-center gap-2 text-xs text-muted-foreground px-3 py-1.5 rounded-full bg-muted/50">
-        <Loader2 className="h-3 w-3 animate-spin" />
-        <span>Checking...</span>
-      </div>
-    );
-  }
 
   return (
     <div className="flex items-center gap-2 text-xs text-muted-foreground px-3 py-1.5 rounded-full bg-muted/50">

@@ -71,3 +71,9 @@ verify_jwt = true
 
 [functions.get-activity-trends]
 verify_jwt = true
+
+[functions.detect-health-anomalies]
+verify_jwt = false
+
+[functions.system-health-check]
+verify_jwt = false

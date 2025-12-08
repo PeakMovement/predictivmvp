@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import OuraSyncStatus from "@/components/OuraSyncStatus";
 import { YvesRecommendationsCard } from "@/components/dashboard/YvesRecommendationsCard";
@@ -33,6 +33,7 @@ export const Dashboard = () => {
   const { refreshAll } = useRefreshTrends();
   const { isConnected, isLoading: tokenLoading } = useOuraTokenStatus();
   const { toast } = useToast();
+  const hasShownConnectionToast = useRef(false);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
@@ -40,9 +41,10 @@ export const Dashboard = () => {
     });
   }, []);
 
-  // Show confirmation toast when Oura Ring connection is detected
+  // Show confirmation toast ONCE when Oura Ring connection is detected
   useEffect(() => {
-    if (!tokenLoading && isConnected) {
+    if (!tokenLoading && isConnected && !hasShownConnectionToast.current) {
+      hasShownConnectionToast.current = true;
       toast({
         title: "Oura Ring Connected",
         description: "Your data syncs automatically in the background",

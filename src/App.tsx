@@ -15,6 +15,7 @@ import { YourPlan } from "@/pages/YourPlan";
 import { Settings } from "@/pages/Settings";
 import { FindHelp } from "@/pages/FindHelp";
 import { InsightsTree } from "@/pages/InsightsTree";
+import { YvesChat } from "@/components/YvesChat";
 import TestSupabase from "@/pages/TestSupabase";
 import AuthTest from "@/pages/AuthTest";
 import FitbitSyncNow from "@/pages/FitbitSyncNow";
@@ -108,6 +109,12 @@ const App = () => {
         return <Settings onNavigate={setActiveTab} />;
       case "insights-tree":
         return <InsightsTree onNavigate={setActiveTab} />;
+      case "yves-insights":
+        return (
+          <div className="container mx-auto px-4 py-8 pb-24">
+            <YvesChat />
+          </div>
+        );
       case "test-supabase":
         return <TestSupabase />;
       case "auth-test":

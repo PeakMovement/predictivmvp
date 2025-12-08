@@ -105,14 +105,16 @@ export async function refreshOuraToken(
 
     console.log(`[oura-token-refresh] Token refreshed, new expiry: ${expiresAt}`);
 
+    // Update wearable_tokens directly (not the view)
     const { error: updateError } = await supabase
-      .from("oura_tokens")
+      .from("wearable_tokens")
       .update({
         access_token: refreshed.access_token,
         refresh_token: refreshed.refresh_token ?? token.refresh_token,
         expires_at: expiresAt,
       })
-      .eq("user_id", token.user_id);
+      .eq("user_id", token.user_id)
+      .ilike("scope", "%extapi%");
 
     if (updateError) {
       console.error(`[oura-token-refresh] Database update failed:`, updateError);
@@ -146,10 +148,13 @@ export async function getValidOuraToken(
 ): Promise<RefreshResult> {
   console.log(`[oura-token-refresh] Getting valid token for user ${userId}`);
 
+  // Query wearable_tokens directly (not oura_tokens view which requires auth.uid())
+  // Filter by Oura scope to distinguish from other providers
   const { data: token, error: tokenError } = await supabase
-    .from("oura_tokens")
+    .from("wearable_tokens")
     .select("*")
     .eq("user_id", userId)
+    .ilike("scope", "%extapi%")
     .maybeSingle();
 
   if (tokenError) {
@@ -162,7 +167,7 @@ export async function getValidOuraToken(
   }
 
   if (!token) {
-    console.log(`[oura-token-refresh] No token found for user ${userId}`);
+    console.log(`[oura-token-refresh] No Oura token found for user ${userId}`);
     return {
       success: false,
       error: "No Oura Ring connected. Please connect your Oura Ring in Settings.",

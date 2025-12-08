@@ -118,7 +118,8 @@ Deno.serve(async (req: Request) => {
 
     console.log(`[fetch-oura-auto] [START] Starting sync${targetUserId ? ` for user ${targetUserId}` : " for all users"}`);
 
-    let query = supabase.from("oura_tokens").select("*");
+    // Query wearable_tokens directly, filter by Oura scope (extapi)
+    let query = supabase.from("wearable_tokens").select("*").ilike("scope", "%extapi%");
     
     if (targetUserId) {
       query = query.eq("user_id", targetUserId);

@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import OuraSyncStatus from "@/components/OuraSyncStatus";
 import { YvesRecommendationsCard } from "@/components/dashboard/YvesRecommendationsCard";
@@ -32,8 +31,7 @@ const WelcomeHeader = () => (
 export const Dashboard = () => {
   const [userId, setUserId] = useState<string | null>(null);
   const { refreshAll } = useRefreshTrends();
-  const { isConnected, isLoading: tokenLoading, errorCode } = useOuraTokenStatus();
-  const navigate = useNavigate();
+  const { isConnected, isLoading: tokenLoading } = useOuraTokenStatus();
   const { toast } = useToast();
 
   useEffect(() => {
@@ -42,16 +40,15 @@ export const Dashboard = () => {
     });
   }, []);
 
-  // Redirect to settings if no Oura token (only after loading completes)
+  // Show confirmation toast when Oura Ring connection is detected
   useEffect(() => {
-    if (!tokenLoading && userId && !isConnected && errorCode === "NO_TOKEN") {
+    if (!tokenLoading && isConnected) {
       toast({
-        title: "Connect Your Oura Ring",
-        description: "Please connect your Oura Ring to view your health data",
+        title: "Oura Ring Connected",
+        description: "Your data syncs automatically in the background",
       });
-      navigate("/settings");
     }
-  }, [tokenLoading, userId, isConnected, errorCode, navigate, toast]);
+  }, [isConnected, tokenLoading, toast]);
 
   const { data: session, isLoading } = useWearableSessions(userId || undefined);
 

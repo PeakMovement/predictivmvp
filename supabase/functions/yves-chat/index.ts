@@ -166,6 +166,35 @@ Deno.serve(async (req) => {
       .order("period_date", { ascending: false })
       .limit(7);
 
+    // ─── LOAD HEALTH ANOMALIES (NEW) ─────────────────────────────────────────
+    const { data: healthAnomalies } = await supabase
+      .from("health_anomalies")
+      .select("*")
+      .eq("user_id", user.id)
+      .is("acknowledged_at", null)
+      .order("detected_at", { ascending: false })
+      .limit(10);
+
+    // ─── LOAD USER DEVIATIONS (NEW) ──────────────────────────────────────────
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    const sevenDaysAgoStr = sevenDaysAgo.toISOString().split("T")[0];
+
+    const { data: userDeviations } = await supabase
+      .from("user_deviations")
+      .select("*")
+      .eq("user_id", user.id)
+      .gte("date", sevenDaysAgoStr)
+      .order("date", { ascending: false });
+
+    // ─── LOAD SYMPTOM CHECK-INS (NEW) ────────────────────────────────────────
+    const { data: symptomCheckIns } = await supabase
+      .from("symptom_check_ins")
+      .select("*")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false })
+      .limit(15);
+
     // Build wearable context string - ONLY reference populated fields
     let wearableContext = "";
     let hasWearableData = false;
@@ -289,6 +318,63 @@ Deno.serve(async (req) => {
       wearableContext = "\nWEARABLE DATA: No wearable data available yet. User may need to connect their Oura Ring.";
     }
 
+    // ─── BUILD HEALTH ANOMALIES CONTEXT (NEW) ────────────────────────────────
+    let anomaliesContext = "";
+    if (healthAnomalies && healthAnomalies.length > 0) {
+      anomaliesContext = "\n\n⚠️ ACTIVE HEALTH ANOMALIES:";
+      for (const anomaly of healthAnomalies) {
+        const severityIcon = anomaly.severity === "high" ? "🔴" : anomaly.severity === "medium" ? "🟠" : "🟡";
+        anomaliesContext += `\n${severityIcon} ${anomaly.metric_name}: ${anomaly.anomaly_type}`;
+        if (anomaly.deviation_percent) {
+          anomaliesContext += ` (${anomaly.deviation_percent > 0 ? "+" : ""}${anomaly.deviation_percent.toFixed(1)}% from baseline)`;
+        }
+        if (anomaly.notes) {
+          anomaliesContext += ` - ${anomaly.notes}`;
+        }
+      }
+    }
+
+    // ─── BUILD USER DEVIATIONS CONTEXT (NEW) ─────────────────────────────────
+    let deviationsContext = "";
+    if (userDeviations && userDeviations.length > 0) {
+      deviationsContext = "\n\nTREND DEVIATIONS (Last 7 days):";
+      const riskZoneOrder = { "high-risk": 0, "moderate-risk": 1, "elevated": 2, "optimal": 3 };
+      const sortedDeviations = [...userDeviations].sort((a, b) => 
+        (riskZoneOrder[a.risk_zone as keyof typeof riskZoneOrder] || 3) - 
+        (riskZoneOrder[b.risk_zone as keyof typeof riskZoneOrder] || 3)
+      );
+      
+      for (const dev of sortedDeviations.slice(0, 5)) {
+        const riskIcon = dev.risk_zone === "high-risk" ? "🔴" : 
+                         dev.risk_zone === "moderate-risk" ? "🟠" : 
+                         dev.risk_zone === "elevated" ? "🟡" : "🟢";
+        deviationsContext += `\n${riskIcon} ${dev.metric}: ${dev.deviation?.toFixed(1) || 0}% deviation (${dev.risk_zone || "unknown"})`;
+        if (dev.baseline_value && dev.current_value) {
+          deviationsContext += ` [baseline: ${dev.baseline_value} → current: ${dev.current_value}]`;
+        }
+      }
+    }
+
+    // ─── BUILD SYMPTOM CHECK-INS CONTEXT (NEW) ───────────────────────────────
+    let symptomsContext = "";
+    if (symptomCheckIns && symptomCheckIns.length > 0) {
+      symptomsContext = "\n\nRECENT SYMPTOM CHECK-INS:";
+      for (const symptom of symptomCheckIns.slice(0, 5)) {
+        const severityIcon = symptom.severity === "severe" ? "🔴" : symptom.severity === "moderate" ? "🟠" : "🟡";
+        const date = new Date(symptom.created_at).toLocaleDateString();
+        symptomsContext += `\n${severityIcon} ${date}: ${symptom.symptom_type} (${symptom.severity})`;
+        if (symptom.body_location) {
+          symptomsContext += ` - Location: ${symptom.body_location}`;
+        }
+        if (symptom.description) {
+          symptomsContext += ` - "${symptom.description.slice(0, 100)}${symptom.description.length > 100 ? "..." : ""}"`;
+        }
+        if (symptom.triggers && symptom.triggers.length > 0) {
+          symptomsContext += ` - Triggers: ${symptom.triggers.join(", ")}`;
+        }
+      }
+    }
+
     // ─── BUILD PROMPT CONTEXT ────────────────────────────────────────────────
     const contextInfo = `
 USER PROFILE:
@@ -309,6 +395,9 @@ HEALTH PROFILE FROM DOCUMENTS:
 ${healthProfile?.ai_synthesis || "No comprehensive health profile available yet."}
 ${documentsContext}
 ${wearableContext}
+${anomaliesContext}
+${deviationsContext}
+${symptomsContext}
 
 RECENT CONVERSATION HISTORY:
 ${conversationHistory}
@@ -339,7 +428,16 @@ You provide personalized, actionable advice using ALL available context:
 - User's profile (goals, activity level, injuries, conditions)
 - Uploaded documents (nutrition plans, medical records, training programs)
 - Oura Ring data (sleep, readiness, activity scores, steps, calories)
+- Health anomalies (flagged deviations requiring attention)
+- Trend deviations (metrics moving outside normal baseline ranges)
+- Symptom check-ins (user-reported symptoms with severity and triggers)
 - Conversation history and long-term memory
+
+CRITICAL REASONING INSTRUCTIONS:
+1. When health anomalies are present, ALWAYS address them proactively.
+2. Cross-reference symptoms with trend deviations to identify patterns.
+3. Consider the relationship between training load, recovery metrics, and reported symptoms.
+4. Provide actionable recommendations based on the combined context.
 
 When referencing health data, use the specific metrics available. If certain metrics are not available, focus on what IS available rather than mentioning missing data.
 

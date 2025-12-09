@@ -847,6 +847,51 @@ export type Database = {
           },
         ]
       }
+      symptom_check_ins: {
+        Row: {
+          body_location: string | null
+          created_at: string
+          description: string | null
+          duration_hours: number | null
+          id: string
+          onset_time: string | null
+          related_metrics: Json | null
+          severity: string
+          symptom_type: string
+          triggers: string[] | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          body_location?: string | null
+          created_at?: string
+          description?: string | null
+          duration_hours?: number | null
+          id?: string
+          onset_time?: string | null
+          related_metrics?: Json | null
+          severity: string
+          symptom_type: string
+          triggers?: string[] | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          body_location?: string | null
+          created_at?: string
+          description?: string | null
+          duration_hours?: number | null
+          id?: string
+          onset_time?: string | null
+          related_metrics?: Json | null
+          severity?: string
+          symptom_type?: string
+          triggers?: string[] | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       sync_health_log: {
         Row: {
           created_at: string | null

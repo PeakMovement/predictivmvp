@@ -1053,6 +1053,57 @@ export type Database = {
         }
         Relationships: []
       }
+      triage_results: {
+        Row: {
+          action_taken: string | null
+          confidence_score: number
+          contextual_factors: Json | null
+          created_at: string
+          data_sources_used: string[] | null
+          flags: string[] | null
+          id: string
+          issue_type: string
+          outcome_feedback: string | null
+          reasoning: string
+          recommended_provider: string
+          severity: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          action_taken?: string | null
+          confidence_score: number
+          contextual_factors?: Json | null
+          created_at?: string
+          data_sources_used?: string[] | null
+          flags?: string[] | null
+          id?: string
+          issue_type: string
+          outcome_feedback?: string | null
+          reasoning: string
+          recommended_provider: string
+          severity: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          action_taken?: string | null
+          confidence_score?: number
+          contextual_factors?: Json | null
+          created_at?: string
+          data_sources_used?: string[] | null
+          flags?: string[] | null
+          id?: string
+          issue_type?: string
+          outcome_feedback?: string | null
+          reasoning?: string
+          recommended_provider?: string
+          severity?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_baselines: {
         Row: {
           data_window: number

@@ -77,3 +77,6 @@ verify_jwt = false
 
 [functions.system-health-check]
 verify_jwt = false
+
+[functions.predict-provider]
+verify_jwt = true

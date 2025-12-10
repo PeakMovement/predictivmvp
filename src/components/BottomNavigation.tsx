@@ -1,4 +1,4 @@
-import { Home, Dumbbell, Heart, FileText, User, ClipboardList, TrendingUp, Users, Sparkles } from "lucide-react";
+import { Home, Dumbbell, Heart, FileText, User, ClipboardList, TrendingUp, Users, Sparkles, Stethoscope } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const navItems = [
@@ -6,7 +6,8 @@ const navItems = [
   { name: "yves-insights", icon: Sparkles, label: "Yves AI" },
   { name: "training", icon: Dumbbell, label: "Training" },
   { name: "health", icon: Heart, label: "Health" },
-  { name: "my-documents", icon: FileText, label: "Documents" },
+  { name: "symptom-checkin", icon: Stethoscope, label: "Check-In" },
+  { name: "my-documents", icon: FileText, label: "Docs" },
   { name: "profile-setup", icon: User, label: "Profile" },
   { name: "your-plan", icon: ClipboardList, label: "Plan" },
   { name: "mybaselines", icon: TrendingUp, label: "Baselines" },

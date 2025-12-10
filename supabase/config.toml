@@ -80,3 +80,6 @@ verify_jwt = false
 
 [functions.predict-provider]
 verify_jwt = true
+
+[functions.interpret-health-event]
+verify_jwt = true

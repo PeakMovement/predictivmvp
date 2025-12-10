@@ -1,13 +1,27 @@
 import { useState } from "react";
 import { SymptomCheckInForm } from "@/components/symptoms/SymptomCheckInForm";
 import { SymptomHistory } from "@/components/symptoms/SymptomHistory";
-import { Stethoscope } from "lucide-react";
+import { useHealthInterpretation } from "@/hooks/useHealthInterpretation";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Stethoscope, Brain, AlertTriangle, CheckCircle, Loader2, X } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 
 export const SymptomCheckIn = () => {
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [latestCheckinId, setLatestCheckinId] = useState<string | null>(null);
+  const { interpretSymptom, interpretation, isLoading, error, clearInterpretation } =
+    useHealthInterpretation();
 
-  const handleSuccess = () => {
+  const handleSuccess = async (checkinId: string) => {
+    setLatestCheckinId(checkinId);
     setRefreshTrigger((prev) => prev + 1);
+    await interpretSymptom(checkinId);
+  };
+
+  const handleClear = () => {
+    setLatestCheckinId(null);
+    clearInterpretation();
   };
 
   return (
@@ -30,6 +44,98 @@ export const SymptomCheckIn = () => {
         <div className="mb-6">
           <SymptomCheckInForm onSuccess={handleSuccess} />
         </div>
+
+        {/* AI Interpretation Result */}
+        {(latestCheckinId || isLoading) && (
+          <Card className="mb-6 bg-card/50 backdrop-blur-xl border-border/50">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="flex items-center gap-2 text-foreground">
+                <Brain className="h-5 w-5 text-primary" />
+                AI Health Interpretation
+              </CardTitle>
+              {interpretation && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={handleClear}
+                  className="h-8 w-8"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              )}
+            </CardHeader>
+            <CardContent>
+              {isLoading && (
+                <div className="flex items-center gap-3 text-muted-foreground py-4">
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                  <span>Analyzing your symptom with health context...</span>
+                </div>
+              )}
+              
+              {error && (
+                <div className="flex items-center gap-2 text-destructive py-2">
+                  <AlertTriangle className="h-5 w-5" />
+                  <span>{error}</span>
+                </div>
+              )}
+              
+              {interpretation && (
+                <div className="space-y-4">
+                  {/* Summary */}
+                  <div className="p-3 rounded-lg bg-secondary/50">
+                    <p className="text-foreground">{interpretation.summary}</p>
+                  </div>
+
+                  {/* Flagged Conditions */}
+                  {interpretation.flagged_conditions && interpretation.flagged_conditions.length > 0 && (
+                    <div>
+                      <h4 className="text-sm font-medium text-muted-foreground mb-2 flex items-center gap-2">
+                        <AlertTriangle className="h-4 w-4 text-amber-500" />
+                        Flagged Conditions
+                      </h4>
+                      <ul className="space-y-1">
+                        {interpretation.flagged_conditions.map((condition, idx) => (
+                          <li key={idx} className="flex items-start gap-2 text-sm text-foreground">
+                            <span className="text-amber-500 mt-1">•</span>
+                            {condition}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {/* Recommendations */}
+                  {interpretation.recommendations && interpretation.recommendations.length > 0 && (
+                    <div>
+                      <h4 className="text-sm font-medium text-muted-foreground mb-2 flex items-center gap-2">
+                        <CheckCircle className="h-4 w-4 text-emerald-500" />
+                        Recommendations
+                      </h4>
+                      <ul className="space-y-1">
+                        {interpretation.recommendations.map((rec, idx) => (
+                          <li key={idx} className="flex items-start gap-2 text-sm text-foreground">
+                            <span className="text-emerald-500 mt-1">•</span>
+                            {rec}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {/* Footer: Confidence + Data Sources */}
+                  <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-border/50">
+                    <Badge variant="secondary" className="text-xs">
+                      {interpretation.confidence_score}% confidence
+                    </Badge>
+                    <span className="text-xs text-muted-foreground">
+                      Sources: {interpretation.data_sources_used.join(", ")}
+                    </span>
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
 
         {/* History */}
         <SymptomHistory refreshTrigger={refreshTrigger} />

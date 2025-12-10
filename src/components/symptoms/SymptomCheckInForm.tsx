@@ -60,7 +60,7 @@ const formSchema = z.object({
 type FormData = z.infer<typeof formSchema>;
 
 interface SymptomCheckInFormProps {
-  onSuccess?: () => void;
+  onSuccess?: (checkinId: string) => void;
 }
 
 export const SymptomCheckInForm = ({ onSuccess }: SymptomCheckInFormProps) => {
@@ -112,7 +112,7 @@ export const SymptomCheckInForm = ({ onSuccess }: SymptomCheckInFormProps) => {
         throw new Error("You must be logged in to submit symptoms");
       }
 
-      const { error } = await supabase.from("symptom_check_ins").insert({
+      const { data: insertedData, error } = await supabase.from("symptom_check_ins").insert({
         user_id: session.user.id,
         symptom_type: data.symptom_type,
         severity: getSeverityLabel(data.severity).toLowerCase(),
@@ -121,7 +121,7 @@ export const SymptomCheckInForm = ({ onSuccess }: SymptomCheckInFormProps) => {
         triggers: data.triggers && data.triggers.length > 0 ? data.triggers : null,
         duration_hours: data.duration_hours || null,
         onset_time: new Date().toISOString(),
-      });
+      }).select('id').single();
 
       if (error) throw error;
 
@@ -130,9 +130,10 @@ export const SymptomCheckInForm = ({ onSuccess }: SymptomCheckInFormProps) => {
         description: "Your symptom has been recorded successfully.",
       });
 
+      const checkinId = insertedData?.id;
       form.reset();
       setSelectedTriggers([]);
-      onSuccess?.();
+      if (checkinId) onSuccess?.(checkinId);
     } catch (error) {
       toast({
         title: "Error",

@@ -28,6 +28,7 @@ import PolarCallback from "@/pages/auth/polar";
 import MyBaselines from "@/pages/MyBaselines";
 import DeveloperBaselinesEngine from "@/pages/DeveloperBaselinesEngine";
 import MyDocuments from "@/pages/MyDocuments";
+import { SymptomCheckIn } from "@/pages/SymptomCheckIn";
 import PlanCompliance from "@/pages/PlanCompliance";
 import { ProfileSetup } from "@/pages/ProfileSetup";
 import { AdminDashboard } from "@/pages/AdminDashboard";
@@ -105,6 +106,8 @@ const App = () => {
         return <MyBaselines />;
       case "find-help":
         return <FindHelp />;
+      case "symptom-checkin":
+        return <SymptomCheckIn />;
       case "settings":
         return <Settings onNavigate={setActiveTab} />;
       case "insights-tree":

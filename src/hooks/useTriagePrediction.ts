@@ -2,6 +2,25 @@ import { useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
+export interface ProviderRecommendation {
+  key: string;
+  name: string;
+  specialties?: string[];
+}
+
+export interface TriagePrediction {
+  success: boolean;
+  triage_id?: string;
+  recommended_provider: ProviderRecommendation | string;
+  confidence_score: number;
+  reasoning: string;
+  urgency: "routine" | "soon" | "urgent" | "emergency";
+  alternative_providers?: string[];
+  action_items?: string[];
+  data_sources_used?: string[];
+  flags?: string[] | null;
+}
+
 export type TriageInput = {
   issue_type: string;
   severity?: string;
@@ -9,12 +28,12 @@ export type TriageInput = {
 };
 
 export const useTriagePrediction = () => {
-  const [prediction, setPrediction] = useState(null);
+  const [prediction, setPrediction] = useState<TriagePrediction | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
-  const predictProvider = useCallback(async (input: TriageInput): Promise<any> => {
+  const predictProvider = useCallback(async (input: TriageInput): Promise<TriagePrediction | null> => {
     setIsLoading(true);
     setError(null);
 

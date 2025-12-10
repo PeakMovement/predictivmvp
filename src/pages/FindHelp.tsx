@@ -1,106 +1,105 @@
-import { useState, useEffect, useRef } from "react";
+import { useState } from "react";
+import { TriageForm } from "@/components/triage/TriageForm";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Users, ExternalLink, Stethoscope, ArrowRight } from "lucide-react";
 
 export const FindHelp = () => {
-  const [iframeError, setIframeError] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [fadeIn, setFadeIn] = useState(false);
-  const iframeRef = useRef<HTMLIFrameElement>(null);
+  const [showExternalFinder, setShowExternalFinder] = useState(false);
 
-  useEffect(() => {
-    // Reset loading state when component mounts
-    setLoading(true);
-    setFadeIn(false);
-  }, []);
+  if (showExternalFinder) {
+    return (
+      <div className="flex flex-col w-full h-screen relative bg-background">
+        {/* Back button */}
+        <div className="absolute top-4 left-4 z-50">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowExternalFinder(false)}
+            className="bg-card/80 backdrop-blur-sm"
+          >
+            ← Back to Triage
+          </Button>
+        </div>
 
-  const handleIframeLoad = () => {
-    // Send postMessage to Finder app to navigate to AI Health Assistant page
-    if (iframeRef.current?.contentWindow) {
-      try {
-        iframeRef.current.contentWindow.postMessage(
-          { action: 'goToAIHealthAssistant' }, 
-          'https://preview--predictivmedicalfinder.lovable.app'
-        );
-      } catch (error) {
-        console.log('PostMessage not supported or blocked by CORS');
-      }
-    }
-    
-    // Trigger fade-in effect
-    setTimeout(() => {
-      setLoading(false);
-      setFadeIn(true);
-    }, 300);
-  };
+        {/* External finder iframe */}
+        <iframe
+          src="https://preview--predictivmedicalfinder.lovable.app/?step=2"
+          style={{
+            width: "100%",
+            height: "100vh",
+            border: "none",
+          }}
+          loading="lazy"
+          allow="clipboard-write; fullscreen"
+          title="Predictiv Medical Finder"
+        />
+      </div>
+    );
+  }
 
   return (
-    <div className="flex flex-col w-full h-screen relative bg-gradient-to-b from-black via-[#0B0B0F] to-black">
-      {/* Purple-blue glow overlay */}
-      <div 
-        className="absolute inset-0 pointer-events-none z-0"
-        style={{
-          background: 'radial-gradient(circle at center, rgba(150, 120, 255, 0.08) 0%, transparent 70%)',
-        }}
-      />
-      
-      {/* Loading overlay with blurred gradient */}
-      {loading && (
-        <div 
-          className="absolute inset-0 z-50 animate-fadeInOut"
-          style={{
-            background: 'linear-gradient(135deg, rgba(18, 18, 18, 0.95) 0%, rgba(95, 132, 255, 0.25) 100%)',
-            backdropFilter: 'blur(8px)',
-          }}
-        />
-      )}
-      
-      {/* Main iframe container */}
-      <div 
-        className="flex-1 relative overflow-hidden z-10 transition-opacity duration-500"
-        style={{
-          paddingBottom: 'env(safe-area-inset-bottom)',
-          opacity: fadeIn ? 1 : 0,
-        }}
-      >
-        {!iframeError ? (
-          <iframe
-            ref={iframeRef}
-            id="finderFrame"
-            src="https://preview--predictivmedicalfinder.lovable.app/?step=2"
-            style={{
-              width: '100%',
-              height: '100vh',
-              border: 'none',
-              borderRadius: '0',
-              overflow: 'auto',
-            }}
-            loading="lazy"
-            allow="clipboard-write; fullscreen"
-            onLoad={handleIframeLoad}
-            onError={() => setIframeError(true)}
-            title="Predictiv Medical Finder - AI Health Assistant"
-          />
-        ) : (
-          <div className="min-h-screen flex items-center justify-center px-4 pb-[calc(5rem+env(safe-area-inset-bottom))]">
-            <div className="bg-gradient-to-b from-[#141414] to-[#0B0B0F] backdrop-blur-xl border border-[#222] rounded-2xl p-8 max-w-4xl w-full text-center shadow-2xl">
-              <div className="text-4xl mb-4">⚠️</div>
-              <p className="text-foreground font-medium mb-2">
-                Couldn't load the professional finder right now
-              </p>
-              <p className="text-muted-foreground text-sm">
-                Please try again later or check your internet connection.
-              </p>
-              <button
-                onClick={() => {
-                  setIframeError(false);
-                  setLoading(true);
-                }}
-                className="mt-4 px-6 py-3 rounded-2xl bg-[#1E1E1E] text-gray-200 border border-gray-700 hover:bg-[#2D2D2D] hover:text-white hover:scale-105 hover:shadow-xl active:scale-95 transition-all duration-200 font-medium min-h-[44px]"
-              >
-                Try Again
-              </button>
+    <div className="min-h-screen bg-background pb-24">
+      <div className="container mx-auto px-4 py-6 max-w-2xl">
+        {/* Header */}
+        <div className="mb-6">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="p-2 rounded-xl bg-primary/20">
+              <Users className="h-6 w-6 text-primary" />
             </div>
+            <h1 className="text-2xl font-bold text-foreground">Find Help</h1>
           </div>
-        )}
+          <p className="text-muted-foreground">
+            Get personalized recommendations for the right healthcare provider based on your health data.
+          </p>
+        </div>
+
+        {/* Quick Actions */}
+        <div className="grid grid-cols-2 gap-3 mb-6">
+          <Card 
+            className="bg-card/50 backdrop-blur-xl border-border/50 cursor-pointer hover:bg-card/70 transition-colors"
+            onClick={() => window.dispatchEvent(new CustomEvent("navigate-tab", { detail: "symptom-checkin" }))}
+          >
+            <CardContent className="p-4 flex flex-col items-center text-center">
+              <Stethoscope className="h-8 w-8 text-primary mb-2" />
+              <span className="text-sm font-medium text-foreground">Log Symptoms</span>
+              <span className="text-xs text-muted-foreground">First</span>
+            </CardContent>
+          </Card>
+          <Card 
+            className="bg-card/50 backdrop-blur-xl border-border/50 cursor-pointer hover:bg-card/70 transition-colors"
+            onClick={() => setShowExternalFinder(true)}
+          >
+            <CardContent className="p-4 flex flex-col items-center text-center">
+              <ExternalLink className="h-8 w-8 text-primary mb-2" />
+              <span className="text-sm font-medium text-foreground">Browse Providers</span>
+              <span className="text-xs text-muted-foreground">Directory</span>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Triage Form */}
+        <TriageForm />
+
+        {/* Additional Help */}
+        <Card className="mt-6 bg-gradient-to-br from-primary/10 to-primary/5 border-primary/20">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="font-medium text-foreground mb-1">Need immediate help?</h3>
+                <p className="text-sm text-muted-foreground">
+                  If this is an emergency, please call 911 or go to your nearest emergency room.
+                </p>
+              </div>
+              <Button variant="outline" size="sm" className="flex-shrink-0" asChild>
+                <a href="tel:911">
+                  Call 911
+                  <ArrowRight className="h-4 w-4 ml-1" />
+                </a>
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

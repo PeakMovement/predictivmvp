@@ -2,45 +2,25 @@ import { useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
-export interface ProviderRecommendation {
-  key: string;
-  name: string;
-  specialties: string[];
-}
-
-export interface TriagePrediction {
-  success: boolean;
-  triage_id: string;
-  recommended_provider: ProviderRecommendation;
-  confidence_score: number;
-  reasoning: string;
-  urgency: "routine" | "soon" | "urgent" | "emergency";
-  alternative_providers: string[];
-  action_items: string[];
-  data_sources_used: string[];
-  flags: string[] | null;
-  find_help_link: string;
-}
-
-interface TriageInput {
+export type TriageInput = {
   issue_type: string;
-  severity?: "mild" | "moderate" | "severe" | "critical";
-  contextual_factors?: Record<string, unknown>;
-}
+  severity?: string;
+  contextual_factors?: Record<string, any>;
+};
 
 export const useTriagePrediction = () => {
-  const [prediction, setPrediction] = useState<TriagePrediction | null>(null);
+  const [prediction, setPrediction] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState(null);
   const { toast } = useToast();
 
-  const predictProvider = useCallback(async (input: TriageInput): Promise<TriagePrediction | null> => {
+  const predictProvider = useCallback(async (input: TriageInput): Promise<any> => {
     setIsLoading(true);
     setError(null);
-    
+
     try {
       const { data: { session } } = await supabase.auth.getSession();
-      
+
       if (!session?.access_token) {
         throw new Error("You must be logged in to use triage");
       }
@@ -58,11 +38,10 @@ export const useTriagePrediction = () => {
       }
 
       setPrediction(data);
-      
-      // Show toast based on urgency
+
       if (data.urgency === "emergency") {
         toast({
-          title: "⚠️ Emergency Detected",
+          title: "Emergency Detected",
           description: "Please seek immediate medical attention.",
           variant: "destructive",
         });
@@ -89,16 +68,10 @@ export const useTriagePrediction = () => {
     }
   }, [toast]);
 
-  const clearPrediction = useCallback(() => {
-    setPrediction(null);
-    setError(null);
-  }, []);
-
   return {
+    predictProvider,
     prediction,
     isLoading,
     error,
-    predictProvider,
-    clearPrediction,
   };
 };

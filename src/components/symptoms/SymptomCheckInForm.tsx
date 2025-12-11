@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Slider } from "@/components/ui/slider";
 import { Loader2, Stethoscope } from "lucide-react";
+import { RedFlagFunnel, shouldTriggerRedFlagFunnel } from "@/components/help/RedFlagFunnel";
 
 const symptomTypes = [
   { value: "headache", label: "Headache" },
@@ -66,6 +67,8 @@ interface SymptomCheckInFormProps {
 export const SymptomCheckInForm = ({ onSuccess }: SymptomCheckInFormProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedTriggers, setSelectedTriggers] = useState<string[]>([]);
+  const [showRedFlagFunnel, setShowRedFlagFunnel] = useState(false);
+  const [lastSubmission, setLastSubmission] = useState<{ symptomType: string; severity: number; id?: string } | null>(null);
   const { toast } = useToast();
 
   const form = useForm<FormData>({
@@ -131,6 +134,13 @@ export const SymptomCheckInForm = ({ onSuccess }: SymptomCheckInFormProps) => {
       });
 
       const checkinId = insertedData?.id;
+      
+      // Check if red-flag funnel should be triggered
+      if (shouldTriggerRedFlagFunnel(data.symptom_type, data.severity)) {
+        setLastSubmission({ symptomType: data.symptom_type, severity: data.severity, id: checkinId });
+        setShowRedFlagFunnel(true);
+      }
+      
       form.reset();
       setSelectedTriggers([]);
       if (checkinId) onSuccess?.(checkinId);
@@ -144,6 +154,19 @@ export const SymptomCheckInForm = ({ onSuccess }: SymptomCheckInFormProps) => {
       setIsSubmitting(false);
     }
   };
+
+  // Show red-flag funnel if triggered
+  if (showRedFlagFunnel && lastSubmission) {
+    return (
+      <RedFlagFunnel
+        symptomType={lastSubmission.symptomType}
+        severity={lastSubmission.severity}
+        symptomId={lastSubmission.id}
+        onComplete={() => setShowRedFlagFunnel(false)}
+        onSkip={() => setShowRedFlagFunnel(false)}
+      />
+    );
+  }
 
   return (
     <Card className="bg-card/50 backdrop-blur-xl border-border/50">

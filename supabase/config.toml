@@ -83,3 +83,6 @@ verify_jwt = true
 
 [functions.interpret-health-event]
 verify_jwt = true
+
+[functions.match-provider]
+verify_jwt = true

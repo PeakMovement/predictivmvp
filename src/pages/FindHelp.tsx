@@ -1,43 +1,11 @@
-import { useState } from "react";
 import { TriageForm } from "@/components/triage/TriageForm";
+import { ProviderMatchForm } from "@/components/help/ProviderMatchForm";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Users, ExternalLink, Stethoscope, ArrowRight } from "lucide-react";
+import { Users, Search, Stethoscope, ArrowRight } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export const FindHelp = () => {
-  const [showExternalFinder, setShowExternalFinder] = useState(false);
-
-  if (showExternalFinder) {
-    return (
-      <div className="flex flex-col w-full h-screen relative bg-background">
-        {/* Back button */}
-        <div className="absolute top-4 left-4 z-50">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setShowExternalFinder(false)}
-            className="bg-card/80 backdrop-blur-sm"
-          >
-            ← Back to Triage
-          </Button>
-        </div>
-
-        {/* External finder iframe */}
-        <iframe
-          src="https://preview--predictivmedicalfinder.lovable.app/?step=2"
-          style={{
-            width: "100%",
-            height: "100vh",
-            border: "none",
-          }}
-          loading="lazy"
-          allow="clipboard-write; fullscreen"
-          title="Predictiv Medical Finder"
-        />
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen bg-background pb-24">
       <div className="container mx-auto px-4 py-6 max-w-2xl">
@@ -50,38 +18,33 @@ export const FindHelp = () => {
             <h1 className="text-2xl font-bold text-foreground">Find Help</h1>
           </div>
           <p className="text-muted-foreground">
-            Get personalized recommendations for the right healthcare provider based on your health data.
+            Get matched with the right healthcare provider based on your needs, budget, and location.
           </p>
         </div>
 
-        {/* Quick Actions */}
-        <div className="grid grid-cols-2 gap-3 mb-6">
-          <Card 
-            className="bg-card/50 backdrop-blur-xl border-border/50 cursor-pointer hover:bg-card/70 transition-colors"
-            onClick={() => window.dispatchEvent(new CustomEvent("navigate-tab", { detail: "symptom-checkin" }))}
-          >
-            <CardContent className="p-4 flex flex-col items-center text-center">
-              <Stethoscope className="h-8 w-8 text-primary mb-2" />
-              <span className="text-sm font-medium text-foreground">Log Symptoms</span>
-              <span className="text-xs text-muted-foreground">First</span>
-            </CardContent>
-          </Card>
-          <Card 
-            className="bg-card/50 backdrop-blur-xl border-border/50 cursor-pointer hover:bg-card/70 transition-colors"
-            onClick={() => setShowExternalFinder(true)}
-          >
-            <CardContent className="p-4 flex flex-col items-center text-center">
-              <ExternalLink className="h-8 w-8 text-primary mb-2" />
-              <span className="text-sm font-medium text-foreground">Browse Providers</span>
-              <span className="text-xs text-muted-foreground">Directory</span>
-            </CardContent>
-          </Card>
-        </div>
+        {/* Main Tabs */}
+        <Tabs defaultValue="match" className="w-full">
+          <TabsList className="grid w-full grid-cols-2 mb-4">
+            <TabsTrigger value="match" className="flex items-center gap-2">
+              <Search className="h-4 w-4" />
+              Find Provider
+            </TabsTrigger>
+            <TabsTrigger value="triage" className="flex items-center gap-2">
+              <Stethoscope className="h-4 w-4" />
+              AI Triage
+            </TabsTrigger>
+          </TabsList>
 
-        {/* Triage Form */}
-        <TriageForm />
+          <TabsContent value="match">
+            <ProviderMatchForm />
+          </TabsContent>
 
-        {/* Additional Help */}
+          <TabsContent value="triage">
+            <TriageForm />
+          </TabsContent>
+        </Tabs>
+
+        {/* Emergency Help */}
         <Card className="mt-6 bg-gradient-to-br from-primary/10 to-primary/5 border-primary/20">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">

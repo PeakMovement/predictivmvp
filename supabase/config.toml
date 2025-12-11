@@ -86,3 +86,6 @@ verify_jwt = true
 
 [functions.match-provider]
 verify_jwt = true
+
+[functions.trigger-risk-alert]
+verify_jwt = false

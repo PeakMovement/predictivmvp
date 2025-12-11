@@ -5,6 +5,7 @@ import { OuraReadinessCard } from "@/components/oura/OuraReadinessCard";
 import { OuraSleepCard } from "@/components/oura/OuraSleepCard";
 import { OuraActivityCard } from "@/components/oura/OuraActivityCard";
 import { OuraHRVCard } from "@/components/oura/OuraHRVCard";
+import { TodayActivitySection } from "@/components/dashboard/TodayActivitySection";
 import OuraSyncStatus from "@/components/OuraSyncStatus";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { InfoIcon } from "lucide-react";
@@ -99,6 +100,11 @@ export const Health = () => {
                 spo2={session?.spo2_avg ?? null}
                 isLoading={isLoading}
               />
+            </div>
+
+            {/* Today's Activity Section */}
+            <div className="mb-8">
+              <TodayActivitySection />
             </div>
 
             {/* Data Source Info */}

@@ -4,6 +4,8 @@ import OuraSyncStatus from "@/components/OuraSyncStatus";
 import { YvesRecommendationsCard } from "@/components/dashboard/YvesRecommendationsCard";
 import { DailyBriefingCard } from "@/components/dashboard/DailyBriefingCard";
 import { RiskScoreCard } from "@/components/dashboard/RiskScoreCard";
+import { TodayActivitySection } from "@/components/dashboard/TodayActivitySection";
+import { RiskAlertPopup } from "@/components/alerts/RiskAlertPopup";
 import { useRefreshTrends } from "@/hooks/useTrendData";
 import { supabase } from "@/integrations/supabase/client";
 import { useWearableSessions } from "@/hooks/useWearableSessions";
@@ -79,6 +81,11 @@ export const Dashboard = () => {
     };
   }, [refreshAll]);
 
+  const handleSymptomCheckIn = () => {
+    // Navigate to symptom check-in
+    window.dispatchEvent(new CustomEvent("navigate-tab", { detail: "symptom-checkin" }));
+  };
+
   return (
     <TooltipProvider>
       <div className="min-h-screen bg-background flex flex-col pb-24 md:pb-32">
@@ -126,6 +133,11 @@ export const Dashboard = () => {
                 </div>
               </div>
 
+              {/* Today's Activity Section */}
+              <div className="mb-8">
+                <TodayActivitySection />
+              </div>
+
               {/* Daily Briefing */}
               <div className="mb-8">
                 <DailyBriefingCard />
@@ -138,6 +150,9 @@ export const Dashboard = () => {
             </>
           )}
         </div>
+
+        {/* Risk Alert Popup */}
+        <RiskAlertPopup onCheckIn={handleSymptomCheckIn} />
       </div>
     </TooltipProvider>
   );

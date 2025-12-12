@@ -223,17 +223,29 @@ export async function clearChatHistory(): Promise<{ success: boolean; error?: st
       };
     }
 
-    const { error } = await supabase
+    // Delete insight history
+    const { error: historyError } = await supabase
       .from('insight_history')
       .delete()
       .eq('user_id', user.id);
 
-    if (error) {
-      console.error('Error clearing chat history:', error);
+    if (historyError) {
+      console.error('Error clearing insight history:', historyError);
       return {
         success: false,
-        error: error.message || 'Failed to clear chat history'
+        error: historyError.message || 'Failed to clear chat history'
       };
+    }
+
+    // Also clear Yves memory bank for this user
+    const { error: memoryError } = await supabase
+      .from('yves_memory_bank')
+      .delete()
+      .eq('user_id', user.id);
+
+    if (memoryError) {
+      console.error('Error clearing yves memory:', memoryError);
+      // Non-critical, don't fail the operation
     }
 
     return { success: true };

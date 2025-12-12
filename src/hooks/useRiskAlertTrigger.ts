@@ -1,6 +1,6 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
+import { getAlertSettings } from "@/lib/alertConditions";
 
 interface RiskAlert {
   type: "high_risk" | "anomaly" | "red_flag";
@@ -26,9 +26,35 @@ const RISK_THRESHOLDS = {
   sleep_low: 60
 };
 
+// Function to send SMS alert via edge function
+export async function sendRiskAlertSMS(phoneNumber: string, alertMessage: string): Promise<{ success: boolean; error?: string }> {
+  try {
+    const { data, error } = await supabase.functions.invoke("send-sms-alert", {
+      body: {
+        to: phoneNumber,
+        message: `Predictiv Alert: ${alertMessage} - Check app for details.`
+      }
+    });
+
+    if (error) {
+      console.error("[sendRiskAlertSMS] Error:", error);
+      return { success: false, error: error.message };
+    }
+
+    console.log("[sendRiskAlertSMS] SMS sent successfully");
+    return { success: data?.success || false, error: data?.error };
+  } catch (error) {
+    console.error("[sendRiskAlertSMS] Exception:", error);
+    return { 
+      success: false, 
+      error: error instanceof Error ? error.message : "Failed to send SMS" 
+    };
+  }
+}
+
 export function useRiskAlertTrigger(): UseRiskAlertTriggerResult {
   const [currentAlert, setCurrentAlert] = useState<RiskAlert | null>(null);
-  const { toast } = useToast();
+  const smsSentRef = useRef<string | null>(null);
 
   const checkForAlerts = useCallback(async () => {
     try {
@@ -44,95 +70,107 @@ export function useRiskAlertTrigger(): UseRiskAlertTriggerResult {
         .limit(1)
         .maybeSingle();
 
+      let alertToSet: RiskAlert | null = null;
+
       if (recoveryTrends) {
         // Check ACWR
         if (recoveryTrends.acwr && recoveryTrends.acwr >= RISK_THRESHOLDS.acwr.critical) {
-          setCurrentAlert({
+          alertToSet = {
             type: "high_risk",
             metric: "ACWR",
             value: recoveryTrends.acwr,
             threshold: RISK_THRESHOLDS.acwr.critical,
             message: "Your training load ratio is critically high. Consider reducing intensity to prevent injury."
-          });
-          return;
+          };
         }
-
         // Check strain
-        if (recoveryTrends.strain && recoveryTrends.strain >= RISK_THRESHOLDS.strain.critical) {
-          setCurrentAlert({
+        else if (recoveryTrends.strain && recoveryTrends.strain >= RISK_THRESHOLDS.strain.critical) {
+          alertToSet = {
             type: "high_risk",
             metric: "Strain",
             value: recoveryTrends.strain,
             threshold: RISK_THRESHOLDS.strain.critical,
             message: "Your accumulated training strain is very high. Recovery is recommended."
-          });
-          return;
+          };
         }
-
         // Check monotony
-        if (recoveryTrends.monotony && recoveryTrends.monotony >= RISK_THRESHOLDS.monotony.critical) {
-          setCurrentAlert({
+        else if (recoveryTrends.monotony && recoveryTrends.monotony >= RISK_THRESHOLDS.monotony.critical) {
+          alertToSet = {
             type: "high_risk",
             metric: "Monotony",
             value: recoveryTrends.monotony,
             threshold: RISK_THRESHOLDS.monotony.critical,
             message: "Your training variation is very low. Consider diversifying your workouts."
-          });
-          return;
+          };
         }
       }
 
       // Check wearable session for low readiness/sleep
-      const { data: session } = await supabase
-        .from("wearable_sessions")
-        .select("readiness_score, sleep_score, hrv_avg")
-        .eq("user_id", user.id)
-        .order("date", { ascending: false })
-        .limit(1)
-        .maybeSingle();
+      if (!alertToSet) {
+        const { data: session } = await supabase
+          .from("wearable_sessions")
+          .select("readiness_score, sleep_score, hrv_avg")
+          .eq("user_id", user.id)
+          .order("date", { ascending: false })
+          .limit(1)
+          .maybeSingle();
 
-      if (session) {
-        if (session.readiness_score && session.readiness_score < RISK_THRESHOLDS.readiness_low) {
-          setCurrentAlert({
-            type: "anomaly",
-            metric: "Readiness",
-            value: session.readiness_score,
-            threshold: RISK_THRESHOLDS.readiness_low,
-            message: "Your readiness score is unusually low. How are you feeling?"
-          });
-          return;
-        }
-
-        if (session.sleep_score && session.sleep_score < RISK_THRESHOLDS.sleep_low) {
-          setCurrentAlert({
-            type: "anomaly",
-            metric: "Sleep",
-            value: session.sleep_score,
-            threshold: RISK_THRESHOLDS.sleep_low,
-            message: "Your sleep quality was poor. Consider logging any symptoms."
-          });
-          return;
+        if (session) {
+          if (session.readiness_score && session.readiness_score < RISK_THRESHOLDS.readiness_low) {
+            alertToSet = {
+              type: "anomaly",
+              metric: "Readiness",
+              value: session.readiness_score,
+              threshold: RISK_THRESHOLDS.readiness_low,
+              message: "Your readiness score is unusually low. How are you feeling?"
+            };
+          } else if (session.sleep_score && session.sleep_score < RISK_THRESHOLDS.sleep_low) {
+            alertToSet = {
+              type: "anomaly",
+              metric: "Sleep",
+              value: session.sleep_score,
+              threshold: RISK_THRESHOLDS.sleep_low,
+              message: "Your sleep quality was poor. Consider logging any symptoms."
+            };
+          }
         }
       }
 
       // Check health anomalies
-      const { data: anomalies } = await supabase
-        .from("health_anomalies")
-        .select("*")
-        .eq("user_id", user.id)
-        .is("acknowledged_at", null)
-        .order("detected_at", { ascending: false })
-        .limit(1)
-        .maybeSingle();
+      if (!alertToSet) {
+        const { data: anomalies } = await supabase
+          .from("health_anomalies")
+          .select("*")
+          .eq("user_id", user.id)
+          .is("acknowledged_at", null)
+          .order("detected_at", { ascending: false })
+          .limit(1)
+          .maybeSingle();
 
-      if (anomalies && anomalies.severity === "high") {
-        setCurrentAlert({
-          type: "red_flag",
-          metric: anomalies.metric_name,
-          value: anomalies.current_value || 0,
-          threshold: anomalies.baseline_value || 0,
-          message: anomalies.notes || `Unusual ${anomalies.metric_name} detected. Please check in.`
-        });
+        if (anomalies && anomalies.severity === "high") {
+          alertToSet = {
+            type: "red_flag",
+            metric: anomalies.metric_name,
+            value: anomalies.current_value || 0,
+            threshold: anomalies.baseline_value || 0,
+            message: anomalies.notes || `Unusual ${anomalies.metric_name} detected. Please check in.`
+          };
+        }
+      }
+
+      // Set the alert and send SMS if needed
+      if (alertToSet) {
+        setCurrentAlert(alertToSet);
+        
+        // Send SMS if enabled and not already sent for this alert
+        const alertKey = `${alertToSet.metric}_${alertToSet.type}`;
+        if (smsSentRef.current !== alertKey) {
+          const settings = getAlertSettings();
+          if (settings.enableSMS && settings.phoneNumber) {
+            smsSentRef.current = alertKey;
+            await sendRiskAlertSMS(settings.phoneNumber, alertToSet.message);
+          }
+        }
       }
 
     } catch (error) {
@@ -154,27 +192,4 @@ export function useRiskAlertTrigger(): UseRiskAlertTriggerResult {
     dismissAlert,
     checkForAlerts
   };
-}
-
-// Function to send SMS alert via edge function
-export async function sendRiskAlertSMS(phoneNumber: string, alertMessage: string): Promise<{ success: boolean; error?: string }> {
-  try {
-    const { data, error } = await supabase.functions.invoke("send-sms-alert", {
-      body: {
-        to: phoneNumber,
-        message: `Predictiv Alert: ${alertMessage} - Check app for details.`
-      }
-    });
-
-    if (error) {
-      return { success: false, error: error.message };
-    }
-
-    return { success: data?.success || false, error: data?.error };
-  } catch (error) {
-    return { 
-      success: false, 
-      error: error instanceof Error ? error.message : "Failed to send SMS" 
-    };
-  }
 }

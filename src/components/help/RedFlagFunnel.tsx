@@ -246,5 +246,16 @@ export function RedFlagFunnel({
 
 // Helper to check if a symptom should trigger the red-flag funnel
 export function shouldTriggerRedFlagFunnel(symptomType: string, severity: number): boolean {
-  return RED_FLAG_SYMPTOMS.includes(symptomType) || severity >= HIGH_SEVERITY_THRESHOLD;
+  const isRedFlagSymptom = RED_FLAG_SYMPTOMS.includes(symptomType);
+  const isHighSeverity = severity >= HIGH_SEVERITY_THRESHOLD;
+  const shouldTrigger = isRedFlagSymptom || isHighSeverity;
+  
+  if (shouldTrigger) {
+    const reason = isRedFlagSymptom 
+      ? `Red-flag symptom detected: ${symptomType}` 
+      : `High severity threshold exceeded: ${severity}/10`;
+    console.log(`[RedFlagFunnel] [TRIGGER] ${reason} | timestamp: ${new Date().toISOString()}`);
+  }
+  
+  return shouldTrigger;
 }

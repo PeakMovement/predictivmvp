@@ -211,6 +211,7 @@ export async function getLovableAICredits(): Promise<LovableAICredits> {
 
 /**
  * Clear all chat history for the current user
+ * Also sets memory_cleared_at timestamp to prevent auto-capture of old memories
  */
 export async function clearChatHistory(): Promise<{ success: boolean; error?: string }> {
   try {
@@ -223,6 +224,9 @@ export async function clearChatHistory(): Promise<{ success: boolean; error?: st
       };
     }
 
+    const clearTimestamp = new Date().toISOString();
+    console.log('[clearChatHistory] Clearing chat for user:', user.id, 'at:', clearTimestamp);
+
     // Delete insight history
     const { error: historyError } = await supabase
       .from('insight_history')
@@ -230,7 +234,7 @@ export async function clearChatHistory(): Promise<{ success: boolean; error?: st
       .eq('user_id', user.id);
 
     if (historyError) {
-      console.error('Error clearing insight history:', historyError);
+      console.error('[clearChatHistory] Error clearing insight history:', historyError);
       return {
         success: false,
         error: historyError.message || 'Failed to clear chat history'
@@ -244,13 +248,25 @@ export async function clearChatHistory(): Promise<{ success: boolean; error?: st
       .eq('user_id', user.id);
 
     if (memoryError) {
-      console.error('Error clearing yves memory:', memoryError);
+      console.error('[clearChatHistory] Error clearing yves memory:', memoryError);
       // Non-critical, don't fail the operation
     }
 
+    // Update memory_cleared_at timestamp in profiles to prevent auto-capture of old memories
+    const { error: profileError } = await supabase
+      .from('profiles')
+      .update({ memory_cleared_at: clearTimestamp })
+      .eq('id', user.id);
+
+    if (profileError) {
+      console.error('[clearChatHistory] Error updating memory_cleared_at:', profileError);
+      // Non-critical, don't fail the operation
+    }
+
+    console.log('[clearChatHistory] Chat cleared successfully');
     return { success: true };
   } catch (error) {
-    console.error('Error clearing chat history:', error);
+    console.error('[clearChatHistory] Error:', error);
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error occurred'

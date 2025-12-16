@@ -718,6 +718,7 @@ export type Database = {
           avatar_url: string | null
           full_name: string | null
           id: string
+          memory_cleared_at: string | null
           updated_at: string | null
           username: string | null
         }
@@ -725,6 +726,7 @@ export type Database = {
           avatar_url?: string | null
           full_name?: string | null
           id: string
+          memory_cleared_at?: string | null
           updated_at?: string | null
           username?: string | null
         }
@@ -732,6 +734,7 @@ export type Database = {
           avatar_url?: string | null
           full_name?: string | null
           id?: string
+          memory_cleared_at?: string | null
           updated_at?: string | null
           username?: string | null
         }

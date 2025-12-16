@@ -39,7 +39,7 @@ Deno.serve(async (req) => {
     }
 
     // ─── INPUT VALIDATION ────────────────────────────────────────────────────
-    const { user_id, memory_key, memory_value } = await req.json();
+    const { user_id, memory_key, memory_value, source_timestamp } = await req.json();
 
     if (!user_id || !memory_key || !memory_value) {
       return new Response(
@@ -57,6 +57,40 @@ Deno.serve(async (req) => {
         status: 403,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
+    }
+
+    // ─── CHECK MEMORY_CLEARED_AT SAFEGUARD ───────────────────────────────────
+    // If the user has cleared their chat history, ignore auto-captured memories
+    // that originated before the clear timestamp
+    const { data: profile, error: profileError } = await supabase
+      .from("profiles")
+      .select("memory_cleared_at")
+      .eq("id", user_id)
+      .maybeSingle();
+
+    if (profileError) {
+      console.error("[yves-memory-update] Error fetching profile:", profileError);
+      // Continue anyway - don't block on profile fetch failure
+    }
+
+    if (profile?.memory_cleared_at && source_timestamp) {
+      const clearedAt = new Date(profile.memory_cleared_at).getTime();
+      const sourceTime = new Date(source_timestamp).getTime();
+      
+      if (sourceTime < clearedAt) {
+        console.log(`[yves-memory-update] Ignoring memory from before clear: source=${source_timestamp}, cleared=${profile.memory_cleared_at}`);
+        return new Response(
+          JSON.stringify({ 
+            success: true, 
+            message: "Memory ignored - originated before last clear",
+            skipped: true 
+          }),
+          {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+            status: 200,
+          }
+        );
+      }
     }
 
     console.log(`[yves-memory-update] Upserting memory for user ${user_id}: ${memory_key}`);

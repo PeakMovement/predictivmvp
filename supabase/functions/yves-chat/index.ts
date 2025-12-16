@@ -504,7 +504,12 @@ suggest saving them with memory_key and memory_value so they can be stored via y
         if (match) {
           const [, memory_key, memory_value] = match;
           await supabase.functions.invoke("yves-memory-update", {
-            body: { user_id: user.id, memory_key: memory_key.trim(), memory_value: memory_value.trim() },
+            body: { 
+              user_id: user.id, 
+              memory_key: memory_key.trim(), 
+              memory_value: memory_value.trim(),
+              source_timestamp: new Date().toISOString() // For memory_cleared_at safeguard
+            },
           });
           console.log(`[yves-chat] Memory updated: ${memory_key.trim()}`);
         }

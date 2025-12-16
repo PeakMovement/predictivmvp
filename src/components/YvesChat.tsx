@@ -110,7 +110,15 @@ export function YvesChat() {
       const result = await clearChatHistory();
 
       if (result.success) {
+        // Reset frontend state
         setInsights([]);
+        
+        // Clear any persisted storage (safeguard)
+        localStorage.removeItem('chatInsights');
+        sessionStorage.removeItem('chatInsights');
+        
+        console.log('[Yves AI] Clear Chat executed, state reset.');
+        
         toast({
           title: 'Chat cleared',
           description: 'All conversation history has been deleted'
@@ -123,7 +131,7 @@ export function YvesChat() {
         });
       }
     } catch (error) {
-      console.error('Error clearing history:', error);
+      console.error('[Yves AI] Clear Chat failed:', error);
       toast({
         title: 'Error',
         description: error instanceof Error ? error.message : 'Unknown error occurred',

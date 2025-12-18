@@ -23,12 +23,49 @@ Deno.serve(async (req: Request) => {
       });
     }
 
-    const { code, user_id } = await req.json();
-
-    if (!code || !user_id) {
-      console.error("[oura-auth] [ERROR] Missing code or user_id in request");
+    // SECURITY: Validate JWT authentication
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader) {
+      console.error("[oura-auth] [ERROR] Missing Authorization header");
       return new Response(
-        JSON.stringify({ error: "Missing code or user_id", success: false }),
+        JSON.stringify({ error: "Unauthorized - missing authentication", success: false }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Get Supabase credentials
+    const supabaseUrl = Deno.env.get("SUPABASE_URL");
+    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+
+    if (!supabaseUrl || !supabaseKey) {
+      console.error("[oura-auth] [ERROR] Supabase credentials not available");
+      throw new Error("Supabase credentials not available in Edge Runtime environment");
+    }
+
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
+    // SECURITY: Validate the JWT and extract user_id from the authenticated user
+    const token = authHeader.replace("Bearer ", "");
+    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+
+    if (authError || !user) {
+      console.error("[oura-auth] [ERROR] Invalid authentication token:", authError?.message);
+      return new Response(
+        JSON.stringify({ error: "Unauthorized - invalid token", success: false }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // SECURITY: Use authenticated user.id instead of request body
+    const user_id = user.id;
+    console.log(`[oura-auth] [START] Authenticated user: ${user_id}`);
+
+    const { code } = await req.json();
+
+    if (!code) {
+      console.error("[oura-auth] [ERROR] Missing code in request");
+      return new Response(
+        JSON.stringify({ error: "Missing authorization code", success: false }),
         { 
           status: 400, 
           headers: { ...corsHeaders, "Content-Type": "application/json" } 
@@ -36,7 +73,7 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    console.log(`[oura-auth] [START] Exchanging code for user: ${user_id}`);
+    console.log(`[oura-auth] Exchanging code for user: ${user_id}`);
     console.log(`[oura-auth] Code length: ${code.length}`);
 
     // Get Oura credentials from environment
@@ -110,17 +147,6 @@ Deno.serve(async (req: Request) => {
     }
 
     console.log("[oura-auth] Successfully received tokens from Oura");
-
-    // Get Supabase credentials - automatically provided by Edge Runtime
-    const supabaseUrl = Deno.env.get("SUPABASE_URL");
-    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-
-    if (!supabaseUrl || !supabaseKey) {
-      console.error("[oura-auth] [ERROR] Supabase credentials not available");
-      throw new Error("Supabase credentials not available in Edge Runtime environment");
-    }
-
-    const supabase = createClient(supabaseUrl, supabaseKey);
 
     // Calculate expiration timestamp as ISO string (timestamptz format)
     const expiresAtTimestamp = new Date(Date.now() + tokenData.expires_in * 1000).toISOString();

@@ -83,15 +83,15 @@ export function RiskAlertPopup({ onCheckIn }: RiskAlertPopupProps) {
                 </Button>
               </div>
               <p className="text-sm text-muted-foreground mb-3">
-                {currentAlert.message}
+                Would you like to do a symptom check-in?
               </p>
               <div className="flex gap-2">
                 <Button size="sm" onClick={handleCheckIn} className="gap-1">
                   <Stethoscope className="h-3 w-3" />
-                  Log Symptoms
+                  Yes
                 </Button>
                 <Button size="sm" variant="outline" onClick={handleDismiss}>
-                  Dismiss
+                  No
                 </Button>
               </div>
             </div>

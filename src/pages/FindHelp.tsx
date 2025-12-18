@@ -31,7 +31,7 @@ export const FindHelp = () => {
             </TabsTrigger>
             <TabsTrigger value="triage" className="flex items-center gap-2">
               <Stethoscope className="h-4 w-4" />
-              AI Triage
+              Smart Assessment
             </TabsTrigger>
           </TabsList>
 

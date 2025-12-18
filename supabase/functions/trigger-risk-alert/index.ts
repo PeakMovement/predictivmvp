@@ -24,14 +24,52 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    const body = await req.json();
-    const { user_id, check_type } = body;
-
-    if (!user_id) {
+    // ─── INPUT VALIDATION ─────────────────────────────────────────────────────
+    let body: unknown;
+    try {
+      body = await req.json();
+    } catch {
       return new Response(
-        JSON.stringify({ error: 'user_id is required' }),
+        JSON.stringify({ error: 'Invalid JSON body' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
+    }
+
+    if (typeof body !== 'object' || body === null) {
+      return new Response(
+        JSON.stringify({ error: 'Request body must be an object' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const { user_id, check_type } = body as { user_id?: unknown; check_type?: unknown };
+
+    // Validate user_id is present and is a valid UUID
+    if (!user_id || typeof user_id !== 'string') {
+      return new Response(
+        JSON.stringify({ error: 'user_id is required and must be a string' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // UUID format validation
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!uuidRegex.test(user_id)) {
+      return new Response(
+        JSON.stringify({ error: 'user_id must be a valid UUID' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Validate check_type if provided
+    const validCheckTypes = ['recovery', 'wearable', 'anomaly', 'all'];
+    if (check_type !== undefined && check_type !== null) {
+      if (typeof check_type !== 'string' || !validCheckTypes.includes(check_type)) {
+        return new Response(
+          JSON.stringify({ error: `check_type must be one of: ${validCheckTypes.join(', ')}` }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
     }
 
     console.log(`[trigger-risk-alert] Checking risk for user ${user_id}, type: ${check_type || 'all'}`);

@@ -18,7 +18,91 @@ Deno.serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    const { documentId, userId, documentType, fileContent } = await req.json();
+    // ─── INPUT VALIDATION ─────────────────────────────────────────────────────
+    let body: unknown;
+    try {
+      body = await req.json();
+    } catch {
+      return new Response(
+        JSON.stringify({ error: 'Invalid JSON body' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    if (typeof body !== 'object' || body === null) {
+      return new Response(
+        JSON.stringify({ error: 'Request body must be an object' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const rawBody = body as { documentId?: unknown; userId?: unknown; documentType?: unknown; fileContent?: unknown };
+
+    // UUID format validation helper
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+    // Validate documentId (required UUID)
+    if (!rawBody.documentId || typeof rawBody.documentId !== 'string') {
+      return new Response(
+        JSON.stringify({ error: 'documentId is required and must be a string' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    if (!uuidRegex.test(rawBody.documentId)) {
+      return new Response(
+        JSON.stringify({ error: 'documentId must be a valid UUID' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Validate userId (required UUID)
+    if (!rawBody.userId || typeof rawBody.userId !== 'string') {
+      return new Response(
+        JSON.stringify({ error: 'userId is required and must be a string' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    if (!uuidRegex.test(rawBody.userId)) {
+      return new Response(
+        JSON.stringify({ error: 'userId must be a valid UUID' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Validate documentType (required enum)
+    const validDocumentTypes = ['nutrition', 'medical', 'training'];
+    if (!rawBody.documentType || typeof rawBody.documentType !== 'string') {
+      return new Response(
+        JSON.stringify({ error: 'documentType is required and must be a string' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    if (!validDocumentTypes.includes(rawBody.documentType)) {
+      return new Response(
+        JSON.stringify({ error: `documentType must be one of: ${validDocumentTypes.join(', ')}` }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Validate fileContent (required string with length limit)
+    if (!rawBody.fileContent || typeof rawBody.fileContent !== 'string') {
+      return new Response(
+        JSON.stringify({ error: 'fileContent is required and must be a string' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    // Limit file content to 500KB to prevent DoS
+    if (rawBody.fileContent.length > 512000) {
+      return new Response(
+        JSON.stringify({ error: 'fileContent exceeds maximum size of 500KB' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const documentId = rawBody.documentId;
+    const userId = rawBody.userId;
+    const documentType = rawBody.documentType;
+    const fileContent = rawBody.fileContent;
 
     console.log(`[analyze-document] Analyzing document ${documentId} for user ${userId}, type: ${documentType}, content length: ${fileContent?.length}`);
 

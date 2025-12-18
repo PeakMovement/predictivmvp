@@ -128,21 +128,91 @@ serve(async (req) => {
       );
     }
 
-    // Parse input
-    const body = await req.json();
-    const { 
-      symptom_type, 
-      budget_max = 500, 
-      location = "any",
-      urgency = "routine"
-    } = body;
-
-    if (!symptom_type) {
+    // ─── INPUT VALIDATION ─────────────────────────────────────────────────────
+    let body: unknown;
+    try {
+      body = await req.json();
+    } catch {
       return new Response(
-        JSON.stringify({ error: 'symptom_type is required' }),
+        JSON.stringify({ error: 'Invalid JSON body' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
+
+    if (typeof body !== 'object' || body === null) {
+      return new Response(
+        JSON.stringify({ error: 'Request body must be an object' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const rawBody = body as { symptom_type?: unknown; budget_max?: unknown; location?: unknown; urgency?: unknown };
+
+    // Validate symptom_type (required string)
+    if (!rawBody.symptom_type || typeof rawBody.symptom_type !== 'string') {
+      return new Response(
+        JSON.stringify({ error: 'symptom_type is required and must be a string' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    if (rawBody.symptom_type.length > 100) {
+      return new Response(
+        JSON.stringify({ error: 'symptom_type exceeds maximum length of 100 characters' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Validate budget_max (optional number, default 500)
+    let budget_max = 500;
+    if (rawBody.budget_max !== undefined && rawBody.budget_max !== null) {
+      if (typeof rawBody.budget_max !== 'number' || isNaN(rawBody.budget_max)) {
+        return new Response(
+          JSON.stringify({ error: 'budget_max must be a number' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      if (rawBody.budget_max < 0 || rawBody.budget_max > 100000) {
+        return new Response(
+          JSON.stringify({ error: 'budget_max must be between 0 and 100000' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      budget_max = rawBody.budget_max;
+    }
+
+    // Validate location (optional string, default "any")
+    let location = "any";
+    if (rawBody.location !== undefined && rawBody.location !== null) {
+      if (typeof rawBody.location !== 'string') {
+        return new Response(
+          JSON.stringify({ error: 'location must be a string' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      if (rawBody.location.length > 200) {
+        return new Response(
+          JSON.stringify({ error: 'location exceeds maximum length of 200 characters' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      location = rawBody.location;
+    }
+
+    // Validate urgency (optional enum, default "routine")
+    const validUrgencies = ['routine', 'low', 'medium', 'high', 'critical'];
+    let urgency = "routine";
+    if (rawBody.urgency !== undefined && rawBody.urgency !== null) {
+      if (typeof rawBody.urgency !== 'string' || !validUrgencies.includes(rawBody.urgency)) {
+        return new Response(
+          JSON.stringify({ error: `urgency must be one of: ${validUrgencies.join(', ')}` }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      urgency = rawBody.urgency;
+    }
+
+    const symptom_type = rawBody.symptom_type;
 
     console.log(`[match-provider] Processing request for user ${user.id}: symptom=${symptom_type}, budget=${budget_max}, location=${location}`);
 

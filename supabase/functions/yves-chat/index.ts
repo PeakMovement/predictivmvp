@@ -39,10 +39,45 @@ Deno.serve(async (req) => {
       });
     }
 
-    // ─── INPUT ───────────────────────────────────────────────────────────────
-    const { query } = await req.json();
+    // ─── INPUT VALIDATION ─────────────────────────────────────────────────────
+    let body: unknown;
+    try {
+      body = await req.json();
+    } catch {
+      return new Response(JSON.stringify({ error: "Invalid JSON body" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Validate request shape
+    if (typeof body !== "object" || body === null) {
+      return new Response(JSON.stringify({ error: "Request body must be an object" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const { query } = body as { query?: unknown };
+
+    // Validate query field
     if (!query || typeof query !== "string") {
-      return new Response(JSON.stringify({ error: "Query is required" }), {
+      return new Response(JSON.stringify({ error: "Query is required and must be a string" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Enforce length limits to prevent DoS
+    if (query.length > 5000) {
+      return new Response(JSON.stringify({ error: "Query exceeds maximum length of 5000 characters" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    if (query.trim().length === 0) {
+      return new Response(JSON.stringify({ error: "Query cannot be empty" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });

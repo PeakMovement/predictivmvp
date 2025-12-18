@@ -52,6 +52,9 @@ export async function sendRiskAlertSMS(phoneNumber: string, alertMessage: string
   }
 }
 
+// Session storage key for cooldown tracking
+const ALERT_COOLDOWN_KEY = "risk_alert_shown";
+
 export function useRiskAlertTrigger(): UseRiskAlertTriggerResult {
   const [currentAlert, setCurrentAlert] = useState<RiskAlert | null>(null);
   const smsSentRef = useRef<string | null>(null);
@@ -60,6 +63,10 @@ export function useRiskAlertTrigger(): UseRiskAlertTriggerResult {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
+
+      // Session-based cooldown: check if alert was already shown this session
+      const shownAlerts = sessionStorage.getItem(ALERT_COOLDOWN_KEY);
+      const shownSet = shownAlerts ? new Set(JSON.parse(shownAlerts)) : new Set();
 
       // Check recovery trends for ACWR, strain, monotony
       const { data: recoveryTrends } = await supabase
@@ -160,10 +167,20 @@ export function useRiskAlertTrigger(): UseRiskAlertTriggerResult {
 
       // Set the alert and send SMS if needed
       if (alertToSet) {
+        const alertKey = `${alertToSet.metric}_${alertToSet.type}`;
+        
+        // Skip if this alert type was already shown this session (cooldown)
+        if (shownSet.has(alertKey)) {
+          return;
+        }
+        
+        // Mark this alert as shown in session storage
+        shownSet.add(alertKey);
+        sessionStorage.setItem(ALERT_COOLDOWN_KEY, JSON.stringify([...shownSet]));
+        
         setCurrentAlert(alertToSet);
         
         // Send SMS if enabled and not already sent for this alert
-        const alertKey = `${alertToSet.metric}_${alertToSet.type}`;
         if (smsSentRef.current !== alertKey) {
           const settings = getAlertSettings();
           if (settings.enableSMS && settings.phoneNumber) {

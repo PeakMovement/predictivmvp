@@ -81,9 +81,9 @@ export const Dashboard = () => {
     };
   }, [refreshAll]);
 
-  const handleSymptomCheckIn = () => {
-    // Navigate to symptom check-in
-    window.dispatchEvent(new CustomEvent("navigate-tab", { detail: "symptom-checkin" }));
+  const handleNavigateToHelp = () => {
+    // Navigate to Find Help page for Medical Finder
+    window.dispatchEvent(new CustomEvent("navigate-tab", { detail: "find-help" }));
   };
 
   return (
@@ -152,7 +152,7 @@ export const Dashboard = () => {
         </div>
 
         {/* Risk Alert Popup */}
-        <RiskAlertPopup onCheckIn={handleSymptomCheckIn} />
+        <RiskAlertPopup onNavigateToHelp={handleNavigateToHelp} />
       </div>
     </TooltipProvider>
   );

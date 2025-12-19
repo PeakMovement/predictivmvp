@@ -89,3 +89,6 @@ verify_jwt = true
 
 [functions.trigger-risk-alert]
 verify_jwt = false
+
+[functions.send-risk-email]
+verify_jwt = false

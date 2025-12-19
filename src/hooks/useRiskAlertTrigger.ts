@@ -52,12 +52,56 @@ export async function sendRiskAlertSMS(phoneNumber: string, alertMessage: string
   }
 }
 
+// Function to send email alert via edge function
+export async function sendRiskAlertEmail(
+  userId: string, 
+  alertType: "injury_risk" | "health_anomaly" | "red_flag_symptom" | "risk_threshold",
+  alertMessage: string,
+  metric?: string,
+  value?: number,
+  threshold?: number
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const { data, error } = await supabase.functions.invoke("send-risk-email", {
+      body: {
+        user_id: userId,
+        alert_type: alertType,
+        alert_message: alertMessage,
+        metric,
+        value,
+        threshold,
+        triggered_at: new Date().toISOString()
+      }
+    });
+
+    if (error) {
+      console.error("[sendRiskAlertEmail] Error:", error);
+      return { success: false, error: error.message };
+    }
+
+    if (data?.skipped) {
+      console.log("[sendRiskAlertEmail] Skipped (spam prevention):", data.reason);
+      return { success: true }; // Not an error, just skipped
+    }
+
+    console.log("[sendRiskAlertEmail] Email sent successfully");
+    return { success: data?.success || false, error: data?.error };
+  } catch (error) {
+    console.error("[sendRiskAlertEmail] Exception:", error);
+    return { 
+      success: false, 
+      error: error instanceof Error ? error.message : "Failed to send email" 
+    };
+  }
+}
+
 // Session storage key for cooldown tracking
 const ALERT_COOLDOWN_KEY = "risk_alert_shown";
 
 export function useRiskAlertTrigger(): UseRiskAlertTriggerResult {
   const [currentAlert, setCurrentAlert] = useState<RiskAlert | null>(null);
   const smsSentRef = useRef<string | null>(null);
+  const emailSentRef = useRef<string | null>(null);
 
   const checkForAlerts = useCallback(async () => {
     try {
@@ -78,6 +122,7 @@ export function useRiskAlertTrigger(): UseRiskAlertTriggerResult {
         .maybeSingle();
 
       let alertToSet: RiskAlert | null = null;
+      let emailAlertType: "injury_risk" | "health_anomaly" | "red_flag_symptom" | "risk_threshold" = "risk_threshold";
 
       if (recoveryTrends) {
         // Check ACWR
@@ -89,6 +134,7 @@ export function useRiskAlertTrigger(): UseRiskAlertTriggerResult {
             threshold: RISK_THRESHOLDS.acwr.critical,
             message: "Your training load ratio is critically high. Consider reducing intensity to prevent injury."
           };
+          emailAlertType = "injury_risk";
         }
         // Check strain
         else if (recoveryTrends.strain && recoveryTrends.strain >= RISK_THRESHOLDS.strain.critical) {
@@ -99,6 +145,7 @@ export function useRiskAlertTrigger(): UseRiskAlertTriggerResult {
             threshold: RISK_THRESHOLDS.strain.critical,
             message: "Your accumulated training strain is very high. Recovery is recommended."
           };
+          emailAlertType = "injury_risk";
         }
         // Check monotony
         else if (recoveryTrends.monotony && recoveryTrends.monotony >= RISK_THRESHOLDS.monotony.critical) {
@@ -109,6 +156,7 @@ export function useRiskAlertTrigger(): UseRiskAlertTriggerResult {
             threshold: RISK_THRESHOLDS.monotony.critical,
             message: "Your training variation is very low. Consider diversifying your workouts."
           };
+          emailAlertType = "risk_threshold";
         }
       }
 
@@ -131,6 +179,7 @@ export function useRiskAlertTrigger(): UseRiskAlertTriggerResult {
               threshold: RISK_THRESHOLDS.readiness_low,
               message: "Your readiness score is unusually low. How are you feeling?"
             };
+            emailAlertType = "health_anomaly";
           } else if (session.sleep_score && session.sleep_score < RISK_THRESHOLDS.sleep_low) {
             alertToSet = {
               type: "anomaly",
@@ -139,6 +188,7 @@ export function useRiskAlertTrigger(): UseRiskAlertTriggerResult {
               threshold: RISK_THRESHOLDS.sleep_low,
               message: "Your sleep quality was poor. Consider logging any symptoms."
             };
+            emailAlertType = "health_anomaly";
           }
         }
       }
@@ -162,10 +212,11 @@ export function useRiskAlertTrigger(): UseRiskAlertTriggerResult {
             threshold: anomalies.baseline_value || 0,
             message: anomalies.notes || `Unusual ${anomalies.metric_name} detected. Please check in.`
           };
+          emailAlertType = "health_anomaly";
         }
       }
 
-      // Set the alert and send SMS if needed
+      // Set the alert and send notifications if needed
       if (alertToSet) {
         const alertKey = `${alertToSet.metric}_${alertToSet.type}`;
         
@@ -187,6 +238,19 @@ export function useRiskAlertTrigger(): UseRiskAlertTriggerResult {
             smsSentRef.current = alertKey;
             await sendRiskAlertSMS(settings.phoneNumber, alertToSet.message);
           }
+        }
+
+        // Send Email notification (always, with built-in spam prevention)
+        if (emailSentRef.current !== alertKey) {
+          emailSentRef.current = alertKey;
+          await sendRiskAlertEmail(
+            user.id,
+            emailAlertType,
+            alertToSet.message,
+            alertToSet.metric,
+            alertToSet.value,
+            alertToSet.threshold
+          );
         }
       }
 

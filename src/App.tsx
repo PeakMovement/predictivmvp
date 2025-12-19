@@ -70,13 +70,20 @@ const App = () => {
   useEffect(() => {
     const handleNavigateInsights = () => setActiveTab("insights-tree");
     const handleNavigateYves = () => setActiveTab("yves-insights");
+    const handleNavigateTab = (e: CustomEvent) => {
+      if (e.detail) {
+        setActiveTab(e.detail);
+      }
+    };
 
     window.addEventListener("navigate-insights", handleNavigateInsights as EventListener);
     window.addEventListener("navigate-yves-insights", handleNavigateYves as EventListener);
+    window.addEventListener("navigate-tab", handleNavigateTab as EventListener);
 
     return () => {
       window.removeEventListener("navigate-insights", handleNavigateInsights as EventListener);
       window.removeEventListener("navigate-yves-insights", handleNavigateYves as EventListener);
+      window.removeEventListener("navigate-tab", handleNavigateTab as EventListener);
     };
   }, []);
 

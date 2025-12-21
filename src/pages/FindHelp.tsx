@@ -1,13 +1,16 @@
+import { useLocation } from 'react-router-dom';
 import { MedicalFinderAssistant } from '@/components/medical-finder';
 import { Users } from 'lucide-react';
 
-interface FindHelpProps {
-  initialStep?: 'intro' | 'assessment' | 'provider';
-  symptomType?: string;
-  severity?: number;
+interface LocationState {
+  symptomText?: string;
 }
 
-export const FindHelp = ({ initialStep, symptomType, severity }: FindHelpProps) => {
+export const FindHelp = () => {
+  const location = useLocation();
+  const state = location.state as LocationState | null;
+  const initialSymptoms = state?.symptomText || '';
+
   return (
     <div className="min-h-screen bg-background pb-24">
       <div className="container mx-auto px-4 py-6 max-w-4xl">
@@ -27,7 +30,7 @@ export const FindHelp = ({ initialStep, symptomType, severity }: FindHelpProps) 
         </div>
 
         {/* Medical Finder Assistant */}
-        <MedicalFinderAssistant />
+        <MedicalFinderAssistant initialSymptoms={initialSymptoms} />
       </div>
     </div>
   );

@@ -67,6 +67,7 @@ export interface UserPreferences {
 interface MedicalFinderState {
   currentStep: MedicalFinderStep;
   symptoms: string;
+  initialSymptoms: string;
   analysis: SymptomAnalysis | null;
   physicianMatches: PhysicianMatch[];
   selectedPhysician: PhysicianMatch | null;
@@ -79,6 +80,7 @@ interface MedicalFinderState {
 
 interface MedicalFinderContextType extends MedicalFinderState {
   setSymptoms: (symptoms: string) => void;
+  setInitialSymptoms: (symptoms: string) => void;
   setAnalysis: (analysis: SymptomAnalysis) => void;
   setPhysicianMatches: (matches: PhysicianMatch[]) => void;
   selectPhysician: (physician: PhysicianMatch) => void;
@@ -95,6 +97,7 @@ interface MedicalFinderContextType extends MedicalFinderState {
 const initialState: MedicalFinderState = {
   currentStep: 'intake',
   symptoms: '',
+  initialSymptoms: '',
   analysis: null,
   physicianMatches: [],
   selectedPhysician: null,
@@ -107,11 +110,24 @@ const initialState: MedicalFinderState = {
 
 const MedicalFinderContext = createContext<MedicalFinderContextType | undefined>(undefined);
 
-export function MedicalFinderProvider({ children }: { children: ReactNode }) {
-  const [state, setState] = useState<MedicalFinderState>(initialState);
+interface MedicalFinderProviderProps {
+  children: ReactNode;
+  initialSymptoms?: string;
+}
+
+export function MedicalFinderProvider({ children, initialSymptoms = '' }: MedicalFinderProviderProps) {
+  const [state, setState] = useState<MedicalFinderState>({
+    ...initialState,
+    initialSymptoms,
+    symptoms: initialSymptoms,
+  });
 
   const setSymptoms = useCallback((symptoms: string) => {
     setState(prev => ({ ...prev, symptoms }));
+  }, []);
+
+  const setInitialSymptoms = useCallback((initialSymptoms: string) => {
+    setState(prev => ({ ...prev, initialSymptoms, symptoms: initialSymptoms }));
   }, []);
 
   const setAnalysis = useCallback((analysis: SymptomAnalysis) => {
@@ -174,6 +190,7 @@ export function MedicalFinderProvider({ children }: { children: ReactNode }) {
   const value: MedicalFinderContextType = {
     ...state,
     setSymptoms,
+    setInitialSymptoms,
     setAnalysis,
     setPhysicianMatches,
     selectPhysician,

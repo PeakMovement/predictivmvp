@@ -1,9 +1,16 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { AlertTriangle, CheckCircle2, Info, Stethoscope, UserRound, X } from "lucide-react";
-import { SymptomCheckInForm } from "@/components/symptoms/SymptomCheckInForm";
+import { AlertTriangle, CheckCircle2, Info, Stethoscope, UserRound, X, Loader2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Textarea } from "@/components/ui/textarea";
+import { Slider } from "@/components/ui/slider";
 
 type FlowStep = 
   | "initial_prompt"      // "We're detecting some potential issues. Would you like to check in?"
@@ -65,9 +72,11 @@ function getGenericAdvice(alert: AlertInfo): { title: string; advice: string } {
 }
 
 export function AlertCheckInFlow({ alert, onComplete, onNavigateToHelp }: AlertCheckInFlowProps) {
+  const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState<FlowStep>("initial_prompt");
   const [hasSymptoms, setHasSymptoms] = useState<boolean | null>(null);
   const [symptomSeverity, setSymptomSeverity] = useState<"none" | "mild" | "serious">("none");
+  const symptomTextRef = useRef<string>("");
   const [symptomId, setSymptomId] = useState<string | null>(null);
 
   const handleYesCheckIn = useCallback(() => {
@@ -89,9 +98,10 @@ export function AlertCheckInFlow({ alert, onComplete, onNavigateToHelp }: AlertC
     }
   }, []);
 
-  const handleSymptomFormSuccess = useCallback((checkinId: string, severity: "mild" | "serious") => {
+  const handleSymptomFormSuccess = useCallback((checkinId: string, severity: "mild" | "serious", symptomText: string) => {
     setSymptomId(checkinId);
     setSymptomSeverity(severity);
+    symptomTextRef.current = symptomText;
     
     if (severity === "serious") {
       // Serious symptoms - ask about referral
@@ -103,10 +113,10 @@ export function AlertCheckInFlow({ alert, onComplete, onNavigateToHelp }: AlertC
   }, []);
 
   const handleReferralYes = useCallback(() => {
-    // Navigate to Help page with Medical Finder
-    onNavigateToHelp?.();
+    // Navigate to Help page with Medical Finder, passing the symptom text
+    navigate('/find-help', { state: { symptomText: symptomTextRef.current } });
     onComplete();
-  }, [onNavigateToHelp, onComplete]);
+  }, [navigate, onComplete]);
 
   const handleReferralNo = useCallback(() => {
     // Show AI guidance only
@@ -315,43 +325,29 @@ export function AlertCheckInFlow({ alert, onComplete, onNavigateToHelp }: AlertC
   return null;
 }
 
-// Simplified symptom form for the flow (reuses existing logic but with callbacks)
+// Simplified symptom form - single text prompt + severity slider
 interface SymptomCheckInFlowFormProps {
-  onSuccess: (checkinId: string, severity: "mild" | "serious") => void;
+  onSuccess: (checkinId: string, severity: "mild" | "serious", symptomText: string) => void;
   onCancel: () => void;
 }
 
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
-import { Slider } from "@/components/ui/slider";
-import { Loader2 } from "lucide-react";
-
-const symptomTypes = [
-  { value: "headache", label: "Headache" },
-  { value: "fatigue", label: "Fatigue" },
-  { value: "muscle_pain", label: "Muscle Pain" },
-  { value: "joint_pain", label: "Joint Pain" },
-  { value: "chest_discomfort", label: "Chest Discomfort", redFlag: true },
-  { value: "breathing_difficulty", label: "Breathing Difficulty", redFlag: true },
-  { value: "sleep_issues", label: "Sleep Issues" },
-  { value: "digestive_issues", label: "Digestive Issues" },
-  { value: "dizziness", label: "Dizziness" },
-  { value: "other", label: "Other" },
-];
-
 const formSchema = z.object({
-  symptom_type: z.string().min(1, "Please select a symptom type"),
+  description: z.string().min(10, "Please describe your symptoms (at least 10 characters)"),
   severity: z.number().min(1).max(10),
-  description: z.string().optional(),
 });
 
-const RED_FLAG_SYMPTOMS = ["chest_discomfort", "breathing_difficulty", "heart"];
+// Red flag keywords that indicate serious conditions
+const RED_FLAG_KEYWORDS = [
+  "chest pain", "chest tightness", "heart", "cardiac",
+  "can't breathe", "breathing difficulty", "shortness of breath", "difficulty breathing",
+  "severe pain", "intense pain", "unbearable pain",
+  "blood", "bleeding", "vomiting blood", "coughing blood",
+  "faint", "fainting", "passed out", "unconscious",
+  "stroke", "numbness", "paralysis", "can't move",
+  "seizure", "convulsion",
+  "suicidal", "self-harm"
+];
+
 const HIGH_SEVERITY_THRESHOLD = 7;
 
 function SymptomCheckInFlowForm({ onSuccess, onCancel }: SymptomCheckInFlowFormProps) {
@@ -361,9 +357,8 @@ function SymptomCheckInFlowForm({ onSuccess, onCancel }: SymptomCheckInFlowFormP
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      symptom_type: "",
-      severity: 5,
       description: "",
+      severity: 5,
     },
   });
 
@@ -383,10 +378,15 @@ function SymptomCheckInFlowForm({ onSuccess, onCancel }: SymptomCheckInFlowFormP
     return "text-destructive";
   };
 
-  const determineSymptomSeverity = (symptomType: string, severity: number): "mild" | "serious" => {
-    const isRedFlag = RED_FLAG_SYMPTOMS.includes(symptomType);
+  const hasRedFlagKeywords = (text: string): boolean => {
+    const lowerText = text.toLowerCase();
+    return RED_FLAG_KEYWORDS.some(keyword => lowerText.includes(keyword));
+  };
+
+  const determineSymptomSeverity = (description: string, severity: number): "mild" | "serious" => {
+    const hasRedFlags = hasRedFlagKeywords(description);
     const isHighSeverity = severity >= HIGH_SEVERITY_THRESHOLD;
-    return (isRedFlag || isHighSeverity) ? "serious" : "mild";
+    return (hasRedFlags || isHighSeverity) ? "serious" : "mild";
   };
 
   const onSubmit = async (data: z.infer<typeof formSchema>) => {
@@ -399,9 +399,9 @@ function SymptomCheckInFlowForm({ onSuccess, onCancel }: SymptomCheckInFlowFormP
 
       const { data: insertedData, error } = await supabase.from("symptom_check_ins").insert({
         user_id: session.user.id,
-        symptom_type: data.symptom_type,
+        symptom_type: "general",
         severity: getSeverityLabel(data.severity).toLowerCase(),
-        description: data.description || null,
+        description: data.description,
         onset_time: new Date().toISOString(),
       }).select('id').single();
 
@@ -412,8 +412,8 @@ function SymptomCheckInFlowForm({ onSuccess, onCancel }: SymptomCheckInFlowFormP
         description: "Your symptom has been recorded successfully.",
       });
 
-      const severity = determineSymptomSeverity(data.symptom_type, data.severity);
-      onSuccess(insertedData?.id || "", severity);
+      const severity = determineSymptomSeverity(data.description, data.severity);
+      onSuccess(insertedData?.id || "", severity, data.description);
       
     } catch (error) {
       toast({
@@ -431,7 +431,7 @@ function SymptomCheckInFlowForm({ onSuccess, onCancel }: SymptomCheckInFlowFormP
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-foreground">
           <Stethoscope className="h-5 w-5 text-primary" />
-          Log Your Symptom
+          Describe Your Symptoms
         </CardTitle>
       </CardHeader>
       <CardContent>
@@ -439,24 +439,17 @@ function SymptomCheckInFlowForm({ onSuccess, onCancel }: SymptomCheckInFlowFormP
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
             <FormField
               control={form.control}
-              name="symptom_type"
+              name="description"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>What are you experiencing? *</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value}>
-                    <FormControl>
-                      <SelectTrigger className="bg-secondary/50 border-border/50">
-                        <SelectValue placeholder="Select symptom type" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {symptomTypes.map((type) => (
-                        <SelectItem key={type.value} value={type.value}>
-                          {type.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <FormLabel>What are you experiencing?</FormLabel>
+                  <FormControl>
+                    <Textarea
+                      placeholder="Describe your symptoms in detail... For example: I've been having a headache for the past 2 days, especially in the morning. It's a dull pain behind my eyes."
+                      className="bg-secondary/50 border-border/50 min-h-[120px]"
+                      {...field}
+                    />
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
@@ -489,23 +482,6 @@ function SymptomCheckInFlowForm({ onSuccess, onCancel }: SymptomCheckInFlowFormP
                     <span>Severe</span>
                     <span>Critical</span>
                   </div>
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="description"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Additional details (optional)</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      placeholder="Describe how you're feeling..."
-                      className="bg-secondary/50 border-border/50 min-h-[80px]"
-                      {...field}
-                    />
-                  </FormControl>
                 </FormItem>
               )}
             />

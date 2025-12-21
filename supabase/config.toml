@@ -92,3 +92,12 @@ verify_jwt = false
 
 [functions.send-risk-email]
 verify_jwt = false
+
+[functions.symptom-analysis]
+verify_jwt = true
+
+[functions.physician-match-advanced]
+verify_jwt = true
+
+[functions.generate-treatment-plan]
+verify_jwt = true

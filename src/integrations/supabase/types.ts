@@ -677,6 +677,87 @@ export type Database = {
         }
         Relationships: []
       }
+      physicians: {
+        Row: {
+          accepting_new_patients: boolean | null
+          address: string | null
+          availability: string | null
+          city: string | null
+          cost_tier: string | null
+          created_at: string
+          education: string | null
+          email: string | null
+          hospital_affiliations: string[] | null
+          id: string
+          insurance_accepted: string[] | null
+          languages: string[] | null
+          location: string | null
+          name: string
+          phone: string | null
+          rating: number | null
+          specialty: string
+          state: string | null
+          sub_specialty: string | null
+          telehealth_available: boolean | null
+          updated_at: string
+          verified: boolean | null
+          years_experience: number | null
+          zip_code: string | null
+        }
+        Insert: {
+          accepting_new_patients?: boolean | null
+          address?: string | null
+          availability?: string | null
+          city?: string | null
+          cost_tier?: string | null
+          created_at?: string
+          education?: string | null
+          email?: string | null
+          hospital_affiliations?: string[] | null
+          id?: string
+          insurance_accepted?: string[] | null
+          languages?: string[] | null
+          location?: string | null
+          name: string
+          phone?: string | null
+          rating?: number | null
+          specialty: string
+          state?: string | null
+          sub_specialty?: string | null
+          telehealth_available?: boolean | null
+          updated_at?: string
+          verified?: boolean | null
+          years_experience?: number | null
+          zip_code?: string | null
+        }
+        Update: {
+          accepting_new_patients?: boolean | null
+          address?: string | null
+          availability?: string | null
+          city?: string | null
+          cost_tier?: string | null
+          created_at?: string
+          education?: string | null
+          email?: string | null
+          hospital_affiliations?: string[] | null
+          id?: string
+          insurance_accepted?: string[] | null
+          languages?: string[] | null
+          location?: string | null
+          name?: string
+          phone?: string | null
+          rating?: number | null
+          specialty?: string
+          state?: string | null
+          sub_specialty?: string | null
+          telehealth_available?: boolean | null
+          updated_at?: string
+          verified?: boolean | null
+          years_experience?: number | null
+          zip_code?: string | null
+        }
+        Relationships: []
+      }
       plan_adherence: {
         Row: {
           actual_data: Json | null

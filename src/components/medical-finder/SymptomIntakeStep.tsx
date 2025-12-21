@@ -1,13 +1,22 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { useMedicalFinder } from '@/hooks/useMedicalFinder';
+import { useMedicalFinderContext } from '@/contexts/MedicalFinderContext';
 import { Stethoscope, AlertCircle, ArrowRight, Heart, Brain, Activity } from 'lucide-react';
 
 export function SymptomIntakeStep() {
   const { analyzeSymptoms, isLoading } = useMedicalFinder();
-  const [symptoms, setSymptoms] = useState('');
+  const { initialSymptoms } = useMedicalFinderContext();
+  const [symptoms, setSymptoms] = useState(initialSymptoms || '');
+
+  // Update symptoms if initialSymptoms changes (e.g., coming from alert check-in)
+  useEffect(() => {
+    if (initialSymptoms) {
+      setSymptoms(initialSymptoms);
+    }
+  }, [initialSymptoms]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -50,23 +59,25 @@ export function SymptomIntakeStep() {
             </div>
           </div>
 
-          {/* Example prompts */}
-          <div className="space-y-2">
-            <p className="text-sm text-muted-foreground">Or try an example:</p>
-            <div className="flex flex-wrap gap-2">
-              {examplePrompts.map((prompt, index) => (
-                <button
-                  key={index}
-                  type="button"
-                  onClick={() => setSymptoms(prompt)}
-                  className="text-xs px-3 py-1.5 rounded-full border border-border/50 hover:border-primary/50 hover:bg-primary/5 transition-colors"
-                  disabled={isLoading}
-                >
-                  {prompt.substring(0, 30)}...
-                </button>
-              ))}
+          {/* Example prompts - only show if no initial symptoms */}
+          {!initialSymptoms && (
+            <div className="space-y-2">
+              <p className="text-sm text-muted-foreground">Or try an example:</p>
+              <div className="flex flex-wrap gap-2">
+                {examplePrompts.map((prompt, index) => (
+                  <button
+                    key={index}
+                    type="button"
+                    onClick={() => setSymptoms(prompt)}
+                    className="text-xs px-3 py-1.5 rounded-full border border-border/50 hover:border-primary/50 hover:bg-primary/5 transition-colors"
+                    disabled={isLoading}
+                  >
+                    {prompt.substring(0, 30)}...
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
 
           <Button 
             type="submit" 

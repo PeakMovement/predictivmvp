@@ -59,9 +59,13 @@ function MedicalFinderContent() {
   );
 }
 
-export function MedicalFinderAssistant() {
+interface MedicalFinderAssistantProps {
+  initialSymptoms?: string;
+}
+
+export function MedicalFinderAssistant({ initialSymptoms = '' }: MedicalFinderAssistantProps) {
   return (
-    <MedicalFinderProvider>
+    <MedicalFinderProvider initialSymptoms={initialSymptoms}>
       <MedicalFinderContent />
     </MedicalFinderProvider>
   );

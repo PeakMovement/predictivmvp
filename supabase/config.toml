@@ -101,3 +101,12 @@ verify_jwt = true
 
 [functions.generate-treatment-plan]
 verify_jwt = true
+
+[functions.seed-physicians]
+verify_jwt = false
+
+[functions.create-booking]
+verify_jwt = true
+
+[functions.get-bookings]
+verify_jwt = true

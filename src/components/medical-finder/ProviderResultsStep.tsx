@@ -1,8 +1,9 @@
-import React from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import React, { useState } from 'react';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useMedicalFinder } from '@/hooks/useMedicalFinder';
+import { BookingModal } from './BookingModal';
 import { 
   Star, 
   MapPin, 
@@ -13,12 +14,16 @@ import {
   ChevronRight,
   UserCheck,
   Award,
-  ArrowRight
+  Phone,
+  Mail,
+  Calendar
 } from 'lucide-react';
 import { PhysicianMatch } from '@/contexts/MedicalFinderContext';
+import { toast } from 'sonner';
 
 export function ProviderResultsStep() {
   const { physicianMatches, generateTreatmentPlan, isLoading, analysis } = useMedicalFinder();
+  const [bookingPhysician, setBookingPhysician] = useState<PhysicianMatch | null>(null);
 
   if (physicianMatches.length === 0) {
     return (
@@ -39,6 +44,33 @@ export function ProviderResultsStep() {
 
   const handleSelectProvider = async (physician: PhysicianMatch) => {
     await generateTreatmentPlan(physician);
+  };
+
+  const handleBookNow = (e: React.MouseEvent, physician: PhysicianMatch) => {
+    e.stopPropagation();
+    setBookingPhysician(physician);
+  };
+
+  const handleCall = (e: React.MouseEvent, phone: string | undefined) => {
+    e.stopPropagation();
+    if (phone) {
+      window.location.href = `tel:${phone}`;
+    } else {
+      toast.error('Phone number not available', { 
+        description: 'Contact information is being updated' 
+      });
+    }
+  };
+
+  const handleEmail = (e: React.MouseEvent, email: string | undefined) => {
+    e.stopPropagation();
+    if (email) {
+      window.location.href = `mailto:${email}`;
+    } else {
+      toast.error('Email not available', { 
+        description: 'Contact information is being updated' 
+      });
+    }
   };
 
   const getCostIndicator = (tier: string) => {
@@ -90,10 +122,9 @@ export function ProviderResultsStep() {
           className={`border-border/50 bg-card/80 backdrop-blur-sm hover:border-primary/30 transition-all cursor-pointer ${
             index === 0 ? 'ring-1 ring-primary/30' : ''
           }`}
-          onClick={() => handleSelectProvider(physician)}
         >
           <CardContent className="p-4">
-            <div className="flex items-start gap-4">
+            <div className="flex items-start gap-4" onClick={() => handleSelectProvider(physician)}>
               {/* Avatar / Rank */}
               <div className="flex-shrink-0">
                 <div className={`w-12 h-12 rounded-full flex items-center justify-center text-lg font-bold ${
@@ -186,6 +217,32 @@ export function ProviderResultsStep() {
                 />
               </div>
             </div>
+
+            {/* Action Buttons */}
+            <div className="flex gap-2 mt-4 pt-3 border-t border-border/30">
+              <Button 
+                size="sm" 
+                className="flex-1"
+                onClick={(e) => handleBookNow(e, physician)}
+              >
+                <Calendar className="h-4 w-4 mr-1.5" />
+                Book Now
+              </Button>
+              <Button 
+                size="sm" 
+                variant="outline"
+                onClick={(e) => handleCall(e, (physician as any).phone)}
+              >
+                <Phone className="h-4 w-4" />
+              </Button>
+              <Button 
+                size="sm" 
+                variant="outline"
+                onClick={(e) => handleEmail(e, (physician as any).email)}
+              >
+                <Mail className="h-4 w-4" />
+              </Button>
+            </div>
           </CardContent>
         </Card>
       ))}
@@ -197,6 +254,16 @@ export function ProviderResultsStep() {
             <span>Generating your personalized plan...</span>
           </div>
         </div>
+      )}
+
+      {/* Booking Modal */}
+      {bookingPhysician && (
+        <BookingModal
+          open={!!bookingPhysician}
+          onOpenChange={(open) => !open && setBookingPhysician(null)}
+          physician={bookingPhysician as any}
+          onBookingComplete={() => setBookingPhysician(null)}
+        />
       )}
     </div>
   );

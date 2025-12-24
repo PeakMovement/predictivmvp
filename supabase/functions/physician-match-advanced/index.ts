@@ -27,9 +27,12 @@ interface PhysicianMatch {
   location: string;
   city: string;
   state: string;
+  phone?: string;
+  email?: string;
   rating: number;
   costTier: string;
   availability: string;
+  availabilitySchedule?: Array<{ day: string; start: string; end: string }>;
   insuranceAccepted: string[];
   telehealthAvailable: boolean;
   yearsExperience: number;
@@ -238,9 +241,12 @@ function scorePhysician(
     location: physician.location,
     city: physician.city,
     state: physician.state,
+    phone: physician.phone || undefined,
+    email: physician.email || undefined,
     rating: rating,
     costTier: physician.cost_tier,
     availability: physician.availability,
+    availabilitySchedule: physician.availability_schedule || undefined,
     insuranceAccepted: physician.insurance_accepted || [],
     telehealthAvailable: physician.telehealth_available || false,
     yearsExperience: experience,

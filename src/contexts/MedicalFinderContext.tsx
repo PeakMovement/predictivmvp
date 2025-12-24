@@ -1,4 +1,6 @@
-import React, { createContext, useContext, useState, useCallback, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useCallback, useEffect, useRef, ReactNode } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { useMedicalSession, MedicalSessionData } from '@/hooks/useMedicalSession';
 
 export type MedicalFinderStep = 'intake' | 'analyzing' | 'severity' | 'matching' | 'results' | 'treatment';
 
@@ -79,6 +81,8 @@ interface MedicalFinderState {
   isLoading: boolean;
   error: string | null;
   showEmergencyAlert: boolean;
+  sessionId: string | null;
+  isRestoringSession: boolean;
 }
 
 interface MedicalFinderContextType extends MedicalFinderState {
@@ -95,6 +99,8 @@ interface MedicalFinderContextType extends MedicalFinderState {
   setShowEmergencyAlert: (show: boolean) => void;
   reset: () => void;
   goBack: () => void;
+  completeSession: (bookingId?: string) => Promise<void>;
+  startNewSearch: () => Promise<void>;
 }
 
 const initialState: MedicalFinderState = {
@@ -109,6 +115,8 @@ const initialState: MedicalFinderState = {
   isLoading: false,
   error: null,
   showEmergencyAlert: false,
+  sessionId: null,
+  isRestoringSession: false,
 };
 
 const MedicalFinderContext = createContext<MedicalFinderContextType | undefined>(undefined);
@@ -118,12 +126,133 @@ interface MedicalFinderProviderProps {
   initialSymptoms?: string;
 }
 
+// Map context step to backend step name
+function stepToBackendStep(step: MedicalFinderStep): string {
+  const mapping: Record<MedicalFinderStep, string> = {
+    'intake': 'symptoms',
+    'analyzing': 'symptoms',
+    'severity': 'preferences',
+    'matching': 'provider_results',
+    'results': 'provider_results',
+    'treatment': 'treatment_plan'
+  };
+  return mapping[step];
+}
+
+// Map backend step to context step
+function backendStepToStep(backendStep: string): MedicalFinderStep {
+  const mapping: Record<string, MedicalFinderStep> = {
+    'symptoms': 'intake',
+    'preferences': 'severity',
+    'provider_results': 'results',
+    'treatment_plan': 'treatment',
+    'booking': 'treatment'
+  };
+  return mapping[backendStep] || 'intake';
+}
+
 export function MedicalFinderProvider({ children, initialSymptoms = '' }: MedicalFinderProviderProps) {
   const [state, setState] = useState<MedicalFinderState>({
     ...initialState,
     initialSymptoms,
     symptoms: initialSymptoms,
+    isRestoringSession: true, // Start true, will be set false after restore attempt
   });
+
+  const { saveSession, getSession, completeSession: completeSessionApi, abandonSession } = useMedicalSession();
+  const hasRestoredSession = useRef(false);
+  const isAuthenticated = useRef(false);
+
+  // Restore session on mount
+  useEffect(() => {
+    if (hasRestoredSession.current) return;
+    
+    const restoreSession = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        isAuthenticated.current = !!user;
+        
+        if (!user) {
+          console.log('[Session] No user, skipping restore');
+          setState(prev => ({ ...prev, isRestoringSession: false }));
+          return;
+        }
+
+        const { exists, session } = await getSession();
+        
+        if (exists && session) {
+          console.log('[Session] Restoring session:', session.currentStep);
+          const data = session.data;
+          
+          setState(prev => ({
+            ...prev,
+            sessionId: session.id,
+            currentStep: backendStepToStep(session.currentStep),
+            symptoms: data.symptoms?.primary || '',
+            preferences: {
+              location: data.preferences?.location?.city,
+              insurance: data.preferences?.insurance?.[0],
+              telehealth: data.preferences?.telehealthPreferred,
+            },
+          analysis: (data.analysis as unknown as SymptomAnalysis) || null,
+          physicianMatches: (data.physicianMatches as unknown as PhysicianMatch[]) || [],
+          selectedPhysician: data.selectedPhysician ? {
+            id: data.selectedPhysician.id,
+            name: data.selectedPhysician.name,
+            specialty: data.selectedPhysician.specialty,
+          } as PhysicianMatch : null,
+          treatmentPlan: (data.treatmentPlan as unknown as TreatmentPlan) || null,
+            isRestoringSession: false,
+          }));
+        } else {
+          setState(prev => ({ ...prev, isRestoringSession: false }));
+        }
+      } catch (err) {
+        console.error('[Session] Restore error:', err);
+        setState(prev => ({ ...prev, isRestoringSession: false }));
+      }
+      
+      hasRestoredSession.current = true;
+    };
+
+    restoreSession();
+  }, [getSession]);
+
+  // Persist session on state changes (debounced via step changes)
+  const persistSession = useCallback(async (newState: MedicalFinderState) => {
+    if (!isAuthenticated.current) return;
+    if (newState.isRestoringSession) return;
+    if (newState.currentStep === 'analyzing' || newState.currentStep === 'matching') return;
+
+    const sessionData: MedicalSessionData = {
+      symptoms: {
+        primary: newState.symptoms,
+        secondary: newState.analysis?.extractedSymptoms?.map(s => s.symptom) || [],
+      },
+      preferences: {
+        location: newState.preferences.location ? { city: newState.preferences.location } : undefined,
+        insurance: newState.preferences.insurance ? [newState.preferences.insurance] : undefined,
+        telehealthPreferred: newState.preferences.telehealth,
+      },
+      selectedPhysician: newState.selectedPhysician ? {
+        id: newState.selectedPhysician.id,
+        name: newState.selectedPhysician.name,
+        specialty: newState.selectedPhysician.specialty,
+      } : undefined,
+      analysis: (newState.analysis as unknown as Record<string, unknown>) || undefined,
+      physicianMatches: (newState.physicianMatches as unknown as Record<string, unknown>[]) || undefined,
+      treatmentPlan: (newState.treatmentPlan as unknown as Record<string, unknown>) || undefined,
+    };
+
+    const { success, sessionId } = await saveSession(
+      stepToBackendStep(newState.currentStep),
+      sessionData
+    );
+
+    if (success && sessionId && !newState.sessionId) {
+      setState(prev => ({ ...prev, sessionId }));
+    }
+  }, [saveSession]);
 
   const setSymptoms = useCallback((symptoms: string) => {
     setState(prev => ({ ...prev, symptoms }));
@@ -134,11 +263,14 @@ export function MedicalFinderProvider({ children, initialSymptoms = '' }: Medica
   }, []);
 
   const setAnalysis = useCallback((analysis: SymptomAnalysis) => {
-    setState(prev => ({ 
-      ...prev, 
-      analysis,
-      showEmergencyAlert: analysis.isEmergency 
-    }));
+    setState(prev => {
+      const newState = { 
+        ...prev, 
+        analysis,
+        showEmergencyAlert: analysis.isEmergency 
+      };
+      return newState;
+    });
   }, []);
 
   const setPhysicianMatches = useCallback((matches: PhysicianMatch[]) => {
@@ -158,8 +290,15 @@ export function MedicalFinderProvider({ children, initialSymptoms = '' }: Medica
   }, []);
 
   const setCurrentStep = useCallback((step: MedicalFinderStep) => {
-    setState(prev => ({ ...prev, currentStep: step }));
-  }, []);
+    setState(prev => {
+      const newState = { ...prev, currentStep: step };
+      // Persist on step change (not during loading states)
+      if (step !== 'analyzing' && step !== 'matching') {
+        persistSession(newState);
+      }
+      return newState;
+    });
+  }, [persistSession]);
 
   const setIsLoading = useCallback((loading: boolean) => {
     setState(prev => ({ ...prev, isLoading: loading }));
@@ -181,14 +320,35 @@ export function MedicalFinderProvider({ children, initialSymptoms = '' }: Medica
     const stepOrder: MedicalFinderStep[] = ['intake', 'analyzing', 'severity', 'matching', 'results', 'treatment'];
     const currentIndex = stepOrder.indexOf(state.currentStep);
     if (currentIndex > 0) {
-      // Skip 'analyzing' and 'matching' when going back
       let newIndex = currentIndex - 1;
       while (newIndex > 0 && (stepOrder[newIndex] === 'analyzing' || stepOrder[newIndex] === 'matching')) {
         newIndex--;
       }
-      setState(prev => ({ ...prev, currentStep: stepOrder[newIndex] }));
+      const newStep = stepOrder[newIndex];
+      setState(prev => {
+        const newState = { ...prev, currentStep: newStep };
+        persistSession(newState);
+        return newState;
+      });
     }
-  }, [state.currentStep]);
+  }, [state.currentStep, persistSession]);
+
+  const completeSession = useCallback(async (bookingId?: string) => {
+    await completeSessionApi(bookingId);
+    setState(prev => ({ ...prev, sessionId: null }));
+  }, [completeSessionApi]);
+
+  const startNewSearch = useCallback(async () => {
+    // Abandon current session if exists
+    if (state.sessionId) {
+      await abandonSession();
+    }
+    // Reset state
+    setState({
+      ...initialState,
+      isRestoringSession: false,
+    });
+  }, [state.sessionId, abandonSession]);
 
   const value: MedicalFinderContextType = {
     ...state,
@@ -205,6 +365,8 @@ export function MedicalFinderProvider({ children, initialSymptoms = '' }: Medica
     setShowEmergencyAlert,
     reset,
     goBack,
+    completeSession,
+    startNewSearch,
   };
 
   return (

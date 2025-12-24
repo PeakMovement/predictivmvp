@@ -138,8 +138,12 @@ export function useMedicalFinder() {
     context.setShowEmergencyAlert(false);
   }, [context]);
 
-  const startOver = useCallback(() => {
-    context.reset();
+  const startOver = useCallback(async () => {
+    await context.startNewSearch();
+  }, [context]);
+
+  const completeSessionWithBooking = useCallback(async (bookingId?: string) => {
+    await context.completeSession(bookingId);
   }, [context]);
 
   return {
@@ -152,5 +156,6 @@ export function useMedicalFinder() {
     generateTreatmentPlan,
     dismissEmergency,
     startOver,
+    completeSessionWithBooking,
   };
 }

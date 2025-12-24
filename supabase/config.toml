@@ -110,3 +110,12 @@ verify_jwt = true
 
 [functions.get-bookings]
 verify_jwt = true
+
+[functions.save-medical-session]
+verify_jwt = true
+
+[functions.get-medical-session]
+verify_jwt = true
+
+[functions.complete-medical-session]
+verify_jwt = true

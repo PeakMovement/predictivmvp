@@ -599,6 +599,36 @@ export type Database = {
         }
         Relationships: []
       }
+      medical_finder_sessions: {
+        Row: {
+          created_at: string
+          current_step: string
+          data: Json
+          id: string
+          last_updated_at: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          current_step?: string
+          data?: Json
+          id?: string
+          last_updated_at?: string
+          status?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          current_step?: string
+          data?: Json
+          id?: string
+          last_updated_at?: string
+          status?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       notification_log: {
         Row: {
           created_at: string

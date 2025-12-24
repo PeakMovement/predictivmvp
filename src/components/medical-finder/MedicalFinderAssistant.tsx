@@ -8,16 +8,28 @@ import { TreatmentPlanStep } from './TreatmentPlanStep';
 import { EmergencyAlert } from './EmergencyAlert';
 import { AnalyzingStep } from './AnalyzingStep';
 import { ProgressIndicator } from './ProgressIndicator';
+import { Loader2 } from 'lucide-react';
 
 function MedicalFinderContent() {
   const { 
     currentStep, 
     showEmergencyAlert, 
     isLoading,
+    isRestoringSession,
     dismissEmergency,
     startOver,
     goBack
   } = useMedicalFinder();
+
+  // Show loading state while restoring session
+  if (isRestoringSession) {
+    return (
+      <div className="w-full max-w-4xl mx-auto flex flex-col items-center justify-center py-16">
+        <Loader2 className="h-8 w-8 animate-spin text-primary mb-4" />
+        <p className="text-muted-foreground">Restoring your session...</p>
+      </div>
+    );
+  }
 
   const renderStep = () => {
     switch (currentStep) {

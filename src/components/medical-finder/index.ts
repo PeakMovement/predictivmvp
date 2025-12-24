@@ -6,3 +6,4 @@ export { TreatmentPlanStep } from './TreatmentPlanStep';
 export { EmergencyAlert } from './EmergencyAlert';
 export { AnalyzingStep } from './AnalyzingStep';
 export { ProgressIndicator } from './ProgressIndicator';
+export { BookingModal } from './BookingModal';

@@ -37,9 +37,12 @@ export interface PhysicianMatch {
   location: string;
   city: string;
   state: string;
+  phone?: string;
+  email?: string;
   rating: number;
   costTier: string;
   availability: string;
+  availabilitySchedule?: Array<{ day: string; start: string; end: string }>;
   insuranceAccepted: string[];
   telehealthAvailable: boolean;
   yearsExperience: number;

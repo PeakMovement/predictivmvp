@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Separator } from '@/components/ui/separator';
 import { useMedicalFinder } from '@/hooks/useMedicalFinder';
+import { BookingModal } from './BookingModal';
+import { toast } from 'sonner';
 import { 
   CheckCircle, 
   AlertTriangle, 
@@ -14,13 +15,66 @@ import {
   MapPin,
   Star,
   RotateCcw,
-  Download
+  Download,
+  Calendar,
+  Phone,
+  Mail
 } from 'lucide-react';
 
 export function TreatmentPlanStep() {
   const { treatmentPlan, selectedPhysician, startOver, analysis } = useMedicalFinder();
+  const [showBookingModal, setShowBookingModal] = useState(false);
 
   if (!treatmentPlan || !selectedPhysician) return null;
+
+  const handleCall = () => {
+    if (selectedPhysician.phone) {
+      window.location.href = `tel:${selectedPhysician.phone}`;
+    } else {
+      toast.error('Phone number not available', { 
+        description: 'Contact information is being updated' 
+      });
+    }
+  };
+
+  const handleEmail = () => {
+    if (selectedPhysician.email) {
+      window.location.href = `mailto:${selectedPhysician.email}`;
+    } else {
+      toast.error('Email not available', { 
+        description: 'Contact information is being updated' 
+      });
+    }
+  };
+
+  const handleCopySummary = () => {
+    const summary = `
+Medical Finder Summary
+=====================
+Provider: ${selectedPhysician.name}
+Specialty: ${selectedPhysician.specialty}
+Location: ${selectedPhysician.city}, ${selectedPhysician.state}
+${selectedPhysician.phone ? `Phone: ${selectedPhysician.phone}` : ''}
+${selectedPhysician.email ? `Email: ${selectedPhysician.email}` : ''}
+
+${treatmentPlan.summary}
+
+Immediate Steps:
+${treatmentPlan.immediateSteps.map(s => `• ${s}`).join('\n')}
+
+Before Appointment:
+${treatmentPlan.beforeAppointment.map(s => `• ${s}`).join('\n')}
+
+Questions to Ask:
+${treatmentPlan.questionsForDoctor.map(s => `• ${s}`).join('\n')}
+
+Warning Signs:
+${treatmentPlan.warningSignsToWatch.map(s => `• ${s}`).join('\n')}
+    `.trim();
+    
+    navigator.clipboard.writeText(summary);
+    toast.success('Summary copied to clipboard');
+  };
 
   const sections = [
     {
@@ -85,6 +139,34 @@ export function TreatmentPlanStep() {
                 </span>
               </div>
             </div>
+          </div>
+          
+          {/* Provider Action Buttons */}
+          <div className="flex gap-2 mt-4 pt-3 border-t border-primary/20">
+            <Button 
+              size="sm" 
+              className="flex-1"
+              onClick={() => setShowBookingModal(true)}
+            >
+              <Calendar className="h-4 w-4 mr-1.5" />
+              Book Appointment
+            </Button>
+            <Button 
+              size="sm" 
+              variant="outline"
+              onClick={handleCall}
+              disabled={!selectedPhysician.phone}
+            >
+              <Phone className="h-4 w-4" />
+            </Button>
+            <Button 
+              size="sm" 
+              variant="outline"
+              onClick={handleEmail}
+              disabled={!selectedPhysician.email}
+            >
+              <Mail className="h-4 w-4" />
+            </Button>
           </div>
         </CardContent>
       </Card>
@@ -155,38 +237,23 @@ export function TreatmentPlanStep() {
         </Button>
         <Button 
           className="flex-1"
-          onClick={() => {
-            // Generate a simple text summary to copy
-            const summary = `
-Medical Finder Summary
-=====================
-Provider: ${selectedPhysician.name}
-Specialty: ${selectedPhysician.specialty}
-Location: ${selectedPhysician.city}, ${selectedPhysician.state}
-
-${treatmentPlan.summary}
-
-Immediate Steps:
-${treatmentPlan.immediateSteps.map(s => `• ${s}`).join('\n')}
-
-Before Appointment:
-${treatmentPlan.beforeAppointment.map(s => `• ${s}`).join('\n')}
-
-Questions to Ask:
-${treatmentPlan.questionsForDoctor.map(s => `• ${s}`).join('\n')}
-
-Warning Signs:
-${treatmentPlan.warningSignsToWatch.map(s => `• ${s}`).join('\n')}
-            `.trim();
-            
-            navigator.clipboard.writeText(summary);
-            // Could use toast here
-          }}
+          onClick={handleCopySummary}
         >
           <Download className="h-4 w-4 mr-2" />
           Copy Summary
         </Button>
       </div>
+
+      {/* Booking Modal */}
+      <BookingModal
+        open={showBookingModal}
+        onOpenChange={setShowBookingModal}
+        physician={{
+          ...selectedPhysician,
+          availability: selectedPhysician.availabilitySchedule
+        } as any}
+        onBookingComplete={() => setShowBookingModal(false)}
+      />
     </div>
   );
 }

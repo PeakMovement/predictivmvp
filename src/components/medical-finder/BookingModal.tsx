@@ -14,6 +14,7 @@ import { Badge } from '@/components/ui/badge';
 import { Calendar } from '@/components/ui/calendar';
 import { useBookings, BookingResponse } from '@/hooks/useBookings';
 import { PhysicianMatch } from '@/contexts/MedicalFinderContext';
+import { CalendlyWidget } from './CalendlyWidget';
 import { 
   CalendarDays, 
   Clock, 
@@ -27,7 +28,7 @@ import {
 } from 'lucide-react';
 import { format, addDays, isAfter, isBefore, startOfToday } from 'date-fns';
 
-type BookingStep = 'select_date' | 'select_time' | 'confirm_details' | 'success';
+type BookingStep = 'select_date' | 'select_time' | 'confirm_details' | 'calendly' | 'success';
 
 interface PhysicianAvailability {
   day: string;
@@ -42,6 +43,7 @@ interface BookingModalProps {
     phone?: string; 
     email?: string;
     availability?: PhysicianAvailability[];
+    calendlyUrl?: string;
   };
   onBookingComplete?: (booking: BookingResponse) => void;
 }
@@ -65,7 +67,10 @@ const DAY_MAP: Record<number, string> = {
 export function BookingModal({ open, onOpenChange, physician, onBookingComplete }: BookingModalProps) {
   const { createBooking, isCreating, lastBooking, error } = useBookings();
   
-  const [currentStep, setCurrentStep] = useState<BookingStep>('select_date');
+  // Determine initial step based on whether physician has Calendly URL
+  const hasCalendly = Boolean(physician.calendlyUrl && physician.calendlyUrl.includes('calendly.com'));
+  
+  const [currentStep, setCurrentStep] = useState<BookingStep>(hasCalendly ? 'calendly' : 'select_date');
   const [selectedDate, setSelectedDate] = useState<Date | undefined>();
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
   const [notes, setNotes] = useState('');
@@ -144,9 +149,32 @@ export function BookingModal({ open, onOpenChange, physician, onBookingComplete 
     }
   };
 
+  const handleCalendlyEventScheduled = () => {
+    setCurrentStep('success');
+    // Create a mock booking response for Calendly bookings
+    const calendlyBooking: BookingResponse = {
+      success: true,
+      bookingId: `calendly-${Date.now()}`,
+      physician: {
+        id: physician.id,
+        name: physician.name,
+        specialty: physician.specialty,
+      },
+      appointment: {
+        date: 'Scheduled via Calendly',
+        time: 'See confirmation email',
+        dateTime: new Date().toISOString(),
+        sessionType: 'consultation',
+      },
+      status: 'confirmed',
+      message: 'Appointment scheduled via Calendly',
+    };
+    onBookingComplete?.(calendlyBooking);
+  };
+
   const handleClose = () => {
     // Reset state
-    setCurrentStep('select_date');
+    setCurrentStep(hasCalendly ? 'calendly' : 'select_date');
     setSelectedDate(undefined);
     setSelectedTime(null);
     setNotes('');
@@ -164,6 +192,25 @@ export function BookingModal({ open, onOpenChange, physician, onBookingComplete 
 
   const renderStep = () => {
     switch (currentStep) {
+      case 'calendly':
+        return (
+          <div className="space-y-4">
+            <div className="flex items-center gap-3 mb-4 p-3 bg-muted/50 rounded-lg">
+              <User className="h-5 w-5 text-primary" />
+              <div>
+                <p className="font-medium">{physician.name}</p>
+                <p className="text-sm text-muted-foreground">{physician.specialty}</p>
+              </div>
+            </div>
+            
+            <CalendlyWidget 
+              url={physician.calendlyUrl!}
+              onEventScheduled={handleCalendlyEventScheduled}
+              primaryColor="0f172a"
+            />
+          </div>
+        );
+
       case 'select_date':
         return (
           <div className="space-y-4">
@@ -338,11 +385,14 @@ export function BookingModal({ open, onOpenChange, physician, onBookingComplete 
             <div>
               <h3 className="text-xl font-semibold">Appointment Confirmed!</h3>
               <p className="text-muted-foreground mt-1">
-                Your booking has been successfully created
+                {hasCalendly 
+                  ? 'Check your email for confirmation details from Calendly'
+                  : 'Your booking has been successfully created'
+                }
               </p>
             </div>
 
-            {lastBooking && (
+            {lastBooking && !hasCalendly && (
               <div className="bg-muted/50 rounded-lg p-4 text-left space-y-2">
                 <p className="font-medium">{lastBooking.physician.name}</p>
                 <p className="text-sm text-muted-foreground">{lastBooking.physician.specialty}</p>
@@ -358,6 +408,16 @@ export function BookingModal({ open, onOpenChange, physician, onBookingComplete 
               </div>
             )}
 
+            {hasCalendly && (
+              <div className="bg-muted/50 rounded-lg p-4 text-left space-y-2">
+                <p className="font-medium">{physician.name}</p>
+                <p className="text-sm text-muted-foreground">{physician.specialty}</p>
+                <p className="text-xs text-muted-foreground">
+                  You will receive a confirmation email from Calendly with appointment details.
+                </p>
+              </div>
+            )}
+
             <Button onClick={handleClose} className="w-full">
               Done
             </Button>
@@ -368,12 +428,12 @@ export function BookingModal({ open, onOpenChange, physician, onBookingComplete 
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className={hasCalendly && currentStep === 'calendly' ? "sm:max-w-[700px]" : "sm:max-w-[425px]"}>
         <DialogHeader>
           <DialogTitle>
             {currentStep === 'success' ? 'Booking Complete' : 'Book Appointment'}
           </DialogTitle>
-          {currentStep !== 'success' && (
+          {currentStep !== 'success' && currentStep !== 'calendly' && (
             <DialogDescription>
               Schedule an appointment with {physician.name}
             </DialogDescription>

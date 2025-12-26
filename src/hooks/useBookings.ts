@@ -17,11 +17,18 @@ export interface BookingResponse {
     id: string;
     name: string;
     specialty: string;
+    phone?: string;
+    email?: string;
+    location?: string;
   };
   appointment: {
     date: string;
     time: string;
+    dateTime?: string;
+    sessionType?: string;
   };
+  status?: string;
+  message?: string;
 }
 
 export interface UserBooking {

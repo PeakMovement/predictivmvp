@@ -112,26 +112,50 @@ export type Database = {
       }
       Bookings: {
         Row: {
+          appointment_end: string | null
+          appointment_start: string | null
+          calendly_event_id: string | null
           clinician_id: string | null
+          created_at: string | null
           id: string
+          notes: string | null
+          patient_email: string | null
+          patient_name: string | null
           session_date: string
           session_type: string | null
+          source: string | null
           status: string | null
           user_id: string | null
         }
         Insert: {
+          appointment_end?: string | null
+          appointment_start?: string | null
+          calendly_event_id?: string | null
           clinician_id?: string | null
+          created_at?: string | null
           id?: string
+          notes?: string | null
+          patient_email?: string | null
+          patient_name?: string | null
           session_date?: string
           session_type?: string | null
+          source?: string | null
           status?: string | null
           user_id?: string | null
         }
         Update: {
+          appointment_end?: string | null
+          appointment_start?: string | null
+          calendly_event_id?: string | null
           clinician_id?: string | null
+          created_at?: string | null
           id?: string
+          notes?: string | null
+          patient_email?: string | null
+          patient_name?: string | null
           session_date?: string
           session_type?: string | null
+          source?: string | null
           status?: string | null
           user_id?: string | null
         }
@@ -712,6 +736,7 @@ export type Database = {
           accepting_new_patients: boolean | null
           address: string | null
           availability: string | null
+          calendly_url: string | null
           city: string | null
           cost_tier: string | null
           created_at: string
@@ -738,6 +763,7 @@ export type Database = {
           accepting_new_patients?: boolean | null
           address?: string | null
           availability?: string | null
+          calendly_url?: string | null
           city?: string | null
           cost_tier?: string | null
           created_at?: string
@@ -764,6 +790,7 @@ export type Database = {
           accepting_new_patients?: boolean | null
           address?: string | null
           availability?: string | null
+          calendly_url?: string | null
           city?: string | null
           cost_tier?: string | null
           created_at?: string

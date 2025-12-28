@@ -1,90 +1,37 @@
-import { useEffect, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ThumbsUp, ThumbsDown, ExternalLink } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
+import { ExternalLink, Lightbulb, ArrowRight } from "lucide-react";
+import { YvesRecommendation } from "@/hooks/useYvesIntelligence";
+import { cn } from "@/lib/utils";
 
-import { formatDistanceToNow } from "date-fns";
-
-interface Recommendation {
-  id: string;
-  recommendation_text: string;
-  category: string;
-  priority: string;
-  created_at: string;
-  feedback_score: number | null;
+interface YvesRecommendationsCardProps {
+  recommendations: YvesRecommendation[];
+  isLoading: boolean;
 }
 
-export const YvesRecommendationsCard = () => {
-  const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
-  const [loading, setLoading] = useState(true);
-  const { toast } = useToast();
-
-  const fetchRecommendations = async () => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      const { data, error } = await supabase
-        .from('yves_recommendations')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false })
-        .limit(3);
-
-      if (error) throw error;
-      setRecommendations(data || []);
-    } catch (error) {
-      console.error('Error fetching recommendations:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleFeedback = async (recommendationId: string, score: number) => {
-    try {
-      const { error } = await supabase
-        .from('yves_recommendations')
-        .update({ 
-          feedback_score: score,
-          acknowledged_at: new Date().toISOString()
-        })
-        .eq('id', recommendationId);
-
-      if (error) throw error;
-
-      toast({
-        title: "Feedback recorded",
-        description: "Thank you for helping Yves improve!"
-      });
-
-      // Update local state
-      setRecommendations(prev => 
-        prev.map(rec => 
-          rec.id === recommendationId 
-            ? { ...rec, feedback_score: score }
-            : rec
-        )
-      );
-    } catch (error) {
-      console.error('Error recording feedback:', error);
-      toast({
-        title: "Error",
-        description: "Failed to record feedback",
-        variant: "destructive"
-      });
-    }
-  };
-
+export function YvesRecommendationsCard({ recommendations, isLoading }: YvesRecommendationsCardProps) {
   const getCategoryColor = (category: string) => {
     switch (category) {
       case 'training': return 'bg-blue-500/10 text-blue-500 border-blue-500/20';
       case 'recovery': return 'bg-green-500/10 text-green-500 border-green-500/20';
       case 'nutrition': return 'bg-orange-500/10 text-orange-500 border-orange-500/20';
       case 'medical': return 'bg-red-500/10 text-red-500 border-red-500/20';
+      case 'sleep': return 'bg-purple-500/10 text-purple-500 border-purple-500/20';
+      case 'activity': return 'bg-cyan-500/10 text-cyan-500 border-cyan-500/20';
       default: return 'bg-muted text-muted-foreground';
+    }
+  };
+
+  const getCategoryIcon = (category: string) => {
+    switch (category) {
+      case 'training': return '💪';
+      case 'recovery': return '🏃';
+      case 'nutrition': return '🥗';
+      case 'medical': return '🏥';
+      case 'sleep': return '😴';
+      case 'activity': return '⚡';
+      default: return '💡';
     }
   };
 
@@ -97,34 +44,13 @@ export const YvesRecommendationsCard = () => {
     }
   };
 
-  useEffect(() => {
-    fetchRecommendations();
-
-    // Subscribe to new recommendations
-    const channel = supabase
-      .channel('recommendations_changes')
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'yves_recommendations'
-        },
-        () => fetchRecommendations()
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, []);
-
-  if (loading) {
+  if (isLoading) {
     return (
       <Card className="bg-glass backdrop-blur-xl border-glass-border shadow-glass">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            🧠 Yves Recommendations
+            <Lightbulb className="h-5 w-5 text-primary" />
+            Yves Recommendations
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -138,72 +64,65 @@ export const YvesRecommendationsCard = () => {
     <Card className="bg-glass backdrop-blur-xl border-glass-border shadow-glass">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          🧠 Yves Recommendations
+          <Lightbulb className="h-5 w-5 text-primary" />
+          🎯 Yves Recommendations
         </CardTitle>
         <CardDescription>
-          AI-powered insights based on your health documents
+          AI-powered actions based on your health data
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         {recommendations.length === 0 ? (
           <div className="text-center py-6 space-y-2">
             <p className="text-muted-foreground">
-              Yves will generate your first set of insights once you upload a document or ask a question.
+              Yves will generate personalized recommendations once your daily briefing is ready.
             </p>
-            <Button variant="outline" className="mt-4" onClick={() => window.dispatchEvent(new Event('navigate-yves-insights'))}>
+            <Button 
+              variant="outline" 
+              className="mt-4" 
+              onClick={() => window.dispatchEvent(new CustomEvent("navigate-tab", { detail: "yves-insights" }))}
+            >
               Chat with Yves <ExternalLink className="ml-2 h-4 w-4" />
             </Button>
           </div>
         ) : (
           <>
-            {recommendations.map((rec) => (
+            {recommendations.map((rec, idx) => (
               <div 
-                key={rec.id}
-                className="p-4 rounded-lg border border-border bg-card/50 space-y-3"
+                key={idx}
+                className={cn(
+                  "p-4 rounded-lg border border-border bg-card/50 space-y-3",
+                  rec.priority === 'high' && "border-l-4 border-l-destructive"
+                )}
               >
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-lg">{getCategoryIcon(rec.category)}</span>
                     <Badge className={getCategoryColor(rec.category)}>
                       {rec.category.charAt(0).toUpperCase() + rec.category.slice(1)}
                     </Badge>
                     {getPriorityBadge(rec.priority)}
                   </div>
-                  <span className="text-xs text-muted-foreground whitespace-nowrap">
-                    {formatDistanceToNow(new Date(rec.created_at), { addSuffix: true })}
-                  </span>
                 </div>
                 
-                <p className="text-sm leading-relaxed">
-                  {rec.recommendation_text}
+                <p className="text-sm leading-relaxed font-medium">
+                  {rec.text}
                 </p>
 
-                <div className="flex items-center gap-2 pt-2">
-                  <span className="text-xs text-muted-foreground">Was this helpful?</span>
-                  <div className="flex gap-1">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleFeedback(rec.id, 1)}
-                      disabled={rec.feedback_score !== null}
-                      className={rec.feedback_score === 1 ? 'text-green-500' : ''}
-                    >
-                      <ThumbsUp className="h-3 w-3" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleFeedback(rec.id, -1)}
-                      disabled={rec.feedback_score !== null}
-                      className={rec.feedback_score === -1 ? 'text-red-500' : ''}
-                    >
-                      <ThumbsDown className="h-3 w-3" />
-                    </Button>
-                  </div>
-                </div>
+                {rec.reasoning && (
+                  <p className="text-xs text-muted-foreground flex items-start gap-1">
+                    <ArrowRight className="h-3 w-3 mt-0.5 flex-shrink-0" />
+                    {rec.reasoning}
+                  </p>
+                )}
               </div>
             ))}
 
-            <Button variant="outline" className="w-full mt-4" onClick={() => window.dispatchEvent(new Event('navigate-yves-insights'))}>
+            <Button 
+              variant="outline" 
+              className="w-full mt-4" 
+              onClick={() => window.dispatchEvent(new CustomEvent("navigate-tab", { detail: "yves-insights" }))}
+            >
               View All & Chat with Yves <ExternalLink className="ml-2 h-4 w-4" />
             </Button>
           </>
@@ -211,4 +130,4 @@ export const YvesRecommendationsCard = () => {
       </CardContent>
     </Card>
   );
-};
+}

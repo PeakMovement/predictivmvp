@@ -10,9 +10,12 @@ export interface BookingRequest {
   notes?: string;
 }
 
+// Unified BookingResponse for both native and Calendly bookings
 export interface BookingResponse {
   success: boolean;
   bookingId: string;
+  source: 'native' | 'calendly';
+  status: 'confirmed' | 'pending' | 'cancelled';
   physician: {
     id: string;
     name: string;
@@ -25,9 +28,13 @@ export interface BookingResponse {
     date: string;
     time: string;
     dateTime?: string;
+    startTime?: string;
+    endTime?: string;
     sessionType?: string;
   };
-  status?: string;
+  userId?: string;
+  createdAt?: string;
+  calendlyEventId?: string;
   message?: string;
 }
 
@@ -83,8 +90,12 @@ export function useBookings() {
       const bookingResponse: BookingResponse = {
         success: true,
         bookingId: data.bookingId,
+        source: data.source || 'native',
+        status: data.status || 'confirmed',
         physician: data.physician,
-        appointment: data.appointment
+        appointment: data.appointment,
+        userId: data.userId,
+        createdAt: data.createdAt,
       };
 
       setState(prev => ({ 

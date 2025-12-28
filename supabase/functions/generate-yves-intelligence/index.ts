@@ -43,7 +43,6 @@ Deno.serve(async (req) => {
     }
 
     if (!userId) {
-      // Try to get from auth header
       const authHeader = req.headers.get("authorization");
       if (authHeader) {
         const token = authHeader.replace("Bearer ", "");
@@ -61,7 +60,7 @@ Deno.serve(async (req) => {
 
     const today = new Date().toISOString().split("T")[0];
 
-    // Check if we already have today's intelligence
+    // Check for cached intelligence
     const { data: existingIntelligence } = await supabase
       .from("daily_briefings")
       .select("*")
@@ -89,219 +88,481 @@ Deno.serve(async (req) => {
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
     const sevenDaysAgoStr = sevenDaysAgo.toISOString().split("T")[0];
 
+    // Batch 1: Core wearable & dynamic data
     const [
       wearableSummaryResult,
       wearableSessionsResult,
-      userDocumentsResult,
-      memoryBankResult,
-      userProfileResult,
-      userContextResult,
+      trainingTrendsResult,
+      recoveryTrendsResult,
+      healthAnomaliesResult,
+      userBaselinesResult,
+      userDeviationsResult,
       symptomCheckInsResult,
-      recentRecommendationsResult,
     ] = await Promise.all([
       supabase.from("wearable_summary").select("*").eq("user_id", userId).gte("date", sevenDaysAgoStr).order("date", { ascending: false }),
       supabase.from("wearable_sessions").select("*").eq("user_id", userId).order("date", { ascending: false }).limit(7),
-      supabase.from("user_documents").select("document_type, file_name, parsed_content, ai_summary, tags").eq("user_id", userId).eq("processing_status", "completed").order("uploaded_at", { ascending: false }).limit(5),
-      supabase.from("yves_memory_bank").select("memory_key, memory_value").eq("user_id", userId),
-      supabase.from("user_profile").select("*").eq("user_id", userId).maybeSingle(),
-      supabase.from("user_context_enhanced").select("*").eq("user_id", userId).maybeSingle(),
+      supabase.from("training_trends").select("*").eq("user_id", userId).gte("date", sevenDaysAgoStr).order("date", { ascending: false }),
+      supabase.from("recovery_trends").select("*").eq("user_id", userId).gte("period_date", sevenDaysAgoStr).order("period_date", { ascending: false }),
+      supabase.from("health_anomalies").select("*").eq("user_id", userId).gte("detected_at", sevenDaysAgo.toISOString()).order("detected_at", { ascending: false }).limit(5),
+      supabase.from("user_baselines").select("*").eq("user_id", userId),
+      supabase.from("user_deviations").select("*").eq("user_id", userId).gte("date", sevenDaysAgoStr).order("date", { ascending: false }),
       supabase.from("symptom_check_ins").select("*").eq("user_id", userId).order("created_at", { ascending: false }).limit(5),
+    ]);
+
+    // Batch 2: Static/contextual profile data
+    const [
+      userProfileResult,
+      userMedicalResult,
+      userInjuriesResult,
+      userLifestyleResult,
+      userInterestsResult,
+      userNutritionResult,
+      userTrainingResult,
+      userRecoveryResult,
+      userMindsetResult,
+      userWellnessGoalsResult,
+      userHealthProfilesResult,
+      userContextResult,
+    ] = await Promise.all([
+      supabase.from("user_profile").select("*").eq("user_id", userId).maybeSingle(),
+      supabase.from("user_medical").select("*").eq("user_id", userId).maybeSingle(),
+      supabase.from("user_injuries").select("*").eq("user_id", userId).maybeSingle(),
+      supabase.from("user_lifestyle").select("*").eq("user_id", userId).maybeSingle(),
+      supabase.from("user_interests").select("*").eq("user_id", userId).maybeSingle(),
+      supabase.from("user_nutrition").select("*").eq("user_id", userId).maybeSingle(),
+      supabase.from("user_training").select("*").eq("user_id", userId).maybeSingle(),
+      supabase.from("user_recovery").select("*").eq("user_id", userId).maybeSingle(),
+      supabase.from("user_mindset").select("*").eq("user_id", userId).maybeSingle(),
+      supabase.from("user_wellness_goals").select("*").eq("user_id", userId).maybeSingle(),
+      supabase.from("user_health_profiles").select("*").eq("user_id", userId).order("generated_at", { ascending: false }).limit(1).maybeSingle(),
+      supabase.from("user_context_enhanced").select("*").eq("user_id", userId).maybeSingle(),
+    ]);
+
+    // Batch 3: Documents & memory
+    const [
+      userDocumentsResult,
+      memoryBankResult,
+      recentRecommendationsResult,
+    ] = await Promise.all([
+      supabase.from("user_documents").select("document_type, file_name, parsed_content, ai_summary, tags").eq("user_id", userId).eq("processing_status", "completed").order("uploaded_at", { ascending: false }).limit(10),
+      supabase.from("yves_memory_bank").select("memory_key, memory_value").eq("user_id", userId),
       supabase.from("yves_recommendations").select("*").eq("user_id", userId).order("created_at", { ascending: false }).limit(5),
     ]);
 
+    // Extract data
     const wearableSummary = wearableSummaryResult.data || [];
     const wearableSessions = wearableSessionsResult.data || [];
+    const trainingTrends = trainingTrendsResult.data || [];
+    const recoveryTrends = recoveryTrendsResult.data || [];
+    const healthAnomalies = healthAnomaliesResult.data || [];
+    const userBaselines = userBaselinesResult.data || [];
+    const userDeviations = userDeviationsResult.data || [];
+    const symptomCheckIns = symptomCheckInsResult.data || [];
+    
+    const userProfile = userProfileResult.data;
+    const userMedical = userMedicalResult.data;
+    const userInjuries = userInjuriesResult.data;
+    const userLifestyle = userLifestyleResult.data;
+    const userInterests = userInterestsResult.data;
+    const userNutrition = userNutritionResult.data;
+    const userTraining = userTrainingResult.data;
+    const userRecovery = userRecoveryResult.data;
+    const userMindset = userMindsetResult.data;
+    const userWellnessGoals = userWellnessGoalsResult.data;
+    const userHealthProfiles = userHealthProfilesResult.data;
+    const userContext = userContextResult.data;
+    
     const userDocuments = userDocumentsResult.data || [];
     const memoryBank = memoryBankResult.data || [];
-    const userProfile = userProfileResult.data;
-    const userContext = userContextResult.data;
-    const symptomCheckIns = symptomCheckInsResult.data || [];
     const recentRecommendations = recentRecommendationsResult.data || [];
 
-    const hasWearableData = wearableSummary.length > 0 || wearableSessions.length > 0;
+    const hasWearableData = wearableSummary.length > 0 || wearableSessions.length > 0 || trainingTrends.length > 0;
+    const hasProfileData = userProfile || userMedical || userWellnessGoals;
 
     // ─── BUILD COMPREHENSIVE CONTEXT ─────────────────────────────────────────
     let promptContext = "";
 
-    // Wearable metrics
-    if (hasWearableData) {
-      if (wearableSessions.length > 0) {
-        const latestSession = wearableSessions[0];
-        const previousSession = wearableSessions[1];
+    // ═══════════════════════════════════════════════════════════════════════
+    // SECTION 1: USER PROFILE & GOALS (Static/Long-term)
+    // ═══════════════════════════════════════════════════════════════════════
+    promptContext += "═══ USER PROFILE & GOALS ═══\n\n";
 
-        promptContext += `CURRENT HEALTH STATE (${latestSession.date}):\n`;
-        
-        if (latestSession.readiness_score !== null) {
-          const readinessChange = previousSession?.readiness_score 
-            ? latestSession.readiness_score - previousSession.readiness_score 
-            : 0;
-          promptContext += `- Readiness Score: ${latestSession.readiness_score}/100 (${readinessChange >= 0 ? '+' : ''}${readinessChange} vs yesterday)\n`;
-        }
-        
-        if (latestSession.sleep_score !== null) {
-          const sleepChange = previousSession?.sleep_score 
-            ? latestSession.sleep_score - previousSession.sleep_score 
-            : 0;
-          promptContext += `- Sleep Score: ${latestSession.sleep_score}/100 (${sleepChange >= 0 ? '+' : ''}${sleepChange} vs yesterday)\n`;
-        }
-        
-        if (latestSession.activity_score !== null) {
-          promptContext += `- Activity Score: ${latestSession.activity_score}/100\n`;
-        }
-        
-        if (latestSession.hrv_avg !== null) {
-          promptContext += `- HRV: ${latestSession.hrv_avg}ms\n`;
-        }
-        
-        if (latestSession.resting_hr !== null) {
-          promptContext += `- Resting HR: ${latestSession.resting_hr}bpm\n`;
-        }
-        
-        if (latestSession.total_steps) {
-          promptContext += `- Steps: ${latestSession.total_steps}\n`;
-        }
-        
-        if (latestSession.active_calories) {
-          promptContext += `- Active Calories: ${latestSession.active_calories}\n`;
-        }
-        
-        promptContext += "\n";
-      }
-
-      // Weekly trends
-      if (wearableSummary.length > 0) {
-        const avgStrain = wearableSummary.reduce((sum, s) => sum + (s.strain || 0), 0) / wearableSummary.length;
-        const avgAcwr = wearableSummary.reduce((sum, s) => sum + (s.acwr || 0), 0) / wearableSummary.length;
-        
-        promptContext += `7-DAY TRAINING TRENDS:\n`;
-        promptContext += `- Avg Strain: ${avgStrain.toFixed(1)}\n`;
-        promptContext += `- ACWR (Acute:Chronic Workload Ratio): ${avgAcwr.toFixed(2)}`;
-        
-        if (avgAcwr > 1.5) {
-          promptContext += ` ⚠️ HIGH RISK - Potential overtraining\n`;
-        } else if (avgAcwr < 0.8) {
-          promptContext += ` ⚠️ LOW - Undertrained, can increase load\n`;
-        } else {
-          promptContext += ` ✓ OPTIMAL ZONE\n`;
-        }
-        promptContext += "\n";
-      }
-
-      // Multi-day trend analysis
-      if (wearableSessions.length >= 3) {
-        const avgReadiness = wearableSessions
-          .filter(s => s.readiness_score !== null)
-          .reduce((sum, s) => sum + (s.readiness_score || 0), 0) / wearableSessions.filter(s => s.readiness_score !== null).length;
-        
-        const avgSleep = wearableSessions
-          .filter(s => s.sleep_score !== null)
-          .reduce((sum, s) => sum + (s.sleep_score || 0), 0) / wearableSessions.filter(s => s.sleep_score !== null).length;
-        
-        promptContext += `3-DAY AVERAGES:\n`;
-        if (!isNaN(avgReadiness)) promptContext += `- Avg Readiness: ${avgReadiness.toFixed(0)}\n`;
-        if (!isNaN(avgSleep)) promptContext += `- Avg Sleep Score: ${avgSleep.toFixed(0)}\n`;
-        promptContext += "\n";
-      }
-    }
-
-    // Recent symptoms
-    if (symptomCheckIns.length > 0) {
-      promptContext += `RECENT SYMPTOM CHECK-INS:\n`;
-      symptomCheckIns.slice(0, 3).forEach(s => {
-        promptContext += `- ${s.symptom_type} (${s.severity}): ${s.description || 'No description'}\n`;
-      });
-      promptContext += "\n";
-    }
-
-    // User documents
-    if (userDocuments.length > 0) {
-      promptContext += `UPLOADED HEALTH DOCUMENTS:\n`;
-      for (const doc of userDocuments) {
-        promptContext += `- ${doc.document_type}: `;
-        if (doc.ai_summary) {
-          promptContext += `${doc.ai_summary.slice(0, 200)}...\n`;
-        } else if (doc.tags?.length > 0) {
-          promptContext += `Tags: ${doc.tags.join(", ")}\n`;
-        } else {
-          promptContext += `${doc.file_name}\n`;
-        }
-      }
-      promptContext += "\n";
-    }
-
-    // User profile & goals
     if (userProfile) {
-      promptContext += `USER PROFILE:\n`;
-      if (userProfile.name) promptContext += `- Name: ${userProfile.name}\n`;
-      if (userProfile.goals?.length > 0) promptContext += `- Goals: ${userProfile.goals.join(", ")}\n`;
-      if (userProfile.activity_level) promptContext += `- Activity Level: ${userProfile.activity_level}\n`;
-      if (userProfile.injuries?.length > 0) promptContext += `- Current Injuries: ${userProfile.injuries.join(", ")}\n`;
-      if (userProfile.conditions?.length > 0) promptContext += `- Health Conditions: ${userProfile.conditions.join(", ")}\n`;
+      if (userProfile.name) promptContext += `Name: ${userProfile.name}\n`;
+      if (userProfile.gender) promptContext += `Gender: ${userProfile.gender}\n`;
+      if (userProfile.dob) {
+        const age = Math.floor((Date.now() - new Date(userProfile.dob).getTime()) / (365.25 * 24 * 60 * 60 * 1000));
+        promptContext += `Age: ${age} years\n`;
+      }
+      if (userProfile.activity_level) promptContext += `Activity Level: ${userProfile.activity_level}\n`;
+      if (userProfile.goals?.length > 0) promptContext += `Primary Goals: ${userProfile.goals.join(", ")}\n`;
+    }
+
+    if (userWellnessGoals) {
+      if (userWellnessGoals.goals?.length > 0) promptContext += `Wellness Goals: ${userWellnessGoals.goals.join(", ")}\n`;
+      if (userWellnessGoals.priority) promptContext += `Top Priority: ${userWellnessGoals.priority}\n`;
+      if (userWellnessGoals.target_date) promptContext += `Target Date: ${userWellnessGoals.target_date}\n`;
+    }
+
+    if (userMindset) {
+      if (userMindset.motivation_factors?.length > 0) promptContext += `Motivation Factors: ${userMindset.motivation_factors.join(", ")}\n`;
+      if (userMindset.mental_health_focus) promptContext += `Mental Health Focus: ${userMindset.mental_health_focus}\n`;
+    }
+
+    promptContext += "\n";
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // SECTION 2: HEALTH CONTEXT (Long-term conditions)
+    // ═══════════════════════════════════════════════════════════════════════
+    promptContext += "═══ HEALTH CONTEXT ═══\n\n";
+
+    if (userMedical) {
+      if (userMedical.conditions?.length > 0) promptContext += `Health Conditions: ${userMedical.conditions.join(", ")}\n`;
+      if (userMedical.medications?.length > 0) promptContext += `Current Medications: ${userMedical.medications.join(", ")}\n`;
+      if (userMedical.medical_notes) promptContext += `Medical Notes: ${userMedical.medical_notes}\n`;
+    }
+
+    if (userInjuries) {
+      if (userInjuries.injuries?.length > 0) promptContext += `Current Injuries: ${userInjuries.injuries.join(", ")}\n`;
+      if (userInjuries.injury_details) {
+        const details = typeof userInjuries.injury_details === 'object' ? JSON.stringify(userInjuries.injury_details) : userInjuries.injury_details;
+        promptContext += `Injury Details: ${details}\n`;
+      }
+    }
+
+    if (userProfile?.injuries?.length > 0) {
+      promptContext += `Injuries (from profile): ${userProfile.injuries.join(", ")}\n`;
+    }
+
+    if (userProfile?.conditions?.length > 0) {
+      promptContext += `Conditions (from profile): ${userProfile.conditions.join(", ")}\n`;
+    }
+
+    promptContext += "\n";
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // SECTION 3: LIFESTYLE & PREFERENCES
+    // ═══════════════════════════════════════════════════════════════════════
+    promptContext += "═══ LIFESTYLE & PREFERENCES ═══\n\n";
+
+    if (userLifestyle) {
+      if (userLifestyle.work_schedule) promptContext += `Work Schedule: ${userLifestyle.work_schedule}\n`;
+      if (userLifestyle.stress_level) promptContext += `Stress Level: ${userLifestyle.stress_level}\n`;
+      if (userLifestyle.daily_routine) promptContext += `Daily Routine: ${userLifestyle.daily_routine}\n`;
+    }
+
+    if (userNutrition) {
+      if (userNutrition.diet_type) promptContext += `Diet Type: ${userNutrition.diet_type}\n`;
+      if (userNutrition.allergies?.length > 0) promptContext += `Food Allergies: ${userNutrition.allergies.join(", ")}\n`;
+      if (userNutrition.eating_pattern) promptContext += `Eating Pattern: ${userNutrition.eating_pattern}\n`;
+    }
+
+    if (userInterests) {
+      if (userInterests.hobbies?.length > 0) promptContext += `Hobbies: ${userInterests.hobbies.join(", ")}\n`;
+      if (userInterests.interests?.length > 0) promptContext += `Interests: ${userInterests.interests.join(", ")}\n`;
+    }
+
+    if (userTraining) {
+      if (userTraining.preferred_activities?.length > 0) promptContext += `Preferred Activities: ${userTraining.preferred_activities.join(", ")}\n`;
+      if (userTraining.training_frequency) promptContext += `Training Frequency: ${userTraining.training_frequency}\n`;
+      if (userTraining.intensity_preference) promptContext += `Intensity Preference: ${userTraining.intensity_preference}\n`;
+    }
+
+    if (userRecovery) {
+      if (userRecovery.recovery_methods?.length > 0) promptContext += `Recovery Methods: ${userRecovery.recovery_methods.join(", ")}\n`;
+      if (userRecovery.sleep_hours) promptContext += `Target Sleep Hours: ${userRecovery.sleep_hours}\n`;
+      if (userRecovery.sleep_quality) promptContext += `Typical Sleep Quality: ${userRecovery.sleep_quality}\n`;
+    }
+
+    if (userMindset?.stress_management) {
+      promptContext += `Stress Management: ${userMindset.stress_management}\n`;
+    }
+
+    promptContext += "\n";
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // SECTION 4: CURRENT HEALTH STATE (Dynamic/Daily)
+    // ═══════════════════════════════════════════════════════════════════════
+    promptContext += "═══ CURRENT HEALTH STATE ═══\n\n";
+
+    if (wearableSessions.length > 0) {
+      const latestSession = wearableSessions[0];
+      const previousSession = wearableSessions[1];
+
+      promptContext += `Today (${latestSession.date}):\n`;
+      
+      if (latestSession.readiness_score !== null) {
+        const readinessChange = previousSession?.readiness_score 
+          ? latestSession.readiness_score - previousSession.readiness_score 
+          : 0;
+        promptContext += `• Readiness Score: ${latestSession.readiness_score}/100 (${readinessChange >= 0 ? '+' : ''}${readinessChange} vs yesterday)\n`;
+      }
+      
+      if (latestSession.sleep_score !== null) {
+        const sleepChange = previousSession?.sleep_score 
+          ? latestSession.sleep_score - previousSession.sleep_score 
+          : 0;
+        promptContext += `• Sleep Score: ${latestSession.sleep_score}/100 (${sleepChange >= 0 ? '+' : ''}${sleepChange} vs yesterday)\n`;
+      }
+      
+      if (latestSession.activity_score !== null) {
+        promptContext += `• Activity Score: ${latestSession.activity_score}/100\n`;
+      }
+      
+      if (latestSession.hrv_avg !== null) {
+        promptContext += `• HRV: ${latestSession.hrv_avg}ms\n`;
+      }
+      
+      if (latestSession.resting_hr !== null) {
+        promptContext += `• Resting HR: ${latestSession.resting_hr}bpm\n`;
+      }
+      
+      if (latestSession.total_steps) {
+        promptContext += `• Steps: ${latestSession.total_steps.toLocaleString()}\n`;
+      }
+      
+      if (latestSession.active_calories) {
+        promptContext += `• Active Calories: ${latestSession.active_calories}\n`;
+      }
+      
       promptContext += "\n";
     }
 
-    // Memory/preferences
-    if (memoryBank.length > 0) {
-      promptContext += `YVES MEMORY (past conversations):\n`;
-      memoryBank.slice(0, 5).forEach(m => {
-        const valueStr = typeof m.memory_value === 'string' 
-          ? m.memory_value 
-          : JSON.stringify(m.memory_value).slice(0, 100);
-        promptContext += `- ${m.memory_key}: ${valueStr}\n`;
+    // Personal baselines comparison
+    if (userBaselines.length > 0) {
+      promptContext += "Personal Baselines:\n";
+      userBaselines.forEach(b => {
+        promptContext += `• ${b.metric}: ${b.rolling_avg.toFixed(1)} (${b.data_window}-day avg)\n`;
       });
       promptContext += "\n";
     }
 
-    // Recent recommendations for continuity
-    if (recentRecommendations.length > 0) {
-      promptContext += `PREVIOUS RECOMMENDATIONS (for continuity):\n`;
-      recentRecommendations.slice(0, 3).forEach(r => {
-        promptContext += `- ${r.category}: ${r.recommendation_text.slice(0, 100)}...\n`;
-      });
+    // Current deviations from baseline
+    if (userDeviations.length > 0) {
+      const recentDeviations = userDeviations.slice(0, 5);
+      const significantDeviations = recentDeviations.filter(d => Math.abs(d.deviation || 0) > 10);
+      
+      if (significantDeviations.length > 0) {
+        promptContext += "Significant Deviations from Baseline:\n";
+        significantDeviations.forEach(d => {
+          const direction = (d.deviation || 0) > 0 ? "above" : "below";
+          const riskLabel = d.risk_zone ? ` [${d.risk_zone.toUpperCase()}]` : "";
+          promptContext += `• ${d.metric}: ${Math.abs(d.deviation || 0).toFixed(0)}% ${direction} baseline${riskLabel}\n`;
+        });
+        promptContext += "\n";
+      }
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // SECTION 5: TRAINING TRENDS (7-day)
+    // ═══════════════════════════════════════════════════════════════════════
+    promptContext += "═══ 7-DAY TRAINING TRENDS ═══\n\n";
+
+    if (trainingTrends.length > 0) {
+      const latestTrend = trainingTrends[0];
+      
+      if (latestTrend.acwr !== null) {
+        promptContext += `ACWR (Acute:Chronic Workload): ${latestTrend.acwr.toFixed(2)}`;
+        if (latestTrend.acwr > 1.5) {
+          promptContext += " ⚠️ HIGH RISK - Overtraining zone\n";
+        } else if (latestTrend.acwr > 1.3) {
+          promptContext += " ⚠️ ELEVATED - Monitor closely\n";
+        } else if (latestTrend.acwr < 0.8) {
+          promptContext += " ⚠️ LOW - Can increase load safely\n";
+        } else {
+          promptContext += " ✓ OPTIMAL ZONE\n";
+        }
+      }
+
+      if (latestTrend.strain !== null) promptContext += `Training Strain: ${latestTrend.strain.toFixed(1)}\n`;
+      if (latestTrend.monotony !== null) {
+        promptContext += `Training Monotony: ${latestTrend.monotony.toFixed(2)}`;
+        if (latestTrend.monotony > 2.0) {
+          promptContext += " ⚠️ HIGH - Increase variety\n";
+        } else {
+          promptContext += " ✓ Healthy variety\n";
+        }
+      }
+      if (latestTrend.acute_load !== null) promptContext += `Acute Load (7-day): ${latestTrend.acute_load.toFixed(0)}\n`;
+      if (latestTrend.chronic_load !== null) promptContext += `Chronic Load (28-day): ${latestTrend.chronic_load.toFixed(0)}\n`;
+      if (latestTrend.hrv !== null) promptContext += `Avg HRV: ${latestTrend.hrv.toFixed(0)}ms\n`;
+      if (latestTrend.sleep_score !== null) promptContext += `Avg Sleep Score: ${latestTrend.sleep_score.toFixed(0)}\n`;
+    } else if (wearableSummary.length > 0) {
+      const avgStrain = wearableSummary.reduce((sum, s) => sum + (s.strain || 0), 0) / wearableSummary.length;
+      const avgAcwr = wearableSummary.reduce((sum, s) => sum + (s.acwr || 0), 0) / wearableSummary.length;
+      
+      promptContext += `Avg Strain: ${avgStrain.toFixed(1)}\n`;
+      promptContext += `ACWR: ${avgAcwr.toFixed(2)}`;
+      if (avgAcwr > 1.5) {
+        promptContext += " ⚠️ HIGH RISK\n";
+      } else if (avgAcwr < 0.8) {
+        promptContext += " ⚠️ LOW\n";
+      } else {
+        promptContext += " ✓ OPTIMAL\n";
+      }
+    }
+
+    promptContext += "\n";
+
+    // Recovery trends
+    if (recoveryTrends.length > 0) {
+      const latestRecovery = recoveryTrends[0];
+      promptContext += "Recovery Trends:\n";
+      if (latestRecovery.recovery_score !== null) promptContext += `• Recovery Score: ${latestRecovery.recovery_score.toFixed(0)}\n`;
+      if (latestRecovery.acwr_trend) promptContext += `• ACWR Trend: ${latestRecovery.acwr_trend}\n`;
       promptContext += "\n";
+    }
+
+    // Multi-day averages from sessions
+    if (wearableSessions.length >= 3) {
+      const validReadiness = wearableSessions.filter(s => s.readiness_score !== null);
+      const validSleep = wearableSessions.filter(s => s.sleep_score !== null);
+      
+      if (validReadiness.length > 0 || validSleep.length > 0) {
+        promptContext += "3-Day Averages:\n";
+        if (validReadiness.length > 0) {
+          const avgReadiness = validReadiness.reduce((sum, s) => sum + (s.readiness_score || 0), 0) / validReadiness.length;
+          promptContext += `• Avg Readiness: ${avgReadiness.toFixed(0)}\n`;
+        }
+        if (validSleep.length > 0) {
+          const avgSleep = validSleep.reduce((sum, s) => sum + (s.sleep_score || 0), 0) / validSleep.length;
+          promptContext += `• Avg Sleep Score: ${avgSleep.toFixed(0)}\n`;
+        }
+        promptContext += "\n";
+      }
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // SECTION 6: HEALTH ALERTS & ANOMALIES
+    // ═══════════════════════════════════════════════════════════════════════
+    if (healthAnomalies.length > 0 || symptomCheckIns.length > 0) {
+      promptContext += "═══ HEALTH ALERTS & SYMPTOMS ═══\n\n";
+
+      if (healthAnomalies.length > 0) {
+        promptContext += "Detected Anomalies (last 7 days):\n";
+        healthAnomalies.forEach(a => {
+          promptContext += `• ${a.metric_name}: ${a.anomaly_type} (${a.severity} severity)`;
+          if (a.deviation_percent) promptContext += ` - ${a.deviation_percent.toFixed(0)}% deviation`;
+          promptContext += "\n";
+        });
+        promptContext += "\n";
+      }
+
+      if (symptomCheckIns.length > 0) {
+        promptContext += "Recent Symptom Check-ins:\n";
+        symptomCheckIns.slice(0, 3).forEach(s => {
+          promptContext += `• ${s.symptom_type} (${s.severity})`;
+          if (s.description) promptContext += `: ${s.description}`;
+          promptContext += "\n";
+        });
+        promptContext += "\n";
+      }
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // SECTION 7: DOCUMENTS & AI HEALTH PROFILE
+    // ═══════════════════════════════════════════════════════════════════════
+    if (userDocuments.length > 0 || userHealthProfiles) {
+      promptContext += "═══ DOCUMENTS & HEALTH PROFILE ═══\n\n";
+
+      if (userHealthProfiles?.ai_synthesis) {
+        promptContext += `AI Health Profile Summary:\n${userHealthProfiles.ai_synthesis.slice(0, 500)}\n\n`;
+      }
+
+      if (userDocuments.length > 0) {
+        promptContext += "Uploaded Health Documents:\n";
+        for (const doc of userDocuments) {
+          promptContext += `• ${doc.document_type}: `;
+          if (doc.ai_summary) {
+            promptContext += `${doc.ai_summary.slice(0, 150)}...\n`;
+          } else if (doc.tags?.length > 0) {
+            promptContext += `Tags: ${doc.tags.join(", ")}\n`;
+          } else {
+            promptContext += `${doc.file_name}\n`;
+          }
+        }
+        promptContext += "\n";
+      }
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // SECTION 8: YVES MEMORY & CONTINUITY
+    // ═══════════════════════════════════════════════════════════════════════
+    if (memoryBank.length > 0 || recentRecommendations.length > 0) {
+      promptContext += "═══ YVES MEMORY ═══\n\n";
+
+      if (memoryBank.length > 0) {
+        promptContext += "Remembered Context:\n";
+        memoryBank.slice(0, 5).forEach(m => {
+          const valueStr = typeof m.memory_value === 'string' 
+            ? m.memory_value 
+            : JSON.stringify(m.memory_value).slice(0, 80);
+          promptContext += `• ${m.memory_key}: ${valueStr}\n`;
+        });
+        promptContext += "\n";
+      }
+
+      if (recentRecommendations.length > 0) {
+        promptContext += "Previous Recommendations (for continuity):\n";
+        recentRecommendations.slice(0, 3).forEach(r => {
+          promptContext += `• ${r.category}: ${r.recommendation_text.slice(0, 80)}...\n`;
+        });
+        promptContext += "\n";
+      }
     }
 
     // ─── AI CALL WITH STRUCTURED OUTPUT ────────────────────────────────────
-    const systemPrompt = `You are Yves, an AI health intelligence coach. You MUST generate a coordinated daily health analysis with BOTH a daily briefing AND actionable recommendations.
+    const systemPrompt = `You are Yves, an AI health intelligence coach. Generate a coordinated daily health analysis with BOTH a daily briefing AND actionable recommendations.
 
-CRITICAL: The briefing and recommendations MUST be consistent - they should reference the same data and not contradict each other.
+CRITICAL RULES:
+1. The briefing and recommendations MUST be consistent - reference the same data, never contradict
+2. ALWAYS personalize based on user's goals, conditions, injuries, and preferences
+3. Consider the user's lifestyle (work schedule, stress level) when timing recommendations
+4. Respect dietary restrictions and allergies in nutrition advice
+5. Avoid exercises that could aggravate listed injuries
+6. Reference specific numbers from their data
+7. Match recommendations to their preferred activities and training style
 
 Generate output as a JSON object with this exact structure:
 {
   "dailyBriefing": {
-    "summary": "2-3 sentence interpretive summary of current health state",
+    "summary": "2-3 sentence interpretive summary referencing user's goals and current state",
     "keyChanges": ["change1", "change2", "change3"],
-    "riskHighlights": ["risk1 if any"]
+    "riskHighlights": ["risk1 if any, considering their conditions/injuries"]
   },
   "recommendations": [
     {
-      "text": "Specific actionable recommendation",
+      "text": "Specific actionable recommendation aligned with their preferences",
       "category": "training|recovery|nutrition|medical|sleep|activity",
       "priority": "high|medium|low",
-      "reasoning": "Brief explanation tied to the data"
+      "reasoning": "Brief explanation tied to their data and goals"
     }
   ]
 }
 
-RULES:
-1. Daily Briefing should interpret the health state, highlight changes from previous days, and identify any risks
-2. Recommendations should be practical next steps that EXPAND on the briefing insights
-3. Include 2-4 recommendations ordered by priority
-4. Reference specific numbers from the data
-5. If readiness is low (<70), prioritize recovery recommendations
-6. If ACWR is >1.3, warn about overtraining
-7. Consider the user's goals and health conditions
-8. Be encouraging but honest about areas needing attention
+INTELLIGENCE RULES:
+- If readiness < 70: prioritize recovery, reduce training intensity
+- If ACWR > 1.3: warn about overtraining, suggest rest
+- If ACWR < 0.8: encourage gradual load increase
+- If monotony > 2.0: suggest varied training
+- If sleep score < 70: prioritize sleep recommendations
+- Consider their stress level when suggesting intensity
+- Reference their wellness goals in recommendations
+- Include 2-4 recommendations ordered by priority
+- Be encouraging but honest about areas needing attention
 
 RESPOND WITH ONLY THE JSON OBJECT, NO OTHER TEXT.`;
 
-    const userPrompt = hasWearableData 
-      ? `Analyze this user's health data and generate a coordinated briefing + recommendations:\n\n${promptContext}`
-      : userProfile
-        ? `Generate a welcoming intelligence report for a new user:\n\n${promptContext}\n\nEncourage them to connect their Oura Ring for personalized insights.`
-        : `Generate a brief welcome message as JSON, encouraging the user to set up their profile and connect their Oura Ring.`;
+    let userPrompt: string;
+    if (hasWearableData) {
+      userPrompt = `Analyze this user's comprehensive health data and generate a coordinated briefing + recommendations:\n\n${promptContext}`;
+    } else if (hasProfileData) {
+      userPrompt = `Generate a personalized intelligence report for this user who has profile data but limited wearable data:\n\n${promptContext}\n\nEncourage them to sync their Oura Ring for richer insights while providing value from their profile.`;
+    } else {
+      userPrompt = `Generate a brief welcome message as JSON, encouraging the user to:\n1. Set up their profile with goals and preferences\n2. Connect their Oura Ring for health tracking\n\nMake it warm and explain the value of personalized health intelligence.`;
+    }
 
-    console.log(`[generate-yves-intelligence] Calling AI for user ${userId}`);
+    console.log(`[generate-yves-intelligence] Calling AI for user ${userId} with ${promptContext.length} chars of context`);
 
     const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -315,7 +576,7 @@ RESPOND WITH ONLY THE JSON OBJECT, NO OTHER TEXT.`;
           { role: "system", content: systemPrompt },
           { role: "user", content: userPrompt }
         ],
-        max_tokens: 800,
+        max_tokens: 1000,
       }),
     });
 
@@ -355,7 +616,6 @@ RESPOND WITH ONLY THE JSON OBJECT, NO OTHER TEXT.`;
     // Parse JSON from AI response
     let intelligenceData: YvesIntelligenceOutput;
     try {
-      // Remove markdown code blocks if present
       content = content.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
       intelligenceData = JSON.parse(content);
     } catch (parseError) {
@@ -364,15 +624,19 @@ RESPOND WITH ONLY THE JSON OBJECT, NO OTHER TEXT.`;
       // Fallback structure
       intelligenceData = {
         dailyBriefing: {
-          summary: "Unable to generate personalized briefing. Please ensure your Oura Ring is connected and synced.",
+          summary: hasProfileData 
+            ? "Welcome! I can see your profile. Connect your Oura Ring to unlock personalized daily health insights based on your goals."
+            : "Welcome to Yves! Set up your profile and connect your Oura Ring to receive personalized health intelligence.",
           keyChanges: [],
           riskHighlights: [],
         },
         recommendations: [{
-          text: "Connect your Oura Ring to unlock personalized health insights",
+          text: hasProfileData 
+            ? "Sync your Oura Ring to see how your daily metrics align with your health goals"
+            : "Complete your profile to help me understand your health goals and preferences",
           category: "recovery",
           priority: "high",
-          reasoning: "Wearable data enables accurate health tracking"
+          reasoning: "Personalized data enables accurate, goal-aligned recommendations"
         }]
       };
     }

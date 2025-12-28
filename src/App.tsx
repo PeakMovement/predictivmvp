@@ -8,6 +8,7 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import { BottomNavigation } from "@/components/BottomNavigation";
 import { SimulationControl } from "@/components/SimulationControl";
 import { LiveDataProvider } from "@/contexts/LiveDataContext";
+import { RiskAlertPopup } from "@/components/alerts/RiskAlertPopup";
 import { Dashboard } from "@/pages/Dashboard";
 import { Training } from "@/pages/Training";
 import { Health } from "@/pages/Health";
@@ -299,6 +300,8 @@ const App = () => {
               <div className="transition-all duration-500 ease-out animate-fade-in">{renderContent()}</div>
               <BottomNavigation activeTab={activeTab} onNavigate={setActiveTab} />
               <SimulationControl />
+              {/* Risk Alert Modal - auto-triggers on health thresholds */}
+              <RiskAlertPopup onNavigateToHelp={() => setActiveTab("find-help")} />
             </div>
           </TooltipProvider>
         </LiveDataProvider>

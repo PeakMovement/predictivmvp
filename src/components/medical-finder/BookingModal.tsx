@@ -151,10 +151,12 @@ export function BookingModal({ open, onOpenChange, physician, onBookingComplete 
 
   const handleCalendlyEventScheduled = () => {
     setCurrentStep('success');
-    // Create a mock booking response for Calendly bookings
+    // Create booking response for Calendly bookings
     const calendlyBooking: BookingResponse = {
       success: true,
       bookingId: `calendly-${Date.now()}`,
+      source: 'calendly',
+      status: 'confirmed',
       physician: {
         id: physician.id,
         name: physician.name,
@@ -166,7 +168,6 @@ export function BookingModal({ open, onOpenChange, physician, onBookingComplete 
         dateTime: new Date().toISOString(),
         sessionType: 'consultation',
       },
-      status: 'confirmed',
       message: 'Appointment scheduled via Calendly',
     };
     onBookingComplete?.(calendlyBooking);

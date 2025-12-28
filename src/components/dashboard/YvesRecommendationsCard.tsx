@@ -18,14 +18,16 @@ export function YvesRecommendationsCard({ recommendations, isLoading }: YvesReco
       training: "Training Tip",
       recovery: "Recovery Tip",
       nutrition: "Nutrition Tip",
-      medical: "Health Tip",
       sleep: "Sleep Tip",
+      mindset: "Mindset Tip",
+      performance: "Performance Tip",
+      // Legacy categories for backwards compatibility
+      medical: "Health Tip",
       activity: "Activity Tip",
       mobility: "Mobility Tip",
       injury: "Injury Prevention Tip",
-      mindset: "Mindset Tip",
     };
-    return labels[category] || `${category.charAt(0).toUpperCase() + category.slice(1)} Tip`;
+    return labels[category] || "Performance Tip";
   };
 
   const getCategoryIcon = (category: string) => {
@@ -33,14 +35,16 @@ export function YvesRecommendationsCard({ recommendations, isLoading }: YvesReco
       training: "💪",
       recovery: "🧘",
       nutrition: "🥗",
-      medical: "🏥",
       sleep: "😴",
+      mindset: "🧠",
+      performance: "🎯",
+      // Legacy
+      medical: "🏥",
       activity: "⚡",
       mobility: "🤸",
       injury: "🩹",
-      mindset: "🧠",
     };
-    return icons[category] || "💡";
+    return icons[category] || "🎯";
   };
 
   const getPriorityBadge = (priority: string) => {

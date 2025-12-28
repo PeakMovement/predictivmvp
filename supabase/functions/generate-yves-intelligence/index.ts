@@ -17,7 +17,7 @@ interface YvesIntelligenceOutput {
   };
   recommendations: Array<{
     text: string;
-    category: 'training' | 'recovery' | 'nutrition' | 'medical' | 'sleep' | 'activity';
+    category: 'training' | 'recovery' | 'nutrition' | 'sleep' | 'mindset' | 'performance';
     priority: 'high' | 'medium' | 'low';
     reasoning: string;
   }>;
@@ -533,12 +533,27 @@ Generate a JSON object with this exact structure:
   "recommendations": [
     {
       "text": "Specific action tied to THEIR preferences and activities",
-      "category": "training|recovery|nutrition|medical|sleep|activity",
+      "category": "training|recovery|nutrition|sleep|mindset|performance",
       "priority": "high|medium|low",
       "reasoning": "Why this matters for THEIR specific goals"
     }
   ]
 }
+
+═══ CATEGORY RULES (STRICT) ═══
+Each recommendation MUST have exactly one category. Use these rules:
+
+• "recovery" → Use when recommendation relates to: soreness, pain, mobility, rest days, recovery score drops, HRV drops, injury prevention, stretching, foam rolling, massage, ice/heat therapy
+
+• "training" → Use when recommendation relates to: training load, strain, monotony, ACWR, running/swimming/cycling/gym programming, workout intensity, progressive overload, deload weeks, exercise technique
+
+• "sleep" → Use when recommendation relates to: sleep duration, sleep quality, sleep efficiency, readiness score, wind-down routines, sleep environment, naps, circadian rhythm
+
+• "nutrition" → Use when recommendation relates to: hydration, calories, macros, protein intake, meal timing, supplements, diet adherence, fueling for workouts, recovery nutrition
+
+• "mindset" → Use when recommendation relates to: stress, burnout, mental fatigue, motivation, focus, anxiety, meditation, breathing exercises, mental recovery, work-life balance
+
+• "performance" → DEFAULT FALLBACK. Use when the recommendation doesn't clearly fit the above categories or spans multiple categories
 
 ═══ PERSONALIZATION RULES (MANDATORY) ═══
 1. REFERENCE THEIR GOALS: If they want to "improve sleep quality", say "Given your focus on sleep improvement..." not generic sleep tips

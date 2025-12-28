@@ -67,6 +67,7 @@ export interface UserPreferences {
   insurance?: string;
   costPreference?: 'low' | 'medium' | 'high' | 'any';
   telehealth?: boolean;
+  maxBudget?: number;
 }
 
 interface MedicalFinderState {

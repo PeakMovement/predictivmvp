@@ -160,35 +160,64 @@ export function useRiskAlertTrigger(): UseRiskAlertTriggerResult {
         }
       }
 
-      // Check wearable session for low readiness/sleep
+      // Check wearable session for low readiness/sleep and HRV drop
       if (!alertToSet) {
-        const { data: session } = await supabase
+        // Fetch last 14 days of wearable data for HRV baseline calculation
+        const { data: sessions } = await supabase
           .from("wearable_sessions")
-          .select("readiness_score, sleep_score, hrv_avg")
+          .select("readiness_score, sleep_score, hrv_avg, date")
           .eq("user_id", user.id)
           .order("date", { ascending: false })
-          .limit(1)
-          .maybeSingle();
+          .limit(14);
 
-        if (session) {
-          if (session.readiness_score && session.readiness_score < RISK_THRESHOLDS.readiness_low) {
+        const todaySession = sessions?.[0];
+
+        if (todaySession) {
+          // Check readiness first
+          if (todaySession.readiness_score && todaySession.readiness_score < RISK_THRESHOLDS.readiness_low) {
             alertToSet = {
               type: "anomaly",
               metric: "Readiness",
-              value: session.readiness_score,
+              value: todaySession.readiness_score,
               threshold: RISK_THRESHOLDS.readiness_low,
               message: "Your readiness score is unusually low. How are you feeling?"
             };
             emailAlertType = "health_anomaly";
-          } else if (session.sleep_score && session.sleep_score < RISK_THRESHOLDS.sleep_low) {
+          } 
+          // Check sleep
+          else if (todaySession.sleep_score && todaySession.sleep_score < RISK_THRESHOLDS.sleep_low) {
             alertToSet = {
               type: "anomaly",
               metric: "Sleep",
-              value: session.sleep_score,
+              value: todaySession.sleep_score,
               threshold: RISK_THRESHOLDS.sleep_low,
               message: "Your sleep quality was poor. Consider logging any symptoms."
             };
             emailAlertType = "health_anomaly";
+          }
+          // Check HRV drop from baseline (requires at least 3 days of data)
+          else if (sessions && sessions.length >= 3) {
+            const todayHrv = todaySession.hrv_avg;
+            const baselineHrvValues = sessions
+              .slice(1) // Exclude today
+              .filter(s => s.hrv_avg != null)
+              .map(s => s.hrv_avg as number);
+
+            if (todayHrv && baselineHrvValues.length >= 2) {
+              const baselineHrv = baselineHrvValues.reduce((a, b) => a + b, 0) / baselineHrvValues.length;
+              const dropPercentage = ((baselineHrv - todayHrv) / baselineHrv) * 100;
+
+              if (dropPercentage >= RISK_THRESHOLDS.hrv_drop) {
+                alertToSet = {
+                  type: "anomaly",
+                  metric: "HRV",
+                  value: todayHrv,
+                  threshold: Math.round(baselineHrv * 0.8), // 80% of baseline
+                  message: `Your HRV is down ${Math.round(dropPercentage)}% from your usual. Your body may need extra recovery today.`
+                };
+                emailAlertType = "health_anomaly";
+              }
+            }
           }
         }
       }

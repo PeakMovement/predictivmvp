@@ -14,6 +14,7 @@ import { OuraSleepCard } from "@/components/oura/OuraSleepCard";
 import { OuraActivityCard } from "@/components/oura/OuraActivityCard";
 import { useOuraTokenStatus } from "@/hooks/useOuraTokenStatus";
 import { useToast } from "@/hooks/use-toast";
+import { useYvesIntelligence } from "@/hooks/useYvesIntelligence";
 
 const WelcomeHeader = () => (
   <div className="text-center mb-8 md:mb-12 space-y-3 md:space-y-4 px-4 md:px-0">
@@ -36,6 +37,18 @@ export const Dashboard = () => {
   const { isConnected, isLoading: tokenLoading } = useOuraTokenStatus();
   const { toast } = useToast();
   const hasShownConnectionToast = useRef(false);
+  
+  // Unified Yves Intelligence - single source of truth for briefing & recommendations
+  const {
+    dailyBriefing,
+    recommendations,
+    content: briefingContent,
+    createdAt: briefingCreatedAt,
+    isLoading: intelligenceLoading,
+    isGenerating: intelligenceGenerating,
+    cached: intelligenceCached,
+    refresh: refreshIntelligence,
+  } = useYvesIntelligence();
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
@@ -138,14 +151,25 @@ export const Dashboard = () => {
                 <TodayActivitySection />
               </div>
 
-              {/* Daily Briefing */}
+              {/* Daily Briefing - Coordinated with Recommendations */}
               <div className="mb-8">
-                <DailyBriefingCard />
+                <DailyBriefingCard
+                  briefing={dailyBriefing}
+                  content={briefingContent}
+                  createdAt={briefingCreatedAt}
+                  isLoading={intelligenceLoading}
+                  isGenerating={intelligenceGenerating}
+                  cached={intelligenceCached}
+                  onRefresh={refreshIntelligence}
+                />
               </div>
 
-              {/* Recommendations */}
+              {/* Recommendations - Aligned with Daily Briefing */}
               <div className="mb-10">
-                <YvesRecommendationsCard />
+                <YvesRecommendationsCard
+                  recommendations={recommendations}
+                  isLoading={intelligenceLoading}
+                />
               </div>
             </>
           )}

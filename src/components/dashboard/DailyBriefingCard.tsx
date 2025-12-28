@@ -1,10 +1,11 @@
+import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Loader2, RefreshCw, Sparkles, Calendar, AlertTriangle, TrendingUp } from "lucide-react";
+import { Loader2, RefreshCw, Sparkles, Calendar, AlertTriangle, TrendingUp, ChevronDown, Brain } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { YvesDailyBriefing } from "@/hooks/useYvesIntelligence";
 import { cn } from "@/lib/utils";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 interface DailyBriefingCardProps {
   briefing: YvesDailyBriefing | null;
@@ -91,59 +92,137 @@ export function DailyBriefingCard({
             </Button>
           </div>
         ) : (
-          <>
-            {/* Summary */}
-            <div className="p-4 rounded-lg bg-primary/5 border border-primary/20">
-              <p className="text-sm leading-relaxed text-foreground">
-                {briefing.summary}
-              </p>
-            </div>
-
-            {/* Key Changes */}
-            {briefing.keyChanges.length > 0 && (
-              <div className="space-y-2">
-                <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-                  <TrendingUp className="h-4 w-4" />
-                  Key Changes
-                </div>
-                <div className="space-y-2">
-                  {briefing.keyChanges.map((change, idx) => (
-                    <div 
-                      key={idx}
-                      className={cn(
-                        "p-3 rounded-lg border text-sm",
-                        "bg-card/50 border-border"
-                      )}
-                    >
-                      📊 {change}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Risk Highlights */}
-            {briefing.riskHighlights.length > 0 && (
-              <div className="space-y-2">
-                <div className="flex items-center gap-2 text-sm font-medium text-destructive">
-                  <AlertTriangle className="h-4 w-4" />
-                  Attention Needed
-                </div>
-                <div className="space-y-2">
-                  {briefing.riskHighlights.map((risk, idx) => (
-                    <div 
-                      key={idx}
-                      className="p-3 rounded-lg border border-destructive/30 bg-destructive/5 text-sm"
-                    >
-                      ⚠️ {risk}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </>
+          <CollapsibleBriefingSections briefing={briefing} />
         )}
       </CardContent>
     </Card>
+  );
+}
+
+interface CollapsibleSectionProps {
+  title: string;
+  icon: React.ReactNode;
+  preview: string;
+  children: React.ReactNode;
+  variant?: "default" | "warning";
+}
+
+function CollapsibleSection({ title, icon, preview, children, variant = "default" }: CollapsibleSectionProps) {
+  const [isOpen, setIsOpen] = useState(false);
+  
+  return (
+    <Collapsible open={isOpen} onOpenChange={setIsOpen}>
+      <div className={cn(
+        "rounded-lg border transition-colors",
+        variant === "warning" 
+          ? "border-destructive/30 bg-destructive/5" 
+          : "border-border bg-card/50"
+      )}>
+        <CollapsibleTrigger asChild>
+          <button className="w-full p-3 flex items-center justify-between gap-3 text-left hover:bg-muted/30 transition-colors rounded-lg">
+            <div className="flex items-center gap-2 min-w-0 flex-1">
+              <div className={cn(
+                "shrink-0",
+                variant === "warning" ? "text-destructive" : "text-muted-foreground"
+              )}>
+                {icon}
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className={cn(
+                  "text-sm font-medium",
+                  variant === "warning" ? "text-destructive" : "text-foreground"
+                )}>
+                  {title}
+                </div>
+                {!isOpen && (
+                  <p className="text-xs text-muted-foreground truncate mt-0.5">
+                    {preview}
+                  </p>
+                )}
+              </div>
+            </div>
+            <ChevronDown className={cn(
+              "h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-200",
+              isOpen && "rotate-180"
+            )} />
+          </button>
+        </CollapsibleTrigger>
+        <CollapsibleContent>
+          <div className="px-3 pb-3 pt-0">
+            {children}
+          </div>
+        </CollapsibleContent>
+      </div>
+    </Collapsible>
+  );
+}
+
+function CollapsibleBriefingSections({ briefing }: { briefing: YvesDailyBriefing }) {
+  const summaryPreview = briefing.summary.split('.')[0] + '.';
+  const keyChangesPreview = briefing.keyChanges.length > 0 
+    ? `${briefing.keyChanges.length} change${briefing.keyChanges.length > 1 ? 's' : ''} detected`
+    : "No significant changes";
+  const riskPreview = briefing.riskHighlights.length > 0
+    ? `${briefing.riskHighlights.length} item${briefing.riskHighlights.length > 1 ? 's' : ''} need attention`
+    : "No immediate concerns";
+
+  return (
+    <div className="space-y-3">
+      {/* Brief of the Day */}
+      <CollapsibleSection
+        title="Brief of the Day"
+        icon={<Brain className="h-4 w-4" />}
+        preview={summaryPreview}
+      >
+        <p className="text-sm leading-relaxed text-foreground">
+          {briefing.summary}
+        </p>
+      </CollapsibleSection>
+
+      {/* Key Changes */}
+      <CollapsibleSection
+        title="Key Changes"
+        icon={<TrendingUp className="h-4 w-4" />}
+        preview={keyChangesPreview}
+      >
+        {briefing.keyChanges.length > 0 ? (
+          <div className="space-y-2">
+            {briefing.keyChanges.map((change, idx) => (
+              <div 
+                key={idx}
+                className="p-2 rounded-md bg-muted/50 text-sm"
+              >
+                📊 {change}
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="text-sm text-muted-foreground">No significant changes detected today.</p>
+        )}
+      </CollapsibleSection>
+
+      {/* Attention Needed */}
+      <CollapsibleSection
+        title="Attention Needed"
+        icon={<AlertTriangle className="h-4 w-4" />}
+        preview={riskPreview}
+        variant={briefing.riskHighlights.length > 0 ? "warning" : "default"}
+      >
+        {briefing.riskHighlights.length > 0 ? (
+          <div className="space-y-2">
+            {briefing.riskHighlights.map((risk, idx) => (
+              <div 
+                key={idx}
+                className="p-2 rounded-md bg-destructive/10 text-sm"
+              >
+                ⚠️ {risk}
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="text-sm text-muted-foreground">No immediate concerns. Keep up the good work!</p>
+        )}
+      </CollapsibleSection>
+    </div>
   );
 }

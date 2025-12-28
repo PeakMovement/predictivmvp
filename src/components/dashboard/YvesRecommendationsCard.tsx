@@ -1,9 +1,11 @@
+import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ExternalLink, Lightbulb, ArrowRight } from "lucide-react";
+import { ExternalLink, Lightbulb, ChevronDown } from "lucide-react";
 import { YvesRecommendation } from "@/hooks/useYvesIntelligence";
 import { cn } from "@/lib/utils";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 interface YvesRecommendationsCardProps {
   recommendations: YvesRecommendation[];
@@ -11,36 +13,46 @@ interface YvesRecommendationsCardProps {
 }
 
 export function YvesRecommendationsCard({ recommendations, isLoading }: YvesRecommendationsCardProps) {
-  const getCategoryColor = (category: string) => {
-    switch (category) {
-      case 'training': return 'bg-blue-500/10 text-blue-500 border-blue-500/20';
-      case 'recovery': return 'bg-green-500/10 text-green-500 border-green-500/20';
-      case 'nutrition': return 'bg-orange-500/10 text-orange-500 border-orange-500/20';
-      case 'medical': return 'bg-red-500/10 text-red-500 border-red-500/20';
-      case 'sleep': return 'bg-purple-500/10 text-purple-500 border-purple-500/20';
-      case 'activity': return 'bg-cyan-500/10 text-cyan-500 border-cyan-500/20';
-      default: return 'bg-muted text-muted-foreground';
-    }
+  const getCategoryLabel = (category: string) => {
+    const labels: Record<string, string> = {
+      training: "Training Tip",
+      recovery: "Recovery Tip",
+      nutrition: "Nutrition Tip",
+      medical: "Health Tip",
+      sleep: "Sleep Tip",
+      activity: "Activity Tip",
+      mobility: "Mobility Tip",
+      injury: "Injury Prevention Tip",
+      mindset: "Mindset Tip",
+    };
+    return labels[category] || `${category.charAt(0).toUpperCase() + category.slice(1)} Tip`;
   };
 
   const getCategoryIcon = (category: string) => {
-    switch (category) {
-      case 'training': return '💪';
-      case 'recovery': return '🏃';
-      case 'nutrition': return '🥗';
-      case 'medical': return '🏥';
-      case 'sleep': return '😴';
-      case 'activity': return '⚡';
-      default: return '💡';
-    }
+    const icons: Record<string, string> = {
+      training: "💪",
+      recovery: "🧘",
+      nutrition: "🥗",
+      medical: "🏥",
+      sleep: "😴",
+      activity: "⚡",
+      mobility: "🤸",
+      injury: "🩹",
+      mindset: "🧠",
+    };
+    return icons[category] || "💡";
   };
 
   const getPriorityBadge = (priority: string) => {
     switch (priority) {
-      case 'high': return <Badge variant="destructive" className="text-xs">High Priority</Badge>;
-      case 'medium': return <Badge variant="secondary" className="text-xs">Medium</Badge>;
-      case 'low': return <Badge variant="outline" className="text-xs">Low</Badge>;
-      default: return null;
+      case "high":
+        return <Badge variant="destructive" className="text-xs">High</Badge>;
+      case "medium":
+        return <Badge variant="secondary" className="text-xs">Medium</Badge>;
+      case "low":
+        return <Badge variant="outline" className="text-xs">Low</Badge>;
+      default:
+        return null;
     }
   };
 
@@ -71,7 +83,7 @@ export function YvesRecommendationsCard({ recommendations, isLoading }: YvesReco
           AI-powered actions based on your health data
         </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-3">
         {recommendations.length === 0 ? (
           <div className="text-center py-6 space-y-2">
             <p className="text-muted-foreground">
@@ -88,34 +100,13 @@ export function YvesRecommendationsCard({ recommendations, isLoading }: YvesReco
         ) : (
           <>
             {recommendations.map((rec, idx) => (
-              <div 
+              <RecommendationItem
                 key={idx}
-                className={cn(
-                  "p-4 rounded-lg border border-border bg-card/50 space-y-3",
-                  rec.priority === 'high' && "border-l-4 border-l-destructive"
-                )}
-              >
-                <div className="flex items-start justify-between gap-2">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className="text-lg">{getCategoryIcon(rec.category)}</span>
-                    <Badge className={getCategoryColor(rec.category)}>
-                      {rec.category.charAt(0).toUpperCase() + rec.category.slice(1)}
-                    </Badge>
-                    {getPriorityBadge(rec.priority)}
-                  </div>
-                </div>
-                
-                <p className="text-sm leading-relaxed font-medium">
-                  {rec.text}
-                </p>
-
-                {rec.reasoning && (
-                  <p className="text-xs text-muted-foreground flex items-start gap-1">
-                    <ArrowRight className="h-3 w-3 mt-0.5 flex-shrink-0" />
-                    {rec.reasoning}
-                  </p>
-                )}
-              </div>
+                recommendation={rec}
+                categoryLabel={getCategoryLabel(rec.category)}
+                categoryIcon={getCategoryIcon(rec.category)}
+                priorityBadge={getPriorityBadge(rec.priority)}
+              />
             ))}
 
             <Button 
@@ -129,5 +120,75 @@ export function YvesRecommendationsCard({ recommendations, isLoading }: YvesReco
         )}
       </CardContent>
     </Card>
+  );
+}
+
+interface RecommendationItemProps {
+  recommendation: YvesRecommendation;
+  categoryLabel: string;
+  categoryIcon: string;
+  priorityBadge: React.ReactNode;
+}
+
+function RecommendationItem({ recommendation, categoryLabel, categoryIcon, priorityBadge }: RecommendationItemProps) {
+  const [isOpen, setIsOpen] = useState(false);
+  
+  // Create a short preview (first sentence or first ~60 chars)
+  const preview = recommendation.text.length > 60 
+    ? recommendation.text.slice(0, 60).trim() + "..."
+    : recommendation.text.split('.')[0] + (recommendation.text.includes('.') ? '.' : '');
+
+  return (
+    <Collapsible open={isOpen} onOpenChange={setIsOpen}>
+      <div className={cn(
+        "rounded-lg border transition-colors bg-card/50",
+        recommendation.priority === "high" 
+          ? "border-l-4 border-l-destructive border-destructive/30" 
+          : "border-border"
+      )}>
+        <CollapsibleTrigger asChild>
+          <button className="w-full p-3 flex items-center justify-between gap-3 text-left hover:bg-muted/30 transition-colors rounded-lg">
+            <div className="flex items-center gap-3 min-w-0 flex-1">
+              <span className="text-lg shrink-0">{categoryIcon}</span>
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-sm font-medium text-foreground">
+                    {categoryLabel}
+                  </span>
+                  {priorityBadge}
+                </div>
+                {!isOpen && (
+                  <p className="text-xs text-muted-foreground truncate mt-0.5">
+                    {preview}
+                  </p>
+                )}
+              </div>
+            </div>
+            <ChevronDown className={cn(
+              "h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-200",
+              isOpen && "rotate-180"
+            )} />
+          </button>
+        </CollapsibleTrigger>
+        <CollapsibleContent>
+          <div className="px-3 pb-3 pt-0 space-y-3">
+            {/* Main suggestion */}
+            <p className="text-sm leading-relaxed font-medium text-foreground">
+              {recommendation.text}
+            </p>
+
+            {/* Why this matters */}
+            {recommendation.reasoning && (
+              <div className="p-2 rounded-md bg-muted/50">
+                <p className="text-xs text-muted-foreground">
+                  <span className="font-medium text-foreground">Why this matters: </span>
+                  {recommendation.reasoning}
+                </p>
+              </div>
+            )}
+          </div>
+        </CollapsibleContent>
+      </div>
+    </Collapsible>
   );
 }

@@ -97,6 +97,32 @@ export async function sendRiskAlertEmail(
 
 // Session storage key for cooldown tracking
 const ALERT_COOLDOWN_KEY = "risk_alert_shown";
+// LocalStorage key for 24-hour cooldown
+const ALERT_DAILY_COOLDOWN_KEY = "risk_alert_daily_cooldown";
+const COOLDOWN_HOURS = 24;
+
+function getDailyCooldowns(): Record<string, number> {
+  try {
+    const stored = localStorage.getItem(ALERT_DAILY_COOLDOWN_KEY);
+    return stored ? JSON.parse(stored) : {};
+  } catch {
+    return {};
+  }
+}
+
+function setDailyCooldown(alertKey: string): void {
+  const cooldowns = getDailyCooldowns();
+  cooldowns[alertKey] = Date.now();
+  localStorage.setItem(ALERT_DAILY_COOLDOWN_KEY, JSON.stringify(cooldowns));
+}
+
+function isOnDailyCooldown(alertKey: string): boolean {
+  const cooldowns = getDailyCooldowns();
+  const lastShown = cooldowns[alertKey];
+  if (!lastShown) return false;
+  const hoursSince = (Date.now() - lastShown) / (1000 * 60 * 60);
+  return hoursSince < COOLDOWN_HOURS;
+}
 
 export function useRiskAlertTrigger(): UseRiskAlertTriggerResult {
   const [currentAlert, setCurrentAlert] = useState<RiskAlert | null>(null);
@@ -253,10 +279,17 @@ export function useRiskAlertTrigger(): UseRiskAlertTriggerResult {
         if (shownSet.has(alertKey)) {
           return;
         }
+
+        // Skip if on 24-hour cooldown (persists across sessions)
+        if (isOnDailyCooldown(alertKey)) {
+          console.log(`[useRiskAlertTrigger] Alert ${alertKey} on 24h cooldown, skipping`);
+          return;
+        }
         
-        // Mark this alert as shown in session storage
+        // Mark this alert as shown in session storage AND 24h cooldown
         shownSet.add(alertKey);
         sessionStorage.setItem(ALERT_COOLDOWN_KEY, JSON.stringify([...shownSet]));
+        setDailyCooldown(alertKey);
         
         setCurrentAlert(alertToSet);
         

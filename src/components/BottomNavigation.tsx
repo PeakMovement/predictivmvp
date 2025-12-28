@@ -1,5 +1,7 @@
-import { Home, Dumbbell, Heart, FileText, User, ClipboardList, TrendingUp, Users, Sparkles, Stethoscope } from "lucide-react";
+import { useState } from "react";
+import { Home, Dumbbell, Heart, FileText, User, ClipboardList, TrendingUp, Users, Sparkles, Stethoscope, Menu, X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const navItems = [
   { name: "dashboard", icon: Home, label: "Dashboard" },
@@ -20,6 +22,122 @@ interface BottomNavigationProps {
 }
 
 export const BottomNavigation = ({ activeTab, onNavigate }: BottomNavigationProps) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const isMobile = useIsMobile();
+
+  const handleNavigate = (tab: string) => {
+    onNavigate(tab);
+    setIsOpen(false);
+  };
+
+  // Mobile: Expandable FAB menu
+  if (isMobile) {
+    return (
+      <>
+        {/* Backdrop overlay when menu is open */}
+        {isOpen && (
+          <div
+            className="fixed inset-0 z-40 bg-background/80 backdrop-blur-sm animate-fade-in"
+            onClick={() => setIsOpen(false)}
+          />
+        )}
+
+        {/* Expandable menu panel */}
+        {isOpen && (
+          <div
+            className={cn(
+              "fixed bottom-24 left-4 right-4 z-50",
+              "bg-card/95 backdrop-blur-lg border border-border/30 rounded-2xl",
+              "p-4 shadow-[0_-8px_30px_rgba(0,0,0,0.3)]",
+              "animate-scale-in"
+            )}
+          >
+            {/* Grid of navigation items */}
+            <div className="grid grid-cols-3 gap-3">
+              {navItems.map(({ name, icon: Icon, label }) => {
+                const isActive = activeTab === name;
+                return (
+                  <button
+                    key={name}
+                    onClick={() => handleNavigate(name)}
+                    className={cn(
+                      "flex flex-col items-center justify-center p-3 rounded-xl transition-all",
+                      "min-h-[72px] touch-manipulation",
+                      "hover:bg-accent/50 active:scale-95",
+                      isActive 
+                        ? "bg-primary/15 text-primary border border-primary/30" 
+                        : "bg-muted/30 text-muted-foreground border border-transparent"
+                    )}
+                  >
+                    <Icon
+                      className={cn(
+                        "h-6 w-6 mb-1.5 transition-colors",
+                        isActive ? "text-primary" : "text-muted-foreground"
+                      )}
+                    />
+                    <span className={cn(
+                      "text-xs font-medium text-center leading-tight",
+                      isActive ? "text-primary" : "text-muted-foreground"
+                    )}>
+                      {label}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Close button row */}
+            <button
+              onClick={() => setIsOpen(false)}
+              className={cn(
+                "w-full mt-3 py-3 rounded-xl",
+                "bg-muted/50 text-muted-foreground",
+                "flex items-center justify-center gap-2",
+                "hover:bg-muted active:scale-98 transition-all"
+              )}
+            >
+              <X className="h-5 w-5" />
+              <span className="text-sm font-medium">Close</span>
+            </button>
+          </div>
+        )}
+
+        {/* Floating Action Button */}
+        <div
+          className={cn(
+            "fixed bottom-0 left-0 right-0 z-50",
+            "flex justify-center items-center",
+            "h-20 pb-[env(safe-area-inset-bottom)]",
+            "pointer-events-none"
+          )}
+        >
+          <button
+            onClick={() => setIsOpen(!isOpen)}
+            className={cn(
+              "pointer-events-auto",
+              "flex items-center justify-center gap-2",
+              "h-14 px-6 rounded-full",
+              "bg-primary text-primary-foreground",
+              "shadow-[0_4px_20px_rgba(0,0,0,0.3)]",
+              "hover:bg-primary/90 active:scale-95 transition-all",
+              "touch-manipulation"
+            )}
+          >
+            {isOpen ? (
+              <X className="h-5 w-5" />
+            ) : (
+              <Menu className="h-5 w-5" />
+            )}
+            <span className="text-sm font-semibold">
+              {isOpen ? "Close" : "Menu"}
+            </span>
+          </button>
+        </div>
+      </>
+    );
+  }
+
+  // Desktop/Tablet: Original horizontal navigation
   return (
     <nav
       className={cn(

@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { useMedicalFinder } from '@/hooks/useMedicalFinder';
 import { BookingModal } from './BookingModal';
 import { 
@@ -18,12 +20,33 @@ import {
   Mail,
   Calendar
 } from 'lucide-react';
-import { PhysicianMatch } from '@/contexts/MedicalFinderContext';
+import { PhysicianMatch, useMedicalFinderContext } from '@/contexts/MedicalFinderContext';
 import { toast } from 'sonner';
 
 export function ProviderResultsStep() {
   const { physicianMatches, generateTreatmentPlan, isLoading, analysis } = useMedicalFinder();
+  const { preferences } = useMedicalFinderContext();
   const [bookingPhysician, setBookingPhysician] = useState<PhysicianMatch | null>(null);
+  const [budgetFilter, setBudgetFilter] = useState<string>(
+    (preferences as any)?.maxBudget?.toString() || ''
+  );
+
+  // Filter providers by budget
+  const filteredProviders = physicianMatches.filter((physician) => {
+    if (!budgetFilter) return true;
+    const maxBudget = parseFloat(budgetFilter);
+    if (isNaN(maxBudget)) return true;
+    
+    // Map cost tiers to approximate values
+    const costMap: Record<string, number> = {
+      low: 100,
+      medium: 200,
+      high: 350,
+      premium: 500,
+    };
+    const providerCost = costMap[physician.costTier] || 200;
+    return providerCost <= maxBudget;
+  });
 
   if (physicianMatches.length === 0) {
     return (
@@ -106,17 +129,51 @@ export function ProviderResultsStep() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between mb-2">
+      {/* Header with filter */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-2">
         <div>
           <h2 className="text-xl font-semibold">Recommended Providers</h2>
           <p className="text-sm text-muted-foreground">
-            {physicianMatches.length} provider{physicianMatches.length !== 1 ? 's' : ''} matched for{' '}
+            {filteredProviders.length} provider{filteredProviders.length !== 1 ? 's' : ''} matched for{' '}
             {analysis?.suggestedSpecialties.slice(0, 2).join(', ')}
           </p>
         </div>
+        
+        {/* Budget Filter */}
+        <div className="flex items-center gap-2">
+          <Label htmlFor="budget-filter" className="text-sm whitespace-nowrap">Max budget:</Label>
+          <div className="relative w-28">
+            <span className="absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">$</span>
+            <Input
+              id="budget-filter"
+              type="number"
+              placeholder="Any"
+              value={budgetFilter}
+              onChange={(e) => setBudgetFilter(e.target.value)}
+              className="pl-6 h-8 text-sm"
+            />
+          </div>
+        </div>
       </div>
 
-      {physicianMatches.map((physician, index) => (
+      {filteredProviders.length === 0 && physicianMatches.length > 0 && (
+        <Card className="border-border/50 bg-card/80 backdrop-blur-sm">
+          <CardContent className="py-8 text-center">
+            <DollarSign className="h-8 w-8 text-muted-foreground mx-auto mb-3" />
+            <p className="text-muted-foreground">
+              No providers match your budget of ${budgetFilter}.{' '}
+              <button 
+                onClick={() => setBudgetFilter('')}
+                className="text-primary underline hover:no-underline"
+              >
+                Clear filter
+              </button>
+            </p>
+          </CardContent>
+        </Card>
+      )}
+
+      {filteredProviders.map((physician, index) => (
         <Card 
           key={physician.id}
           className={`border-border/50 bg-card/80 backdrop-blur-sm hover:border-primary/30 transition-all cursor-pointer ${

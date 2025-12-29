@@ -17,6 +17,7 @@ import {
   Sparkles,
   Shield,
   Zap,
+  Send,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Switch } from "@/components/ui/switch";
@@ -64,6 +65,7 @@ export const Settings = ({ onNavigate }: { onNavigate?: (tab: string) => void })
     riskAlerts: true,
     aiCoachRecommendations: true,
   });
+  const [isSendingTestEmail, setIsSendingTestEmail] = useState(false);
 
   const { theme, setTheme } = useTheme();
   const { toast } = useToast();
@@ -438,6 +440,59 @@ export const Settings = ({ onNavigate }: { onNavigate?: (tab: string) => void })
     }
   };
 
+  const handleTestEmail = async () => {
+    setIsSendingTestEmail(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        toast({
+          title: "Authentication Required",
+          description: "Please sign in to send a test email",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      toast({
+        title: "Sending test email...",
+        description: "This may take a few seconds",
+      });
+
+      const { data, error } = await supabase.functions.invoke("send-daily-summary-email", {
+        body: { testMode: true, testUserId: user.id },
+      });
+
+      if (error) {
+        throw new Error(error.message);
+      }
+
+      if (data?.sent > 0) {
+        toast({
+          title: "Test email sent!",
+          description: "Check your inbox for the daily summary email",
+        });
+      } else if (data?.error) {
+        throw new Error(data.error);
+      } else {
+        toast({
+          title: "No email sent",
+          description: data?.details?.[0] || "Check that daily summary is enabled",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error("Failed to send test email:", error);
+      toast({
+        title: "Failed to send test email",
+        description: error instanceof Error ? error.message : "Unknown error",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSendingTestEmail(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background pb-[calc(6rem+env(safe-area-inset-bottom))] md:pb-32">
       <div className="container mx-auto px-4 md:px-6 pt-6 md:pt-8 max-w-3xl scrollable-content">
@@ -770,6 +825,26 @@ export const Settings = ({ onNavigate }: { onNavigate?: (tab: string) => void })
                       onCheckedChange={(checked) => handleEmailPreferenceChange("dailySummary", checked)}
                       disabled={!emailNotificationsEnabled}
                     />
+                  </div>
+
+                  {/* Test Email Button */}
+                  <div className={cn(
+                    "pt-2 transition-opacity duration-200",
+                    (!emailNotificationsEnabled || !emailPreferences.dailySummary) && "opacity-50"
+                  )}>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleTestEmail}
+                      disabled={!emailNotificationsEnabled || !emailPreferences.dailySummary || isSendingTestEmail}
+                      className="w-full sm:w-auto"
+                    >
+                      <Send size={14} className="mr-2" />
+                      {isSendingTestEmail ? "Sending..." : "Send Test Email"}
+                    </Button>
+                    <p className="text-xs text-muted-foreground mt-2">
+                      Send a test daily summary email to verify it's working
+                    </p>
                   </div>
 
                   {/* Risk Alerts */}

@@ -22,6 +22,19 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
+    // Check for test mode
+    let testMode = false;
+    let testUserId: string | null = null;
+    
+    try {
+      const body = await req.json();
+      testMode = body?.testMode === true;
+      testUserId = body?.testUserId || null;
+      console.log(`[send-daily-summary-email] Test mode: ${testMode}, testUserId: ${testUserId}`);
+    } catch {
+      // No body or invalid JSON - that's fine for cron calls
+    }
+
     // Get today's date in SA timezone (UTC+2)
     const now = new Date();
     const saTime = new Date(now.getTime() + (2 * 60 * 60 * 1000));
@@ -29,11 +42,17 @@ serve(async (req) => {
     
     console.log(`[send-daily-summary-email] Processing for date: ${todayDate}`);
 
-    // Get all users who have daily summary emails enabled
-    const { data: usersWithPrefs, error: usersError } = await supabase
+    // Get users - either specific user for test mode or all users
+    let usersQuery = supabase
       .from("users")
       .select("id, email, email_preferences")
       .not("email", "is", null);
+    
+    if (testMode && testUserId) {
+      usersQuery = usersQuery.eq("id", testUserId);
+    }
+
+    const { data: usersWithPrefs, error: usersError } = await usersQuery;
 
     if (usersError) {
       console.error("[send-daily-summary-email] Error fetching users:", usersError);
@@ -61,19 +80,21 @@ serve(async (req) => {
           continue;
         }
 
-        // Check if we already sent a daily summary today
-        const { data: recentEmails } = await supabase
-          .from("notification_log")
-          .select("created_at")
-          .eq("recipient", user.id)
-          .ilike("message", "%daily_summary%")
-          .gte("created_at", `${todayDate}T00:00:00Z`)
-          .limit(1);
+        // Check if we already sent a daily summary today (skip this check in test mode)
+        if (!testMode) {
+          const { data: recentEmails } = await supabase
+            .from("notification_log")
+            .select("created_at")
+            .eq("recipient", user.id)
+            .ilike("message", "%daily_summary%")
+            .gte("created_at", `${todayDate}T00:00:00Z`)
+            .limit(1);
 
-        if (recentEmails && recentEmails.length > 0) {
-          console.log(`[send-daily-summary-email] Already sent daily summary to user ${user.id} today, skipping`);
-          results.skipped++;
-          continue;
+          if (recentEmails && recentEmails.length > 0) {
+            console.log(`[send-daily-summary-email] Already sent daily summary to user ${user.id} today, skipping`);
+            results.skipped++;
+            continue;
+          }
         }
 
         // Get user's name from profile

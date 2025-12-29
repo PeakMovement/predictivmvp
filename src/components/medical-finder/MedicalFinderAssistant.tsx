@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useMemo } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { MedicalFinderProvider } from '@/contexts/MedicalFinderContext';
 import { useMedicalFinder } from '@/hooks/useMedicalFinder';
 import { SymptomIntakeStep } from './SymptomIntakeStep';
@@ -71,11 +72,20 @@ function MedicalFinderContent() {
   );
 }
 
-interface MedicalFinderAssistantProps {
-  initialSymptoms?: string;
-}
+export function MedicalFinderAssistant() {
+  const [searchParams] = useSearchParams();
 
-export function MedicalFinderAssistant({ initialSymptoms = '' }: MedicalFinderAssistantProps) {
+  // Read query parameters and build initial symptoms string
+  const initialSymptoms = useMemo(() => {
+    const q = searchParams.get('q');
+    const severity = searchParams.get('severity');
+    
+    if (q) {
+      return severity ? `${q} (Severity: ${severity})` : q;
+    }
+    return '';
+  }, [searchParams]);
+
   return (
     <MedicalFinderProvider initialSymptoms={initialSymptoms}>
       <MedicalFinderContent />

@@ -118,7 +118,7 @@ export function RedFlagFunnel({
     );
   }
 
-  // Step 1: Intro - explain why we're asking
+  // Step 1: Intro - explain why we're asking and offer direct redirect to Help page
   if (step === "intro") {
     return (
       <Card className="bg-orange-500/10 border-orange-500/30">
@@ -130,12 +130,11 @@ export function RedFlagFunnel({
         </CardHeader>
         <CardContent className="space-y-4">
           <p className="text-muted-foreground">
-            Based on your symptom severity, we recommend connecting you with a healthcare provider. 
-            Let us find the best match for your budget and location.
+            Based on your symptom severity, we recommend connecting you with a healthcare provider.
           </p>
           <div className="flex gap-3">
-            <Button onClick={() => setStep("budget")} className="flex-1">
-              Find Provider
+            <Button onClick={onComplete} className="flex-1">
+              Find a medical professional
               <ArrowRight className="h-4 w-4 ml-2" />
             </Button>
             <Button variant="outline" onClick={onSkip}>

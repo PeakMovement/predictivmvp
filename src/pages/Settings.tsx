@@ -18,6 +18,7 @@ import {
   Shield,
   Zap,
   Send,
+  Stethoscope,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Switch } from "@/components/ui/switch";
@@ -25,6 +26,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useTheme } from "@/components/ThemeProvider";
 import { useLiveData } from "@/contexts/LiveDataContext";
 import { getAlertSettings, saveAlertSettings } from "@/lib/alertConditions";
@@ -34,6 +36,7 @@ import { useWearableSync } from "@/hooks/useWearableSync";
 import { getUserContext, updateUserContext } from "@/api/yves";
 import { ConnectPolarButton } from "@/components/ConnectPolarButton";
 import { PolarSyncButton } from "@/components/PolarSyncButton";
+import { SymptomCheckInForm } from "@/components/symptoms/SymptomCheckInForm";
 
 export const Settings = ({ onNavigate }: { onNavigate?: (tab: string) => void }) => {
   const [notifications, setNotifications] = useState(true);
@@ -66,6 +69,7 @@ export const Settings = ({ onNavigate }: { onNavigate?: (tab: string) => void })
     aiCoachRecommendations: true,
   });
   const [isSendingTestEmail, setIsSendingTestEmail] = useState(false);
+  const [showSymptomChecker, setShowSymptomChecker] = useState(false);
 
   const { theme, setTheme } = useTheme();
   const { toast } = useToast();
@@ -1289,9 +1293,42 @@ export const Settings = ({ onNavigate }: { onNavigate?: (tab: string) => void })
                   <ChevronRight size={16} className="text-muted-foreground" />
                 )}
               </Button>
+
+              <button
+                onClick={() => setShowSymptomChecker(true)}
+                className="w-full flex items-center justify-between p-4 rounded-xl border bg-glass/30 border-glass-border hover:bg-glass-highlight transition-all duration-200"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 bg-orange-500/20 rounded-lg flex items-center justify-center">
+                    <Stethoscope size={16} className="text-orange-500" />
+                  </div>
+                  <div className="text-left">
+                    <p className="font-medium text-foreground">Test Symptom Checker</p>
+                    <p className="text-xs text-muted-foreground">Verify symptom flow, red flags & Help redirect</p>
+                  </div>
+                </div>
+                <ChevronRight size={16} className="text-muted-foreground" />
+              </button>
             </div>
           </div>
         </div>
+
+        {/* Symptom Checker Test Dialog */}
+        <Dialog open={showSymptomChecker} onOpenChange={setShowSymptomChecker}>
+          <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Stethoscope className="h-5 w-5 text-orange-500" />
+                Test Symptom Checker
+              </DialogTitle>
+            </DialogHeader>
+            <SymptomCheckInForm 
+              onSuccess={() => {
+                // Keep dialog open to show the red-flag flow or find help prompt
+              }} 
+            />
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );

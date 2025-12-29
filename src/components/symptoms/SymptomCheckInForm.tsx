@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -10,7 +11,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Slider } from "@/components/ui/slider";
-import { Loader2, Stethoscope } from "lucide-react";
+import { Loader2, Stethoscope, ArrowRight } from "lucide-react";
 import { RedFlagFunnel, shouldTriggerRedFlagFunnel } from "@/components/help/RedFlagFunnel";
 
 const symptomTypes = [
@@ -65,10 +66,17 @@ interface SymptomCheckInFormProps {
 }
 
 export const SymptomCheckInForm = ({ onSuccess }: SymptomCheckInFormProps) => {
+  const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedTriggers, setSelectedTriggers] = useState<string[]>([]);
   const [showRedFlagFunnel, setShowRedFlagFunnel] = useState(false);
-  const [lastSubmission, setLastSubmission] = useState<{ symptomType: string; severity: number; id?: string } | null>(null);
+  const [showFindHelpPrompt, setShowFindHelpPrompt] = useState(false);
+  const [lastSubmission, setLastSubmission] = useState<{ 
+    symptomType: string; 
+    severity: number; 
+    id?: string;
+    description?: string;
+  } | null>(null);
   const { toast } = useToast();
 
   const form = useForm<FormData>({
@@ -107,6 +115,39 @@ export const SymptomCheckInForm = ({ onSuccess }: SymptomCheckInFormProps) => {
     form.setValue("triggers", updated);
   };
 
+  const navigateToHelp = (symptomType: string, severity: number, description?: string) => {
+    const symptomLabel = symptomTypes.find(s => s.value === symptomType)?.label || symptomType;
+    const queryText = description 
+      ? `${symptomLabel}: ${description}`
+      : symptomLabel;
+    
+    const params = new URLSearchParams({
+      q: queryText,
+      severity: severity.toString(),
+    });
+    
+    navigate(`/find-help?${params.toString()}`);
+  };
+
+  const handleFindHelp = () => {
+    if (lastSubmission) {
+      navigateToHelp(lastSubmission.symptomType, lastSubmission.severity, lastSubmission.description);
+    }
+  };
+
+  const handleRedFlagComplete = () => {
+    setShowRedFlagFunnel(false);
+    if (lastSubmission) {
+      navigateToHelp(lastSubmission.symptomType, lastSubmission.severity, lastSubmission.description);
+    }
+  };
+
+  const handleRedFlagSkip = () => {
+    setShowRedFlagFunnel(false);
+    // Show the find help prompt instead
+    setShowFindHelpPrompt(true);
+  };
+
   const onSubmit = async (data: FormData) => {
     setIsSubmitting(true);
     try {
@@ -135,10 +176,20 @@ export const SymptomCheckInForm = ({ onSuccess }: SymptomCheckInFormProps) => {
 
       const checkinId = insertedData?.id;
       
+      // Store submission data for potential redirect
+      setLastSubmission({ 
+        symptomType: data.symptom_type, 
+        severity: data.severity, 
+        id: checkinId,
+        description: data.description 
+      });
+      
       // Check if red-flag funnel should be triggered
       if (shouldTriggerRedFlagFunnel(data.symptom_type, data.severity)) {
-        setLastSubmission({ symptomType: data.symptom_type, severity: data.severity, id: checkinId });
         setShowRedFlagFunnel(true);
+      } else {
+        // Show find help prompt for non-red-flag cases
+        setShowFindHelpPrompt(true);
       }
       
       form.reset();
@@ -162,9 +213,37 @@ export const SymptomCheckInForm = ({ onSuccess }: SymptomCheckInFormProps) => {
         symptomType={lastSubmission.symptomType}
         severity={lastSubmission.severity}
         symptomId={lastSubmission.id}
-        onComplete={() => setShowRedFlagFunnel(false)}
-        onSkip={() => setShowRedFlagFunnel(false)}
+        onComplete={handleRedFlagComplete}
+        onSkip={handleRedFlagSkip}
       />
+    );
+  }
+
+  // Show find help prompt after successful submission
+  if (showFindHelpPrompt && lastSubmission) {
+    return (
+      <Card className="bg-primary/5 border-primary/20">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-foreground">
+            <Stethoscope className="h-5 w-5 text-primary" />
+            Symptom Logged Successfully
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <p className="text-muted-foreground">
+            Would you like to find a healthcare provider who can help with your symptoms?
+          </p>
+          <div className="flex gap-3">
+            <Button onClick={handleFindHelp} className="flex-1">
+              Find Help
+              <ArrowRight className="h-4 w-4 ml-2" />
+            </Button>
+            <Button variant="outline" onClick={() => setShowFindHelpPrompt(false)}>
+              Done
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
     );
   }
 

@@ -1,27 +1,86 @@
-import { useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { MedicalFinderAssistant } from '@/components/medical-finder/MedicalFinderAssistant';
+import { Loader2, ExternalLink } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 export const FindHelp = () => {
   const [searchParams] = useSearchParams();
+  const [isLoading, setIsLoading] = useState(true);
+  const [hasError, setHasError] = useState(false);
 
-  // Read query parameters passed from Symptom Checker redirect
-  const initialSymptoms = useMemo(() => {
+  // Build iframe URL with query parameters
+  const iframeUrl = useMemo(() => {
+    const baseUrl = 'https://predictiv-medic-finder.netlify.app';
     const q = searchParams.get('q');
     const severity = searchParams.get('severity');
     
-    if (q) {
-      // Combine symptom text with severity if available
-      return severity ? `${q} (Severity: ${severity})` : q;
-    }
-    return '';
+    const params = new URLSearchParams();
+    if (q) params.set('q', q);
+    if (severity) params.set('severity', severity);
+    
+    const queryString = params.toString();
+    return queryString ? `${baseUrl}?${queryString}` : baseUrl;
   }, [searchParams]);
+
+  // Timeout fallback after 15 seconds
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      if (isLoading) {
+        setHasError(true);
+        setIsLoading(false);
+      }
+    }, 15000);
+
+    return () => clearTimeout(timeout);
+  }, [isLoading]);
+
+  const handleIframeLoad = () => {
+    setIsLoading(false);
+    setHasError(false);
+  };
+
+  const handleIframeError = () => {
+    setIsLoading(false);
+    setHasError(true);
+  };
 
   return (
     <div className="min-h-screen bg-background pb-20">
-      <div className="container mx-auto px-4 py-6">
-        <MedicalFinderAssistant initialSymptoms={initialSymptoms} />
-      </div>
+      {/* Loading State */}
+      {isLoading && (
+        <div className="absolute inset-0 flex items-center justify-center bg-background z-10">
+          <div className="flex flex-col items-center gap-4">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <p className="text-muted-foreground">Loading Medical Finder...</p>
+          </div>
+        </div>
+      )}
+
+      {/* Error Fallback */}
+      {hasError && (
+        <div className="absolute inset-0 flex items-center justify-center bg-background z-10">
+          <div className="flex flex-col items-center gap-4 text-center px-4">
+            <p className="text-muted-foreground">
+              Unable to load embedded content. You can open it directly:
+            </p>
+            <Button asChild>
+              <a href={iframeUrl} target="_blank" rel="noopener noreferrer">
+                Open Medical Finder <ExternalLink className="ml-2 h-4 w-4" />
+              </a>
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {/* Iframe */}
+      <iframe
+        src={iframeUrl}
+        className="w-full min-h-[calc(100vh-80px)] border-0"
+        onLoad={handleIframeLoad}
+        onError={handleIframeError}
+        allow="geolocation; microphone; camera"
+        title="Medical Finder Assistant"
+      />
     </div>
   );
 };

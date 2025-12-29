@@ -60,7 +60,7 @@ export const Settings = ({ onNavigate }: { onNavigate?: (tab: string) => void })
   // Email notification settings
   const [emailNotificationsEnabled, setEmailNotificationsEnabled] = useState(true);
   const [emailPreferences, setEmailPreferences] = useState({
-    weeklySummary: true,
+    dailySummary: true,
     riskAlerts: true,
     aiCoachRecommendations: true,
   });
@@ -210,12 +210,12 @@ export const Settings = ({ onNavigate }: { onNavigate?: (tab: string) => void })
       if (data?.email_preferences) {
         const prefs = data.email_preferences as any;
         setEmailPreferences({
-          weeklySummary: prefs?.weeklySummary ?? true,
+          dailySummary: prefs?.dailySummary ?? prefs?.weeklySummary ?? true,
           riskAlerts: prefs?.riskAlerts ?? true,
           aiCoachRecommendations: prefs?.aiCoachRecommendations ?? true,
         });
         // If all preferences are false, consider master toggle as disabled
-        const allDisabled = !prefs?.weeklySummary && !prefs?.riskAlerts && !prefs?.aiCoachRecommendations;
+        const allDisabled = !prefs?.dailySummary && !prefs?.weeklySummary && !prefs?.riskAlerts && !prefs?.aiCoachRecommendations;
         if (allDisabled) {
           setEmailNotificationsEnabled(false);
         }
@@ -370,7 +370,7 @@ export const Settings = ({ onNavigate }: { onNavigate?: (tab: string) => void })
     if (!enabled) {
       // Disable all sub-toggles
       const newPrefs = {
-        weeklySummary: false,
+        dailySummary: false,
         riskAlerts: false,
         aiCoachRecommendations: false,
       };
@@ -379,7 +379,7 @@ export const Settings = ({ onNavigate }: { onNavigate?: (tab: string) => void })
     } else {
       // Enable all sub-toggles
       const newPrefs = {
-        weeklySummary: true,
+        dailySummary: true,
         riskAlerts: true,
         aiCoachRecommendations: true,
       };
@@ -738,7 +738,7 @@ export const Settings = ({ onNavigate }: { onNavigate?: (tab: string) => void })
 
                 {/* Individual Preferences */}
                 <div className="space-y-4">
-                  {/* Weekly Summary */}
+                  {/* Daily Summary */}
                   <div
                     className={cn(
                       "flex items-center justify-between transition-opacity duration-200",
@@ -747,9 +747,9 @@ export const Settings = ({ onNavigate }: { onNavigate?: (tab: string) => void })
                   >
                     <div className="flex items-center gap-2 flex-1">
                       <div>
-                        <p className="font-medium text-foreground">Weekly Summary Report</p>
+                        <p className="font-medium text-foreground">Daily Summary Email</p>
                         <p className="text-sm text-muted-foreground">
-                          Receive a PDF overview of your health and training metrics
+                          Receive a morning health summary at 7:30am SA time
                         </p>
                       </div>
                       <Tooltip>
@@ -766,8 +766,8 @@ export const Settings = ({ onNavigate }: { onNavigate?: (tab: string) => void })
                       </Tooltip>
                     </div>
                     <Switch
-                      checked={emailPreferences.weeklySummary}
-                      onCheckedChange={(checked) => handleEmailPreferenceChange("weeklySummary", checked)}
+                      checked={emailPreferences.dailySummary}
+                      onCheckedChange={(checked) => handleEmailPreferenceChange("dailySummary", checked)}
                       disabled={!emailNotificationsEnabled}
                     />
                   </div>

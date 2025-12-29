@@ -122,3 +122,6 @@ verify_jwt = true
 
 [functions.calendly-webhook]
 verify_jwt = false
+
+[functions.send-daily-summary-email]
+verify_jwt = false

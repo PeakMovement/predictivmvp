@@ -23,7 +23,9 @@ export const FindHelp = () => {
         if (q) params.set('q', q);
         if (severity) params.set('severity', severity);
         
-        return `${baseUrl}?${params.toString()}`;
+        const url = `${baseUrl}?${params.toString()}`;
+        console.log('[FindHelp] Auto-fill URL:', url);
+        return url;
       } catch (e) {
         console.error('Failed to parse stored query:', e);
       }
@@ -38,7 +40,9 @@ export const FindHelp = () => {
     if (severity) params.set('severity', severity);
     
     const queryString = params.toString();
-    return queryString ? `${baseUrl}?${queryString}` : baseUrl;
+    const url = queryString ? `${baseUrl}?${queryString}` : baseUrl;
+    console.log('[FindHelp] iframe URL:', url);
+    return url;
   }, [searchParams]);
 
   // Timeout fallback after 15 seconds

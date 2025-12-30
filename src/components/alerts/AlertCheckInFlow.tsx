@@ -113,16 +113,38 @@ export function AlertCheckInFlow({ alert, onComplete, onNavigateToHelp }: AlertC
   }, []);
 
   const handleReferralYes = useCallback(() => {
+    // Build a nicely formatted symptom description from alert context
+    const symptomText = symptomTextRef.current || '';
+    
+    // Map symptomSeverity string to numeric value
+    const severityMap: Record<string, number> = {
+      'none': 2,
+      'mild': 4,
+      'serious': 8
+    };
+    const severityValue = severityMap[symptomSeverity] || 5;
+    
+    const getSeverityLabelForValue = (value: number): string => {
+      if (value <= 3) return 'Mild';
+      if (value <= 5) return 'Moderate';
+      if (value <= 7) return 'Severe';
+      return 'Critical';
+    };
+    
+    let formattedText = symptomText;
+    formattedText += `\n\nSeverity: ${severityValue}/10 (${getSeverityLabelForValue(severityValue)})`;
+    formattedText += `\n\nTriggered by: ${alert.metric} alert (${alert.message})`;
+
     // Store data for FindHelp to read
     sessionStorage.setItem('findHelpQuery', JSON.stringify({
-      q: symptomTextRef.current || '',
-      severity: '7',
+      q: formattedText,
+      severity: severityValue.toString(),
     }));
     
     // Use custom event to switch tabs (App.tsx listens to this)
     window.dispatchEvent(new CustomEvent('navigate-tab', { detail: 'find-help' }));
     onComplete();
-  }, [onComplete]);
+  }, [onComplete, symptomSeverity, alert.metric, alert.message]);
 
   const handleReferralNo = useCallback(() => {
     // Show AI guidance only

@@ -75,8 +75,25 @@ function MedicalFinderContent() {
 export function MedicalFinderAssistant() {
   const [searchParams] = useSearchParams();
 
-  // Read query parameters and build initial symptoms string
+  // Read query parameters OR sessionStorage and build initial symptoms string
   const initialSymptoms = useMemo(() => {
+    // Priority 1: Check sessionStorage (from symptom check-in flow)
+    const storedQuery = sessionStorage.getItem('findHelpQuery');
+    if (storedQuery) {
+      try {
+        const { q, severity } = JSON.parse(storedQuery);
+        // Don't clear sessionStorage here - FindHelp.tsx handles that
+        // But we do want to use this data
+        console.log('[MedicalFinderAssistant] Using sessionStorage data:', { q, severity });
+        if (q) {
+          return q; // Already includes severity info in the formatted text
+        }
+      } catch (e) {
+        console.error('[MedicalFinderAssistant] Failed to parse stored query:', e);
+      }
+    }
+    
+    // Priority 2: Fall back to URL search params
     const q = searchParams.get('q');
     const severity = searchParams.get('severity');
     

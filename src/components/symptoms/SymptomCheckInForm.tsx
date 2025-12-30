@@ -5,58 +5,65 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Slider } from "@/components/ui/slider";
-import { Loader2, Stethoscope, ArrowRight } from "lucide-react";
-import { RedFlagFunnel, shouldTriggerRedFlagFunnel } from "@/components/help/RedFlagFunnel";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Loader2, Stethoscope, AlertTriangle, UserSearch } from "lucide-react";
 
-const symptomTypes = [
-  { value: "headache", label: "Headache" },
-  { value: "fatigue", label: "Fatigue" },
-  { value: "muscle_pain", label: "Muscle Pain" },
-  { value: "joint_pain", label: "Joint Pain" },
-  { value: "chest_discomfort", label: "Chest Discomfort" },
-  { value: "breathing_difficulty", label: "Breathing Difficulty" },
-  { value: "sleep_issues", label: "Sleep Issues" },
-  { value: "digestive_issues", label: "Digestive Issues" },
-  { value: "dizziness", label: "Dizziness" },
-  { value: "other", label: "Other" },
-];
-
-const bodyLocations = [
-  { value: "head", label: "Head" },
-  { value: "neck", label: "Neck" },
-  { value: "chest", label: "Chest" },
-  { value: "back", label: "Back" },
-  { value: "abdomen", label: "Abdomen" },
-  { value: "arms", label: "Arms" },
-  { value: "legs", label: "Legs" },
-  { value: "joints", label: "Joints" },
-  { value: "full_body", label: "Full Body" },
-  { value: "other", label: "Other" },
-];
-
-const triggerOptions = [
-  { value: "exercise", label: "Exercise" },
-  { value: "stress", label: "Stress" },
-  { value: "food", label: "Food" },
-  { value: "sleep", label: "Poor Sleep" },
-  { value: "medication", label: "Medication" },
-  { value: "weather", label: "Weather" },
-  { value: "other", label: "Other" },
+// Red flag keywords that indicate potential serious conditions
+const RED_FLAG_KEYWORDS = [
+  "chest pain",
+  "difficulty breathing",
+  "shortness of breath",
+  "can't breathe",
+  "severe pain",
+  "blood",
+  "bleeding",
+  "faint",
+  "fainting",
+  "passed out",
+  "unconscious",
+  "stroke",
+  "numbness",
+  "paralysis",
+  "seizure",
+  "suicidal",
+  "self-harm",
+  "heart",
+  "palpitations",
+  "vision loss",
+  "sudden weakness",
+  "slurred speech",
+  "confusion",
+  "worst headache",
+  "head injury",
+  "overdose",
 ];
 
 const formSchema = z.object({
-  symptom_type: z.string().min(1, "Please select a symptom type"),
+  description: z
+    .string()
+    .min(10, "Please describe your symptoms in at least 10 characters")
+    .max(2000, "Description is too long"),
   severity: z.number().min(1).max(10),
-  description: z.string().optional(),
-  body_location: z.string().optional(),
-  triggers: z.array(z.string()).optional(),
-  duration_hours: z.number().optional(),
+  additionalNotes: z.string().max(1000).optional(),
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -65,107 +72,91 @@ interface SymptomCheckInFormProps {
   onSuccess?: (checkinId: string) => void;
 }
 
-export const SymptomCheckInForm = ({ onSuccess }: SymptomCheckInFormProps) => {
+export function SymptomCheckInForm({ onSuccess }: SymptomCheckInFormProps) {
   const navigate = useNavigate();
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [selectedTriggers, setSelectedTriggers] = useState<string[]>([]);
-  const [showRedFlagFunnel, setShowRedFlagFunnel] = useState(false);
-  const [showFindHelpPrompt, setShowFindHelpPrompt] = useState(false);
-  const [lastSubmission, setLastSubmission] = useState<{ 
-    symptomType: string; 
-    severity: number; 
-    id?: string;
-    description?: string;
-  } | null>(null);
   const { toast } = useToast();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showProfessionalPrompt, setShowProfessionalPrompt] = useState(false);
+  const [submittedData, setSubmittedData] = useState<FormData | null>(null);
+  const [lastCheckinId, setLastCheckinId] = useState<string | null>(null);
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      symptom_type: "",
-      severity: 5,
       description: "",
-      body_location: "",
-      triggers: [],
-      duration_hours: undefined,
+      severity: 5,
+      additionalNotes: "",
     },
   });
 
-  const severityValue = form.watch("severity");
+  // Check if description contains any red flag keywords
+  const checkRedFlagKeywords = (text: string): boolean => {
+    const lowerText = text.toLowerCase();
+    return RED_FLAG_KEYWORDS.some((keyword) => lowerText.includes(keyword));
+  };
 
-  const getSeverityLabel = (value: number) => {
-    if (value <= 3) return "Mild";
-    if (value <= 6) return "Moderate";
+  // Map numeric severity to string
+  const getSeverityString = (value: number): string => {
+    if (value <= 3) return "mild";
+    if (value <= 5) return "moderate";
+    if (value <= 7) return "severe";
+    return "critical";
+  };
+
+  // Get severity label for display
+  const getSeverityLabel = (value: number): string => {
+    if (value <= 2) return "Mild";
+    if (value <= 4) return "Moderate";
+    if (value <= 6) return "Uncomfortable";
     if (value <= 8) return "Severe";
     return "Critical";
   };
 
-  const getSeverityColor = (value: number) => {
-    if (value <= 3) return "text-green-400";
-    if (value <= 6) return "text-yellow-400";
-    if (value <= 8) return "text-orange-400";
-    return "text-destructive";
-  };
-
-  const toggleTrigger = (trigger: string) => {
-    const updated = selectedTriggers.includes(trigger)
-      ? selectedTriggers.filter((t) => t !== trigger)
-      : [...selectedTriggers, trigger];
-    setSelectedTriggers(updated);
-    form.setValue("triggers", updated);
-  };
-
-  const navigateToHelp = (symptomType: string, severity: number, description?: string) => {
-    const symptomLabel = symptomTypes.find(s => s.value === symptomType)?.label || symptomType;
-    const queryText = description 
-      ? `${symptomLabel}: ${description}`
-      : symptomLabel;
-    
-    const params = new URLSearchParams({
-      q: queryText,
-      severity: severity.toString(),
-    });
-    
-    navigate(`/find-help?${params.toString()}`);
-  };
-
-  const handleFindHelp = () => {
-    if (lastSubmission) {
-      navigateToHelp(lastSubmission.symptomType, lastSubmission.severity, lastSubmission.description);
-    }
-  };
-
-  const handleRedFlagComplete = () => {
-    setShowRedFlagFunnel(false);
-    if (lastSubmission) {
-      navigateToHelp(lastSubmission.symptomType, lastSubmission.severity, lastSubmission.description);
-    }
-  };
-
-  const handleRedFlagSkip = () => {
-    setShowRedFlagFunnel(false);
-    // Show the find help prompt instead
-    setShowFindHelpPrompt(true);
+  // Get severity color class
+  const getSeverityColor = (value: number): string => {
+    if (value <= 2) return "text-emerald-500";
+    if (value <= 4) return "text-yellow-500";
+    if (value <= 6) return "text-orange-500";
+    if (value <= 8) return "text-red-500";
+    return "text-red-600";
   };
 
   const onSubmit = async (data: FormData) => {
     setIsSubmitting(true);
+
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.user?.id) {
-        throw new Error("You must be logged in to submit symptoms");
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!user) {
+        toast({
+          title: "Not logged in",
+          description: "Please log in to log symptoms.",
+          variant: "destructive",
+        });
+        setIsSubmitting(false);
+        return;
       }
 
-      const { data: insertedData, error } = await supabase.from("symptom_check_ins").insert({
-        user_id: session.user.id,
-        symptom_type: data.symptom_type,
-        severity: getSeverityLabel(data.severity).toLowerCase(),
-        description: data.description || null,
-        body_location: data.body_location || null,
-        triggers: data.triggers && data.triggers.length > 0 ? data.triggers : null,
-        duration_hours: data.duration_hours || null,
-        onset_time: new Date().toISOString(),
-      }).select('id').single();
+      // Combine description with additional notes for storage
+      const fullDescription = data.additionalNotes
+        ? `${data.description}\n\nAdditional notes: ${data.additionalNotes}`
+        : data.description;
+
+      // Insert into symptom_check_ins table
+      const { data: checkin, error } = await supabase
+        .from("symptom_check_ins")
+        .insert({
+          user_id: user.id,
+          symptom_type: "general",
+          severity: getSeverityString(data.severity),
+          description: fullDescription,
+          body_location: null,
+          triggers: null,
+        })
+        .select("id")
+        .single();
 
       if (error) throw error;
 
@@ -174,31 +165,30 @@ export const SymptomCheckInForm = ({ onSuccess }: SymptomCheckInFormProps) => {
         description: "Your symptom has been recorded successfully.",
       });
 
-      const checkinId = insertedData?.id;
-      
-      // Store submission data for potential redirect
-      setLastSubmission({ 
-        symptomType: data.symptom_type, 
-        severity: data.severity, 
-        id: checkinId,
-        description: data.description 
-      });
-      
-      // Check if red-flag funnel should be triggered
-      if (shouldTriggerRedFlagFunnel(data.symptom_type, data.severity)) {
-        setShowRedFlagFunnel(true);
+      const checkinId = checkin?.id;
+      setLastCheckinId(checkinId || null);
+
+      // Check for red flags
+      const hasRedFlags = checkRedFlagKeywords(data.description);
+      const isHighSeverity = data.severity >= 7;
+
+      if (hasRedFlags || isHighSeverity) {
+        // Store data and show professional prompt
+        setSubmittedData(data);
+        setShowProfessionalPrompt(true);
       } else {
-        // Show find help prompt for non-red-flag cases
-        setShowFindHelpPrompt(true);
+        // No red flags - just call success callback
+        if (onSuccess && checkinId) {
+          onSuccess(checkinId);
+        }
       }
-      
+
       form.reset();
-      setSelectedTriggers([]);
-      if (checkinId) onSuccess?.(checkinId);
     } catch (error) {
+      console.error("Error logging symptom:", error);
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "Failed to log symptom",
+        description: "Failed to log symptom. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -206,192 +196,183 @@ export const SymptomCheckInForm = ({ onSuccess }: SymptomCheckInFormProps) => {
     }
   };
 
-  // Show red-flag funnel if triggered
-  if (showRedFlagFunnel && lastSubmission) {
-    return (
-      <RedFlagFunnel
-        symptomType={lastSubmission.symptomType}
-        severity={lastSubmission.severity}
-        symptomId={lastSubmission.id}
-        onComplete={handleRedFlagComplete}
-        onSkip={handleRedFlagSkip}
-      />
-    );
-  }
+  const handleFindProfessional = () => {
+    if (!submittedData) return;
 
-  // Show find help prompt after successful submission
-  if (showFindHelpPrompt && lastSubmission) {
-    return (
-      <Card className="bg-primary/5 border-primary/20">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-foreground">
-            <Stethoscope className="h-5 w-5 text-primary" />
-            Symptom Logged Successfully
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <p className="text-muted-foreground">
-            Would you like to find a healthcare provider who can help with your symptoms?
-          </p>
-          <div className="flex gap-3">
-            <Button onClick={handleFindHelp} className="flex-1">
-              Find Help
-              <ArrowRight className="h-4 w-4 ml-2" />
-            </Button>
-            <Button variant="outline" onClick={() => setShowFindHelpPrompt(false)}>
-              Done
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
+    // Build query string with symptom data
+    const symptomText = submittedData.additionalNotes
+      ? `${submittedData.description} | Notes: ${submittedData.additionalNotes}`
+      : submittedData.description;
+
+    const params = new URLSearchParams({
+      q: symptomText,
+      severity: submittedData.severity.toString(),
+    });
+
+    setShowProfessionalPrompt(false);
+    navigate(`/find-help?${params.toString()}`);
+  };
+
+  const handleDeclineProfessional = () => {
+    setShowProfessionalPrompt(false);
+    // Call success callback after declining
+    if (onSuccess && lastCheckinId) {
+      onSuccess(lastCheckinId);
+    }
+    setSubmittedData(null);
+    setLastCheckinId(null);
+  };
 
   return (
-    <Card className="bg-card/50 backdrop-blur-xl border-border/50">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-foreground">
-          <Stethoscope className="h-5 w-5 text-primary" />
-          Log a Symptom
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            <FormField
-              control={form.control}
-              name="symptom_type"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Symptom Type *</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value}>
+    <>
+      <Card className="bg-card/50 backdrop-blur-xl border-border/50">
+        <CardHeader className="pb-4">
+          <CardTitle className="flex items-center gap-2 text-foreground">
+            <Stethoscope className="h-5 w-5 text-primary" />
+            Log a Symptom
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+              {/* Symptom Description */}
+              <FormField
+                control={form.control}
+                name="description"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-foreground">
+                      What are you experiencing?
+                    </FormLabel>
                     <FormControl>
-                      <SelectTrigger className="bg-secondary/50 border-border/50">
-                        <SelectValue placeholder="Select symptom type" />
-                      </SelectTrigger>
+                      <Textarea
+                        placeholder="Describe your symptoms in detail... (e.g., I've had a headache behind my eyes for the past 2 hours)"
+                        className="min-h-[120px] bg-background/50 border-border/50 text-foreground placeholder:text-muted-foreground resize-none"
+                        {...field}
+                      />
                     </FormControl>
-                    <SelectContent>
-                      {symptomTypes.map((type) => (
-                        <SelectItem key={type.value} value={type.value}>
-                          {type.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-            <FormField
-              control={form.control}
-              name="severity"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="flex justify-between">
-                    <span>Severity</span>
-                    <span className={getSeverityColor(severityValue)}>
-                      {severityValue} - {getSeverityLabel(severityValue)}
-                    </span>
-                  </FormLabel>
-                  <FormControl>
-                    <Slider
-                      min={1}
-                      max={10}
-                      step={1}
-                      value={[field.value]}
-                      onValueChange={(vals) => field.onChange(vals[0])}
-                      className="py-4"
-                    />
-                  </FormControl>
-                  <div className="flex justify-between text-xs text-muted-foreground">
-                    <span>Mild</span>
-                    <span>Moderate</span>
-                    <span>Severe</span>
-                    <span>Critical</span>
-                  </div>
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="body_location"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Body Location</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value}>
-                    <FormControl>
-                      <SelectTrigger className="bg-secondary/50 border-border/50">
-                        <SelectValue placeholder="Where is the symptom?" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {bodyLocations.map((loc) => (
-                        <SelectItem key={loc.value} value={loc.value}>
-                          {loc.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="triggers"
-              render={() => (
-                <FormItem>
-                  <FormLabel>Possible Triggers</FormLabel>
-                  <div className="flex flex-wrap gap-2">
-                    {triggerOptions.map((trigger) => (
-                      <Button
-                        key={trigger.value}
-                        type="button"
-                        variant={selectedTriggers.includes(trigger.value) ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => toggleTrigger(trigger.value)}
-                        className="text-xs"
+              {/* Severity Slider */}
+              <FormField
+                control={form.control}
+                name="severity"
+                render={({ field }) => (
+                  <FormItem>
+                    <div className="flex items-center justify-between">
+                      <FormLabel className="text-foreground">Severity</FormLabel>
+                      <span
+                        className={`text-sm font-medium ${getSeverityColor(
+                          field.value
+                        )}`}
                       >
-                        {trigger.label}
-                      </Button>
-                    ))}
-                  </div>
-                </FormItem>
-              )}
-            />
+                        {field.value}/10 - {getSeverityLabel(field.value)}
+                      </span>
+                    </div>
+                    <FormControl>
+                      <div className="pt-2">
+                        <Slider
+                          min={1}
+                          max={10}
+                          step={1}
+                          value={[field.value]}
+                          onValueChange={(vals) => field.onChange(vals[0])}
+                          className="w-full"
+                        />
+                        <div className="flex justify-between mt-2 text-xs text-muted-foreground">
+                          <span>Mild</span>
+                          <span>Moderate</span>
+                          <span>Severe</span>
+                          <span>Critical</span>
+                        </div>
+                      </div>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-            <FormField
-              control={form.control}
-              name="description"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Additional Notes</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      placeholder="Describe how you're feeling..."
-                      className="bg-secondary/50 border-border/50 min-h-[80px]"
-                      {...field}
-                    />
-                  </FormControl>
-                </FormItem>
-              )}
-            />
+              {/* Additional Notes */}
+              <FormField
+                control={form.control}
+                name="additionalNotes"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-foreground">
+                      Additional Notes{" "}
+                      <span className="text-muted-foreground font-normal">
+                        (optional)
+                      </span>
+                    </FormLabel>
+                    <FormControl>
+                      <Textarea
+                        placeholder="Any other details, context, or recent changes..."
+                        className="min-h-[80px] bg-background/50 border-border/50 text-foreground placeholder:text-muted-foreground resize-none"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-            <Button type="submit" className="w-full" disabled={isSubmitting}>
-              {isSubmitting ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Saving...
-                </>
-              ) : (
-                "Log Symptom"
-              )}
+              {/* Submit Button */}
+              <Button
+                type="submit"
+                className="w-full"
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Logging...
+                  </>
+                ) : (
+                  "Log Symptom"
+                )}
+              </Button>
+            </form>
+          </Form>
+        </CardContent>
+      </Card>
+
+      {/* Professional Help Prompt Dialog */}
+      <Dialog open={showProfessionalPrompt} onOpenChange={setShowProfessionalPrompt}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-amber-500" />
+              We recommend seeking professional help
+            </DialogTitle>
+            <DialogDescription className="pt-2">
+              Based on your symptoms, we suggest speaking with a healthcare
+              professional. Would you like us to help you find one?
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex-col gap-2 sm:flex-row">
+            <Button
+              variant="outline"
+              onClick={handleDeclineProfessional}
+              className="w-full sm:w-auto"
+            >
+              No thanks
             </Button>
-          </form>
-        </Form>
-      </CardContent>
-    </Card>
+            <Button
+              onClick={handleFindProfessional}
+              className="w-full sm:w-auto"
+            >
+              <UserSearch className="mr-2 h-4 w-4" />
+              Yes, find help
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   );
-};
+}
+
+// Keep the old export for backwards compatibility
+export const SymptomCheckInFormLegacy = SymptomCheckInForm;

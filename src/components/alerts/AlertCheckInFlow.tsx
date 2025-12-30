@@ -114,7 +114,8 @@ export function AlertCheckInFlow({ alert, onComplete, onNavigateToHelp }: AlertC
 
   const handleReferralYes = useCallback(() => {
     // Navigate to Help page with Medical Finder, passing the symptom text
-    navigate('/find-help', { state: { symptomText: symptomTextRef.current } });
+      const params = new URLSearchParams({ q: symptomTextRef.current || '', severity: '7' });
+      navigate(`/find-help?${params.toString()}`);
     onComplete();
   }, [navigate, onComplete]);
 

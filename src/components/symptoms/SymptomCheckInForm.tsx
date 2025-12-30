@@ -199,14 +199,21 @@ export function SymptomCheckInForm({ onSuccess }: SymptomCheckInFormProps) {
   const handleFindProfessional = () => {
     if (!submittedData) return;
 
-    // Build query string with symptom data
-    const symptomText = submittedData.additionalNotes
-      ? `${submittedData.description} | Notes: ${submittedData.additionalNotes}`
-      : submittedData.description;
+    // Build a nicely formatted symptom description
+    const severityLabel = getSeverityLabel(submittedData.severity);
+    let formattedText = submittedData.description;
+    
+    // Add severity in a natural way
+    formattedText += `\n\nSeverity: ${submittedData.severity}/10 (${severityLabel})`;
+    
+    // Add additional notes if present
+    if (submittedData.additionalNotes?.trim()) {
+      formattedText += `\n\nAdditional notes: ${submittedData.additionalNotes}`;
+    }
 
     // Store in sessionStorage for FindHelp to read
     sessionStorage.setItem('findHelpQuery', JSON.stringify({
-      q: symptomText,
+      q: formattedText,
       severity: submittedData.severity.toString(),
     }));
 

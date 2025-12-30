@@ -113,11 +113,16 @@ export function AlertCheckInFlow({ alert, onComplete, onNavigateToHelp }: AlertC
   }, []);
 
   const handleReferralYes = useCallback(() => {
-    // Navigate to Help page with Medical Finder, passing the symptom text
-      const params = new URLSearchParams({ q: symptomTextRef.current || '', severity: '7' });
-      navigate(`/find-help?${params.toString()}`);
+    // Store data for FindHelp to read
+    sessionStorage.setItem('findHelpQuery', JSON.stringify({
+      q: symptomTextRef.current || '',
+      severity: '7',
+    }));
+    
+    // Use custom event to switch tabs (App.tsx listens to this)
+    window.dispatchEvent(new CustomEvent('navigate-tab', { detail: 'find-help' }));
     onComplete();
-  }, [navigate, onComplete]);
+  }, [onComplete]);
 
   const handleReferralNo = useCallback(() => {
     // Show AI guidance only

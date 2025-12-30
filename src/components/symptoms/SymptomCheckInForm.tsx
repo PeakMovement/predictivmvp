@@ -204,13 +204,16 @@ export function SymptomCheckInForm({ onSuccess }: SymptomCheckInFormProps) {
       ? `${submittedData.description} | Notes: ${submittedData.additionalNotes}`
       : submittedData.description;
 
-    const params = new URLSearchParams({
+    // Store in sessionStorage for FindHelp to read
+    sessionStorage.setItem('findHelpQuery', JSON.stringify({
       q: symptomText,
       severity: submittedData.severity.toString(),
-    });
+    }));
 
     setShowProfessionalPrompt(false);
-    navigate(`/find-help?${params.toString()}`);
+    
+    // Use custom event to switch tabs (App.tsx listens to this)
+    window.dispatchEvent(new CustomEvent('navigate-tab', { detail: 'find-help' }));
   };
 
   const handleDeclineProfessional = () => {

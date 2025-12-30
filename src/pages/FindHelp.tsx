@@ -11,6 +11,25 @@ export const FindHelp = () => {
   // Build iframe URL with query parameters
   const iframeUrl = useMemo(() => {
     const baseUrl = 'https://predictiv-medic-finder.netlify.app';
+    
+    // Priority 1: Check sessionStorage (from symptom check-in flow)
+    const storedQuery = sessionStorage.getItem('findHelpQuery');
+    if (storedQuery) {
+      try {
+        const { q, severity } = JSON.parse(storedQuery);
+        sessionStorage.removeItem('findHelpQuery'); // Clear after reading
+        
+        const params = new URLSearchParams();
+        if (q) params.set('q', q);
+        if (severity) params.set('severity', severity);
+        
+        return `${baseUrl}?${params.toString()}`;
+      } catch (e) {
+        console.error('Failed to parse stored query:', e);
+      }
+    }
+    
+    // Priority 2: Fall back to URL search params
     const q = searchParams.get('q');
     const severity = searchParams.get('severity');
     

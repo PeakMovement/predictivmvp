@@ -319,6 +319,12 @@ This should feel natural and human. Do NOT provide medical advice - just acknowl
         let maxTokens = 300;
 
         if (category === 'full') {
+          // Check if user has a name for personalization
+          const userName = userProfile?.name?.split(' ')[0] || null;
+          const nameInstruction = userName ? `
+PERSONALIZATION: The user's first name is "${userName}". Use it naturally ONCE at the start (e.g., "Good morning, ${userName}" or "${userName}, your body is asking for..."). Do not repeat it or use it mechanically.
+` : '';
+
           systemPrompt = `You are Yves, an AI health intelligence coach. Generate a concise daily briefing (about 150 words) with 4 sections:
 
 1. Recovery: Readiness and sleep score trends from Oura Ring
@@ -327,7 +333,7 @@ This should feel natural and human. Do NOT provide medical advice - just acknowl
 4. Motivation: Brief encouragement aligned with their goals
 
 ${toneGuidance[coaching_mode]}
-${symptomAcknowledgement}
+${symptomAcknowledgement}${nameInstruction}
 Use emoji section markers (🏃, 💪, 💡, 🎯). Be specific with actual numbers from the data. Keep it actionable.
 
 CRITICAL FORMATTING RULES:

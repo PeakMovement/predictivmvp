@@ -529,6 +529,15 @@ CURRENT TONE: REHAB
 • Never suggest pushing through symptoms or ignoring warning signs`
     };
 
+    // ─── BUILD SYMPTOM ACKNOWLEDGEMENT INSTRUCTION ────────────────────────────
+    const hasRecentSymptoms = symptomCheckIns && symptomCheckIns.length > 0;
+    const symptomAcknowledgement = hasRecentSymptoms ? `
+SYMPTOM ACKNOWLEDGEMENT (MANDATORY):
+The user has logged recent symptoms. When relevant to the conversation, acknowledge these FIRST before discussing metrics or recommendations.
+Examples: "I see you've been dealing with [symptom] recently." or "Given the [symptom] you logged, let's factor that in."
+This should feel natural and human - don't force it if unrelated to their question. Do NOT provide medical advice - just acknowledge.
+` : '';
+
     // ─── SEND TO AI ───────────────────────────────────────────────────────────
     const ai = getAIProvider();
     let aiResponse;
@@ -541,7 +550,7 @@ CURRENT TONE: REHAB
             content: `You are Yves, an AI health intelligence coach for the Predictiv platform. Always respond in full sentences with clear grammar, natural pacing, and friendly professionalism.
 
 ${toneGuidance[coaching_mode]}
-
+${symptomAcknowledgement}
 Use markdown formatting for readability:
 • Bold important keywords or section titles.
 • Keep responses concise and conversational.

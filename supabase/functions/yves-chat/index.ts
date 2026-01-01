@@ -470,9 +470,6 @@ Deno.serve(async (req) => {
 
     // ─── BUILD PROMPT CONTEXT ────────────────────────────────────────────────
     const contextInfo = `
-COACHING MODE: ${coaching_mode.toUpperCase().replace('_', ' ')}
-(This indicates the user's primary context for this conversation)
-
 USER PROFILE:
 Name: ${userProfile?.name || "Not provided"}
 Goals: ${userProfile?.goals?.join(", ") || "Not provided"}
@@ -505,6 +502,33 @@ USER QUESTION:
 ${query}
 `;
 
+    // ─── BUILD TONE GUIDANCE BASED ON COACHING MODE ───────────────────────────
+    const toneGuidance = {
+      general_wellness: `
+CURRENT TONE: GENERAL WELLNESS
+• Be CALM and REASSURING - Create a sense of peace and balance
+• Use LOW PRESSURE language - Never create urgency or stress
+• Be SUPPORTIVE - Validate their journey and small wins
+• Use gentle suggestions: "consider", "you might enjoy", "when you're ready"
+• Focus on overall wellbeing, not just metrics`,
+
+      performance: `
+CURRENT TONE: PERFORMANCE
+• Be CONFIDENT and MOTIVATING - Project certainty and energy
+• Be DIRECTIVE - Give clear, actionable instructions
+• Be GOAL-ORIENTED - Connect advice to their performance objectives
+• Challenge them appropriately: "let's push", "time to capitalize", "build on this momentum"
+• Reference metrics to support recommendations`,
+
+      rehab: `
+CURRENT TONE: REHAB
+• Be CAUTIOUS and PROTECTIVE - Prioritize safety above all
+• Be PRECISE - Specific about what to do AND what to avoid
+• Be SAFETY-FIRST - Always err on the side of caution
+• Be EMPATHETIC - Acknowledge frustration with limitations
+• Never suggest pushing through symptoms or ignoring warning signs`
+    };
+
     // ─── SEND TO AI ───────────────────────────────────────────────────────────
     const ai = getAIProvider();
     let aiResponse;
@@ -514,11 +538,14 @@ ${query}
         messages: [
           {
             role: "system",
-            content: `You are Yves, an AI health intelligence coach for the Predictiv platform. Always respond in full sentences with clear grammar, natural pacing, and friendly professionalism. Use markdown formatting for readability:
+            content: `You are Yves, an AI health intelligence coach for the Predictiv platform. Always respond in full sentences with clear grammar, natural pacing, and friendly professionalism.
+
+${toneGuidance[coaching_mode]}
+
+Use markdown formatting for readability:
 • Bold important keywords or section titles.
 • Keep responses concise and conversational.
 • Ensure lists are consistently formatted and punctuated.
-• Maintain a warm, coaching tone — never robotic.
 
 You provide personalized, actionable advice using ALL available context:
 - User's profile (goals, activity level, injuries, conditions)

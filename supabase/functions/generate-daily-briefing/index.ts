@@ -176,9 +176,6 @@ Deno.serve(async (req) => {
 
         // ─── BUILD PROMPT CONTEXT ────────────────────────────────────────────
         let promptContext = "";
-        
-        // Add coaching mode to context
-        promptContext += `Coaching Mode: ${coaching_mode.toUpperCase().replace('_', ' ')}\n\n`;
 
         // Add Oura Ring data - ONLY reference populated fields
         if (hasWearableData) {
@@ -271,6 +268,13 @@ Deno.serve(async (req) => {
           promptContext += "\n";
         }
 
+        // ─── BUILD TONE GUIDANCE BASED ON COACHING MODE ─────────────────────
+        const toneGuidance = {
+          general_wellness: `Adopt a CALM, REASSURING tone. Be supportive and low-pressure. Use gentle suggestions like "consider", "you might enjoy". Validate small wins. Focus on overall wellbeing.`,
+          performance: `Adopt a CONFIDENT, MOTIVATING tone. Be directive and goal-oriented. Give clear instructions. Challenge them appropriately. Reference their goals and metrics to drive action.`,
+          rehab: `Adopt a CAUTIOUS, PROTECTIVE tone. Prioritize safety above all. Be precise about what to do AND what to avoid. Acknowledge any frustration. Never suggest pushing through symptoms.`
+        };
+
         // ─── CALL LOVABLE AI ────────────────────────────────────────────────
         let systemPrompt: string;
         let userPrompt: string;
@@ -284,7 +288,9 @@ Deno.serve(async (req) => {
 3. Recommendations: 1-2 specific adjustments based on Oura data and any uploaded documents
 4. Motivation: Brief encouragement aligned with their goals
 
-Use emoji section markers (🏃, 💪, 💡, 🎯). Be specific with actual numbers from the data. Keep it actionable and motivational.
+${toneGuidance[coaching_mode]}
+
+Use emoji section markers (🏃, 💪, 💡, 🎯). Be specific with actual numbers from the data. Keep it actionable.
 
 CRITICAL FORMATTING RULES:
 - Use plain text only with emoji bullets
@@ -301,27 +307,29 @@ CRITICAL FORMATTING RULES:
             userPrompt = `Generate a brief welcome message encouraging the user to complete their profile and connect their Oura Ring to unlock personalized health insights.`;
           }
         } else {
-          // Category-specific mini-briefings
+          // Category-specific mini-briefings with tone adaptation
           maxTokens = 150;
+          const toneInstruction = toneGuidance[coaching_mode];
+          
           const categoryPrompts: Record<string, { system: string; user: string }> = {
             recovery: {
-              system: `You are Yves, a health coach. Create a focused 60-word briefing about recovery status using Oura Ring data. Include readiness scores and recovery advice. Use emoji 🏃 at the start. Plain text only, no markdown. Only mention metrics that have actual data.`,
+              system: `You are Yves, a health coach. Create a focused 60-word briefing about recovery status using Oura Ring data. Include readiness scores and recovery advice. Use emoji 🏃 at the start. Plain text only, no markdown. Only mention metrics that have actual data. ${toneInstruction}`,
               user: `${promptContext}\n\nFocus only on recovery metrics and advice based on Oura data.`
             },
             sleep: {
-              system: `You are Yves, a health coach. Create a focused 60-word briefing about sleep quality using Oura Ring data. Include sleep score and recommendations. Use emoji 😴 at the start. Plain text only, no markdown. Only mention metrics that have actual data.`,
+              system: `You are Yves, a health coach. Create a focused 60-word briefing about sleep quality using Oura Ring data. Include sleep score and recommendations. Use emoji 😴 at the start. Plain text only, no markdown. Only mention metrics that have actual data. ${toneInstruction}`,
               user: `${promptContext}\n\nFocus only on sleep metrics and advice based on Oura data.`
             },
             activity: {
-              system: `You are Yves, a health coach. Create a focused 60-word briefing about activity using Oura Ring data. Include activity score, steps, and training advice. Use emoji 💪 at the start. Plain text only, no markdown. Only mention metrics that have actual data.`,
+              system: `You are Yves, a health coach. Create a focused 60-word briefing about activity using Oura Ring data. Include activity score, steps, and training advice. Use emoji 💪 at the start. Plain text only, no markdown. Only mention metrics that have actual data. ${toneInstruction}`,
               user: `${promptContext}\n\nFocus only on activity metrics and training advice based on Oura data.`
             },
             goals: {
-              system: `You are Yves, a health coach. Create a focused 60-word briefing about goal progress based on user profile and Oura data. Mention progress toward stated goals and provide encouragement. Use emoji 🎯 at the start. Plain text only, no markdown.`,
+              system: `You are Yves, a health coach. Create a focused 60-word briefing about goal progress based on user profile and Oura data. Mention progress toward stated goals and provide encouragement. Use emoji 🎯 at the start. Plain text only, no markdown. ${toneInstruction}`,
               user: `${promptContext}\n\nFocus on progress toward the user's stated goals.`
             },
             tip: {
-              system: `You are Yves, a health coach. Create a focused 40-word actionable health tip based on the user's Oura data and any uploaded documents. Use emoji 💡 at the start. Plain text only, no markdown.`,
+              system: `You are Yves, a health coach. Create a focused 40-word actionable health tip based on the user's Oura data and any uploaded documents. Use emoji 💡 at the start. Plain text only, no markdown. ${toneInstruction}`,
               user: `${promptContext}\n\nGive one specific, personalized tip based on their data.`
             }
           };

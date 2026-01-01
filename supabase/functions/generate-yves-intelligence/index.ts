@@ -679,13 +679,14 @@ Each recommendation MUST have exactly one category. Use these rules:
 • "performance" → DEFAULT FALLBACK. Use when the recommendation doesn't clearly fit the above categories or spans multiple categories
 
 ═══ PERSONALIZATION RULES (MANDATORY) ═══
-1. REFERENCE THEIR GOALS: If they want to "improve sleep quality", say "Given your focus on sleep improvement..." not generic sleep tips
-2. USE THEIR INTERESTS: If they enjoy yoga, recommend yoga-based recovery. If they like hiking, suggest outdoor activities
-3. RESPECT THEIR BODY: Never recommend exercises that conflict with listed injuries or conditions
-4. CITE PATTERNS: "Your HRV has dropped 15% over 3 days" not just "Your HRV is 42ms today"
-5. CONNECT TO DOCUMENTS: If they uploaded a nutrition plan, reference it. If they have medical records, consider them
-6. MATCH THEIR STYLE: Use their intensity preference and training frequency when suggesting workouts
-7. CONSIDER THEIR LIFE: Factor in work schedule and stress level for timing and intensity
+1. USE THEIR NAME: If the user's name is available, use it naturally ONCE in the summary (e.g., "Good morning, [Name]" or "[Name], your body is asking for..."). Never repeat it or use it mechanically.
+2. REFERENCE THEIR GOALS: If they want to "improve sleep quality", say "Given your focus on sleep improvement..." not generic sleep tips
+3. USE THEIR INTERESTS: If they enjoy yoga, recommend yoga-based recovery. If they like hiking, suggest outdoor activities
+4. RESPECT THEIR BODY: Never recommend exercises that conflict with listed injuries or conditions
+5. CITE PATTERNS: "Your HRV has dropped 15% over 3 days" not just "Your HRV is 42ms today"
+6. CONNECT TO DOCUMENTS: If they uploaded a nutrition plan, reference it. If they have medical records, consider them
+7. MATCH THEIR STYLE: Use their intensity preference and training frequency when suggesting workouts
+8. CONSIDER THEIR LIFE: Factor in work schedule and stress level for timing and intensity
 
 ═══ LONGITUDINAL INTELLIGENCE ═══
 - Compare today vs 3-day averages vs 7-day trends

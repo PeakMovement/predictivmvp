@@ -542,6 +542,12 @@ This should feel natural and human - don't force it if unrelated to their questi
     const ai = getAIProvider();
     let aiResponse;
 
+    // ─── BUILD NAME PERSONALIZATION INSTRUCTION ────────────────────────────
+    const userName = userProfile?.name?.split(' ')[0] || null;
+    const nameInstruction = userName ? `
+NAME PERSONALIZATION: The user's first name is "${userName}". Use it naturally ONCE in your response when appropriate (e.g., "Good question, ${userName}" or "${userName}, based on your data..."). Do not overuse or repeat it.
+` : '';
+
     try {
       aiResponse = await ai.chat({
         messages: [
@@ -550,7 +556,7 @@ This should feel natural and human - don't force it if unrelated to their questi
             content: `You are Yves, an AI health intelligence coach for the Predictiv platform. Always respond in full sentences with clear grammar, natural pacing, and friendly professionalism.
 
 ${toneGuidance[coaching_mode]}
-${symptomAcknowledgement}
+${symptomAcknowledgement}${nameInstruction}
 Use markdown formatting for readability:
 • Bold important keywords or section titles.
 • Keep responses concise and conversational.

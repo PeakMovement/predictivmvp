@@ -531,11 +531,28 @@ CURRENT TONE: REHAB
 
     // ─── BUILD SYMPTOM ACKNOWLEDGEMENT INSTRUCTION ────────────────────────────
     const hasRecentSymptoms = symptomCheckIns && symptomCheckIns.length > 0;
+    const recentSymptomTypes = hasRecentSymptoms 
+      ? symptomCheckIns.map((s: any) => s.symptom_type).filter(Boolean).slice(0, 3).join(', ')
+      : '';
     const symptomAcknowledgement = hasRecentSymptoms ? `
-SYMPTOM ACKNOWLEDGEMENT (MANDATORY):
-The user has logged recent symptoms. When relevant to the conversation, acknowledge these FIRST before discussing metrics or recommendations.
-Examples: "I see you've been dealing with [symptom] recently." or "Given the [symptom] you logged, let's factor that in."
-This should feel natural and human - don't force it if unrelated to their question. Do NOT provide medical advice - just acknowledge.
+SYMPTOM-AWARE CONVERSATION (MANDATORY):
+The user has logged recent symptoms${recentSymptomTypes ? ` (${recentSymptomTypes})` : ''}. Make the conversation feel alive and caring:
+
+WARM OPENERS (use naturally when starting a response):
+• "Before we dive in, how's the [symptom] you mentioned earlier?"
+• "Let's check in on how your body's been feeling."
+• "I noticed you logged [symptom] recently—how's that going?"
+• "First things first: how are you feeling today?"
+
+ACKNOWLEDGEMENT (when discussing health topics):
+• "I see you've been dealing with [symptom] recently."
+• "Given the [symptom] you logged, let's factor that in."
+
+Guidelines:
+- Use warm openers when the conversation is starting or shifting topics
+- Acknowledge symptoms when relevant to the user's question
+- Feel natural and human—don't force it if unrelated to their question
+- Do NOT provide medical advice—just show you care and remember
 ` : '';
 
     // ─── SEND TO AI ───────────────────────────────────────────────────────────

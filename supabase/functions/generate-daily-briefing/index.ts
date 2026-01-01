@@ -334,6 +334,15 @@ PERSONALIZATION: The user's first name is "${userName}". Use it naturally ONCE a
 
 ${toneGuidance[coaching_mode]}
 ${symptomAcknowledgement}${nameInstruction}
+COACHING LANGUAGE (use instead of clinical phrasing):
+• "Metrics indicate" → "What I'm seeing suggests"
+• "Consider reducing intensity" → "Let's ease off today"
+• "Suboptimal recovery" → "Your body hasn't fully recharged"
+• "Data suggests" → "It looks like"
+• "Recommend" → "I'd suggest" or "Let's try"
+• "Elevated strain" → "You've been pushing hard"
+Speak like a trusted coach, not a medical report.
+
 Use emoji section markers (🏃, 💪, 💡, 🎯). Be specific with actual numbers from the data. Keep it actionable.
 
 CRITICAL FORMATTING RULES:

@@ -390,6 +390,64 @@ Deno.serve(async (req) => {
       }
     }
 
+    // ─── COACHING MODE CLASSIFICATION ─────────────────────────────────────────
+    // Classify user context into one of: general_wellness, performance, rehab
+    type CoachingMode = 'general_wellness' | 'performance' | 'rehab';
+    
+    const classifyCoachingMode = (): CoachingMode => {
+      // Priority 1: REHAB - Check for symptoms, pain, injury risk, or high deviations
+      const hasRecentSymptoms = symptomCheckIns && symptomCheckIns.length > 0;
+      const hasSevereSymptoms = symptomCheckIns?.some(s => 
+        s.severity === 'severe' || s.severity === 'moderate'
+      );
+      const hasPainSymptoms = symptomCheckIns?.some(s => 
+        s.symptom_type?.toLowerCase().includes('pain') ||
+        s.symptom_type?.toLowerCase().includes('ache') ||
+        s.symptom_type?.toLowerCase().includes('sore') ||
+        s.symptom_type?.toLowerCase().includes('injury')
+      );
+      const hasHighRiskAnomalies = healthAnomalies?.some(a => 
+        a.severity === 'high' || a.severity === 'critical'
+      );
+      const hasHighRiskDeviations = userDeviations?.some(d => 
+        d.risk_zone === 'high-risk' || d.risk_zone === 'moderate-risk'
+      );
+      const hasActiveInjuries = userProfile?.injuries?.length > 0;
+      
+      // Check for overload from training trends
+      const latestTrend = trainingTrends?.[0];
+      const isOverloaded = latestTrend?.acwr !== null && latestTrend?.acwr > 1.5;
+
+      if (hasSevereSymptoms || hasPainSymptoms || hasHighRiskAnomalies || 
+          hasHighRiskDeviations || hasActiveInjuries || isOverloaded) {
+        return 'rehab';
+      }
+
+      // Priority 2: PERFORMANCE - Check for training focus, goals, high activity
+      const performanceGoals = ['performance', 'strength', 'endurance', 'speed', 
+        'muscle', 'training', 'competition', 'race', 'marathon', 'triathlon', 
+        'gym', 'running', 'cycling', 'swimming', 'conditioning'];
+      
+      const hasPerformanceGoals = userProfile?.goals?.some((g: string) => 
+        performanceGoals.some(pg => g.toLowerCase().includes(pg))
+      );
+      const hasHighActivityLevel = userProfile?.activity_level === 'very_active' || 
+        userProfile?.activity_level === 'extremely_active';
+      const hasTrainingData = trainingTrends && trainingTrends.length >= 3;
+      const hasOptimalACWR = latestTrend?.acwr !== null && 
+        latestTrend?.acwr >= 0.8 && latestTrend?.acwr <= 1.3;
+
+      if (hasPerformanceGoals || (hasHighActivityLevel && hasTrainingData) || hasOptimalACWR) {
+        return 'performance';
+      }
+
+      // Priority 3: GENERAL_WELLNESS - Default for recovery, sleep, stress, mobility
+      return 'general_wellness';
+    };
+
+    const coaching_mode: CoachingMode = classifyCoachingMode();
+    console.log(`[yves-chat] Coaching mode: ${coaching_mode} for user ${user.id}`);
+
     // ─── BUILD SYMPTOM CHECK-INS CONTEXT (NEW) ───────────────────────────────
     let symptomsContext = "";
     if (symptomCheckIns && symptomCheckIns.length > 0) {
@@ -412,6 +470,9 @@ Deno.serve(async (req) => {
 
     // ─── BUILD PROMPT CONTEXT ────────────────────────────────────────────────
     const contextInfo = `
+COACHING MODE: ${coaching_mode.toUpperCase().replace('_', ' ')}
+(This indicates the user's primary context for this conversation)
+
 USER PROFILE:
 Name: ${userProfile?.name || "Not provided"}
 Goals: ${userProfile?.goals?.join(", ") || "Not provided"}

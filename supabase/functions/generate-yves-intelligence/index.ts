@@ -179,8 +179,70 @@ Deno.serve(async (req) => {
     const hasWearableData = wearableSummary.length > 0 || wearableSessions.length > 0 || trainingTrends.length > 0;
     const hasProfileData = userProfile || userMedical || userWellnessGoals;
 
+    // ─── COACHING MODE CLASSIFICATION ────────────────────────────────────────
+    // Classify user context into one of: general_wellness, performance, rehab
+    type CoachingMode = 'general_wellness' | 'performance' | 'rehab';
+    
+    const classifyCoachingMode = (): CoachingMode => {
+      // Priority 1: REHAB - Check for symptoms, pain, injury risk, or high deviations
+      const hasRecentSymptoms = symptomCheckIns.length > 0;
+      const hasSevereSymptoms = symptomCheckIns.some(s => 
+        s.severity === 'severe' || s.severity === 'moderate'
+      );
+      const hasPainSymptoms = symptomCheckIns.some(s => 
+        s.symptom_type?.toLowerCase().includes('pain') ||
+        s.symptom_type?.toLowerCase().includes('ache') ||
+        s.symptom_type?.toLowerCase().includes('sore') ||
+        s.symptom_type?.toLowerCase().includes('injury')
+      );
+      const hasHighRiskAnomalies = healthAnomalies.some(a => 
+        a.severity === 'high' || a.severity === 'critical'
+      );
+      const hasHighRiskDeviations = userDeviations.some(d => 
+        d.risk_zone === 'high-risk' || d.risk_zone === 'moderate-risk'
+      );
+      const hasActiveInjuries = userInjuries?.injuries?.length > 0;
+      const latestACWR = trainingTrends[0]?.acwr;
+      const isOverloaded = latestACWR !== null && latestACWR > 1.5;
+
+      if (hasSevereSymptoms || hasPainSymptoms || hasHighRiskAnomalies || 
+          hasHighRiskDeviations || hasActiveInjuries || isOverloaded) {
+        return 'rehab';
+      }
+
+      // Priority 2: PERFORMANCE - Check for training focus, goals, high activity
+      const performanceGoals = ['performance', 'strength', 'endurance', 'speed', 
+        'muscle', 'training', 'competition', 'race', 'marathon', 'triathlon', 
+        'gym', 'running', 'cycling', 'swimming', 'conditioning'];
+      
+      const hasPerformanceGoals = userProfile?.goals?.some((g: string) => 
+        performanceGoals.some(pg => g.toLowerCase().includes(pg))
+      );
+      const hasHighActivityLevel = userProfile?.activity_level === 'very_active' || 
+        userProfile?.activity_level === 'extremely_active';
+      const hasTrainingProfile = userTraining?.preferred_activities?.length > 0;
+      const hasRecentTrainingData = trainingTrends.length >= 3;
+      const hasOptimalACWR = latestACWR !== null && latestACWR >= 0.8 && latestACWR <= 1.3;
+
+      if (hasPerformanceGoals || (hasHighActivityLevel && hasRecentTrainingData) || 
+          (hasTrainingProfile && hasOptimalACWR)) {
+        return 'performance';
+      }
+
+      // Priority 3: GENERAL_WELLNESS - Default for recovery, sleep, stress, mobility
+      return 'general_wellness';
+    };
+
+    const coaching_mode: CoachingMode = classifyCoachingMode();
+    console.log(`[generate-yves-intelligence] Coaching mode classified as: ${coaching_mode} for user ${userId}`);
+
     // ─── BUILD COMPREHENSIVE CONTEXT ─────────────────────────────────────────
     let promptContext = "";
+    
+    // Add coaching mode to context
+    promptContext += `═══ COACHING MODE ═══\n\n`;
+    promptContext += `Current Mode: ${coaching_mode.toUpperCase().replace('_', ' ')}\n`;
+    promptContext += `(This indicates the user's primary context for today's recommendations)\n\n`;
 
     // ═══════════════════════════════════════════════════════════════════════
     // SECTION 1: USER PROFILE & GOALS (Static/Long-term)

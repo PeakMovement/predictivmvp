@@ -119,6 +119,14 @@ Deno.serve(async (req) => {
           .eq("user_id", uid)
           .maybeSingle();
 
+        // ─── LOAD RECENT SYMPTOM CHECK-INS ───────────────────────────────────
+        const { data: symptomCheckIns } = await supabase
+          .from("symptom_check_ins")
+          .select("symptom_type, severity, body_location, created_at")
+          .eq("user_id", uid)
+          .order("created_at", { ascending: false })
+          .limit(5);
+
         // ─── BUILD CONTEXT DATA ──────────────────────────────────────────────
         const contextData: Record<string, unknown> = {
           wearable_summary: wearableSummary || [],
@@ -127,6 +135,7 @@ Deno.serve(async (req) => {
           memory_bank: memoryBank || [],
           user_profile: userProfile || null,
           user_context: userContext || null,
+          symptom_check_ins: symptomCheckIns || [],
         };
 
         const hasWearableData = (wearableSummary && wearableSummary.length > 0) || 
@@ -137,16 +146,22 @@ Deno.serve(async (req) => {
         type CoachingMode = 'general_wellness' | 'performance' | 'rehab';
         
         const classifyCoachingMode = (): CoachingMode => {
-          // Check for rehab indicators from profile
+          // Check for rehab indicators from profile and symptoms
           const hasActiveInjuries = userProfile?.injuries?.length > 0;
           const hasConditions = userProfile?.conditions?.length > 0;
+          
+          // Check for recent symptoms indicating rehab mode
+          const hasRecentSymptoms = symptomCheckIns && symptomCheckIns.length > 0;
+          const hasSevereSymptoms = symptomCheckIns?.some(s => 
+            s.severity === 'severe' || s.severity === 'moderate'
+          );
           
           // Check wearable data for overload signals
           const latestSummary = wearableSummary?.[0];
           const isOverloaded = latestSummary?.acwr !== null && latestSummary?.acwr > 1.5;
           const highStrain = latestSummary?.strain !== null && latestSummary?.strain > 150;
           
-          if (hasActiveInjuries || isOverloaded || highStrain) {
+          if (hasActiveInjuries || isOverloaded || highStrain || hasSevereSymptoms) {
             return 'rehab';
           }
 
@@ -265,6 +280,20 @@ Deno.serve(async (req) => {
           if (userProfile.activity_level) promptContext += `- Activity Level: ${userProfile.activity_level}\n`;
           if (userProfile.injuries?.length > 0) promptContext += `- Injuries: ${userProfile.injuries.join(", ")}\n`;
           if (userProfile.conditions?.length > 0) promptContext += `- Conditions: ${userProfile.conditions.join(", ")}\n`;
+          promptContext += "\n";
+        }
+
+        // Add recent symptoms context
+        if (symptomCheckIns && symptomCheckIns.length > 0) {
+          promptContext += `Recent Symptoms:\n`;
+          symptomCheckIns.forEach(s => {
+            const date = new Date(s.created_at);
+            const daysAgo = Math.floor((Date.now() - date.getTime()) / (1000 * 60 * 60 * 24));
+            const timeLabel = daysAgo === 0 ? "today" : daysAgo === 1 ? "yesterday" : `${daysAgo} days ago`;
+            promptContext += `- ${s.symptom_type} (${s.severity})`;
+            if (s.body_location) promptContext += ` - ${s.body_location}`;
+            promptContext += ` - ${timeLabel}\n`;
+          });
           promptContext += "\n";
         }
 

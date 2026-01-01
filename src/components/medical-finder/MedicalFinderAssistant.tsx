@@ -11,6 +11,10 @@ import { AnalyzingStep } from './AnalyzingStep';
 import { ProgressIndicator } from './ProgressIndicator';
 import { Loader2 } from 'lucide-react';
 
+interface MedicalFinderAssistantProps {
+  initialSymptomsOverride?: string;
+}
+
 function MedicalFinderContent() {
   const { 
     currentStep, 
@@ -72,28 +76,32 @@ function MedicalFinderContent() {
   );
 }
 
-export function MedicalFinderAssistant() {
+export function MedicalFinderAssistant({ initialSymptomsOverride }: MedicalFinderAssistantProps) {
   const [searchParams] = useSearchParams();
 
   // Read query parameters OR sessionStorage and build initial symptoms string
   const initialSymptoms = useMemo(() => {
-    // Priority 1: Check sessionStorage (from symptom check-in flow)
+    // Priority 1: Direct prop override (from FindHelp when using internal finder)
+    if (initialSymptomsOverride) {
+      console.log('[MedicalFinderAssistant] Using prop override:', initialSymptomsOverride);
+      return initialSymptomsOverride;
+    }
+
+    // Priority 2: Check sessionStorage (from symptom check-in flow)
     const storedQuery = sessionStorage.getItem('findHelpQuery');
     if (storedQuery) {
       try {
         const { q, severity } = JSON.parse(storedQuery);
-        // Don't clear sessionStorage here - FindHelp.tsx handles that
-        // But we do want to use this data
         console.log('[MedicalFinderAssistant] Using sessionStorage data:', { q, severity });
         if (q) {
-          return q; // Already includes severity info in the formatted text
+          return q;
         }
       } catch (e) {
         console.error('[MedicalFinderAssistant] Failed to parse stored query:', e);
       }
     }
     
-    // Priority 2: Fall back to URL search params
+    // Priority 3: Fall back to URL search params
     const q = searchParams.get('q');
     const severity = searchParams.get('severity');
     
@@ -101,7 +109,7 @@ export function MedicalFinderAssistant() {
       return severity ? `${q} (Severity: ${severity})` : q;
     }
     return '';
-  }, [searchParams]);
+  }, [initialSymptomsOverride, searchParams]);
 
   return (
     <MedicalFinderProvider initialSymptoms={initialSymptoms}>

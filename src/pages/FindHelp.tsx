@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Loader2, ExternalLink, Bug, ArrowRight } from 'lucide-react';
+import { Loader2, ExternalLink, Bug, ArrowRight, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { MedicalFinderAssistant } from '@/components/medical-finder/MedicalFinderAssistant';
@@ -12,14 +12,16 @@ export const FindHelp = () => {
   const [useInternalFinder, setUseInternalFinder] = useState(false);
   const [showDebug, setShowDebug] = useState(false);
   const [storedQuery, setStoredQuery] = useState<{ q?: string; severity?: string } | null>(null);
+  const [showPrefillPrompt, setShowPrefillPrompt] = useState(false);
 
-  // Read sessionStorage on mount
+  // Read sessionStorage on mount - DO NOT clear it here
   useEffect(() => {
     const stored = sessionStorage.getItem('findHelpQuery');
     if (stored) {
       try {
         const parsed = JSON.parse(stored);
         setStoredQuery(parsed);
+        setShowPrefillPrompt(true); // Show the prefill prompt
         console.log('[FindHelp] Found stored query:', parsed);
       } catch (e) {
         console.error('[FindHelp] Failed to parse stored query:', e);
@@ -27,30 +29,22 @@ export const FindHelp = () => {
     }
   }, []);
 
-  // Build iframe URL with query parameters
+  // Build iframe URL with query parameters (without clearing sessionStorage)
   const iframeUrl = useMemo(() => {
     const baseUrl = 'https://predictiv-medic-finder.netlify.app';
     
-    // Priority 1: Check sessionStorage (from symptom check-in flow)
-    const stored = sessionStorage.getItem('findHelpQuery');
-    if (stored) {
-      try {
-        const { q, severity } = JSON.parse(stored);
-        sessionStorage.removeItem('findHelpQuery'); // Clear after reading
-        
-        const params = new URLSearchParams();
-        if (q) params.set('q', q);
-        if (severity) params.set('severity', severity);
-        
-        const url = `${baseUrl}?${params.toString()}`;
-        console.log('[FindHelp] Auto-fill URL:', url);
-        return url;
-      } catch (e) {
-        console.error('Failed to parse stored query:', e);
-      }
+    // Use storedQuery state if available
+    if (storedQuery?.q) {
+      const params = new URLSearchParams();
+      params.set('q', storedQuery.q);
+      if (storedQuery.severity) params.set('severity', storedQuery.severity);
+      
+      const url = `${baseUrl}?${params.toString()}`;
+      console.log('[FindHelp] Auto-fill URL from stored query:', url);
+      return url;
     }
     
-    // Priority 2: Fall back to URL search params
+    // Fall back to URL search params
     const q = searchParams.get('q');
     const severity = searchParams.get('severity');
     
@@ -62,7 +56,22 @@ export const FindHelp = () => {
     const url = queryString ? `${baseUrl}?${queryString}` : baseUrl;
     console.log('[FindHelp] iframe URL:', url);
     return url;
-  }, [searchParams]);
+  }, [searchParams, storedQuery]);
+
+  // Handler for using internal finder with auto-fill
+  const handleUseInternalFinder = () => {
+    setShowPrefillPrompt(false);
+    setUseInternalFinder(true);
+    // Clear sessionStorage now that we're using the data
+    sessionStorage.removeItem('findHelpQuery');
+  };
+
+  // Handler for starting fresh (no prefill)
+  const handleStartFresh = () => {
+    setShowPrefillPrompt(false);
+    setStoredQuery(null);
+    sessionStorage.removeItem('findHelpQuery');
+  };
 
   // Timeout fallback after 15 seconds
   useEffect(() => {
@@ -86,7 +95,7 @@ export const FindHelp = () => {
     setHasError(true);
   };
 
-  // If using internal finder, render it directly
+  // If using internal finder, render it directly with symptoms passed as prop
   if (useInternalFinder) {
     return (
       <div className="min-h-screen bg-background pb-20 px-4 pt-6">
@@ -101,8 +110,57 @@ export const FindHelp = () => {
             ← Back to embedded finder
           </Button>
           
-          <MedicalFinderAssistant />
+          <MedicalFinderAssistant initialSymptomsOverride={storedQuery?.q} />
         </div>
+      </div>
+    );
+  }
+
+  // Show prefill prompt when we have symptom data
+  if (showPrefillPrompt && storedQuery?.q) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center px-4">
+        <Card className="max-w-lg w-full border-primary/30 bg-card">
+          <CardContent className="p-6">
+            <div className="flex items-center gap-2 mb-4">
+              <Sparkles className="h-5 w-5 text-primary" />
+              <h2 className="text-lg font-semibold">Your Symptoms Are Ready</h2>
+            </div>
+            
+            <div className="bg-muted/50 rounded-lg p-4 mb-4">
+              <p className="text-sm text-muted-foreground mb-1">Your description:</p>
+              <p className="text-sm font-medium line-clamp-3">
+                {storedQuery.q}
+              </p>
+              {storedQuery.severity && (
+                <p className="text-xs text-muted-foreground mt-2">
+                  Severity: {storedQuery.severity}
+                </p>
+              )}
+            </div>
+            
+            <p className="text-sm text-muted-foreground mb-6">
+              Would you like to auto-fill this into the medical finder to help match you with the right provider?
+            </p>
+            
+            <div className="flex flex-col sm:flex-row gap-3">
+              <Button 
+                onClick={handleUseInternalFinder}
+                className="flex-1"
+              >
+                <Sparkles className="h-4 w-4 mr-2" />
+                Auto-fill and continue
+              </Button>
+              <Button 
+                variant="outline" 
+                onClick={handleStartFresh}
+                className="flex-1"
+              >
+                Start fresh
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     );
   }
@@ -138,27 +196,6 @@ export const FindHelp = () => {
           )}
         </div>
       )}
-
-      {/* Prefill Banner - Show when we have data to prefill */}
-      {storedQuery?.q && !isLoading && !hasError && (
-        <div className="bg-primary/10 border-b border-primary/20 px-4 py-3">
-          <div className="max-w-4xl mx-auto flex items-center justify-between gap-4">
-            <div className="text-sm">
-              <span className="text-muted-foreground">
-                Your symptom data was sent to the finder. If it didn't auto-fill:
-              </span>
-            </div>
-            <Button
-              size="sm"
-              onClick={() => setUseInternalFinder(true)}
-              className="shrink-0"
-            >
-              Use built-in finder <ArrowRight className="ml-1 h-4 w-4" />
-            </Button>
-          </div>
-        </div>
-      )}
-
       {/* Loading State */}
       {isLoading && (
         <div className="absolute inset-0 flex items-center justify-center bg-background z-10">

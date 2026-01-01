@@ -132,8 +132,53 @@ Deno.serve(async (req) => {
         const hasWearableData = (wearableSummary && wearableSummary.length > 0) || 
                                 (wearableSessions && wearableSessions.length > 0);
 
+        // ─── COACHING MODE CLASSIFICATION ────────────────────────────────────
+        // Classify user context into one of: general_wellness, performance, rehab
+        type CoachingMode = 'general_wellness' | 'performance' | 'rehab';
+        
+        const classifyCoachingMode = (): CoachingMode => {
+          // Check for rehab indicators from profile
+          const hasActiveInjuries = userProfile?.injuries?.length > 0;
+          const hasConditions = userProfile?.conditions?.length > 0;
+          
+          // Check wearable data for overload signals
+          const latestSummary = wearableSummary?.[0];
+          const isOverloaded = latestSummary?.acwr !== null && latestSummary?.acwr > 1.5;
+          const highStrain = latestSummary?.strain !== null && latestSummary?.strain > 150;
+          
+          if (hasActiveInjuries || isOverloaded || highStrain) {
+            return 'rehab';
+          }
+
+          // Check for performance indicators
+          const performanceGoals = ['performance', 'strength', 'endurance', 'speed', 
+            'muscle', 'training', 'competition', 'race', 'marathon', 'triathlon', 
+            'gym', 'running', 'cycling', 'swimming', 'conditioning'];
+          
+          const hasPerformanceGoals = userProfile?.goals?.some((g: string) => 
+            performanceGoals.some(pg => g.toLowerCase().includes(pg))
+          );
+          const hasHighActivityLevel = userProfile?.activity_level === 'very_active' || 
+            userProfile?.activity_level === 'extremely_active';
+          const hasOptimalACWR = latestSummary?.acwr !== null && 
+            latestSummary?.acwr >= 0.8 && latestSummary?.acwr <= 1.3;
+
+          if (hasPerformanceGoals || hasHighActivityLevel || hasOptimalACWR) {
+            return 'performance';
+          }
+
+          // Default to general wellness
+          return 'general_wellness';
+        };
+
+        const coaching_mode: CoachingMode = classifyCoachingMode();
+        console.log(`[generate-daily-briefing] Coaching mode: ${coaching_mode} for user ${uid}`);
+
         // ─── BUILD PROMPT CONTEXT ────────────────────────────────────────────
         let promptContext = "";
+        
+        // Add coaching mode to context
+        promptContext += `Coaching Mode: ${coaching_mode.toUpperCase().replace('_', ' ')}\n\n`;
 
         // Add Oura Ring data - ONLY reference populated fields
         if (hasWearableData) {

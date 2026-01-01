@@ -304,6 +304,15 @@ Deno.serve(async (req) => {
           rehab: `Adopt a CAUTIOUS, PROTECTIVE tone. Prioritize safety above all. Be precise about what to do AND what to avoid. Acknowledge any frustration. Never suggest pushing through symptoms.`
         };
 
+        // ─── BUILD SYMPTOM ACKNOWLEDGEMENT INSTRUCTION ─────────────────────
+        const hasRecentSymptoms = symptomCheckIns && symptomCheckIns.length > 0;
+        const symptomAcknowledgement = hasRecentSymptoms ? `
+SYMPTOM ACKNOWLEDGEMENT (MANDATORY):
+The user has logged recent symptoms. You MUST acknowledge these FIRST before discussing metrics or recommendations.
+Examples: "I see you've been dealing with [symptom] recently." or "Given the [symptom] you logged, let's factor that in."
+This should feel natural and human. Do NOT provide medical advice - just acknowledge.
+` : '';
+
         // ─── CALL LOVABLE AI ────────────────────────────────────────────────
         let systemPrompt: string;
         let userPrompt: string;
@@ -318,7 +327,7 @@ Deno.serve(async (req) => {
 4. Motivation: Brief encouragement aligned with their goals
 
 ${toneGuidance[coaching_mode]}
-
+${symptomAcknowledgement}
 Use emoji section markers (🏃, 💪, 💡, 🎯). Be specific with actual numbers from the data. Keep it actionable.
 
 CRITICAL FORMATTING RULES:

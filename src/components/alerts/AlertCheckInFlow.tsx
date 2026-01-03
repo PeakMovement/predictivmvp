@@ -310,7 +310,7 @@ export function AlertCheckInFlow({ alert, onComplete, onNavigateToHelp }: AlertC
             <div className="flex items-center justify-between">
               <CardTitle className="flex items-center gap-2 text-foreground">
                 <CheckCircle2 className="h-5 w-5 text-green-500" />
-                {hasSymptoms ? "Check-In Complete" : "All Clear"}
+                {hasSymptoms ? "Check In Complete" : "All Clear"}
               </CardTitle>
               <Button variant="ghost" size="icon" onClick={handleClose}>
                 <X className="h-4 w-4" />
@@ -324,7 +324,7 @@ export function AlertCheckInFlow({ alert, onComplete, onNavigateToHelp }: AlertC
               </p>
             ) : (
               <p className="text-muted-foreground">
-                Thank you for logging your symptoms. Based on your check-in, here's some guidance:
+                Thank you for logging your symptoms. Based on your check in, here's some guidance:
               </p>
             )}
             

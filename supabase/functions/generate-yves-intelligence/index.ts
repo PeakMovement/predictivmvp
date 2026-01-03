@@ -14,6 +14,7 @@ interface YvesIntelligenceOutput {
     summary: string;
     keyChanges: string[];
     riskHighlights: string[];
+    todaysFocus?: string;
   };
   recommendations: Array<{
     text: string;
@@ -650,7 +651,8 @@ Generate a JSON object with this exact structure:
   "dailyBriefing": {
     "summary": "2-3 sentences that interpret their current state IN CONTEXT of their goals and recent trajectory",
     "keyChanges": ["Specific change referencing multi-day patterns", "Another pattern-based observation"],
-    "riskHighlights": ["Risk framed around their specific conditions/goals if any"]
+    "riskHighlights": ["Risk framed around their specific conditions/goals if any"],
+    "todaysFocus": "One clear, actionable priority for today with specific timing or duration"
   },
   "recommendations": [
     {
@@ -661,6 +663,21 @@ Generate a JSON object with this exact structure:
     }
   ]
 }
+
+═══ TODAYS FOCUS RULES (MANDATORY) ═══
+The "todaysFocus" field must contain exactly ONE clear priority for today:
+• Action oriented and easy to remember
+• Include specific timing or duration when possible
+• Use coach tone for training or physical execution actions
+• Use warm, supportive tone for recovery, pain, stress, or wellbeing actions
+• Use strategic, objective tone for planning, work, or long term goal actions
+• Never include multiple actions or mixed messages
+• Do not use hyphens or dashes in the text
+
+Examples:
+• Training: "Complete your 30 minute tempo run before noon to build your race pace"
+• Recovery: "Take today completely off and let your body recover. You've earned it"
+• Strategic: "Review your weekly training plan and set your targets for next week"
 
 ═══ CATEGORY RULES (STRICT) ═══
 Each recommendation MUST have exactly one category. Use these rules:
@@ -812,6 +829,18 @@ RESPOND WITH ONLY THE JSON OBJECT, NO OTHER TEXT.`;
     try {
       content = content.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
       intelligenceData = JSON.parse(content);
+      
+      // Extract todaysFocus from summary if not provided directly
+      if (!intelligenceData.dailyBriefing.todaysFocus) {
+        const focusMatch = intelligenceData.dailyBriefing.summary.match(/🎯\s*Today's Focus:\s*(.+?)(?:\n|$)/i);
+        if (focusMatch) {
+          intelligenceData.dailyBriefing.todaysFocus = focusMatch[1].trim();
+          // Remove the focus from summary to avoid duplication
+          intelligenceData.dailyBriefing.summary = intelligenceData.dailyBriefing.summary
+            .replace(/🎯\s*Today's Focus:\s*.+?(?:\n|$)/i, '')
+            .trim();
+        }
+      }
     } catch (parseError) {
       console.error(`[generate-yves-intelligence] JSON parse error:`, parseError, content);
       
@@ -823,6 +852,9 @@ RESPOND WITH ONLY THE JSON OBJECT, NO OTHER TEXT.`;
             : "Welcome to Yves! Set up your profile and connect your Oura Ring to receive personalized health intelligence.",
           keyChanges: [],
           riskHighlights: [],
+          todaysFocus: hasProfileData
+            ? "Connect your Oura Ring to start receiving personalized insights"
+            : "Complete your profile and connect your wearable to get started",
         },
         recommendations: [{
           text: hasProfileData 

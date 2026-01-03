@@ -20,11 +20,19 @@ export interface WeeklyTheme {
   days: number;
 }
 
+export interface WeekIntent {
+  statement: string;
+  prioritize: string;
+  beCarefulWith: string;
+  tone: 'coach' | 'warm' | 'strategic';
+}
+
 export interface WeeklyOverview {
   weekStart: Date;
   weekEnd: Date;
   days: DayBriefing[];
   themes: WeeklyTheme[];
+  intent: WeekIntent;
   overallFocus: string;
   overallTone: 'coach' | 'warm' | 'strategic';
 }
@@ -154,6 +162,84 @@ function determineOverallFocus(days: DayBriefing[]): { focus: string; tone: 'coa
   };
 }
 
+function generateWeekIntent(days: DayBriefing[], themes: WeeklyTheme[]): WeekIntent {
+  const daysWithData = days.filter(d => d.hasData);
+  
+  // Count categories to determine dominant focus
+  const categoryCounts: Record<string, number> = {};
+  daysWithData.forEach(day => {
+    categoryCounts[day.category] = (categoryCounts[day.category] || 0) + 1;
+  });
+
+  // Determine dominant category
+  let dominantCategory: 'training' | 'recovery' | 'wellbeing' | 'planning' | 'mixed' = 'mixed';
+  let maxCount = 0;
+  Object.entries(categoryCounts).forEach(([cat, count]) => {
+    if (count > maxCount) {
+      maxCount = count;
+      dominantCategory = cat as typeof dominantCategory;
+    }
+  });
+
+  const tone = getToneForCategory(dominantCategory);
+
+  // Generate intent statement based on dominant category
+  const intentStatements: Record<string, string> = {
+    training: 'This week is for building strength and consistency in your training.',
+    recovery: 'This week is for letting your body rest and restore.',
+    wellbeing: 'This week is for honoring how you feel and nurturing your wellbeing.',
+    planning: 'This week is for stepping back and seeing the bigger picture.',
+    mixed: 'This week is for staying flexible and responding to what each day brings.',
+  };
+
+  // Generate prioritize guidance
+  const prioritizeGuidance: Record<string, string> = {
+    training: 'Prioritize showing up for your workouts even when motivation wavers.',
+    recovery: 'Prioritize quality sleep and moments of stillness.',
+    wellbeing: 'Prioritize checking in with yourself before pushing through discomfort.',
+    planning: 'Prioritize clarity over urgency when making decisions.',
+    mixed: 'Prioritize being present with whatever the day asks of you.',
+  };
+
+  // Generate caution guidance based on risks observed
+  const allRisks = daysWithData.flatMap(d => d.riskHighlights);
+  let cautionGuidance: string;
+
+  if (allRisks.length > 0) {
+    // Derive caution from actual risk data
+    const riskText = allRisks.join(' ').toLowerCase();
+    if (riskText.includes('fatigue') || riskText.includes('tired') || riskText.includes('sleep')) {
+      cautionGuidance = 'Be careful with pushing too hard when your body signals fatigue.';
+    } else if (riskText.includes('stress') || riskText.includes('hrv')) {
+      cautionGuidance = 'Be careful with taking on too much when stress levels are elevated.';
+    } else if (riskText.includes('pain') || riskText.includes('discomfort')) {
+      cautionGuidance = 'Be careful with ignoring signals from your body that ask for gentleness.';
+    } else {
+      cautionGuidance = getCautionByCategory(dominantCategory);
+    }
+  } else {
+    cautionGuidance = getCautionByCategory(dominantCategory);
+  }
+
+  return {
+    statement: intentStatements[dominantCategory] || intentStatements.mixed,
+    prioritize: prioritizeGuidance[dominantCategory] || prioritizeGuidance.mixed,
+    beCarefulWith: cautionGuidance,
+    tone,
+  };
+}
+
+function getCautionByCategory(category: string): string {
+  const cautionDefaults: Record<string, string> = {
+    training: 'Be careful with skipping recovery in the pursuit of progress.',
+    recovery: 'Be careful with guilt about resting when rest is what you need.',
+    wellbeing: 'Be careful with dismissing how you feel as unimportant.',
+    planning: 'Be careful with overthinking at the expense of action.',
+    mixed: 'Be careful with spreading yourself too thin across too many priorities.',
+  };
+  return cautionDefaults[category] || cautionDefaults.mixed;
+}
+
 export function useWeeklyBriefings() {
   const [overview, setOverview] = useState<WeeklyOverview | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -239,12 +325,14 @@ export function useWeeklyBriefings() {
 
       const themes = synthesizeThemes(days);
       const { focus: overallFocus, tone: overallTone } = determineOverallFocus(days);
+      const intent = generateWeekIntent(days, themes);
 
       setOverview({
         weekStart,
         weekEnd,
         days,
         themes,
+        intent,
         overallFocus,
         overallTone,
       });

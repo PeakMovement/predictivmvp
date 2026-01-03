@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef, useMemo } from "react";
+import { useEffect, useState, useRef } from "react";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import OuraSyncStatus from "@/components/OuraSyncStatus";
 import { YvesRecommendationsCard } from "@/components/dashboard/YvesRecommendationsCard";
@@ -6,6 +6,7 @@ import { DailyBriefingCard } from "@/components/dashboard/DailyBriefingCard";
 import { RiskScoreCard } from "@/components/dashboard/RiskScoreCard";
 import { TodayActivitySection } from "@/components/dashboard/TodayActivitySection";
 import { FocusModeSelector } from "@/components/dashboard/FocusModeSelector";
+import { CustomFocusEditor } from "@/components/dashboard/CustomFocusEditor";
 import { useRefreshTrends } from "@/hooks/useTrendData";
 import { supabase } from "@/integrations/supabase/client";
 import { useWearableSessions } from "@/hooks/useWearableSessions";
@@ -48,6 +49,13 @@ export const Dashboard = () => {
     isCardEmphasized,
     isCardMinimized,
     getCardOrder,
+    // Custom mode
+    isEditingCustom,
+    openCustomEditor,
+    saveCustomCardPreferences,
+    cancelCustomEditing,
+    getCardPreferencesForEditor,
+    hasCustomPreferences,
   } = useDashboardFocusMode();
   
   // Unified Yves Intelligence - single source of truth for briefing & recommendations
@@ -125,8 +133,21 @@ export const Dashboard = () => {
                   currentMode={currentMode}
                   allModes={allModes}
                   onModeChange={setMode}
+                  onEditCustom={openCustomEditor}
+                  hasCustomPreferences={hasCustomPreferences}
                 />
               </div>
+
+              {/* Custom Focus Editor */}
+              {isEditingCustom && (
+                <div className="mb-8 animate-fade-in">
+                  <CustomFocusEditor
+                    cardPreferences={getCardPreferencesForEditor()}
+                    onSave={saveCustomCardPreferences}
+                    onCancel={cancelCustomEditing}
+                  />
+                </div>
+              )}
 
               {/* Dashboard Cards - Ordered by Focus Mode */}
               <div className="space-y-8">

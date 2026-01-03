@@ -856,6 +856,7 @@ export type Database = {
           avatar_url: string | null
           full_name: string | null
           id: string
+          layout_preferences: Json | null
           memory_cleared_at: string | null
           tone_preference: string | null
           updated_at: string | null
@@ -865,6 +866,7 @@ export type Database = {
           avatar_url?: string | null
           full_name?: string | null
           id: string
+          layout_preferences?: Json | null
           memory_cleared_at?: string | null
           tone_preference?: string | null
           updated_at?: string | null
@@ -874,6 +876,7 @@ export type Database = {
           avatar_url?: string | null
           full_name?: string | null
           id?: string
+          layout_preferences?: Json | null
           memory_cleared_at?: string | null
           tone_preference?: string | null
           updated_at?: string | null

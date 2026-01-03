@@ -6,6 +6,7 @@ import { formatDistanceToNow } from "date-fns";
 import { YvesDailyBriefing } from "@/hooks/useYvesIntelligence";
 import { cn } from "@/lib/utils";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { PersonalContextChips } from "./PersonalContextChips";
 
 interface DailyBriefingCardProps {
   briefing: YvesDailyBriefing | null;
@@ -72,6 +73,9 @@ export function DailyBriefingCard({
         )}
       </CardHeader>
       <CardContent className="space-y-4">
+        {/* Personal Context Section */}
+        <PersonalContextChips className="pb-2 border-b border-border/50" />
+        
         {!briefing ? (
           <div className="text-center py-6 space-y-3">
             <p className="text-muted-foreground">

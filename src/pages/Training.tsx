@@ -31,10 +31,13 @@ import { HealthDataRow } from "@/lib/healthDataStore";
 import { UnifiedTrendCard } from "@/components/trends/UnifiedTrendCard";
 import { useTrainingTrends } from "@/hooks/useTrainingTrends";
 import { SessionLogList } from "@/components/dashboard/SessionLogList";
+import { useLayoutCustomization } from "@/hooks/useLayoutCustomization";
+import { CustomizeLayoutButton } from "@/components/layout/CustomizeLayoutButton";
+import { LayoutEditor } from "@/components/layout/LayoutEditor";
 
 
 // ✅ getSessionLogs, generateSuggestions, getGraphData and helpers remain unchanged
-// (Paste your original implementations here — they don’t affect the grid fix)
+// (Paste your original implementations here — they don't affect the grid fix)
 
 const getSessionLogs = (csvData: HealthDataRow[]) => {
   if (csvData.length === 0) return [];
@@ -81,7 +84,7 @@ const generateSuggestions = (currentData: HealthDataRow | null) => {
   if (sleepHours >= 7 && sleepScore > 80)
     suggestions.push({
       id: 3,
-      text: "Excellent recovery! This is a great day for a high-intensity performance session.",
+      text: "Excellent recovery! This is a great day for a high intensity performance session.",
       type: "actionable",
       category: "Training",
       accentColor: "green",
@@ -209,6 +212,22 @@ export const Training = () => {
   const { trends, isLoading: trendsLoading, refresh, userId } = useTrainingTrends({ days: 7 });
   const [suggestions, setSuggestions] = useState<ReturnType<typeof generateSuggestions>>([]);
 
+  // Layout customization
+  const {
+    isEditing: isLayoutEditing,
+    editingSections,
+    isCustomized: layoutCustomized,
+    openEditor: openLayoutEditor,
+    closeEditor: closeLayoutEditor,
+    saveLayout,
+    resetToDefault,
+    toggleSectionVisibility,
+    moveSectionUp,
+    moveSectionDown,
+    reorderSections,
+    isSectionVisible,
+  } = useLayoutCustomization('training');
+
   // Find latest trend with non-null monotony/strain
   const latestAvailableTrend = trends?.find(t => t.monotony != null && t.strain != null) || null;
   
@@ -241,12 +260,33 @@ export const Training = () => {
       <div className="min-h-screen bg-background pb-[calc(7rem+env(safe-area-inset-bottom))] md:pb-32">
         <div className="container mx-auto px-4 md:px-6 pt-6 md:pt-8 max-w-7xl">
           {/* Header */}
-          <div className="text-center mb-6 md:mb-8">
-            <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-2">Training Analytics</h1>
-            <p className="text-sm md:text-base text-muted-foreground">
-              {userId ? "Track your workouts and training progression" : "Please connect your Ōura Ring to see your data"}
-            </p>
-          </div>
+          {isSectionVisible('header') && (
+            <div className="text-center mb-6 md:mb-8">
+              <div className="flex justify-end mb-2">
+                <CustomizeLayoutButton onClick={openLayoutEditor} isCustomized={layoutCustomized} />
+              </div>
+              <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-2">Training Analytics</h1>
+              <p className="text-sm md:text-base text-muted-foreground">
+                {userId ? "Track your workouts and training progression" : "Please connect your Ōura Ring to see your data"}
+              </p>
+            </div>
+          )}
+
+          {/* Layout Editor */}
+          {isLayoutEditing && (
+            <div className="mb-8 animate-fade-in">
+              <LayoutEditor
+                sections={editingSections}
+                onSave={saveLayout}
+                onCancel={closeLayoutEditor}
+                onReset={resetToDefault}
+                onToggleVisibility={toggleSectionVisibility}
+                onMoveUp={moveSectionUp}
+                onMoveDown={moveSectionDown}
+                onReorder={reorderSections}
+              />
+            </div>
+          )}
 
           {!userId && (
             <div className="text-center py-12 px-4 bg-glass backdrop-blur-xl border border-glass-border rounded-2xl mb-8">
@@ -261,36 +301,42 @@ export const Training = () => {
               <div className="mb-6 md:mb-8">{/* your AccountabilityChallenges component here */}</div>
 
               {/* Session Logs and Gauges */}
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6 mb-6 md:mb-8">
-                <div className="lg:col-span-2 w-full">
-                  <SessionLogList />
+              {isSectionVisible('sessionLogs') && (
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6 mb-6 md:mb-8">
+                  <div className="lg:col-span-2 w-full">
+                    <SessionLogList />
+                  </div>
+                  {isSectionVisible('gauges') && (
+                    <div className="space-y-4 md:space-y-6 w-full">
+                      <CircularGauge
+                        title="Training Monotony"
+                        value={latestAvailableTrend?.monotony ? parseFloat(latestAvailableTrend.monotony.toFixed(1)) : 0}
+                        maxValue={5}
+                        unit="ratio"
+                      />
+                      <CircularGauge
+                        title="Training Strain"
+                        value={latestAvailableTrend?.strain ? Math.round(latestAvailableTrend.strain) : 0}
+                        maxValue={200}
+                        unit="TSS"
+                      />
+                      <CircularGauge
+                        title="Fatigue Index"
+                        value={fatigueIndex}
+                        maxValue={100}
+                        unit="%"
+                      />
+                    </div>
+                  )}
                 </div>
-                <div className="space-y-4 md:space-y-6 w-full">
-                  <CircularGauge
-                    title="Training Monotony"
-                    value={latestAvailableTrend?.monotony ? parseFloat(latestAvailableTrend.monotony.toFixed(1)) : 0}
-                    maxValue={5}
-                    unit="ratio"
-                  />
-                  <CircularGauge
-                    title="Training Strain"
-                    value={latestAvailableTrend?.strain ? Math.round(latestAvailableTrend.strain) : 0}
-                    maxValue={200}
-                    unit="TSS"
-                  />
-                  <CircularGauge
-                    title="Fatigue Index"
-                    value={fatigueIndex}
-                    maxValue={100}
-                    unit="%"
-                  />
-                </div>
-              </div>
+              )}
 
               {/* Trend Analysis Carousel */}
-              <div className="mb-6 md:mb-8">
-                <UnifiedTrendCard />
-              </div>
+              {isSectionVisible('trendAnalysis') && (
+                <div className="mb-6 md:mb-8">
+                  <UnifiedTrendCard />
+                </div>
+              )}
             </>
           )}
         </div>

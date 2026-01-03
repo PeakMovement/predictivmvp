@@ -17,10 +17,16 @@ import { useOuraTokenStatus } from "@/hooks/useOuraTokenStatus";
 import { useToast } from "@/hooks/use-toast";
 import { useYvesIntelligence } from "@/hooks/useYvesIntelligence";
 import { useDashboardFocusMode } from "@/hooks/useDashboardFocusMode";
+import { useLayoutCustomization } from "@/hooks/useLayoutCustomization";
+import { CustomizeLayoutButton } from "@/components/layout/CustomizeLayoutButton";
+import { LayoutEditor } from "@/components/layout/LayoutEditor";
 import { cn } from "@/lib/utils";
 
-const WelcomeHeader = () => (
+const WelcomeHeader = ({ onCustomize, isCustomized }: { onCustomize: () => void; isCustomized: boolean }) => (
   <div className="text-center mb-8 md:mb-12 space-y-3 md:space-y-4 px-4 md:px-0">
+    <div className="flex justify-end mb-2">
+      <CustomizeLayoutButton onClick={onCustomize} isCustomized={isCustomized} />
+    </div>
     <div className="animate-fade-in-slow">
       <h1 className="text-xl md:text-2xl font-light text-muted-foreground mb-1 md:mb-2">Hello,</h1>
       <h2 className="text-3xl md:text-4xl font-bold text-foreground tracking-tight">Athlete</h2>
@@ -40,6 +46,22 @@ export const Dashboard = () => {
   const { isConnected, isLoading: tokenLoading } = useOuraTokenStatus();
   const { toast } = useToast();
   const hasShownConnectionToast = useRef(false);
+  
+  // Layout customization
+  const {
+    isEditing: isLayoutEditing,
+    editingSections,
+    isCustomized: layoutCustomized,
+    openEditor: openLayoutEditor,
+    closeEditor: closeLayoutEditor,
+    saveLayout,
+    resetToDefault,
+    toggleSectionVisibility,
+    moveSectionUp,
+    moveSectionDown,
+    reorderSections,
+    isSectionVisible,
+  } = useLayoutCustomization('dashboard');
   
   // Focus Mode for dashboard presentation
   const {
@@ -118,7 +140,23 @@ export const Dashboard = () => {
     <TooltipProvider>
       <div className="min-h-screen bg-background flex flex-col pb-24 md:pb-32">
         <div className="flex-grow container mx-auto px-4 md:px-6 pt-6 md:pt-8">
-          <WelcomeHeader />
+          <WelcomeHeader onCustomize={openLayoutEditor} isCustomized={layoutCustomized} />
+
+          {/* Layout Editor */}
+          {isLayoutEditing && (
+            <div className="mb-8 animate-fade-in">
+              <LayoutEditor
+                sections={editingSections}
+                onSave={saveLayout}
+                onCancel={closeLayoutEditor}
+                onReset={resetToDefault}
+                onToggleVisibility={toggleSectionVisibility}
+                onMoveUp={moveSectionUp}
+                onMoveDown={moveSectionDown}
+                onReorder={reorderSections}
+              />
+            </div>
+          )}
 
           {!userId ? (
             <div className="text-center py-12 px-4 bg-glass backdrop-blur-xl border border-glass-border rounded-2xl">
@@ -128,15 +166,17 @@ export const Dashboard = () => {
           ) : (
             <>
               {/* Focus Mode Selector */}
-              <div className="mb-8 p-4 bg-glass backdrop-blur-xl border border-glass-border rounded-xl">
-                <FocusModeSelector
-                  currentMode={currentMode}
-                  allModes={allModes}
-                  onModeChange={setMode}
-                  onEditCustom={openCustomEditor}
-                  hasCustomPreferences={hasCustomPreferences}
-                />
-              </div>
+              {isSectionVisible('focusMode') && (
+                <div className="mb-8 p-4 bg-glass backdrop-blur-xl border border-glass-border rounded-xl">
+                  <FocusModeSelector
+                    currentMode={currentMode}
+                    allModes={allModes}
+                    onModeChange={setMode}
+                    onEditCustom={openCustomEditor}
+                    hasCustomPreferences={hasCustomPreferences}
+                  />
+                </div>
+              )}
 
               {/* Custom Focus Editor */}
               {isEditingCustom && (
@@ -152,104 +192,114 @@ export const Dashboard = () => {
               {/* Dashboard Cards - Ordered by Focus Mode */}
               <div className="space-y-8">
                 {/* Risk Score */}
-                <div 
-                  className={cn(
-                    "transition-all duration-300",
-                    isCardMinimized('risk') && "opacity-60 scale-[0.98]",
-                    isCardEmphasized('risk') && "ring-2 ring-primary/30 rounded-xl"
-                  )}
-                  style={{ order: getCardOrder('risk') }}
-                >
-                  <RiskScoreCard />
-                </div>
+                {isSectionVisible('riskScore') && (
+                  <div 
+                    className={cn(
+                      "transition-all duration-300",
+                      isCardMinimized('risk') && "opacity-60 scale-[0.98]",
+                      isCardEmphasized('risk') && "ring-2 ring-primary/30 rounded-xl"
+                    )}
+                    style={{ order: getCardOrder('risk') }}
+                  >
+                    <RiskScoreCard />
+                  </div>
+                )}
 
                 {/* Core Metrics: Sleep, Readiness, Activity */}
-                <div className={cn(
-                  "transition-all duration-300",
-                  isCardMinimized('readiness') && isCardMinimized('sleep') && isCardMinimized('activity') && "opacity-60"
-                )}>
-                  <h3 className="text-lg md:text-xl font-semibold text-foreground mb-4">Today's Scores</h3>
-                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    <div className={cn(
-                      "transition-all duration-300",
-                      isCardEmphasized('readiness') && "ring-2 ring-primary/30 rounded-xl",
-                      isCardMinimized('readiness') && "opacity-60 scale-[0.98]"
-                    )}>
-                      <OuraReadinessCard
-                        score={session?.readiness_score ?? null}
-                        restingHR={session?.resting_hr ?? null}
-                        hrv={session?.hrv_avg ?? null}
-                        isLoading={isLoading}
-                      />
-                    </div>
-                    <div className={cn(
-                      "transition-all duration-300",
-                      isCardEmphasized('sleep') && "ring-2 ring-emerald-500/30 rounded-xl",
-                      isCardMinimized('sleep') && "opacity-60 scale-[0.98]"
-                    )}>
-                      <OuraSleepCard
-                        score={session?.sleep_score ?? null}
-                        totalSleep={null}
-                        deepSleep={null}
-                        remSleep={null}
-                        lightSleep={null}
-                        efficiency={null}
-                        isLoading={isLoading}
-                      />
-                    </div>
-                    <div className={cn(
-                      "transition-all duration-300",
-                      isCardEmphasized('activity') && "ring-2 ring-primary/30 rounded-xl",
-                      isCardMinimized('activity') && "opacity-60 scale-[0.98]"
-                    )}>
-                      <OuraActivityCard
-                        score={session?.activity_score ?? null}
-                        steps={session?.total_steps ?? null}
-                        activeCalories={session?.active_calories ?? null}
-                        totalCalories={session?.total_calories ?? null}
-                        isLoading={isLoading}
-                      />
+                {isSectionVisible('todaysScores') && (
+                  <div className={cn(
+                    "transition-all duration-300",
+                    isCardMinimized('readiness') && isCardMinimized('sleep') && isCardMinimized('activity') && "opacity-60"
+                  )}>
+                    <h3 className="text-lg md:text-xl font-semibold text-foreground mb-4">Today's Scores</h3>
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                      <div className={cn(
+                        "transition-all duration-300",
+                        isCardEmphasized('readiness') && "ring-2 ring-primary/30 rounded-xl",
+                        isCardMinimized('readiness') && "opacity-60 scale-[0.98]"
+                      )}>
+                        <OuraReadinessCard
+                          score={session?.readiness_score ?? null}
+                          restingHR={session?.resting_hr ?? null}
+                          hrv={session?.hrv_avg ?? null}
+                          isLoading={isLoading}
+                        />
+                      </div>
+                      <div className={cn(
+                        "transition-all duration-300",
+                        isCardEmphasized('sleep') && "ring-2 ring-emerald-500/30 rounded-xl",
+                        isCardMinimized('sleep') && "opacity-60 scale-[0.98]"
+                      )}>
+                        <OuraSleepCard
+                          score={session?.sleep_score ?? null}
+                          totalSleep={null}
+                          deepSleep={null}
+                          remSleep={null}
+                          lightSleep={null}
+                          efficiency={null}
+                          isLoading={isLoading}
+                        />
+                      </div>
+                      <div className={cn(
+                        "transition-all duration-300",
+                        isCardEmphasized('activity') && "ring-2 ring-primary/30 rounded-xl",
+                        isCardMinimized('activity') && "opacity-60 scale-[0.98]"
+                      )}>
+                        <OuraActivityCard
+                          score={session?.activity_score ?? null}
+                          steps={session?.total_steps ?? null}
+                          activeCalories={session?.active_calories ?? null}
+                          totalCalories={session?.total_calories ?? null}
+                          isLoading={isLoading}
+                        />
+                      </div>
                     </div>
                   </div>
-                </div>
+                )}
 
                 {/* Today's Activity Section */}
-                <div className={cn(
-                  "transition-all duration-300",
-                  isCardMinimized('todayActivity') && "opacity-60 scale-[0.98]",
-                  isCardEmphasized('todayActivity') && "ring-2 ring-primary/30 rounded-xl"
-                )}>
-                  <TodayActivitySection />
-                </div>
+                {isSectionVisible('todayActivity') && (
+                  <div className={cn(
+                    "transition-all duration-300",
+                    isCardMinimized('todayActivity') && "opacity-60 scale-[0.98]",
+                    isCardEmphasized('todayActivity') && "ring-2 ring-primary/30 rounded-xl"
+                  )}>
+                    <TodayActivitySection />
+                  </div>
+                )}
 
                 {/* Daily Briefing */}
-                <div className={cn(
-                  "transition-all duration-300",
-                  isCardMinimized('briefing') && "opacity-60 scale-[0.98]",
-                  isCardEmphasized('briefing') && "ring-2 ring-blue-500/30 rounded-xl"
-                )}>
-                  <DailyBriefingCard
-                    briefing={dailyBriefing}
-                    content={briefingContent}
-                    createdAt={briefingCreatedAt}
-                    isLoading={intelligenceLoading}
-                    isGenerating={intelligenceGenerating}
-                    cached={intelligenceCached}
-                    onRefresh={refreshIntelligence}
-                  />
-                </div>
+                {isSectionVisible('dailyBriefing') && (
+                  <div className={cn(
+                    "transition-all duration-300",
+                    isCardMinimized('briefing') && "opacity-60 scale-[0.98]",
+                    isCardEmphasized('briefing') && "ring-2 ring-blue-500/30 rounded-xl"
+                  )}>
+                    <DailyBriefingCard
+                      briefing={dailyBriefing}
+                      content={briefingContent}
+                      createdAt={briefingCreatedAt}
+                      isLoading={intelligenceLoading}
+                      isGenerating={intelligenceGenerating}
+                      cached={intelligenceCached}
+                      onRefresh={refreshIntelligence}
+                    />
+                  </div>
+                )}
 
                 {/* Recommendations */}
-                <div className={cn(
-                  "mb-10 transition-all duration-300",
-                  isCardMinimized('recommendations') && "opacity-60 scale-[0.98]",
-                  isCardEmphasized('recommendations') && "ring-2 ring-blue-500/30 rounded-xl"
-                )}>
-                  <YvesRecommendationsCard
-                    recommendations={recommendations}
-                    isLoading={intelligenceLoading}
-                  />
-                </div>
+                {isSectionVisible('recommendations') && (
+                  <div className={cn(
+                    "mb-10 transition-all duration-300",
+                    isCardMinimized('recommendations') && "opacity-60 scale-[0.98]",
+                    isCardEmphasized('recommendations') && "ring-2 ring-blue-500/30 rounded-xl"
+                  )}>
+                    <YvesRecommendationsCard
+                      recommendations={recommendations}
+                      isLoading={intelligenceLoading}
+                    />
+                  </div>
+                )}
               </div>
             </>
           )}

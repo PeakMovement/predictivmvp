@@ -5,6 +5,9 @@ import { useWeeklyBriefings, DayBriefing, WeeklyTheme, WeekIntent } from "@/hook
 import { Calendar, Sparkles, Target, Heart, Zap, Scale, RefreshCw, Shield, AlertCircle, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { useLayoutCustomization } from "@/hooks/useLayoutCustomization";
+import { CustomizeLayoutButton } from "@/components/layout/CustomizeLayoutButton";
+import { LayoutEditor } from "@/components/layout/LayoutEditor";
 
 const toneStyles: Record<'coach' | 'warm' | 'strategic', { bg: string; border: string; text: string; icon: React.ReactNode }> = {
   coach: {
@@ -214,6 +217,22 @@ function WeekIntentSection({ intent }: { intent: WeekIntent }) {
 export function Planner() {
   const { overview, isLoading, error, refresh } = useWeeklyBriefings();
 
+  // Layout customization
+  const {
+    isEditing: isLayoutEditing,
+    editingSections,
+    isCustomized: layoutCustomized,
+    openEditor: openLayoutEditor,
+    closeEditor: closeLayoutEditor,
+    saveLayout,
+    resetToDefault,
+    toggleSectionVisibility,
+    moveSectionUp,
+    moveSectionDown,
+    reorderSections,
+    isSectionVisible,
+  } = useLayoutCustomization('plan');
+
   const today = format(new Date(), 'yyyy-MM-dd');
 
   if (isLoading) {
@@ -282,20 +301,43 @@ export function Planner() {
               </p>
             </div>
           </div>
-          <Button variant="ghost" size="icon" onClick={refresh}>
-            <RefreshCw className="h-4 w-4" />
-          </Button>
+          <div className="flex items-center gap-2">
+            <CustomizeLayoutButton onClick={openLayoutEditor} isCustomized={layoutCustomized} />
+            <Button variant="ghost" size="icon" onClick={refresh}>
+              <RefreshCw className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
+
+        {/* Layout Editor */}
+        {isLayoutEditing && (
+          <div className="mb-8 animate-fade-in">
+            <LayoutEditor
+              sections={editingSections}
+              onSave={saveLayout}
+              onCancel={closeLayoutEditor}
+              onReset={resetToDefault}
+              onToggleVisibility={toggleSectionVisibility}
+              onMoveUp={moveSectionUp}
+              onMoveDown={moveSectionDown}
+              onReorder={reorderSections}
+            />
+          </div>
+        )}
 
         <div className="space-y-8">
           {/* Week Intent and Guardrails */}
-          <WeekIntentSection intent={overview.intent} />
+          {isSectionVisible('weekIntent') && (
+            <WeekIntentSection intent={overview.intent} />
+          )}
 
           {/* Overall Focus Banner */}
-          <WeeklyFocusBanner focus={overview.overallFocus} tone={overview.overallTone} />
+          {isSectionVisible('weeklyFocus') && (
+            <WeeklyFocusBanner focus={overview.overallFocus} tone={overview.overallTone} />
+          )}
 
           {/* Weekly Themes */}
-          {overview.themes.length > 0 && (
+          {isSectionVisible('themes') && overview.themes.length > 0 && (
             <section>
               <h2 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
                 <Sparkles className="h-5 w-5 text-primary" />
@@ -310,20 +352,22 @@ export function Planner() {
           )}
 
           {/* Daily Overview */}
-          <section>
-            <h2 className="text-lg font-semibold text-foreground mb-4">
-              Day by Day
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-              {overview.days.map((day) => (
-                <DayCard 
-                  key={day.date} 
-                  day={day} 
-                  isToday={day.date === today}
-                />
-              ))}
-            </div>
-          </section>
+          {isSectionVisible('dailyBriefings') && (
+            <section>
+              <h2 className="text-lg font-semibold text-foreground mb-4">
+                Day by Day
+              </h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                {overview.days.map((day) => (
+                  <DayCard 
+                    key={day.date} 
+                    day={day} 
+                    isToday={day.date === today}
+                  />
+                ))}
+              </div>
+            </section>
+          )}
 
           {/* Gentle guidance footer */}
           <div className="text-center pt-4">

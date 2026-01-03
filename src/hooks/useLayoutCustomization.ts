@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
 
 export type LayoutBlockSize = 'compact' | 'standard' | 'wide';
 
@@ -8,6 +8,7 @@ export interface SectionConfig {
   visible: boolean;
   order: number;
   collapsed?: boolean;
+  collapsedByDefault?: boolean;
   size?: LayoutBlockSize;
 }
 
@@ -90,28 +91,52 @@ function saveLayouts(layouts: Record<PageId, PageLayout>) {
 export function useLayoutCustomization(pageId: PageId) {
   const [isEditing, setIsEditing] = useState(false);
   const [editingSections, setEditingSections] = useState<SectionConfig[]>([]);
+  const [previewMode, setPreviewMode] = useState(false);
+  const [layoutVersion, setLayoutVersion] = useState(0);
+  
+  // Listen for layout updates
+  useEffect(() => {
+    const handleUpdate = () => setLayoutVersion(v => v + 1);
+    window.addEventListener('layout_updated', handleUpdate);
+    return () => window.removeEventListener('layout_updated', handleUpdate);
+  }, []);
   
   // Get current layout from localStorage or defaults
   const layout = useMemo((): PageLayout => {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const _version = layoutVersion; // Force re-compute on update
     const stored = getStoredLayouts();
     if (stored && stored[pageId]) {
       return stored[pageId];
     }
     return { sections: [...defaultLayouts[pageId]] };
-  }, [pageId]);
+  }, [pageId, layoutVersion]);
 
-  const sections = layout.sections;
+  // Use preview sections if in preview mode, otherwise use saved layout
+  const sections = useMemo(() => {
+    if (previewMode && editingSections.length > 0) {
+      return editingSections;
+    }
+    return layout.sections;
+  }, [previewMode, editingSections, layout.sections]);
 
   // Open the layout editor
   const openEditor = useCallback(() => {
-    setEditingSections([...sections]);
+    setEditingSections([...layout.sections]);
     setIsEditing(true);
-  }, [sections]);
+    setPreviewMode(false);
+  }, [layout.sections]);
 
   // Close the editor without saving
   const closeEditor = useCallback(() => {
     setIsEditing(false);
     setEditingSections([]);
+    setPreviewMode(false);
+  }, []);
+
+  // Toggle preview mode
+  const togglePreviewMode = useCallback(() => {
+    setPreviewMode(prev => !prev);
   }, []);
 
   // Save the edited layout
@@ -121,6 +146,7 @@ export function useLayoutCustomization(pageId: PageId) {
     saveLayouts(stored);
     setIsEditing(false);
     setEditingSections([]);
+    setPreviewMode(false);
     // Force re-render by updating storage
     window.dispatchEvent(new Event('layout_updated'));
   }, [pageId]);
@@ -138,6 +164,13 @@ export function useLayoutCustomization(pageId: PageId) {
   const toggleSectionVisibility = useCallback((sectionId: string) => {
     setEditingSections(prev => 
       prev.map(s => s.id === sectionId ? { ...s, visible: !s.visible } : s)
+    );
+  }, []);
+
+  // Toggle collapse by default
+  const toggleCollapseByDefault = useCallback((sectionId: string) => {
+    setEditingSections(prev => 
+      prev.map(s => s.id === sectionId ? { ...s, collapsedByDefault: !s.collapsedByDefault } : s)
     );
   }, []);
 
@@ -179,6 +212,12 @@ export function useLayoutCustomization(pageId: PageId) {
     return section?.visible ?? true;
   }, [sections]);
 
+  // Check if section should be collapsed by default
+  const isSectionCollapsedByDefault = useCallback((sectionId: string): boolean => {
+    const section = sections.find(s => s.id === sectionId);
+    return section?.collapsedByDefault ?? false;
+  }, [sections]);
+
   // Get ordered sections
   const orderedSections = useMemo(() => {
     return [...sections].sort((a, b) => a.order - b.order);
@@ -195,14 +234,18 @@ export function useLayoutCustomization(pageId: PageId) {
     isEditing,
     editingSections,
     isCustomized,
+    previewMode,
     openEditor,
     closeEditor,
     saveLayout,
     resetToDefault,
     toggleSectionVisibility,
+    toggleCollapseByDefault,
+    togglePreviewMode,
     moveSectionUp,
     moveSectionDown,
     reorderSections,
     isSectionVisible,
+    isSectionCollapsedByDefault,
   };
 }

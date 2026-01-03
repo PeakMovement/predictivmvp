@@ -1,10 +1,11 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useMemo } from "react";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import OuraSyncStatus from "@/components/OuraSyncStatus";
 import { YvesRecommendationsCard } from "@/components/dashboard/YvesRecommendationsCard";
 import { DailyBriefingCard } from "@/components/dashboard/DailyBriefingCard";
 import { RiskScoreCard } from "@/components/dashboard/RiskScoreCard";
 import { TodayActivitySection } from "@/components/dashboard/TodayActivitySection";
+import { FocusModeSelector } from "@/components/dashboard/FocusModeSelector";
 import { useRefreshTrends } from "@/hooks/useTrendData";
 import { supabase } from "@/integrations/supabase/client";
 import { useWearableSessions } from "@/hooks/useWearableSessions";
@@ -14,6 +15,8 @@ import { OuraActivityCard } from "@/components/oura/OuraActivityCard";
 import { useOuraTokenStatus } from "@/hooks/useOuraTokenStatus";
 import { useToast } from "@/hooks/use-toast";
 import { useYvesIntelligence } from "@/hooks/useYvesIntelligence";
+import { useDashboardFocusMode } from "@/hooks/useDashboardFocusMode";
+import { cn } from "@/lib/utils";
 
 const WelcomeHeader = () => (
   <div className="text-center mb-8 md:mb-12 space-y-3 md:space-y-4 px-4 md:px-0">
@@ -36,6 +39,16 @@ export const Dashboard = () => {
   const { isConnected, isLoading: tokenLoading } = useOuraTokenStatus();
   const { toast } = useToast();
   const hasShownConnectionToast = useRef(false);
+  
+  // Focus Mode for dashboard presentation
+  const {
+    currentMode,
+    setMode,
+    allModes,
+    isCardEmphasized,
+    isCardMinimized,
+    getCardOrder,
+  } = useDashboardFocusMode();
   
   // Unified Yves Intelligence - single source of truth for briefing & recommendations
   const {
@@ -106,64 +119,116 @@ export const Dashboard = () => {
             </div>
           ) : (
             <>
-              {/* Risk Score - Prominent Position */}
-              <div className="mb-8">
-                <RiskScoreCard />
+              {/* Focus Mode Selector */}
+              <div className="mb-8 p-4 bg-glass backdrop-blur-xl border border-glass-border rounded-xl">
+                <FocusModeSelector
+                  currentMode={currentMode}
+                  allModes={allModes}
+                  onModeChange={setMode}
+                />
               </div>
 
-              {/* Core Metrics: Sleep, Readiness, Activity */}
-              <div className="mb-8">
-                <h3 className="text-lg md:text-xl font-semibold text-foreground mb-4">Today's Scores</h3>
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                  <OuraReadinessCard
-                    score={session?.readiness_score ?? null}
-                    restingHR={session?.resting_hr ?? null}
-                    hrv={session?.hrv_avg ?? null}
-                    isLoading={isLoading}
-                  />
-                  <OuraSleepCard
-                    score={session?.sleep_score ?? null}
-                    totalSleep={null}
-                    deepSleep={null}
-                    remSleep={null}
-                    lightSleep={null}
-                    efficiency={null}
-                    isLoading={isLoading}
-                  />
-                  <OuraActivityCard
-                    score={session?.activity_score ?? null}
-                    steps={session?.total_steps ?? null}
-                    activeCalories={session?.active_calories ?? null}
-                    totalCalories={session?.total_calories ?? null}
-                    isLoading={isLoading}
+              {/* Dashboard Cards - Ordered by Focus Mode */}
+              <div className="space-y-8">
+                {/* Risk Score */}
+                <div 
+                  className={cn(
+                    "transition-all duration-300",
+                    isCardMinimized('risk') && "opacity-60 scale-[0.98]",
+                    isCardEmphasized('risk') && "ring-2 ring-primary/30 rounded-xl"
+                  )}
+                  style={{ order: getCardOrder('risk') }}
+                >
+                  <RiskScoreCard />
+                </div>
+
+                {/* Core Metrics: Sleep, Readiness, Activity */}
+                <div className={cn(
+                  "transition-all duration-300",
+                  isCardMinimized('readiness') && isCardMinimized('sleep') && isCardMinimized('activity') && "opacity-60"
+                )}>
+                  <h3 className="text-lg md:text-xl font-semibold text-foreground mb-4">Today's Scores</h3>
+                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div className={cn(
+                      "transition-all duration-300",
+                      isCardEmphasized('readiness') && "ring-2 ring-primary/30 rounded-xl",
+                      isCardMinimized('readiness') && "opacity-60 scale-[0.98]"
+                    )}>
+                      <OuraReadinessCard
+                        score={session?.readiness_score ?? null}
+                        restingHR={session?.resting_hr ?? null}
+                        hrv={session?.hrv_avg ?? null}
+                        isLoading={isLoading}
+                      />
+                    </div>
+                    <div className={cn(
+                      "transition-all duration-300",
+                      isCardEmphasized('sleep') && "ring-2 ring-emerald-500/30 rounded-xl",
+                      isCardMinimized('sleep') && "opacity-60 scale-[0.98]"
+                    )}>
+                      <OuraSleepCard
+                        score={session?.sleep_score ?? null}
+                        totalSleep={null}
+                        deepSleep={null}
+                        remSleep={null}
+                        lightSleep={null}
+                        efficiency={null}
+                        isLoading={isLoading}
+                      />
+                    </div>
+                    <div className={cn(
+                      "transition-all duration-300",
+                      isCardEmphasized('activity') && "ring-2 ring-primary/30 rounded-xl",
+                      isCardMinimized('activity') && "opacity-60 scale-[0.98]"
+                    )}>
+                      <OuraActivityCard
+                        score={session?.activity_score ?? null}
+                        steps={session?.total_steps ?? null}
+                        activeCalories={session?.active_calories ?? null}
+                        totalCalories={session?.total_calories ?? null}
+                        isLoading={isLoading}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Today's Activity Section */}
+                <div className={cn(
+                  "transition-all duration-300",
+                  isCardMinimized('todayActivity') && "opacity-60 scale-[0.98]",
+                  isCardEmphasized('todayActivity') && "ring-2 ring-primary/30 rounded-xl"
+                )}>
+                  <TodayActivitySection />
+                </div>
+
+                {/* Daily Briefing */}
+                <div className={cn(
+                  "transition-all duration-300",
+                  isCardMinimized('briefing') && "opacity-60 scale-[0.98]",
+                  isCardEmphasized('briefing') && "ring-2 ring-blue-500/30 rounded-xl"
+                )}>
+                  <DailyBriefingCard
+                    briefing={dailyBriefing}
+                    content={briefingContent}
+                    createdAt={briefingCreatedAt}
+                    isLoading={intelligenceLoading}
+                    isGenerating={intelligenceGenerating}
+                    cached={intelligenceCached}
+                    onRefresh={refreshIntelligence}
                   />
                 </div>
-              </div>
 
-              {/* Today's Activity Section */}
-              <div className="mb-8">
-                <TodayActivitySection />
-              </div>
-
-              {/* Daily Briefing - Coordinated with Recommendations */}
-              <div className="mb-8">
-                <DailyBriefingCard
-                  briefing={dailyBriefing}
-                  content={briefingContent}
-                  createdAt={briefingCreatedAt}
-                  isLoading={intelligenceLoading}
-                  isGenerating={intelligenceGenerating}
-                  cached={intelligenceCached}
-                  onRefresh={refreshIntelligence}
-                />
-              </div>
-
-              {/* Recommendations - Aligned with Daily Briefing */}
-              <div className="mb-10">
-                <YvesRecommendationsCard
-                  recommendations={recommendations}
-                  isLoading={intelligenceLoading}
-                />
+                {/* Recommendations */}
+                <div className={cn(
+                  "mb-10 transition-all duration-300",
+                  isCardMinimized('recommendations') && "opacity-60 scale-[0.98]",
+                  isCardEmphasized('recommendations') && "ring-2 ring-blue-500/30 rounded-xl"
+                )}>
+                  <YvesRecommendationsCard
+                    recommendations={recommendations}
+                    isLoading={intelligenceLoading}
+                  />
+                </div>
               </div>
             </>
           )}

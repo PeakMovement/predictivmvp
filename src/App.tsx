@@ -31,6 +31,7 @@ import DeveloperBaselinesEngine from "@/pages/DeveloperBaselinesEngine";
 import MyDocuments from "@/pages/MyDocuments";
 import { SymptomCheckIn } from "@/pages/SymptomCheckIn";
 import PlanCompliance from "@/pages/PlanCompliance";
+import { Planner } from "@/pages/Planner";
 import { ProfileSetup } from "@/pages/ProfileSetup";
 import { AdminDashboard } from "@/pages/AdminDashboard";
 import Login from "@/pages/Login";
@@ -100,6 +101,8 @@ const App = () => {
     switch (activeTab) {
       case "dashboard":
         return <Dashboard />;
+      case "planner":
+        return <Planner />;
       case "training":
         return <Training />;
       case "health":

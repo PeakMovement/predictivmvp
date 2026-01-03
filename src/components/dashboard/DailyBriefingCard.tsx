@@ -13,6 +13,7 @@ import { TodaysBestDecision } from "./TodaysBestDecision";
 import { PlanAlignmentSection } from "./PlanAlignmentSection";
 import { WhyThisMatters } from "./WhyThisMatters";
 import { DocumentReference } from "./DocumentReference";
+import { BriefingFooter } from "./BriefingFooter";
 import { usePersonalizedInsights } from "@/hooks/usePersonalizedInsights";
 import { useRelevantDocuments } from "@/hooks/useRelevantDocuments";
 
@@ -118,6 +119,9 @@ export function DailyBriefingCard({
         ) : (
           <CollapsibleBriefingSections briefing={briefing} />
         )}
+        
+        {/* Subtle footer explaining data sources */}
+        <BriefingFooter />
       </CardContent>
     </Card>
   );

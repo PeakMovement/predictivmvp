@@ -37,6 +37,7 @@ import { getUserContext, updateUserContext } from "@/api/yves";
 import { ConnectPolarButton } from "@/components/ConnectPolarButton";
 import { PolarSyncButton } from "@/components/PolarSyncButton";
 import { SymptomCheckInForm } from "@/components/symptoms/SymptomCheckInForm";
+import { TonePreferenceSettings } from "@/components/settings/TonePreferenceSettings";
 
 export const Settings = ({ onNavigate }: { onNavigate?: (tab: string) => void }) => {
   const [notifications, setNotifications] = useState(true);
@@ -611,6 +612,11 @@ export const Settings = ({ onNavigate }: { onNavigate?: (tab: string) => void })
                     saveYvesPreferences(newPrefs);
                   }}
                 />
+              </div>
+
+              {/* Tone Preference Section */}
+              <div className="pt-4 border-t border-border/50">
+                <TonePreferenceSettings />
               </div>
             </div>
           </div>

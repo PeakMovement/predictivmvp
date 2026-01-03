@@ -214,11 +214,14 @@ export const Training = () => {
     isEditing: isLayoutEditing,
     editingSections,
     isCustomized: layoutCustomized,
+    previewMode,
     openEditor: openLayoutEditor,
     closeEditor: closeLayoutEditor,
     saveLayout,
     resetToDefault,
     toggleSectionVisibility,
+    toggleCollapseByDefault,
+    togglePreviewMode,
     moveSectionUp,
     moveSectionDown,
     reorderSections,
@@ -280,10 +283,13 @@ export const Training = () => {
             <div className="mb-8 animate-fade-in">
               <LayoutEditor
                 sections={editingSections}
+                previewMode={previewMode}
                 onSave={saveLayout}
                 onCancel={closeLayoutEditor}
                 onReset={resetToDefault}
                 onToggleVisibility={toggleSectionVisibility}
+                onToggleCollapseByDefault={toggleCollapseByDefault}
+                onTogglePreviewMode={togglePreviewMode}
                 onMoveUp={moveSectionUp}
                 onMoveDown={moveSectionDown}
                 onReorder={reorderSections}

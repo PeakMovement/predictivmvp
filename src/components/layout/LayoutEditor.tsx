@@ -1,16 +1,22 @@
 import { useState, useRef } from 'react';
-import { GripVertical, Eye, EyeOff, ChevronUp, ChevronDown, RotateCcw, X, Check, Sparkles } from 'lucide-react';
+import { GripVertical, Eye, EyeOff, ChevronUp, ChevronDown, RotateCcw, X, Check, Sparkles, ChevronRight, ChevronDown as CollapseIcon, MonitorPlay } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 import { SectionConfig } from '@/hooks/useLayoutCustomization';
 
 interface LayoutEditorProps {
   sections: SectionConfig[];
+  previewMode: boolean;
   onSave: (sections: SectionConfig[]) => void;
   onCancel: () => void;
   onReset: () => void;
   onToggleVisibility: (sectionId: string) => void;
+  onToggleCollapseByDefault: (sectionId: string) => void;
+  onTogglePreviewMode: () => void;
   onMoveUp: (sectionId: string) => void;
   onMoveDown: (sectionId: string) => void;
   onReorder: (fromIndex: number, toIndex: number) => void;
@@ -18,10 +24,13 @@ interface LayoutEditorProps {
 
 export function LayoutEditor({
   sections,
+  previewMode,
   onSave,
   onCancel,
   onReset,
   onToggleVisibility,
+  onToggleCollapseByDefault,
+  onTogglePreviewMode,
   onMoveUp,
   onMoveDown,
   onReorder,
@@ -86,93 +95,175 @@ export function LayoutEditor({
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
+        {/* Preview Mode Toggle */}
+        <div className="flex items-center justify-between bg-primary/10 rounded-lg p-3">
+          <div className="flex items-center gap-3">
+            <MonitorPlay className="w-5 h-5 text-primary" />
+            <div>
+              <Label htmlFor="preview-mode" className="font-medium">Live Preview</Label>
+              <p className="text-xs text-muted-foreground">See changes as you make them</p>
+            </div>
+          </div>
+          <Switch
+            id="preview-mode"
+            checked={previewMode}
+            onCheckedChange={onTogglePreviewMode}
+          />
+        </div>
+
         {/* Instructions */}
-        <div className="bg-muted/30 rounded-lg p-3 text-sm text-muted-foreground">
+        <div className="bg-muted/30 rounded-lg p-3 text-sm text-muted-foreground space-y-1">
           <p className="flex items-center gap-2">
-            <GripVertical className="w-4 h-4" />
+            <GripVertical className="w-4 h-4 flex-shrink-0" />
             Drag sections to reorder, or use the arrows
           </p>
-          <p className="flex items-center gap-2 mt-1">
-            <Eye className="w-4 h-4" />
-            Toggle visibility to focus on what matters most
+          <p className="flex items-center gap-2">
+            <Eye className="w-4 h-4 flex-shrink-0" />
+            Show or hide sections to focus on what matters
+          </p>
+          <p className="flex items-center gap-2">
+            <CollapseIcon className="w-4 h-4 flex-shrink-0" />
+            Set sections to start collapsed for a cleaner view
           </p>
         </div>
 
         {/* Section List */}
         <div className="space-y-2">
-          {sections.map((section, index) => (
-            <div
-              key={section.id}
-              ref={index === draggedIndex ? dragNodeRef : null}
-              draggable
-              onDragStart={(e) => handleDragStart(e, index)}
-              onDragEnd={handleDragEnd}
-              onDragOver={(e) => handleDragOver(e, index)}
-              onDrop={(e) => handleDrop(e, index)}
-              onDragLeave={handleDragLeave}
-              className={cn(
-                "flex items-center gap-3 p-3 rounded-lg border transition-all duration-200",
-                "bg-background/80 hover:bg-background cursor-grab active:cursor-grabbing",
-                section.visible 
-                  ? "border-border hover:border-primary/50" 
-                  : "border-muted bg-muted/20 opacity-70",
-                draggedIndex === index && "opacity-50 scale-[0.98]",
-                dragOverIndex === index && draggedIndex !== index && "border-primary border-2 scale-[1.02]"
-              )}
-            >
-              {/* Drag Handle */}
-              <div className="text-muted-foreground hover:text-foreground transition-colors">
-                <GripVertical className="w-5 h-5" />
+          <TooltipProvider>
+            {sections.map((section, index) => (
+              <div
+                key={section.id}
+                ref={index === draggedIndex ? dragNodeRef : null}
+                draggable
+                onDragStart={(e) => handleDragStart(e, index)}
+                onDragEnd={handleDragEnd}
+                onDragOver={(e) => handleDragOver(e, index)}
+                onDrop={(e) => handleDrop(e, index)}
+                onDragLeave={handleDragLeave}
+                className={cn(
+                  "flex items-center gap-3 p-3 rounded-lg border transition-all duration-200",
+                  "bg-background/80 hover:bg-background cursor-grab active:cursor-grabbing",
+                  section.visible 
+                    ? "border-border hover:border-primary/50" 
+                    : "border-muted bg-muted/20 opacity-70",
+                  draggedIndex === index && "opacity-50 scale-[0.98]",
+                  dragOverIndex === index && draggedIndex !== index && "border-primary border-2 scale-[1.02]"
+                )}
+              >
+                {/* Drag Handle */}
+                <div className="text-muted-foreground hover:text-foreground transition-colors">
+                  <GripVertical className="w-5 h-5" />
+                </div>
+
+                {/* Section Name and Status */}
+                <div className="flex-1 min-w-0">
+                  <div className="font-medium text-foreground truncate">
+                    {section.name}
+                  </div>
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5">
+                    {!section.visible && (
+                      <span className="text-amber-500">Hidden</span>
+                    )}
+                    {section.collapsedByDefault && section.visible && (
+                      <span className="text-blue-500">Collapsed by default</span>
+                    )}
+                  </div>
+                </div>
+
+                {/* Controls */}
+                <div className="flex items-center gap-1">
+                  {/* Move Up */}
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={() => onMoveUp(section.id)}
+                        disabled={index === 0}
+                      >
+                        <ChevronUp className="h-4 w-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Move up</TooltipContent>
+                  </Tooltip>
+
+                  {/* Move Down */}
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={() => onMoveDown(section.id)}
+                        disabled={index === sections.length - 1}
+                      >
+                        <ChevronDown className="h-4 w-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Move down</TooltipContent>
+                  </Tooltip>
+
+                  {/* Toggle Collapse by Default */}
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className={cn(
+                          "h-8 w-8",
+                          section.collapsedByDefault ? "text-blue-500" : "text-muted-foreground"
+                        )}
+                        onClick={() => onToggleCollapseByDefault(section.id)}
+                        disabled={!section.visible}
+                      >
+                        {section.collapsedByDefault ? (
+                          <ChevronRight className="h-4 w-4" />
+                        ) : (
+                          <CollapseIcon className="h-4 w-4" />
+                        )}
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      {section.collapsedByDefault ? 'Start expanded' : 'Start collapsed'}
+                    </TooltipContent>
+                  </Tooltip>
+
+                  {/* Toggle Visibility */}
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className={cn(
+                          "h-8 w-8",
+                          section.visible ? "text-primary" : "text-muted-foreground"
+                        )}
+                        onClick={() => onToggleVisibility(section.id)}
+                      >
+                        {section.visible ? (
+                          <Eye className="h-4 w-4" />
+                        ) : (
+                          <EyeOff className="h-4 w-4" />
+                        )}
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      {section.visible ? 'Hide section' : 'Show section'}
+                    </TooltipContent>
+                  </Tooltip>
+                </div>
               </div>
+            ))}
+          </TooltipProvider>
+        </div>
 
-              {/* Section Name */}
-              <div className="flex-1 font-medium text-foreground">
-                {section.name}
-              </div>
-
-              {/* Controls */}
-              <div className="flex items-center gap-1">
-                {/* Move Up */}
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8"
-                  onClick={() => onMoveUp(section.id)}
-                  disabled={index === 0}
-                >
-                  <ChevronUp className="h-4 w-4" />
-                </Button>
-
-                {/* Move Down */}
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8"
-                  onClick={() => onMoveDown(section.id)}
-                  disabled={index === sections.length - 1}
-                >
-                  <ChevronDown className="h-4 w-4" />
-                </Button>
-
-                {/* Toggle Visibility */}
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className={cn(
-                    "h-8 w-8",
-                    section.visible ? "text-primary" : "text-muted-foreground"
-                  )}
-                  onClick={() => onToggleVisibility(section.id)}
-                >
-                  {section.visible ? (
-                    <Eye className="h-4 w-4" />
-                  ) : (
-                    <EyeOff className="h-4 w-4" />
-                  )}
-                </Button>
-              </div>
-            </div>
-          ))}
+        {/* Data Safety Notice */}
+        <div className="bg-green-500/10 border border-green-500/20 rounded-lg p-3 text-sm text-green-700 dark:text-green-400">
+          <p className="flex items-center gap-2">
+            <Check className="w-4 h-4 flex-shrink-0" />
+            Your data is always safe. Hiding sections only changes what you see, not what is stored or synced.
+          </p>
         </div>
 
         {/* Actions */}

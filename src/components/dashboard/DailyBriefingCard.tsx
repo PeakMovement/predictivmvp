@@ -7,6 +7,7 @@ import { YvesDailyBriefing } from "@/hooks/useYvesIntelligence";
 import { cn } from "@/lib/utils";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { PersonalContextChips } from "./PersonalContextChips";
+import { ActiveGoalSection } from "./ActiveGoalSection";
 import { WhyThisMatters } from "./WhyThisMatters";
 import { usePersonalizedInsights } from "@/hooks/usePersonalizedInsights";
 
@@ -77,6 +78,9 @@ export function DailyBriefingCard({
       <CardContent className="space-y-4">
         {/* Personal Context Section */}
         <PersonalContextChips className="pb-2 border-b border-border/50" />
+        
+        {/* Active Goal Section */}
+        <ActiveGoalSection className="pb-2 border-b border-border/50" />
         
         {!briefing ? (
           <div className="text-center py-6 space-y-3">

@@ -1,5 +1,4 @@
-import React, { useMemo } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import React from 'react';
 import { MedicalFinderProvider } from '@/contexts/MedicalFinderContext';
 import { useMedicalFinder } from '@/hooks/useMedicalFinder';
 import { SymptomIntakeStep } from './SymptomIntakeStep';
@@ -76,43 +75,9 @@ function MedicalFinderContent() {
   );
 }
 
-export function MedicalFinderAssistant({ initialSymptomsOverride }: MedicalFinderAssistantProps) {
-  const [searchParams] = useSearchParams();
-
-  // Read query parameters OR sessionStorage and build initial symptoms string
-  const initialSymptoms = useMemo(() => {
-    // Priority 1: Direct prop override (from FindHelp when using internal finder)
-    if (initialSymptomsOverride) {
-      console.log('[MedicalFinderAssistant] Using prop override:', initialSymptomsOverride);
-      return initialSymptomsOverride;
-    }
-
-    // Priority 2: Check sessionStorage (from symptom check-in flow)
-    const storedQuery = sessionStorage.getItem('findHelpQuery');
-    if (storedQuery) {
-      try {
-        const { q, severity } = JSON.parse(storedQuery);
-        console.log('[MedicalFinderAssistant] Using sessionStorage data:', { q, severity });
-        if (q) {
-          return q;
-        }
-      } catch (e) {
-        console.error('[MedicalFinderAssistant] Failed to parse stored query:', e);
-      }
-    }
-    
-    // Priority 3: Fall back to URL search params
-    const q = searchParams.get('q');
-    const severity = searchParams.get('severity');
-    
-    if (q) {
-      return severity ? `${q} (Severity: ${severity})` : q;
-    }
-    return '';
-  }, [initialSymptomsOverride, searchParams]);
-
+export function MedicalFinderAssistant({ initialSymptomsOverride = '' }: MedicalFinderAssistantProps) {
   return (
-    <MedicalFinderProvider initialSymptoms={initialSymptoms}>
+    <MedicalFinderProvider initialSymptoms={initialSymptomsOverride}>
       <MedicalFinderContent />
     </MedicalFinderProvider>
   );

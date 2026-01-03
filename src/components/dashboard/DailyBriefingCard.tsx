@@ -7,6 +7,8 @@ import { YvesDailyBriefing } from "@/hooks/useYvesIntelligence";
 import { cn } from "@/lib/utils";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { PersonalContextChips } from "./PersonalContextChips";
+import { WhyThisMatters } from "./WhyThisMatters";
+import { usePersonalizedInsights } from "@/hooks/usePersonalizedInsights";
 
 interface DailyBriefingCardProps {
   briefing: YvesDailyBriefing | null;
@@ -162,6 +164,8 @@ function CollapsibleSection({ title, icon, preview, children, variant = "default
 }
 
 function CollapsibleBriefingSections({ briefing }: { briefing: YvesDailyBriefing }) {
+  const { getExplanation, hasContext } = usePersonalizedInsights();
+  
   const summaryPreview = briefing.summary.split('.')[0] + '.';
   const keyChangesPreview = briefing.keyChanges.length > 0 
     ? `${briefing.keyChanges.length} change${briefing.keyChanges.length > 1 ? 's' : ''} detected`
@@ -169,6 +173,9 @@ function CollapsibleBriefingSections({ briefing }: { briefing: YvesDailyBriefing
   const riskPreview = briefing.riskHighlights.length > 0
     ? `${briefing.riskHighlights.length} item${briefing.riskHighlights.length > 1 ? 's' : ''} need attention`
     : "No immediate concerns";
+
+  // Get explanation for the summary
+  const summaryExplanation = hasContext ? getExplanation(briefing.summary) : null;
 
   return (
     <div className="space-y-3">
@@ -181,6 +188,12 @@ function CollapsibleBriefingSections({ briefing }: { briefing: YvesDailyBriefing
         <p className="text-sm leading-relaxed text-foreground">
           {briefing.summary}
         </p>
+        {summaryExplanation && (
+          <WhyThisMatters 
+            explanation={summaryExplanation.text} 
+            tone={summaryExplanation.tone} 
+          />
+        )}
       </CollapsibleSection>
 
       {/* Key Changes */}
@@ -190,15 +203,23 @@ function CollapsibleBriefingSections({ briefing }: { briefing: YvesDailyBriefing
         preview={keyChangesPreview}
       >
         {briefing.keyChanges.length > 0 ? (
-          <div className="space-y-2">
-            {briefing.keyChanges.map((change, idx) => (
-              <div 
-                key={idx}
-                className="p-2 rounded-md bg-muted/50 text-sm"
-              >
-                📊 {change}
-              </div>
-            ))}
+          <div className="space-y-3">
+            {briefing.keyChanges.map((change, idx) => {
+              const explanation = hasContext ? getExplanation(change) : null;
+              return (
+                <div key={idx}>
+                  <div className="p-2 rounded-md bg-muted/50 text-sm">
+                    📊 {change}
+                  </div>
+                  {explanation && (
+                    <WhyThisMatters 
+                      explanation={explanation.text} 
+                      tone={explanation.tone} 
+                    />
+                  )}
+                </div>
+              );
+            })}
           </div>
         ) : (
           <p className="text-sm text-muted-foreground">No significant changes detected today.</p>
@@ -213,15 +234,23 @@ function CollapsibleBriefingSections({ briefing }: { briefing: YvesDailyBriefing
         variant={briefing.riskHighlights.length > 0 ? "warning" : "default"}
       >
         {briefing.riskHighlights.length > 0 ? (
-          <div className="space-y-2">
-            {briefing.riskHighlights.map((risk, idx) => (
-              <div 
-                key={idx}
-                className="p-2 rounded-md bg-destructive/10 text-sm"
-              >
-                ⚠️ {risk}
-              </div>
-            ))}
+          <div className="space-y-3">
+            {briefing.riskHighlights.map((risk, idx) => {
+              const explanation = hasContext ? getExplanation(risk) : null;
+              return (
+                <div key={idx}>
+                  <div className="p-2 rounded-md bg-destructive/10 text-sm">
+                    ⚠️ {risk}
+                  </div>
+                  {explanation && (
+                    <WhyThisMatters 
+                      explanation={explanation.text} 
+                      tone={explanation.tone} 
+                    />
+                  )}
+                </div>
+              );
+            })}
           </div>
         ) : (
           <p className="text-sm text-muted-foreground">No immediate concerns. Keep up the good work!</p>

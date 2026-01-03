@@ -9,7 +9,9 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { PersonalContextChips } from "./PersonalContextChips";
 import { ActiveGoalSection } from "./ActiveGoalSection";
 import { WhyThisMatters } from "./WhyThisMatters";
+import { DocumentReference } from "./DocumentReference";
 import { usePersonalizedInsights } from "@/hooks/usePersonalizedInsights";
+import { useRelevantDocuments } from "@/hooks/useRelevantDocuments";
 
 interface DailyBriefingCardProps {
   briefing: YvesDailyBriefing | null;
@@ -169,6 +171,7 @@ function CollapsibleSection({ title, icon, preview, children, variant = "default
 
 function CollapsibleBriefingSections({ briefing }: { briefing: YvesDailyBriefing }) {
   const { getExplanation, hasContext } = usePersonalizedInsights();
+  const { getRelevantDocument, hasDocuments } = useRelevantDocuments();
   
   const summaryPreview = briefing.summary.split('.')[0] + '.';
   const keyChangesPreview = briefing.keyChanges.length > 0 
@@ -178,8 +181,9 @@ function CollapsibleBriefingSections({ briefing }: { briefing: YvesDailyBriefing
     ? `${briefing.riskHighlights.length} item${briefing.riskHighlights.length > 1 ? 's' : ''} need attention`
     : "No immediate concerns";
 
-  // Get explanation for the summary
+  // Get explanation and document for the summary
   const summaryExplanation = hasContext ? getExplanation(briefing.summary) : null;
+  const summaryDocument = hasDocuments ? getRelevantDocument(briefing.summary) : null;
 
   return (
     <div className="space-y-3">
@@ -198,6 +202,9 @@ function CollapsibleBriefingSections({ briefing }: { briefing: YvesDailyBriefing
             tone={summaryExplanation.tone} 
           />
         )}
+        {summaryDocument && (
+          <DocumentReference document={summaryDocument} />
+        )}
       </CollapsibleSection>
 
       {/* Key Changes */}
@@ -210,6 +217,7 @@ function CollapsibleBriefingSections({ briefing }: { briefing: YvesDailyBriefing
           <div className="space-y-3">
             {briefing.keyChanges.map((change, idx) => {
               const explanation = hasContext ? getExplanation(change) : null;
+              const relevantDoc = hasDocuments ? getRelevantDocument(change) : null;
               return (
                 <div key={idx}>
                   <div className="p-2 rounded-md bg-muted/50 text-sm">
@@ -220,6 +228,9 @@ function CollapsibleBriefingSections({ briefing }: { briefing: YvesDailyBriefing
                       explanation={explanation.text} 
                       tone={explanation.tone} 
                     />
+                  )}
+                  {relevantDoc && (
+                    <DocumentReference document={relevantDoc} />
                   )}
                 </div>
               );
@@ -241,6 +252,7 @@ function CollapsibleBriefingSections({ briefing }: { briefing: YvesDailyBriefing
           <div className="space-y-3">
             {briefing.riskHighlights.map((risk, idx) => {
               const explanation = hasContext ? getExplanation(risk) : null;
+              const relevantDoc = hasDocuments ? getRelevantDocument(risk) : null;
               return (
                 <div key={idx}>
                   <div className="p-2 rounded-md bg-destructive/10 text-sm">
@@ -251,6 +263,9 @@ function CollapsibleBriefingSections({ briefing }: { briefing: YvesDailyBriefing
                       explanation={explanation.text} 
                       tone={explanation.tone} 
                     />
+                  )}
+                  {relevantDoc && (
+                    <DocumentReference document={relevantDoc} />
                   )}
                 </div>
               );

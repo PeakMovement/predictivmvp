@@ -1,4 +1,5 @@
 import { useState, useCallback, useMemo, useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 
 export type LayoutBlockSize = 'compact' | 'standard' | 'wide';
 
@@ -66,25 +67,27 @@ const defaultLayouts: Record<PageId, SectionConfig[]> = {
   ],
 };
 
-const STORAGE_KEY = 'layout_customization';
+const LOCAL_STORAGE_KEY = 'layout_customization';
 
-function getStoredLayouts(): Record<PageId, PageLayout> | null {
+// Get layouts from localStorage (fallback for anonymous users)
+function getLocalLayouts(): Record<PageId, PageLayout> | null {
   try {
-    const stored = localStorage.getItem(STORAGE_KEY);
+    const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
     if (stored) {
       return JSON.parse(stored);
     }
   } catch (error) {
-    console.error('Error loading layout customization:', error);
+    console.error('Error loading layout from localStorage:', error);
   }
   return null;
 }
 
-function saveLayouts(layouts: Record<PageId, PageLayout>) {
+// Save layouts to localStorage
+function saveLocalLayouts(layouts: Record<PageId, PageLayout>) {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(layouts));
+    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(layouts));
   } catch (error) {
-    console.error('Error saving layout customization:', error);
+    console.error('Error saving layout to localStorage:', error);
   }
 }
 
@@ -93,7 +96,57 @@ export function useLayoutCustomization(pageId: PageId) {
   const [editingSections, setEditingSections] = useState<SectionConfig[]>([]);
   const [previewMode, setPreviewMode] = useState(false);
   const [layoutVersion, setLayoutVersion] = useState(0);
+  const [userId, setUserId] = useState<string | null>(null);
+  const [remoteLayouts, setRemoteLayouts] = useState<Record<PageId, PageLayout> | null>(null);
+  const [isLoadingRemote, setIsLoadingRemote] = useState(true);
   
+  // Get current user
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      setUserId(user?.id || null);
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUserId(session?.user?.id || null);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  // Load layouts from Supabase for authenticated users
+  useEffect(() => {
+    async function loadRemoteLayouts() {
+      if (!userId) {
+        setIsLoadingRemote(false);
+        return;
+      }
+
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('layout_preferences')
+          .eq('id', userId)
+          .single();
+
+        if (error) {
+          console.error('Error loading layout preferences:', error);
+          setIsLoadingRemote(false);
+          return;
+        }
+
+        if (data?.layout_preferences && typeof data.layout_preferences === 'object' && !Array.isArray(data.layout_preferences)) {
+          setRemoteLayouts(data.layout_preferences as unknown as Record<PageId, PageLayout>);
+        }
+      } catch (error) {
+        console.error('Error loading layout preferences:', error);
+      } finally {
+        setIsLoadingRemote(false);
+      }
+    }
+
+    loadRemoteLayouts();
+  }, [userId]);
+
   // Listen for layout updates
   useEffect(() => {
     const handleUpdate = () => setLayoutVersion(v => v + 1);
@@ -101,16 +154,24 @@ export function useLayoutCustomization(pageId: PageId) {
     return () => window.removeEventListener('layout_updated', handleUpdate);
   }, []);
   
-  // Get current layout from localStorage or defaults
+  // Get current layout from Supabase (if logged in) or localStorage
   const layout = useMemo((): PageLayout => {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const _version = layoutVersion; // Force re-compute on update
-    const stored = getStoredLayouts();
+    
+    // For authenticated users, prefer remote layouts
+    if (userId && remoteLayouts && remoteLayouts[pageId]) {
+      return remoteLayouts[pageId];
+    }
+    
+    // Fall back to localStorage
+    const stored = getLocalLayouts();
     if (stored && stored[pageId]) {
       return stored[pageId];
     }
+    
     return { sections: [...defaultLayouts[pageId]] };
-  }, [pageId, layoutVersion]);
+  }, [pageId, layoutVersion, userId, remoteLayouts]);
 
   // Use preview sections if in preview mode, otherwise use saved layout
   const sections = useMemo(() => {
@@ -119,6 +180,31 @@ export function useLayoutCustomization(pageId: PageId) {
     }
     return layout.sections;
   }, [previewMode, editingSections, layout.sections]);
+
+  // Save layouts to Supabase for authenticated users, localStorage for anonymous
+  const persistLayouts = useCallback(async (layouts: Record<PageId, PageLayout>) => {
+    // Always save to localStorage as a fallback
+    saveLocalLayouts(layouts);
+
+    // If authenticated, also save to Supabase
+    if (userId) {
+      try {
+        const { error } = await supabase
+          .from('profiles')
+          .update({ layout_preferences: JSON.parse(JSON.stringify(layouts)) })
+          .eq('id', userId);
+
+        if (error) {
+          console.error('Error saving layout preferences to Supabase:', error);
+        } else {
+          // Update remote layouts state
+          setRemoteLayouts(layouts);
+        }
+      } catch (error) {
+        console.error('Error saving layout preferences:', error);
+      }
+    }
+  }, [userId]);
 
   // Open the layout editor
   const openEditor = useCallback(() => {
@@ -140,25 +226,28 @@ export function useLayoutCustomization(pageId: PageId) {
   }, []);
 
   // Save the edited layout
-  const saveLayout = useCallback((newSections: SectionConfig[]) => {
-    const stored = getStoredLayouts() || {} as Record<PageId, PageLayout>;
-    stored[pageId] = { sections: newSections };
-    saveLayouts(stored);
+  const saveLayout = useCallback(async (newSections: SectionConfig[]) => {
+    const currentLayouts = (userId && remoteLayouts) ? remoteLayouts : (getLocalLayouts() || {} as Record<PageId, PageLayout>);
+    const updatedLayouts = { ...currentLayouts, [pageId]: { sections: newSections } };
+    
+    await persistLayouts(updatedLayouts);
+    
     setIsEditing(false);
     setEditingSections([]);
     setPreviewMode(false);
-    // Force re-render by updating storage
+    // Force re-render
     window.dispatchEvent(new Event('layout_updated'));
-  }, [pageId]);
+  }, [pageId, userId, remoteLayouts, persistLayouts]);
 
   // Reset to default layout
-  const resetToDefault = useCallback(() => {
-    const stored = getStoredLayouts() || {} as Record<PageId, PageLayout>;
-    stored[pageId] = { sections: [...defaultLayouts[pageId]] };
-    saveLayouts(stored);
+  const resetToDefault = useCallback(async () => {
+    const currentLayouts = (userId && remoteLayouts) ? remoteLayouts : (getLocalLayouts() || {} as Record<PageId, PageLayout>);
+    const updatedLayouts = { ...currentLayouts, [pageId]: { sections: [...defaultLayouts[pageId]] } };
+    
+    await persistLayouts(updatedLayouts);
     setEditingSections([...defaultLayouts[pageId]]);
     window.dispatchEvent(new Event('layout_updated'));
-  }, [pageId]);
+  }, [pageId, userId, remoteLayouts, persistLayouts]);
 
   // Toggle section visibility
   const toggleSectionVisibility = useCallback((sectionId: string) => {
@@ -225,9 +314,12 @@ export function useLayoutCustomization(pageId: PageId) {
 
   // Check if layout has been customized
   const isCustomized = useMemo(() => {
-    const stored = getStoredLayouts();
+    if (userId && remoteLayouts) {
+      return remoteLayouts[pageId] !== undefined;
+    }
+    const stored = getLocalLayouts();
     return stored !== null && stored[pageId] !== undefined;
-  }, [pageId]);
+  }, [pageId, userId, remoteLayouts]);
 
   return {
     sections: orderedSections,
@@ -235,6 +327,7 @@ export function useLayoutCustomization(pageId: PageId) {
     editingSections,
     isCustomized,
     previewMode,
+    isLoading: isLoadingRemote,
     openEditor,
     closeEditor,
     saveLayout,

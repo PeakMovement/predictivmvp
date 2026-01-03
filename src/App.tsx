@@ -34,6 +34,7 @@ import PlanCompliance from "@/pages/PlanCompliance";
 import { Planner } from "@/pages/Planner";
 import { ProfileSetup } from "@/pages/ProfileSetup";
 import { AdminDashboard } from "@/pages/AdminDashboard";
+import PersonalCanvas from "@/pages/PersonalCanvas";
 import Login from "@/pages/Login";
 import Register from "@/pages/Register";
 import { Settings as SettingsIcon } from "lucide-react";
@@ -143,6 +144,8 @@ const App = () => {
         return <ProfileSetup />;
       case "admin-dashboard":
         return <AdminDashboard />;
+      case "personal-canvas":
+        return <PersonalCanvas />;
       default:
         return <Dashboard />;
     }

@@ -618,8 +618,7 @@ Language examples:
 
     // ─── AI CALL WITH STRUCTURED OUTPUT ────────────────────────────────────
     // Check if recent symptoms are present
-    const hasRecentSymptoms = contextData.symptom_check_ins && 
-      (contextData.symptom_check_ins as any[]).length > 0;
+    const hasRecentSymptoms = symptomCheckIns && symptomCheckIns.length > 0;
     
     const symptomAcknowledgement = hasRecentSymptoms ? `
 ═══ SYMPTOM ACKNOWLEDGEMENT (MANDATORY) ═══

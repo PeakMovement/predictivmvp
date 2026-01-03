@@ -6,6 +6,7 @@ import { RecoveryPanel } from "@/components/dashboard/RecoveryPanel";
 import { useLayoutCustomization } from "@/hooks/useLayoutCustomization";
 import { CustomizeLayoutButton } from "@/components/layout/CustomizeLayoutButton";
 import { LayoutEditor } from "@/components/layout/LayoutEditor";
+import { LayoutBlock } from "@/components/layout/LayoutBlock";
 
 export default function MyBaselines() {
   // Layout customization
@@ -28,20 +29,24 @@ export default function MyBaselines() {
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5 p-6 pb-32 md:pb-24">
       <div className="max-w-6xl mx-auto">
         {/* Header */}
-        {isSectionVisible('header') && (
-          <>
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center gap-3">
-                <Activity className="w-8 h-8 text-primary" />
-                <h1 className="text-3xl font-bold text-foreground">Activity and Trends</h1>
-              </div>
-              <CustomizeLayoutButton onClick={openLayoutEditor} isCustomized={layoutCustomized} />
+        <LayoutBlock
+          blockId="header"
+          displayName="Header"
+          pageId="baselines"
+          size="wide"
+          visible={isSectionVisible('header')}
+        >
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-3">
+              <Activity className="w-8 h-8 text-primary" />
+              <h1 className="text-3xl font-bold text-foreground">Activity and Trends</h1>
             </div>
-            <p className="text-muted-foreground mb-8">
-              Track your activity patterns, recovery trends, and weekly performance.
-            </p>
-          </>
-        )}
+            <CustomizeLayoutButton onClick={openLayoutEditor} isCustomized={layoutCustomized} />
+          </div>
+          <p className="text-muted-foreground mb-8">
+            Track your activity patterns, recovery trends, and weekly performance.
+          </p>
+        </LayoutBlock>
 
         {/* Layout Editor */}
         {isLayoutEditing && (
@@ -60,32 +65,42 @@ export default function MyBaselines() {
         )}
 
         {/* Activity Trends Section */}
-        {isSectionVisible('activityTrends') && (
-          <div className="mb-8">
-            <h2 className="text-xl font-semibold text-foreground mb-4 flex items-center gap-2">
-              <Activity className="w-5 h-5 text-primary" />
-              Activity Trends
-            </h2>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <ActivityPanel />
-              <WeeklyTrendChart />
-            </div>
+        <LayoutBlock
+          blockId="activityTrends"
+          displayName="Activity Trends"
+          pageId="baselines"
+          size="wide"
+          visible={isSectionVisible('activityTrends')}
+          className="mb-8"
+        >
+          <h2 className="text-xl font-semibold text-foreground mb-4 flex items-center gap-2">
+            <Activity className="w-5 h-5 text-primary" />
+            Activity Trends
+          </h2>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <ActivityPanel />
+            <WeeklyTrendChart />
           </div>
-        )}
+        </LayoutBlock>
 
         {/* Health & Recovery Trends Section */}
-        {isSectionVisible('healthRecovery') && (
-          <div className="mb-8">
-            <h2 className="text-xl font-semibold text-foreground mb-4 flex items-center gap-2">
-              <TrendingUp className="w-5 h-5 text-emerald-500" />
-              Health and Recovery Trends
-            </h2>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <DailyHealthPanel />
-              <RecoveryPanel />
-            </div>
+        <LayoutBlock
+          blockId="healthRecovery"
+          displayName="Health and Recovery"
+          pageId="baselines"
+          size="wide"
+          visible={isSectionVisible('healthRecovery')}
+          className="mb-8"
+        >
+          <h2 className="text-xl font-semibold text-foreground mb-4 flex items-center gap-2">
+            <TrendingUp className="w-5 h-5 text-emerald-500" />
+            Health and Recovery Trends
+          </h2>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <DailyHealthPanel />
+            <RecoveryPanel />
           </div>
-        )}
+        </LayoutBlock>
       </div>
     </div>
   );

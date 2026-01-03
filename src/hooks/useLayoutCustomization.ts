@@ -1,11 +1,14 @@
 import { useState, useCallback, useMemo } from 'react';
 
+export type LayoutBlockSize = 'compact' | 'standard' | 'wide';
+
 export interface SectionConfig {
   id: string;
   name: string;
   visible: boolean;
   order: number;
   collapsed?: boolean;
+  size?: LayoutBlockSize;
 }
 
 export interface PageLayout {

@@ -20,6 +20,7 @@ import { useDashboardFocusMode } from "@/hooks/useDashboardFocusMode";
 import { useLayoutCustomization } from "@/hooks/useLayoutCustomization";
 import { CustomizeLayoutButton } from "@/components/layout/CustomizeLayoutButton";
 import { LayoutEditor } from "@/components/layout/LayoutEditor";
+import { LayoutBlock } from "@/components/layout/LayoutBlock";
 import { cn } from "@/lib/utils";
 
 const WelcomeHeader = ({ onCustomize, isCustomized }: { onCustomize: () => void; isCustomized: boolean }) => (
@@ -166,7 +167,13 @@ export const Dashboard = () => {
           ) : (
             <>
               {/* Focus Mode Selector */}
-              {isSectionVisible('focusMode') && (
+              <LayoutBlock
+                blockId="focusMode"
+                displayName="Focus Mode"
+                pageId="dashboard"
+                size="wide"
+                visible={isSectionVisible('focusMode')}
+              >
                 <div className="mb-8 p-4 bg-glass backdrop-blur-xl border border-glass-border rounded-xl">
                   <FocusModeSelector
                     currentMode={currentMode}
@@ -176,7 +183,7 @@ export const Dashboard = () => {
                     hasCustomPreferences={hasCustomPreferences}
                   />
                 </div>
-              )}
+              </LayoutBlock>
 
               {/* Custom Focus Editor */}
               {isEditingCustom && (
@@ -192,7 +199,13 @@ export const Dashboard = () => {
               {/* Dashboard Cards - Ordered by Focus Mode */}
               <div className="space-y-8">
                 {/* Risk Score */}
-                {isSectionVisible('riskScore') && (
+                <LayoutBlock
+                  blockId="riskScore"
+                  displayName="Risk Score"
+                  pageId="dashboard"
+                  size="wide"
+                  visible={isSectionVisible('riskScore')}
+                >
                   <div 
                     className={cn(
                       "transition-all duration-300",
@@ -203,10 +216,16 @@ export const Dashboard = () => {
                   >
                     <RiskScoreCard />
                   </div>
-                )}
+                </LayoutBlock>
 
                 {/* Core Metrics: Sleep, Readiness, Activity */}
-                {isSectionVisible('todaysScores') && (
+                <LayoutBlock
+                  blockId="todaysScores"
+                  displayName="Todays Scores"
+                  pageId="dashboard"
+                  size="wide"
+                  visible={isSectionVisible('todaysScores')}
+                >
                   <div className={cn(
                     "transition-all duration-300",
                     isCardMinimized('readiness') && isCardMinimized('sleep') && isCardMinimized('activity') && "opacity-60"
@@ -255,10 +274,16 @@ export const Dashboard = () => {
                       </div>
                     </div>
                   </div>
-                )}
+                </LayoutBlock>
 
                 {/* Today's Activity Section */}
-                {isSectionVisible('todayActivity') && (
+                <LayoutBlock
+                  blockId="todayActivity"
+                  displayName="Today Activity"
+                  pageId="dashboard"
+                  size="wide"
+                  visible={isSectionVisible('todayActivity')}
+                >
                   <div className={cn(
                     "transition-all duration-300",
                     isCardMinimized('todayActivity') && "opacity-60 scale-[0.98]",
@@ -266,10 +291,16 @@ export const Dashboard = () => {
                   )}>
                     <TodayActivitySection />
                   </div>
-                )}
+                </LayoutBlock>
 
                 {/* Daily Briefing */}
-                {isSectionVisible('dailyBriefing') && (
+                <LayoutBlock
+                  blockId="dailyBriefing"
+                  displayName="Daily Briefing"
+                  pageId="dashboard"
+                  size="wide"
+                  visible={isSectionVisible('dailyBriefing')}
+                >
                   <div className={cn(
                     "transition-all duration-300",
                     isCardMinimized('briefing') && "opacity-60 scale-[0.98]",
@@ -285,12 +316,19 @@ export const Dashboard = () => {
                       onRefresh={refreshIntelligence}
                     />
                   </div>
-                )}
+                </LayoutBlock>
 
                 {/* Recommendations */}
-                {isSectionVisible('recommendations') && (
+                <LayoutBlock
+                  blockId="recommendations"
+                  displayName="Recommendations"
+                  pageId="dashboard"
+                  size="wide"
+                  visible={isSectionVisible('recommendations')}
+                  className="mb-10"
+                >
                   <div className={cn(
-                    "mb-10 transition-all duration-300",
+                    "transition-all duration-300",
                     isCardMinimized('recommendations') && "opacity-60 scale-[0.98]",
                     isCardEmphasized('recommendations') && "ring-2 ring-blue-500/30 rounded-xl"
                   )}>
@@ -299,7 +337,7 @@ export const Dashboard = () => {
                       isLoading={intelligenceLoading}
                     />
                   </div>
-                )}
+                </LayoutBlock>
               </div>
             </>
           )}

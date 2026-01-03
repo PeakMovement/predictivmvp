@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 import { useLayoutCustomization } from "@/hooks/useLayoutCustomization";
 import { CustomizeLayoutButton } from "@/components/layout/CustomizeLayoutButton";
 import { LayoutEditor } from "@/components/layout/LayoutEditor";
+import { LayoutBlock } from "@/components/layout/LayoutBlock";
 
 const toneStyles: Record<'coach' | 'warm' | 'strategic', { bg: string; border: string; text: string; icon: React.ReactNode }> = {
   coach: {
@@ -327,17 +328,35 @@ export function Planner() {
 
         <div className="space-y-8">
           {/* Week Intent and Guardrails */}
-          {isSectionVisible('weekIntent') && (
+          <LayoutBlock
+            blockId="weekIntent"
+            displayName="Week Intent"
+            pageId="plan"
+            size="wide"
+            visible={isSectionVisible('weekIntent')}
+          >
             <WeekIntentSection intent={overview.intent} />
-          )}
+          </LayoutBlock>
 
           {/* Overall Focus Banner */}
-          {isSectionVisible('weeklyFocus') && (
+          <LayoutBlock
+            blockId="weeklyFocus"
+            displayName="Weekly Focus"
+            pageId="plan"
+            size="wide"
+            visible={isSectionVisible('weeklyFocus')}
+          >
             <WeeklyFocusBanner focus={overview.overallFocus} tone={overview.overallTone} />
-          )}
+          </LayoutBlock>
 
           {/* Weekly Themes */}
-          {isSectionVisible('themes') && overview.themes.length > 0 && (
+          <LayoutBlock
+            blockId="themes"
+            displayName="Weekly Themes"
+            pageId="plan"
+            size="wide"
+            visible={isSectionVisible('themes') && overview.themes.length > 0}
+          >
             <section>
               <h2 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
                 <Sparkles className="h-5 w-5 text-primary" />
@@ -349,10 +368,16 @@ export function Planner() {
                 ))}
               </div>
             </section>
-          )}
+          </LayoutBlock>
 
           {/* Daily Overview */}
-          {isSectionVisible('dailyBriefings') && (
+          <LayoutBlock
+            blockId="dailyBriefings"
+            displayName="Daily Briefings"
+            pageId="plan"
+            size="wide"
+            visible={isSectionVisible('dailyBriefings')}
+          >
             <section>
               <h2 className="text-lg font-semibold text-foreground mb-4">
                 Day by Day
@@ -367,7 +392,7 @@ export function Planner() {
                 ))}
               </div>
             </section>
-          )}
+          </LayoutBlock>
 
           {/* Gentle guidance footer */}
           <div className="text-center pt-4">

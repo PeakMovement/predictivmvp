@@ -33,7 +33,7 @@ export const SymptomCheckIn = () => {
             <div className="p-2 rounded-xl bg-primary/20">
               <Stethoscope className="h-6 w-6 text-primary" />
             </div>
-            <h1 className="text-2xl font-bold text-foreground">Symptom Check-In</h1>
+            <h1 className="text-2xl font-bold text-foreground">Symptom Check In</h1>
           </div>
           <p className="text-muted-foreground">
             Log your symptoms to help Yves and the triage system provide personalized recommendations.

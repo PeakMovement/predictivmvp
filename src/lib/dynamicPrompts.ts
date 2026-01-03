@@ -89,7 +89,7 @@ export const generateDynamicTodaysPlan = (
   if (timeOfDay === 'morning') {
     greeting = '🌅 Good morning! ';
   } else if (timeOfDay === 'evening') {
-    greeting = '🌙 Evening check-in: ';
+    greeting = '🌙 Evening check in: ';
   }
 
   if (recommendations.length === 0) {

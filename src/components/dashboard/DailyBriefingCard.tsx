@@ -10,6 +10,7 @@ import { PersonalContextChips } from "./PersonalContextChips";
 import { ActiveGoalSection } from "./ActiveGoalSection";
 import { LearnedPatternsSection } from "./LearnedPatternsSection";
 import { TodaysBestDecision } from "./TodaysBestDecision";
+import { PlanAlignmentSection } from "./PlanAlignmentSection";
 import { WhyThisMatters } from "./WhyThisMatters";
 import { DocumentReference } from "./DocumentReference";
 import { usePersonalizedInsights } from "@/hooks/usePersonalizedInsights";
@@ -91,6 +92,9 @@ export function DailyBriefingCard({
         
         {/* Todays Best Decision Section */}
         <TodaysBestDecision className="pb-2 border-b border-border/50" />
+        
+        {/* Plan Alignment Section - only shows if user has uploaded plans */}
+        <PlanAlignmentSection className="pb-2 border-b border-border/50" />
         
         {!briefing ? (
           <div className="text-center py-6 space-y-3">

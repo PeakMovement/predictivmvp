@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { PersonalContextChips } from "./PersonalContextChips";
 import { ActiveGoalSection } from "./ActiveGoalSection";
+import { LearnedPatternsSection } from "./LearnedPatternsSection";
 import { WhyThisMatters } from "./WhyThisMatters";
 import { DocumentReference } from "./DocumentReference";
 import { usePersonalizedInsights } from "@/hooks/usePersonalizedInsights";
@@ -83,6 +84,9 @@ export function DailyBriefingCard({
         
         {/* Active Goal Section */}
         <ActiveGoalSection className="pb-2 border-b border-border/50" />
+        
+        {/* Learned Patterns Section */}
+        <LearnedPatternsSection className="pb-2 border-b border-border/50" />
         
         {!briefing ? (
           <div className="text-center py-6 space-y-3">

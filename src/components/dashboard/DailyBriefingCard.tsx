@@ -14,6 +14,7 @@ import { PlanAlignmentSection } from "./PlanAlignmentSection";
 import { WhyThisMatters } from "./WhyThisMatters";
 import { DocumentReference } from "./DocumentReference";
 import { BriefingFooter } from "./BriefingFooter";
+import { OneThingThatMatters } from "./OneThingThatMatters";
 import { usePersonalizedInsights } from "@/hooks/usePersonalizedInsights";
 import { useRelevantDocuments } from "@/hooks/useRelevantDocuments";
 
@@ -291,6 +292,9 @@ function CollapsibleBriefingSections({ briefing }: { briefing: YvesDailyBriefing
           <p className="text-sm text-muted-foreground">No immediate concerns. Keep up the good work!</p>
         )}
       </CollapsibleSection>
+
+      {/* One Thing That Matters Today */}
+      <OneThingThatMatters focus={briefing.todaysFocus || null} />
     </div>
   );
 }

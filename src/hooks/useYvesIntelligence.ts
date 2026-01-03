@@ -6,6 +6,7 @@ export interface YvesDailyBriefing {
   summary: string;
   keyChanges: string[];
   riskHighlights: string[];
+  todaysFocus?: string;
 }
 
 export interface YvesRecommendation {

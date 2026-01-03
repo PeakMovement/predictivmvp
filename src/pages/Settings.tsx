@@ -38,6 +38,9 @@ import { ConnectPolarButton } from "@/components/ConnectPolarButton";
 import { PolarSyncButton } from "@/components/PolarSyncButton";
 import { SymptomCheckInForm } from "@/components/symptoms/SymptomCheckInForm";
 import { TonePreferenceSettings } from "@/components/settings/TonePreferenceSettings";
+import { useLayoutCustomization } from "@/hooks/useLayoutCustomization";
+import { CustomizeLayoutButton } from "@/components/layout/CustomizeLayoutButton";
+import { LayoutEditor } from "@/components/layout/LayoutEditor";
 
 export const Settings = ({ onNavigate }: { onNavigate?: (tab: string) => void }) => {
   const [notifications, setNotifications] = useState(true);
@@ -498,11 +501,30 @@ export const Settings = ({ onNavigate }: { onNavigate?: (tab: string) => void })
     }
   };
 
+  // Layout customization
+  const {
+    isEditing: isLayoutEditing,
+    editingSections,
+    isCustomized: layoutCustomized,
+    openEditor: openLayoutEditor,
+    closeEditor: closeLayoutEditor,
+    saveLayout,
+    resetToDefault,
+    toggleSectionVisibility,
+    moveSectionUp,
+    moveSectionDown,
+    reorderSections,
+    isSectionVisible,
+  } = useLayoutCustomization('profile');
+
   return (
     <div className="min-h-screen bg-background pb-[calc(6rem+env(safe-area-inset-bottom))] md:pb-32">
       <div className="container mx-auto px-4 md:px-6 pt-6 md:pt-8 max-w-3xl scrollable-content">
         {/* Header */}
         <div className="text-center mb-8 md:mb-12 space-y-3 md:space-y-4 px-4 md:px-0">
+          <div className="flex justify-end mb-2">
+            <CustomizeLayoutButton onClick={openLayoutEditor} isCustomized={layoutCustomized} />
+          </div>
           <div className="animate-fade-in">
             <h1 className="text-3xl md:text-4xl font-bold text-foreground tracking-tight">Settings</h1>
           </div>
@@ -511,8 +533,25 @@ export const Settings = ({ onNavigate }: { onNavigate?: (tab: string) => void })
           </div>
         </div>
 
+        {/* Layout Editor */}
+        {isLayoutEditing && (
+          <div className="mb-8 animate-fade-in">
+            <LayoutEditor
+              sections={editingSections}
+              onSave={saveLayout}
+              onCancel={closeLayoutEditor}
+              onReset={resetToDefault}
+              onToggleVisibility={toggleSectionVisibility}
+              onMoveUp={moveSectionUp}
+              onMoveDown={moveSectionDown}
+              onReorder={reorderSections}
+            />
+          </div>
+        )}
+
         <div className="space-y-4 md:space-y-6">
           {/* Profile Section */}
+          {isSectionVisible('account') && (
           <div className="bg-glass backdrop-blur-xl border border-glass-border rounded-2xl p-4 md:p-6 shadow-glass hover:bg-glass-highlight transition-all duration-300">
             <div className="flex items-center gap-3 mb-4 md:mb-6">
               <div className="w-8 h-8 bg-primary/20 rounded-lg flex items-center justify-center">
@@ -553,8 +592,10 @@ export const Settings = ({ onNavigate }: { onNavigate?: (tab: string) => void })
               </div>
             </div>
           </div>
+          )}
 
           {/* Yves AI Preferences Section */}
+          {isSectionVisible('appearance') && (
           <div className="bg-glass backdrop-blur-xl border border-glass-border rounded-2xl p-6 shadow-glass hover:bg-glass-highlight transition-all duration-300">
             <div className="flex items-center gap-3 mb-6">
               <div className="w-8 h-8 bg-green-500/20 rounded-lg flex items-center justify-center">
@@ -620,8 +661,10 @@ export const Settings = ({ onNavigate }: { onNavigate?: (tab: string) => void })
               </div>
             </div>
           </div>
+          )}
 
           {/* Connected Devices Section */}
+          {isSectionVisible('wearables') && (
           <div className="bg-glass backdrop-blur-xl border border-glass-border rounded-2xl p-6 shadow-glass hover:bg-glass-highlight transition-all duration-300">
             <div className="flex items-center gap-3 mb-6">
               <div className="w-8 h-8 bg-primary/20 rounded-lg flex items-center justify-center">
@@ -728,8 +771,10 @@ export const Settings = ({ onNavigate }: { onNavigate?: (tab: string) => void })
               </div>
             </div>
           </div>
+          )}
 
           {/* Notifications Section */}
+          {isSectionVisible('notifications') && (
           <div className="bg-glass backdrop-blur-xl border border-glass-border rounded-2xl p-6 shadow-glass hover:bg-glass-highlight transition-all duration-300">
             <div className="flex items-center gap-3 mb-6">
               <div className="w-8 h-8 bg-primary/20 rounded-lg flex items-center justify-center">
@@ -777,8 +822,10 @@ export const Settings = ({ onNavigate }: { onNavigate?: (tab: string) => void })
               </div>
             </div>
           </div>
+          )}
 
           {/* Email Notifications Section */}
+          {isSectionVisible('emailPrefs') && (
           <TooltipProvider>
             <div className="bg-glass backdrop-blur-xl border border-glass-border rounded-2xl p-6 shadow-glass hover:bg-glass-highlight transition-all duration-300">
               <div className="flex items-center gap-3 mb-4">
@@ -926,6 +973,7 @@ export const Settings = ({ onNavigate }: { onNavigate?: (tab: string) => void })
               </div>
             </div>
           </TooltipProvider>
+          )}
 
           {/* Theme Section */}
           <div className="bg-glass backdrop-blur-xl border border-glass-border rounded-2xl p-6 shadow-glass hover:bg-glass-highlight transition-all duration-300">

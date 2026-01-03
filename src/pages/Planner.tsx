@@ -1,8 +1,8 @@
 import { format } from "date-fns";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useWeeklyBriefings, DayBriefing, WeeklyTheme } from "@/hooks/useWeeklyBriefings";
-import { Calendar, Sparkles, Target, Heart, Zap, Scale, RefreshCw } from "lucide-react";
+import { useWeeklyBriefings, DayBriefing, WeeklyTheme, WeekIntent } from "@/hooks/useWeeklyBriefings";
+import { Calendar, Sparkles, Target, Heart, Zap, Scale, RefreshCw, Shield, AlertCircle, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -138,6 +138,79 @@ function WeeklyFocusBanner({ focus, tone }: { focus: string; tone: 'coach' | 'wa
   );
 }
 
+function WeekIntentSection({ intent }: { intent: WeekIntent }) {
+  const styles = toneStyles[intent.tone];
+
+  return (
+    <Card className={cn(
+      "p-6 border-2",
+      styles.bg,
+      styles.border
+    )}>
+      <div className="space-y-6">
+        {/* Intent Statement */}
+        <div className="flex items-start gap-4">
+          <div className={cn(
+            "w-12 h-12 rounded-xl flex items-center justify-center shrink-0",
+            styles.bg,
+            "border",
+            styles.border
+          )}>
+            <Shield className={cn("h-6 w-6", styles.text)} />
+          </div>
+          <div className="flex-1">
+            <h3 className={cn("text-sm font-medium mb-1", "text-muted-foreground")}>
+              This Week's Intent
+            </h3>
+            <p className={cn("text-lg font-semibold leading-relaxed", styles.text)}>
+              {intent.statement}
+            </p>
+          </div>
+        </div>
+
+        {/* Guardrails */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t border-border/50">
+          {/* Prioritize */}
+          <div className="flex items-start gap-3">
+            <div className={cn(
+              "w-8 h-8 rounded-lg flex items-center justify-center shrink-0",
+              "bg-emerald-500/10 border border-emerald-500/30"
+            )}>
+              <CheckCircle2 className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+            </div>
+            <div>
+              <span className="text-xs font-medium text-emerald-600 dark:text-emerald-400 uppercase tracking-wide">
+                Prioritize
+              </span>
+              <p className="text-sm text-foreground mt-0.5 leading-relaxed">
+                {intent.prioritize}
+              </p>
+            </div>
+          </div>
+
+          {/* Be Careful With */}
+          <div className="flex items-start gap-3">
+            <div className={cn(
+              "w-8 h-8 rounded-lg flex items-center justify-center shrink-0",
+              "bg-amber-500/10 border border-amber-500/30"
+            )}>
+              <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+            </div>
+            <div>
+              <span className="text-xs font-medium text-amber-600 dark:text-amber-400 uppercase tracking-wide">
+                Be Mindful Of
+              </span>
+              <p className="text-sm text-foreground mt-0.5 leading-relaxed">
+                {intent.beCarefulWith}
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </Card>
+  );
+}
+
 export function Planner() {
   const { overview, isLoading, error, refresh } = useWeeklyBriefings();
 
@@ -215,6 +288,9 @@ export function Planner() {
         </div>
 
         <div className="space-y-8">
+          {/* Week Intent and Guardrails */}
+          <WeekIntentSection intent={overview.intent} />
+
           {/* Overall Focus Banner */}
           <WeeklyFocusBanner focus={overview.overallFocus} tone={overview.overallTone} />
 

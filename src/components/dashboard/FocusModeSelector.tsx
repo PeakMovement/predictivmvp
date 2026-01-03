@@ -1,11 +1,14 @@
 import { cn } from "@/lib/utils";
 import { FocusMode, FocusModeConfig } from "@/hooks/useDashboardFocusMode";
-import { Focus, Zap, Heart, Scale, Sliders } from "lucide-react";
+import { Focus, Zap, Heart, Scale, Sliders, Pencil } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface FocusModeSelectorProps {
   currentMode: FocusMode;
   allModes: FocusModeConfig[];
   onModeChange: (mode: FocusMode) => void;
+  onEditCustom?: () => void;
+  hasCustomPreferences?: boolean;
   className?: string;
 }
 
@@ -33,6 +36,8 @@ export function FocusModeSelector({
   currentMode,
   allModes,
   onModeChange,
+  onEditCustom,
+  hasCustomPreferences,
   className,
 }: FocusModeSelectorProps) {
   const currentConfig = allModes.find(m => m.id === currentMode);
@@ -52,18 +57,31 @@ export function FocusModeSelector({
             : toneColors[mode.tone];
           
           return (
-            <button
-              key={mode.id}
-              onClick={() => onModeChange(mode.id)}
-              className={cn(
-                "flex items-center gap-2 px-3 py-2 rounded-lg border text-sm font-medium transition-all duration-200",
-                colorClass,
-                isSelected && "shadow-md"
+            <div key={mode.id} className="flex items-center gap-1">
+              <button
+                onClick={() => onModeChange(mode.id)}
+                className={cn(
+                  "flex items-center gap-2 px-3 py-2 rounded-lg border text-sm font-medium transition-all duration-200",
+                  colorClass,
+                  isSelected && "shadow-md"
+                )}
+              >
+                {modeIcons[mode.id]}
+                <span>{mode.label}</span>
+              </button>
+              
+              {/* Edit button for Custom mode when it's selected and has preferences */}
+              {mode.id === 'custom' && isSelected && hasCustomPreferences && onEditCustom && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={onEditCustom}
+                  className="h-8 w-8 p-0 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10"
+                >
+                  <Pencil className="h-3.5 w-3.5" />
+                </Button>
               )}
-            >
-              {modeIcons[mode.id]}
-              <span>{mode.label}</span>
-            </button>
+            </div>
           );
         })}
       </div>

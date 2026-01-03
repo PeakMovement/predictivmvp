@@ -12,6 +12,7 @@ import { InfoIcon } from "lucide-react";
 import { useLayoutCustomization } from "@/hooks/useLayoutCustomization";
 import { CustomizeLayoutButton } from "@/components/layout/CustomizeLayoutButton";
 import { LayoutEditor } from "@/components/layout/LayoutEditor";
+import { LayoutBlock } from "@/components/layout/LayoutBlock";
 
 export const Health = () => {
   const [userId, setUserId] = useState<string | null>(null);
@@ -46,7 +47,13 @@ export const Health = () => {
     <div className="min-h-screen bg-background pb-[calc(6rem+env(safe-area-inset-bottom))] md:pb-32">
       <div className="container mx-auto px-4 md:px-6 pt-6 md:pt-8 max-w-7xl">
         {/* Header */}
-        {isSectionVisible('header') && (
+        <LayoutBlock
+          blockId="header"
+          displayName="Header"
+          pageId="health"
+          size="wide"
+          visible={isSectionVisible('header')}
+        >
           <div className="text-center mb-6 md:mb-8 animate-fade-in">
             <div className="flex justify-end mb-2">
               <CustomizeLayoutButton onClick={openLayoutEditor} isCustomized={layoutCustomized} />
@@ -59,7 +66,7 @@ export const Health = () => {
               <OuraSyncStatus />
             </div>
           </div>
-        )}
+        </LayoutBlock>
 
         {/* Layout Editor */}
         {isLayoutEditing && (
@@ -104,8 +111,15 @@ export const Health = () => {
             )}
 
             {/* Three Main Score Cards */}
-            {isSectionVisible('scoreCards') && (
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+            <LayoutBlock
+              blockId="scoreCards"
+              displayName="Score Cards"
+              pageId="health"
+              size="wide"
+              visible={isSectionVisible('scoreCards')}
+              className="mb-8"
+            >
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <OuraReadinessCard
                   score={session?.readiness_score ?? null}
                   restingHR={session?.resting_hr ?? null}
@@ -129,11 +143,18 @@ export const Health = () => {
                   isLoading={isLoading}
                 />
               </div>
-            )}
+            </LayoutBlock>
 
             {/* Detailed Metrics Section */}
-            {isSectionVisible('detailedMetrics') && (
-              <div className="space-y-6 mb-8">
+            <LayoutBlock
+              blockId="detailedMetrics"
+              displayName="Detailed Metrics"
+              pageId="health"
+              size="wide"
+              visible={isSectionVisible('detailedMetrics')}
+              className="mb-8"
+            >
+              <div className="space-y-6">
                 <h2 className="text-xl font-semibold text-foreground">Detailed Metrics</h2>
 
                 {/* HRV & Heart Rate Card */}
@@ -144,20 +165,32 @@ export const Health = () => {
                   isLoading={isLoading}
                 />
               </div>
-            )}
+            </LayoutBlock>
 
             {/* Today's Activity Section */}
-            {isSectionVisible('todayActivity') && (
-              <div className="mb-8">
-                <TodayActivitySection />
-              </div>
-            )}
+            <LayoutBlock
+              blockId="todayActivity"
+              displayName="Today Activity"
+              pageId="health"
+              size="wide"
+              visible={isSectionVisible('todayActivity')}
+              className="mb-8"
+            >
+              <TodayActivitySection />
+            </LayoutBlock>
 
             {/* Data Source Info */}
-            {isSectionVisible('dataSource') && session && (
-              <div className="bg-glass/50 backdrop-blur-xl border border-glass-border rounded-xl p-4 mb-8 text-center">
+            <LayoutBlock
+              blockId="dataSource"
+              displayName="Data Source Info"
+              pageId="health"
+              size="wide"
+              visible={isSectionVisible('dataSource') && !!session}
+              className="mb-8"
+            >
+              <div className="bg-glass/50 backdrop-blur-xl border border-glass-border rounded-xl p-4 text-center">
                 <p className="text-xs text-muted-foreground">
-                  Last updated: {session.date ? new Date(session.date).toLocaleDateString('en-US', {
+                  Last updated: {session?.date ? new Date(session.date).toLocaleDateString('en-US', {
                     weekday: 'long',
                     year: 'numeric',
                     month: 'long',
@@ -165,7 +198,7 @@ export const Health = () => {
                   }) : 'Unknown'} • Source: Ōura Ring
                 </p>
               </div>
-            )}
+            </LayoutBlock>
           </>
         )}
       </div>

@@ -41,6 +41,7 @@ import { TonePreferenceSettings } from "@/components/settings/TonePreferenceSett
 import { useLayoutCustomization } from "@/hooks/useLayoutCustomization";
 import { CustomizeLayoutButton } from "@/components/layout/CustomizeLayoutButton";
 import { LayoutEditor } from "@/components/layout/LayoutEditor";
+import { LayoutBlock } from "@/components/layout/LayoutBlock";
 
 export const Settings = ({ onNavigate }: { onNavigate?: (tab: string) => void }) => {
   const [notifications, setNotifications] = useState(true);
@@ -551,429 +552,459 @@ export const Settings = ({ onNavigate }: { onNavigate?: (tab: string) => void })
 
         <div className="space-y-4 md:space-y-6">
           {/* Profile Section */}
-          {isSectionVisible('account') && (
-          <div className="bg-glass backdrop-blur-xl border border-glass-border rounded-2xl p-4 md:p-6 shadow-glass hover:bg-glass-highlight transition-all duration-300">
-            <div className="flex items-center gap-3 mb-4 md:mb-6">
-              <div className="w-8 h-8 bg-primary/20 rounded-lg flex items-center justify-center">
-                <User size={16} className="text-primary" />
-              </div>
-              <h3 className="text-lg font-semibold text-foreground">Profile</h3>
-            </div>
-            <div className="space-y-4">
-              <div className="flex items-center gap-4">
-                <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center">
-                  <User size={32} className="text-muted-foreground" />
+          <LayoutBlock
+            blockId="account"
+            displayName="Account"
+            pageId="profile"
+            size="standard"
+            visible={isSectionVisible('account')}
+          >
+            <div className="bg-glass backdrop-blur-xl border border-glass-border rounded-2xl p-4 md:p-6 shadow-glass hover:bg-glass-highlight transition-all duration-300">
+              <div className="flex items-center gap-3 mb-4 md:mb-6">
+                <div className="w-8 h-8 bg-primary/20 rounded-lg flex items-center justify-center">
+                  <User size={16} className="text-primary" />
                 </div>
-                <div className="flex-1 space-y-2">
-                  <div>
-                    <Label htmlFor="name" className="text-sm text-muted-foreground">
-                      Name
-                    </Label>
-                    <Input
-                      id="name"
-                      placeholder="Your name"
-                      className="mt-1 bg-glass/30 border-glass-border"
-                      defaultValue="John Doe"
-                    />
+                <h3 className="text-lg font-semibold text-foreground">Profile</h3>
+              </div>
+              <div className="space-y-4">
+                <div className="flex items-center gap-4">
+                  <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center">
+                    <User size={32} className="text-muted-foreground" />
                   </div>
-                  <div>
-                    <Label htmlFor="email" className="text-sm text-muted-foreground">
-                      Email
-                    </Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      placeholder="your.email@example.com"
-                      className="mt-1 bg-glass/30 border-glass-border"
-                      defaultValue="john.doe@example.com"
-                    />
+                  <div className="flex-1 space-y-2">
+                    <div>
+                      <Label htmlFor="name" className="text-sm text-muted-foreground">
+                        Name
+                      </Label>
+                      <Input
+                        id="name"
+                        placeholder="Your name"
+                        className="mt-1 bg-glass/30 border-glass-border"
+                        defaultValue="John Doe"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="email" className="text-sm text-muted-foreground">
+                        Email
+                      </Label>
+                      <Input
+                        id="email"
+                        type="email"
+                        placeholder="your.email@example.com"
+                        className="mt-1 bg-glass/30 border-glass-border"
+                        defaultValue="john.doe@example.com"
+                      />
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
-          </div>
-          )}
+          </LayoutBlock>
 
           {/* Yves AI Preferences Section */}
-          {isSectionVisible('appearance') && (
-          <div className="bg-glass backdrop-blur-xl border border-glass-border rounded-2xl p-6 shadow-glass hover:bg-glass-highlight transition-all duration-300">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-8 h-8 bg-green-500/20 rounded-lg flex items-center justify-center">
-                <Sparkles size={16} className="text-green-600" />
+          <LayoutBlock
+            blockId="appearance"
+            displayName="Appearance"
+            pageId="profile"
+            size="standard"
+            visible={isSectionVisible('appearance')}
+          >
+            <div className="bg-glass backdrop-blur-xl border border-glass-border rounded-2xl p-6 shadow-glass hover:bg-glass-highlight transition-all duration-300">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-8 h-8 bg-green-500/20 rounded-lg flex items-center justify-center">
+                  <Sparkles size={16} className="text-green-600" />
+                </div>
+                <h3 className="text-lg font-semibold text-foreground">Yves AI Preferences</h3>
               </div>
-              <h3 className="text-lg font-semibold text-foreground">Yves AI Preferences</h3>
-            </div>
-            <div className="space-y-4">
-              <div>
-                <Label htmlFor="sleepGoal" className="text-sm text-muted-foreground">
-                  Sleep Goal (hours per night)
-                </Label>
-                <Input
-                  id="sleepGoal"
-                  type="number"
-                  min="6"
-                  max="12"
-                  value={yvesPreferences.sleepGoalHours}
-                  onChange={(e) => {
-                    const newPrefs = { ...yvesPreferences, sleepGoalHours: parseInt(e.target.value) };
-                    setYvesPreferences(newPrefs);
-                  }}
-                  onBlur={() => saveYvesPreferences(yvesPreferences)}
-                  className="mt-1 bg-glass/30 border-glass-border"
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="trainingFocus" className="text-sm text-muted-foreground">
-                  Training Focus
-                </Label>
-                <Input
-                  id="trainingFocus"
-                  placeholder="e.g., Marathon preparation, Weight loss, General fitness"
-                  value={yvesPreferences.trainingFocus}
-                  onChange={(e) => {
-                    const newPrefs = { ...yvesPreferences, trainingFocus: e.target.value };
-                    setYvesPreferences(newPrefs);
-                  }}
-                  onBlur={() => saveYvesPreferences(yvesPreferences)}
-                  className="mt-1 bg-glass/30 border-glass-border"
-                />
-              </div>
-
-              <div className="flex items-center justify-between pt-2">
+              <div className="space-y-4">
                 <div>
-                  <p className="font-medium text-foreground">Prioritize Recovery</p>
-                  <p className="text-sm text-muted-foreground">Yves will emphasize rest and recovery recommendations</p>
-                </div>
-                <Switch
-                  checked={yvesPreferences.recoveryPriority}
-                  onCheckedChange={(checked) => {
-                    const newPrefs = { ...yvesPreferences, recoveryPriority: checked };
-                    setYvesPreferences(newPrefs);
-                    saveYvesPreferences(newPrefs);
-                  }}
-                />
-              </div>
-
-              {/* Tone Preference Section */}
-              <div className="pt-4 border-t border-border/50">
-                <TonePreferenceSettings />
-              </div>
-            </div>
-          </div>
-          )}
-
-          {/* Connected Devices Section */}
-          {isSectionVisible('wearables') && (
-          <div className="bg-glass backdrop-blur-xl border border-glass-border rounded-2xl p-6 shadow-glass hover:bg-glass-highlight transition-all duration-300">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-8 h-8 bg-primary/20 rounded-lg flex items-center justify-center">
-                <Smartphone size={16} className="text-primary" />
-              </div>
-              <h3 className="text-lg font-semibold text-foreground">Connected Devices</h3>
-            </div>
-            <div className="space-y-3">
-              <div className="w-full flex items-center justify-between p-4 rounded-xl border bg-glass/30 border-glass-border hover:bg-glass-highlight transition-all duration-200">
-                <div className="flex items-center gap-3 flex-1">
-                  <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-indigo-500 rounded-full flex items-center justify-center">
-                    <div className="w-4 h-4 rounded-full border-2 border-white"></div>
-                  </div>
-                  <div className="text-left flex-1">
-                    <p className="font-medium text-foreground flex items-center gap-2">
-                      Ōura Ring
-                      {isConnected && (
-                        <span className="text-xs px-2 py-0.5 rounded-full bg-green-500/20 text-green-400 border border-green-500/30">
-                          ✓ Connected
-                        </span>
-                      )}
-                    </p>
-                    {isConnected ? (
-                      <div className="space-y-1">
-                        <p className="text-xs text-muted-foreground flex items-center gap-1">
-                          <Zap size={12} className="text-green-500" />
-                          Auto-sync enabled • Data updates automatically
-                        </p>
-                        {lastSyncTime && (
-                          <p className="text-xs text-muted-foreground">
-                            Last synced: {new Date(lastSyncTime).toLocaleString()}
-                          </p>
-                        )}
-                      </div>
-                    ) : (
-                      <p className="text-xs text-muted-foreground">
-                        Connect and sync your Ōura Ring data
-                      </p>
-                    )}
-                  </div>
-                </div>
-                <div className="flex gap-2">
-                  {!isConnected && (
-                    <Button
-                      onClick={connectOura}
-                      size="sm"
-                      className="bg-primary/80 hover:bg-primary text-primary-foreground hover:scale-105 active:scale-95 transition-all duration-200"
-                    >
-                      Connect Ōura Ring
-                    </Button>
-                  )}
-                </div>
-              </div>
-
-              <div className="w-full flex items-center justify-between p-4 rounded-xl border bg-glass/30 border-glass-border hover:bg-glass-highlight transition-all duration-200">
-                <div className="flex items-center gap-3 flex-1">
-                  <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-full flex items-center justify-center">
-                    <svg
-                      width="20"
-                      height="20"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="text-white"
-                    >
-                      <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="2" />
-                      <path
-                        d="M12 6v6l4 2"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                    </svg>
-                  </div>
-                  <div className="text-left flex-1">
-                    <p className="font-medium text-foreground flex items-center gap-2">
-                      Polar
-                      {isPolarConnected && (
-                        <span className="text-xs px-2 py-0.5 rounded-full bg-green-500/20 text-green-400 border border-green-500/30">
-                          ✓ Connected
-                        </span>
-                      )}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {isPolarConnected
-                        ? "Connect your Polar fitness device"
-                        : "Track training, sleep, and recovery data"}
-                    </p>
-                  </div>
-                </div>
-                <div className="flex gap-2">
-                  {isPolarConnected && (
-                    <PolarSyncButton
-                      isConnected={isPolarConnected}
-                      onSyncComplete={checkPolarConnection}
-                    />
-                  )}
-                  <ConnectPolarButton
-                    isConnected={isPolarConnected}
-                    onConnectionChange={checkPolarConnection}
+                  <Label htmlFor="sleepGoal" className="text-sm text-muted-foreground">
+                    Sleep Goal (hours per night)
+                  </Label>
+                  <Input
+                    id="sleepGoal"
+                    type="number"
+                    min="6"
+                    max="12"
+                    value={yvesPreferences.sleepGoalHours}
+                    onChange={(e) => {
+                      const newPrefs = { ...yvesPreferences, sleepGoalHours: parseInt(e.target.value) };
+                      setYvesPreferences(newPrefs);
+                    }}
+                    onBlur={() => saveYvesPreferences(yvesPreferences)}
+                    className="mt-1 bg-glass/30 border-glass-border"
                   />
                 </div>
+
+                <div>
+                  <Label htmlFor="trainingFocus" className="text-sm text-muted-foreground">
+                    Training Focus
+                  </Label>
+                  <Input
+                    id="trainingFocus"
+                    placeholder="e.g., Marathon preparation, Weight loss, General fitness"
+                    value={yvesPreferences.trainingFocus}
+                    onChange={(e) => {
+                      const newPrefs = { ...yvesPreferences, trainingFocus: e.target.value };
+                      setYvesPreferences(newPrefs);
+                    }}
+                    onBlur={() => saveYvesPreferences(yvesPreferences)}
+                    className="mt-1 bg-glass/30 border-glass-border"
+                  />
+                </div>
+
+                <div className="flex items-center justify-between pt-2">
+                  <div>
+                    <p className="font-medium text-foreground">Prioritize Recovery</p>
+                    <p className="text-sm text-muted-foreground">Yves will emphasize rest and recovery recommendations</p>
+                  </div>
+                  <Switch
+                    checked={yvesPreferences.recoveryPriority}
+                    onCheckedChange={(checked) => {
+                      const newPrefs = { ...yvesPreferences, recoveryPriority: checked };
+                      setYvesPreferences(newPrefs);
+                      saveYvesPreferences(newPrefs);
+                    }}
+                  />
+                </div>
+
+                {/* Tone Preference Section */}
+                <div className="pt-4 border-t border-border/50">
+                  <TonePreferenceSettings />
+                </div>
               </div>
             </div>
-          </div>
-          )}
+          </LayoutBlock>
+
+          {/* Connected Devices Section */}
+          <LayoutBlock
+            blockId="wearables"
+            displayName="Wearables"
+            pageId="profile"
+            size="standard"
+            visible={isSectionVisible('wearables')}
+          >
+            <div className="bg-glass backdrop-blur-xl border border-glass-border rounded-2xl p-6 shadow-glass hover:bg-glass-highlight transition-all duration-300">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-8 h-8 bg-primary/20 rounded-lg flex items-center justify-center">
+                  <Smartphone size={16} className="text-primary" />
+                </div>
+                <h3 className="text-lg font-semibold text-foreground">Connected Devices</h3>
+              </div>
+              <div className="space-y-3">
+                <div className="w-full flex items-center justify-between p-4 rounded-xl border bg-glass/30 border-glass-border hover:bg-glass-highlight transition-all duration-200">
+                  <div className="flex items-center gap-3 flex-1">
+                    <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-indigo-500 rounded-full flex items-center justify-center">
+                      <div className="w-4 h-4 rounded-full border-2 border-white"></div>
+                    </div>
+                    <div className="text-left flex-1">
+                      <p className="font-medium text-foreground flex items-center gap-2">
+                        Ōura Ring
+                        {isConnected && (
+                          <span className="text-xs px-2 py-0.5 rounded-full bg-green-500/20 text-green-400 border border-green-500/30">
+                            ✓ Connected
+                          </span>
+                        )}
+                      </p>
+                      {isConnected ? (
+                        <div className="space-y-1">
+                          <p className="text-xs text-muted-foreground flex items-center gap-1">
+                            <Zap size={12} className="text-green-500" />
+                            Auto-sync enabled • Data updates automatically
+                          </p>
+                          {lastSyncTime && (
+                            <p className="text-xs text-muted-foreground">
+                              Last synced: {new Date(lastSyncTime).toLocaleString()}
+                            </p>
+                          )}
+                        </div>
+                      ) : (
+                        <p className="text-xs text-muted-foreground">
+                          Connect and sync your Ōura Ring data
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    {!isConnected && (
+                      <Button
+                        onClick={connectOura}
+                        size="sm"
+                        className="bg-primary/80 hover:bg-primary text-primary-foreground hover:scale-105 active:scale-95 transition-all duration-200"
+                      >
+                        Connect Ōura Ring
+                      </Button>
+                    )}
+                  </div>
+                </div>
+
+                <div className="w-full flex items-center justify-between p-4 rounded-xl border bg-glass/30 border-glass-border hover:bg-glass-highlight transition-all duration-200">
+                  <div className="flex items-center gap-3 flex-1">
+                    <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-full flex items-center justify-center">
+                      <svg
+                        width="20"
+                        height="20"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="text-white"
+                      >
+                        <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="2" />
+                        <path
+                          d="M12 6v6l4 2"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
+                    </div>
+                    <div className="text-left flex-1">
+                      <p className="font-medium text-foreground flex items-center gap-2">
+                        Polar
+                        {isPolarConnected && (
+                          <span className="text-xs px-2 py-0.5 rounded-full bg-green-500/20 text-green-400 border border-green-500/30">
+                            ✓ Connected
+                          </span>
+                        )}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {isPolarConnected
+                          ? "Connect your Polar fitness device"
+                          : "Track training, sleep, and recovery data"}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    {isPolarConnected && (
+                      <PolarSyncButton
+                        isConnected={isPolarConnected}
+                        onSyncComplete={checkPolarConnection}
+                      />
+                    )}
+                    <ConnectPolarButton
+                      isConnected={isPolarConnected}
+                      onConnectionChange={checkPolarConnection}
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </LayoutBlock>
 
           {/* Notifications Section */}
-          {isSectionVisible('notifications') && (
-          <div className="bg-glass backdrop-blur-xl border border-glass-border rounded-2xl p-6 shadow-glass hover:bg-glass-highlight transition-all duration-300">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-8 h-8 bg-primary/20 rounded-lg flex items-center justify-center">
-                <Bell size={16} className="text-primary" />
-              </div>
-              <h3 className="text-lg font-semibold text-foreground">Notifications</h3>
-            </div>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="font-medium text-foreground">Push Notifications</p>
-                  <p className="text-sm text-muted-foreground">Receive updates about your progress</p>
+          <LayoutBlock
+            blockId="notifications"
+            displayName="Notifications"
+            pageId="profile"
+            size="standard"
+            visible={isSectionVisible('notifications')}
+          >
+            <div className="bg-glass backdrop-blur-xl border border-glass-border rounded-2xl p-6 shadow-glass hover:bg-glass-highlight transition-all duration-300">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-8 h-8 bg-primary/20 rounded-lg flex items-center justify-center">
+                  <Bell size={16} className="text-primary" />
                 </div>
-                <Switch checked={notifications} onCheckedChange={setNotifications} />
+                <h3 className="text-lg font-semibold text-foreground">Notifications</h3>
               </div>
-
-              <div className="pt-4 border-t border-glass-border">
-                <div className="flex items-center justify-between mb-4">
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
                   <div>
-                    <p className="font-medium text-foreground">SMS Alerts</p>
-                    <p className="text-sm text-muted-foreground">Get real-time alerts for training risks</p>
+                    <p className="font-medium text-foreground">Push Notifications</p>
+                    <p className="text-sm text-muted-foreground">Receive updates about your progress</p>
                   </div>
-                  <Switch checked={smsEnabled} onCheckedChange={handleSmsToggle} />
+                  <Switch checked={notifications} onCheckedChange={setNotifications} />
                 </div>
 
-                {smsEnabled && (
-                  <div className="space-y-2 animate-fade-in">
-                    <Label htmlFor="phone" className="text-sm text-muted-foreground">
-                      Phone Number (South Africa)
-                    </Label>
-                    <Input
-                      id="phone"
-                      type="tel"
-                      placeholder="+27827251107"
-                      value={phoneNumber}
-                      onChange={handlePhoneNumberChange}
-                      className="bg-glass/30 border-glass-border"
-                    />
-                    <p className="text-xs text-muted-foreground">
-                      Alert conditions: High training load (ACWR &gt; 1.5), Low recovery (HRV &lt; 65), Poor sleep (&lt;
-                      70)
-                    </p>
+                <div className="pt-4 border-t border-glass-border">
+                  <div className="flex items-center justify-between mb-4">
+                    <div>
+                      <p className="font-medium text-foreground">SMS Alerts</p>
+                      <p className="text-sm text-muted-foreground">Get real-time alerts for training risks</p>
+                    </div>
+                    <Switch checked={smsEnabled} onCheckedChange={handleSmsToggle} />
                   </div>
-                )}
+
+                  {smsEnabled && (
+                    <div className="space-y-2 animate-fade-in">
+                      <Label htmlFor="phone" className="text-sm text-muted-foreground">
+                        Phone Number (South Africa)
+                      </Label>
+                      <Input
+                        id="phone"
+                        type="tel"
+                        placeholder="+27827251107"
+                        value={phoneNumber}
+                        onChange={handlePhoneNumberChange}
+                        className="bg-glass/30 border-glass-border"
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        Alert conditions: High training load (ACWR &gt; 1.5), Low recovery (HRV &lt; 65), Poor sleep (&lt;
+                        70)
+                      </p>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
-          </div>
-          )}
+          </LayoutBlock>
 
           {/* Email Notifications Section */}
-          {isSectionVisible('emailPrefs') && (
-          <TooltipProvider>
-            <div className="bg-glass backdrop-blur-xl border border-glass-border rounded-2xl p-6 shadow-glass hover:bg-glass-highlight transition-all duration-300">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-8 h-8 bg-primary/20 rounded-lg flex items-center justify-center">
-                  <Mail size={16} className="text-primary" />
-                </div>
-                <div>
-                  <h3 className="text-lg font-semibold text-foreground">Email Notifications</h3>
-                  <p className="text-sm text-muted-foreground">Choose what updates you'd like to receive by email</p>
-                </div>
-              </div>
-
-              <div className="space-y-4">
-                {/* Master Toggle */}
-                <div className="flex items-center justify-between pb-4 border-b border-glass-border">
+          <LayoutBlock
+            blockId="emailPrefs"
+            displayName="Email Preferences"
+            pageId="profile"
+            size="standard"
+            visible={isSectionVisible('emailPrefs')}
+          >
+            <TooltipProvider>
+              <div className="bg-glass backdrop-blur-xl border border-glass-border rounded-2xl p-6 shadow-glass hover:bg-glass-highlight transition-all duration-300">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-8 h-8 bg-primary/20 rounded-lg flex items-center justify-center">
+                    <Mail size={16} className="text-primary" />
+                  </div>
                   <div>
-                    <p className="font-medium text-foreground">Enable Email Notifications</p>
-                    <p className="text-sm text-muted-foreground">Turn on to receive email updates</p>
+                    <h3 className="text-lg font-semibold text-foreground">Email Notifications</h3>
+                    <p className="text-sm text-muted-foreground">Choose what updates you'd like to receive by email</p>
                   </div>
-                  <Switch checked={emailNotificationsEnabled} onCheckedChange={handleEmailMasterToggle} />
                 </div>
 
-                {/* Individual Preferences */}
                 <div className="space-y-4">
-                  {/* Daily Summary */}
-                  <div
-                    className={cn(
-                      "flex items-center justify-between transition-opacity duration-200",
-                      !emailNotificationsEnabled && "opacity-50",
-                    )}
-                  >
-                    <div className="flex items-center gap-2 flex-1">
-                      <div>
-                        <p className="font-medium text-foreground">Daily Summary Email</p>
-                        <p className="text-sm text-muted-foreground">
-                          Receive a morning health summary at 7:30am SA time
-                        </p>
-                      </div>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <button className="text-muted-foreground hover:text-foreground transition-colors">
-                            <HelpCircle size={16} />
-                          </button>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p className="max-w-xs text-xs">
-                            Get a comprehensive weekly report with insights on your performance, recovery, and progress
-                          </p>
-                        </TooltipContent>
-                      </Tooltip>
+                  {/* Master Toggle */}
+                  <div className="flex items-center justify-between pb-4 border-b border-glass-border">
+                    <div>
+                      <p className="font-medium text-foreground">Enable Email Notifications</p>
+                      <p className="text-sm text-muted-foreground">Turn on to receive email updates</p>
                     </div>
-                    <Switch
-                      checked={emailPreferences.dailySummary}
-                      onCheckedChange={(checked) => handleEmailPreferenceChange("dailySummary", checked)}
-                      disabled={!emailNotificationsEnabled}
-                    />
+                    <Switch checked={emailNotificationsEnabled} onCheckedChange={handleEmailMasterToggle} />
                   </div>
 
-                  {/* Test Email Button */}
-                  <div className={cn(
-                    "pt-2 transition-opacity duration-200",
-                    (!emailNotificationsEnabled || !emailPreferences.dailySummary) && "opacity-50"
-                  )}>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={handleTestEmail}
-                      disabled={!emailNotificationsEnabled || !emailPreferences.dailySummary || isSendingTestEmail}
-                      className="w-full sm:w-auto"
+                  {/* Individual Preferences */}
+                  <div className="space-y-4">
+                    {/* Daily Summary */}
+                    <div
+                      className={cn(
+                        "flex items-center justify-between transition-opacity duration-200",
+                        !emailNotificationsEnabled && "opacity-50",
+                      )}
                     >
-                      <Send size={14} className="mr-2" />
-                      {isSendingTestEmail ? "Sending..." : "Send Test Email"}
-                    </Button>
-                    <p className="text-xs text-muted-foreground mt-2">
-                      Send a test daily summary email to verify it's working
-                    </p>
-                  </div>
-
-                  {/* Risk Alerts */}
-                  <div
-                    className={cn(
-                      "flex items-center justify-between transition-opacity duration-200",
-                      !emailNotificationsEnabled && "opacity-50",
-                    )}
-                  >
-                    <div className="flex items-center gap-2 flex-1">
-                      <div>
-                        <p className="font-medium text-foreground">Risk Alerts</p>
-                        <p className="text-sm text-muted-foreground">
-                          Get notified when risk scores reach unsafe levels
-                        </p>
-                      </div>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <button className="text-muted-foreground hover:text-foreground transition-colors">
-                            <HelpCircle size={16} />
-                          </button>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p className="max-w-xs text-xs">
-                            Receive alerts when ACWR, strain, or recovery indicators suggest increased injury risk
+                      <div className="flex items-center gap-2 flex-1">
+                        <div>
+                          <p className="font-medium text-foreground">Daily Summary Email</p>
+                          <p className="text-sm text-muted-foreground">
+                            Receive a morning health summary at 7:30am SA time
                           </p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </div>
-                    <Switch
-                      checked={emailPreferences.riskAlerts}
-                      onCheckedChange={(checked) => handleEmailPreferenceChange("riskAlerts", checked)}
-                      disabled={!emailNotificationsEnabled}
-                    />
-                  </div>
-
-                  {/* AI Coach Recommendations */}
-                  <div
-                    className={cn(
-                      "flex items-center justify-between transition-opacity duration-200",
-                      !emailNotificationsEnabled && "opacity-50",
-                    )}
-                  >
-                    <div className="flex items-center gap-2 flex-1">
-                      <div>
-                        <p className="font-medium text-foreground">AI Coach Recommendations</p>
-                        <p className="text-sm text-muted-foreground">Receive daily performance and recovery advice</p>
+                        </div>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <button className="text-muted-foreground hover:text-foreground transition-colors">
+                              <HelpCircle size={16} />
+                            </button>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p className="max-w-xs text-xs">
+                              Get a comprehensive weekly report with insights on your performance, recovery, and progress
+                            </p>
+                          </TooltipContent>
+                        </Tooltip>
                       </div>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <button className="text-muted-foreground hover:text-foreground transition-colors">
-                            <HelpCircle size={16} />
-                          </button>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p className="max-w-xs text-xs">
-                            Get personalized training and recovery recommendations based on your data
-                          </p>
-                        </TooltipContent>
-                      </Tooltip>
+                      <Switch
+                        checked={emailPreferences.dailySummary}
+                        onCheckedChange={(checked) => handleEmailPreferenceChange("dailySummary", checked)}
+                        disabled={!emailNotificationsEnabled}
+                      />
                     </div>
-                    <Switch
-                      checked={emailPreferences.aiCoachRecommendations}
-                      onCheckedChange={(checked) => handleEmailPreferenceChange("aiCoachRecommendations", checked)}
-                      disabled={!emailNotificationsEnabled}
-                    />
+
+                    {/* Test Email Button */}
+                    <div className={cn(
+                      "pt-2 transition-opacity duration-200",
+                      (!emailNotificationsEnabled || !emailPreferences.dailySummary) && "opacity-50"
+                    )}>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleTestEmail}
+                        disabled={!emailNotificationsEnabled || !emailPreferences.dailySummary || isSendingTestEmail}
+                        className="w-full sm:w-auto"
+                      >
+                        <Send size={14} className="mr-2" />
+                        {isSendingTestEmail ? "Sending..." : "Send Test Email"}
+                      </Button>
+                      <p className="text-xs text-muted-foreground mt-2">
+                        Send a test daily summary email to verify it's working
+                      </p>
+                    </div>
+
+                    {/* Risk Alerts */}
+                    <div
+                      className={cn(
+                        "flex items-center justify-between transition-opacity duration-200",
+                        !emailNotificationsEnabled && "opacity-50",
+                      )}
+                    >
+                      <div className="flex items-center gap-2 flex-1">
+                        <div>
+                          <p className="font-medium text-foreground">Risk Alerts</p>
+                          <p className="text-sm text-muted-foreground">
+                            Get notified when risk scores reach unsafe levels
+                          </p>
+                        </div>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <button className="text-muted-foreground hover:text-foreground transition-colors">
+                              <HelpCircle size={16} />
+                            </button>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p className="max-w-xs text-xs">
+                              Receive alerts when ACWR, strain, or recovery indicators suggest increased injury risk
+                            </p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </div>
+                      <Switch
+                        checked={emailPreferences.riskAlerts}
+                        onCheckedChange={(checked) => handleEmailPreferenceChange("riskAlerts", checked)}
+                        disabled={!emailNotificationsEnabled}
+                      />
+                    </div>
+
+                    {/* AI Coach Recommendations */}
+                    <div
+                      className={cn(
+                        "flex items-center justify-between transition-opacity duration-200",
+                        !emailNotificationsEnabled && "opacity-50",
+                      )}
+                    >
+                      <div className="flex items-center gap-2 flex-1">
+                        <div>
+                          <p className="font-medium text-foreground">AI Coach Recommendations</p>
+                          <p className="text-sm text-muted-foreground">Receive daily performance and recovery advice</p>
+                        </div>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <button className="text-muted-foreground hover:text-foreground transition-colors">
+                              <HelpCircle size={16} />
+                            </button>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p className="max-w-xs text-xs">
+                              Get personalized training and recovery recommendations based on your data
+                            </p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </div>
+                      <Switch
+                        checked={emailPreferences.aiCoachRecommendations}
+                        onCheckedChange={(checked) => handleEmailPreferenceChange("aiCoachRecommendations", checked)}
+                        disabled={!emailNotificationsEnabled}
+                      />
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          </TooltipProvider>
-          )}
+            </TooltipProvider>
+          </LayoutBlock>
 
           {/* Theme Section */}
           <div className="bg-glass backdrop-blur-xl border border-glass-border rounded-2xl p-6 shadow-glass hover:bg-glass-highlight transition-all duration-300">

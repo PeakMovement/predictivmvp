@@ -10,6 +10,7 @@ import { useNavigate } from 'react-router-dom';
 import { useLayoutCustomization } from '@/hooks/useLayoutCustomization';
 import { CustomizeLayoutButton } from '@/components/layout/CustomizeLayoutButton';
 import { LayoutEditor } from '@/components/layout/LayoutEditor';
+import { LayoutBlock } from '@/components/layout/LayoutBlock';
 
 const MyDocuments = () => {
   const { documents, loading, uploading, uploadDocument, deleteDocument } = useDocuments();
@@ -74,7 +75,13 @@ const MyDocuments = () => {
       )}
 
       {/* Upload Zones */}
-      {isSectionVisible('uploadZones') && (
+      <LayoutBlock
+        blockId="uploadZones"
+        displayName="Upload Zones"
+        pageId="docs"
+        size="wide"
+        visible={isSectionVisible('uploadZones')}
+      >
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <DocumentUploadZone
             documentType="nutrition"
@@ -120,10 +127,16 @@ const MyDocuments = () => {
             description="Workout plans, coaching"
           />
         </div>
-      )}
+      </LayoutBlock>
 
       {/* Stats Card */}
-      {isSectionVisible('summary') && (
+      <LayoutBlock
+        blockId="summary"
+        displayName="Document Summary"
+        pageId="docs"
+        size="wide"
+        visible={isSectionVisible('summary')}
+      >
         <Card className="bg-glass border-glass-border">
           <CardHeader>
             <CardTitle className="text-lg">Document Summary</CardTitle>
@@ -145,10 +158,16 @@ const MyDocuments = () => {
             </div>
           </CardContent>
         </Card>
-      )}
+      </LayoutBlock>
 
       {/* Document Library */}
-      {isSectionVisible('library') && (
+      <LayoutBlock
+        blockId="library"
+        displayName="Document Library"
+        pageId="docs"
+        size="wide"
+        visible={isSectionVisible('library')}
+      >
         <Card className="bg-glass border-glass-border">
           <CardHeader>
             <div className="flex items-center justify-between">
@@ -190,7 +209,7 @@ const MyDocuments = () => {
             )}
           </CardContent>
         </Card>
-      )}
+      </LayoutBlock>
     </div>
   );
 };

@@ -34,10 +34,7 @@ import { SessionLogList } from "@/components/dashboard/SessionLogList";
 import { useLayoutCustomization } from "@/hooks/useLayoutCustomization";
 import { CustomizeLayoutButton } from "@/components/layout/CustomizeLayoutButton";
 import { LayoutEditor } from "@/components/layout/LayoutEditor";
-
-
-// ✅ getSessionLogs, generateSuggestions, getGraphData and helpers remain unchanged
-// (Paste your original implementations here — they don't affect the grid fix)
+import { LayoutBlock } from "@/components/layout/LayoutBlock";
 
 const getSessionLogs = (csvData: HealthDataRow[]) => {
   if (csvData.length === 0) return [];
@@ -260,7 +257,13 @@ export const Training = () => {
       <div className="min-h-screen bg-background pb-[calc(7rem+env(safe-area-inset-bottom))] md:pb-32">
         <div className="container mx-auto px-4 md:px-6 pt-6 md:pt-8 max-w-7xl">
           {/* Header */}
-          {isSectionVisible('header') && (
+          <LayoutBlock
+            blockId="header"
+            displayName="Header"
+            pageId="training"
+            size="wide"
+            visible={isSectionVisible('header')}
+          >
             <div className="text-center mb-6 md:mb-8">
               <div className="flex justify-end mb-2">
                 <CustomizeLayoutButton onClick={openLayoutEditor} isCustomized={layoutCustomized} />
@@ -270,7 +273,7 @@ export const Training = () => {
                 {userId ? "Track your workouts and training progression" : "Please connect your Ōura Ring to see your data"}
               </p>
             </div>
-          )}
+          </LayoutBlock>
 
           {/* Layout Editor */}
           {isLayoutEditing && (
@@ -301,12 +304,25 @@ export const Training = () => {
               <div className="mb-6 md:mb-8">{/* your AccountabilityChallenges component here */}</div>
 
               {/* Session Logs and Gauges */}
-              {isSectionVisible('sessionLogs') && (
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6 mb-6 md:mb-8">
+              <LayoutBlock
+                blockId="sessionLogs"
+                displayName="Session Logs"
+                pageId="training"
+                size="wide"
+                visible={isSectionVisible('sessionLogs')}
+                className="mb-6 md:mb-8"
+              >
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
                   <div className="lg:col-span-2 w-full">
                     <SessionLogList />
                   </div>
-                  {isSectionVisible('gauges') && (
+                  <LayoutBlock
+                    blockId="gauges"
+                    displayName="Training Gauges"
+                    pageId="training"
+                    size="standard"
+                    visible={isSectionVisible('gauges')}
+                  >
                     <div className="space-y-4 md:space-y-6 w-full">
                       <CircularGauge
                         title="Training Monotony"
@@ -327,16 +343,21 @@ export const Training = () => {
                         unit="%"
                       />
                     </div>
-                  )}
+                  </LayoutBlock>
                 </div>
-              )}
+              </LayoutBlock>
 
               {/* Trend Analysis Carousel */}
-              {isSectionVisible('trendAnalysis') && (
-                <div className="mb-6 md:mb-8">
-                  <UnifiedTrendCard />
-                </div>
-              )}
+              <LayoutBlock
+                blockId="trendAnalysis"
+                displayName="Trend Analysis"
+                pageId="training"
+                size="wide"
+                visible={isSectionVisible('trendAnalysis')}
+                className="mb-6 md:mb-8"
+              >
+                <UnifiedTrendCard />
+              </LayoutBlock>
             </>
           )}
         </div>

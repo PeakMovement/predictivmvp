@@ -67,6 +67,33 @@ const defaultLayouts: Record<PageId, SectionConfig[]> = {
   ],
 };
 
+// Get all valid section IDs for a page (source of truth)
+function getValidSectionIds(pageId: PageId): Set<string> {
+  return new Set(defaultLayouts[pageId].map(s => s.id));
+}
+
+// Merge saved layout with defaults: filter removed blocks, add new blocks
+function mergeWithDefaults(saved: SectionConfig[], pageId: PageId): SectionConfig[] {
+  const defaults = defaultLayouts[pageId];
+  const validIds = getValidSectionIds(pageId);
+  
+  // Filter out any saved sections that no longer exist in defaults
+  const filteredSaved = saved.filter(s => validIds.has(s.id));
+  const savedIds = new Set(filteredSaved.map(s => s.id));
+  
+  // Find new sections that exist in defaults but not in saved layout
+  const newSections = defaults.filter(d => !savedIds.has(d.id));
+  
+  // Combine: existing saved sections + new sections appended at the end
+  const merged = [
+    ...filteredSaved,
+    ...newSections.map((s, i) => ({ ...s, order: filteredSaved.length + i })),
+  ];
+  
+  // Re-normalize order to be sequential
+  return merged.map((s, i) => ({ ...s, order: i }));
+}
+
 const LOCAL_STORAGE_KEY = 'layout_customization';
 
 // Get layouts from localStorage (fallback for anonymous users)
@@ -155,21 +182,30 @@ export function useLayoutCustomization(pageId: PageId) {
   }, []);
   
   // Get current layout from Supabase (if logged in) or localStorage
+  // Always merge with defaults to handle new/removed sections gracefully
   const layout = useMemo((): PageLayout => {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const _version = layoutVersion; // Force re-compute on update
     
+    let savedSections: SectionConfig[] | null = null;
+    
     // For authenticated users, prefer remote layouts
-    if (userId && remoteLayouts && remoteLayouts[pageId]) {
-      return remoteLayouts[pageId];
+    if (userId && remoteLayouts && remoteLayouts[pageId]?.sections) {
+      savedSections = remoteLayouts[pageId].sections;
+    } else {
+      // Fall back to localStorage
+      const stored = getLocalLayouts();
+      if (stored && stored[pageId]?.sections) {
+        savedSections = stored[pageId].sections;
+      }
     }
     
-    // Fall back to localStorage
-    const stored = getLocalLayouts();
-    if (stored && stored[pageId]) {
-      return stored[pageId];
+    // If we have saved sections, merge with defaults to handle changes
+    if (savedSections && savedSections.length > 0) {
+      return { sections: mergeWithDefaults(savedSections, pageId) };
     }
     
+    // No saved layout, use defaults
     return { sections: [...defaultLayouts[pageId]] };
   }, [pageId, layoutVersion, userId, remoteLayouts]);
 

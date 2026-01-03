@@ -80,13 +80,37 @@ export const blockLibrary: Record<string, { pageId: PageId; blocks: { id: string
   },
 };
 
+// Build a set of all valid block references from the library
+function getAllValidBlockReferences(): Set<string> {
+  const validRefs = new Set<string>();
+  Object.values(blockLibrary).forEach(({ pageId, blocks }) => {
+    blocks.forEach(block => {
+      validRefs.add(`${pageId}:${block.id}`);
+    });
+  });
+  return validRefs;
+}
+
+// Filter canvas blocks to remove any that reference non-existent sections
+function filterValidBlocks(blocks: CanvasBlock[]): CanvasBlock[] {
+  const validRefs = getAllValidBlockReferences();
+  return blocks
+    .filter(block => validRefs.has(`${block.sourcePageId}:${block.sourceSectionId}`))
+    .map((block, index) => ({ ...block, order: index }));
+}
+
 const LOCAL_STORAGE_KEY = 'personal_canvas';
 
 function getLocalCanvas(): CanvasLayout | null {
   try {
     const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
     if (stored) {
-      return JSON.parse(stored);
+      const parsed = JSON.parse(stored) as CanvasLayout;
+      // Filter out any blocks that no longer exist in the library
+      return {
+        ...parsed,
+        blocks: filterValidBlocks(parsed.blocks || []),
+      };
     }
   } catch (error) {
     console.error('Error loading canvas from localStorage:', error);
@@ -154,7 +178,12 @@ export function usePersonalCanvas() {
 
         const prefs = data?.layout_preferences as Record<string, unknown> | null;
         if (prefs && prefs.personalCanvas) {
-          setCanvas(prefs.personalCanvas as CanvasLayout);
+          const savedCanvas = prefs.personalCanvas as CanvasLayout;
+          // Filter out any blocks that no longer exist in the library
+          setCanvas({
+            ...savedCanvas,
+            blocks: filterValidBlocks(savedCanvas.blocks || []),
+          });
         } else {
           const local = getLocalCanvas();
           setCanvas(local || defaultCanvas);

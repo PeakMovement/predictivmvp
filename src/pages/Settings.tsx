@@ -42,6 +42,7 @@ import { useLayoutCustomization } from "@/hooks/useLayoutCustomization";
 import { CustomizeLayoutButton } from "@/components/layout/CustomizeLayoutButton";
 import { LayoutEditor } from "@/components/layout/LayoutEditor";
 import { LayoutBlock } from "@/components/layout/LayoutBlock";
+import { OnboardingSimulator } from "@/components/onboarding/OnboardingSimulator";
 
 export const Settings = ({ onNavigate }: { onNavigate?: (tab: string) => void }) => {
   const [notifications, setNotifications] = useState(true);
@@ -75,6 +76,7 @@ export const Settings = ({ onNavigate }: { onNavigate?: (tab: string) => void })
   });
   const [isSendingTestEmail, setIsSendingTestEmail] = useState(false);
   const [showSymptomChecker, setShowSymptomChecker] = useState(false);
+  const [showOnboardingSimulator, setShowOnboardingSimulator] = useState(false);
 
   const { theme, setTheme } = useTheme();
   const { toast } = useToast();
@@ -1400,6 +1402,22 @@ export const Settings = ({ onNavigate }: { onNavigate?: (tab: string) => void })
                 </div>
                 <ChevronRight size={16} className="text-muted-foreground" />
               </button>
+
+              <button
+                onClick={() => setShowOnboardingSimulator(true)}
+                className="w-full flex items-center justify-between p-4 rounded-xl border bg-glass/30 border-glass-border hover:bg-glass-highlight transition-all duration-200"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 bg-primary/20 rounded-lg flex items-center justify-center">
+                    <Sparkles size={16} className="text-primary" />
+                  </div>
+                  <div className="text-left">
+                    <p className="font-medium text-foreground">Simulate Onboarding</p>
+                    <p className="text-xs text-muted-foreground">Preview the new user onboarding experience</p>
+                  </div>
+                </div>
+                <ChevronRight size={16} className="text-muted-foreground" />
+              </button>
             </div>
           </div>
         </div>
@@ -1420,6 +1438,12 @@ export const Settings = ({ onNavigate }: { onNavigate?: (tab: string) => void })
             />
           </DialogContent>
         </Dialog>
+
+        {/* Onboarding Simulator */}
+        <OnboardingSimulator
+          open={showOnboardingSimulator}
+          onOpenChange={setShowOnboardingSimulator}
+        />
       </div>
     </div>
   );

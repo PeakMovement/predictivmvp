@@ -1,5 +1,17 @@
 project_id = "ixtwbkikyuexskdgfpfq"
 
+[functions.calculate-data-maturity]
+verify_jwt = false
+
+[functions.evaluate-escalation-rules]
+verify_jwt = false
+
+[functions.track-engagement]
+verify_jwt = true
+
+[functions.adapt-user-model]
+verify_jwt = false
+
 [functions.analyze-document]
 verify_jwt = true
 

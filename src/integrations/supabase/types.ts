@@ -306,6 +306,131 @@ export type Database = {
           },
         ]
       }
+      engagement_events: {
+        Row: {
+          created_at: string
+          event_type: string
+          id: string
+          metadata: Json | null
+          target_id: string | null
+          target_type: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          event_type: string
+          id?: string
+          metadata?: Json | null
+          target_id?: string | null
+          target_type?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          event_type?: string
+          id?: string
+          metadata?: Json | null
+          target_id?: string | null
+          target_type?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      escalation_log: {
+        Row: {
+          acknowledged_at: string | null
+          action_taken: string | null
+          created_at: string
+          escalation_type: string
+          id: string
+          message: string
+          rule_id: string | null
+          rule_name: string
+          severity: string
+          triggered_conditions: Json | null
+          user_id: string
+        }
+        Insert: {
+          acknowledged_at?: string | null
+          action_taken?: string | null
+          created_at?: string
+          escalation_type: string
+          id?: string
+          message: string
+          rule_id?: string | null
+          rule_name: string
+          severity: string
+          triggered_conditions?: Json | null
+          user_id: string
+        }
+        Update: {
+          acknowledged_at?: string | null
+          action_taken?: string | null
+          created_at?: string
+          escalation_type?: string
+          id?: string
+          message?: string
+          rule_id?: string | null
+          rule_name?: string
+          severity?: string
+          triggered_conditions?: Json | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "escalation_log_rule_id_fkey"
+            columns: ["rule_id"]
+            isOneToOne: false
+            referencedRelation: "escalation_rules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      escalation_rules: {
+        Row: {
+          conditions: Json
+          cooldown_hours: number
+          created_at: string
+          description: string | null
+          enabled: boolean
+          escalation_type: string
+          id: string
+          message_template: string
+          require_all: boolean
+          rule_name: string
+          severity: string
+          updated_at: string
+        }
+        Insert: {
+          conditions?: Json
+          cooldown_hours?: number
+          created_at?: string
+          description?: string | null
+          enabled?: boolean
+          escalation_type: string
+          id?: string
+          message_template: string
+          require_all?: boolean
+          rule_name: string
+          severity?: string
+          updated_at?: string
+        }
+        Update: {
+          conditions?: Json
+          cooldown_hours?: number
+          created_at?: string
+          description?: string | null
+          enabled?: boolean
+          escalation_type?: string
+          id?: string
+          message_template?: string
+          require_all?: boolean
+          rule_name?: string
+          severity?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       feedback: {
         Row: {
           action_taken: string | null
@@ -884,6 +1009,39 @@ export type Database = {
         }
         Relationships: []
       }
+      prompt_history: {
+        Row: {
+          created_at: string
+          id: string
+          priority: string | null
+          prompt_content: string | null
+          prompt_type: string
+          user_id: string
+          was_acted_upon: boolean | null
+          was_helpful: boolean | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          priority?: string | null
+          prompt_content?: string | null
+          prompt_type: string
+          user_id: string
+          was_acted_upon?: boolean | null
+          was_helpful?: boolean | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          priority?: string | null
+          prompt_content?: string | null
+          prompt_type?: string
+          user_id?: string
+          was_acted_upon?: boolean | null
+          was_helpful?: boolean | null
+        }
+        Relationships: []
+      }
       rate_limit_state: {
         Row: {
           is_throttled: boolean | null
@@ -914,6 +1072,48 @@ export type Database = {
           updated_at?: string | null
           user_id?: string
           window_start?: string | null
+        }
+        Relationships: []
+      }
+      recommendation_outcomes: {
+        Row: {
+          created_at: string
+          id: string
+          measured_at: string
+          metrics_after: Json | null
+          metrics_before: Json | null
+          notes: string | null
+          outcome_delta: Json | null
+          outcome_type: string
+          recommendation_id: string
+          user_feedback: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          measured_at?: string
+          metrics_after?: Json | null
+          metrics_before?: Json | null
+          notes?: string | null
+          outcome_delta?: Json | null
+          outcome_type: string
+          recommendation_id: string
+          user_feedback?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          measured_at?: string
+          metrics_after?: Json | null
+          metrics_before?: Json | null
+          notes?: string | null
+          outcome_delta?: Json | null
+          outcome_type?: string
+          recommendation_id?: string
+          user_feedback?: string | null
+          user_id?: string
         }
         Relationships: []
       }
@@ -993,6 +1193,51 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      risk_trajectories: {
+        Row: {
+          baseline_value: number | null
+          calculation_date: string
+          confidence: number | null
+          created_at: string
+          current_value: number | null
+          id: string
+          metric: string
+          predicted_3day: number | null
+          predicted_7day: number | null
+          trajectory_direction: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          baseline_value?: number | null
+          calculation_date?: string
+          confidence?: number | null
+          created_at?: string
+          current_value?: number | null
+          id?: string
+          metric: string
+          predicted_3day?: number | null
+          predicted_7day?: number | null
+          trajectory_direction?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          baseline_value?: number | null
+          calculation_date?: string
+          confidence?: number | null
+          created_at?: string
+          current_value?: number | null
+          id?: string
+          metric?: string
+          predicted_3day?: number | null
+          predicted_7day?: number | null
+          trajectory_direction?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       symptom_check_ins: {
         Row: {
@@ -1251,6 +1496,48 @@ export type Database = {
         }
         Relationships: []
       }
+      user_adaptation_profile: {
+        Row: {
+          avg_response_time_hours: number | null
+          created_at: string
+          effective_tone: string | null
+          follow_through_rate: number | null
+          id: string
+          last_adapted: string
+          optimal_timing: Json | null
+          preferred_categories: Json | null
+          threshold_adjustments: Json | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          avg_response_time_hours?: number | null
+          created_at?: string
+          effective_tone?: string | null
+          follow_through_rate?: number | null
+          id?: string
+          last_adapted?: string
+          optimal_timing?: Json | null
+          preferred_categories?: Json | null
+          threshold_adjustments?: Json | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          avg_response_time_hours?: number | null
+          created_at?: string
+          effective_tone?: string | null
+          follow_through_rate?: number | null
+          id?: string
+          last_adapted?: string
+          optimal_timing?: Json | null
+          preferred_categories?: Json | null
+          threshold_adjustments?: Json | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_baselines: {
         Row: {
           data_window: number
@@ -1299,6 +1586,51 @@ export type Database = {
           nutrition_profile?: Json | null
           training_profile?: Json | null
           user_id?: string
+        }
+        Relationships: []
+      }
+      user_data_maturity: {
+        Row: {
+          created_at: string
+          data_days: number
+          documents_count: number
+          id: string
+          last_calculated: string
+          maturity_level: string
+          maturity_score: number
+          profile_completeness: number
+          symptom_checkins_count: number
+          updated_at: string
+          user_id: string
+          wearable_connected: boolean
+        }
+        Insert: {
+          created_at?: string
+          data_days?: number
+          documents_count?: number
+          id?: string
+          last_calculated?: string
+          maturity_level?: string
+          maturity_score?: number
+          profile_completeness?: number
+          symptom_checkins_count?: number
+          updated_at?: string
+          user_id: string
+          wearable_connected?: boolean
+        }
+        Update: {
+          created_at?: string
+          data_days?: number
+          documents_count?: number
+          id?: string
+          last_calculated?: string
+          maturity_level?: string
+          maturity_score?: number
+          profile_completeness?: number
+          symptom_checkins_count?: number
+          updated_at?: string
+          user_id?: string
+          wearable_connected?: boolean
         }
         Relationships: []
       }
@@ -2134,9 +2466,13 @@ export type Database = {
         Row: {
           acknowledged_at: string | null
           category: string
+          confidence: number | null
+          confidence_breakdown: Json | null
           created_at: string
+          data_sources: string[] | null
           feedback_score: number | null
           id: string
+          internal_reasoning: string | null
           priority: string | null
           recommendation_text: string
           source: string | null
@@ -2145,9 +2481,13 @@ export type Database = {
         Insert: {
           acknowledged_at?: string | null
           category: string
+          confidence?: number | null
+          confidence_breakdown?: Json | null
           created_at?: string
+          data_sources?: string[] | null
           feedback_score?: number | null
           id?: string
+          internal_reasoning?: string | null
           priority?: string | null
           recommendation_text: string
           source?: string | null
@@ -2156,9 +2496,13 @@ export type Database = {
         Update: {
           acknowledged_at?: string | null
           category?: string
+          confidence?: number | null
+          confidence_breakdown?: Json | null
           created_at?: string
+          data_sources?: string[] | null
           feedback_score?: number | null
           id?: string
+          internal_reasoning?: string | null
           priority?: string | null
           recommendation_text?: string
           source?: string | null

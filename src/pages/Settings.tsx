@@ -6,10 +6,6 @@ import {
   Palette,
   Info,
   ChevronRight,
-  PlayCircle,
-  PauseCircle,
-  SkipForward,
-  RotateCcw,
   Database,
   Mail,
   HelpCircle,
@@ -28,7 +24,6 @@ import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useTheme } from "@/components/ThemeProvider";
-import { useLiveData } from "@/contexts/LiveDataContext";
 import { getAlertSettings, saveAlertSettings } from "@/lib/alertConditions";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -81,25 +76,6 @@ export const Settings = ({ onNavigate }: { onNavigate?: (tab: string) => void })
   const { theme, setTheme } = useTheme();
   const { toast } = useToast();
   const { isConnected } = useWearableSync();
-  const {
-    currentDayIndex,
-    totalDays,
-    isSimulating,
-    startSimulation,
-    pauseSimulation,
-    resetSimulation,
-    setDayIndex,
-    refreshData,
-  } = useLiveData();
-
-  const handleNextDay = () => {
-    const nextIndex = currentDayIndex + 1;
-    if (nextIndex >= totalDays) {
-      setDayIndex(0); // Wrap to beginning
-    } else {
-      setDayIndex(nextIndex);
-    }
-  };
 
   // Load saved primary hue from localStorage and email preferences from Supabase
   useEffect(() => {
@@ -1166,92 +1142,6 @@ export const Settings = ({ onNavigate }: { onNavigate?: (tab: string) => void })
                   </div>
                 </div>
               </div>
-            </div>
-          </div>
-
-          {/* Live Feed Simulation Section */}
-          <div className="bg-glass backdrop-blur-xl border border-glass-border rounded-2xl p-6 shadow-glass hover:bg-glass-highlight transition-all duration-300">
-            <div className="flex items-center gap-3 mb-6">
-              <div
-                className={cn(
-                  "w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-300",
-                  isSimulating ? "bg-green-500/20" : "bg-muted/50",
-                )}
-              >
-                {isSimulating ? (
-                  <PlayCircle size={16} className="text-green-400" />
-                ) : (
-                  <PauseCircle size={16} className="text-muted-foreground" />
-                )}
-              </div>
-              <h3 className="text-lg font-semibold text-foreground">Live Feed Simulation</h3>
-            </div>
-
-            <div className="space-y-6">
-              {/* Simulation Toggle */}
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="font-medium text-foreground">Simulate Live Feed</p>
-                  <p className="text-sm text-muted-foreground">
-                    Show floating 'Next Day' button for manual progression
-                  </p>
-                </div>
-                <Switch
-                  checked={isSimulating}
-                  onCheckedChange={(checked) => {
-                    if (checked) {
-                      startSimulation();
-                    } else {
-                      pauseSimulation();
-                    }
-                  }}
-                />
-              </div>
-
-              {/* Status Display */}
-              <div className="bg-glass/30 border border-glass-border rounded-xl p-4">
-                <div className="flex items-center justify-between mb-3">
-                  <span className="text-sm text-muted-foreground">Current Status</span>
-                  <div
-                    className={cn(
-                      "flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium transition-all",
-                      isSimulating
-                        ? "bg-green-500/20 text-green-400 border border-green-500/30"
-                        : "bg-muted/50 text-muted-foreground border border-border",
-                    )}
-                  >
-                    <div
-                      className={cn(
-                        "w-2 h-2 rounded-full transition-all",
-                        isSimulating ? "bg-green-400" : "bg-muted-foreground",
-                      )}
-                    />
-                    {isSimulating ? "Active" : "Inactive"}
-                  </div>
-                </div>
-                <div className="text-center py-2">
-                  <p className="text-2xl font-bold text-foreground mb-1">Day {currentDayIndex + 1}</p>
-                  <p className="text-sm text-muted-foreground">of {totalDays} total days</p>
-                </div>
-              </div>
-
-              {/* Control Buttons */}
-              <div className="grid grid-cols-2 gap-3">
-                <Button variant="outline" onClick={handleNextDay} className="w-full" disabled={totalDays === 0}>
-                  <SkipForward size={16} />
-                  Next Day
-                </Button>
-                <Button variant="outline" onClick={resetSimulation} className="w-full" disabled={totalDays === 0}>
-                  <RotateCcw size={16} />
-                  Reset
-                </Button>
-              </div>
-
-              {totalDays === 0 && (
-                <p className="text-xs text-center text-muted-foreground">
-                  Upload data first to enable simulation controls
-                </p>
-              )}
             </div>
           </div>
 

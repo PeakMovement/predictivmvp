@@ -1,10 +1,9 @@
-import { useMemo, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useWearableMetrics } from "./useWearableMetrics";
-import { useLiveData } from "@/contexts/LiveDataContext";
+import { getHealthData } from "@/lib/healthDataStore";
 
 export const useUnifiedMetrics = () => {
   const { metrics, isLoading: fitbitLoading, refresh } = useWearableMetrics();
-  const { currentDayData } = useLiveData();
   const [refreshKey, setRefreshKey] = useState(0);
   
   // Listen for Fitbit data refresh events
@@ -28,6 +27,10 @@ export const useUnifiedMetrics = () => {
     const durationScore = Math.min(durationHours / 8, 1); // Cap at 8 hours
     return Math.round(efficiency * 0.7 + durationScore * 30);
   };
+
+  // Get CSV data for fallback
+  const csvData = getHealthData();
+  const currentDayData = csvData.length > 0 ? csvData[csvData.length - 1] : null;
 
   // Unified sleep score
   const sleepScore = metrics?.hasSleepData

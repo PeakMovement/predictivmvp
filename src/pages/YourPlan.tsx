@@ -1,6 +1,6 @@
 import { CheckCircle, Calendar, Clock, User, FileText, Play, CalendarPlus, Download, Info, TrendingUp } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { format } from "date-fns";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -10,9 +10,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import jsPDF from "jspdf";
-import { useLiveData } from "@/contexts/LiveDataContext";
+import { getHealthData } from "@/lib/healthDataStore";
 import { useTrainingTrends } from "@/hooks/useTrainingTrends";
-import { useMemo } from "react";
 import { calculateMetrics } from "@/lib/metricsCalculator";
 import OuraSyncStatus from "@/components/OuraSyncStatus";
 
@@ -540,7 +539,8 @@ const AcceptedChallengesSection = () => {
 
 const WeeklyInsightsSection = () => {
   const [isInfoDialogOpen, setIsInfoDialogOpen] = useState(false);
-  const { csvData, currentDayIndex } = useLiveData();
+  const csvData = getHealthData();
+  const currentDayIndex = csvData.length > 0 ? csvData.length - 1 : 0;
   const { trends, latestTrend, isLoading } = useTrainingTrends({ days: 7 });
   
   // Calculate 7-day rolling averages using unified calculator

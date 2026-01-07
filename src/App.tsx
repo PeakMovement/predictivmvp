@@ -6,8 +6,6 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { BottomNavigation } from "@/components/BottomNavigation";
-import { SimulationControl } from "@/components/SimulationControl";
-import { LiveDataProvider } from "@/contexts/LiveDataContext";
 import { RiskAlertPopup } from "@/components/alerts/RiskAlertPopup";
 import { Dashboard } from "@/pages/Dashboard";
 import { Training } from "@/pages/Training";
@@ -277,40 +275,37 @@ const App = () => {
   return (
     <ThemeProvider defaultTheme="dark" storageKey="predictiv-theme">
       <QueryClientProvider client={queryClient}>
-        <LiveDataProvider>
-          <TooltipProvider>
-            <Toaster />
-            <Sonner />
-            <div className="relative overflow-hidden min-h-screen">
-              <ThemeToggle />
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <button
-                    onClick={() => setActiveTab("settings")}
-                    className={cn(
-                      "fixed top-[80px] right-6 z-50",
-                      "w-12 h-12 rounded-xl bg-glass backdrop-blur-xl border-glass-border",
-                      "flex items-center justify-center",
-                      "hover:bg-glass-highlight hover:scale-110 active:scale-95",
-                      "transition-all duration-300 ease-out transform-gpu animate-fade-in",
-                    )}
-                    aria-label="Settings"
-                  >
-                    <SettingsIcon size={20} className="text-primary drop-shadow-[0_0_8px_hsl(var(--primary)/0.6)]" />
-                  </button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Settings</p>
-                </TooltipContent>
-              </Tooltip>
-              <div className="transition-all duration-500 ease-out animate-fade-in">{renderContent()}</div>
-              <BottomNavigation activeTab={activeTab} onNavigate={setActiveTab} />
-              <SimulationControl />
-              {/* Risk Alert Modal - auto-triggers on health thresholds */}
-              <RiskAlertPopup onNavigateToHelp={() => setActiveTab("find-help")} />
-            </div>
-          </TooltipProvider>
-        </LiveDataProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <div className="relative overflow-hidden min-h-screen">
+            <ThemeToggle />
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={() => setActiveTab("settings")}
+                  className={cn(
+                    "fixed top-[80px] right-6 z-50",
+                    "w-12 h-12 rounded-xl bg-glass backdrop-blur-xl border-glass-border",
+                    "flex items-center justify-center",
+                    "hover:bg-glass-highlight hover:scale-110 active:scale-95",
+                    "transition-all duration-300 ease-out transform-gpu animate-fade-in",
+                  )}
+                  aria-label="Settings"
+                >
+                  <SettingsIcon size={20} className="text-primary drop-shadow-[0_0_8px_hsl(var(--primary)/0.6)]" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Settings</p>
+              </TooltipContent>
+            </Tooltip>
+            <div className="transition-all duration-500 ease-out animate-fade-in">{renderContent()}</div>
+            <BottomNavigation activeTab={activeTab} onNavigate={setActiveTab} />
+            {/* Risk Alert Modal - auto-triggers on health thresholds */}
+            <RiskAlertPopup onNavigateToHelp={() => setActiveTab("find-help")} />
+          </div>
+        </TooltipProvider>
       </QueryClientProvider>
     </ThemeProvider>
   );

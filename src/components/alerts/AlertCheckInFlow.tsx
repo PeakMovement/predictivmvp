@@ -1,7 +1,7 @@
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { AlertTriangle, CheckCircle2, Info, Stethoscope, UserRound, X, Loader2 } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Info, Stethoscope, UserRound, X, Loader2, Brain } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -35,7 +35,14 @@ interface AlertCheckInFlowProps {
   onNavigateToHelp?: () => void;
 }
 
-// Generate advice based on the alert type
+interface AIInterpretation {
+  summary: string;
+  recommendations?: string[];
+  flagged_conditions?: string[];
+  confidence_score: number;
+}
+
+// Generate advice based on the alert type (fallback when AI is unavailable)
 function getGenericAdvice(alert: AlertInfo): { title: string; advice: string } {
   switch (alert.metric.toLowerCase()) {
     case "acwr":
@@ -78,6 +85,33 @@ export function AlertCheckInFlow({ alert, onComplete, onNavigateToHelp }: AlertC
   const [symptomSeverity, setSymptomSeverity] = useState<"none" | "mild" | "serious">("none");
   const symptomTextRef = useRef<string>("");
   const [symptomId, setSymptomId] = useState<string | null>(null);
+  const [aiInterpretation, setAiInterpretation] = useState<AIInterpretation | null>(null);
+  const [isLoadingAI, setIsLoadingAI] = useState(false);
+
+  // Fetch AI interpretation when we have a symptom ID
+  const fetchAIInterpretation = useCallback(async (checkinId: string) => {
+    setIsLoadingAI(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("interpret-health-event", {
+        body: { symptom_checkin_id: checkinId },
+      });
+      
+      if (error) throw error;
+      if (data?.summary) {
+        setAiInterpretation({
+          summary: data.summary,
+          recommendations: data.recommendations || [],
+          flagged_conditions: data.flagged_conditions || [],
+          confidence_score: data.confidence_score || 70,
+        });
+      }
+    } catch (error) {
+      console.error("[AlertCheckInFlow] AI interpretation error:", error);
+      // AI failed - we'll fall back to generic advice
+    } finally {
+      setIsLoadingAI(false);
+    }
+  }, []);
 
   const handleYesCheckIn = useCallback(() => {
     setCurrentStep("symptom_question");
@@ -103,6 +137,11 @@ export function AlertCheckInFlow({ alert, onComplete, onNavigateToHelp }: AlertC
     setSymptomSeverity(severity);
     symptomTextRef.current = symptomText;
     
+    // Fetch AI interpretation for logged symptom
+    if (checkinId) {
+      fetchAIInterpretation(checkinId);
+    }
+    
     if (severity === "serious") {
       // Serious symptoms - ask about referral
       setCurrentStep("referral_question");
@@ -110,7 +149,7 @@ export function AlertCheckInFlow({ alert, onComplete, onNavigateToHelp }: AlertC
       // Mild symptoms - show AI guidance only
       setCurrentStep("evaluation_result");
     }
-  }, []);
+  }, [fetchAIInterpretation]);
 
   const handleReferralYes = useCallback(() => {
     // Build a nicely formatted symptom description from alert context
@@ -301,48 +340,102 @@ export function AlertCheckInFlow({ alert, onComplete, onNavigateToHelp }: AlertC
     );
   }
 
-  // STEP 5: Evaluation result (AI guidance only - no serious symptoms or user declined referral)
+  // STEP 5: Evaluation result (AI guidance - dynamic and personalized)
   if (currentStep === "evaluation_result") {
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm">
-        <Card className="max-w-md w-full bg-card border-border/50 shadow-xl">
+        <Card className="max-w-md w-full bg-card border-border/50 shadow-xl max-h-[90vh] overflow-y-auto">
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
               <CardTitle className="flex items-center gap-2 text-foreground">
-                <CheckCircle2 className="h-5 w-5 text-green-500" />
-                {hasSymptoms ? "Check In Complete" : "All Clear"}
+                {isLoadingAI ? (
+                  <>
+                    <Brain className="h-5 w-5 text-primary animate-pulse" />
+                    Analyzing...
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle2 className="h-5 w-5 text-green-500" />
+                    {hasSymptoms ? "Check In Complete" : "All Clear"}
+                  </>
+                )}
               </CardTitle>
-              <Button variant="ghost" size="icon" onClick={handleClose}>
+              <Button variant="ghost" size="icon" onClick={handleClose} disabled={isLoadingAI}>
                 <X className="h-4 w-4" />
               </Button>
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
-            {!hasSymptoms ? (
-              <p className="text-muted-foreground">
-                Great! Since you're not experiencing any symptoms, here's some guidance based on your current metrics:
-              </p>
+            {isLoadingAI ? (
+              <div className="flex items-center gap-3 text-muted-foreground py-4">
+                <Loader2 className="h-5 w-5 animate-spin" />
+                <span>Generating personalized guidance based on your health data...</span>
+              </div>
             ) : (
-              <p className="text-muted-foreground">
-                Thank you for logging your symptoms. Based on your check in, here's some guidance:
-              </p>
+              <>
+                {!hasSymptoms ? (
+                  <p className="text-muted-foreground">
+                    Great! Since you're not experiencing any symptoms, here's some guidance based on your current metrics:
+                  </p>
+                ) : (
+                  <p className="text-muted-foreground">
+                    Thank you for logging your symptoms. Based on your check in, here's personalized guidance:
+                  </p>
+                )}
+                
+                {/* AI Interpretation Summary */}
+                {aiInterpretation ? (
+                  <div className="space-y-3">
+                    <div className="p-4 rounded-lg bg-primary/10 border border-primary/20">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Brain className="h-4 w-4 text-primary" />
+                        <span className="text-xs font-medium text-primary">AI Analysis</span>
+                      </div>
+                      <p className="text-sm text-foreground">
+                        {aiInterpretation.summary}
+                      </p>
+                    </div>
+                    
+                    {/* Recommendations */}
+                    {aiInterpretation.recommendations && aiInterpretation.recommendations.length > 0 && (
+                      <div className="p-4 rounded-lg bg-muted/50 border border-border/50">
+                        <h4 className="font-semibold text-foreground mb-2 text-sm">Recommendations</h4>
+                        <ul className="space-y-1.5">
+                          {aiInterpretation.recommendations.map((rec, idx) => (
+                            <li key={idx} className="flex items-start gap-2 text-sm text-muted-foreground">
+                              <span className="text-green-500 mt-0.5">•</span>
+                              {rec}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                    
+                    {/* Confidence indicator */}
+                    <div className="text-xs text-muted-foreground text-right">
+                      Confidence: {aiInterpretation.confidence_score}%
+                    </div>
+                  </div>
+                ) : (
+                  /* Fallback to generic advice when AI is unavailable */
+                  <div className="p-4 rounded-lg bg-muted/50 border border-border/50">
+                    <h4 className="font-semibold text-foreground mb-2">{genericAdvice.title}</h4>
+                    <p className="text-sm text-muted-foreground">
+                      {genericAdvice.advice}
+                    </p>
+                  </div>
+                )}
+
+                <div className="p-3 rounded-lg bg-secondary/50 border border-border/50">
+                  <p className="text-sm text-foreground">
+                    <strong>Tip:</strong> Monitor how you feel over the next 24-48 hours. If symptoms develop or worsen, use the "Find Help" feature to connect with a healthcare provider.
+                  </p>
+                </div>
+              </>
             )}
-            
-            <div className="p-4 rounded-lg bg-muted/50 border border-border/50">
-              <h4 className="font-semibold text-foreground mb-2">{genericAdvice.title}</h4>
-              <p className="text-sm text-muted-foreground">
-                {genericAdvice.advice}
-              </p>
-            </div>
 
-            <div className="p-3 rounded-lg bg-primary/10 border border-primary/20">
-              <p className="text-sm text-foreground">
-                <strong>Tip:</strong> Monitor how you feel over the next 24-48 hours. If symptoms develop or worsen, use the "Find Help" feature to connect with a healthcare provider.
-              </p>
-            </div>
-
-            <Button onClick={handleClose} className="w-full">
-              Done
+            <Button onClick={handleClose} className="w-full" disabled={isLoadingAI}>
+              {isLoadingAI ? "Please wait..." : "Done"}
             </Button>
           </CardContent>
         </Card>

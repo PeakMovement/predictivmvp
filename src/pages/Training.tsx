@@ -26,8 +26,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { useLiveData } from "@/contexts/LiveDataContext";
-import { HealthDataRow } from "@/lib/healthDataStore";
+import { HealthDataRow, getHealthData } from "@/lib/healthDataStore";
 import { UnifiedTrendCard } from "@/components/trends/UnifiedTrendCard";
 import { useTrainingTrends } from "@/hooks/useTrainingTrends";
 import { SessionLogList } from "@/components/dashboard/SessionLogList";
@@ -36,20 +35,9 @@ import { CustomizeLayoutButton } from "@/components/layout/CustomizeLayoutButton
 import { LayoutEditor } from "@/components/layout/LayoutEditor";
 import { LayoutBlock } from "@/components/layout/LayoutBlock";
 
-const getSessionLogs = (csvData: HealthDataRow[]) => {
+const generateSuggestions = (csvData: HealthDataRow[]) => {
   if (csvData.length === 0) return [];
-  return csvData
-    .slice(-5)
-    .map((row, index) => ({
-      title: `Training Session ${csvData.length - 4 + index}`,
-      date: row.Date || "N/A",
-      load: parseFloat(row.TrainingLoad || "0"),
-      type: "Training",
-    }))
-    .reverse();
-};
-
-const generateSuggestions = (currentData: HealthDataRow | null) => {
+  const currentData = csvData[csvData.length - 1];
   if (!currentData) return [];
   const suggestions = [];
   const hrv = parseFloat(currentData.HRV || "0");
@@ -205,7 +193,6 @@ const CircularGauge = ({
 
 // ✅ Main Page Component
 export const Training = () => {
-  const { currentDayData } = useLiveData();
   const { trends, isLoading: trendsLoading, refresh, userId } = useTrainingTrends({ days: 7 });
   const [suggestions, setSuggestions] = useState<ReturnType<typeof generateSuggestions>>([]);
 
@@ -240,9 +227,10 @@ export const Training = () => {
     : 0;
 
   useEffect(() => {
-    const newSuggestions = generateSuggestions(currentDayData);
+    const csvData = getHealthData();
+    const newSuggestions = generateSuggestions(csvData);
     setSuggestions(newSuggestions);
-  }, [currentDayData]);
+  }, []);
   
   // Listen for Ōura data refresh
   useEffect(() => {

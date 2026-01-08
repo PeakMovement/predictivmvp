@@ -84,6 +84,55 @@ Deno.serve(async (req) => {
       );
     }
 
+    // ─── CHECK DATA MATURITY FIRST ────────────────────────────────────────────
+    // Fetch data maturity to determine if we should generate insights or stay silent
+    const { data: dataMaturity } = await supabase
+      .from("user_data_maturity")
+      .select("*")
+      .eq("user_id", userId)
+      .maybeSingle();
+
+    // If maturity is insufficient, return encouraging onboarding message
+    if (dataMaturity?.maturity_level === 'insufficient') {
+      console.log(`[generate-yves-intelligence] User ${userId} has insufficient data maturity - returning onboarding guidance`);
+      
+      const onboardingIntelligence: YvesIntelligenceOutput = {
+        dailyBriefing: {
+          summary: "I'm just getting to know you! Connect your Oura Ring and complete your profile so I can provide personalized insights tailored to your goals.",
+          keyChanges: [],
+          riskHighlights: [],
+          todaysFocus: "Set up your health profile and connect your wearable to unlock personalized guidance",
+        },
+        recommendations: [{
+          text: "Complete your health profile with your goals, preferences, and any health conditions I should know about",
+          category: "performance",
+          priority: "high",
+          reasoning: "A complete profile helps me understand your unique needs and provide relevant, actionable advice"
+        }]
+      };
+
+      // Cache this response
+      await supabase.from("daily_briefings").upsert({
+        user_id: userId,
+        date: today,
+        content: onboardingIntelligence.dailyBriefing.summary,
+        context_used: onboardingIntelligence,
+        category: "unified",
+      });
+
+      return new Response(
+        JSON.stringify({
+          success: true,
+          cached: false,
+          data: onboardingIntelligence,
+          content: onboardingIntelligence.dailyBriefing.summary,
+          created_at: new Date().toISOString(),
+          maturity: dataMaturity,
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     // ─── LOAD ALL USER DATA ────────────────────────────────────────────────
     const sevenDaysAgo = new Date();
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
@@ -139,15 +188,19 @@ Deno.serve(async (req) => {
       supabase.from("user_context_enhanced").select("*").eq("user_id", userId).maybeSingle(),
     ]);
 
-    // Batch 3: Documents & memory
+    // Batch 3: Documents, memory & adaptation profile
     const [
       userDocumentsResult,
       memoryBankResult,
       recentRecommendationsResult,
+      adaptationProfileResult,
+      riskTrajectoriesResult,
     ] = await Promise.all([
       supabase.from("user_documents").select("document_type, file_name, parsed_content, ai_summary, tags").eq("user_id", userId).eq("processing_status", "completed").order("uploaded_at", { ascending: false }).limit(10),
       supabase.from("yves_memory_bank").select("memory_key, memory_value").eq("user_id", userId),
       supabase.from("yves_recommendations").select("*").eq("user_id", userId).order("created_at", { ascending: false }).limit(5),
+      supabase.from("user_adaptation_profile").select("*").eq("user_id", userId).maybeSingle(),
+      supabase.from("risk_trajectories").select("*").eq("user_id", userId).order("calculation_date", { ascending: false }).limit(5),
     ]);
 
     // Extract data
@@ -176,6 +229,8 @@ Deno.serve(async (req) => {
     const userDocuments = userDocumentsResult.data || [];
     const memoryBank = memoryBankResult.data || [];
     const recentRecommendations = recentRecommendationsResult.data || [];
+    const adaptationProfile = adaptationProfileResult.data;
+    const riskTrajectories = riskTrajectoriesResult.data || [];
 
     const hasWearableData = wearableSummary.length > 0 || wearableSessions.length > 0 || trainingTrends.length > 0;
     const hasProfileData = userProfile || userMedical || userWellnessGoals;
@@ -567,6 +622,147 @@ Deno.serve(async (req) => {
         });
         promptContext += "\n";
       }
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // SECTION 9: RISK TRAJECTORIES (Predictive)
+    // ═══════════════════════════════════════════════════════════════════════
+    if (riskTrajectories.length > 0) {
+      promptContext += "═══ RISK TRAJECTORIES ═══\n\n";
+      promptContext += "Predicted trends (next 3-7 days):\n";
+      riskTrajectories.forEach(t => {
+        const direction = t.trajectory_direction || 'stable';
+        const conf = t.confidence ? ` (${Math.round(t.confidence * 100)}% confidence)` : '';
+        promptContext += `• ${t.metric}: Currently ${t.current_value?.toFixed(1) || 'N/A'}, trending ${direction}${conf}\n`;
+        if (t.predicted_3day !== null) {
+          promptContext += `  → 3-day prediction: ${t.predicted_3day.toFixed(1)}\n`;
+        }
+      });
+      promptContext += "\n";
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // SECTION 10: ADAPTATION PROFILE (Learning from user behavior)
+    // ═══════════════════════════════════════════════════════════════════════
+    if (adaptationProfile) {
+      promptContext += "═══ USER ADAPTATION PROFILE ═══\n\n";
+      
+      if (adaptationProfile.effective_tone) {
+        promptContext += `Preferred communication tone: ${adaptationProfile.effective_tone}\n`;
+      }
+      
+      if (adaptationProfile.follow_through_rate !== null) {
+        promptContext += `Follow-through rate: ${adaptationProfile.follow_through_rate}%\n`;
+      }
+      
+      if (adaptationProfile.preferred_categories && Object.keys(adaptationProfile.preferred_categories).length > 0) {
+        const prefs = adaptationProfile.preferred_categories as Record<string, number>;
+        const sortedCats = Object.entries(prefs).sort((a, b) => b[1] - a[1]).slice(0, 3);
+        if (sortedCats.length > 0) {
+          promptContext += `Most effective categories: ${sortedCats.map(([cat, rate]) => `${cat} (${rate}%)`).join(', ')}\n`;
+        }
+      }
+
+      if (adaptationProfile.optimal_timing && Object.keys(adaptationProfile.optimal_timing).length > 0) {
+        const timing = adaptationProfile.optimal_timing as Record<string, number>;
+        const bestTime = Object.entries(timing).sort((a, b) => b[1] - a[1])[0];
+        if (bestTime) {
+          promptContext += `Most active time of day: ${bestTime[0]}\n`;
+        }
+      }
+
+      promptContext += "\n";
+    }
+
+    // ─── CALCULATE CONFIDENCE SCORE ───────────────────────────────────────────
+    // Confidence determines if we should generate detailed insights or hedge our advice
+    let confidenceScore = 0;
+    const confidenceBreakdown = {
+      data_maturity: 0,
+      data_freshness: 0,
+      baseline_stability: 0,
+      context_completeness: 0,
+    };
+
+    // Data maturity (40% weight)
+    if (dataMaturity) {
+      confidenceBreakdown.data_maturity = Math.min(dataMaturity.maturity_score, 100) * 0.4;
+    } else if (wearableSessions.length >= 7) {
+      confidenceBreakdown.data_maturity = 28; // 70% of 40
+    } else if (wearableSessions.length >= 3) {
+      confidenceBreakdown.data_maturity = 16; // 40% of 40
+    }
+
+    // Data freshness (30% weight) - hours since last sync
+    if (wearableSessions.length > 0) {
+      const latestSession = wearableSessions[0];
+      const hoursSinceSync = (Date.now() - new Date(latestSession.date + 'T00:00:00Z').getTime()) / (1000 * 60 * 60);
+      if (hoursSinceSync < 24) {
+        confidenceBreakdown.data_freshness = 30;
+      } else if (hoursSinceSync < 48) {
+        confidenceBreakdown.data_freshness = 20;
+      } else if (hoursSinceSync < 72) {
+        confidenceBreakdown.data_freshness = 10;
+      }
+    }
+
+    // Baseline stability (20% weight)
+    if (userBaselines.length >= 3) {
+      confidenceBreakdown.baseline_stability = 20;
+    } else if (userBaselines.length >= 1) {
+      confidenceBreakdown.baseline_stability = 10;
+    }
+
+    // Context completeness (10% weight)
+    const hasProfile = userProfile || userMedical || userWellnessGoals;
+    const hasContext = userContext || userTraining || userNutrition;
+    if (hasProfile && hasContext) {
+      confidenceBreakdown.context_completeness = 10;
+    } else if (hasProfile || hasContext) {
+      confidenceBreakdown.context_completeness = 5;
+    }
+
+    confidenceScore = Object.values(confidenceBreakdown).reduce((a, b) => a + b, 0);
+    console.log(`[generate-yves-intelligence] Confidence score: ${confidenceScore}%, breakdown:`, confidenceBreakdown);
+
+    // If confidence is very low (<30%), return hedged/silent response
+    if (confidenceScore < 30 && dataMaturity?.maturity_level !== 'mature') {
+      console.log(`[generate-yves-intelligence] Low confidence (${confidenceScore}%) - returning hedged response`);
+      
+      const hedgedIntelligence: YvesIntelligenceOutput = {
+        dailyBriefing: {
+          summary: "I'm still learning your patterns. Sync your wearable regularly and check back tomorrow for more personalized insights.",
+          keyChanges: [],
+          riskHighlights: [],
+          todaysFocus: "Keep wearing your Oura Ring and syncing daily to build your baseline",
+        },
+        recommendations: [{
+          text: "Continue syncing your wearable data daily. The more consistent data I have, the better I can personalize my guidance for you.",
+          category: "performance",
+          priority: "medium",
+          reasoning: "Building a reliable baseline takes about 7-14 days of consistent data"
+        }]
+      };
+
+      await supabase.from("daily_briefings").upsert({
+        user_id: userId,
+        date: today,
+        content: hedgedIntelligence.dailyBriefing.summary,
+        context_used: { ...hedgedIntelligence, confidence: confidenceScore, confidenceBreakdown },
+        category: "unified",
+      });
+
+      return new Response(
+        JSON.stringify({
+          success: true,
+          cached: false,
+          data: hedgedIntelligence,
+          content: hedgedIntelligence.dailyBriefing.summary,
+          created_at: new Date().toISOString(),
+          confidence: confidenceScore,
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
 
     // ─── BUILD TONE GUIDANCE BASED ON COACHING MODE ───────────────────────────

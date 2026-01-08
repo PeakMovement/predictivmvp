@@ -1,11 +1,13 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ExternalLink, Lightbulb, ChevronDown } from "lucide-react";
+import { ExternalLink, Lightbulb, ChevronDown, ThumbsUp, ThumbsDown, Check } from "lucide-react";
 import { YvesRecommendation } from "@/hooks/useYvesIntelligence";
+import { useEngagementTracking } from "@/hooks/useEngagementTracking";
 import { cn } from "@/lib/utils";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { useToast } from "@/hooks/use-toast";
 
 interface YvesRecommendationsCardProps {
   recommendations: YvesRecommendation[];
@@ -110,6 +112,7 @@ export function YvesRecommendationsCard({ recommendations, isLoading }: YvesReco
                 categoryLabel={getCategoryLabel(rec.category)}
                 categoryIcon={getCategoryIcon(rec.category)}
                 priorityBadge={getPriorityBadge(rec.priority)}
+                index={idx}
               />
             ))}
 
@@ -132,15 +135,53 @@ interface RecommendationItemProps {
   categoryLabel: string;
   categoryIcon: string;
   priorityBadge: React.ReactNode;
+  index: number;
 }
 
-function RecommendationItem({ recommendation, categoryLabel, categoryIcon, priorityBadge }: RecommendationItemProps) {
+function RecommendationItem({ recommendation, categoryLabel, categoryIcon, priorityBadge, index }: RecommendationItemProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const [feedbackGiven, setFeedbackGiven] = useState<'helpful' | 'not_helpful' | 'followed' | null>(null);
+  const { trackRecommendationViewed, trackRecommendationHelpful, trackRecommendationFollowed } = useEngagementTracking();
+  const { toast } = useToast();
+  
+  // Generate a stable ID for tracking (in real app, this would come from the database)
+  const recommendationId = `rec-${index}-${recommendation.category}-${recommendation.priority}`;
+  
+  // Track view when expanded
+  useEffect(() => {
+    if (isOpen) {
+      trackRecommendationViewed(recommendationId);
+    }
+  }, [isOpen, recommendationId, trackRecommendationViewed]);
   
   // Create a short preview (first sentence or first ~60 chars)
   const preview = recommendation.text.length > 60 
     ? recommendation.text.slice(0, 60).trim() + "..."
     : recommendation.text.split('.')[0] + (recommendation.text.includes('.') ? '.' : '');
+
+  const handleHelpful = async (helpful: boolean) => {
+    const success = await trackRecommendationHelpful(recommendationId, helpful);
+    if (success) {
+      setFeedbackGiven(helpful ? 'helpful' : 'not_helpful');
+      toast({
+        title: helpful ? "Thanks for the feedback!" : "Got it",
+        description: helpful 
+          ? "I'll provide more insights like this" 
+          : "I'll adjust my recommendations",
+      });
+    }
+  };
+
+  const handleFollowed = async () => {
+    const success = await trackRecommendationFollowed(recommendationId);
+    if (success) {
+      setFeedbackGiven('followed');
+      toast({
+        title: "Great job! 🎉",
+        description: "Keep up the momentum!",
+      });
+    }
+  };
 
   return (
     <Collapsible open={isOpen} onOpenChange={setIsOpen}>
@@ -148,7 +189,8 @@ function RecommendationItem({ recommendation, categoryLabel, categoryIcon, prior
         "rounded-lg border transition-colors bg-card/50",
         recommendation.priority === "high" 
           ? "border-l-4 border-l-destructive border-destructive/30" 
-          : "border-border"
+          : "border-border",
+        feedbackGiven === 'followed' && "border-l-4 border-l-emerald-500 border-emerald-500/30 bg-emerald-500/5"
       )}>
         <CollapsibleTrigger asChild>
           <button className="w-full p-3 flex items-center justify-between gap-3 text-left hover:bg-muted/30 transition-colors rounded-lg">
@@ -160,6 +202,11 @@ function RecommendationItem({ recommendation, categoryLabel, categoryIcon, prior
                     {categoryLabel}
                   </span>
                   {priorityBadge}
+                  {feedbackGiven === 'followed' && (
+                    <Badge variant="outline" className="text-xs bg-emerald-500/10 text-emerald-600 border-emerald-500/30">
+                      <Check className="h-3 w-3 mr-1" /> Done
+                    </Badge>
+                  )}
                 </div>
                 {!isOpen && (
                   <p className="text-xs text-muted-foreground truncate mt-0.5">
@@ -188,6 +235,46 @@ function RecommendationItem({ recommendation, categoryLabel, categoryIcon, prior
                   <span className="font-medium text-foreground">Why this matters: </span>
                   {recommendation.reasoning}
                 </p>
+              </div>
+            )}
+
+            {/* Feedback buttons */}
+            {!feedbackGiven && (
+              <div className="flex items-center gap-2 pt-2 border-t border-border/50">
+                <span className="text-xs text-muted-foreground mr-2">Was this helpful?</span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 px-2 text-xs hover:bg-emerald-500/10 hover:text-emerald-600"
+                  onClick={(e) => { e.stopPropagation(); handleHelpful(true); }}
+                >
+                  <ThumbsUp className="h-3 w-3 mr-1" /> Yes
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 px-2 text-xs hover:bg-destructive/10 hover:text-destructive"
+                  onClick={(e) => { e.stopPropagation(); handleHelpful(false); }}
+                >
+                  <ThumbsDown className="h-3 w-3 mr-1" /> No
+                </Button>
+                <div className="flex-1" />
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-7 px-3 text-xs"
+                  onClick={(e) => { e.stopPropagation(); handleFollowed(); }}
+                >
+                  <Check className="h-3 w-3 mr-1" /> I did this
+                </Button>
+              </div>
+            )}
+
+            {feedbackGiven && (
+              <div className="flex items-center gap-2 pt-2 border-t border-border/50 text-xs text-muted-foreground">
+                {feedbackGiven === 'helpful' && <><ThumbsUp className="h-3 w-3 text-emerald-500" /> Thanks for the feedback!</>}
+                {feedbackGiven === 'not_helpful' && <><ThumbsDown className="h-3 w-3 text-destructive" /> Noted. I'll improve!</>}
+                {feedbackGiven === 'followed' && <><Check className="h-3 w-3 text-emerald-500" /> Awesome! Keep it up!</>}
               </div>
             )}
           </div>

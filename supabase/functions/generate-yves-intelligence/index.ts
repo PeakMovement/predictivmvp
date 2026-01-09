@@ -24,6 +24,581 @@ interface YvesIntelligenceOutput {
   }>;
 }
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// LAYERED REASONING ENGINE - 4 LAYERS THAT MUST PASS BEFORE SPEAKING
+// ═══════════════════════════════════════════════════════════════════════════════
+
+interface LayerResult {
+  pass: boolean;
+  confidence: number;
+  reason: string;
+  findings: Record<string, unknown>;
+}
+
+interface ReasoningContext {
+  layer1_physiological: LayerResult;
+  layer2_risk_trajectory: LayerResult;
+  layer3_behavior_psychology: LayerResult;
+  layer4_interests_adherence: LayerResult;
+  overall_confidence: number;
+  should_speak: boolean;
+  silence_reason?: string;
+  justification: {
+    why_this_issue: string | null;
+    why_now: string | null;
+    why_this_intervention: string | null;
+    why_this_user: string | null;
+    all_justified: boolean;
+  };
+}
+
+// Layer 1: Physiological State Analysis
+function evaluatePhysiologicalState(
+  wearableSessions: any[],
+  trainingTrends: any[],
+  recoveryTrends: any[],
+  userBaselines: any[],
+  userDeviations: any[]
+): LayerResult {
+  const findings: Record<string, unknown> = {};
+  let confidence = 0;
+  let pass = false;
+  let reason = "";
+
+  // Need at least 3 days of data for trend analysis
+  if (wearableSessions.length < 3) {
+    return {
+      pass: false,
+      confidence: 0,
+      reason: "Insufficient data for trend analysis (need 3+ days)",
+      findings: { data_days: wearableSessions.length }
+    };
+  }
+
+  const latest = wearableSessions[0];
+  const previous = wearableSessions[1];
+  const weekAgo = wearableSessions[wearableSessions.length - 1];
+
+  // Trend direction analysis
+  const readinessTrend = latest?.readiness_score && previous?.readiness_score
+    ? latest.readiness_score - previous.readiness_score
+    : null;
+  const sleepTrend = latest?.sleep_score && previous?.sleep_score
+    ? latest.sleep_score - previous.sleep_score
+    : null;
+  const hrvTrend = latest?.hrv_avg && previous?.hrv_avg
+    ? latest.hrv_avg - previous.hrv_avg
+    : null;
+
+  findings.trend_direction = {
+    readiness: readinessTrend !== null ? (readinessTrend > 0 ? 'improving' : readinessTrend < 0 ? 'declining' : 'stable') : 'unknown',
+    sleep: sleepTrend !== null ? (sleepTrend > 0 ? 'improving' : sleepTrend < 0 ? 'declining' : 'stable') : 'unknown',
+    hrv: hrvTrend !== null ? (hrvTrend > 0 ? 'improving' : hrvTrend < 0 ? 'declining' : 'stable') : 'unknown',
+  };
+
+  // Variability analysis (standard deviation over window)
+  const validReadiness = wearableSessions.filter(s => s.readiness_score !== null);
+  if (validReadiness.length >= 3) {
+    const avgReadiness = validReadiness.reduce((sum, s) => sum + s.readiness_score, 0) / validReadiness.length;
+    const variance = validReadiness.reduce((sum, s) => sum + Math.pow(s.readiness_score - avgReadiness, 2), 0) / validReadiness.length;
+    findings.variability_analysis = {
+      readiness_avg: avgReadiness.toFixed(1),
+      readiness_std: Math.sqrt(variance).toFixed(1),
+      is_stable: Math.sqrt(variance) < 10
+    };
+    confidence += 20;
+  }
+
+  // Recovery vs Load balance
+  const latestTrend = trainingTrends[0];
+  if (latestTrend?.acwr !== null) {
+    const acwr = latestTrend.acwr;
+    findings.recovery_vs_load = {
+      acwr: acwr,
+      zone: acwr < 0.8 ? 'underloading' : acwr > 1.5 ? 'overloading' : acwr > 1.3 ? 'elevated' : 'optimal',
+      balance: acwr >= 0.8 && acwr <= 1.3 ? 'balanced' : 'imbalanced'
+    };
+    confidence += 25;
+  }
+
+  // Trajectory change detection (significant shifts from baseline)
+  const significantDeviations = userDeviations.filter(d => Math.abs(d.deviation || 0) > 15);
+  findings.trajectory_changes = {
+    count: significantDeviations.length,
+    metrics: significantDeviations.map(d => d.metric),
+    highest_deviation: significantDeviations.length > 0 
+      ? Math.max(...significantDeviations.map(d => Math.abs(d.deviation || 0)))
+      : 0
+  };
+  
+  if (significantDeviations.length > 0) {
+    confidence += 15;
+  }
+
+  // Baseline comparison
+  if (userBaselines.length >= 3) {
+    findings.baseline_established = true;
+    confidence += 20;
+  } else {
+    findings.baseline_established = false;
+  }
+
+  // Pass if we have enough data to analyze
+  pass = confidence >= 35;
+  reason = pass 
+    ? `Physiological state analyzable (confidence: ${confidence}%)` 
+    : `Insufficient physiological data for analysis`;
+
+  return { pass, confidence: Math.min(confidence, 100), reason, findings };
+}
+
+// Layer 2: Risk Trajectory Evaluation
+function evaluateRiskTrajectory(
+  layer1: LayerResult,
+  riskTrajectories: any[],
+  healthAnomalies: any[],
+  userDeviations: any[],
+  symptomCheckIns: any[]
+): LayerResult {
+  const findings: Record<string, unknown> = {};
+  let confidence = 0;
+  let reason = "";
+
+  // If Layer 1 failed, this layer cannot proceed meaningfully
+  if (!layer1.pass) {
+    return {
+      pass: false,
+      confidence: 0,
+      reason: "Cannot evaluate risk trajectory without physiological state",
+      findings: { blocked_by: "layer1_failed" }
+    };
+  }
+
+  // NOISE FILTER: Distinguish normal fluctuations from meaningful signals
+  const significantDeviations = userDeviations.filter(d => Math.abs(d.deviation || 0) > 10);
+  const criticalDeviations = userDeviations.filter(d => d.risk_zone === 'high-risk' || d.risk_zone === 'moderate-risk');
+  const recentSymptoms = symptomCheckIns.filter(s => {
+    const symptomDate = new Date(s.created_at);
+    const threeDaysAgo = new Date();
+    threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
+    return symptomDate >= threeDaysAgo;
+  });
+
+  // Noise detection: Single day spikes without pattern are noise
+  const singleDaySpike = significantDeviations.length === 1 && 
+    !criticalDeviations.length && 
+    !recentSymptoms.length;
+  
+  findings.noise_filter = {
+    significant_deviations: significantDeviations.length,
+    critical_deviations: criticalDeviations.length,
+    recent_symptoms: recentSymptoms.length,
+    is_noise: singleDaySpike,
+    noise_reason: singleDaySpike ? "Single day deviation without supporting signals" : null
+  };
+
+  if (singleDaySpike) {
+    confidence = 20;
+  } else {
+    confidence += 30;
+  }
+
+  // EARLY WARNING DETECTION: Patterns that precede problems
+  const earlyWarnings: string[] = [];
+  
+  // Consecutive declining days
+  const physiologicalTrends = layer1.findings.trend_direction as Record<string, string> | undefined;
+  if (physiologicalTrends) {
+    const decliningMetrics = Object.entries(physiologicalTrends)
+      .filter(([_, trend]) => trend === 'declining')
+      .map(([metric, _]) => metric);
+    
+    if (decliningMetrics.length >= 2) {
+      earlyWarnings.push(`Multiple metrics declining: ${decliningMetrics.join(', ')}`);
+    }
+  }
+
+  // High-risk zone entries
+  if (criticalDeviations.length > 0) {
+    earlyWarnings.push(`Metrics in risk zone: ${criticalDeviations.map(d => d.metric).join(', ')}`);
+    confidence += 20;
+  }
+
+  // Recent symptoms correlating with metric changes
+  if (recentSymptoms.length > 0 && significantDeviations.length > 0) {
+    earlyWarnings.push("Symptoms correlating with metric deviations");
+    confidence += 15;
+  }
+
+  findings.early_warning_detection = {
+    warnings: earlyWarnings,
+    count: earlyWarnings.length,
+    severity: earlyWarnings.length >= 2 ? 'elevated' : earlyWarnings.length === 1 ? 'mild' : 'none'
+  };
+
+  // RISK ACCUMULATION MODEL: Track compounding risk
+  const riskFactors: number[] = [];
+  
+  if (criticalDeviations.length > 0) riskFactors.push(30);
+  if (recentSymptoms.length > 0) riskFactors.push(20);
+  if (healthAnomalies.filter(a => a.severity === 'high').length > 0) riskFactors.push(25);
+  if (earlyWarnings.length >= 2) riskFactors.push(15);
+  
+  const accumulatedRisk = riskFactors.reduce((a, b) => a + b, 0);
+  findings.risk_accumulation = {
+    factors: riskFactors.length,
+    accumulated_score: accumulatedRisk,
+    level: accumulatedRisk >= 50 ? 'high' : accumulatedRisk >= 25 ? 'moderate' : 'low',
+    meaningful: accumulatedRisk >= 25 // Only meaningful if risk is at least moderate
+  };
+
+  // Pass if we can distinguish signal from noise AND risk is meaningful OR no risk
+  const isNoise = findings.noise_filter && (findings.noise_filter as any).is_noise;
+  const riskIsMeaningful = (findings.risk_accumulation as any).meaningful;
+  
+  // SILENCE IS VALID: If it's just noise, we should not speak
+  if (isNoise && !riskIsMeaningful) {
+    return {
+      pass: false,
+      confidence: confidence,
+      reason: "Signal is noise without meaningful risk - SILENCE IS APPROPRIATE",
+      findings
+    };
+  }
+
+  reason = `Risk trajectory evaluated: ${(findings.risk_accumulation as any).level} risk`;
+  
+  return { 
+    pass: true, 
+    confidence: Math.min(confidence, 100), 
+    reason, 
+    findings 
+  };
+}
+
+// Layer 3: Behavior & Psychology Evaluation
+function evaluateBehaviorPsychology(
+  layer2: LayerResult,
+  adaptationProfile: any,
+  engagementHistory: any[],
+  recentRecommendations: any[]
+): LayerResult {
+  const findings: Record<string, unknown> = {};
+  let confidence = 50; // Start at 50% - we can still advise without full history
+  let reason = "";
+
+  // If Layer 2 indicated silence is appropriate, propagate that
+  if (!layer2.pass && layer2.reason.includes("SILENCE")) {
+    return {
+      pass: false,
+      confidence: 0,
+      reason: layer2.reason,
+      findings: { blocked_by: "layer2_silence" }
+    };
+  }
+
+  // COMPLIANCE HISTORY
+  const followedCount = recentRecommendations.filter(r => r.feedback_score >= 4).length;
+  const totalRecommendations = recentRecommendations.length;
+  const complianceRate = totalRecommendations > 0 
+    ? Math.round((followedCount / totalRecommendations) * 100) 
+    : 50; // Default to 50% if no history
+
+  findings.compliance_history = {
+    followed: followedCount,
+    total: totalRecommendations,
+    rate: complianceRate,
+    trend: complianceRate > 60 ? 'good' : complianceRate > 40 ? 'moderate' : 'low'
+  };
+
+  // PROMPT RESPONSE PATTERNS
+  const acknowledgedRecs = recentRecommendations.filter(r => r.acknowledged_at);
+  const avgResponseHours = adaptationProfile?.avg_response_time_hours || null;
+  
+  findings.response_patterns = {
+    acknowledged_count: acknowledgedRecs.length,
+    avg_response_hours: avgResponseHours,
+    responsiveness: avgResponseHours !== null 
+      ? (avgResponseHours < 6 ? 'high' : avgResponseHours < 24 ? 'moderate' : 'low')
+      : 'unknown'
+  };
+
+  // FATIGUE AND OVERRIDE TENDENCIES
+  const recentDismissals = recentRecommendations.filter(r => r.feedback_score <= 2).length;
+  const dismissalRate = totalRecommendations > 0 
+    ? Math.round((recentDismissals / totalRecommendations) * 100)
+    : 0;
+
+  findings.fatigue_override = {
+    dismissal_rate: dismissalRate,
+    showing_fatigue: dismissalRate > 40,
+    recommendation: dismissalRate > 40 ? 'reduce_frequency' : 'maintain_frequency'
+  };
+
+  // Adjust confidence based on user's receptiveness
+  if (complianceRate > 60) {
+    confidence += 20;
+  } else if (complianceRate < 40 && totalRecommendations >= 3) {
+    confidence -= 10; // Reduce confidence if user rarely follows advice
+  }
+
+  // If user is showing fatigue, we should be more selective
+  if ((findings.fatigue_override as any).showing_fatigue) {
+    confidence -= 15;
+    reason = "User showing recommendation fatigue - be more selective";
+  } else {
+    reason = `Behavior patterns analyzed: ${complianceRate}% compliance rate`;
+  }
+
+  return { 
+    pass: true, // This layer advises but doesn't block
+    confidence: Math.max(confidence, 30), 
+    reason, 
+    findings 
+  };
+}
+
+// Layer 4: Interests & Adherence Probability
+function evaluateInterestsAdherence(
+  layer3: LayerResult,
+  userProfile: any,
+  userInterests: any,
+  userTraining: any,
+  adaptationProfile: any
+): LayerResult {
+  const findings: Record<string, unknown> = {};
+  let confidence = 50;
+  let reason = "";
+
+  // Propagate silence from earlier layers
+  if (!layer3.pass && (layer3.findings as any).blocked_by) {
+    return {
+      pass: false,
+      confidence: 0,
+      reason: layer3.reason,
+      findings: { blocked_by: (layer3.findings as any).blocked_by }
+    };
+  }
+
+  // EXPLICIT INTERESTS
+  const explicitInterests: string[] = [];
+  if (userInterests?.interests?.length > 0) {
+    explicitInterests.push(...userInterests.interests);
+  }
+  if (userInterests?.hobbies?.length > 0) {
+    explicitInterests.push(...userInterests.hobbies);
+  }
+  if (userTraining?.preferred_activities?.length > 0) {
+    explicitInterests.push(...userTraining.preferred_activities);
+  }
+
+  findings.explicit_interests = {
+    count: explicitInterests.length,
+    items: explicitInterests.slice(0, 10),
+    has_interests: explicitInterests.length > 0
+  };
+
+  if (explicitInterests.length > 0) {
+    confidence += 15;
+  }
+
+  // IMPLICIT PREFERENCES (from adaptation profile)
+  const preferredCategories = adaptationProfile?.preferred_categories || {};
+  const effectiveTone = adaptationProfile?.effective_tone || 'balanced';
+  const followThroughRate = adaptationProfile?.follow_through_rate || 50;
+
+  findings.implicit_preferences = {
+    preferred_categories: preferredCategories,
+    effective_tone: effectiveTone,
+    follow_through_rate: followThroughRate
+  };
+
+  // ADHERENCE PROBABILITY RANKING
+  // Categories with higher historical follow-through should be prioritized
+  const categoryRankings: Record<string, number> = {};
+  for (const [category, rate] of Object.entries(preferredCategories)) {
+    categoryRankings[category] = rate as number;
+  }
+
+  // Sort categories by adherence probability
+  const rankedCategories = Object.entries(categoryRankings)
+    .sort((a, b) => b[1] - a[1])
+    .map(([cat, rate]) => ({ category: cat, adherence_probability: rate }));
+
+  findings.adherence_ranking = {
+    categories: rankedCategories,
+    suppress_low_adherence: rankedCategories.filter(c => c.adherence_probability < 30).map(c => c.category),
+    prioritize_high_adherence: rankedCategories.filter(c => c.adherence_probability > 60).map(c => c.category)
+  };
+
+  // User goals alignment
+  const userGoals = userProfile?.goals || [];
+  findings.goals_alignment = {
+    goals: userGoals,
+    has_goals: userGoals.length > 0
+  };
+
+  if (userGoals.length > 0) {
+    confidence += 10;
+  }
+
+  reason = `Interests & adherence evaluated: ${rankedCategories.length} categories ranked`;
+
+  return { 
+    pass: true, 
+    confidence: Math.min(confidence, 100), 
+    reason, 
+    findings 
+  };
+}
+
+// Build Justification Chain
+function buildJustification(
+  layer1: LayerResult,
+  layer2: LayerResult,
+  layer3: LayerResult,
+  layer4: LayerResult,
+  userProfile: any
+): ReasoningContext['justification'] {
+  let why_this_issue: string | null = null;
+  let why_now: string | null = null;
+  let why_this_intervention: string | null = null;
+  let why_this_user: string | null = null;
+
+  // WHY THIS ISSUE: From Layer 1 & 2 findings
+  const riskLevel = (layer2.findings.risk_accumulation as any)?.level;
+  const earlyWarnings = (layer2.findings.early_warning_detection as any)?.warnings || [];
+  if (riskLevel === 'high' || riskLevel === 'moderate') {
+    why_this_issue = `Risk level is ${riskLevel} with ${earlyWarnings.length} early warning(s)`;
+  } else if (layer1.pass) {
+    why_this_issue = "Physiological state requires attention based on trend analysis";
+  }
+
+  // WHY NOW: From Layer 1 trajectory changes
+  const trajectoryChanges = (layer1.findings.trajectory_changes as any);
+  if (trajectoryChanges?.count > 0) {
+    why_now = `${trajectoryChanges.count} significant trajectory change(s) detected today`;
+  } else if (earlyWarnings.length > 0) {
+    why_now = "Early warning signals detected that warrant timely intervention";
+  }
+
+  // WHY THIS INTERVENTION: From Layer 3 & 4
+  const complianceHistory = (layer3.findings.compliance_history as any);
+  const adherenceRanking = (layer4.findings.adherence_ranking as any);
+  if (complianceHistory?.rate > 60) {
+    why_this_intervention = "User has high compliance history - direct intervention appropriate";
+  } else if (adherenceRanking?.prioritize_high_adherence?.length > 0) {
+    why_this_intervention = `Intervention in user's high-adherence categories: ${adherenceRanking.prioritize_high_adherence.join(', ')}`;
+  }
+
+  // WHY THIS USER: From Layer 4 user profile
+  const goals = userProfile?.goals || [];
+  const interests = (layer4.findings.explicit_interests as any)?.items || [];
+  if (goals.length > 0) {
+    why_this_user = `Aligned with user's goals: ${goals.slice(0, 2).join(', ')}`;
+  } else if (interests.length > 0) {
+    why_this_user = `Tailored to user's interests: ${interests.slice(0, 2).join(', ')}`;
+  }
+
+  // All 4 must be answerable for full justification
+  const all_justified = !!(why_this_issue && why_now && why_this_intervention && why_this_user);
+
+  return {
+    why_this_issue,
+    why_now,
+    why_this_intervention,
+    why_this_user,
+    all_justified
+  };
+}
+
+// Main Reasoning Orchestrator
+function executeLayeredReasoning(
+  wearableSessions: any[],
+  trainingTrends: any[],
+  recoveryTrends: any[],
+  userBaselines: any[],
+  userDeviations: any[],
+  riskTrajectories: any[],
+  healthAnomalies: any[],
+  symptomCheckIns: any[],
+  adaptationProfile: any,
+  recentRecommendations: any[],
+  userProfile: any,
+  userInterests: any,
+  userTraining: any
+): ReasoningContext {
+  // Execute layers in sequence - each depends on previous
+  const layer1 = evaluatePhysiologicalState(
+    wearableSessions, trainingTrends, recoveryTrends, userBaselines, userDeviations
+  );
+
+  const layer2 = evaluateRiskTrajectory(
+    layer1, riskTrajectories, healthAnomalies, userDeviations, symptomCheckIns
+  );
+
+  const layer3 = evaluateBehaviorPsychology(
+    layer2, adaptationProfile, [], recentRecommendations
+  );
+
+  const layer4 = evaluateInterestsAdherence(
+    layer3, userProfile, userInterests, userTraining, adaptationProfile
+  );
+
+  // Calculate overall confidence (weighted average)
+  const weights = { layer1: 0.35, layer2: 0.30, layer3: 0.20, layer4: 0.15 };
+  const overall_confidence = Math.round(
+    layer1.confidence * weights.layer1 +
+    layer2.confidence * weights.layer2 +
+    layer3.confidence * weights.layer3 +
+    layer4.confidence * weights.layer4
+  );
+
+  // Build justification chain
+  const justification = buildJustification(layer1, layer2, layer3, layer4, userProfile);
+
+  // Determine if we should speak
+  let should_speak = true;
+  let silence_reason: string | undefined;
+
+  // SILENCE CONDITIONS:
+  // 1. Layer 1 failed (insufficient physiological data)
+  if (!layer1.pass) {
+    should_speak = false;
+    silence_reason = layer1.reason;
+  }
+  // 2. Layer 2 determined silence is appropriate (noise, no meaningful risk)
+  else if (!layer2.pass && layer2.reason.includes("SILENCE")) {
+    should_speak = false;
+    silence_reason = "Risk is not meaningful - normal fluctuation";
+  }
+  // 3. Overall confidence too low
+  else if (overall_confidence < 25) {
+    should_speak = false;
+    silence_reason = `Confidence too low (${overall_confidence}%) to provide meaningful guidance`;
+  }
+  // 4. Justification incomplete and risk is not high
+  else if (!justification.all_justified && (layer2.findings.risk_accumulation as any)?.level !== 'high') {
+    should_speak = false;
+    silence_reason = "Cannot fully justify intervention - staying silent";
+  }
+
+  return {
+    layer1_physiological: layer1,
+    layer2_risk_trajectory: layer2,
+    layer3_behavior_psychology: layer3,
+    layer4_interests_adherence: layer4,
+    overall_confidence,
+    should_speak,
+    silence_reason,
+    justification
+  };
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// MAIN HANDLER
+// ═══════════════════════════════════════════════════════════════════════════════
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -85,7 +660,6 @@ Deno.serve(async (req) => {
     }
 
     // ─── CHECK DATA MATURITY FIRST ────────────────────────────────────────────
-    // Fetch data maturity to determine if we should generate insights or stay silent
     const { data: dataMaturity } = await supabase
       .from("user_data_maturity")
       .select("*")
@@ -111,7 +685,6 @@ Deno.serve(async (req) => {
         }]
       };
 
-      // Cache this response
       await supabase.from("daily_briefings").upsert({
         user_id: userId,
         date: today,
@@ -128,6 +701,7 @@ Deno.serve(async (req) => {
           content: onboardingIntelligence.dailyBriefing.summary,
           created_at: new Date().toISOString(),
           maturity: dataMaturity,
+          reasoning: { should_speak: false, silence_reason: "Insufficient data maturity" }
         }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
@@ -198,7 +772,7 @@ Deno.serve(async (req) => {
     ] = await Promise.all([
       supabase.from("user_documents").select("document_type, file_name, parsed_content, ai_summary, tags").eq("user_id", userId).eq("processing_status", "completed").order("uploaded_at", { ascending: false }).limit(10),
       supabase.from("yves_memory_bank").select("memory_key, memory_value").eq("user_id", userId),
-      supabase.from("yves_recommendations").select("*").eq("user_id", userId).order("created_at", { ascending: false }).limit(5),
+      supabase.from("yves_recommendations").select("*").eq("user_id", userId).order("created_at", { ascending: false }).limit(10),
       supabase.from("user_adaptation_profile").select("*").eq("user_id", userId).maybeSingle(),
       supabase.from("risk_trajectories").select("*").eq("user_id", userId).order("calculation_date", { ascending: false }).limit(5),
     ]);
@@ -232,72 +806,155 @@ Deno.serve(async (req) => {
     const adaptationProfile = adaptationProfileResult.data;
     const riskTrajectories = riskTrajectoriesResult.data || [];
 
-    const hasWearableData = wearableSummary.length > 0 || wearableSessions.length > 0 || trainingTrends.length > 0;
-    const hasProfileData = userProfile || userMedical || userWellnessGoals;
+    // ═══════════════════════════════════════════════════════════════════════
+    // EXECUTE 4-LAYER REASONING ENGINE
+    // ═══════════════════════════════════════════════════════════════════════
+    const reasoningContext = executeLayeredReasoning(
+      wearableSessions,
+      trainingTrends,
+      recoveryTrends,
+      userBaselines,
+      userDeviations,
+      riskTrajectories,
+      healthAnomalies,
+      symptomCheckIns,
+      adaptationProfile,
+      recentRecommendations,
+      userProfile,
+      userInterests,
+      userTraining
+    );
+
+    console.log(`[generate-yves-intelligence] Reasoning result for user ${userId}:`, {
+      should_speak: reasoningContext.should_speak,
+      overall_confidence: reasoningContext.overall_confidence,
+      silence_reason: reasoningContext.silence_reason,
+      justification: reasoningContext.justification
+    });
+
+    // ─── SILENCE IS A VALID OUTCOME ───────────────────────────────────────────
+    if (!reasoningContext.should_speak) {
+      const silentResponse: YvesIntelligenceOutput = {
+        dailyBriefing: {
+          summary: reasoningContext.overall_confidence < 25
+            ? "I'm still building your baseline. Keep syncing your data - I'll have personalized insights for you soon."
+            : "Everything looks stable today. I'll speak up when there's something meaningful to share.",
+          keyChanges: [],
+          riskHighlights: [],
+          todaysFocus: reasoningContext.overall_confidence < 25
+            ? "Continue wearing your Oura Ring to build your personal baseline"
+            : undefined,
+        },
+        recommendations: []
+      };
+
+      // Store the silent response with reasoning context
+      await supabase.from("daily_briefings").upsert({
+        user_id: userId,
+        date: today,
+        content: silentResponse.dailyBriefing.summary,
+        context_used: { 
+          ...silentResponse, 
+          reasoning: reasoningContext,
+          silent: true 
+        },
+        category: "unified",
+      });
+
+      return new Response(
+        JSON.stringify({
+          success: true,
+          cached: false,
+          data: silentResponse,
+          content: silentResponse.dailyBriefing.summary,
+          created_at: new Date().toISOString(),
+          reasoning: {
+            should_speak: false,
+            silence_reason: reasoningContext.silence_reason,
+            confidence: reasoningContext.overall_confidence,
+            layers: {
+              layer1: { pass: reasoningContext.layer1_physiological.pass, confidence: reasoningContext.layer1_physiological.confidence },
+              layer2: { pass: reasoningContext.layer2_risk_trajectory.pass, confidence: reasoningContext.layer2_risk_trajectory.confidence },
+              layer3: { pass: reasoningContext.layer3_behavior_psychology.pass, confidence: reasoningContext.layer3_behavior_psychology.confidence },
+              layer4: { pass: reasoningContext.layer4_interests_adherence.pass, confidence: reasoningContext.layer4_interests_adherence.confidence },
+            }
+          }
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
 
     // ─── COACHING MODE CLASSIFICATION ────────────────────────────────────────
-    // Classify user context into one of: general_wellness, performance, rehab
     type CoachingMode = 'general_wellness' | 'performance' | 'rehab';
     
     const classifyCoachingMode = (): CoachingMode => {
-      // Priority 1: REHAB - Check for symptoms, pain, injury risk, or high deviations
-      const hasRecentSymptoms = symptomCheckIns.length > 0;
-      const hasSevereSymptoms = symptomCheckIns.some(s => 
-        s.severity === 'severe' || s.severity === 'moderate'
-      );
-      const hasPainSymptoms = symptomCheckIns.some(s => 
-        s.symptom_type?.toLowerCase().includes('pain') ||
-        s.symptom_type?.toLowerCase().includes('ache') ||
-        s.symptom_type?.toLowerCase().includes('sore') ||
-        s.symptom_type?.toLowerCase().includes('injury')
-      );
-      const hasHighRiskAnomalies = healthAnomalies.some(a => 
-        a.severity === 'high' || a.severity === 'critical'
-      );
-      const hasHighRiskDeviations = userDeviations.some(d => 
-        d.risk_zone === 'high-risk' || d.risk_zone === 'moderate-risk'
-      );
-      const hasActiveInjuries = userInjuries?.injuries?.length > 0;
-      const latestACWR = trainingTrends[0]?.acwr;
-      const isOverloaded = latestACWR !== null && latestACWR > 1.5;
-
-      if (hasSevereSymptoms || hasPainSymptoms || hasHighRiskAnomalies || 
-          hasHighRiskDeviations || hasActiveInjuries || isOverloaded) {
+      // Use reasoning context to determine mode
+      const riskLevel = (reasoningContext.layer2_risk_trajectory.findings.risk_accumulation as any)?.level;
+      
+      // Priority 1: REHAB - if risk is high or moderate
+      if (riskLevel === 'high' || riskLevel === 'moderate') {
         return 'rehab';
       }
 
-      // Priority 2: PERFORMANCE - Check for training focus, goals, high activity
+      // Check for symptoms or injuries
+      const hasRecentSymptoms = symptomCheckIns.length > 0;
+      const hasActiveInjuries = userInjuries?.injuries?.length > 0;
+      
+      if (hasRecentSymptoms || hasActiveInjuries) {
+        return 'rehab';
+      }
+
+      // Priority 2: PERFORMANCE
       const performanceGoals = ['performance', 'strength', 'endurance', 'speed', 
-        'muscle', 'training', 'competition', 'race', 'marathon', 'triathlon', 
-        'gym', 'running', 'cycling', 'swimming', 'conditioning'];
+        'muscle', 'training', 'competition', 'race', 'marathon', 'triathlon'];
       
       const hasPerformanceGoals = userProfile?.goals?.some((g: string) => 
         performanceGoals.some(pg => g.toLowerCase().includes(pg))
       );
       const hasHighActivityLevel = userProfile?.activity_level === 'very_active' || 
         userProfile?.activity_level === 'extremely_active';
-      const hasTrainingProfile = userTraining?.preferred_activities?.length > 0;
-      const hasRecentTrainingData = trainingTrends.length >= 3;
-      const hasOptimalACWR = latestACWR !== null && latestACWR >= 0.8 && latestACWR <= 1.3;
 
-      if (hasPerformanceGoals || (hasHighActivityLevel && hasRecentTrainingData) || 
-          (hasTrainingProfile && hasOptimalACWR)) {
+      if (hasPerformanceGoals || hasHighActivityLevel) {
         return 'performance';
       }
 
-      // Priority 3: GENERAL_WELLNESS - Default for recovery, sleep, stress, mobility
       return 'general_wellness';
     };
 
     const coaching_mode: CoachingMode = classifyCoachingMode();
-    console.log(`[generate-yves-intelligence] Coaching mode classified as: ${coaching_mode} for user ${userId}`);
+    console.log(`[generate-yves-intelligence] Coaching mode: ${coaching_mode} for user ${userId}`);
 
     // ─── BUILD COMPREHENSIVE CONTEXT ─────────────────────────────────────────
     let promptContext = "";
 
-    // ═══════════════════════════════════════════════════════════════════════
-    // SECTION 1: USER PROFILE & GOALS (Static/Long-term)
-    // ═══════════════════════════════════════════════════════════════════════
+    // Include reasoning context for AI
+    promptContext += "═══ REASONING ENGINE OUTPUT ═══\n\n";
+    promptContext += `Overall Confidence: ${reasoningContext.overall_confidence}%\n`;
+    promptContext += `Justification:\n`;
+    promptContext += `• Why this issue: ${reasoningContext.justification.why_this_issue || 'Not established'}\n`;
+    promptContext += `• Why now: ${reasoningContext.justification.why_now || 'Not established'}\n`;
+    promptContext += `• Why this intervention: ${reasoningContext.justification.why_this_intervention || 'Not established'}\n`;
+    promptContext += `• Why this user: ${reasoningContext.justification.why_this_user || 'Not established'}\n\n`;
+
+    // Risk summary from Layer 2
+    const riskLevel = (reasoningContext.layer2_risk_trajectory.findings.risk_accumulation as any)?.level;
+    const earlyWarnings = (reasoningContext.layer2_risk_trajectory.findings.early_warning_detection as any)?.warnings || [];
+    promptContext += `Risk Level: ${riskLevel || 'low'}\n`;
+    if (earlyWarnings.length > 0) {
+      promptContext += `Early Warnings: ${earlyWarnings.join('; ')}\n`;
+    }
+
+    // Adherence guidance from Layer 4
+    const adherenceRanking = reasoningContext.layer4_interests_adherence.findings.adherence_ranking as any;
+    if (adherenceRanking?.prioritize_high_adherence?.length > 0) {
+      promptContext += `Prioritize categories: ${adherenceRanking.prioritize_high_adherence.join(', ')}\n`;
+    }
+    if (adherenceRanking?.suppress_low_adherence?.length > 0) {
+      promptContext += `Suppress categories (low adherence): ${adherenceRanking.suppress_low_adherence.join(', ')}\n`;
+    }
+    promptContext += "\n";
+
+    // User profile section
     promptContext += "═══ USER PROFILE & GOALS ═══\n\n";
 
     if (userProfile) {
@@ -314,88 +971,23 @@ Deno.serve(async (req) => {
     if (userWellnessGoals) {
       if (userWellnessGoals.goals?.length > 0) promptContext += `Wellness Goals: ${userWellnessGoals.goals.join(", ")}\n`;
       if (userWellnessGoals.priority) promptContext += `Top Priority: ${userWellnessGoals.priority}\n`;
-      if (userWellnessGoals.target_date) promptContext += `Target Date: ${userWellnessGoals.target_date}\n`;
     }
-
-    if (userMindset) {
-      if (userMindset.motivation_factors?.length > 0) promptContext += `Motivation Factors: ${userMindset.motivation_factors.join(", ")}\n`;
-      if (userMindset.mental_health_focus) promptContext += `Mental Health Focus: ${userMindset.mental_health_focus}\n`;
-    }
-
     promptContext += "\n";
 
-    // ═══════════════════════════════════════════════════════════════════════
-    // SECTION 2: HEALTH CONTEXT (Long-term conditions)
-    // ═══════════════════════════════════════════════════════════════════════
+    // Health context
     promptContext += "═══ HEALTH CONTEXT ═══\n\n";
 
     if (userMedical) {
       if (userMedical.conditions?.length > 0) promptContext += `Health Conditions: ${userMedical.conditions.join(", ")}\n`;
       if (userMedical.medications?.length > 0) promptContext += `Current Medications: ${userMedical.medications.join(", ")}\n`;
-      if (userMedical.medical_notes) promptContext += `Medical Notes: ${userMedical.medical_notes}\n`;
     }
 
-    if (userInjuries) {
-      if (userInjuries.injuries?.length > 0) promptContext += `Current Injuries: ${userInjuries.injuries.join(", ")}\n`;
-      if (userInjuries.injury_details) {
-        const details = typeof userInjuries.injury_details === 'object' ? JSON.stringify(userInjuries.injury_details) : userInjuries.injury_details;
-        promptContext += `Injury Details: ${details}\n`;
-      }
+    if (userInjuries?.injuries?.length > 0) {
+      promptContext += `Current Injuries: ${userInjuries.injuries.join(", ")}\n`;
     }
-
-    if (userProfile?.injuries?.length > 0) {
-      promptContext += `Injuries (from profile): ${userProfile.injuries.join(", ")}\n`;
-    }
-
-    if (userProfile?.conditions?.length > 0) {
-      promptContext += `Conditions (from profile): ${userProfile.conditions.join(", ")}\n`;
-    }
-
     promptContext += "\n";
 
-    // ═══════════════════════════════════════════════════════════════════════
-    // SECTION 3: LIFESTYLE & PREFERENCES
-    // ═══════════════════════════════════════════════════════════════════════
-    promptContext += "═══ LIFESTYLE & PREFERENCES ═══\n\n";
-
-    if (userLifestyle) {
-      if (userLifestyle.work_schedule) promptContext += `Work Schedule: ${userLifestyle.work_schedule}\n`;
-      if (userLifestyle.stress_level) promptContext += `Stress Level: ${userLifestyle.stress_level}\n`;
-      if (userLifestyle.daily_routine) promptContext += `Daily Routine: ${userLifestyle.daily_routine}\n`;
-    }
-
-    if (userNutrition) {
-      if (userNutrition.diet_type) promptContext += `Diet Type: ${userNutrition.diet_type}\n`;
-      if (userNutrition.allergies?.length > 0) promptContext += `Food Allergies: ${userNutrition.allergies.join(", ")}\n`;
-      if (userNutrition.eating_pattern) promptContext += `Eating Pattern: ${userNutrition.eating_pattern}\n`;
-    }
-
-    if (userInterests) {
-      if (userInterests.hobbies?.length > 0) promptContext += `Hobbies: ${userInterests.hobbies.join(", ")}\n`;
-      if (userInterests.interests?.length > 0) promptContext += `Interests: ${userInterests.interests.join(", ")}\n`;
-    }
-
-    if (userTraining) {
-      if (userTraining.preferred_activities?.length > 0) promptContext += `Preferred Activities: ${userTraining.preferred_activities.join(", ")}\n`;
-      if (userTraining.training_frequency) promptContext += `Training Frequency: ${userTraining.training_frequency}\n`;
-      if (userTraining.intensity_preference) promptContext += `Intensity Preference: ${userTraining.intensity_preference}\n`;
-    }
-
-    if (userRecovery) {
-      if (userRecovery.recovery_methods?.length > 0) promptContext += `Recovery Methods: ${userRecovery.recovery_methods.join(", ")}\n`;
-      if (userRecovery.sleep_hours) promptContext += `Target Sleep Hours: ${userRecovery.sleep_hours}\n`;
-      if (userRecovery.sleep_quality) promptContext += `Typical Sleep Quality: ${userRecovery.sleep_quality}\n`;
-    }
-
-    if (userMindset?.stress_management) {
-      promptContext += `Stress Management: ${userMindset.stress_management}\n`;
-    }
-
-    promptContext += "\n";
-
-    // ═══════════════════════════════════════════════════════════════════════
-    // SECTION 4: CURRENT HEALTH STATE (Dynamic/Daily)
-    // ═══════════════════════════════════════════════════════════════════════
+    // Current health state
     promptContext += "═══ CURRENT HEALTH STATE ═══\n\n";
 
     if (wearableSessions.length > 0) {
@@ -418,10 +1010,6 @@ Deno.serve(async (req) => {
         promptContext += `• Sleep Score: ${latestSession.sleep_score}/100 (${sleepChange >= 0 ? '+' : ''}${sleepChange} vs yesterday)\n`;
       }
       
-      if (latestSession.activity_score !== null) {
-        promptContext += `• Activity Score: ${latestSession.activity_score}/100\n`;
-      }
-      
       if (latestSession.hrv_avg !== null) {
         promptContext += `• HRV: ${latestSession.hrv_avg}ms\n`;
       }
@@ -429,545 +1017,113 @@ Deno.serve(async (req) => {
       if (latestSession.resting_hr !== null) {
         promptContext += `• Resting HR: ${latestSession.resting_hr}bpm\n`;
       }
-      
-      if (latestSession.total_steps) {
-        promptContext += `• Steps: ${latestSession.total_steps.toLocaleString()}\n`;
-      }
-      
-      if (latestSession.active_calories) {
-        promptContext += `• Active Calories: ${latestSession.active_calories}\n`;
-      }
-      
       promptContext += "\n";
     }
 
-    // Personal baselines comparison
-    if (userBaselines.length > 0) {
-      promptContext += "Personal Baselines:\n";
-      userBaselines.forEach(b => {
-        promptContext += `• ${b.metric}: ${b.rolling_avg.toFixed(1)} (${b.data_window}-day avg)\n`;
-      });
-      promptContext += "\n";
-    }
-
-    // Current deviations from baseline
-    if (userDeviations.length > 0) {
-      const recentDeviations = userDeviations.slice(0, 5);
-      const significantDeviations = recentDeviations.filter(d => Math.abs(d.deviation || 0) > 10);
-      
-      if (significantDeviations.length > 0) {
-        promptContext += "Significant Deviations from Baseline:\n";
-        significantDeviations.forEach(d => {
-          const direction = (d.deviation || 0) > 0 ? "above" : "below";
-          const riskLabel = d.risk_zone ? ` [${d.risk_zone.toUpperCase()}]` : "";
-          promptContext += `• ${d.metric}: ${Math.abs(d.deviation || 0).toFixed(0)}% ${direction} baseline${riskLabel}\n`;
-        });
-        promptContext += "\n";
-      }
-    }
-
-    // ═══════════════════════════════════════════════════════════════════════
-    // SECTION 5: TRAINING TRENDS (7-day)
-    // ═══════════════════════════════════════════════════════════════════════
-    promptContext += "═══ 7-DAY TRAINING TRENDS ═══\n\n";
-
+    // Training trends
     if (trainingTrends.length > 0) {
       const latestTrend = trainingTrends[0];
+      promptContext += "═══ TRAINING STATUS ═══\n\n";
       
       if (latestTrend.acwr !== null) {
-        promptContext += `ACWR (Acute:Chronic Workload): ${latestTrend.acwr.toFixed(2)}`;
-        if (latestTrend.acwr > 1.5) {
-          promptContext += " ⚠️ HIGH RISK - Overtraining zone\n";
-        } else if (latestTrend.acwr > 1.3) {
-          promptContext += " ⚠️ ELEVATED - Monitor closely\n";
-        } else if (latestTrend.acwr < 0.8) {
-          promptContext += " ⚠️ LOW - Can increase load safely\n";
-        } else {
-          promptContext += " ✓ OPTIMAL ZONE\n";
-        }
+        promptContext += `ACWR: ${latestTrend.acwr.toFixed(2)}`;
+        if (latestTrend.acwr > 1.5) promptContext += " ⚠️ HIGH RISK\n";
+        else if (latestTrend.acwr > 1.3) promptContext += " ⚠️ ELEVATED\n";
+        else if (latestTrend.acwr < 0.8) promptContext += " ℹ️ CAN INCREASE\n";
+        else promptContext += " ✓ OPTIMAL\n";
       }
-
-      if (latestTrend.strain !== null) promptContext += `Training Strain: ${latestTrend.strain.toFixed(1)}\n`;
-      if (latestTrend.monotony !== null) {
-        promptContext += `Training Monotony: ${latestTrend.monotony.toFixed(2)}`;
-        if (latestTrend.monotony > 2.0) {
-          promptContext += " ⚠️ HIGH - Increase variety\n";
-        } else {
-          promptContext += " ✓ Healthy variety\n";
-        }
+      if (latestTrend.monotony !== null && latestTrend.monotony > 2.0) {
+        promptContext += `Monotony: ${latestTrend.monotony.toFixed(2)} ⚠️ HIGH - needs variety\n`;
       }
-      if (latestTrend.acute_load !== null) promptContext += `Acute Load (7-day): ${latestTrend.acute_load.toFixed(0)}\n`;
-      if (latestTrend.chronic_load !== null) promptContext += `Chronic Load (28-day): ${latestTrend.chronic_load.toFixed(0)}\n`;
-      if (latestTrend.hrv !== null) promptContext += `Avg HRV: ${latestTrend.hrv.toFixed(0)}ms\n`;
-      if (latestTrend.sleep_score !== null) promptContext += `Avg Sleep Score: ${latestTrend.sleep_score.toFixed(0)}\n`;
-    } else if (wearableSummary.length > 0) {
-      const avgStrain = wearableSummary.reduce((sum, s) => sum + (s.strain || 0), 0) / wearableSummary.length;
-      const avgAcwr = wearableSummary.reduce((sum, s) => sum + (s.acwr || 0), 0) / wearableSummary.length;
-      
-      promptContext += `Avg Strain: ${avgStrain.toFixed(1)}\n`;
-      promptContext += `ACWR: ${avgAcwr.toFixed(2)}`;
-      if (avgAcwr > 1.5) {
-        promptContext += " ⚠️ HIGH RISK\n";
-      } else if (avgAcwr < 0.8) {
-        promptContext += " ⚠️ LOW\n";
-      } else {
-        promptContext += " ✓ OPTIMAL\n";
-      }
-    }
-
-    promptContext += "\n";
-
-    // Recovery trends
-    if (recoveryTrends.length > 0) {
-      const latestRecovery = recoveryTrends[0];
-      promptContext += "Recovery Trends:\n";
-      if (latestRecovery.recovery_score !== null) promptContext += `• Recovery Score: ${latestRecovery.recovery_score.toFixed(0)}\n`;
-      if (latestRecovery.acwr_trend) promptContext += `• ACWR Trend: ${latestRecovery.acwr_trend}\n`;
       promptContext += "\n";
     }
 
-    // Multi-day averages from sessions
-    if (wearableSessions.length >= 3) {
-      const validReadiness = wearableSessions.filter(s => s.readiness_score !== null);
-      const validSleep = wearableSessions.filter(s => s.sleep_score !== null);
-      
-      if (validReadiness.length > 0 || validSleep.length > 0) {
-        promptContext += "3-Day Averages:\n";
-        if (validReadiness.length > 0) {
-          const avgReadiness = validReadiness.reduce((sum, s) => sum + (s.readiness_score || 0), 0) / validReadiness.length;
-          promptContext += `• Avg Readiness: ${avgReadiness.toFixed(0)}\n`;
-        }
-        if (validSleep.length > 0) {
-          const avgSleep = validSleep.reduce((sum, s) => sum + (s.sleep_score || 0), 0) / validSleep.length;
-          promptContext += `• Avg Sleep Score: ${avgSleep.toFixed(0)}\n`;
-        }
+    // Symptom check-ins
+    if (symptomCheckIns.length > 0) {
+      promptContext += "═══ RECENT SYMPTOMS ═══\n\n";
+      symptomCheckIns.slice(0, 3).forEach(s => {
+        promptContext += `• ${s.symptom_type} (${s.severity})`;
+        if (s.description) promptContext += `: ${s.description}`;
         promptContext += "\n";
-      }
-    }
-
-    // ═══════════════════════════════════════════════════════════════════════
-    // SECTION 6: HEALTH ALERTS & ANOMALIES
-    // ═══════════════════════════════════════════════════════════════════════
-    if (healthAnomalies.length > 0 || symptomCheckIns.length > 0) {
-      promptContext += "═══ HEALTH ALERTS & SYMPTOMS ═══\n\n";
-
-      if (healthAnomalies.length > 0) {
-        promptContext += "Detected Anomalies (last 7 days):\n";
-        healthAnomalies.forEach(a => {
-          promptContext += `• ${a.metric_name}: ${a.anomaly_type} (${a.severity} severity)`;
-          if (a.deviation_percent) promptContext += ` - ${a.deviation_percent.toFixed(0)}% deviation`;
-          promptContext += "\n";
-        });
-        promptContext += "\n";
-      }
-
-      if (symptomCheckIns.length > 0) {
-        promptContext += "Recent Symptom Check-ins:\n";
-        symptomCheckIns.slice(0, 3).forEach(s => {
-          promptContext += `• ${s.symptom_type} (${s.severity})`;
-          if (s.description) promptContext += `: ${s.description}`;
-          promptContext += "\n";
-        });
-        promptContext += "\n";
-      }
-    }
-
-    // ═══════════════════════════════════════════════════════════════════════
-    // SECTION 7: DOCUMENTS & AI HEALTH PROFILE
-    // ═══════════════════════════════════════════════════════════════════════
-    if (userDocuments.length > 0 || userHealthProfiles) {
-      promptContext += "═══ DOCUMENTS & HEALTH PROFILE ═══\n\n";
-
-      if (userHealthProfiles?.ai_synthesis) {
-        promptContext += `AI Health Profile Summary:\n${userHealthProfiles.ai_synthesis.slice(0, 500)}\n\n`;
-      }
-
-      if (userDocuments.length > 0) {
-        promptContext += "Uploaded Health Documents:\n";
-        for (const doc of userDocuments) {
-          promptContext += `• ${doc.document_type}: `;
-          if (doc.ai_summary) {
-            promptContext += `${doc.ai_summary.slice(0, 150)}...\n`;
-          } else if (doc.tags?.length > 0) {
-            promptContext += `Tags: ${doc.tags.join(", ")}\n`;
-          } else {
-            promptContext += `${doc.file_name}\n`;
-          }
-        }
-        promptContext += "\n";
-      }
-    }
-
-    // ═══════════════════════════════════════════════════════════════════════
-    // SECTION 8: YVES MEMORY & CONTINUITY
-    // ═══════════════════════════════════════════════════════════════════════
-    if (memoryBank.length > 0 || recentRecommendations.length > 0) {
-      promptContext += "═══ YVES MEMORY ═══\n\n";
-
-      if (memoryBank.length > 0) {
-        promptContext += "Remembered Context:\n";
-        memoryBank.slice(0, 5).forEach(m => {
-          const valueStr = typeof m.memory_value === 'string' 
-            ? m.memory_value 
-            : JSON.stringify(m.memory_value).slice(0, 80);
-          promptContext += `• ${m.memory_key}: ${valueStr}\n`;
-        });
-        promptContext += "\n";
-      }
-
-      if (recentRecommendations.length > 0) {
-        promptContext += "Previous Recommendations (for continuity):\n";
-        recentRecommendations.slice(0, 3).forEach(r => {
-          promptContext += `• ${r.category}: ${r.recommendation_text.slice(0, 80)}...\n`;
-        });
-        promptContext += "\n";
-      }
-    }
-
-    // ═══════════════════════════════════════════════════════════════════════
-    // SECTION 9: RISK TRAJECTORIES (Predictive)
-    // ═══════════════════════════════════════════════════════════════════════
-    if (riskTrajectories.length > 0) {
-      promptContext += "═══ RISK TRAJECTORIES ═══\n\n";
-      promptContext += "Predicted trends (next 3-7 days):\n";
-      riskTrajectories.forEach(t => {
-        const direction = t.trajectory_direction || 'stable';
-        const conf = t.confidence ? ` (${Math.round(t.confidence * 100)}% confidence)` : '';
-        promptContext += `• ${t.metric}: Currently ${t.current_value?.toFixed(1) || 'N/A'}, trending ${direction}${conf}\n`;
-        if (t.predicted_3day !== null) {
-          promptContext += `  → 3-day prediction: ${t.predicted_3day.toFixed(1)}\n`;
-        }
       });
       promptContext += "\n";
     }
 
-    // ═══════════════════════════════════════════════════════════════════════
-    // SECTION 10: ADAPTATION PROFILE (Learning from user behavior)
-    // ═══════════════════════════════════════════════════════════════════════
+    // Adaptation profile
     if (adaptationProfile) {
-      promptContext += "═══ USER ADAPTATION PROFILE ═══\n\n";
-      
+      promptContext += "═══ USER PREFERENCES ═══\n\n";
       if (adaptationProfile.effective_tone) {
-        promptContext += `Preferred communication tone: ${adaptationProfile.effective_tone}\n`;
+        promptContext += `Preferred tone: ${adaptationProfile.effective_tone}\n`;
       }
-      
       if (adaptationProfile.follow_through_rate !== null) {
-        promptContext += `Follow-through rate: ${adaptationProfile.follow_through_rate}%\n`;
+        promptContext += `Historical follow-through: ${adaptationProfile.follow_through_rate}%\n`;
       }
-      
-      if (adaptationProfile.preferred_categories && Object.keys(adaptationProfile.preferred_categories).length > 0) {
-        const prefs = adaptationProfile.preferred_categories as Record<string, number>;
-        const sortedCats = Object.entries(prefs).sort((a, b) => b[1] - a[1]).slice(0, 3);
-        if (sortedCats.length > 0) {
-          promptContext += `Most effective categories: ${sortedCats.map(([cat, rate]) => `${cat} (${rate}%)`).join(', ')}\n`;
-        }
-      }
-
-      if (adaptationProfile.optimal_timing && Object.keys(adaptationProfile.optimal_timing).length > 0) {
-        const timing = adaptationProfile.optimal_timing as Record<string, number>;
-        const bestTime = Object.entries(timing).sort((a, b) => b[1] - a[1])[0];
-        if (bestTime) {
-          promptContext += `Most active time of day: ${bestTime[0]}\n`;
-        }
-      }
-
       promptContext += "\n";
     }
 
-    // ─── CALCULATE CONFIDENCE SCORE ───────────────────────────────────────────
-    // Confidence determines if we should generate detailed insights or hedge our advice
-    let confidenceScore = 0;
-    const confidenceBreakdown = {
-      data_maturity: 0,
-      data_freshness: 0,
-      baseline_stability: 0,
-      context_completeness: 0,
-    };
-
-    // Data maturity (40% weight)
-    if (dataMaturity) {
-      confidenceBreakdown.data_maturity = Math.min(dataMaturity.maturity_score, 100) * 0.4;
-    } else if (wearableSessions.length >= 7) {
-      confidenceBreakdown.data_maturity = 28; // 70% of 40
-    } else if (wearableSessions.length >= 3) {
-      confidenceBreakdown.data_maturity = 16; // 40% of 40
-    }
-
-    // Data freshness (30% weight) - hours since last sync
-    if (wearableSessions.length > 0) {
-      const latestSession = wearableSessions[0];
-      const hoursSinceSync = (Date.now() - new Date(latestSession.date + 'T00:00:00Z').getTime()) / (1000 * 60 * 60);
-      if (hoursSinceSync < 24) {
-        confidenceBreakdown.data_freshness = 30;
-      } else if (hoursSinceSync < 48) {
-        confidenceBreakdown.data_freshness = 20;
-      } else if (hoursSinceSync < 72) {
-        confidenceBreakdown.data_freshness = 10;
-      }
-    }
-
-    // Baseline stability (20% weight)
-    if (userBaselines.length >= 3) {
-      confidenceBreakdown.baseline_stability = 20;
-    } else if (userBaselines.length >= 1) {
-      confidenceBreakdown.baseline_stability = 10;
-    }
-
-    // Context completeness (10% weight)
-    const hasProfile = userProfile || userMedical || userWellnessGoals;
-    const hasContext = userContext || userTraining || userNutrition;
-    if (hasProfile && hasContext) {
-      confidenceBreakdown.context_completeness = 10;
-    } else if (hasProfile || hasContext) {
-      confidenceBreakdown.context_completeness = 5;
-    }
-
-    confidenceScore = Object.values(confidenceBreakdown).reduce((a, b) => a + b, 0);
-    console.log(`[generate-yves-intelligence] Confidence score: ${confidenceScore}%, breakdown:`, confidenceBreakdown);
-
-    // If confidence is very low (<30%), return hedged/silent response
-    if (confidenceScore < 30 && dataMaturity?.maturity_level !== 'mature') {
-      console.log(`[generate-yves-intelligence] Low confidence (${confidenceScore}%) - returning hedged response`);
-      
-      const hedgedIntelligence: YvesIntelligenceOutput = {
-        dailyBriefing: {
-          summary: "I'm still learning your patterns. Sync your wearable regularly and check back tomorrow for more personalized insights.",
-          keyChanges: [],
-          riskHighlights: [],
-          todaysFocus: "Keep wearing your Oura Ring and syncing daily to build your baseline",
-        },
-        recommendations: [{
-          text: "Continue syncing your wearable data daily. The more consistent data I have, the better I can personalize my guidance for you.",
-          category: "performance",
-          priority: "medium",
-          reasoning: "Building a reliable baseline takes about 7-14 days of consistent data"
-        }]
-      };
-
-      await supabase.from("daily_briefings").upsert({
-        user_id: userId,
-        date: today,
-        content: hedgedIntelligence.dailyBriefing.summary,
-        context_used: { ...hedgedIntelligence, confidence: confidenceScore, confidenceBreakdown },
-        category: "unified",
-      });
-
-      return new Response(
-        JSON.stringify({
-          success: true,
-          cached: false,
-          data: hedgedIntelligence,
-          content: hedgedIntelligence.dailyBriefing.summary,
-          created_at: new Date().toISOString(),
-          confidence: confidenceScore,
-        }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    // ─── BUILD TONE GUIDANCE BASED ON COACHING MODE ───────────────────────────
+    // ─── BUILD TONE GUIDANCE ────────────────────────────────────────────────
     const toneGuidance = {
       general_wellness: `
 ═══ TONE: GENERAL WELLNESS ═══
-Your communication style should be:
-• CALM and REASSURING - Create a sense of peace and balance
-• LOW PRESSURE - Never create urgency or stress about metrics
-• SUPPORTIVE - Validate their journey and small wins
-• GENTLE SUGGESTIONS - Use "consider", "you might enjoy", "when you're ready"
-• HOLISTIC FOCUS - Emphasize overall wellbeing, not just performance
-
-Language examples:
-✓ "Your body seems to be asking for a bit more rest—nothing to worry about"
-✓ "When you feel ready, a gentle stretch session could feel nice"
-✓ "You're doing great by staying consistent with your routine"
-✗ Avoid: "You NEED to...", "Critical that you...", "Don't miss..."`,
+Be CALM, SUPPORTIVE, LOW PRESSURE. Use "consider", "you might enjoy", "when you're ready".
+Focus on overall wellbeing, not performance metrics.`,
 
       performance: `
 ═══ TONE: PERFORMANCE ═══
-Your communication style should be:
-• CONFIDENT and MOTIVATING - Project certainty and energy
-• DIRECTIVE - Give clear, actionable instructions
-• GOAL-ORIENTED - Always connect advice to their performance objectives
-• CHALLENGING - Push them appropriately while respecting limits
-• DATA-DRIVEN - Reference metrics to support recommendations
-
-Language examples:
-✓ "Your numbers show you're ready to push harder today—let's capitalize on it"
-✓ "To hit your goals, prioritize your interval session tomorrow"
-✓ "Great progress this week. Now let's build on that momentum"
-✗ Avoid: "Maybe you could...", "No pressure, but...", vague suggestions`,
+Be CONFIDENT, DIRECTIVE, GOAL-ORIENTED. Give clear, actionable instructions.
+Reference metrics and connect advice to their performance objectives.`,
 
       rehab: `
 ═══ TONE: REHAB ═══
-Your communication style should be:
-• CAUTIOUS and PROTECTIVE - Prioritize safety above all
-• PRECISE - Be specific about what to do and what to avoid
-• SAFETY-FIRST - Always err on the side of caution
-• EMPATHETIC - Acknowledge frustration with limitations
-• CLEAR BOUNDARIES - State what NOT to do as clearly as what TO do
-
-Language examples:
-✓ "Given what your body is telling us, let's hold off on high-impact work today"
-✓ "Focus on mobility only—no resistance training until symptoms improve"
-✓ "I know it's frustrating, but listening to these signals now prevents bigger setbacks"
-✗ Avoid: "Push through...", "It's probably fine to...", dismissing symptoms`
+Be CAUTIOUS, PROTECTIVE, PRECISE. Prioritize safety above all.
+Acknowledge frustration but enforce clear boundaries on activity.`
     };
 
     // ─── AI CALL WITH STRUCTURED OUTPUT ────────────────────────────────────
-    // Check if recent symptoms are present
-    const hasRecentSymptoms = symptomCheckIns && symptomCheckIns.length > 0;
-    
-    const symptomAcknowledgement = hasRecentSymptoms ? `
-═══ SYMPTOM ACKNOWLEDGEMENT (MANDATORY) ═══
-The user has logged recent symptoms. You MUST acknowledge these FIRST in your summary before discussing any metrics or recommendations.
-
-Examples of acceptable acknowledgement:
-• "I see you've been dealing with [symptom] recently."
-• "Given the [symptom] you logged, let's factor that in."
-• "I noticed you reported [symptom] - let's keep that front of mind."
-
-This acknowledgement should feel natural and human, showing you're paying attention to what they've shared. Do NOT provide medical advice - just acknowledge and factor it into your recommendations.
-` : '';
-
-    const systemPrompt = `You are Yves, a deeply personalized AI health intelligence coach. You know this user intimately - their goals, history, preferences, and patterns over time.
+    const systemPrompt = `You are Yves, a clinical reasoning AI health coach. You ONLY speak when you have something meaningful to say.
 
 ${toneGuidance[coaching_mode]}
-${symptomAcknowledgement}
-═══ CORE PHILOSOPHY ═══
-You are NOT a generic health advisor. Every insight must demonstrate that you KNOW this specific user. Reference their:
-- Stated goals and priorities by name
-- Hobbies and interests (to make recommendations engaging)
-- Health conditions and injuries (to ensure safety)
-- Past patterns and trends (not just today's data)
-- Uploaded documents (nutrition plans, medical records, etc.)
+
+═══ CRITICAL RULES ═══
+1. You must generate EXACTLY ONE dominant insight - no more, no less
+2. Recommendations must align with the JUSTIFICATION provided by the reasoning engine
+3. Do NOT recommend categories marked as "suppress" (low adherence)
+4. DO prioritize categories marked as high adherence
+5. If the risk level is "low" and there are no early warnings, keep your message brief and encouraging
 
 ═══ OUTPUT FORMAT ═══
-Generate a JSON object with this exact structure:
+Generate a JSON object:
 {
   "dailyBriefing": {
-    "summary": "2-3 sentences that interpret their current state IN CONTEXT of their goals and recent trajectory",
-    "keyChanges": ["Specific change referencing multi-day patterns", "Another pattern-based observation"],
-    "riskHighlights": ["Risk framed around their specific conditions/goals if any"],
-    "todaysFocus": "One clear, actionable priority for today with specific timing or duration"
+    "summary": "2-3 sentences interpreting their state. ONE clear message.",
+    "keyChanges": ["Max 2 significant pattern-based observations"],
+    "riskHighlights": ["Only include if genuinely concerning"],
+    "todaysFocus": "ONE clear, actionable priority with specific timing"
   },
   "recommendations": [
     {
-      "text": "Specific action tied to THEIR preferences and activities",
+      "text": "Specific action tied to THEIR preferences",
       "category": "training|recovery|nutrition|sleep|mindset|performance",
       "priority": "high|medium|low",
-      "reasoning": "Why this matters for THEIR specific goals"
+      "reasoning": "Internal justification connecting to user's goals"
     }
   ]
 }
 
-═══ TODAYS FOCUS RULES (MANDATORY) ═══
-The "todaysFocus" field must contain exactly ONE clear priority for today:
-• Action oriented and easy to remember
-• Include specific timing or duration when possible
-• Use coach tone for training or physical execution actions
-• Use warm, supportive tone for recovery, pain, stress, or wellbeing actions
-• Use strategic, objective tone for planning, work, or long term goal actions
-• Never include multiple actions or mixed messages
-• Do not use hyphens or dashes in the text
+═══ PERSONALIZATION ═══
+- USE their name if available (once, naturally)
+- REFERENCE their specific goals
+- RESPECT their injuries/conditions
+- MATCH their preferred tone
+- CITE multi-day patterns, not just today
 
-Examples:
-• Training: "Complete your 30 minute tempo run before noon to build your race pace"
-• Recovery: "Take today completely off and let your body recover. You've earned it"
-• Strategic: "Review your weekly training plan and set your targets for next week"
+═══ SILENCE PRINCIPLE ═══
+Less is more. One impactful insight beats five mediocre ones.
+If nothing is truly notable today, say so briefly and move on.
 
-═══ CATEGORY RULES (STRICT) ═══
-Each recommendation MUST have exactly one category. Use these rules:
+RESPOND WITH ONLY THE JSON OBJECT.`;
 
-• "recovery" → Use when recommendation relates to: soreness, pain, mobility, rest days, recovery score drops, HRV drops, injury prevention, stretching, foam rolling, massage, ice/heat therapy
-
-• "training" → Use when recommendation relates to: training load, strain, monotony, ACWR, running/swimming/cycling/gym programming, workout intensity, progressive overload, deload weeks, exercise technique
-
-• "sleep" → Use when recommendation relates to: sleep duration, sleep quality, sleep efficiency, readiness score, wind-down routines, sleep environment, naps, circadian rhythm
-
-• "nutrition" → Use when recommendation relates to: hydration, calories, macros, protein intake, meal timing, supplements, diet adherence, fueling for workouts, recovery nutrition
-
-• "mindset" → Use when recommendation relates to: stress, burnout, mental fatigue, motivation, focus, anxiety, meditation, breathing exercises, mental recovery, work-life balance
-
-• "performance" → DEFAULT FALLBACK. Use when the recommendation doesn't clearly fit the above categories or spans multiple categories
-
-═══ PERSONALIZATION RULES (MANDATORY) ═══
-1. USE THEIR NAME: If the user's name is available, use it naturally ONCE in the summary (e.g., "Good morning, [Name]" or "[Name], your body is asking for..."). Never repeat it or use it mechanically.
-2. REFERENCE THEIR GOALS: If they want to "improve sleep quality", say "Given your focus on sleep improvement..." not generic sleep tips
-3. USE THEIR INTERESTS: If they enjoy yoga, recommend yoga-based recovery. If they like hiking, suggest outdoor activities
-4. RESPECT THEIR BODY: Never recommend exercises that conflict with listed injuries or conditions
-5. CITE PATTERNS: "Your HRV has dropped 15% over 3 days" not just "Your HRV is 42ms today"
-6. CONNECT TO DOCUMENTS: If they uploaded a nutrition plan, reference it. If they have medical records, consider them
-7. MATCH THEIR STYLE: Use their intensity preference and training frequency when suggesting workouts
-8. CONSIDER THEIR LIFE: Factor in work schedule and stress level for timing and intensity
-
-═══ COACHING LANGUAGE (USE INSTEAD OF CLINICAL PHRASING) ═══
-Speak like a trusted coach, not a medical report. Replace clinical patterns with warm, human language:
-• "Metrics indicate" → "What I'm seeing suggests"
-• "Consider reducing intensity" → "Let's ease off today"
-• "Suboptimal recovery" → "Your body hasn't fully recharged"
-• "Data suggests" → "It looks like"
-• "Recommend" → "I'd suggest" or "Let's try"
-• "Elevated strain" → "You've been pushing hard"
-• "Insufficient sleep duration" → "You didn't get quite enough sleep"
-• "Deviation from baseline" → "This is a bit different from your usual"
-• "Parameters indicate" → "Your numbers are telling me"
-• "Implement recovery protocol" → "Give yourself some extra rest"
-
-═══ CONFLICT RESOLUTION (SYMPTOMS vs METRICS) ═══
-If performance metrics are strong BUT symptoms are present, ALWAYS default to safety-oriented guidance.
-Explain the trade-off briefly and confidently:
-• "Your metrics look solid, but the [symptom] changes today's priority."
-• "The numbers are good, but let's respect what your body is telling you."
-• "Strong recovery scores, but that [symptom] means we ease up today."
-Symptoms override metrics. Safety first, always.
-
-═══ LONGITUDINAL INTELLIGENCE ═══
-- Compare today vs 3-day averages vs 7-day trends
-- Identify emerging patterns before they become problems
-- Reference previous recommendations and whether metrics improved
-- Notice correlations (e.g., "Your sleep scores dip after high-strain days")
-
-═══ METRIC-BASED TRIGGERS ═══
-- Readiness < 70: Prioritize recovery, reduce intensity
-- ACWR > 1.3: Warn about overtraining risk, suggest deload
-- ACWR < 0.8: Encourage safe load increase toward goals
-- Monotony > 2.0: Suggest variety using their preferred activities
-- Sleep score < 70: Address sleep as priority
-- Deviation > 15% from baseline: Flag and explain significance
-
-═══ TODAY'S FOCUS (MANDATORY) ═══
-ALWAYS end your summary with a "Today's Focus" section containing:
-• ONE clear action (not multiple)
-• Specific timing or duration when possible
-Format: "🎯 Today's Focus: [single actionable item with timing]"
-Examples:
-• "🎯 Today's Focus: 20 minutes of easy movement and an early bedtime."
-• "🎯 Today's Focus: A full rest day—prioritize hydration and 8+ hours of sleep."
-• "🎯 Today's Focus: Light stretching this morning, then a moderate 30-minute workout."
-Avoid mixed messages. One focus, one priority.
-
-═══ FINAL CHECK ═══
-Before outputting, verify:
-□ Does this feel like it's written FOR THIS PERSON?
-□ Did I reference at least one of their specific goals?
-□ Did I cite a multi-day pattern, not just today?
-□ Would this advice be different for someone else with different goals?
-□ Does it match the required TONE for their current situation?
-□ Did I include exactly ONE "Today's Focus" item?
-□ If symptoms are present with good metrics, did I default to safety?
-
-Include 2-4 recommendations ordered by priority.
-
-RESPOND WITH ONLY THE JSON OBJECT, NO OTHER TEXT.`;
-
-    let userPrompt: string;
-    if (hasWearableData) {
-      userPrompt = `Analyze this user's comprehensive health data and generate a coordinated briefing + recommendations:\n\n${promptContext}`;
-    } else if (hasProfileData) {
-      userPrompt = `Generate a personalized intelligence report for this user who has profile data but limited wearable data:\n\n${promptContext}\n\nEncourage them to sync their Oura Ring for richer insights while providing value from their profile.`;
-    } else {
-      userPrompt = `Generate a brief welcome message as JSON, encouraging the user to:\n1. Set up their profile with goals and preferences\n2. Connect their Oura Ring for health tracking\n\nMake it warm and explain the value of personalized health intelligence.`;
-    }
+    const userPrompt = `Based on this user's data and the reasoning engine analysis, generate ONE dominant insight:\n\n${promptContext}`;
 
     console.log(`[generate-yves-intelligence] Calling AI for user ${userId} with ${promptContext.length} chars of context`);
 
@@ -983,7 +1139,7 @@ RESPOND WITH ONLY THE JSON OBJECT, NO OTHER TEXT.`;
           { role: "system", content: systemPrompt },
           { role: "user", content: userPrompt }
         ],
-        max_tokens: 1000,
+        max_tokens: 800,
       }),
     });
 
@@ -1026,44 +1182,43 @@ RESPOND WITH ONLY THE JSON OBJECT, NO OTHER TEXT.`;
       content = content.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
       intelligenceData = JSON.parse(content);
       
-      // Extract todaysFocus from summary if not provided directly
+      // Extract todaysFocus from summary if not provided
       if (!intelligenceData.dailyBriefing.todaysFocus) {
         const focusMatch = intelligenceData.dailyBriefing.summary.match(/🎯\s*Today's Focus:\s*(.+?)(?:\n|$)/i);
         if (focusMatch) {
           intelligenceData.dailyBriefing.todaysFocus = focusMatch[1].trim();
-          // Remove the focus from summary to avoid duplication
           intelligenceData.dailyBriefing.summary = intelligenceData.dailyBriefing.summary
             .replace(/🎯\s*Today's Focus:\s*.+?(?:\n|$)/i, '')
             .trim();
         }
       }
+
+      // Filter recommendations by adherence (suppress low-adherence categories)
+      const suppressCategories = adherenceRanking?.suppress_low_adherence || [];
+      if (suppressCategories.length > 0) {
+        intelligenceData.recommendations = intelligenceData.recommendations.filter(
+          rec => !suppressCategories.includes(rec.category)
+        );
+      }
+
+      // Limit to max 3 recommendations
+      intelligenceData.recommendations = intelligenceData.recommendations.slice(0, 3);
+
     } catch (parseError) {
       console.error(`[generate-yves-intelligence] JSON parse error:`, parseError, content);
       
-      // Fallback structure
       intelligenceData = {
         dailyBriefing: {
-          summary: hasProfileData 
-            ? "Welcome! I can see your profile. Connect your Oura Ring to unlock personalized daily health insights based on your goals."
-            : "Welcome to Yves! Set up your profile and connect your Oura Ring to receive personalized health intelligence.",
+          summary: "I'm analyzing your data. Check back soon for personalized insights.",
           keyChanges: [],
           riskHighlights: [],
-          todaysFocus: hasProfileData
-            ? "Connect your Oura Ring to start receiving personalized insights"
-            : "Complete your profile and connect your wearable to get started",
+          todaysFocus: "Continue your regular routine",
         },
-        recommendations: [{
-          text: hasProfileData 
-            ? "Sync your Oura Ring to see how your daily metrics align with your health goals"
-            : "Complete your profile to help me understand your health goals and preferences",
-          category: "recovery",
-          priority: "high",
-          reasoning: "Personalized data enables accurate, goal-aligned recommendations"
-        }]
+        recommendations: []
       };
     }
 
-    // Create readable briefing content for storage
+    // Create readable briefing content
     const briefingContent = `${intelligenceData.dailyBriefing.summary}\n\n` +
       (intelligenceData.dailyBriefing.keyChanges.length > 0 
         ? `📊 Key Changes:\n${intelligenceData.dailyBriefing.keyChanges.map(c => `• ${c}`).join('\n')}\n\n` 
@@ -1072,16 +1227,20 @@ RESPOND WITH ONLY THE JSON OBJECT, NO OTHER TEXT.`;
         ? `⚠️ Attention:\n${intelligenceData.dailyBriefing.riskHighlights.map(r => `• ${r}`).join('\n')}` 
         : '');
 
-    // ─── SAVE TO DATABASE ────────────────────────────────────────────────
+    // ─── SAVE TO DATABASE WITH REASONING CONTEXT ────────────────────────────
     await supabase.from("daily_briefings").upsert({
       user_id: userId,
       date: today,
       content: briefingContent.trim(),
-      context_used: intelligenceData,
+      context_used: { 
+        ...intelligenceData, 
+        reasoning: reasoningContext,
+        coaching_mode 
+      },
       category: "unified",
     });
 
-    // Also save individual recommendations
+    // Save recommendations
     for (const rec of intelligenceData.recommendations) {
       await supabase.from("yves_recommendations").insert({
         user_id: userId,
@@ -1092,7 +1251,7 @@ RESPOND WITH ONLY THE JSON OBJECT, NO OTHER TEXT.`;
       });
     }
 
-    console.log(`[generate-yves-intelligence] Intelligence generated for user ${userId}`);
+    console.log(`[generate-yves-intelligence] Intelligence generated for user ${userId} (confidence: ${reasoningContext.overall_confidence}%)`);
 
     return new Response(
       JSON.stringify({
@@ -1101,6 +1260,18 @@ RESPOND WITH ONLY THE JSON OBJECT, NO OTHER TEXT.`;
         data: intelligenceData,
         content: briefingContent.trim(),
         created_at: new Date().toISOString(),
+        reasoning: {
+          should_speak: true,
+          confidence: reasoningContext.overall_confidence,
+          justification: reasoningContext.justification,
+          coaching_mode,
+          layers: {
+            layer1: { pass: reasoningContext.layer1_physiological.pass, confidence: reasoningContext.layer1_physiological.confidence },
+            layer2: { pass: reasoningContext.layer2_risk_trajectory.pass, confidence: reasoningContext.layer2_risk_trajectory.confidence },
+            layer3: { pass: reasoningContext.layer3_behavior_psychology.pass, confidence: reasoningContext.layer3_behavior_psychology.confidence },
+            layer4: { pass: reasoningContext.layer4_interests_adherence.pass, confidence: reasoningContext.layer4_interests_adherence.confidence },
+          }
+        }
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );

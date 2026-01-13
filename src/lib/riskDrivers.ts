@@ -31,6 +31,18 @@ export interface CorrectiveAction {
   intensity: 'rest' | 'light' | 'moderate' | 'normal';
   volumeAdjustment?: string; // e.g., "Reduce 20-40%"
   focusArea?: string; // e.g., "mobility", "technique", "cardio"
+  recommendedActivity?: string; // Personalized activity recommendation
+  avoidActivities?: string[]; // Activities to avoid based on injuries
+}
+
+export interface UserProfile {
+  preferredActivities?: string[];
+  interests?: string[];
+  injuries?: string[];
+  injuryDetails?: Record<string, unknown>;
+  equipmentAccess?: string[];
+  trainingFrequency?: string;
+  intensityPreference?: string;
 }
 
 export interface RiskDriverResult {
@@ -323,7 +335,7 @@ export function identifyRiskDrivers(metrics: RiskMetrics): RiskDriverResult {
     }
   }
 
-  // Generate corrective action based on risk drivers
+  // Generate corrective action based on risk drivers (without profile - call separately with profile for personalization)
   const correctiveAction = generateCorrectiveAction(primary, secondary, riskLevel);
 
   return {
@@ -424,6 +436,161 @@ export function generateRiskExplanation(
   return explanation;
 }
 
+// Activity categories for matching user preferences
+const ACTIVITY_CATEGORIES: Record<string, string[]> = {
+  cardio: ['running', 'cycling', 'swimming', 'rowing', 'elliptical', 'walking', 'hiking', 'jogging'],
+  strength: ['weightlifting', 'resistance training', 'powerlifting', 'bodybuilding', 'crossfit'],
+  flexibility: ['yoga', 'pilates', 'stretching', 'mobility work', 'tai chi'],
+  sport: ['tennis', 'basketball', 'soccer', 'football', 'volleyball', 'golf', 'martial arts'],
+  recovery: ['walking', 'light yoga', 'stretching', 'swimming', 'foam rolling'],
+  lowImpact: ['cycling', 'swimming', 'elliptical', 'rowing', 'yoga', 'pilates']
+};
+
+// Body parts affected by different activities
+const ACTIVITY_BODY_IMPACT: Record<string, string[]> = {
+  running: ['knee', 'ankle', 'hip', 'lower back', 'shin', 'foot'],
+  cycling: ['knee', 'hip', 'lower back'],
+  swimming: ['shoulder', 'neck'],
+  weightlifting: ['shoulder', 'back', 'wrist', 'elbow'],
+  yoga: [],
+  walking: ['ankle', 'foot'],
+  rowing: ['back', 'shoulder', 'wrist'],
+  tennis: ['shoulder', 'elbow', 'wrist', 'knee'],
+  basketball: ['knee', 'ankle'],
+  soccer: ['knee', 'ankle', 'hip'],
+  pilates: [],
+  stretching: []
+};
+
+/**
+ * Find safe alternative activities based on injury locations
+ */
+function findSafeActivities(injuries: string[], allActivities: string[]): string[] {
+  const injuryLower = injuries.map(i => i.toLowerCase());
+  
+  return allActivities.filter(activity => {
+    const activityLower = activity.toLowerCase();
+    const impactedAreas = Object.entries(ACTIVITY_BODY_IMPACT)
+      .find(([key]) => activityLower.includes(key.toLowerCase()))?.[1] || [];
+    
+    // Activity is safe if it doesn't impact any injured areas
+    return !impactedAreas.some(area => 
+      injuryLower.some(injury => injury.includes(area) || area.includes(injury))
+    );
+  });
+}
+
+/**
+ * Match corrective strategy with user preferences
+ */
+function matchActivityToPreferences(
+  strategy: string,
+  userProfile: UserProfile,
+  symptoms?: Array<{ type: string; severity: string }>
+): { recommendedActivity: string; avoidActivities: string[] } {
+  const preferred = userProfile.preferredActivities || [];
+  const interests = userProfile.interests || [];
+  const injuries = userProfile.injuries || [];
+  const allPreferred = [...new Set([...preferred, ...interests])];
+  
+  // Determine what areas to avoid based on symptoms
+  const symptomLocations = symptoms?.map(s => s.type.toLowerCase()) || [];
+  const areasToAvoid = [...injuries.map(i => i.toLowerCase()), ...symptomLocations];
+  
+  // Find activities to avoid
+  const avoidActivities: string[] = [];
+  if (areasToAvoid.length > 0) {
+    Object.entries(ACTIVITY_BODY_IMPACT).forEach(([activity, bodyParts]) => {
+      if (bodyParts.some(part => areasToAvoid.some(area => 
+        area.includes(part) || part.includes(area)
+      ))) {
+        avoidActivities.push(activity);
+      }
+    });
+  }
+  
+  // Strategy-specific activity matching
+  let recommendedActivity = '';
+  
+  switch (strategy) {
+    case 'Change training modality':
+      // Find alternative from user preferences that's different from usual
+      const safePreferred = findSafeActivities(areasToAvoid, allPreferred);
+      if (safePreferred.length > 0) {
+        // Pick a low-impact option if available
+        const lowImpactMatch = safePreferred.find(a => 
+          ACTIVITY_CATEGORIES.lowImpact.some(li => a.toLowerCase().includes(li))
+        );
+        recommendedActivity = lowImpactMatch || safePreferred[0];
+      } else {
+        recommendedActivity = findSafeActivities(areasToAvoid, ACTIVITY_CATEGORIES.lowImpact)[0] || 'light walking';
+      }
+      break;
+      
+    case 'Active recovery session':
+    case 'Prioritize recovery':
+      // Match with preferred recovery activities
+      const recoveryOptions = ACTIVITY_CATEGORIES.recovery;
+      const preferredRecovery = allPreferred.find(p => 
+        recoveryOptions.some(r => p.toLowerCase().includes(r))
+      );
+      const safeRecovery = findSafeActivities(areasToAvoid, recoveryOptions);
+      recommendedActivity = preferredRecovery || safeRecovery[0] || 'gentle walking';
+      break;
+      
+    case 'Low intensity session':
+      // Find low-intensity version of preferred activities
+      const userLowImpact = allPreferred.filter(p =>
+        ACTIVITY_CATEGORIES.lowImpact.some(li => p.toLowerCase().includes(li))
+      );
+      const safeLowImpact = findSafeActivities(areasToAvoid, userLowImpact);
+      if (safeLowImpact.length > 0) {
+        recommendedActivity = `Easy ${safeLowImpact[0].toLowerCase()}`;
+      } else if (allPreferred.some(p => p.toLowerCase().includes('cycling'))) {
+        recommendedActivity = 'Easy cycling session';
+      } else if (allPreferred.some(p => p.toLowerCase().includes('swim'))) {
+        recommendedActivity = 'Easy swimming session';
+      } else {
+        recommendedActivity = 'Light walking or easy movement';
+      }
+      break;
+      
+    case 'Reduce training volume':
+    case 'Reduce training load':
+      // Suggest scaled version of preferred activity
+      if (allPreferred.length > 0) {
+        const safeActivity = findSafeActivities(areasToAvoid, allPreferred)[0];
+        if (safeActivity) {
+          recommendedActivity = `Reduced ${safeActivity.toLowerCase()} session`;
+        }
+      }
+      break;
+      
+    case 'Offload affected area':
+      // Find activities that don't load affected areas
+      const safeOptions = findSafeActivities(areasToAvoid, allPreferred);
+      if (safeOptions.length > 0) {
+        recommendedActivity = safeOptions[0];
+      } else {
+        // Fallback to very safe options
+        const safeFallbacks = findSafeActivities(areasToAvoid, ['walking', 'swimming', 'cycling', 'yoga']);
+        recommendedActivity = safeFallbacks[0] || 'Upper body work only' ;
+      }
+      break;
+      
+    default:
+      if (allPreferred.length > 0) {
+        const safeDefault = findSafeActivities(areasToAvoid, allPreferred);
+        recommendedActivity = safeDefault[0] || allPreferred[0];
+      }
+  }
+  
+  return { 
+    recommendedActivity: recommendedActivity || 'Gentle movement of your choice',
+    avoidActivities: [...new Set(avoidActivities)]
+  };
+}
+
 /**
  * Decision Engine: Map risk drivers to corrective actions
  * Rules:
@@ -432,11 +599,18 @@ export function generateRiskExplanation(
  * - Fatigue high → Active recovery
  * - Sleep low → Low intensity session
  * - Symptom logged → Offload affected area
+ * 
+ * Personalization:
+ * - Match with preferred activities
+ * - Avoid injury-affected modalities
+ * - Consider equipment access
  */
 export function generateCorrectiveAction(
   primary: RiskDriver | null,
   secondary: RiskDriver | null,
-  riskLevel: 'low' | 'moderate' | 'high'
+  riskLevel: 'low' | 'moderate' | 'high',
+  userProfile?: UserProfile,
+  symptoms?: Array<{ type: string; severity: string }>
 ): CorrectiveAction {
   // Default action when no significant risk
   if (!primary || riskLevel === 'low') {
@@ -539,6 +713,30 @@ export function generateCorrectiveAction(
         ...action,
         instruction: action.instruction + hint
       };
+    }
+  }
+
+  // Apply personalization if user profile is available
+  if (userProfile && (userProfile.preferredActivities?.length || userProfile.interests?.length || userProfile.injuries?.length)) {
+    const { recommendedActivity, avoidActivities } = matchActivityToPreferences(
+      action.strategy,
+      userProfile,
+      symptoms
+    );
+    
+    action = {
+      ...action,
+      recommendedActivity,
+      avoidActivities
+    };
+    
+    // Enhance instruction with personalized recommendation
+    if (recommendedActivity) {
+      action.instruction = action.instruction + ` Based on your preferences, try: ${recommendedActivity}.`;
+    }
+    
+    if (avoidActivities.length > 0) {
+      action.instruction = action.instruction + ` Avoid: ${avoidActivities.slice(0, 3).join(', ')}.`;
     }
   }
 

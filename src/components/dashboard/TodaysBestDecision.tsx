@@ -160,18 +160,41 @@ function RiskDriverInsight({ riskDrivers }: RiskDriverInsightProps) {
           <p className="text-sm font-medium">{correctiveAction.strategy}</p>
           <p className="text-xs opacity-90">{correctiveAction.instruction}</p>
           
-          {(correctiveAction.volumeAdjustment || correctiveAction.focusArea) && (
-            <div className="flex flex-wrap gap-2 pt-1">
-              {correctiveAction.volumeAdjustment && (
-                <span className="text-[10px] bg-current/10 px-1.5 py-0.5 rounded">
-                  📉 {correctiveAction.volumeAdjustment}
+          <div className="flex flex-wrap gap-2 pt-1">
+            {correctiveAction.volumeAdjustment && (
+              <span className="text-[10px] bg-current/10 px-1.5 py-0.5 rounded">
+                📉 {correctiveAction.volumeAdjustment}
+              </span>
+            )}
+            {correctiveAction.focusArea && (
+              <span className="text-[10px] bg-current/10 px-1.5 py-0.5 rounded">
+                🎯 {correctiveAction.focusArea}
+              </span>
+            )}
+          </div>
+          
+          {/* Personalized Recommendation */}
+          {correctiveAction.recommendedActivity && (
+            <div className="mt-2 p-2 rounded-md bg-current/5 border border-current/10">
+              <div className="flex items-center gap-1.5">
+                <span className="text-xs font-medium">💡 Recommended for you:</span>
+              </div>
+              <p className="text-sm font-medium mt-0.5">{correctiveAction.recommendedActivity}</p>
+            </div>
+          )}
+          
+          {/* Activities to Avoid */}
+          {correctiveAction.avoidActivities && correctiveAction.avoidActivities.length > 0 && (
+            <div className="flex flex-wrap items-center gap-1.5 pt-1">
+              <span className="text-[10px] opacity-70">Avoid:</span>
+              {correctiveAction.avoidActivities.slice(0, 3).map((activity, idx) => (
+                <span 
+                  key={idx} 
+                  className="text-[10px] bg-destructive/10 text-destructive px-1.5 py-0.5 rounded"
+                >
+                  {activity}
                 </span>
-              )}
-              {correctiveAction.focusArea && (
-                <span className="text-[10px] bg-current/10 px-1.5 py-0.5 rounded">
-                  🎯 {correctiveAction.focusArea}
-                </span>
-              )}
+              ))}
             </div>
           )}
         </div>

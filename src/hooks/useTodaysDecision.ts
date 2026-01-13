@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { identifyRiskDrivers, RiskDriverResult, RiskMetrics } from "@/lib/riskDrivers";
+import { identifyRiskDrivers, RiskDriverResult, RiskMetrics, UserProfile, generateCorrectiveAction } from "@/lib/riskDrivers";
 
 export interface DecisionOption {
   label: string;
@@ -34,7 +34,7 @@ export function useTodaysDecision() {
         sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
         const sevenDaysAgoStr = sevenDaysAgo.toISOString().split("T")[0];
 
-        // Fetch all required data in parallel
+        // Fetch all required data in parallel (including user profile for personalization)
         const [
           sessionsResult, 
           profileResult, 
@@ -43,7 +43,10 @@ export function useTodaysDecision() {
           trainingTrendsResult,
           recoveryTrendsResult,
           userBaselinesResult,
-          symptomCheckInsResult
+          symptomCheckInsResult,
+          userTrainingResult,
+          userInterestsResult,
+          userInjuriesResult
         ] = await Promise.all([
           supabase
             .from("wearable_sessions")
@@ -89,7 +92,22 @@ export function useTodaysDecision() {
             .select("*")
             .eq("user_id", user.id)
             .order("created_at", { ascending: false })
-            .limit(10)
+            .limit(10),
+          supabase
+            .from("user_training")
+            .select("preferred_activities, training_frequency, intensity_preference")
+            .eq("user_id", user.id)
+            .maybeSingle(),
+          supabase
+            .from("user_interests")
+            .select("interests, hobbies")
+            .eq("user_id", user.id)
+            .maybeSingle(),
+          supabase
+            .from("user_injuries")
+            .select("injuries, injury_details")
+            .eq("user_id", user.id)
+            .maybeSingle()
         ]);
 
         const sessions = sessionsResult.data || [];
@@ -100,6 +118,19 @@ export function useTodaysDecision() {
         const recoveryTrends = recoveryTrendsResult.data || [];
         const userBaselines = userBaselinesResult.data || [];
         const symptomCheckIns = symptomCheckInsResult.data || [];
+        const userTraining = userTrainingResult.data;
+        const userInterests = userInterestsResult.data;
+        const userInjuries = userInjuriesResult.data;
+
+        // Build user profile for personalization
+        const userProfileData: UserProfile = {
+          preferredActivities: userTraining?.preferred_activities || [],
+          interests: [...(userInterests?.interests || []), ...(userInterests?.hobbies || [])],
+          injuries: userInjuries?.injuries || [],
+          injuryDetails: userInjuries?.injury_details as Record<string, unknown> | undefined,
+          trainingFrequency: userTraining?.training_frequency || undefined,
+          intensityPreference: userTraining?.intensity_preference || undefined
+        };
 
         // Analyze readiness trends
         const latestSession = sessions[0];
@@ -141,6 +172,23 @@ export function useTodaysDecision() {
 
         // Identify risk drivers
         const riskDrivers = identifyRiskDrivers(riskMetrics);
+        
+        // Apply personalization to corrective action
+        const symptomsForMatching = symptomCheckIns.map(s => ({
+          type: s.symptom_type,
+          severity: s.severity
+        }));
+        
+        const personalizedAction = generateCorrectiveAction(
+          riskDrivers.primary,
+          riskDrivers.secondary,
+          riskDrivers.riskLevel,
+          userProfileData,
+          symptomsForMatching
+        );
+        
+        // Update riskDrivers with personalized action
+        riskDrivers.correctiveAction = personalizedAction;
 
         // Determine decision based on context
         const generatedDecision = generateDecision({
@@ -152,7 +200,8 @@ export function useTodaysDecision() {
           stressLevel,
           sleepQuality,
           activityLevel: profile?.activity_level,
-          riskDrivers
+          riskDrivers,
+          userProfile: userProfileData
         });
 
         setDecision(generatedDecision);
@@ -179,6 +228,7 @@ interface DecisionContext {
   sleepQuality: string | null;
   activityLevel: string | null;
   riskDrivers?: RiskDriverResult;
+  userProfile?: UserProfile;
 }
 
 function generateDecision(context: DecisionContext): TodaysDecision | null {

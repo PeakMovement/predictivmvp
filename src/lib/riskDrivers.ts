@@ -25,6 +25,12 @@ export interface RiskDriver {
   category: 'training_load' | 'recovery' | 'physiological' | 'symptoms';
 }
 
+export interface WhyThisMattersContext {
+  triggerMetric: string; // e.g., "HRV dropped 18% below baseline"
+  injuryRiskReduction: string; // e.g., "Reduces overtraining risk by allowing nervous system recovery"
+  todayBenefit: string; // e.g., "You'll feel more energized tomorrow and protect your adaptation"
+}
+
 export interface StructuredSession {
   title: string;
   duration: string; // e.g., "25-30 minutes"
@@ -51,6 +57,7 @@ export interface StructuredSession {
   };
   safetyNotes: string[];
   sessionGoal: string;
+  whyThisMatters?: WhyThisMattersContext;
 }
 
 export interface CorrectiveAction {
@@ -835,12 +842,89 @@ const EXERCISE_LIBRARY: ExerciseOption[] = [
 /**
  * Generate a structured session based on corrective strategy and user profile
  */
+// Why-this-matters context generators by risk driver type
+const WHY_THIS_MATTERS_TEMPLATES: Record<string, { 
+  triggerTemplate: (value: number | null, threshold: number) => string;
+  riskReduction: string;
+  benefitTemplate: (intensity: string) => string;
+}> = {
+  monotony: {
+    triggerTemplate: (v, t) => `Training monotony is ${v ? 'high' : 'elevated'} (${v?.toFixed(1) || '>'} vs ${t} threshold)`,
+    riskReduction: 'Varying training stimulus prevents overuse injuries and mental burnout. Your body adapts better with variety.',
+    benefitTemplate: (i) => i === 'rest' 
+      ? "Complete rest resets both body and mind for stronger training ahead."
+      : "Fresh movement patterns will activate different muscle groups and reignite motivation."
+  },
+  acwr: {
+    triggerTemplate: (v, t) => `Training load ratio spiked to ${v?.toFixed(2) || 'high'} (threshold: ${t})`,
+    riskReduction: 'High acute:chronic workload ratio is strongly linked to injury. Reducing volume today protects tendons, joints, and muscles.',
+    benefitTemplate: (i) => i === 'rest' 
+      ? "Full rest allows tissues to catch up with recent training demands."
+      : "You'll maintain fitness while giving tissues time to strengthen and adapt."
+  },
+  fatigue: {
+    triggerTemplate: (v) => `Fatigue index is elevated${v ? ` at ${v.toFixed(0)}%` : ''}`,
+    riskReduction: 'Training on accumulated fatigue leads to poor form, reduced power, and higher injury risk. Recovery restores performance capacity.',
+    benefitTemplate: (i) => i === 'light' 
+      ? "Light movement promotes blood flow and recovery without adding stress."
+      : "You'll feel sharper tomorrow and perform better in your next hard session."
+  },
+  strain: {
+    triggerTemplate: (v, t) => `Cumulative strain is ${v && t ? `${((v/t)*100).toFixed(0)}% above safe levels` : 'elevated'}`,
+    riskReduction: 'High strain accumulates micro-damage. Reducing load allows repair and prevents it becoming macro-damage (injury).',
+    benefitTemplate: () => "Lower intensity today means you can train harder and longer in the coming weeks."
+  },
+  sleep: {
+    triggerTemplate: (v) => `Sleep score dropped to ${v || 'low'} (below optimal recovery threshold)`,
+    riskReduction: 'Poor sleep impairs coordination, reaction time, and tissue repair—all injury risk factors. Easy training is safer training.',
+    benefitTemplate: () => "A lighter session today helps you recover faster and sleep better tonight."
+  },
+  hrv: {
+    triggerTemplate: (v, t) => `HRV is ${v && t ? `${Math.abs(((v - t) / t) * 100).toFixed(0)}% below` : 'significantly below'} your baseline`,
+    riskReduction: 'Low HRV signals your nervous system is stressed. Pushing through increases injury risk and delays recovery.',
+    benefitTemplate: (i) => i === 'rest' 
+      ? "Complete rest activates your parasympathetic system, accelerating full recovery."
+      : "Gentle movement helps restore nervous system balance without adding stress."
+  },
+  symptoms: {
+    triggerTemplate: () => 'You reported symptoms that need attention',
+    riskReduction: 'Training through symptoms often worsens the underlying issue. Protecting the area now prevents longer time off later.',
+    benefitTemplate: () => "Alternative movements maintain fitness while the affected area heals properly."
+  }
+};
+
+function generateWhyThisMatters(
+  primaryDriver: RiskDriver | null,
+  intensity: 'rest' | 'light' | 'moderate' | 'normal'
+): WhyThisMattersContext | undefined {
+  if (!primaryDriver) return undefined;
+
+  const template = WHY_THIS_MATTERS_TEMPLATES[primaryDriver.id];
+  if (!template) {
+    // Generic fallback
+    return {
+      triggerMetric: `${primaryDriver.label} is outside optimal range`,
+      injuryRiskReduction: primaryDriver.explanation,
+      todayBenefit: intensity === 'rest' 
+        ? "Rest today sets you up for better training tomorrow."
+        : "This session balances recovery with maintaining your fitness."
+    };
+  }
+
+  return {
+    triggerMetric: template.triggerTemplate(primaryDriver.value, primaryDriver.threshold),
+    injuryRiskReduction: template.riskReduction,
+    todayBenefit: template.benefitTemplate(intensity)
+  };
+}
+
 function generateStructuredSession(
   strategy: string,
   intensity: 'rest' | 'light' | 'moderate' | 'normal',
   userProfile: UserProfile,
   recommendedActivity: string,
-  avoidActivities: string[]
+  avoidActivities: string[],
+  primaryDriver?: RiskDriver | null
 ): StructuredSession {
   // Select appropriate template
   let templateKey: keyof typeof SESSION_TEMPLATES = 'moderate';
@@ -1014,6 +1098,9 @@ function generateStructuredSession(
     : '';
   const title = `${template.titlePrefix} Session${activityName}`;
   
+  // Generate why-this-matters context
+  const whyThisMatters = generateWhyThisMatters(primaryDriver || null, intensity);
+  
   return {
     title,
     duration: template.durationRange,
@@ -1025,7 +1112,8 @@ function generateStructuredSession(
     },
     cooldown: template.cooldown,
     safetyNotes,
-    sessionGoal: template.goalTemplate
+    sessionGoal: template.goalTemplate,
+    whyThisMatters
   };
 }
 
@@ -1162,13 +1250,14 @@ export function generateCorrectiveAction(
       symptoms
     );
     
-    // Generate structured session
+    // Generate structured session with primary driver for "why this matters"
     const session = generateStructuredSession(
       action.strategy,
       action.intensity,
       userProfile,
       recommendedActivity,
-      avoidActivities
+      avoidActivities,
+      primary
     );
     
     action = {
@@ -1193,7 +1282,8 @@ export function generateCorrectiveAction(
       action.intensity,
       userProfile || {},
       '',
-      []
+      [],
+      primary
     );
     action = { ...action, session };
   }

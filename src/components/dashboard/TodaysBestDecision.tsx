@@ -4,7 +4,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { ChevronDown, Compass, CheckCircle2, Circle, Info, AlertTriangle, ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTodaysDecision, DecisionOption } from "@/hooks/useTodaysDecision";
-import { RiskDriverResult } from "@/lib/riskDrivers";
+import { RiskDriverResult, CorrectiveAction } from "@/lib/riskDrivers";
 
 interface TodaysBestDecisionProps {
   className?: string;
@@ -75,7 +75,7 @@ interface RiskDriverInsightProps {
 }
 
 function RiskDriverInsight({ riskDrivers }: RiskDriverInsightProps) {
-  const { primary, secondary, explanation, riskLevel } = riskDrivers;
+  const { primary, secondary, explanation, riskLevel, correctiveAction } = riskDrivers;
 
   if (!primary) return null;
 
@@ -97,32 +97,83 @@ function RiskDriverInsight({ riskDrivers }: RiskDriverInsightProps) {
     return <Info className="h-3.5 w-3.5" />;
   };
 
+  const getIntensityBadge = (intensity: CorrectiveAction['intensity']) => {
+    const styles: Record<string, string> = {
+      rest: 'bg-destructive/20 text-destructive',
+      light: 'bg-warning/20 text-warning',
+      moderate: 'bg-primary/20 text-primary',
+      normal: 'bg-muted text-muted-foreground'
+    };
+    const labels: Record<string, string> = {
+      rest: 'Rest day',
+      light: 'Light intensity',
+      moderate: 'Moderate',
+      normal: 'Normal'
+    };
+    return (
+      <span className={cn("text-[10px] uppercase tracking-wide font-medium px-1.5 py-0.5 rounded", styles[intensity])}>
+        {labels[intensity]}
+      </span>
+    );
+  };
+
   return (
     <div className={cn(
-      "rounded-lg border p-3 space-y-2",
+      "rounded-lg border p-3 space-y-3",
       getRiskLevelStyles(riskLevel)
     )}>
-      <div className="flex items-center gap-2">
-        {getRiskLevelIcon(riskLevel)}
-        <span className="text-xs font-medium uppercase tracking-wide">Why this matters</span>
-      </div>
-      
-      <div className="space-y-1.5">
-        <div className="flex items-center gap-2 text-sm">
-          <span className="font-medium">Primary:</span>
-          <span>{primary.label}</span>
+      {/* Risk Drivers Section */}
+      <div className="space-y-2">
+        <div className="flex items-center gap-2">
+          {getRiskLevelIcon(riskLevel)}
+          <span className="text-xs font-medium uppercase tracking-wide">Why this matters</span>
         </div>
         
-        {secondary && (
-          <div className="flex items-center gap-2 text-sm opacity-80">
-            <span className="font-medium">Secondary:</span>
-            <span>{secondary.label}</span>
+        <div className="space-y-1">
+          <div className="flex items-center gap-2 text-sm">
+            <span className="font-medium">Primary:</span>
+            <span>{primary.label}</span>
           </div>
-        )}
+          
+          {secondary && (
+            <div className="flex items-center gap-2 text-sm opacity-80">
+              <span className="font-medium">Secondary:</span>
+              <span>{secondary.label}</span>
+            </div>
+          )}
+          
+          <div className="flex items-start gap-1.5 text-xs opacity-90 pt-0.5">
+            <ArrowRight className="h-3 w-3 mt-0.5 shrink-0" />
+            <span>{explanation}</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Corrective Strategy Section */}
+      <div className="border-t border-current/20 pt-3 space-y-2">
+        <div className="flex items-center justify-between">
+          <span className="text-xs font-medium uppercase tracking-wide">Corrective Strategy</span>
+          {getIntensityBadge(correctiveAction.intensity)}
+        </div>
         
-        <div className="flex items-start gap-1.5 text-xs opacity-90 pt-1">
-          <ArrowRight className="h-3 w-3 mt-0.5 shrink-0" />
-          <span>{explanation}</span>
+        <div className="space-y-1.5">
+          <p className="text-sm font-medium">{correctiveAction.strategy}</p>
+          <p className="text-xs opacity-90">{correctiveAction.instruction}</p>
+          
+          {(correctiveAction.volumeAdjustment || correctiveAction.focusArea) && (
+            <div className="flex flex-wrap gap-2 pt-1">
+              {correctiveAction.volumeAdjustment && (
+                <span className="text-[10px] bg-current/10 px-1.5 py-0.5 rounded">
+                  📉 {correctiveAction.volumeAdjustment}
+                </span>
+              )}
+              {correctiveAction.focusArea && (
+                <span className="text-[10px] bg-current/10 px-1.5 py-0.5 rounded">
+                  🎯 {correctiveAction.focusArea}
+                </span>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </div>

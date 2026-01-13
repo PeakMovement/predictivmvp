@@ -26,12 +26,21 @@ interface RiskDriver {
   category: 'training_load' | 'recovery' | 'physiological' | 'symptoms';
 }
 
+interface CorrectiveAction {
+  strategy: string;
+  instruction: string;
+  intensity: 'rest' | 'light' | 'moderate' | 'normal';
+  volumeAdjustment?: string;
+  focusArea?: string;
+}
+
 interface RiskDriverResult {
   primary: RiskDriver | null;
   secondary: RiskDriver | null;
   explanation: string;
   riskLevel: 'low' | 'moderate' | 'high';
   allDrivers: RiskDriver[];
+  correctiveAction: CorrectiveAction;
 }
 
 // Thresholds for each risk factor
@@ -252,7 +261,86 @@ function identifyRiskDrivers(metrics: RiskMetrics): RiskDriverResult {
     }
   }
 
-  return { primary, secondary, explanation, riskLevel, allDrivers };
+  const correctiveAction = generateCorrectiveAction(primary, secondary, riskLevel);
+
+  return { primary, secondary, explanation, riskLevel, allDrivers, correctiveAction };
+}
+
+function generateCorrectiveAction(
+  primary: RiskDriver | null,
+  secondary: RiskDriver | null,
+  riskLevel: 'low' | 'moderate' | 'high'
+): CorrectiveAction {
+  if (!primary || riskLevel === 'low') {
+    return {
+      strategy: "Continue as planned",
+      instruction: "Your metrics support your current training approach. Proceed with today's planned session.",
+      intensity: 'normal'
+    };
+  }
+
+  const actionRules: Record<string, CorrectiveAction> = {
+    monotony: {
+      strategy: "Change training modality",
+      instruction: "Switch to a different activity type today. If you normally run, try cycling or swimming.",
+      intensity: 'moderate',
+      focusArea: "Cross-training or alternative movement patterns"
+    },
+    acwr: {
+      strategy: "Reduce training volume",
+      instruction: "Cut today's planned volume by 20-40%. Shorten your session or reduce sets/reps.",
+      intensity: 'moderate',
+      volumeAdjustment: "Reduce 20-40%",
+      focusArea: "Technique and quality over quantity"
+    },
+    fatigue: {
+      strategy: "Active recovery session",
+      instruction: "Replace your planned workout with gentle movement: walking, stretching, or yoga.",
+      intensity: 'light',
+      focusArea: "Mobility and nervous system restoration"
+    },
+    strain: {
+      strategy: "Reduce training load",
+      instruction: "Lower both intensity and volume today. Focus on movement quality.",
+      intensity: 'light',
+      volumeAdjustment: "Reduce 30-50%",
+      focusArea: "Deload and recovery"
+    },
+    sleep: {
+      strategy: "Low intensity session",
+      instruction: "Keep today's session short and easy. Avoid high-intensity efforts.",
+      intensity: 'light',
+      focusArea: "Gentle movement and early finish"
+    },
+    hrv: {
+      strategy: "Prioritize recovery",
+      instruction: "Choose restorative activities: gentle yoga, meditation, or light walking.",
+      intensity: 'light',
+      focusArea: "Parasympathetic activation"
+    },
+    symptoms: {
+      strategy: "Offload affected area",
+      instruction: "Avoid loading the symptomatic area. Choose alternative movements.",
+      intensity: 'moderate',
+      focusArea: "Alternative movement patterns, protect affected area"
+    }
+  };
+
+  let action = actionRules[primary.id] || {
+    strategy: "Modify training approach",
+    instruction: "Adjust today's session based on your body's signals.",
+    intensity: 'moderate' as const
+  };
+
+  if (riskLevel === 'high') {
+    if (action.intensity === 'moderate') {
+      action = { ...action, intensity: 'light', instruction: action.instruction + " Given elevated risk, err on the side of less today." };
+    } else if (action.intensity === 'light') {
+      action = { ...action, intensity: 'rest', instruction: "Consider taking today as a complete rest day." };
+    }
+  }
+
+  return action;
 }
 
 function generateRiskExplanation(primary: RiskDriver | null, secondary: RiskDriver | null): string {

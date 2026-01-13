@@ -25,12 +25,21 @@ export interface RiskDriver {
   category: 'training_load' | 'recovery' | 'physiological' | 'symptoms';
 }
 
+export interface CorrectiveAction {
+  strategy: string;
+  instruction: string;
+  intensity: 'rest' | 'light' | 'moderate' | 'normal';
+  volumeAdjustment?: string; // e.g., "Reduce 20-40%"
+  focusArea?: string; // e.g., "mobility", "technique", "cardio"
+}
+
 export interface RiskDriverResult {
   primary: RiskDriver | null;
   secondary: RiskDriver | null;
   explanation: string;
   riskLevel: 'low' | 'moderate' | 'high';
   allDrivers: RiskDriver[];
+  correctiveAction: CorrectiveAction;
 }
 
 // Thresholds for each risk factor
@@ -314,12 +323,16 @@ export function identifyRiskDrivers(metrics: RiskMetrics): RiskDriverResult {
     }
   }
 
+  // Generate corrective action based on risk drivers
+  const correctiveAction = generateCorrectiveAction(primary, secondary, riskLevel);
+
   return {
     primary,
     secondary,
     explanation,
     riskLevel,
-    allDrivers
+    allDrivers,
+    correctiveAction
   };
 }
 
@@ -409,4 +422,125 @@ export function generateRiskExplanation(
     `${primary.label} identified as primary concern`;
 
   return explanation;
+}
+
+/**
+ * Decision Engine: Map risk drivers to corrective actions
+ * Rules:
+ * - Monotony high → Change training modality
+ * - ACWR high → Reduce volume 20-40%
+ * - Fatigue high → Active recovery
+ * - Sleep low → Low intensity session
+ * - Symptom logged → Offload affected area
+ */
+export function generateCorrectiveAction(
+  primary: RiskDriver | null,
+  secondary: RiskDriver | null,
+  riskLevel: 'low' | 'moderate' | 'high'
+): CorrectiveAction {
+  // Default action when no significant risk
+  if (!primary || riskLevel === 'low') {
+    return {
+      strategy: "Continue as planned",
+      instruction: "Your metrics support your current training approach. Proceed with today's planned session.",
+      intensity: 'normal',
+      focusArea: undefined
+    };
+  }
+
+  // Corrective action rules based on primary driver
+  const actionRules: Record<string, CorrectiveAction> = {
+    monotony: {
+      strategy: "Change training modality",
+      instruction: "Switch to a different activity type today. If you normally run, try cycling or swimming. If you lift weights, try bodyweight or mobility work.",
+      intensity: 'moderate',
+      focusArea: "Cross-training or alternative movement patterns"
+    },
+    acwr: {
+      strategy: "Reduce training volume",
+      instruction: "Cut today's planned volume by 20-40%. Shorten your session or reduce sets/reps while maintaining movement quality.",
+      intensity: 'moderate',
+      volumeAdjustment: "Reduce 20-40%",
+      focusArea: "Technique and quality over quantity"
+    },
+    fatigue: {
+      strategy: "Active recovery session",
+      instruction: "Replace your planned workout with gentle movement: walking, light stretching, yoga, or easy swimming. Keep heart rate low.",
+      intensity: 'light',
+      focusArea: "Mobility, blood flow, and nervous system restoration"
+    },
+    strain: {
+      strategy: "Reduce training load",
+      instruction: "Lower both intensity and volume today. Focus on movement quality with reduced resistance or pace.",
+      intensity: 'light',
+      volumeAdjustment: "Reduce 30-50%",
+      focusArea: "Deload and recovery"
+    },
+    sleep: {
+      strategy: "Low intensity session",
+      instruction: "Keep today's session short and easy. Your body is recovering from sleep debt—avoid high-intensity or long-duration efforts.",
+      intensity: 'light',
+      focusArea: "Gentle movement and early finish"
+    },
+    hrv: {
+      strategy: "Prioritize recovery",
+      instruction: "Your nervous system needs recovery. Choose restorative activities: gentle yoga, meditation, light walking, or complete rest.",
+      intensity: 'light',
+      focusArea: "Parasympathetic activation and stress reduction"
+    },
+    symptoms: {
+      strategy: "Offload affected area",
+      instruction: "Avoid loading the symptomatic area. Choose alternative movements that don't stress the affected region while maintaining activity.",
+      intensity: 'moderate',
+      focusArea: "Alternative movement patterns, protect affected area"
+    }
+  };
+
+  // Get primary action
+  let action = actionRules[primary.id] || {
+    strategy: "Modify training approach",
+    instruction: "Adjust today's session based on your body's signals. Consider reducing intensity or duration.",
+    intensity: 'moderate' as const,
+    focusArea: "Listen to your body"
+  };
+
+  // Intensify action if risk is high or multiple drivers present
+  if (riskLevel === 'high') {
+    if (action.intensity === 'moderate') {
+      action = {
+        ...action,
+        intensity: 'light',
+        instruction: action.instruction + " Given elevated risk, err on the side of less today."
+      };
+    } else if (action.intensity === 'light') {
+      action = {
+        ...action,
+        intensity: 'rest',
+        instruction: "Consider taking today as a complete rest day. Your body is signaling a strong need for recovery."
+      };
+    }
+  }
+
+  // Combine with secondary driver if present
+  if (secondary) {
+    const secondaryHints: Record<string, string> = {
+      monotony: " Also consider varying your training type.",
+      acwr: " Keep volume conservative.",
+      fatigue: " Prioritize feeling fresh over completing work.",
+      strain: " Reduce overall load.",
+      sleep: " Keep it short and finish early for better rest tonight.",
+      hrv: " Focus on stress-reducing activities.",
+      symptoms: " Be mindful of any symptomatic areas."
+    };
+    
+    const hint = secondaryHints[secondary.id];
+    if (hint && !action.instruction.toLowerCase().includes(secondary.id)) {
+      action = {
+        ...action,
+        instruction: action.instruction + hint
+      };
+    }
+  }
+
+  return action;
 }

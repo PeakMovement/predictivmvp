@@ -95,7 +95,7 @@ export function useTodaysDecision() {
             .limit(10),
           supabase
             .from("user_training")
-            .select("preferred_activities, training_frequency, intensity_preference")
+            .select("preferred_activities, training_frequency, intensity_preference, equipment_access")
             .eq("user_id", user.id)
             .maybeSingle(),
           supabase
@@ -128,6 +128,7 @@ export function useTodaysDecision() {
           interests: [...(userInterests?.interests || []), ...(userInterests?.hobbies || [])],
           injuries: userInjuries?.injuries || [],
           injuryDetails: userInjuries?.injury_details as Record<string, unknown> | undefined,
+          equipmentAccess: userTraining?.equipment_access || [],
           trainingFrequency: userTraining?.training_frequency || undefined,
           intensityPreference: userTraining?.intensity_preference || undefined
         };

@@ -2029,6 +2029,7 @@ export type Database = {
       user_training: {
         Row: {
           created_at: string | null
+          equipment_access: string[] | null
           id: string
           intensity_preference: string | null
           preferred_activities: string[] | null
@@ -2038,6 +2039,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string | null
+          equipment_access?: string[] | null
           id?: string
           intensity_preference?: string | null
           preferred_activities?: string[] | null
@@ -2047,6 +2049,7 @@ export type Database = {
         }
         Update: {
           created_at?: string | null
+          equipment_access?: string[] | null
           id?: string
           intensity_preference?: string | null
           preferred_activities?: string[] | null

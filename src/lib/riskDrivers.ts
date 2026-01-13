@@ -25,6 +25,34 @@ export interface RiskDriver {
   category: 'training_load' | 'recovery' | 'physiological' | 'symptoms';
 }
 
+export interface StructuredSession {
+  title: string;
+  duration: string; // e.g., "25-30 minutes"
+  intensity: {
+    level: string; // e.g., "Low", "Moderate", "High"
+    hrZone?: string; // e.g., "Zone 1-2 (50-65% max HR)"
+    rpe: string; // e.g., "RPE 3-4/10"
+  };
+  warmup?: {
+    duration: string;
+    activities: string[];
+  };
+  mainBlock: {
+    format: string; // e.g., "Continuous", "Intervals", "Circuit"
+    exercises: Array<{
+      name: string;
+      prescription: string; // e.g., "3x10 reps", "20 minutes", "5x30s on/30s off"
+      notes?: string;
+    }>;
+  };
+  cooldown?: {
+    duration: string;
+    activities: string[];
+  };
+  safetyNotes: string[];
+  sessionGoal: string;
+}
+
 export interface CorrectiveAction {
   strategy: string;
   instruction: string;
@@ -33,6 +61,7 @@ export interface CorrectiveAction {
   focusArea?: string; // e.g., "mobility", "technique", "cardio"
   recommendedActivity?: string; // Personalized activity recommendation
   avoidActivities?: string[]; // Activities to avoid based on injuries
+  session?: StructuredSession; // The detailed session plan
 }
 
 export interface UserProfile {
@@ -651,6 +680,356 @@ function matchActivityToPreferences(
 }
 
 /**
+ * Session Templates: Pre-built session structures for different corrective strategies
+ */
+interface SessionTemplate {
+  titlePrefix: string;
+  durationRange: string;
+  intensity: StructuredSession['intensity'];
+  warmup: StructuredSession['warmup'];
+  cooldown: StructuredSession['cooldown'];
+  goalTemplate: string;
+}
+
+const SESSION_TEMPLATES: Record<string, SessionTemplate> = {
+  recovery: {
+    titlePrefix: 'Active Recovery',
+    durationRange: '20-30 minutes',
+    intensity: {
+      level: 'Low',
+      hrZone: 'Zone 1 (50-60% max HR)',
+      rpe: 'RPE 2-3/10'
+    },
+    warmup: {
+      duration: '3-5 minutes',
+      activities: ['Light walking', 'Gentle joint circles']
+    },
+    cooldown: {
+      duration: '5 minutes',
+      activities: ['Deep breathing', 'Static stretching']
+    },
+    goalTemplate: 'Promote blood flow and recovery without adding training stress'
+  },
+  light: {
+    titlePrefix: 'Low Intensity',
+    durationRange: '25-35 minutes',
+    intensity: {
+      level: 'Low-Moderate',
+      hrZone: 'Zone 1-2 (55-65% max HR)',
+      rpe: 'RPE 3-4/10'
+    },
+    warmup: {
+      duration: '5 minutes',
+      activities: ['Easy movement', 'Dynamic mobility']
+    },
+    cooldown: {
+      duration: '5-7 minutes',
+      activities: ['Walking cool-down', 'Light stretching']
+    },
+    goalTemplate: 'Maintain movement habit while supporting recovery'
+  },
+  moderate: {
+    titlePrefix: 'Modified Training',
+    durationRange: '30-45 minutes',
+    intensity: {
+      level: 'Moderate',
+      hrZone: 'Zone 2-3 (65-75% max HR)',
+      rpe: 'RPE 4-6/10'
+    },
+    warmup: {
+      duration: '5-8 minutes',
+      activities: ['Progressive warm-up', 'Movement preparation']
+    },
+    cooldown: {
+      duration: '5-8 minutes',
+      activities: ['Gradual cool-down', 'Mobility work', 'Stretching']
+    },
+    goalTemplate: 'Quality training at reduced intensity to support adaptation'
+  },
+  crossTrain: {
+    titlePrefix: 'Cross-Training',
+    durationRange: '30-40 minutes',
+    intensity: {
+      level: 'Moderate',
+      hrZone: 'Zone 2 (60-70% max HR)',
+      rpe: 'RPE 4-5/10'
+    },
+    warmup: {
+      duration: '5-7 minutes',
+      activities: ['Activity-specific warm-up', 'Mobility drills']
+    },
+    cooldown: {
+      duration: '5-7 minutes',
+      activities: ['Easy movement', 'Stretching new muscle groups']
+    },
+    goalTemplate: 'Vary training stimulus while maintaining fitness'
+  },
+  rest: {
+    titlePrefix: 'Rest Day',
+    durationRange: '10-15 minutes (optional)',
+    intensity: {
+      level: 'Very Low',
+      hrZone: 'Zone 1 (<55% max HR)',
+      rpe: 'RPE 1-2/10'
+    },
+    warmup: undefined,
+    cooldown: {
+      duration: '5-10 minutes',
+      activities: ['Deep breathing', 'Meditation', 'Gentle stretching']
+    },
+    goalTemplate: 'Complete rest to allow full recovery and adaptation'
+  }
+};
+
+/**
+ * Exercise libraries for different session types
+ */
+interface ExerciseOption {
+  name: string;
+  prescription: string;
+  notes?: string;
+  category: string;
+  equipment?: string[];
+  avoidFor?: string[]; // body areas - skip if injured
+}
+
+const EXERCISE_LIBRARY: ExerciseOption[] = [
+  // Recovery exercises
+  { name: 'Walking', prescription: '10-15 minutes easy pace', category: 'recovery', avoidFor: ['ankle', 'foot', 'knee'] },
+  { name: 'Gentle yoga flow', prescription: '15-20 minutes', category: 'recovery', equipment: ['mat'] },
+  { name: 'Foam rolling', prescription: '5-8 minutes, 30s per area', category: 'recovery', equipment: ['foam roller'] },
+  { name: 'Breathing exercises', prescription: '5 minutes box breathing (4-4-4-4)', category: 'recovery' },
+  { name: 'Cat-cow stretches', prescription: '10 reps slow and controlled', category: 'recovery' },
+  { name: 'Supine spinal twist', prescription: '30s each side', category: 'recovery', avoidFor: ['lower back'] },
+  
+  // Low intensity cardio
+  { name: 'Easy cycling', prescription: '15-20 minutes steady state', category: 'light_cardio', equipment: ['bike', 'spin bike'], avoidFor: ['knee', 'hip'] },
+  { name: 'Swimming', prescription: '15-20 minutes easy laps', category: 'light_cardio', equipment: ['pool'] },
+  { name: 'Elliptical', prescription: '15-20 minutes low resistance', category: 'light_cardio', equipment: ['elliptical', 'gym'], avoidFor: ['knee'] },
+  { name: 'Rowing', prescription: '10-15 minutes easy pace', category: 'light_cardio', equipment: ['rowing machine', 'gym'], avoidFor: ['lower back', 'shoulder'] },
+  { name: 'Incline walking', prescription: '15-20 minutes, 2-4% incline', category: 'light_cardio', equipment: ['treadmill', 'gym'], avoidFor: ['ankle', 'foot'] },
+  
+  // Mobility work
+  { name: 'Hip circles', prescription: '10 each direction', category: 'mobility', avoidFor: ['hip'] },
+  { name: 'Arm circles', prescription: '10 each direction, each arm', category: 'mobility', avoidFor: ['shoulder'] },
+  { name: 'Thoracic rotations', prescription: '10 each side', category: 'mobility', avoidFor: ['back'] },
+  { name: 'Ankle mobility circles', prescription: '10 each direction, each ankle', category: 'mobility', avoidFor: ['ankle'] },
+  { name: 'World\'s greatest stretch', prescription: '5 each side', category: 'mobility' },
+  { name: 'Deep squat hold', prescription: '30-60s accumulated', category: 'mobility', avoidFor: ['knee', 'hip', 'ankle'] },
+  
+  // Light strength
+  { name: 'Bodyweight squats', prescription: '2x10 controlled tempo', category: 'light_strength', avoidFor: ['knee', 'hip', 'ankle'] },
+  { name: 'Push-ups (or wall push-ups)', prescription: '2x8-10', category: 'light_strength', avoidFor: ['shoulder', 'wrist', 'elbow'] },
+  { name: 'Glute bridges', prescription: '2x12', category: 'light_strength', avoidFor: ['lower back', 'hip'] },
+  { name: 'Bird dogs', prescription: '2x8 each side', category: 'light_strength' },
+  { name: 'Dead hangs', prescription: '3x15-30s', category: 'light_strength', equipment: ['pull-up bar'], avoidFor: ['shoulder', 'wrist'] },
+  { name: 'Band pull-aparts', prescription: '2x15', category: 'light_strength', equipment: ['resistance bands'], avoidFor: ['shoulder'] },
+  
+  // Cross-training
+  { name: 'Stationary bike intervals', prescription: '5x1min easy/30s moderate', category: 'cross_train', equipment: ['bike', 'spin bike'], avoidFor: ['knee'] },
+  { name: 'Pool running', prescription: '15-20 minutes', category: 'cross_train', equipment: ['pool'] },
+  { name: 'Battle rope waves', prescription: '3x20s', category: 'cross_train', equipment: ['battle ropes', 'gym'], avoidFor: ['shoulder', 'wrist'] },
+  { name: 'Medicine ball throws', prescription: '2x10 each type', category: 'cross_train', equipment: ['medicine ball', 'gym'], avoidFor: ['shoulder', 'back'] },
+];
+
+/**
+ * Generate a structured session based on corrective strategy and user profile
+ */
+function generateStructuredSession(
+  strategy: string,
+  intensity: 'rest' | 'light' | 'moderate' | 'normal',
+  userProfile: UserProfile,
+  recommendedActivity: string,
+  avoidActivities: string[]
+): StructuredSession {
+  // Select appropriate template
+  let templateKey: keyof typeof SESSION_TEMPLATES = 'moderate';
+  
+  if (intensity === 'rest') {
+    templateKey = 'rest';
+  } else if (intensity === 'light') {
+    if (strategy.includes('recovery') || strategy.includes('Recovery')) {
+      templateKey = 'recovery';
+    } else {
+      templateKey = 'light';
+    }
+  } else if (strategy.includes('modality') || strategy.includes('Change')) {
+    templateKey = 'crossTrain';
+  }
+  
+  const template = SESSION_TEMPLATES[templateKey];
+  const injuries = userProfile.injuries?.map(i => i.toLowerCase()) || [];
+  const equipment = userProfile.equipmentAccess || [];
+  
+  // Filter exercises by safety and equipment
+  const filterExercises = (categories: string[]): ExerciseOption[] => {
+    return EXERCISE_LIBRARY.filter(ex => {
+      // Must be in requested category
+      if (!categories.includes(ex.category)) return false;
+      
+      // Check injury safety
+      if (ex.avoidFor && injuries.length > 0) {
+        if (ex.avoidFor.some(area => injuries.some(inj => inj.includes(area) || area.includes(inj)))) {
+          return false;
+        }
+      }
+      
+      // Check equipment availability
+      if (ex.equipment && ex.equipment.length > 0 && equipment.length > 0) {
+        const userEquipment = equipment.map(e => e.toLowerCase());
+        if (!ex.equipment.some(req => userEquipment.some(ue => ue.includes(req) || req.includes(ue)))) {
+          return false;
+        }
+      }
+      
+      return true;
+    });
+  };
+  
+  // Build session based on template type
+  let exercises: StructuredSession['mainBlock']['exercises'] = [];
+  let format = 'Continuous';
+  let safetyNotes: string[] = [];
+  
+  switch (templateKey) {
+    case 'rest':
+      format = 'Optional gentle movement only';
+      exercises = [
+        { name: 'Complete rest', prescription: 'Full day off', notes: 'Only move if it feels restorative' },
+        { name: 'OR: Gentle walk', prescription: '10-15 minutes if desired', notes: 'Keep effort very low' }
+      ];
+      safetyNotes = [
+        'Rest is productive training',
+        'Avoid the temptation to "do something"',
+        'Focus on sleep, nutrition, and stress management'
+      ];
+      break;
+      
+    case 'recovery':
+      format = 'Circuit - move through exercises smoothly';
+      const recoveryExercises = filterExercises(['recovery', 'mobility']);
+      exercises = recoveryExercises.slice(0, 4).map(ex => ({
+        name: ex.name,
+        prescription: ex.prescription,
+        notes: ex.notes
+      }));
+      if (exercises.length < 3) {
+        exercises.push({ name: 'Walking', prescription: '10 minutes easy pace' });
+        exercises.push({ name: 'Deep breathing', prescription: '5 minutes' });
+      }
+      safetyNotes = [
+        'Movement should feel restorative, not taxing',
+        'If anything causes discomfort, skip it',
+        'Focus on breathing and relaxation'
+      ];
+      break;
+      
+    case 'light':
+      format = 'Steady state or easy circuit';
+      const lightCardio = filterExercises(['light_cardio', 'recovery']);
+      const mobilityWork = filterExercises(['mobility']);
+      
+      if (lightCardio.length > 0) {
+        exercises.push({
+          name: lightCardio[0].name,
+          prescription: lightCardio[0].prescription,
+          notes: 'Main activity - keep effort conversational'
+        });
+      }
+      mobilityWork.slice(0, 2).forEach(ex => {
+        exercises.push({ name: ex.name, prescription: ex.prescription });
+      });
+      
+      safetyNotes = [
+        'Should be able to hold a conversation throughout',
+        'End feeling better than you started',
+        'Cut short if fatigue increases'
+      ];
+      break;
+      
+    case 'crossTrain':
+      format = 'Varied movement session';
+      const crossExercises = filterExercises(['cross_train', 'light_cardio', 'light_strength']);
+      
+      // Primary activity based on recommendation
+      if (recommendedActivity && recommendedActivity !== 'Gentle movement of your choice') {
+        exercises.push({
+          name: recommendedActivity,
+          prescription: '15-20 minutes',
+          notes: 'Primary cross-training activity'
+        });
+      }
+      
+      // Add supporting exercises
+      crossExercises.slice(0, 3).forEach(ex => {
+        if (!exercises.some(e => e.name === ex.name)) {
+          exercises.push({ name: ex.name, prescription: ex.prescription });
+        }
+      });
+      
+      safetyNotes = [
+        'New movement patterns may feel awkward - take time to learn',
+        'Keep intensity moderate as body adapts',
+        'Focus on movement quality over performance'
+      ];
+      break;
+      
+    default: // moderate
+      format = 'Structured training (reduced load)';
+      const strengthExercises = filterExercises(['light_strength']);
+      const cardioOptions = filterExercises(['light_cardio']);
+      
+      if (cardioOptions.length > 0) {
+        exercises.push({
+          name: cardioOptions[0].name,
+          prescription: '10-15 minutes',
+          notes: 'Cardio component'
+        });
+      }
+      
+      strengthExercises.slice(0, 3).forEach(ex => {
+        exercises.push({ name: ex.name, prescription: ex.prescription });
+      });
+      
+      safetyNotes = [
+        'Quality over quantity today',
+        'Leave 2-3 reps in reserve on all sets',
+        'If form breaks down, stop the set'
+      ];
+  }
+  
+  // Add injury-specific safety notes
+  if (injuries.length > 0) {
+    safetyNotes.push(`Protect affected areas: ${injuries.join(', ')}`);
+  }
+  
+  // Add avoid activities note
+  if (avoidActivities.length > 0) {
+    safetyNotes.push(`Today, avoid: ${avoidActivities.slice(0, 3).join(', ')}`);
+  }
+  
+  // Build title
+  const activityName = recommendedActivity && recommendedActivity !== 'Gentle movement of your choice' 
+    ? ` - ${recommendedActivity}` 
+    : '';
+  const title = `${template.titlePrefix} Session${activityName}`;
+  
+  return {
+    title,
+    duration: template.durationRange,
+    intensity: template.intensity,
+    warmup: template.warmup,
+    mainBlock: {
+      format,
+      exercises
+    },
+    cooldown: template.cooldown,
+    safetyNotes,
+    sessionGoal: template.goalTemplate
+  };
+}
+
+/**
  * Decision Engine: Map risk drivers to corrective actions
  * Rules:
  * - Monotony high → Change training modality
@@ -776,17 +1155,27 @@ export function generateCorrectiveAction(
   }
 
   // Apply personalization if user profile is available
-  if (userProfile && (userProfile.preferredActivities?.length || userProfile.interests?.length || userProfile.injuries?.length)) {
+  if (userProfile && (userProfile.preferredActivities?.length || userProfile.interests?.length || userProfile.injuries?.length || userProfile.equipmentAccess?.length)) {
     const { recommendedActivity, avoidActivities } = matchActivityToPreferences(
       action.strategy,
       userProfile,
       symptoms
     );
     
+    // Generate structured session
+    const session = generateStructuredSession(
+      action.strategy,
+      action.intensity,
+      userProfile,
+      recommendedActivity,
+      avoidActivities
+    );
+    
     action = {
       ...action,
       recommendedActivity,
-      avoidActivities
+      avoidActivities,
+      session
     };
     
     // Enhance instruction with personalized recommendation
@@ -797,6 +1186,16 @@ export function generateCorrectiveAction(
     if (avoidActivities.length > 0) {
       action.instruction = action.instruction + ` Avoid: ${avoidActivities.slice(0, 3).join(', ')}.`;
     }
+  } else {
+    // Generate a generic session even without full user profile
+    const session = generateStructuredSession(
+      action.strategy,
+      action.intensity,
+      userProfile || {},
+      '',
+      []
+    );
+    action = { ...action, session };
   }
 
   return action;

@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { ChevronDown, Compass, CheckCircle2, Circle, Info } from "lucide-react";
+import { ChevronDown, Compass, CheckCircle2, Circle, Info, AlertTriangle, ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTodaysDecision, DecisionOption } from "@/hooks/useTodaysDecision";
+import { RiskDriverResult } from "@/lib/riskDrivers";
 
 interface TodaysBestDecisionProps {
   className?: string;
@@ -37,6 +38,11 @@ export function TodaysBestDecision({ className }: TodaysBestDecisionProps) {
         </CollapsibleTrigger>
         <CollapsibleContent>
           <div className="mt-3 space-y-3">
+            {/* Risk Driver Insight */}
+            {decision.riskDrivers && decision.riskDrivers.riskLevel !== 'low' && (
+              <RiskDriverInsight riskDrivers={decision.riskDrivers} />
+            )}
+
             {/* Context summary */}
             {decision.contextSummary && (
               <p className="text-xs text-muted-foreground flex items-start gap-1.5">
@@ -60,6 +66,65 @@ export function TodaysBestDecision({ className }: TodaysBestDecisionProps) {
           </div>
         </CollapsibleContent>
       </Collapsible>
+    </div>
+  );
+}
+
+interface RiskDriverInsightProps {
+  riskDrivers: RiskDriverResult;
+}
+
+function RiskDriverInsight({ riskDrivers }: RiskDriverInsightProps) {
+  const { primary, secondary, explanation, riskLevel } = riskDrivers;
+
+  if (!primary) return null;
+
+  const getRiskLevelStyles = (level: string) => {
+    switch (level) {
+      case 'high':
+        return 'bg-destructive/10 border-destructive/30 text-destructive';
+      case 'moderate':
+        return 'bg-warning/10 border-warning/30 text-warning';
+      default:
+        return 'bg-muted border-border text-muted-foreground';
+    }
+  };
+
+  const getRiskLevelIcon = (level: string) => {
+    if (level === 'high' || level === 'moderate') {
+      return <AlertTriangle className="h-3.5 w-3.5" />;
+    }
+    return <Info className="h-3.5 w-3.5" />;
+  };
+
+  return (
+    <div className={cn(
+      "rounded-lg border p-3 space-y-2",
+      getRiskLevelStyles(riskLevel)
+    )}>
+      <div className="flex items-center gap-2">
+        {getRiskLevelIcon(riskLevel)}
+        <span className="text-xs font-medium uppercase tracking-wide">Why this matters</span>
+      </div>
+      
+      <div className="space-y-1.5">
+        <div className="flex items-center gap-2 text-sm">
+          <span className="font-medium">Primary:</span>
+          <span>{primary.label}</span>
+        </div>
+        
+        {secondary && (
+          <div className="flex items-center gap-2 text-sm opacity-80">
+            <span className="font-medium">Secondary:</span>
+            <span>{secondary.label}</span>
+          </div>
+        )}
+        
+        <div className="flex items-start gap-1.5 text-xs opacity-90 pt-1">
+          <ArrowRight className="h-3 w-3 mt-0.5 shrink-0" />
+          <span>{explanation}</span>
+        </div>
+      </div>
     </div>
   );
 }

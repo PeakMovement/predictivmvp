@@ -40,10 +40,26 @@ export interface UserProfile {
   interests?: string[];
   injuries?: string[];
   injuryDetails?: Record<string, unknown>;
-  equipmentAccess?: string[];
+  equipmentAccess?: string[]; // e.g., ['gym', 'home weights', 'bike', 'pool', 'resistance bands']
   trainingFrequency?: string;
   intensityPreference?: string;
 }
+
+// Equipment requirements for different activities
+const EQUIPMENT_REQUIREMENTS: Record<string, string[]> = {
+  'weightlifting': ['gym', 'home weights', 'barbell', 'dumbbells'],
+  'swimming': ['pool'],
+  'cycling': ['bike', 'spin bike', 'gym'],
+  'rowing': ['rowing machine', 'gym'],
+  'elliptical': ['elliptical', 'gym'],
+  'resistance training': ['gym', 'home weights', 'resistance bands'],
+  'yoga': [], // No equipment needed
+  'pilates': ['mat'],
+  'walking': [], // No equipment needed
+  'running': [], // No equipment needed (basic)
+  'stretching': [], // No equipment needed
+  'foam rolling': ['foam roller'],
+};
 
 export interface RiskDriverResult {
   primary: RiskDriver | null;
@@ -481,6 +497,37 @@ function findSafeActivities(injuries: string[], allActivities: string[]): string
 }
 
 /**
+ * Check if user has required equipment for an activity
+ */
+function hasRequiredEquipment(activity: string, equipmentAccess: string[]): boolean {
+  if (!equipmentAccess || equipmentAccess.length === 0) {
+    // If no equipment listed, assume they have basic access
+    return true;
+  }
+  
+  const activityLower = activity.toLowerCase();
+  const requirements = Object.entries(EQUIPMENT_REQUIREMENTS)
+    .find(([key]) => activityLower.includes(key.toLowerCase()))?.[1] || [];
+  
+  // If no equipment required, always accessible
+  if (requirements.length === 0) return true;
+  
+  // Check if user has any of the required equipment
+  const userEquipment = equipmentAccess.map(e => e.toLowerCase());
+  return requirements.some(req => 
+    userEquipment.some(ue => ue.includes(req) || req.includes(ue))
+  );
+}
+
+/**
+ * Filter activities by equipment availability
+ */
+function filterByEquipment(activities: string[], equipmentAccess?: string[]): string[] {
+  if (!equipmentAccess || equipmentAccess.length === 0) return activities;
+  return activities.filter(a => hasRequiredEquipment(a, equipmentAccess));
+}
+
+/**
  * Match corrective strategy with user preferences
  */
 function matchActivityToPreferences(
@@ -491,6 +538,7 @@ function matchActivityToPreferences(
   const preferred = userProfile.preferredActivities || [];
   const interests = userProfile.interests || [];
   const injuries = userProfile.injuries || [];
+  const equipmentAccess = userProfile.equipmentAccess || [];
   const allPreferred = [...new Set([...preferred, ...interests])];
   
   // Determine what areas to avoid based on symptoms
@@ -509,13 +557,19 @@ function matchActivityToPreferences(
     });
   }
   
+  // Helper: filter by safety AND equipment
+  const filterSafeAndAccessible = (activities: string[]): string[] => {
+    const safe = findSafeActivities(areasToAvoid, activities);
+    return filterByEquipment(safe, equipmentAccess);
+  };
+  
   // Strategy-specific activity matching
   let recommendedActivity = '';
   
   switch (strategy) {
     case 'Change training modality':
       // Find alternative from user preferences that's different from usual
-      const safePreferred = findSafeActivities(areasToAvoid, allPreferred);
+      const safePreferred = filterSafeAndAccessible(allPreferred);
       if (safePreferred.length > 0) {
         // Pick a low-impact option if available
         const lowImpactMatch = safePreferred.find(a => 
@@ -523,7 +577,8 @@ function matchActivityToPreferences(
         );
         recommendedActivity = lowImpactMatch || safePreferred[0];
       } else {
-        recommendedActivity = findSafeActivities(areasToAvoid, ACTIVITY_CATEGORIES.lowImpact)[0] || 'light walking';
+        const safeLowImpact = filterSafeAndAccessible(ACTIVITY_CATEGORIES.lowImpact);
+        recommendedActivity = safeLowImpact[0] || 'light walking';
       }
       break;
       
@@ -534,8 +589,10 @@ function matchActivityToPreferences(
       const preferredRecovery = allPreferred.find(p => 
         recoveryOptions.some(r => p.toLowerCase().includes(r))
       );
-      const safeRecovery = findSafeActivities(areasToAvoid, recoveryOptions);
-      recommendedActivity = preferredRecovery || safeRecovery[0] || 'gentle walking';
+      const safeRecovery = filterSafeAndAccessible(recoveryOptions);
+      recommendedActivity = preferredRecovery && hasRequiredEquipment(preferredRecovery, equipmentAccess) 
+        ? preferredRecovery 
+        : safeRecovery[0] || 'gentle walking';
       break;
       
     case 'Low intensity session':
@@ -543,12 +600,14 @@ function matchActivityToPreferences(
       const userLowImpact = allPreferred.filter(p =>
         ACTIVITY_CATEGORIES.lowImpact.some(li => p.toLowerCase().includes(li))
       );
-      const safeLowImpact = findSafeActivities(areasToAvoid, userLowImpact);
+      const safeLowImpact = filterSafeAndAccessible(userLowImpact);
       if (safeLowImpact.length > 0) {
         recommendedActivity = `Easy ${safeLowImpact[0].toLowerCase()}`;
-      } else if (allPreferred.some(p => p.toLowerCase().includes('cycling'))) {
+      } else if (allPreferred.some(p => p.toLowerCase().includes('cycling')) && 
+                 hasRequiredEquipment('cycling', equipmentAccess)) {
         recommendedActivity = 'Easy cycling session';
-      } else if (allPreferred.some(p => p.toLowerCase().includes('swim'))) {
+      } else if (allPreferred.some(p => p.toLowerCase().includes('swim')) && 
+                 hasRequiredEquipment('swimming', equipmentAccess)) {
         recommendedActivity = 'Easy swimming session';
       } else {
         recommendedActivity = 'Light walking or easy movement';
@@ -559,7 +618,7 @@ function matchActivityToPreferences(
     case 'Reduce training load':
       // Suggest scaled version of preferred activity
       if (allPreferred.length > 0) {
-        const safeActivity = findSafeActivities(areasToAvoid, allPreferred)[0];
+        const safeActivity = filterSafeAndAccessible(allPreferred)[0];
         if (safeActivity) {
           recommendedActivity = `Reduced ${safeActivity.toLowerCase()} session`;
         }
@@ -568,19 +627,19 @@ function matchActivityToPreferences(
       
     case 'Offload affected area':
       // Find activities that don't load affected areas
-      const safeOptions = findSafeActivities(areasToAvoid, allPreferred);
+      const safeOptions = filterSafeAndAccessible(allPreferred);
       if (safeOptions.length > 0) {
         recommendedActivity = safeOptions[0];
       } else {
         // Fallback to very safe options
-        const safeFallbacks = findSafeActivities(areasToAvoid, ['walking', 'swimming', 'cycling', 'yoga']);
-        recommendedActivity = safeFallbacks[0] || 'Upper body work only' ;
+        const safeFallbacks = filterSafeAndAccessible(['walking', 'swimming', 'cycling', 'yoga']);
+        recommendedActivity = safeFallbacks[0] || 'Upper body work only';
       }
       break;
       
     default:
       if (allPreferred.length > 0) {
-        const safeDefault = findSafeActivities(areasToAvoid, allPreferred);
+        const safeDefault = filterSafeAndAccessible(allPreferred);
         recommendedActivity = safeDefault[0] || allPreferred[0];
       }
   }

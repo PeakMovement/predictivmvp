@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { identifyRiskDrivers, RiskDriverResult, RiskMetrics } from "@/lib/riskDrivers";
 
 export interface DecisionOption {
   label: string;
@@ -13,6 +14,7 @@ export interface TodaysDecision {
   title: string;
   options: DecisionOption[];
   contextSummary: string;
+  riskDrivers?: RiskDriverResult;
 }
 
 export function useTodaysDecision() {
@@ -28,9 +30,21 @@ export function useTodaysDecision() {
           return;
         }
 
-        // Fetch readiness data, goals, and context in parallel
-        const today = new Date().toISOString().split("T")[0];
-        const [sessionsResult, profileResult, recoveryResult, lifestyleResult] = await Promise.all([
+        const sevenDaysAgo = new Date();
+        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+        const sevenDaysAgoStr = sevenDaysAgo.toISOString().split("T")[0];
+
+        // Fetch all required data in parallel
+        const [
+          sessionsResult, 
+          profileResult, 
+          recoveryResult, 
+          lifestyleResult,
+          trainingTrendsResult,
+          recoveryTrendsResult,
+          userBaselinesResult,
+          symptomCheckInsResult
+        ] = await Promise.all([
           supabase
             .from("wearable_sessions")
             .select("readiness_score, sleep_score, hrv_avg, activity_score")
@@ -51,13 +65,41 @@ export function useTodaysDecision() {
             .from("user_lifestyle")
             .select("stress_level")
             .eq("user_id", user.id)
-            .maybeSingle()
+            .maybeSingle(),
+          supabase
+            .from("training_trends")
+            .select("*")
+            .eq("user_id", user.id)
+            .gte("date", sevenDaysAgoStr)
+            .order("date", { ascending: false })
+            .limit(7),
+          supabase
+            .from("recovery_trends")
+            .select("*")
+            .eq("user_id", user.id)
+            .gte("period_date", sevenDaysAgoStr)
+            .order("period_date", { ascending: false })
+            .limit(7),
+          supabase
+            .from("user_baselines")
+            .select("*")
+            .eq("user_id", user.id),
+          supabase
+            .from("symptom_check_ins")
+            .select("*")
+            .eq("user_id", user.id)
+            .order("created_at", { ascending: false })
+            .limit(10)
         ]);
 
         const sessions = sessionsResult.data || [];
         const profile = profileResult.data;
         const recovery = recoveryResult.data;
         const lifestyle = lifestyleResult.data;
+        const trainingTrends = trainingTrendsResult.data || [];
+        const recoveryTrends = recoveryTrendsResult.data || [];
+        const userBaselines = userBaselinesResult.data || [];
+        const symptomCheckIns = symptomCheckInsResult.data || [];
 
         // Analyze readiness trends
         const latestSession = sessions[0];
@@ -77,6 +119,29 @@ export function useTodaysDecision() {
         const stressLevel = lifestyle?.stress_level || null;
         const sleepQuality = recovery?.sleep_quality || null;
 
+        // Build risk metrics for risk driver analysis
+        const latestTraining = trainingTrends[0];
+        const latestRecovery = recoveryTrends[0];
+        const hrvBaseline = userBaselines.find(b => b.metric === 'hrv')?.rolling_avg || null;
+        const weeklyStrain = trainingTrends.reduce((sum, t) => sum + (t.strain || 0), 0);
+
+        const riskMetrics: RiskMetrics = {
+          acwr: latestRecovery?.acwr ?? latestTraining?.acwr ?? null,
+          monotony: latestRecovery?.monotony ?? latestTraining?.monotony ?? null,
+          strain: weeklyStrain || latestRecovery?.strain || null,
+          hrvCurrent: hrvAvg,
+          hrvBaseline: hrvBaseline,
+          sleepScore: sleepScore,
+          symptoms: symptomCheckIns.map(s => ({
+            type: s.symptom_type,
+            severity: s.severity,
+            createdAt: s.created_at
+          }))
+        };
+
+        // Identify risk drivers
+        const riskDrivers = identifyRiskDrivers(riskMetrics);
+
         // Determine decision based on context
         const generatedDecision = generateDecision({
           readinessScore,
@@ -86,7 +151,8 @@ export function useTodaysDecision() {
           primaryGoal,
           stressLevel,
           sleepQuality,
-          activityLevel: profile?.activity_level
+          activityLevel: profile?.activity_level,
+          riskDrivers
         });
 
         setDecision(generatedDecision);
@@ -112,13 +178,14 @@ interface DecisionContext {
   stressLevel: string | null;
   sleepQuality: string | null;
   activityLevel: string | null;
+  riskDrivers?: RiskDriverResult;
 }
 
 function generateDecision(context: DecisionContext): TodaysDecision | null {
-  const { readinessScore, sleepScore, avgReadiness, primaryGoal, stressLevel, sleepQuality } = context;
+  const { readinessScore, sleepScore, avgReadiness, primaryGoal, stressLevel, sleepQuality, riskDrivers } = context;
 
   // Need at least some data to generate a decision
-  if (readinessScore === null && sleepScore === null) {
+  if (readinessScore === null && sleepScore === null && (!riskDrivers || riskDrivers.riskLevel === 'low')) {
     return null;
   }
 
@@ -126,22 +193,49 @@ function generateDecision(context: DecisionContext): TodaysDecision | null {
   const isPoorSleep = sleepScore !== null && sleepScore < 65;
   const isHighStress = stressLevel === "high" || stressLevel === "very_high";
   const isBelowAverage = avgReadiness !== null && readinessScore !== null && readinessScore < avgReadiness - 5;
+  
+  // Use risk drivers to inform the decision
+  const hasElevatedRisk = riskDrivers && riskDrivers.riskLevel !== 'low';
+  const primaryDriver = riskDrivers?.primary;
+
+  // Get driver-specific reasoning
+  const getDriverReasoning = (): string => {
+    if (!primaryDriver) return "";
+    
+    const driverReasonings: Record<string, string> = {
+      'monotony': "Your training patterns have been repetitive. Varying your workouts will promote better adaptation.",
+      'acwr': "Your recent training load exceeds your chronic baseline. Scaling back helps prevent overuse issues.",
+      'fatigue': "Accumulated fatigue is elevated. Your body needs more recovery time to adapt.",
+      'hrv': "Your heart rate variability suggests your nervous system needs recovery. Light movement is ideal.",
+      'sleep': "Sleep quality has been limiting recovery. Prioritizing rest will support your training.",
+      'strain': "Weekly strain is high. Reducing load now protects your longer-term progress.",
+      'symptoms': "Recent symptoms suggest your body is signaling for rest. Listen to these signals."
+    };
+    
+    return driverReasonings[primaryDriver.id] || "";
+  };
 
   // Determine the decision scenario
-  if (isLowReadiness || isPoorSleep || isHighStress) {
+  if (hasElevatedRisk || isLowReadiness || isPoorSleep || isHighStress) {
     // Recovery focused decision
     const goalReference = primaryGoal 
       ? `This approach supports your goal of "${primaryGoal}" by ensuring you build from a stronger foundation.`
       : "This approach protects your progress over the coming weeks.";
 
+    const driverReasoning = getDriverReasoning();
+    const combinedReasoning = driverReasoning 
+      ? `${driverReasoning} ${goalReference} Recovery days are where adaptation happens.`
+      : `Your readiness signals suggest your body would benefit from a lighter day. ${goalReference} Recovery days are where adaptation happens.`;
+
     return {
       title: "Training intensity today",
       contextSummary: buildContextSummary(context),
+      riskDrivers: riskDrivers,
       options: [
         {
           label: "Light movement or active recovery",
           description: "A shorter session focused on mobility, easy movement, or technique work.",
-          reasoning: `Your readiness signals suggest your body would benefit from a lighter day. ${goalReference} Recovery days are where adaptation happens.`,
+          reasoning: combinedReasoning,
           isRecommended: true,
           tone: "warm"
         },
@@ -163,6 +257,7 @@ function generateDecision(context: DecisionContext): TodaysDecision | null {
     return {
       title: "Session approach today",
       contextSummary: buildContextSummary(context),
+      riskDrivers: riskDrivers,
       options: [
         {
           label: "Moderate effort with good form",
@@ -189,6 +284,7 @@ function generateDecision(context: DecisionContext): TodaysDecision | null {
     return {
       title: "Making the most of today",
       contextSummary: buildContextSummary(context),
+      riskDrivers: riskDrivers,
       options: [
         {
           label: "Productive training session",

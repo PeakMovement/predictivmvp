@@ -1,0 +1,412 @@
+/**
+ * Risk Driver Identification Engine
+ * Analyzes multiple factors to identify primary and secondary risk drivers
+ * Used by both frontend (useTodaysDecision) and backend (generate-yves-intelligence)
+ */
+
+export interface RiskMetrics {
+  acwr: number | null;
+  monotony: number | null;
+  strain: number | null;
+  hrvCurrent: number | null;
+  hrvBaseline: number | null;
+  sleepScore: number | null;
+  fatigueIndex?: number | null;
+  symptoms: Array<{ type: string; severity: string; createdAt: Date | string }>;
+}
+
+export interface RiskDriver {
+  id: string;
+  label: string;
+  severity: number; // 0-100
+  value: number | null;
+  threshold: number;
+  explanation: string;
+  category: 'training_load' | 'recovery' | 'physiological' | 'symptoms';
+}
+
+export interface RiskDriverResult {
+  primary: RiskDriver | null;
+  secondary: RiskDriver | null;
+  explanation: string;
+  riskLevel: 'low' | 'moderate' | 'high';
+  allDrivers: RiskDriver[];
+}
+
+// Thresholds for each risk factor
+const THRESHOLDS = {
+  acwr: {
+    critical: 1.5,
+    elevated: 1.3,
+    optimal_low: 0.8,
+    optimal_high: 1.3
+  },
+  monotony: {
+    critical: 2.5,
+    elevated: 2.0,
+    moderate: 1.5
+  },
+  strain: {
+    critical: 3500,
+    elevated: 2500,
+    moderate: 1500
+  },
+  fatigueIndex: {
+    critical: 80,
+    elevated: 70,
+    moderate: 50
+  },
+  hrvDeviation: {
+    critical: 30,
+    elevated: 20,
+    moderate: 10
+  },
+  sleepScore: {
+    critical: 50,
+    elevated: 60,
+    moderate: 70
+  }
+};
+
+/**
+ * Calculate fatigue index from strain and monotony
+ * Formula: (Strain / 200) × 50 + (Monotony / 3) × 50, capped at 100
+ */
+export function calculateFatigueIndex(strain: number | null, monotony: number | null): number | null {
+  if (strain === null && monotony === null) return null;
+  
+  const strainContrib = strain !== null ? (strain / 200) * 50 : 0;
+  const monotonyContrib = monotony !== null ? (monotony / 3) * 50 : 0;
+  
+  return Math.min(Math.round(strainContrib + monotonyContrib), 100);
+}
+
+/**
+ * Calculate HRV deviation percentage
+ */
+export function calculateHrvDeviation(current: number | null, baseline: number | null): number | null {
+  if (current === null || baseline === null || baseline === 0) return null;
+  return Math.round(((baseline - current) / baseline) * 100);
+}
+
+/**
+ * Evaluate a single risk factor and return its severity score
+ */
+function evaluateRiskFactor(
+  id: string,
+  value: number | null,
+  thresholds: { critical: number; elevated: number; moderate?: number },
+  isInverted: boolean = false // true for metrics where lower is worse (sleep, HRV)
+): { severity: number; threshold: number; isElevated: boolean } {
+  if (value === null) {
+    return { severity: 0, threshold: thresholds.critical, isElevated: false };
+  }
+
+  let severity = 0;
+  let threshold = thresholds.moderate || thresholds.elevated;
+  let isElevated = false;
+
+  if (isInverted) {
+    // For metrics where lower is worse (sleep score)
+    if (value <= thresholds.critical) {
+      severity = 90;
+      threshold = thresholds.critical;
+      isElevated = true;
+    } else if (value <= thresholds.elevated) {
+      severity = 65;
+      threshold = thresholds.elevated;
+      isElevated = true;
+    } else if (thresholds.moderate && value <= thresholds.moderate) {
+      severity = 35;
+      threshold = thresholds.moderate;
+      isElevated = true;
+    }
+  } else {
+    // For metrics where higher is worse (ACWR, monotony, strain)
+    if (value >= thresholds.critical) {
+      severity = 90;
+      threshold = thresholds.critical;
+      isElevated = true;
+    } else if (value >= thresholds.elevated) {
+      severity = 65;
+      threshold = thresholds.elevated;
+      isElevated = true;
+    } else if (thresholds.moderate && value >= thresholds.moderate) {
+      severity = 35;
+      threshold = thresholds.moderate;
+      isElevated = true;
+    }
+  }
+
+  return { severity, threshold, isElevated };
+}
+
+/**
+ * Main function to identify risk drivers from metrics
+ */
+export function identifyRiskDrivers(metrics: RiskMetrics): RiskDriverResult {
+  const allDrivers: RiskDriver[] = [];
+  
+  // Calculate derived metrics
+  const fatigueIndex = metrics.fatigueIndex ?? calculateFatigueIndex(metrics.strain, metrics.monotony);
+  const hrvDeviation = calculateHrvDeviation(metrics.hrvCurrent, metrics.hrvBaseline);
+
+  // Evaluate ACWR
+  if (metrics.acwr !== null) {
+    const { severity, threshold, isElevated } = evaluateRiskFactor(
+      'acwr', metrics.acwr, THRESHOLDS.acwr
+    );
+    if (isElevated) {
+      allDrivers.push({
+        id: 'acwr',
+        label: 'Elevated ACWR',
+        severity,
+        value: metrics.acwr,
+        threshold,
+        explanation: `Training load ratio at ${metrics.acwr.toFixed(2)} exceeds safe threshold (${threshold})`,
+        category: 'training_load'
+      });
+    }
+  }
+
+  // Evaluate Monotony
+  if (metrics.monotony !== null) {
+    const { severity, threshold, isElevated } = evaluateRiskFactor(
+      'monotony', metrics.monotony, THRESHOLDS.monotony
+    );
+    if (isElevated) {
+      allDrivers.push({
+        id: 'monotony',
+        label: 'High training monotony',
+        severity,
+        value: metrics.monotony,
+        threshold,
+        explanation: `Training variation score of ${metrics.monotony.toFixed(1)} exceeds safe threshold (${threshold})`,
+        category: 'training_load'
+      });
+    }
+  }
+
+  // Evaluate Strain
+  if (metrics.strain !== null) {
+    const { severity, threshold, isElevated } = evaluateRiskFactor(
+      'strain', metrics.strain, THRESHOLDS.strain
+    );
+    if (isElevated) {
+      allDrivers.push({
+        id: 'strain',
+        label: 'High accumulated strain',
+        severity,
+        value: metrics.strain,
+        threshold,
+        explanation: `Weekly strain at ${Math.round(metrics.strain)} exceeds recovery capacity (${threshold})`,
+        category: 'training_load'
+      });
+    }
+  }
+
+  // Evaluate Fatigue Index
+  if (fatigueIndex !== null) {
+    const { severity, threshold, isElevated } = evaluateRiskFactor(
+      'fatigue', fatigueIndex, THRESHOLDS.fatigueIndex
+    );
+    if (isElevated) {
+      allDrivers.push({
+        id: 'fatigue',
+        label: 'Elevated fatigue',
+        severity,
+        value: fatigueIndex,
+        threshold,
+        explanation: `Fatigue index at ${fatigueIndex}% from accumulated strain`,
+        category: 'recovery'
+      });
+    }
+  }
+
+  // Evaluate HRV Deviation
+  if (hrvDeviation !== null) {
+    const { severity, threshold, isElevated } = evaluateRiskFactor(
+      'hrv', hrvDeviation, THRESHOLDS.hrvDeviation
+    );
+    if (isElevated) {
+      allDrivers.push({
+        id: 'hrv',
+        label: 'Suppressed HRV',
+        severity,
+        value: hrvDeviation,
+        threshold,
+        explanation: `HRV ${hrvDeviation}% below baseline indicates autonomic stress`,
+        category: 'physiological'
+      });
+    }
+  }
+
+  // Evaluate Sleep Score
+  if (metrics.sleepScore !== null) {
+    const { severity, threshold, isElevated } = evaluateRiskFactor(
+      'sleep', metrics.sleepScore, THRESHOLDS.sleepScore, true // inverted
+    );
+    if (isElevated) {
+      allDrivers.push({
+        id: 'sleep',
+        label: 'Poor sleep quality',
+        severity,
+        value: metrics.sleepScore,
+        threshold,
+        explanation: `Sleep score of ${metrics.sleepScore} below recovery threshold (${threshold})`,
+        category: 'recovery'
+      });
+    }
+  }
+
+  // Evaluate Symptoms
+  const recentSymptoms = metrics.symptoms.filter(s => {
+    const symptomDate = new Date(s.createdAt);
+    const threeDaysAgo = new Date();
+    threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
+    return symptomDate >= threeDaysAgo;
+  });
+
+  const severeSymptoms = recentSymptoms.filter(s => 
+    s.severity === 'severe' || s.severity === 'high'
+  );
+  const moderateSymptoms = recentSymptoms.filter(s => s.severity === 'moderate');
+
+  if (severeSymptoms.length > 0) {
+    allDrivers.push({
+      id: 'symptoms',
+      label: 'Recent symptoms reported',
+      severity: 75,
+      value: severeSymptoms.length,
+      threshold: 1,
+      explanation: `${severeSymptoms.length} severe symptom(s) reported: ${severeSymptoms.map(s => s.type).join(', ')}`,
+      category: 'symptoms'
+    });
+  } else if (moderateSymptoms.length > 0) {
+    allDrivers.push({
+      id: 'symptoms',
+      label: 'Recent symptoms reported',
+      severity: 45,
+      value: moderateSymptoms.length,
+      threshold: 1,
+      explanation: `${moderateSymptoms.length} moderate symptom(s) reported`,
+      category: 'symptoms'
+    });
+  }
+
+  // Sort by severity (highest first)
+  allDrivers.sort((a, b) => b.severity - a.severity);
+
+  // Get primary and secondary drivers
+  const primary = allDrivers[0] || null;
+  const secondary = allDrivers[1] || null;
+
+  // Generate explanation
+  const explanation = generateRiskExplanation(primary, secondary);
+
+  // Determine overall risk level
+  let riskLevel: 'low' | 'moderate' | 'high' = 'low';
+  if (primary) {
+    if (primary.severity >= 80 || (primary.severity >= 60 && secondary && secondary.severity >= 50)) {
+      riskLevel = 'high';
+    } else if (primary.severity >= 50 || allDrivers.length >= 2) {
+      riskLevel = 'moderate';
+    }
+  }
+
+  return {
+    primary,
+    secondary,
+    explanation,
+    riskLevel,
+    allDrivers
+  };
+}
+
+/**
+ * Generate human-readable explanation from risk drivers
+ */
+export function generateRiskExplanation(
+  primary: RiskDriver | null,
+  secondary: RiskDriver | null
+): string {
+  if (!primary) {
+    return "No significant risk factors detected. Continue with your current training approach.";
+  }
+
+  // Explanation templates based on driver combinations
+  const explanationTemplates: Record<string, Record<string, string>> = {
+    monotony: {
+      fatigue: "Repeating similar training patterns with limited recovery",
+      hrv: "Repetitive training causing autonomic stress",
+      sleep: "Training monotony compounded by poor sleep recovery",
+      strain: "High repetition with excessive load accumulation",
+      symptoms: "Repetitive training patterns correlating with reported symptoms",
+      acwr: "Monotonous training with workload imbalance",
+      default: "Training patterns lack sufficient variety for optimal adaptation"
+    },
+    acwr: {
+      fatigue: "Training load exceeds recovery capacity, causing accumulated fatigue",
+      hrv: "Training load exceeds readiness, stress response elevated",
+      sleep: "Workload imbalance combined with insufficient sleep recovery",
+      monotony: "Excessive load with repetitive training patterns",
+      symptoms: "High training load correlating with reported symptoms",
+      strain: "Acute workload significantly exceeds chronic baseline",
+      default: "Training load ratio indicates elevated injury risk"
+    },
+    fatigue: {
+      sleep: "Accumulated fatigue from insufficient sleep recovery",
+      hrv: "Fatigue accumulation affecting autonomic balance",
+      monotony: "Fatigue from repetitive training without variation",
+      acwr: "Fatigue from sustained high training loads",
+      symptoms: "Elevated fatigue correlating with physical symptoms",
+      strain: "High fatigue from excessive weekly strain",
+      default: "Accumulated fatigue requires additional recovery focus"
+    },
+    hrv: {
+      sleep: "Autonomic stress compounded by poor sleep quality",
+      fatigue: "Suppressed HRV indicating incomplete recovery",
+      symptoms: "Physiological stress compounding with reported symptoms",
+      acwr: "Autonomic stress from training load imbalance",
+      monotony: "HRV suppression from repetitive training stress",
+      strain: "Autonomic stress from high training strain",
+      default: "Heart rate variability indicates elevated stress state"
+    },
+    sleep: {
+      fatigue: "Poor sleep accelerating fatigue accumulation",
+      hrv: "Sleep deficit affecting autonomic recovery",
+      acwr: "Insufficient sleep recovery for current training load",
+      monotony: "Sleep quality suffering from training patterns",
+      symptoms: "Poor sleep correlating with reported symptoms",
+      strain: "Sleep insufficient to recover from training strain",
+      default: "Sleep quality limiting recovery and adaptation"
+    },
+    symptoms: {
+      fatigue: "Reported symptoms with underlying fatigue",
+      hrv: "Symptoms correlating with physiological stress markers",
+      sleep: "Symptoms potentially linked to poor sleep recovery",
+      acwr: "Symptoms appearing during high training load period",
+      monotony: "Symptoms from repetitive stress patterns",
+      strain: "Symptoms correlating with high training strain",
+      default: "Recent symptoms warrant training modification"
+    },
+    strain: {
+      fatigue: "High weekly strain causing fatigue accumulation",
+      monotony: "Excessive strain from repetitive high-load training",
+      hrv: "Training strain affecting autonomic balance",
+      sleep: "High strain outpacing sleep recovery capacity",
+      acwr: "Strain contributing to workload imbalance",
+      symptoms: "High strain correlating with physical symptoms",
+      default: "Weekly training strain exceeds safe recovery capacity"
+    }
+  };
+
+  const primaryId = primary.id;
+  const secondaryId = secondary?.id || 'default';
+  
+  const primaryTemplates = explanationTemplates[primaryId] || {};
+  const explanation = primaryTemplates[secondaryId] || primaryTemplates.default || 
+    `${primary.label} identified as primary concern`;
+
+  return explanation;
+}

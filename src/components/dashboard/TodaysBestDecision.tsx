@@ -5,6 +5,7 @@ import { ChevronDown, Compass, CheckCircle2, Circle, Info, AlertTriangle, ArrowR
 import { cn } from "@/lib/utils";
 import { useTodaysDecision, DecisionOption } from "@/hooks/useTodaysDecision";
 import { RiskDriverResult, CorrectiveAction } from "@/lib/riskDrivers";
+import { StructuredSessionCard } from "./StructuredSessionCard";
 
 interface TodaysBestDecisionProps {
   className?: string;
@@ -173,16 +174,6 @@ function RiskDriverInsight({ riskDrivers }: RiskDriverInsightProps) {
             )}
           </div>
           
-          {/* Personalized Recommendation */}
-          {correctiveAction.recommendedActivity && (
-            <div className="mt-2 p-2 rounded-md bg-current/5 border border-current/10">
-              <div className="flex items-center gap-1.5">
-                <span className="text-xs font-medium">💡 Recommended for you:</span>
-              </div>
-              <p className="text-sm font-medium mt-0.5">{correctiveAction.recommendedActivity}</p>
-            </div>
-          )}
-          
           {/* Activities to Avoid */}
           {correctiveAction.avoidActivities && correctiveAction.avoidActivities.length > 0 && (
             <div className="flex flex-wrap items-center gap-1.5 pt-1">
@@ -199,6 +190,16 @@ function RiskDriverInsight({ riskDrivers }: RiskDriverInsightProps) {
           )}
         </div>
       </div>
+
+      {/* Structured Session - The main actionable content */}
+      {correctiveAction.session && (
+        <div className="border-t border-current/20 pt-3">
+          <StructuredSessionCard 
+            session={correctiveAction.session} 
+            className="border-current/20 shadow-none"
+          />
+        </div>
+      )}
     </div>
   );
 }

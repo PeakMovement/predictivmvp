@@ -289,10 +289,10 @@ export function RecoveryPanel() {
 
         {/* Load Metrics with animated bars */}
         <div className="space-y-4 p-4 rounded-xl bg-background/50 border border-border/50">
-          <AnimatedBar 
-            label="Strain" 
-            value={summary.strain} 
-            maxValue={2000}
+          <AnimatedBar
+            label="Strain"
+            value={summary.strain}
+            maxValue={200}
             color="bg-gradient-to-r from-rose-500 to-orange-500"
             delay={100}
           />

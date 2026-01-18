@@ -257,14 +257,14 @@ serve(async (req) => {
         const meanDailyLoad = weeklyLoad / (acuteData.length || 1);
         
         // Monotony = Mean Daily Load ÷ Standard Deviation of Daily Load
-        // IMPORTANT: Cap monotony at 2.5 to prevent extreme strain values when training variation is low
         const monotonyStdDev = calculateStdDev(acuteData);
-        const rawMonotony = monotonyStdDev && monotonyStdDev > 0 ? meanDailyLoad / monotonyStdDev : null;
-        const monotony = rawMonotony !== null ? Math.min(rawMonotony, 2.5) : null;
+        const monotony = monotonyStdDev && monotonyStdDev > 0 ? meanDailyLoad / monotonyStdDev : null;
 
-        // Strain = Weekly Load × Monotony (capped to realistic range)
-        const rawStrain = monotony && weeklyLoad ? weeklyLoad * monotony : null;
-        const strain = rawStrain !== null ? Math.min(rawStrain, 2000) : null; // Cap at 2000 max
+        // Strain = (Weekly Load × Monotony) / 7
+        // This normalizes to daily average strain (0-200 TSS scale)
+        // Capped monotony at 3 for strain calculation (values >3 indicate critically poor training variation)
+        const cappedMonotony = monotony !== null ? Math.min(monotony, 3) : null;
+        const strain = cappedMonotony && weeklyLoad ? (weeklyLoad * cappedMonotony) / 7 : null;
 
         // Determine ACWR trend
         const prev7DaysAcute = calculateAverage(prev7Days.map((s) => s.activity_score || 0));

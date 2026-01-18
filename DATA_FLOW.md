@@ -248,37 +248,47 @@ ACWR: Current 1.37 vs Baseline 1.06 (+29.2% deviation) – Risk Zone: RED
 
 ### Training Strain
 
-**Purpose:** Measure cumulative training stress over 7 days
+**Purpose:** Measure training stress accounting for both load and variety (Foster's Training Strain)
 
 **Complete Journey:**
 
 #### Step 1-3: Same as ACWR (Raw Data → Training Load → Storage)
 
-#### Step 4: 7-Day Strain Calculation
-**Location:** `fetch-oura-auto` Edge Function (lines 269-277)
+#### Step 4: Strain Calculation (Foster's Formula)
+**Location:** `calculate-oura-trends` Edge Function (lines 263-267)
+**Formula:** `Strain = (Weekly Load × Monotony) / 7`
 
 ```typescript
-const last7Days = historicalSessions
-  .filter(s => s.date <= currentDate)
-  .slice(-7);
+// Weekly Load = sum of last 7 days activity scores
+const weeklyLoad = acuteData.reduce((sum, v) => sum + v, 0);
 
-const strain = last7Days.reduce((sum, s) => {
-  const load = (s.activity_score || 0) * ((s.total_steps || 0) / 10000);
-  return sum + load;
-}, 0);
+// Monotony = Mean Daily Load ÷ Standard Deviation
+const monotonyStdDev = calculateStdDev(acuteData);
+const monotony = monotonyStdDev && monotonyStdDev > 0 ? meanDailyLoad / monotonyStdDev : null;
+
+// Strain normalized to daily TSS scale (0-200)
+// Monotony capped at 3 for safety (>3 = critically poor training variation)
+const cappedMonotony = monotony !== null ? Math.min(monotony, 3) : null;
+const strain = cappedMonotony && weeklyLoad ? (weeklyLoad * cappedMonotony) / 7 : null;
 ```
 
 **Example:**
 ```
 Day 1: 100, Day 2: 110, Day 3: 105, Day 4: 95, Day 5: 106, Day 6: 108, Day 7: 102
-Strain = 100 + 110 + 105 + 95 + 106 + 108 + 102 = 726
+Weekly Load = 726
+Mean Daily Load = 103.7
+Standard Deviation = 5.2
+Monotony = 103.7 / 5.2 = 1.99
+Strain = (726 × 1.99) / 7 = 206 TSS
 ```
 
-**Interpretation:**
-- **< 500:** Light training week
-- **500-800:** Moderate training week
-- **800-1200:** Heavy training week
-- **> 1200:** Very heavy training week
+**Interpretation (Normalized Daily TSS Scale):**
+- **< 80:** Light training strain (good recovery week)
+- **80-120:** Moderate training strain (sustainable)
+- **120-150:** Heavy training strain (monitor recovery)
+- **> 150:** Very heavy strain (high injury risk, recovery needed)
+
+**Critical Alert:** If monotony exceeds 3.0 (before capping), training variation is dangerously low regardless of strain value.
 
 #### Step 5: Storage & Baseline Calculation
 **Storage:** `wearable_summary.strain`
@@ -286,9 +296,9 @@ Strain = 100 + 110 + 105 + 95 + 106 + 108 + 102 = 726
 **Deviation:** Compared in `calculate-deviation`
 
 **Risk Thresholds:**
-- **< 10% deviation:** Green zone
-- **10-25% deviation:** Yellow zone (monitor closely)
-- **> 25% deviation:** Red zone (high risk of overtraining)
+- **< 100 TSS:** Green zone (good variation and recovery)
+- **100-150 TSS:** Yellow zone (monitor closely, ensure recovery days)
+- **> 150 TSS:** Red zone (high risk of overtraining/injury)
 
 ---
 

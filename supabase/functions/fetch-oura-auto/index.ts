@@ -367,9 +367,13 @@ Deno.serve(async (req: Request) => {
             if (last7Days.length < 7) continue;
 
             // Calculate training load (activity score * normalized steps)
+            // Fallback: use activity score directly if steps data is missing
             const calculateLoad = (s: any) => {
               const actScore = s.activity_score || 0;
               const steps = s.total_steps || 0;
+              if (steps === 0 && actScore > 0) {
+                return actScore; // Fallback: use raw activity score when steps missing
+              }
               return actScore * (steps / 10000);
             };
 
@@ -384,15 +388,19 @@ Deno.serve(async (req: Request) => {
               acwr = chronicLoad > 0 ? acuteLoad / chronicLoad : null;
             }
 
-            // Strain (7-day total load)
-            const strain = last7Days.reduce((sum, s) => sum + calculateLoad(s), 0);
+            // Strain (7-day total load) - CAPPED at 2000 max
+            const rawStrain = last7Days.reduce((sum, s) => sum + calculateLoad(s), 0);
+            const strain = Math.min(rawStrain, 2000);
 
-            // Monotony (mean / std deviation of 7-day loads)
+            // Monotony (mean / std deviation of 7-day loads) - CAPPED at 2.5 max
             const loads = last7Days.map(calculateLoad);
             const mean = loads.reduce((a, b) => a + b, 0) / loads.length;
             const variance = loads.reduce((sum, load) => sum + Math.pow(load - mean, 2), 0) / loads.length;
             const std = Math.sqrt(variance);
-            const monotony = std > 0 ? mean / std : 0;
+            const rawMonotony = std > 0 ? mean / std : 0;
+            const monotony = Math.min(rawMonotony, 2.5);
+            
+            console.log(`[fetch-oura-auto] [DEBUG] Strain calc for ${date}: rawStrain=${rawStrain.toFixed(2)}, capped=${strain.toFixed(2)}, monotony=${monotony.toFixed(2)}`);
 
             // HRV and sleep score from current day's detailed sleep
             const hrv = dayData.sleepDetails?.average_hrv || null;
@@ -441,14 +449,25 @@ Deno.serve(async (req: Request) => {
 
             if (last7Days.length < 7) continue;
 
-            const calculateLoad = (s: any) => (s.activity_score || 0) * ((s.total_steps || 0) / 10000);
+            // Fallback: use activity score directly if steps data is missing
+            const calculateLoad = (s: any) => {
+              const actScore = s.activity_score || 0;
+              const steps = s.total_steps || 0;
+              if (steps === 0 && actScore > 0) {
+                return actScore;
+              }
+              return actScore * (steps / 10000);
+            };
 
-            const strain = last7Days.reduce((sum, s) => sum + calculateLoad(s), 0);
+            // Strain and monotony with caps
+            const rawStrain = last7Days.reduce((sum, s) => sum + calculateLoad(s), 0);
+            const strain = Math.min(rawStrain, 2000);
             const loads = last7Days.map(calculateLoad);
             const mean = loads.reduce((a, b) => a + b, 0) / loads.length;
             const variance = loads.reduce((sum, load) => sum + Math.pow(load - mean, 2), 0) / loads.length;
             const std = Math.sqrt(variance);
-            const monotony = std > 0 ? mean / std : 0;
+            const rawMonotony = std > 0 ? mean / std : 0;
+            const monotony = Math.min(rawMonotony, 2.5);
 
             let acwr = null;
             if (last28Days.length >= 28) {

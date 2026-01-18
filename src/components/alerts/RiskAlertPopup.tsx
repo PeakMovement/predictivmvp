@@ -7,7 +7,7 @@ interface RiskAlertPopupProps {
 }
 
 export function RiskAlertPopup({ onNavigateToHelp }: RiskAlertPopupProps) {
-  const { currentAlert, dismissAlert } = useRiskAlertTrigger();
+  const { currentAlert, dismissAlert, snoozeAlert } = useRiskAlertTrigger();
   const [showFlow, setShowFlow] = useState(false);
 
   useEffect(() => {
@@ -27,6 +27,11 @@ export function RiskAlertPopup({ onNavigateToHelp }: RiskAlertPopupProps) {
     dismissAlert();
   };
 
+  const handleSnooze = (duration: "1_day" | "3_days" | "1_week") => {
+    setShowFlow(false);
+    snoozeAlert(duration);
+  };
+
   return (
     <AlertCheckInFlow
       alert={{
@@ -34,9 +39,11 @@ export function RiskAlertPopup({ onNavigateToHelp }: RiskAlertPopupProps) {
         value: currentAlert.value,
         threshold: currentAlert.threshold,
         message: currentAlert.message,
-        type: currentAlert.type
+        type: currentAlert.type,
+        percentAboveThreshold: currentAlert.percentAboveThreshold
       }}
       onComplete={handleComplete}
+      onSnooze={handleSnooze}
       onNavigateToHelp={onNavigateToHelp}
     />
   );

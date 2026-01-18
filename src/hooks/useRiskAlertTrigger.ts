@@ -8,23 +8,34 @@ interface RiskAlert {
   value: number;
   threshold: number;
   message: string;
+  percentAboveThreshold?: number; // Added for better messaging
 }
 
 interface UseRiskAlertTriggerResult {
   currentAlert: RiskAlert | null;
   dismissAlert: () => void;
   checkForAlerts: () => Promise<void>;
+  snoozeAlert: (duration: "1_day" | "3_days" | "1_week") => void;
 }
 
 // Thresholds for triggering alerts
 const RISK_THRESHOLDS = {
   acwr: { high: 1.5, critical: 1.8 },
-  strain: { high: 2500, critical: 3500 },
+  strain: { high: 1200, critical: 1500 }, // Adjusted for capped monotony formula
   monotony: { high: 2.0, critical: 2.5 },
   hrv_drop: 20, // % drop from baseline
   readiness_low: 50,
   sleep_low: 60
 };
+
+// Snooze durations in hours
+const SNOOZE_DURATIONS = {
+  "1_day": 24,
+  "3_days": 72,
+  "1_week": 168,
+} as const;
+
+type SnoozeDuration = keyof typeof SNOOZE_DURATIONS;
 
 // Function to send SMS alert via edge function
 export async function sendRiskAlertSMS(phoneNumber: string, alertMessage: string): Promise<{ success: boolean; error?: string }> {
@@ -116,11 +127,27 @@ function setDailyCooldown(alertKey: string): void {
   localStorage.setItem(ALERT_DAILY_COOLDOWN_KEY, JSON.stringify(cooldowns));
 }
 
+function setSnoozeCooldown(alertKey: string, duration: SnoozeDuration): void {
+  const cooldowns = getDailyCooldowns();
+  const hoursToSnooze = SNOOZE_DURATIONS[duration];
+  // Store expiry time instead of start time for snoozes
+  cooldowns[alertKey] = Date.now() + (hoursToSnooze * 60 * 60 * 1000);
+  localStorage.setItem(ALERT_DAILY_COOLDOWN_KEY, JSON.stringify(cooldowns));
+}
+
 function isOnDailyCooldown(alertKey: string): boolean {
   const cooldowns = getDailyCooldowns();
-  const lastShown = cooldowns[alertKey];
-  if (!lastShown) return false;
-  const hoursSince = (Date.now() - lastShown) / (1000 * 60 * 60);
+  const cooldownValue = cooldowns[alertKey];
+  if (!cooldownValue) return false;
+  
+  // Check if this is an expiry time (snooze) or start time (regular cooldown)
+  // If value is in the future, it's an expiry time
+  if (cooldownValue > Date.now()) {
+    return true; // Still on snooze
+  }
+  
+  // Regular 24-hour cooldown check
+  const hoursSince = (Date.now() - cooldownValue) / (1000 * 60 * 60);
   return hoursSince < COOLDOWN_HOURS;
 }
 
@@ -153,33 +180,39 @@ export function useRiskAlertTrigger(): UseRiskAlertTriggerResult {
       if (recoveryTrends) {
         // Check ACWR
         if (recoveryTrends.acwr && recoveryTrends.acwr >= RISK_THRESHOLDS.acwr.critical) {
+          const percentAbove = Math.round((recoveryTrends.acwr / RISK_THRESHOLDS.acwr.critical - 1) * 100);
           alertToSet = {
             type: "high_risk",
             metric: "ACWR",
             value: recoveryTrends.acwr,
             threshold: RISK_THRESHOLDS.acwr.critical,
+            percentAboveThreshold: percentAbove,
             message: "Your training load ratio is critically high. Consider reducing intensity to prevent injury."
           };
           emailAlertType = "injury_risk";
         }
         // Check strain
         else if (recoveryTrends.strain && recoveryTrends.strain >= RISK_THRESHOLDS.strain.critical) {
+          const percentAbove = Math.round((recoveryTrends.strain / RISK_THRESHOLDS.strain.critical - 1) * 100);
           alertToSet = {
             type: "high_risk",
             metric: "Strain",
             value: recoveryTrends.strain,
             threshold: RISK_THRESHOLDS.strain.critical,
+            percentAboveThreshold: percentAbove,
             message: "Your accumulated training strain is very high. Recovery is recommended."
           };
           emailAlertType = "injury_risk";
         }
         // Check monotony
         else if (recoveryTrends.monotony && recoveryTrends.monotony >= RISK_THRESHOLDS.monotony.critical) {
+          const percentAbove = Math.round((recoveryTrends.monotony / RISK_THRESHOLDS.monotony.critical - 1) * 100);
           alertToSet = {
             type: "high_risk",
             metric: "Monotony",
             value: recoveryTrends.monotony,
             threshold: RISK_THRESHOLDS.monotony.critical,
+            percentAboveThreshold: percentAbove,
             message: "Your training variation is very low. Consider diversifying your workouts."
           };
           emailAlertType = "risk_threshold";
@@ -325,6 +358,15 @@ export function useRiskAlertTrigger(): UseRiskAlertTriggerResult {
     setCurrentAlert(null);
   }, []);
 
+  const snoozeAlert = useCallback((duration: SnoozeDuration) => {
+    if (currentAlert) {
+      const alertKey = `${currentAlert.metric}_${currentAlert.type}`;
+      setSnoozeCooldown(alertKey, duration);
+      console.log(`[useRiskAlertTrigger] Snoozed ${alertKey} for ${duration.replace('_', ' ')}`);
+      setCurrentAlert(null);
+    }
+  }, [currentAlert]);
+
   // Check on mount
   useEffect(() => {
     checkForAlerts();
@@ -333,6 +375,7 @@ export function useRiskAlertTrigger(): UseRiskAlertTriggerResult {
   return {
     currentAlert,
     dismissAlert,
-    checkForAlerts
+    checkForAlerts,
+    snoozeAlert
   };
 }

@@ -27,11 +27,13 @@ interface AlertInfo {
   threshold: number;
   message: string;
   type: "high_risk" | "anomaly" | "red_flag";
+  percentAboveThreshold?: number;
 }
 
 interface AlertCheckInFlowProps {
   alert: AlertInfo;
   onComplete: () => void;
+  onSnooze?: (duration: "1_day" | "3_days" | "1_week") => void;
   onNavigateToHelp?: () => void;
 }
 
@@ -78,7 +80,7 @@ function getGenericAdvice(alert: AlertInfo): { title: string; advice: string } {
   }
 }
 
-export function AlertCheckInFlow({ alert, onComplete, onNavigateToHelp }: AlertCheckInFlowProps) {
+export function AlertCheckInFlow({ alert, onComplete, onSnooze, onNavigateToHelp }: AlertCheckInFlowProps) {
   const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState<FlowStep>("initial_prompt");
   const [hasSymptoms, setHasSymptoms] = useState<boolean | null>(null);
@@ -225,7 +227,7 @@ export function AlertCheckInFlow({ alert, onComplete, onNavigateToHelp }: AlertC
     );
   }
 
-  // STEP 2a: User declined check-in - show explanation + generic advice
+  // STEP 2a: User declined check-in - show explanation + generic advice + snooze options
   if (currentStep === "declined_checkin") {
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm">
@@ -249,11 +251,50 @@ export function AlertCheckInFlow({ alert, onComplete, onNavigateToHelp }: AlertC
               </p>
             </div>
             <div className="text-xs text-muted-foreground">
-              <span className="font-medium">Detected:</span> {alert.metric} at {alert.value} (threshold: {alert.threshold})
+              <span className="font-medium">Status:</span>{" "}
+              {alert.percentAboveThreshold !== undefined ? (
+                <>Your {alert.metric.toLowerCase()} is {alert.percentAboveThreshold}% above normal levels</>
+              ) : (
+                <>{alert.metric} at {Math.round(alert.value * 100) / 100} (threshold: {alert.threshold})</>
+              )}
             </div>
+            
             <Button onClick={handleClose} variant="outline" className="w-full">
               Got it
             </Button>
+            
+            {/* Snooze options */}
+            {onSnooze && (
+              <div className="pt-2 border-t border-border/50">
+                <p className="text-xs text-muted-foreground mb-2">Don't show this alert again for:</p>
+                <div className="flex gap-2">
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="flex-1 text-xs"
+                    onClick={() => onSnooze("1_day")}
+                  >
+                    1 day
+                  </Button>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="flex-1 text-xs"
+                    onClick={() => onSnooze("3_days")}
+                  >
+                    3 days
+                  </Button>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="flex-1 text-xs"
+                    onClick={() => onSnooze("1_week")}
+                  >
+                    1 week
+                  </Button>
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>

@@ -15,20 +15,76 @@ export interface TodaysDecision {
   options: DecisionOption[];
   contextSummary: string;
   riskDrivers?: RiskDriverResult;
+  generatedAt?: string;
+}
+
+interface CachedDecision extends TodaysDecision {
+  generatedAt: string;
+  date: string;
+}
+
+function getTodayDateKey(): string {
+  return new Date().toISOString().split('T')[0];
+}
+
+function getCachedDecision(): CachedDecision | null {
+  try {
+    const cached = localStorage.getItem('todays-decision-cache');
+    if (!cached) return null;
+
+    const parsed = JSON.parse(cached) as CachedDecision;
+    const todayKey = getTodayDateKey();
+
+    // Check if cached decision is from today
+    if (parsed.date === todayKey) {
+      return parsed;
+    }
+
+    // Clear stale cache
+    localStorage.removeItem('todays-decision-cache');
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+function setCachedDecision(decision: TodaysDecision): void {
+  try {
+    const cached: CachedDecision = {
+      ...decision,
+      generatedAt: new Date().toISOString(),
+      date: getTodayDateKey()
+    };
+    localStorage.setItem('todays-decision-cache', JSON.stringify(cached));
+  } catch (error) {
+    console.error('Failed to cache decision:', error);
+  }
 }
 
 export function useTodaysDecision() {
   const [decision, setDecision] = useState<TodaysDecision | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [lastFetchDate, setLastFetchDate] = useState<string | null>(null);
 
-  useEffect(() => {
-    async function fetchDecisionContext() {
-      try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) {
+  const fetchDecisionContext = async (forceRefresh = false) => {
+    try {
+      // Check cache first unless forcing refresh
+      if (!forceRefresh) {
+        const cached = getCachedDecision();
+        if (cached) {
+          setDecision(cached);
+          setLastFetchDate(cached.date);
           setIsLoading(false);
           return;
         }
+      }
+
+      setIsLoading(true);
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        setIsLoading(false);
+        return;
+      }
 
         const sevenDaysAgo = new Date();
         sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
@@ -205,18 +261,38 @@ export function useTodaysDecision() {
           userProfile: userProfileData
         });
 
+        if (generatedDecision) {
+          setCachedDecision(generatedDecision);
+          setLastFetchDate(getTodayDateKey());
+        }
         setDecision(generatedDecision);
       } catch (error) {
         console.error("Error fetching decision context:", error);
       } finally {
         setIsLoading(false);
       }
-    }
+    };
 
+  useEffect(() => {
     fetchDecisionContext();
-  }, []);
 
-  return { decision, isLoading };
+    // Check for date changes periodically (every minute)
+    const interval = setInterval(() => {
+      const currentDate = getTodayDateKey();
+      if (lastFetchDate && lastFetchDate !== currentDate) {
+        // Date has changed, refetch
+        fetchDecisionContext(true);
+      }
+    }, 60000); // Check every minute
+
+    return () => clearInterval(interval);
+  }, [lastFetchDate]);
+
+  const refresh = () => {
+    fetchDecisionContext(true);
+  };
+
+  return { decision, isLoading, refresh };
 }
 
 interface DecisionContext {

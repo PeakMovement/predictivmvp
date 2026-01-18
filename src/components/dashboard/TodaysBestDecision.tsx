@@ -2,12 +2,12 @@ import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { 
-  ChevronDown, 
-  Compass, 
-  AlertTriangle, 
-  Shield, 
-  Zap, 
+import {
+  ChevronDown,
+  Compass,
+  AlertTriangle,
+  Shield,
+  Zap,
   Sparkles,
   CalendarPlus,
   CheckCircle2,
@@ -15,7 +15,8 @@ import {
   Flame,
   Target,
   Dumbbell,
-  Play
+  Play,
+  RefreshCw
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTodaysDecision } from "@/hooks/useTodaysDecision";
@@ -26,7 +27,7 @@ interface TodaysBestDecisionProps {
 }
 
 export function TodaysBestDecision({ className }: TodaysBestDecisionProps) {
-  const { decision, isLoading } = useTodaysDecision();
+  const { decision, isLoading, refresh } = useTodaysDecision();
   const [isOpen, setIsOpen] = useState(true);
   const [isSessionExpanded, setIsSessionExpanded] = useState(false);
   const [completedExercises, setCompletedExercises] = useState<Set<number>>(new Set());
@@ -51,6 +52,11 @@ export function TodaysBestDecision({ className }: TodaysBestDecisionProps) {
     });
   };
 
+  const handleRefresh = () => {
+    refresh();
+    toast.info("Refreshing today's decision...");
+  };
+
   const toggleExercise = (index: number) => {
     const newCompleted = new Set(completedExercises);
     if (newCompleted.has(index)) {
@@ -68,23 +74,35 @@ export function TodaysBestDecision({ className }: TodaysBestDecisionProps) {
   return (
     <Card className={cn("overflow-hidden", className)}>
       <Collapsible open={isOpen} onOpenChange={setIsOpen}>
-        <CollapsibleTrigger asChild>
-          <button className="w-full p-4 flex items-center justify-between text-left group hover:bg-muted/30 transition-colors">
-            <div className="flex items-center gap-2">
-              <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
-                <Compass className="h-4 w-4 text-primary" />
+        <div className="flex items-center justify-between p-4 border-b">
+          <CollapsibleTrigger asChild>
+            <button className="flex-1 flex items-center justify-between text-left group hover:bg-muted/30 transition-colors -m-4 p-4 rounded-t-lg">
+              <div className="flex items-center gap-2">
+                <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
+                  <Compass className="h-4 w-4 text-primary" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-foreground">Today's Best Decision</h3>
+                  <p className="text-xs text-muted-foreground">Your personalised guidance</p>
+                </div>
               </div>
-              <div>
-                <h3 className="text-base font-bold text-foreground">Today's Best Decision</h3>
-                <p className="text-xs text-muted-foreground">Your personalised guidance</p>
-              </div>
-            </div>
-            <ChevronDown className={cn(
-              "h-5 w-5 text-muted-foreground transition-transform duration-200",
-              isOpen && "rotate-180"
-            )} />
-          </button>
-        </CollapsibleTrigger>
+              <ChevronDown className={cn(
+                "h-5 w-5 text-muted-foreground transition-transform duration-200",
+                isOpen && "rotate-180"
+              )} />
+            </button>
+          </CollapsibleTrigger>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={handleRefresh}
+            disabled={isLoading}
+            className="ml-2 h-8 w-8"
+            title="Refresh decision"
+          >
+            <RefreshCw className={cn("h-4 w-4", isLoading && "animate-spin")} />
+          </Button>
+        </div>
 
         <CollapsibleContent>
           <div className="px-4 pb-4 space-y-4">

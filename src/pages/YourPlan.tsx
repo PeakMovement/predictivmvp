@@ -10,9 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import jsPDF from "jspdf";
-import { getHealthData } from "@/lib/healthDataStore";
 import { useTrainingTrends } from "@/hooks/useTrainingTrends";
-import { calculateMetrics } from "@/lib/metricsCalculator";
 import OuraSyncStatus from "@/components/OuraSyncStatus";
 
 // Load accepted challenges from localStorage
@@ -59,49 +57,57 @@ const getCategoryStyle = (category: string) => {
   }
 };
 
-// Dynamic graph data for PDF generation
-const getGraphDataForPDF = (csvData: any[], currentDayIndex: number) => {
-  if (csvData.length === 0 || currentDayIndex < 0) {
-    return [];
-  }
-  
-  const currentData = csvData[currentDayIndex];
-  if (!currentData) return [];
-  
-  const acwrValue = parseFloat(currentData.ACWR || "0");
-  const monotonyValue = parseFloat(currentData.Monotony || "0");
-  const strainValue = parseFloat(currentData.Strain || "0");
-  const ewmaValue = parseFloat(currentData.EWMA || "0");
+// Dynamic graph data for PDF generation - uses metrics from hook
+interface PDFMetrics {
+  avgACWR: number;
+  avgStrain: number;
+  avgMonotony: number;
+  avgEWMA: number;
+  avgHRV: number;
+  recoveryScore: number | null;
+  fatigueIndex: number | null;
+  riskScore: number;
+}
+
+const getGraphDataForPDF = (metrics: PDFMetrics) => {
+  const { avgACWR, avgMonotony, avgStrain, avgEWMA } = metrics;
   
   return [
     {
-      title: "Acute:Chronic Workload",
-      currentValue: acwrValue > 0 ? acwrValue.toFixed(1) : "–",
-      riskZone: acwrValue > 1.5 ? "high-risk" : acwrValue > 1.3 ? "caution" : "optimal"
+      title: "Acute:Chronic Workload (ACWR)",
+      currentValue: avgACWR > 0 ? avgACWR.toFixed(2) : "–",
+      riskZone: avgACWR > 1.5 ? "high-risk" : avgACWR > 1.3 ? "caution" : "optimal"
     },
     {
       title: "Training Monotony",
-      currentValue: monotonyValue > 0 ? `${monotonyValue.toFixed(1)}/5.0` : "–",
-      riskZone: monotonyValue > 2.5 ? "caution" : "optimal"
+      currentValue: avgMonotony > 0 ? avgMonotony.toFixed(2) : "–",
+      riskZone: avgMonotony > 2.0 ? "caution" : "optimal"
     },
     {
       title: "Training Strain",
-      currentValue: strainValue > 0 ? `${strainValue.toFixed(0)}/200` : "–",
-      riskZone: strainValue > 165 ? "high-risk" : strainValue > 150 ? "caution" : "optimal"
+      currentValue: avgStrain > 0 ? avgStrain.toFixed(0) : "–",
+      riskZone: avgStrain > 150 ? "high-risk" : avgStrain > 100 ? "caution" : "optimal"
     },
     {
-      title: "EWMA Trend",
-      currentValue: ewmaValue > 0 ? `+${ewmaValue.toFixed(1)}%` : "–",
-      riskZone: ewmaValue > 7 ? "high-risk" : ewmaValue > 5 ? "caution" : "optimal"
+      title: "EWMA Load",
+      currentValue: avgEWMA > 0 ? avgEWMA.toFixed(0) : "–",
+      riskZone: "optimal"
     }
   ];
 };
 
-const generateWeeklyReportPDF = (csvData: any[], currentDayIndex: number) => {
+interface PDFOptions {
+  metrics: PDFMetrics;
+  insightText: string;
+  recommendations: Array<{color: string; text: string}>;
+}
+
+const generateWeeklyReportPDF = (options: PDFOptions) => {
+  const { metrics, insightText, recommendations } = options;
   const doc = new jsPDF();
   const pageWidth = doc.internal.pageSize.getWidth();
   let yPosition = 20;
-  const graphData = getGraphDataForPDF(csvData, currentDayIndex);
+  const graphData = getGraphDataForPDF(metrics);
 
   // Header
   doc.setFontSize(24);
@@ -117,10 +123,49 @@ const generateWeeklyReportPDF = (csvData: any[], currentDayIndex: number) => {
   yPosition += 20;
   doc.setTextColor(0, 0, 0);
 
-  // Current Risk Graphs Section
+  // Key Metrics Summary Section
   doc.setFontSize(16);
   doc.setFont("helvetica", "bold");
-  doc.text("Current Risk Graphs", 20, yPosition);
+  doc.text("Key Metrics Summary", 20, yPosition);
+  yPosition += 12;
+
+  doc.setFontSize(10);
+  doc.setFont("helvetica", "normal");
+  
+  // Recovery & Risk Scores
+  const recoveryColor = metrics.recoveryScore !== null && metrics.recoveryScore < 60 ? [239, 68, 68] : 
+                        metrics.recoveryScore !== null && metrics.recoveryScore < 75 ? [251, 146, 60] : [34, 197, 94];
+  const riskColor = metrics.riskScore > 60 ? [239, 68, 68] : 
+                    metrics.riskScore > 30 ? [251, 146, 60] : [34, 197, 94];
+  const fatigueColor = metrics.fatigueIndex !== null && metrics.fatigueIndex > 70 ? [239, 68, 68] : 
+                       metrics.fatigueIndex !== null && metrics.fatigueIndex > 50 ? [251, 146, 60] : [34, 197, 94];
+
+  doc.text("• Recovery Score:", 25, yPosition);
+  doc.setTextColor(recoveryColor[0], recoveryColor[1], recoveryColor[2]);
+  doc.text(`${metrics.recoveryScore !== null ? metrics.recoveryScore + '/100' : 'N/A'}`, 80, yPosition);
+  doc.setTextColor(0, 0, 0);
+  yPosition += 8;
+
+  doc.text("• Risk Score:", 25, yPosition);
+  doc.setTextColor(riskColor[0], riskColor[1], riskColor[2]);
+  doc.text(`${metrics.riskScore}/100`, 80, yPosition);
+  doc.setTextColor(0, 0, 0);
+  yPosition += 8;
+
+  doc.text("• Fatigue Index:", 25, yPosition);
+  doc.setTextColor(fatigueColor[0], fatigueColor[1], fatigueColor[2]);
+  doc.text(`${metrics.fatigueIndex !== null ? metrics.fatigueIndex + '%' : 'N/A'}`, 80, yPosition);
+  doc.setTextColor(0, 0, 0);
+  yPosition += 8;
+
+  doc.text("• Average HRV:", 25, yPosition);
+  doc.text(`${metrics.avgHRV.toFixed(1)} ms`, 80, yPosition);
+  yPosition += 15;
+
+  // Training Metrics Section
+  doc.setFontSize(16);
+  doc.setFont("helvetica", "bold");
+  doc.text("Training Metrics", 20, yPosition);
   yPosition += 12;
 
   doc.setFontSize(10);
@@ -128,42 +173,41 @@ const generateWeeklyReportPDF = (csvData: any[], currentDayIndex: number) => {
   
   if (graphData.length > 0) {
     graphData.forEach((graph) => {
-      const riskColor = graph.riskZone === "optimal" ? [34, 197, 94] : 
+      const riskColorArr = graph.riskZone === "optimal" ? [34, 197, 94] : 
                         graph.riskZone === "caution" ? [251, 146, 60] : 
                         [239, 68, 68];
       
       doc.setTextColor(0, 0, 0);
       doc.text(`• ${graph.title}:`, 25, yPosition);
-      doc.text(`${graph.currentValue}`, 80, yPosition);
+      doc.text(`${graph.currentValue}`, 90, yPosition);
       
-      doc.setTextColor(riskColor[0], riskColor[1], riskColor[2]);
-      doc.text(`(${graph.riskZone.toUpperCase()})`, 110, yPosition);
+      doc.setTextColor(riskColorArr[0], riskColorArr[1], riskColorArr[2]);
+      doc.text(`(${graph.riskZone.toUpperCase()})`, 120, yPosition);
       doc.setTextColor(0, 0, 0);
       
       yPosition += 8;
     });
   } else {
-    doc.text("• No data available", 25, yPosition);
+    doc.text("• No training data available", 25, yPosition);
     yPosition += 8;
   }
 
   yPosition += 15;
 
-  // Weekly Insights Section
+  // Weekly Insights Section (dynamic)
   doc.setFontSize(16);
   doc.setFont("helvetica", "bold");
-  doc.text("Weekly Insights", 20, yPosition);
+  doc.text("Weekly Analysis", 20, yPosition);
   yPosition += 12;
 
   doc.setFontSize(10);
   doc.setFont("helvetica", "normal");
   doc.setTextColor(60, 60, 60);
-  const insightText = "Your recovery was below target this week. Training load was high on Wednesday, causing increased strain. Consider adjusting your upcoming sessions to allow for better recovery.";
   const splitInsight = doc.splitTextToSize(insightText, pageWidth - 50);
   doc.text(splitInsight, 25, yPosition);
   yPosition += splitInsight.length * 6 + 10;
 
-  // Recommendations Section
+  // Recommendations Section (dynamic)
   doc.setFontSize(14);
   doc.setFont("helvetica", "bold");
   doc.setTextColor(0, 0, 0);
@@ -172,22 +216,31 @@ const generateWeeklyReportPDF = (csvData: any[], currentDayIndex: number) => {
 
   doc.setFontSize(10);
   doc.setFont("helvetica", "normal");
-  doc.setTextColor(60, 60, 60);
   
-  const recommendations = [
-    "Review and adjust based on your current metrics"
-  ];
-
   recommendations.forEach((rec) => {
-    doc.text(`• ${rec}`, 30, yPosition, { maxWidth: pageWidth - 60 });
-    yPosition += 8;
+    const recColor = rec.color === "red" ? [239, 68, 68] : 
+                     rec.color === "yellow" ? [251, 146, 60] : 
+                     rec.color === "blue" ? [59, 130, 246] : [34, 197, 94];
+    
+    doc.setTextColor(recColor[0], recColor[1], recColor[2]);
+    doc.text("●", 30, yPosition);
+    doc.setTextColor(60, 60, 60);
+    const recText = doc.splitTextToSize(rec.text, pageWidth - 65);
+    doc.text(recText, 38, yPosition);
+    yPosition += recText.length * 6 + 4;
   });
 
   yPosition += 15;
 
   // Accepted Challenges Section
+  if (yPosition > 220) {
+    doc.addPage();
+    yPosition = 20;
+  }
+
   doc.setFontSize(16);
   doc.setFont("helvetica", "bold");
+  doc.setTextColor(0, 0, 0);
   doc.text("Accepted Challenges", 20, yPosition);
   yPosition += 10;
 
@@ -202,6 +255,7 @@ const generateWeeklyReportPDF = (csvData: any[], currentDayIndex: number) => {
         yPosition = 20;
       }
       
+      doc.setTextColor(0, 0, 0);
       doc.text(`${index + 1}. ${challenge.text}`, 25, yPosition, { maxWidth: pageWidth - 50 });
       yPosition += 7;
       doc.setFontSize(9);
@@ -253,45 +307,6 @@ const generateWeeklyReportPDF = (csvData: any[], currentDayIndex: number) => {
     });
   } else {
     doc.text("No upcoming bookings", 25, yPosition);
-    yPosition += 10;
-  }
-
-  yPosition += 15;
-
-  // Weekly Highlights Section
-  if (yPosition > 240) {
-    doc.addPage();
-    yPosition = 20;
-  }
-
-  doc.setFontSize(16);
-  doc.setFont("helvetica", "bold");
-  doc.text("Weekly Highlights", 20, yPosition);
-  yPosition += 12;
-
-  doc.setFontSize(10);
-  doc.setFont("helvetica", "normal");
-  doc.setTextColor(60, 60, 60);
-  
-  if (csvData.length > 0 && currentDayIndex >= 0) {
-    const currentData = csvData[currentDayIndex];
-    const strain = parseFloat(currentData.Strain || "0");
-    const sleepScore = parseFloat(currentData.SleepScore || "0");
-    const restingHR = parseFloat(currentData.RestingHR || "0");
-    
-    if (strain > 0) {
-      doc.text(`• Average Strain: ${strain.toFixed(0)} TSS`, 25, yPosition);
-      yPosition += 8;
-    }
-    if (sleepScore > 0) {
-      doc.text(`• Recovery Score: ${(sleepScore / 10).toFixed(1)}/10`, 25, yPosition);
-      yPosition += 8;
-    }
-    if (restingHR > 0) {
-      doc.text(`• Resting HR: ${restingHR.toFixed(0)} bpm`, 25, yPosition);
-    }
-  } else {
-    doc.text("• No data available for this period", 25, yPosition);
   }
 
   // Save the PDF
@@ -539,9 +554,7 @@ const AcceptedChallengesSection = () => {
 
 const WeeklyInsightsSection = () => {
   const [isInfoDialogOpen, setIsInfoDialogOpen] = useState(false);
-  const csvData = getHealthData();
-  const currentDayIndex = csvData.length > 0 ? csvData.length - 1 : 0;
-  const { trends, latestTrend, isLoading } = useTrainingTrends({ days: 7 });
+  const { trends, isLoading } = useTrainingTrends({ days: 7 });
   
   // Calculate 7-day rolling averages using unified calculator
   const metrics = useMemo(() => {
@@ -834,8 +847,21 @@ const WeeklyInsightsSection = () => {
 
         {/* Download Button */}
         <button
-          onClick={() => generateWeeklyReportPDF(csvData, currentDayIndex)}
-          disabled={csvData.length === 0}
+          onClick={() => generateWeeklyReportPDF({
+            metrics: {
+              avgACWR,
+              avgStrain,
+              avgMonotony,
+              avgEWMA,
+              avgHRV,
+              recoveryScore,
+              fatigueIndex,
+              riskScore
+            },
+            insightText: generateSummary(),
+            recommendations: generateRecommendations()
+          })}
+          disabled={trends.length === 0}
           className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-purple-500/20 text-purple-400 rounded-lg border border-purple-400/30 hover:bg-purple-500/30 hover:scale-105 active:scale-95 transition-all duration-200 font-medium shadow-glow disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
         >
           <Download size={18} />
@@ -976,9 +1002,21 @@ export const YourPlan = () => {
                   <TooltipTrigger asChild>
                     <button
                       onClick={() => {
-                        const { csvData: data, currentDayIndex: index } = { csvData: [], currentDayIndex: 0 };
-                        // This will be called from the parent component context
-                        generateWeeklyReportPDF(data, index);
+                        // Use default empty metrics - user should use the button in WeeklyInsightsSection
+                        generateWeeklyReportPDF({
+                          metrics: {
+                            avgACWR: 0,
+                            avgStrain: 0,
+                            avgMonotony: 0,
+                            avgEWMA: 0,
+                            avgHRV: 0,
+                            recoveryScore: null,
+                            fatigueIndex: null,
+                            riskScore: 0
+                          },
+                          insightText: "Connect your wearable device to see personalized insights.",
+                          recommendations: [{ color: "blue", text: "Connect Oura Ring or other wearable to generate personalized recommendations." }]
+                        });
                       }}
                       className="flex items-center gap-2 px-6 py-3 bg-primary/20 text-primary rounded-lg border border-primary/30 hover:bg-primary/30 hover:scale-105 active:scale-95 transition-all duration-200 font-medium shadow-glow"
                     >

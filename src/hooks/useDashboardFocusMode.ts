@@ -1,4 +1,5 @@
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 export type FocusMode = 'recovery' | 'performance' | 'pain_management' | 'balance' | 'custom';
 
@@ -118,25 +119,100 @@ export function useDashboardFocusMode() {
 
   const [customPreferences, setCustomPreferences] = useState<CustomPreferences>(loadCustomPreferences);
   const [isEditingCustom, setIsEditingCustom] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const setMode = useCallback((mode: FocusMode) => {
+  // Load focus mode from database on mount
+  useEffect(() => {
+    async function loadFocusMode() {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+          setIsLoading(false);
+          return;
+        }
+
+        const { data, error } = await supabase
+          .from('user_focus_preferences')
+          .select('focus_mode, custom_emphasis')
+          .eq('user_id', user.id)
+          .maybeSingle();
+
+        if (!error && data) {
+          setCurrentMode(data.focus_mode as FocusMode);
+          localStorage.setItem('dashboard_focus_mode', data.focus_mode);
+
+          if (data.custom_emphasis && Object.keys(data.custom_emphasis).length > 0) {
+            const customEmphasis = data.custom_emphasis as Record<string, boolean>;
+            const emphasized = Object.entries(customEmphasis)
+              .filter(([_, isEmphasized]) => isEmphasized)
+              .map(([id]) => id);
+            const newPrefs = { emphasizedCards: emphasized };
+            setCustomPreferences(newPrefs);
+            saveCustomPreferences(newPrefs);
+          }
+        }
+      } catch (error) {
+        console.error('Error loading focus mode:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    loadFocusMode();
+  }, []);
+
+  const setMode = useCallback(async (mode: FocusMode) => {
     setCurrentMode(mode);
     localStorage.setItem('dashboard_focus_mode', mode);
+
+    // Persist to database
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        await supabase
+          .from('user_focus_preferences')
+          .upsert({
+            user_id: user.id,
+            focus_mode: mode,
+            updated_at: new Date().toISOString(),
+          });
+      }
+    } catch (error) {
+      console.error('Error saving focus mode:', error);
+    }
+
     // If switching to custom mode, open the editor
     if (mode === 'custom') {
       setIsEditingCustom(true);
     }
   }, []);
 
-  const saveCustomCardPreferences = useCallback((preferences: Record<string, boolean>) => {
+  const saveCustomCardPreferences = useCallback(async (preferences: Record<string, boolean>) => {
     const emphasized = Object.entries(preferences)
       .filter(([_, isEmphasized]) => isEmphasized)
       .map(([id]) => id);
-    
+
     const newPrefs = { emphasizedCards: emphasized };
     setCustomPreferences(newPrefs);
     saveCustomPreferences(newPrefs);
     setIsEditingCustom(false);
+
+    // Persist custom emphasis to database
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        await supabase
+          .from('user_focus_preferences')
+          .upsert({
+            user_id: user.id,
+            focus_mode: 'custom',
+            custom_emphasis: preferences,
+            updated_at: new Date().toISOString(),
+          });
+      }
+    } catch (error) {
+      console.error('Error saving custom preferences:', error);
+    }
   }, []);
 
   const cancelCustomEditing = useCallback(() => {
@@ -214,5 +290,6 @@ export function useDashboardFocusMode() {
     cancelCustomEditing,
     getCardPreferencesForEditor,
     hasCustomPreferences: customPreferences.emphasizedCards.length > 0,
+    isLoading,
   };
 }

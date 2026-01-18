@@ -1,12 +1,16 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { getFocusModePromptContext, filterRecommendationsByFocus } from "../_shared/focus-mode-prompts.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+type FocusMode = 'recovery' | 'performance' | 'pain_management' | 'balance' | 'custom';
+
 interface YvesIntelligenceRequest {
   user_id?: string;
+  focus_mode?: FocusMode;
 }
 
 interface YvesIntelligenceOutput {
@@ -611,9 +615,11 @@ Deno.serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     let userId: string | null = null;
+    let focusMode: FocusMode | null = null;
     try {
       const body = await req.json() as YvesIntelligenceRequest;
       userId = body.user_id || null;
+      focusMode = body.focus_mode || null;
     } catch {
       // No body provided
     }
@@ -636,13 +642,25 @@ Deno.serve(async (req) => {
 
     const today = new Date().toISOString().split("T")[0];
 
-    // Check for cached intelligence
+    // Load user's focus mode preference if not provided
+    if (!focusMode) {
+      const { data: focusPrefs } = await supabase
+        .from("user_focus_preferences")
+        .select("focus_mode")
+        .eq("user_id", userId)
+        .maybeSingle();
+
+      focusMode = (focusPrefs?.focus_mode as FocusMode) || 'balance';
+    }
+
+    // Check for cached intelligence with matching focus mode
     const { data: existingIntelligence } = await supabase
       .from("daily_briefings")
       .select("*")
       .eq("user_id", userId)
       .eq("date", today)
       .eq("category", "unified")
+      .eq("focus_mode", focusMode)
       .maybeSingle();
 
     if (existingIntelligence && existingIntelligence.context_used) {
@@ -924,8 +942,20 @@ Deno.serve(async (req) => {
     const coaching_mode: CoachingMode = classifyCoachingMode();
     console.log(`[generate-yves-intelligence] Coaching mode: ${coaching_mode} for user ${userId}`);
 
+    // ─── GET FOCUS MODE CONTEXT ──────────────────────────────────────────────
+    const focusModeContext = getFocusModePromptContext(focusMode!);
+    console.log(`[generate-yves-intelligence] Using focus mode: ${focusMode} for user ${userId}`);
+
     // ─── BUILD COMPREHENSIVE CONTEXT ─────────────────────────────────────────
     let promptContext = "";
+
+    // Include focus mode context
+    promptContext += `═══ FOCUS MODE: ${focusMode?.toUpperCase()} ═══\n\n`;
+    promptContext += `Topic Emphasis:\n`;
+    focusModeContext.topicEmphasis.forEach(topic => {
+      promptContext += `• ${topic}\n`;
+    });
+    promptContext += "\n";
 
     // Include reasoning context for AI
     promptContext += "═══ REASONING ENGINE OUTPUT ═══\n\n";
@@ -1084,6 +1114,8 @@ Acknowledge frustration but enforce clear boundaries on activity.`
 
 ${toneGuidance[coaching_mode]}
 
+${focusModeContext.systemPromptAddition}
+
 ═══ CRITICAL RULES ═══
 1. You must generate EXACTLY ONE dominant insight - no more, no less
 2. Recommendations must align with the JUSTIFICATION provided by the reasoning engine
@@ -1201,6 +1233,12 @@ RESPOND WITH ONLY THE JSON OBJECT.`;
         );
       }
 
+      // Apply focus mode filtering and prioritization
+      intelligenceData.recommendations = filterRecommendationsByFocus(
+        intelligenceData.recommendations,
+        focusMode!
+      );
+
       // Limit to max 3 recommendations
       intelligenceData.recommendations = intelligenceData.recommendations.slice(0, 3);
 
@@ -1232,12 +1270,18 @@ RESPOND WITH ONLY THE JSON OBJECT.`;
       user_id: userId,
       date: today,
       content: briefingContent.trim(),
-      context_used: { 
-        ...intelligenceData, 
+      context_used: {
+        ...intelligenceData,
         reasoning: reasoningContext,
-        coaching_mode 
+        coaching_mode
       },
       category: "unified",
+      focus_mode: focusMode,
+      focus_context: {
+        mode: focusMode,
+        emphasis: focusModeContext.topicEmphasis,
+        applied_at: new Date().toISOString()
+      }
     });
 
     // Save recommendations
@@ -1260,11 +1304,13 @@ RESPOND WITH ONLY THE JSON OBJECT.`;
         data: intelligenceData,
         content: briefingContent.trim(),
         created_at: new Date().toISOString(),
+        focus_mode: focusMode,
         reasoning: {
           should_speak: true,
           confidence: reasoningContext.overall_confidence,
           justification: reasoningContext.justification,
           coaching_mode,
+          focus_mode: focusMode,
           layers: {
             layer1: { pass: reasoningContext.layer1_physiological.pass, confidence: reasoningContext.layer1_physiological.confidence },
             layer2: { pass: reasoningContext.layer2_risk_trajectory.pass, confidence: reasoningContext.layer2_risk_trajectory.confidence },

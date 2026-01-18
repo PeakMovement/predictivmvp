@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import type { FocusMode } from "./useDashboardFocusMode";
 
 export interface YvesDailyBriefing {
   summary: string;
@@ -29,9 +30,10 @@ interface IntelligenceState {
   isGenerating: boolean;
   error: string | null;
   cached: boolean;
+  focusMode?: FocusMode;
 }
 
-export function useYvesIntelligence() {
+export function useYvesIntelligence(focusMode?: FocusMode) {
   const [state, setState] = useState<IntelligenceState>({
     data: null,
     content: null,
@@ -43,7 +45,7 @@ export function useYvesIntelligence() {
   });
   const { toast } = useToast();
 
-  const fetchIntelligence = useCallback(async (forceRefresh = false) => {
+  const fetchIntelligence = useCallback(async (forceRefresh = false, currentFocusMode?: FocusMode) => {
     try {
       setState(prev => ({ 
         ...prev, 
@@ -58,8 +60,10 @@ export function useYvesIntelligence() {
         return;
       }
 
-      // If not force refresh, try to get cached data first
-      if (!forceRefresh) {
+      const activeFocusMode = currentFocusMode || focusMode;
+
+      // If not force refresh, try to get cached data first (only if same focus mode)
+      if (!forceRefresh && activeFocusMode) {
         const today = new Date().toISOString().split("T")[0];
         const { data: cachedData } = await supabase
           .from("daily_briefings")
@@ -67,6 +71,7 @@ export function useYvesIntelligence() {
           .eq("user_id", user.id)
           .eq("date", today)
           .eq("category", "unified")
+          .eq("focus_mode", activeFocusMode)
           .maybeSingle();
 
         if (cachedData?.context_used) {
@@ -79,6 +84,7 @@ export function useYvesIntelligence() {
             isGenerating: false,
             error: null,
             cached: true,
+            focusMode: activeFocusMode,
           });
           return;
         }
@@ -86,7 +92,10 @@ export function useYvesIntelligence() {
 
       // Call edge function to generate fresh intelligence
       const { data, error } = await supabase.functions.invoke("generate-yves-intelligence", {
-        body: { user_id: user.id },
+        body: {
+          user_id: user.id,
+          focus_mode: activeFocusMode,
+        },
       });
 
       if (error) throw error;
@@ -100,6 +109,7 @@ export function useYvesIntelligence() {
           isGenerating: false,
           error: null,
           cached: data.cached || false,
+          focusMode: activeFocusMode,
         });
 
         if (forceRefresh && !data.cached) {
@@ -130,15 +140,15 @@ export function useYvesIntelligence() {
         });
       }
     }
-  }, [toast]);
+  }, [toast, focusMode]);
 
-  const refresh = useCallback(() => {
-    fetchIntelligence(true);
+  const refresh = useCallback((newFocusMode?: FocusMode) => {
+    fetchIntelligence(true, newFocusMode);
   }, [fetchIntelligence]);
 
   useEffect(() => {
-    fetchIntelligence(false);
-  }, [fetchIntelligence]);
+    fetchIntelligence(false, focusMode);
+  }, [fetchIntelligence, focusMode]);
 
   return {
     ...state,

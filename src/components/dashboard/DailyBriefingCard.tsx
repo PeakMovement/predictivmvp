@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Loader2, RefreshCw, Sparkles, Calendar, AlertTriangle, TrendingUp, ChevronDown, Brain } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Loader2, RefreshCw, Sparkles, Calendar, AlertTriangle, TrendingUp, ChevronDown, Brain, Heart, Zap, ShieldAlert, Scale, Settings } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { YvesDailyBriefing } from "@/hooks/useYvesIntelligence";
 import { cn } from "@/lib/utils";
@@ -17,6 +18,7 @@ import { BriefingFooter } from "./BriefingFooter";
 import { OneThingThatMatters } from "./OneThingThatMatters";
 import { usePersonalizedInsights } from "@/hooks/usePersonalizedInsights";
 import { useRelevantDocuments } from "@/hooks/useRelevantDocuments";
+import type { FocusMode } from "@/hooks/useDashboardFocusMode";
 
 interface DailyBriefingCardProps {
   briefing: YvesDailyBriefing | null;
@@ -26,7 +28,41 @@ interface DailyBriefingCardProps {
   isGenerating: boolean;
   cached: boolean;
   onRefresh: () => void;
+  focusMode?: FocusMode;
 }
+
+const focusModeConfig = {
+  recovery: {
+    label: "Recovery-Focused",
+    icon: Heart,
+    description: "Emphasizing sleep, HRV, and strain reduction",
+    color: "bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/20",
+  },
+  performance: {
+    label: "Performance-Optimized",
+    icon: Zap,
+    description: "Emphasizing training optimization and next best workouts",
+    color: "bg-purple-500/10 text-purple-700 dark:text-purple-400 border-purple-500/20",
+  },
+  pain_management: {
+    label: "Pain Management",
+    icon: ShieldAlert,
+    description: "Emphasizing symptom tracking and gentle movement",
+    color: "bg-orange-500/10 text-orange-700 dark:text-orange-400 border-orange-500/20",
+  },
+  balance: {
+    label: "Balanced View",
+    icon: Scale,
+    description: "Holistic wellbeing across all areas",
+    color: "bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-500/20",
+  },
+  custom: {
+    label: "Custom Focus",
+    icon: Settings,
+    description: "Based on your emphasized priorities",
+    color: "bg-indigo-500/10 text-indigo-700 dark:text-indigo-400 border-indigo-500/20",
+  },
+};
 
 export function DailyBriefingCard({
   briefing,
@@ -36,6 +72,7 @@ export function DailyBriefingCard({
   isGenerating,
   cached,
   onRefresh,
+  focusMode,
 }: DailyBriefingCardProps) {
   if (isLoading) {
     return (
@@ -52,6 +89,9 @@ export function DailyBriefingCard({
       </Card>
     );
   }
+
+  const focusConfig = focusMode ? focusModeConfig[focusMode] : null;
+  const FocusIcon = focusConfig?.icon;
 
   return (
     <Card className="animate-fade-in bg-glass backdrop-blur-xl border-glass-border shadow-glass">
@@ -75,12 +115,24 @@ export function DailyBriefingCard({
             )}
           </Button>
         </div>
-        {createdAt && (
-          <CardDescription className="flex items-center gap-2 text-xs">
-            <Calendar className="h-3 w-3" />
-            {cached ? "Generated" : "Updated"} {formatDistanceToNow(new Date(createdAt), { addSuffix: true })}
-          </CardDescription>
-        )}
+        <div className="flex items-center gap-2 flex-wrap">
+          {createdAt && (
+            <CardDescription className="flex items-center gap-2 text-xs">
+              <Calendar className="h-3 w-3" />
+              {cached ? "Generated" : "Updated"} {formatDistanceToNow(new Date(createdAt), { addSuffix: true })}
+            </CardDescription>
+          )}
+          {focusConfig && FocusIcon && (
+            <Badge
+              variant="outline"
+              className={cn("text-xs font-normal", focusConfig.color)}
+              title={focusConfig.description}
+            >
+              <FocusIcon className="h-3 w-3 mr-1" />
+              {focusConfig.label}
+            </Badge>
+          )}
+        </div>
       </CardHeader>
       <CardContent className="space-y-4">
         {/* Personal Context Section */}

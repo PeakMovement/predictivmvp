@@ -94,7 +94,7 @@ export const Dashboard = () => {
     isGenerating: intelligenceGenerating,
     cached: intelligenceCached,
     refresh: refreshIntelligence,
-  } = useYvesIntelligence();
+  } = useYvesIntelligence(currentMode);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
@@ -320,6 +320,7 @@ export const Dashboard = () => {
                       isGenerating={intelligenceGenerating}
                       cached={intelligenceCached}
                       onRefresh={refreshIntelligence}
+                      focusMode={currentMode}
                     />
                   </div>
                 </LayoutBlock>

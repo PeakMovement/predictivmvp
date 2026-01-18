@@ -11,6 +11,7 @@ type FocusMode = 'recovery' | 'performance' | 'pain_management' | 'balance' | 'c
 interface YvesIntelligenceRequest {
   user_id?: string;
   focus_mode?: FocusMode;
+  force_refresh?: boolean;
 }
 
 interface YvesIntelligenceOutput {
@@ -616,10 +617,12 @@ Deno.serve(async (req) => {
 
     let userId: string | null = null;
     let focusMode: FocusMode | null = null;
+    let forceRefresh = false;
     try {
       const body = await req.json() as YvesIntelligenceRequest;
       userId = body.user_id || null;
       focusMode = body.focus_mode || null;
+      forceRefresh = body.force_refresh || false;
     } catch {
       // No body provided
     }
@@ -663,18 +666,30 @@ Deno.serve(async (req) => {
       .eq("focus_mode", focusMode)
       .maybeSingle();
 
-    if (existingIntelligence && existingIntelligence.context_used) {
-      console.log(`[generate-yves-intelligence] Returning cached intelligence for user ${userId}`);
-      return new Response(
-        JSON.stringify({
-          success: true,
-          cached: true,
-          data: existingIntelligence.context_used as YvesIntelligenceOutput,
-          content: existingIntelligence.content,
-          created_at: existingIntelligence.created_at,
-        }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+    // Check if we should use cache
+    if (!forceRefresh && existingIntelligence && existingIntelligence.context_used) {
+      // Check cache age (6-hour TTL)
+      const cacheAge = Date.now() - new Date(existingIntelligence.created_at).getTime();
+      const sixHoursInMs = 6 * 60 * 60 * 1000;
+
+      if (cacheAge < sixHoursInMs) {
+        console.log(`[generate-yves-intelligence] Returning cached intelligence for user ${userId} (age: ${Math.round(cacheAge / 1000 / 60)} minutes)`);
+        return new Response(
+          JSON.stringify({
+            success: true,
+            cached: true,
+            data: existingIntelligence.context_used as YvesIntelligenceOutput,
+            content: existingIntelligence.content,
+            created_at: existingIntelligence.created_at,
+            focus_mode: focusMode,
+          }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      } else {
+        console.log(`[generate-yves-intelligence] Cache expired for user ${userId} (age: ${Math.round(cacheAge / 1000 / 60)} minutes), regenerating`);
+      }
+    } else if (forceRefresh) {
+      console.log(`[generate-yves-intelligence] Force refresh requested for user ${userId}, bypassing cache`);
     }
 
     // ─── CHECK DATA MATURITY FIRST ────────────────────────────────────────────

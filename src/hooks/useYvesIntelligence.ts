@@ -31,6 +31,7 @@ interface IntelligenceState {
   error: string | null;
   cached: boolean;
   focusMode?: FocusMode;
+  previousFocusMode?: FocusMode;
 }
 
 export function useYvesIntelligence(focusMode?: FocusMode) {
@@ -95,6 +96,7 @@ export function useYvesIntelligence(focusMode?: FocusMode) {
         body: {
           user_id: user.id,
           focus_mode: activeFocusMode,
+          force_refresh: forceRefresh,
         },
       });
 
@@ -147,7 +149,15 @@ export function useYvesIntelligence(focusMode?: FocusMode) {
   }, [fetchIntelligence]);
 
   useEffect(() => {
-    fetchIntelligence(false, focusMode);
+    const shouldForceRefresh = state.previousFocusMode && state.previousFocusMode !== focusMode;
+
+    if (shouldForceRefresh) {
+      console.log(`[useYvesIntelligence] Focus mode changed from ${state.previousFocusMode} to ${focusMode}, forcing refresh`);
+    }
+
+    fetchIntelligence(shouldForceRefresh || false, focusMode);
+
+    setState(prev => ({ ...prev, previousFocusMode: focusMode }));
   }, [fetchIntelligence, focusMode]);
 
   return {

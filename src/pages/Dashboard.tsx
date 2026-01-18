@@ -3,6 +3,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import OuraSyncStatus from "@/components/OuraSyncStatus";
 import { YvesRecommendationsCard } from "@/components/dashboard/YvesRecommendationsCard";
 import { DailyBriefingCard } from "@/components/dashboard/DailyBriefingCard";
+import { BriefingDiagnostics } from "@/components/dashboard/BriefingDiagnostics";
 import { RiskScoreCard } from "@/components/dashboard/RiskScoreCard";
 import { TodayActivitySection } from "@/components/dashboard/TodayActivitySection";
 import { FocusModeSelector } from "@/components/dashboard/FocusModeSelector";
@@ -344,6 +345,18 @@ export const Dashboard = () => {
                       isLoading={intelligenceLoading}
                     />
                   </div>
+                </LayoutBlock>
+
+                {/* Diagnostics (for troubleshooting) */}
+                <LayoutBlock
+                  blockId="briefingDiagnostics"
+                  displayName="Briefing Diagnostics"
+                  pageId="dashboard"
+                  size="wide"
+                  visible={true}
+                  className="mb-10"
+                >
+                  <BriefingDiagnostics />
                 </LayoutBlock>
               </div>
             </>

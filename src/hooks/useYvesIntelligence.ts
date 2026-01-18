@@ -92,12 +92,22 @@ export function useYvesIntelligence(focusMode?: FocusMode) {
       }
 
       // Call edge function to generate fresh intelligence
+      console.log(`[useYvesIntelligence] Invoking generate-yves-intelligence for user ${user.id}, focus_mode: ${activeFocusMode}, force_refresh: ${forceRefresh}`);
+
       const { data, error } = await supabase.functions.invoke("generate-yves-intelligence", {
         body: {
           user_id: user.id,
           focus_mode: activeFocusMode,
           force_refresh: forceRefresh,
         },
+      });
+
+      console.log(`[useYvesIntelligence] Edge function response:`, {
+        success: data?.success,
+        cached: data?.cached,
+        hasData: !!data?.data,
+        error: error || data?.error,
+        reasoning: data?.reasoning
       });
 
       if (error) throw error;

@@ -637,6 +637,7 @@ Deno.serve(async (req) => {
     }
 
     if (!userId) {
+      console.error("[generate-yves-intelligence] No user ID provided");
       return new Response(
         JSON.stringify({ success: false, error: "User ID required" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -644,6 +645,7 @@ Deno.serve(async (req) => {
     }
 
     const today = new Date().toISOString().split("T")[0];
+    console.log(`[generate-yves-intelligence] Starting intelligence generation for user ${userId}, date: ${today}, force_refresh: ${forceRefresh}`);
 
     // Load user's focus mode preference if not provided
     if (!focusMode) {
@@ -693,11 +695,42 @@ Deno.serve(async (req) => {
     }
 
     // ─── CHECK DATA MATURITY FIRST ────────────────────────────────────────────
-    const { data: dataMaturity } = await supabase
+    let { data: dataMaturity, error: maturityError } = await supabase
       .from("user_data_maturity")
       .select("*")
       .eq("user_id", userId)
       .maybeSingle();
+
+    // If no maturity data exists, calculate it now
+    if (!dataMaturity && !maturityError) {
+      console.log(`[generate-yves-intelligence] No maturity data found for user ${userId}, calculating now...`);
+      try {
+        const maturityCalcResponse = await supabase.functions.invoke("calculate-data-maturity", {
+          body: { user_id: userId }
+        });
+
+        if (maturityCalcResponse.data?.success) {
+          // Refetch the maturity data
+          const refetch = await supabase
+            .from("user_data_maturity")
+            .select("*")
+            .eq("user_id", userId)
+            .maybeSingle();
+          dataMaturity = refetch.data;
+          console.log(`[generate-yves-intelligence] Successfully calculated maturity for user ${userId}`);
+        }
+      } catch (calcError) {
+        console.error(`[generate-yves-intelligence] Failed to calculate maturity for user ${userId}:`, calcError);
+      }
+    }
+
+    console.log(`[generate-yves-intelligence] Data maturity check for user ${userId}:`, {
+      maturity_level: dataMaturity?.maturity_level || 'not_found',
+      maturity_score: dataMaturity?.maturity_score,
+      data_days: dataMaturity?.data_days,
+      wearable_connected: dataMaturity?.wearable_connected,
+      error: maturityError
+    });
 
     // If maturity is insufficient, return encouraging onboarding message
     if (dataMaturity?.maturity_level === 'insufficient') {
@@ -745,6 +778,8 @@ Deno.serve(async (req) => {
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
     const sevenDaysAgoStr = sevenDaysAgo.toISOString().split("T")[0];
 
+    console.log(`[generate-yves-intelligence] Loading user data for past 7 days (since ${sevenDaysAgoStr})...`);
+
     // Batch 1: Core wearable & dynamic data
     const [
       wearableSummaryResult,
@@ -765,6 +800,17 @@ Deno.serve(async (req) => {
       supabase.from("user_deviations").select("*").eq("user_id", userId).gte("date", sevenDaysAgoStr).order("date", { ascending: false }),
       supabase.from("symptom_check_ins").select("*").eq("user_id", userId).order("created_at", { ascending: false }).limit(5),
     ]);
+
+    console.log(`[generate-yves-intelligence] Data loaded:`, {
+      wearable_sessions: wearableSessionsResult.data?.length || 0,
+      wearable_summary: wearableSummaryResult.data?.length || 0,
+      training_trends: trainingTrendsResult.data?.length || 0,
+      recovery_trends: recoveryTrendsResult.data?.length || 0,
+      health_anomalies: healthAnomaliesResult.data?.length || 0,
+      user_baselines: userBaselinesResult.data?.length || 0,
+      user_deviations: userDeviationsResult.data?.length || 0,
+      symptom_check_ins: symptomCheckInsResult.data?.length || 0,
+    });
 
     // Batch 2: Static/contextual profile data
     const [
@@ -862,11 +908,16 @@ Deno.serve(async (req) => {
       should_speak: reasoningContext.should_speak,
       overall_confidence: reasoningContext.overall_confidence,
       silence_reason: reasoningContext.silence_reason,
-      justification: reasoningContext.justification
+      justification: reasoningContext.justification,
+      layer1_pass: reasoningContext.layer1_physiological.pass,
+      layer2_pass: reasoningContext.layer2_risk_trajectory.pass,
+      layer3_pass: reasoningContext.layer3_behavior_psychology.pass,
+      layer4_pass: reasoningContext.layer4_interests_adherence.pass,
     });
 
     // ─── SILENCE IS A VALID OUTCOME ───────────────────────────────────────────
     if (!reasoningContext.should_speak) {
+      console.log(`[generate-yves-intelligence] Reasoning engine says SILENCE for user ${userId}. Reason: ${reasoningContext.silence_reason}`);
       const silentResponse: YvesIntelligenceOutput = {
         dailyBriefing: {
           summary: reasoningContext.overall_confidence < 25
@@ -1192,7 +1243,11 @@ RESPOND WITH ONLY THE JSON OBJECT.`;
 
     if (!aiResponse.ok) {
       const errorText = await aiResponse.text();
-      console.error(`[generate-yves-intelligence] AI error:`, errorText);
+      console.error(`[generate-yves-intelligence] AI API error for user ${userId}:`, {
+        status: aiResponse.status,
+        statusText: aiResponse.statusText,
+        error: errorText
+      });
       
       if (aiResponse.status === 429) {
         return new Response(
@@ -1216,7 +1271,10 @@ RESPOND WITH ONLY THE JSON OBJECT.`;
     const aiData = await aiResponse.json();
     let content = aiData.choices[0]?.message?.content;
 
+    console.log(`[generate-yves-intelligence] AI response received for user ${userId}, content length: ${content?.length || 0}`);
+
     if (!content) {
+      console.error(`[generate-yves-intelligence] AI returned no content for user ${userId}`);
       return new Response(
         JSON.stringify({ success: false, error: "AI returned no content" }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -1228,6 +1286,7 @@ RESPOND WITH ONLY THE JSON OBJECT.`;
     try {
       content = content.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
       intelligenceData = JSON.parse(content);
+      console.log(`[generate-yves-intelligence] Successfully parsed AI response for user ${userId}`);
       
       // Extract todaysFocus from summary if not provided
       if (!intelligenceData.dailyBriefing.todaysFocus) {
@@ -1281,7 +1340,9 @@ RESPOND WITH ONLY THE JSON OBJECT.`;
         : '');
 
     // ─── SAVE TO DATABASE WITH REASONING CONTEXT ────────────────────────────
-    await supabase.from("daily_briefings").upsert({
+    console.log(`[generate-yves-intelligence] Saving briefing to database for user ${userId}, date: ${today}, category: unified, focus_mode: ${focusMode}`);
+
+    const { data: savedBriefing, error: saveError } = await supabase.from("daily_briefings").upsert({
       user_id: userId,
       date: today,
       content: briefingContent.trim(),
@@ -1297,7 +1358,13 @@ RESPOND WITH ONLY THE JSON OBJECT.`;
         emphasis: focusModeContext.topicEmphasis,
         applied_at: new Date().toISOString()
       }
-    });
+    }).select();
+
+    if (saveError) {
+      console.error(`[generate-yves-intelligence] Database save error for user ${userId}:`, saveError);
+    } else {
+      console.log(`[generate-yves-intelligence] Successfully saved briefing for user ${userId}`, savedBriefing);
+    }
 
     // Save recommendations
     for (const rec of intelligenceData.recommendations) {

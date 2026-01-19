@@ -1,9 +1,11 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { supabase } from "@/integrations/supabase/client";
-import { AlertCircle, CheckCircle, XCircle, RefreshCw } from "lucide-react";
+import { AlertCircle, CheckCircle, XCircle, RefreshCw, ChevronDown } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { cn } from "@/lib/utils";
 
 interface DiagnosticResult {
   label: string;
@@ -14,6 +16,7 @@ interface DiagnosticResult {
 export function BriefingDiagnostics() {
   const [diagnostics, setDiagnostics] = useState<DiagnosticResult[]>([]);
   const [isRunning, setIsRunning] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
   const { toast } = useToast();
 
   const runDiagnostics = async () => {
@@ -190,8 +193,11 @@ export function BriefingDiagnostics() {
   };
 
   useEffect(() => {
-    runDiagnostics();
-  }, []);
+    // Only run diagnostics when the section is expanded
+    if (isOpen && diagnostics.length === 0) {
+      runDiagnostics();
+    }
+  }, [isOpen]);
 
   const getStatusIcon = (status: DiagnosticResult['status']) => {
     switch (status) {
@@ -206,55 +212,72 @@ export function BriefingDiagnostics() {
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center justify-between">
-          <span>Briefing Diagnostics</span>
-          <Button
-            onClick={runDiagnostics}
-            disabled={isRunning}
-            variant="outline"
-            size="sm"
-          >
-            <RefreshCw className={`h-4 w-4 mr-2 ${isRunning ? 'animate-spin' : ''}`} />
-            Run Check
-          </Button>
-        </CardTitle>
-        <CardDescription>
-          Check why your daily briefing content isn't changing
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        {diagnostics.length === 0 ? (
-          <p className="text-sm text-muted-foreground">Run diagnostics to see results...</p>
-        ) : (
-          <>
-            {diagnostics.map((result, index) => (
-              <div key={index} className="flex items-start gap-3 p-3 rounded-lg bg-secondary/50">
-                <div className="flex-shrink-0 mt-0.5">
-                  {getStatusIcon(result.status)}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium text-sm">{result.label}</p>
-                  <p className="text-sm text-muted-foreground mt-1">{result.details}</p>
-                </div>
-              </div>
-            ))}
+      <Collapsible open={isOpen} onOpenChange={setIsOpen}>
+        <CardHeader>
+          <CollapsibleTrigger asChild>
+            <button className="w-full text-left group">
+              <CardTitle className="flex items-center justify-between">
+                <span className="flex items-center gap-2">
+                  Briefing Diagnostics
+                  <ChevronDown className={cn(
+                    "h-4 w-4 text-muted-foreground transition-transform duration-200",
+                    isOpen && "rotate-180"
+                  )} />
+                </span>
+                <Button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    runDiagnostics();
+                  }}
+                  disabled={isRunning}
+                  variant="outline"
+                  size="sm"
+                >
+                  <RefreshCw className={`h-4 w-4 mr-2 ${isRunning ? 'animate-spin' : ''}`} />
+                  Run Check
+                </Button>
+              </CardTitle>
+              <CardDescription className="mt-1.5">
+                Check why your daily briefing content isn't changing
+              </CardDescription>
+            </button>
+          </CollapsibleTrigger>
+        </CardHeader>
+        <CollapsibleContent>
+          <CardContent className="space-y-4">
+            {diagnostics.length === 0 ? (
+              <p className="text-sm text-muted-foreground">Run diagnostics to see results...</p>
+            ) : (
+              <>
+                {diagnostics.map((result, index) => (
+                  <div key={index} className="flex items-start gap-3 p-3 rounded-lg bg-secondary/50">
+                    <div className="flex-shrink-0 mt-0.5">
+                      {getStatusIcon(result.status)}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-sm">{result.label}</p>
+                      <p className="text-sm text-muted-foreground mt-1">{result.details}</p>
+                    </div>
+                  </div>
+                ))}
 
-            <div className="pt-4 border-t">
-              <Button
-                onClick={forceRegenerateNow}
-                className="w-full"
-                variant="default"
-              >
-                Force Regenerate Briefing Now
-              </Button>
-              <p className="text-xs text-muted-foreground mt-2 text-center">
-                This will bypass cache and generate fresh content based on your latest data
-              </p>
-            </div>
-          </>
-        )}
-      </CardContent>
+                <div className="pt-4 border-t">
+                  <Button
+                    onClick={forceRegenerateNow}
+                    className="w-full"
+                    variant="default"
+                  >
+                    Force Regenerate Briefing Now
+                  </Button>
+                  <p className="text-xs text-muted-foreground mt-2 text-center">
+                    This will bypass cache and generate fresh content based on your latest data
+                  </p>
+                </div>
+              </>
+            )}
+          </CardContent>
+        </CollapsibleContent>
+      </Collapsible>
     </Card>
   );
 }

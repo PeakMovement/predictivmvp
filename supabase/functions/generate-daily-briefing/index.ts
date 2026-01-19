@@ -152,6 +152,87 @@ Deno.serve(async (req) => {
           .limit(1)
           .maybeSingle();
 
+        // ─── LOAD EXTENDED PROFILE DATA FOR DEEP PERSONALIZATION ─────────────
+        const { data: trainingProfile } = await supabase
+          .from("user_training")
+          .select("*")
+          .eq("user_id", uid)
+          .maybeSingle();
+
+        const { data: nutritionProfile } = await supabase
+          .from("user_nutrition")
+          .select("*")
+          .eq("user_id", uid)
+          .maybeSingle();
+
+        const { data: lifestyleProfile } = await supabase
+          .from("user_lifestyle")
+          .select("*")
+          .eq("user_id", uid)
+          .maybeSingle();
+
+        const { data: interestsProfile } = await supabase
+          .from("user_interests")
+          .select("*")
+          .eq("user_id", uid)
+          .maybeSingle();
+
+        const { data: mindsetProfile } = await supabase
+          .from("user_mindset")
+          .select("*")
+          .eq("user_id", uid)
+          .maybeSingle();
+
+        const { data: recoveryProfile } = await supabase
+          .from("user_recovery")
+          .select("*")
+          .eq("user_id", uid)
+          .maybeSingle();
+
+        const { data: wellnessGoals } = await supabase
+          .from("user_wellness_goals")
+          .select("*")
+          .eq("user_id", uid)
+          .maybeSingle();
+
+        // ─── LOAD TONE PREFERENCE FROM PROFILES ──────────────────────────────
+        const { data: profilesData } = await supabase
+          .from("profiles")
+          .select("tone_preference, memory_cleared_at")
+          .eq("id", uid)
+          .maybeSingle();
+
+        // ─── LOAD ENGAGEMENT HISTORY FOR RELATIONSHIP METRICS ─────────────────
+        const { data: engagementEvents } = await supabase
+          .from("engagement_events")
+          .select("event_type, created_at, metadata")
+          .eq("user_id", uid)
+          .order("created_at", { ascending: false })
+          .limit(50);
+
+        // ─── LOAD RECOMMENDATION OUTCOMES FOR LEARNING ────────────────────────
+        const { data: recOutcomes } = await supabase
+          .from("recommendation_outcomes")
+          .select("outcome_type, user_feedback, created_at")
+          .eq("user_id", uid)
+          .order("created_at", { ascending: false })
+          .limit(20);
+
+        // ─── LOAD HISTORICAL BRIEFINGS FOR PATTERN RECOGNITION ────────────────
+        const { data: pastBriefings } = await supabase
+          .from("daily_briefings")
+          .select("date, category, content")
+          .eq("user_id", uid)
+          .order("date", { ascending: false })
+          .limit(7);
+
+        // ─── CALCULATE DATA MATURITY ──────────────────────────────────────────
+        const { data: dataMaturity } = await supabase
+          .from("user_data_maturity")
+          .select("*")
+          .eq("user_id", uid)
+          .maybeSingle();
+
         // ─── BUILD CONTEXT DATA ──────────────────────────────────────────────
         const contextData: Record<string, unknown> = {
           wearable_summary: wearableSummary || [],
@@ -164,6 +245,18 @@ Deno.serve(async (req) => {
           adaptation_profile: adaptationProfile || null,
           risk_trajectories: riskTrajectories || null,
           health_profile: healthProfile || null,
+          training_profile: trainingProfile || null,
+          nutrition_profile: nutritionProfile || null,
+          lifestyle_profile: lifestyleProfile || null,
+          interests_profile: interestsProfile || null,
+          mindset_profile: mindsetProfile || null,
+          recovery_profile: recoveryProfile || null,
+          wellness_goals: wellnessGoals || null,
+          profiles_data: profilesData || null,
+          engagement_events: engagementEvents || [],
+          recommendation_outcomes: recOutcomes || [],
+          past_briefings: pastBriefings || [],
+          data_maturity: dataMaturity || null,
         };
 
         const hasWearableData = (wearableSummary && wearableSummary.length > 0) || 
@@ -216,6 +309,121 @@ Deno.serve(async (req) => {
 
         const coaching_mode: CoachingMode = classifyCoachingMode();
         console.log(`[generate-daily-briefing] Coaching mode: ${coaching_mode} for user ${uid}`);
+
+        // ─── CALCULATE RELATIONSHIP METRICS ───────────────────────────────────
+        const calculateRelationshipStage = (): { stage: string; daysActive: number; engagementLevel: string } => {
+          const createdAt = userProfile?.created_at || new Date().toISOString();
+          const daysActive = Math.floor((Date.now() - new Date(createdAt).getTime()) / (1000 * 60 * 60 * 24));
+
+          // Calculate engagement level from recent events
+          const recentEvents = engagementEvents?.filter(e => {
+            const eventDate = new Date(e.created_at);
+            const daysSince = (Date.now() - eventDate.getTime()) / (1000 * 60 * 60 * 24);
+            return daysSince <= 7;
+          }) || [];
+
+          let engagementLevel = 'low';
+          if (recentEvents.length > 20) engagementLevel = 'very_high';
+          else if (recentEvents.length > 10) engagementLevel = 'high';
+          else if (recentEvents.length > 5) engagementLevel = 'moderate';
+
+          let stage = 'new';
+          if (daysActive > 56) stage = 'established';
+          else if (daysActive > 14) stage = 'regular';
+
+          return { stage, daysActive, engagementLevel };
+        };
+
+        const relationshipMetrics = calculateRelationshipStage();
+        console.log(`[generate-daily-briefing] Relationship: ${relationshipMetrics.stage} (${relationshipMetrics.daysActive} days), engagement: ${relationshipMetrics.engagementLevel}`);
+
+        // ─── CALCULATE HISTORICAL COMPARISONS ─────────────────────────────────
+        const calculateHistoricalContext = (): Record<string, unknown> => {
+          if (!wearableSessions || wearableSessions.length === 0) return {};
+
+          const latest = wearableSessions[0];
+          const context: Record<string, unknown> = {};
+
+          // Compare to 30-day averages if we have enough data
+          if (wearableSessions.length >= 3) {
+            const readinessScores = wearableSessions.filter(s => s.readiness_score).map(s => s.readiness_score);
+            const sleepScores = wearableSessions.filter(s => s.sleep_score).map(s => s.sleep_score);
+            const hrvValues = wearableSessions.filter(s => s.hrv_avg).map(s => s.hrv_avg);
+
+            if (readinessScores.length > 0 && latest.readiness_score) {
+              const avg = readinessScores.reduce((a, b) => a + b, 0) / readinessScores.length;
+              const max = Math.max(...readinessScores);
+              context.readiness_comparison = {
+                current: latest.readiness_score,
+                recent_avg: Math.round(avg),
+                recent_max: max,
+                trend: latest.readiness_score > avg ? 'above_average' : 'below_average'
+              };
+            }
+
+            if (sleepScores.length > 0 && latest.sleep_score) {
+              const avg = sleepScores.reduce((a, b) => a + b, 0) / sleepScores.length;
+              const max = Math.max(...sleepScores);
+              context.sleep_comparison = {
+                current: latest.sleep_score,
+                recent_avg: Math.round(avg),
+                recent_max: max,
+                is_best: latest.sleep_score >= max
+              };
+            }
+
+            if (hrvValues.length > 0 && latest.hrv_avg) {
+              const avg = hrvValues.reduce((a, b) => a + b, 0) / hrvValues.length;
+              context.hrv_comparison = {
+                current: Math.round(latest.hrv_avg),
+                recent_avg: Math.round(avg),
+                deviation_pct: Math.round(((latest.hrv_avg - avg) / avg) * 100)
+              };
+            }
+          }
+
+          return context;
+        };
+
+        const historicalContext = calculateHistoricalContext();
+
+        // ─── PERSONA CLASSIFICATION ───────────────────────────────────────────
+        type PersonaType = 'analytical' | 'intuitive' | 'achiever' | 'cautious' | 'balanced';
+
+        const classifyPersona = (): PersonaType => {
+          // Analyze recommendation outcomes for motivation type
+          const outcomes = recOutcomes || [];
+          const followedCount = outcomes.filter(o => o.outcome_type === 'followed').length;
+          const followRate = outcomes.length > 0 ? followedCount / outcomes.length : 0.5;
+
+          // Check for analytical behavior (checks data frequently)
+          const dataCheckEvents = engagementEvents?.filter(e =>
+            e.event_type === 'app_opened' || e.event_type === 'briefing_viewed'
+          ) || [];
+          const isAnalytical = dataCheckEvents.length > 15; // High frequency checks
+
+          // Check for achiever traits (high goals, high performance mode)
+          const hasAmbitiousGoals = wellnessGoals?.priority === 'high' ||
+            userProfile?.goals?.some((g: string) =>
+              g.toLowerCase().includes('compete') ||
+              g.toLowerCase().includes('pr') ||
+              g.toLowerCase().includes('performance')
+            );
+
+          // Check for cautious behavior (frequent symptom logging, low risk tolerance)
+          const symptomLogRate = symptomCheckIns?.length || 0;
+          const isCautious = symptomLogRate > 3 || followRate < 0.3;
+
+          if (isAnalytical && hasAmbitiousGoals) return 'analytical';
+          if (hasAmbitiousGoals && followRate > 0.7) return 'achiever';
+          if (isCautious) return 'cautious';
+          if (!isAnalytical && followRate > 0.6) return 'intuitive';
+
+          return 'balanced';
+        };
+
+        const persona = classifyPersona();
+        console.log(`[generate-daily-briefing] Persona: ${persona}`);
 
         // ─── BUILD PROMPT CONTEXT ────────────────────────────────────────────
         let promptContext = "";
@@ -310,6 +518,79 @@ Deno.serve(async (req) => {
           if (userProfile.conditions?.length > 0) promptContext += `- Conditions: ${userProfile.conditions.join(", ")}\n`;
           promptContext += "\n";
         }
+
+        // Add training profile for sport-specific language
+        if (trainingProfile) {
+          promptContext += `Training Profile:\n`;
+          if (trainingProfile.preferred_activities?.length > 0) {
+            promptContext += `- Preferred Activities: ${trainingProfile.preferred_activities.join(", ")}\n`;
+          }
+          if (trainingProfile.training_frequency) promptContext += `- Frequency: ${trainingProfile.training_frequency}\n`;
+          if (trainingProfile.intensity_preference) promptContext += `- Intensity Preference: ${trainingProfile.intensity_preference}\n`;
+          if (trainingProfile.equipment_access?.length > 0) {
+            promptContext += `- Available Equipment: ${trainingProfile.equipment_access.join(", ")}\n`;
+          }
+          promptContext += "\n";
+        }
+
+        // Add lifestyle context for timing and constraints
+        if (lifestyleProfile) {
+          promptContext += `Lifestyle Context:\n`;
+          if (lifestyleProfile.work_schedule) promptContext += `- Work Schedule: ${lifestyleProfile.work_schedule}\n`;
+          if (lifestyleProfile.stress_level) promptContext += `- Stress Level: ${lifestyleProfile.stress_level}\n`;
+          if (lifestyleProfile.daily_routine) promptContext += `- Daily Routine: ${lifestyleProfile.daily_routine}\n`;
+          promptContext += "\n";
+        }
+
+        // Add interests for metaphor/analogy selection
+        if (interestsProfile && (interestsProfile.hobbies?.length > 0 || interestsProfile.interests?.length > 0)) {
+          promptContext += `Interests & Hobbies:\n`;
+          if (interestsProfile.hobbies?.length > 0) {
+            promptContext += `- Hobbies: ${interestsProfile.hobbies.join(", ")}\n`;
+          }
+          if (interestsProfile.interests?.length > 0) {
+            promptContext += `- Interests: ${interestsProfile.interests.join(", ")}\n`;
+          }
+          promptContext += "\n";
+        }
+
+        // Add wellness goals with urgency context
+        if (wellnessGoals) {
+          promptContext += `Wellness Goals:\n`;
+          if (wellnessGoals.goals?.length > 0) {
+            promptContext += `- Goals: ${wellnessGoals.goals.join(", ")}\n`;
+          }
+          if (wellnessGoals.target_date) {
+            const daysToGoal = Math.floor((new Date(wellnessGoals.target_date).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+            promptContext += `- Target Date: ${wellnessGoals.target_date} (${daysToGoal} days away)\n`;
+          }
+          if (wellnessGoals.priority) promptContext += `- Priority: ${wellnessGoals.priority}\n`;
+          promptContext += "\n";
+        }
+
+        // Add historical comparisons for progress tracking
+        if (Object.keys(historicalContext).length > 0) {
+          promptContext += `Historical Context:\n`;
+          if (historicalContext.readiness_comparison) {
+            const rc: any = historicalContext.readiness_comparison;
+            promptContext += `- Readiness: ${rc.current} vs ${rc.recent_avg} avg (${rc.trend})\n`;
+          }
+          if (historicalContext.sleep_comparison) {
+            const sc: any = historicalContext.sleep_comparison;
+            promptContext += `- Sleep: ${sc.current} vs ${sc.recent_avg} avg${sc.is_best ? ' (personal best!)' : ''}\n`;
+          }
+          if (historicalContext.hrv_comparison) {
+            const hc: any = historicalContext.hrv_comparison;
+            promptContext += `- HRV: ${hc.current}ms vs ${hc.recent_avg}ms avg (${hc.deviation_pct > 0 ? '+' : ''}${hc.deviation_pct}%)\n`;
+          }
+          promptContext += "\n";
+        }
+
+        // Add relationship stage for tone calibration
+        promptContext += `Relationship Metrics:\n`;
+        promptContext += `- Days Active: ${relationshipMetrics.daysActive}\n`;
+        promptContext += `- Relationship Stage: ${relationshipMetrics.stage}\n`;
+        promptContext += `- Engagement Level: ${relationshipMetrics.engagementLevel}\n\n`;
 
         // Add recent symptoms context
         if (symptomCheckIns && symptomCheckIns.length > 0) {
@@ -442,6 +723,87 @@ This should feel natural and human. Do NOT provide medical advice - just acknowl
 PERSONALIZATION: The user's first name is "${userName}". Use it naturally ONCE at the start (e.g., "Good morning, ${userName}" or "${userName}, your body is asking for..."). Do not repeat it or use it mechanically.
 ` : '';
 
+          // Build sport-specific vocabulary guidance
+          let sportVocabulary = "";
+          if (trainingProfile?.preferred_activities && trainingProfile.preferred_activities.length > 0) {
+            const activities = trainingProfile.preferred_activities;
+            sportVocabulary = `\nSPORT-SPECIFIC LANGUAGE: Use terminology from their preferred activities (${activities.join(", ")}).\n`;
+
+            if (activities.some((a: string) => a.toLowerCase().includes('run'))) {
+              sportVocabulary += `- Running terms: pace, splits, cadence, stride, easy run, tempo, intervals\n`;
+            }
+            if (activities.some((a: string) => a.toLowerCase().includes('cycl'))) {
+              sportVocabulary += `- Cycling terms: power zones, cadence, spin, ride, watts, FTP\n`;
+            }
+            if (activities.some((a: string) => a.toLowerCase().includes('swim'))) {
+              sportVocabulary += `- Swimming terms: laps, technique, form, sets, pool session\n`;
+            }
+            if (activities.some((a: string) => a.toLowerCase().includes('lift') || a.toLowerCase().includes('gym') || a.toLowerCase().includes('strength'))) {
+              sportVocabulary += `- Strength terms: sets, reps, volume, progressive overload, rest days\n`;
+            }
+            if (activities.some((a: string) => a.toLowerCase().includes('yoga') || a.toLowerCase().includes('pilates'))) {
+              sportVocabulary += `- Mind-body terms: practice, flow, movement, breathwork, flexibility\n`;
+            }
+          }
+
+          // Build persona-specific writing guidelines
+          const personaGuidelines = {
+            analytical: `PERSONA: Analytical type. Use data-driven language with specific percentages and comparisons. Reference trends and patterns. Example: "Your HRV is 15% below your 7-day average, indicating accumulated fatigue."`,
+            intuitive: `PERSONA: Intuitive type. Use body-focused, feeling-based language. Less numbers, more sensations. Example: "Your body's signals suggest it hasn't fully recovered - listen to that."`,
+            achiever: `PERSONA: Achievement-oriented. Use goal-focused, forward-looking language. Frame recommendations as opportunities. Example: "This strong recovery window is perfect for hitting that interval workout."`,
+            cautious: `PERSONA: Safety-conscious. Emphasize protection and gradual progression. Validate concerns. Example: "Better to hold back today and ensure you can train strong tomorrow."`,
+            balanced: `PERSONA: Balanced approach. Mix data with intuition, goals with safety. Moderate tone.`
+          };
+
+          // Build relationship stage guidance
+          const relationshipGuidance = {
+            new: `RELATIONSHIP STAGE: New user (${relationshipMetrics.daysActive} days). Be more educational and explanatory. Define terms briefly. Build trust through transparency. Example: "ACWR (Acute:Chronic Workload Ratio) shows your training balance..."`,
+            regular: `RELATIONSHIP STAGE: Regular user (${relationshipMetrics.daysActive} days). Use shared shorthand. Assume familiarity with metrics. Be more conversational. Example: "Your ACWR is climbing again..."`,
+            established: `RELATIONSHIP STAGE: Established relationship (${relationshipMetrics.daysActive} days). Use insider language and reference patterns you've observed together. Example: "This matches your typical Tuesday dip we've been tracking..."`,
+          };
+
+          // Build temporal context
+          const dayOfWeek = new Date().toLocaleDateString('en-US', { weekday: 'long' });
+          const temporalContext = `TEMPORAL CONTEXT: Today is ${dayOfWeek}. If the user has weekly patterns in their lifestyle or training data, acknowledge them (e.g., "Coming off the weekend..." or "Mid-week check-in...").`;
+
+          // Build historical reference guidance
+          let historicalGuidance = "";
+          if (Object.keys(historicalContext).length > 0) {
+            historicalGuidance = `\nHISTORICAL COMPARISONS: Reference their personal patterns when relevant:`;
+            if (historicalContext.readiness_comparison) {
+              const rc: any = historicalContext.readiness_comparison;
+              if (rc.current === rc.recent_max) {
+                historicalGuidance += `\n- This is their BEST readiness recently - celebrate this!`;
+              } else if (rc.trend === 'below_average') {
+                historicalGuidance += `\n- Readiness is below their recent average - acknowledge this dip`;
+              }
+            }
+            if (historicalContext.sleep_comparison) {
+              const sc: any = historicalContext.sleep_comparison;
+              if (sc.is_best) {
+                historicalGuidance += `\n- This is their BEST sleep score - emphasize this win!`;
+              }
+            }
+          }
+
+          // Build metaphor/analogy guidance
+          let metaphorGuidance = "";
+          if (interestsProfile && (interestsProfile.hobbies?.length > 0 || interestsProfile.interests?.length > 0)) {
+            const interests = [...(interestsProfile.hobbies || []), ...(interestsProfile.interests || [])];
+            metaphorGuidance = `\nMETAPHOR GUIDANCE: Draw occasional analogies from their interests (${interests.slice(0, 3).join(", ")}) to make concepts relatable. Don't force it - only when natural.`;
+          }
+
+          // Build goal urgency guidance
+          let goalUrgency = "";
+          if (wellnessGoals?.target_date) {
+            const daysToGoal = Math.floor((new Date(wellnessGoals.target_date).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+            if (daysToGoal > 0 && daysToGoal < 30) {
+              goalUrgency = `\nGOAL URGENCY: Their goal deadline is ${daysToGoal} days away. Frame recommendations in context of this timeline. Be strategic about prioritization.`;
+            } else if (daysToGoal > 0) {
+              goalUrgency = `\nGOAL CONTEXT: Their goal is ${daysToGoal} days out. Maintain long-term perspective. Emphasize consistency over urgency.`;
+            }
+          }
+
           systemPrompt = `You are Yves, an AI health intelligence coach. Generate a concise daily briefing (about 150 words) with 4 sections:
 
 1. Recovery: Readiness and sleep score trends from Oura Ring
@@ -451,6 +813,11 @@ PERSONALIZATION: The user's first name is "${userName}". Use it naturally ONCE a
 
 ${toneGuidance[coaching_mode]}
 ${symptomAcknowledgement}${nameInstruction}${metricEmphasis}
+${personaGuidelines[persona]}
+${relationshipGuidance[relationshipMetrics.stage]}
+${temporalContext}
+${sportVocabulary}${historicalGuidance}${metaphorGuidance}${goalUrgency}
+
 COACHING LANGUAGE (use instead of clinical phrasing):
 • "Metrics indicate" → "What I'm seeing suggests"
 • "Consider reducing intensity" → "Let's ease off today"
@@ -458,7 +825,7 @@ COACHING LANGUAGE (use instead of clinical phrasing):
 • "Data suggests" → "It looks like"
 • "Recommend" → "I'd suggest" or "Let's try"
 • "Elevated strain" → "You've been pushing hard"
-Speak like a trusted coach, not a medical report.
+Speak like a trusted coach who knows their story, not a generic medical report.
 
 CONFLICT RESOLUTION (symptoms vs metrics):
 If performance metrics are strong BUT symptoms are present, default to safety-oriented guidance.

@@ -197,6 +197,8 @@ export type Database = {
           context_used: Json | null
           created_at: string | null
           date: string
+          focus_context: Json | null
+          focus_mode: string | null
           id: string
           user_id: string
         }
@@ -206,6 +208,8 @@ export type Database = {
           context_used?: Json | null
           created_at?: string | null
           date: string
+          focus_context?: Json | null
+          focus_mode?: string | null
           id?: string
           user_id: string
         }
@@ -215,6 +219,8 @@ export type Database = {
           context_used?: Json | null
           created_at?: string | null
           date?: string
+          focus_context?: Json | null
+          focus_mode?: string | null
           id?: string
           user_id?: string
         }
@@ -1715,6 +1721,30 @@ export type Database = {
         }
         Relationships: []
       }
+      user_focus_preferences: {
+        Row: {
+          created_at: string | null
+          custom_emphasis: Json | null
+          focus_mode: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          custom_emphasis?: Json | null
+          focus_mode?: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          custom_emphasis?: Json | null
+          focus_mode?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_health_profiles: {
         Row: {
           ai_synthesis: string | null
@@ -2022,6 +2052,39 @@ export type Database = {
           sleep_hours?: number | null
           sleep_quality?: string | null
           updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_shown_patterns: {
+        Row: {
+          category: string
+          created_at: string | null
+          id: string
+          pattern_id: string
+          pattern_text: string
+          shown_at: string
+          tone: string
+          user_id: string
+        }
+        Insert: {
+          category: string
+          created_at?: string | null
+          id?: string
+          pattern_id: string
+          pattern_text: string
+          shown_at?: string
+          tone: string
+          user_id: string
+        }
+        Update: {
+          category?: string
+          created_at?: string | null
+          id?: string
+          pattern_id?: string
+          pattern_text?: string
+          shown_at?: string
+          tone?: string
           user_id?: string
         }
         Relationships: []
@@ -2600,6 +2663,7 @@ export type Database = {
       }
     }
     Functions: {
+      cleanup_old_pattern_views: { Args: never; Returns: undefined }
       get_latest_insights: {
         Args: never
         Returns: {

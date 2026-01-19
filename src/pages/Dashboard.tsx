@@ -4,6 +4,7 @@ import OuraSyncStatus from "@/components/OuraSyncStatus";
 import { YvesRecommendationsCard } from "@/components/dashboard/YvesRecommendationsCard";
 import { DailyBriefingCard } from "@/components/dashboard/DailyBriefingCard";
 import { BriefingDiagnostics } from "@/components/dashboard/BriefingDiagnostics";
+import { PersonalizationInsights } from "@/components/dashboard/PersonalizationInsights";
 import { RiskScoreCard } from "@/components/dashboard/RiskScoreCard";
 import { TodayActivitySection } from "@/components/dashboard/TodayActivitySection";
 import { FocusModeSelector } from "@/components/dashboard/FocusModeSelector";
@@ -354,9 +355,21 @@ export const Dashboard = () => {
                   pageId="dashboard"
                   size="wide"
                   visible={true}
-                  className="mb-10"
+                  className="mb-6"
                 >
                   <BriefingDiagnostics />
+                </LayoutBlock>
+
+                {/* Personalization Insights */}
+                <LayoutBlock
+                  blockId="personalizationInsights"
+                  displayName="Personalization Insights"
+                  pageId="dashboard"
+                  size="wide"
+                  visible={true}
+                  className="mb-10"
+                >
+                  <PersonalizationInsights />
                 </LayoutBlock>
               </div>
             </>

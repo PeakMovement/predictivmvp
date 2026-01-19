@@ -127,6 +127,31 @@ Deno.serve(async (req) => {
           .order("created_at", { ascending: false })
           .limit(5);
 
+        // ─── LOAD USER ADAPTATION PROFILE (ENGAGEMENT LEARNING) ──────────────
+        const { data: adaptationProfile } = await supabase
+          .from("user_adaptation_profile")
+          .select("*")
+          .eq("user_id", uid)
+          .maybeSingle();
+
+        // ─── LOAD RISK TRAJECTORIES (PREDICTIVE WARNINGS) ─────────────────────
+        const { data: riskTrajectories } = await supabase
+          .from("risk_trajectories")
+          .select("*")
+          .eq("user_id", uid)
+          .order("predicted_at", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        // ─── LOAD USER HEALTH PROFILE (DOCUMENT-DRIVEN PERSONALIZATION) ──────
+        const { data: healthProfile } = await supabase
+          .from("user_health_profiles")
+          .select("*")
+          .eq("user_id", uid)
+          .order("version", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
         // ─── BUILD CONTEXT DATA ──────────────────────────────────────────────
         const contextData: Record<string, unknown> = {
           wearable_summary: wearableSummary || [],
@@ -136,6 +161,9 @@ Deno.serve(async (req) => {
           user_profile: userProfile || null,
           user_context: userContext || null,
           symptom_check_ins: symptomCheckIns || [],
+          adaptation_profile: adaptationProfile || null,
+          risk_trajectories: riskTrajectories || null,
+          health_profile: healthProfile || null,
         };
 
         const hasWearableData = (wearableSummary && wearableSummary.length > 0) || 
@@ -297,12 +325,101 @@ Deno.serve(async (req) => {
           promptContext += "\n";
         }
 
+        // Add predictive warnings (if risk trajectories exist)
+        if (riskTrajectories) {
+          const predictions = riskTrajectories.predictions as any;
+          const highRiskPredictions: string[] = [];
+
+          if (predictions?.three_day) {
+            Object.entries(predictions.three_day).forEach(([metric, data]: [string, any]) => {
+              if (data.risk_level === 'high') {
+                highRiskPredictions.push(`${metric} trending toward high risk in 3 days`);
+              }
+            });
+          }
+
+          if (highRiskPredictions.length > 0) {
+            promptContext += `Predictive Warnings (3-day outlook):\n`;
+            highRiskPredictions.forEach(warning => {
+              promptContext += `- ${warning}\n`;
+            });
+            promptContext += "\n";
+          }
+        }
+
+        // Add document-driven micro-personalization
+        if (healthProfile?.profile_data) {
+          const profileData = healthProfile.profile_data as any;
+
+          if (profileData.medical_summary) {
+            const medSummary = profileData.medical_summary;
+            if (medSummary.contraindications && medSummary.contraindications.length > 0) {
+              promptContext += `Medical Considerations:\n`;
+              medSummary.contraindications.forEach((contraindication: string) => {
+                promptContext += `- ${contraindication}\n`;
+              });
+              promptContext += "\n";
+            }
+          }
+
+          if (profileData.training_summary) {
+            const trainingSummary = profileData.training_summary;
+            if (trainingSummary.current_phase) {
+              promptContext += `Training Program:\n`;
+              promptContext += `- Phase: ${trainingSummary.current_phase}\n`;
+              if (trainingSummary.program_name) {
+                promptContext += `- Program: ${trainingSummary.program_name}\n`;
+              }
+              if (trainingSummary.weekly_volume_km) {
+                promptContext += `- Weekly Volume: ${trainingSummary.weekly_volume_km}km\n`;
+              }
+              promptContext += "\n";
+            }
+          }
+        }
+
+        // Add metric emphasis based on engagement learning
+        let metricEmphasis = "";
+        if (adaptationProfile?.metric_importance_weights) {
+          const weights = adaptationProfile.metric_importance_weights as Record<string, number>;
+          const topMetrics = Object.entries(weights)
+            .sort(([, a], [, b]) => b - a)
+            .slice(0, 3)
+            .map(([metric]) => metric);
+
+          if (topMetrics.length > 0) {
+            metricEmphasis = `\nMETRIC EMPHASIS: The user engages most with: ${topMetrics.join(", ")}. Prioritize these metrics in your analysis.\n`;
+          }
+        }
+
         // ─── BUILD TONE GUIDANCE BASED ON COACHING MODE ─────────────────────
-        const toneGuidance = {
+        let toneGuidance = {
           general_wellness: `Adopt a CALM, REASSURING tone. Be supportive and low-pressure. Use gentle suggestions like "consider", "you might enjoy". Validate small wins. Focus on overall wellbeing.`,
           performance: `Adopt a CONFIDENT, MOTIVATING tone. Be directive and goal-oriented. Give clear instructions. Challenge them appropriately. Reference their goals and metrics to drive action.`,
           rehab: `Adopt a CAUTIOUS, PROTECTIVE tone. Prioritize safety above all. Be precise about what to do AND what to avoid. Acknowledge any frustration. Never suggest pushing through symptoms.`
         };
+
+        // Adapt tone based on engagement learning
+        if (adaptationProfile) {
+          const followThroughRate = adaptationProfile.follow_through_rate || 0;
+          const effectiveTone = adaptationProfile.effective_tone;
+
+          // If follow-through is low and user responds better to different tone
+          if (followThroughRate < 40 && effectiveTone && effectiveTone !== 'balanced') {
+            if (effectiveTone === 'coach') {
+              toneGuidance[coaching_mode] += ` Note: This user responds better to direct, no-nonsense coaching language. Be more directive.`;
+            } else if (effectiveTone === 'warm' || effectiveTone === 'supportive') {
+              toneGuidance[coaching_mode] += ` Note: This user responds better to empathetic, supportive language. Be more encouraging.`;
+            } else if (effectiveTone === 'strategic') {
+              toneGuidance[coaching_mode] += ` Note: This user responds better to analytical, data-driven language. Reference specific metrics more.`;
+            }
+          }
+
+          // If follow-through is high, maintain current tone
+          if (followThroughRate > 70) {
+            toneGuidance[coaching_mode] += ` Note: Current approach is working well (${followThroughRate}% follow-through). Maintain consistency.`;
+          }
+        }
 
         // ─── BUILD SYMPTOM ACKNOWLEDGEMENT INSTRUCTION ─────────────────────
         const hasRecentSymptoms = symptomCheckIns && symptomCheckIns.length > 0;
@@ -328,12 +445,12 @@ PERSONALIZATION: The user's first name is "${userName}". Use it naturally ONCE a
           systemPrompt = `You are Yves, an AI health intelligence coach. Generate a concise daily briefing (about 150 words) with 4 sections:
 
 1. Recovery: Readiness and sleep score trends from Oura Ring
-2. Training Load: ACWR and strain balance status  
+2. Training Load: ACWR and strain balance status
 3. Recommendations: 1-2 specific adjustments based on Oura data and any uploaded documents
 4. Motivation: Brief encouragement aligned with their goals
 
 ${toneGuidance[coaching_mode]}
-${symptomAcknowledgement}${nameInstruction}
+${symptomAcknowledgement}${nameInstruction}${metricEmphasis}
 COACHING LANGUAGE (use instead of clinical phrasing):
 • "Metrics indicate" → "What I'm seeing suggests"
 • "Consider reducing intensity" → "Let's ease off today"

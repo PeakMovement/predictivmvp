@@ -61,7 +61,7 @@ const PATTERN_DEFINITIONS: PatternVariation[] = [
     category: 'sleep',
     condition: (data) => {
       const lowSleepDays = data.sessions.filter(s => s.sleep_score !== null && s.sleep_score < 70);
-      return lowSleepDays.length >= 2;
+      return lowSleepDays.length >= 1;
     }
   },
   {
@@ -75,9 +75,9 @@ const PATTERN_DEFINITIONS: PatternVariation[] = [
     category: 'recovery',
     condition: (data) => {
       const readinessScores = data.sessions.filter(s => s.readiness_score !== null).map(s => s.readiness_score!);
-      if (readinessScores.length < 3) return false;
+      if (readinessScores.length < 2) return false;
       const avgReadiness = readinessScores.reduce((a, b) => a + b, 0) / readinessScores.length;
-      return avgReadiness > 75;
+      return avgReadiness > 70;
     }
   },
   {
@@ -91,10 +91,10 @@ const PATTERN_DEFINITIONS: PatternVariation[] = [
     category: 'training',
     condition: (data) => {
       const hrvValues = data.sessions.filter(s => s.hrv_avg !== null).map(s => s.hrv_avg!);
-      if (hrvValues.length < 5) return false;
+      if (hrvValues.length < 3) return false;
       const avgHrv = hrvValues.reduce((a, b) => a + b, 0) / hrvValues.length;
       const hrvVariance = hrvValues.reduce((sum, v) => sum + Math.pow(v - avgHrv, 2), 0) / hrvValues.length;
-      return hrvVariance > 100;
+      return hrvVariance > 50;
     }
   },
   {
@@ -108,9 +108,9 @@ const PATTERN_DEFINITIONS: PatternVariation[] = [
     category: 'training',
     condition: (data) => {
       const activityScores = data.sessions.filter(s => s.activity_score !== null).map(s => s.activity_score!);
-      if (activityScores.length < 3) return false;
-      const highActivityDays = activityScores.filter(s => s > 80).length;
-      return highActivityDays >= 2;
+      if (activityScores.length < 2) return false;
+      const highActivityDays = activityScores.filter(s => s > 75).length;
+      return highActivityDays >= 1;
     }
   },
   {

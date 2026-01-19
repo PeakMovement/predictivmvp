@@ -51,7 +51,7 @@ export function LearnedPatternsSection({ className }: LearnedPatternsProps) {
   const [isOpen, setIsOpen] = useState(false);
   const { patterns, isLoading, hasPatterns } = useObservedPatterns();
 
-  if (isLoading || !hasPatterns) {
+  if (isLoading) {
     return null;
   }
 
@@ -70,7 +70,9 @@ export function LearnedPatternsSection({ className }: LearnedPatternsProps) {
                 </div>
                 {!isOpen && (
                   <p className="text-xs text-muted-foreground truncate mt-0.5">
-                    {patterns.length} pattern{patterns.length > 1 ? 's' : ''} observed over time
+                    {hasPatterns
+                      ? `${patterns.length} pattern${patterns.length > 1 ? 's' : ''} observed over time`
+                      : "Building your personal patterns..."}
                   </p>
                 )}
               </div>
@@ -83,12 +85,25 @@ export function LearnedPatternsSection({ className }: LearnedPatternsProps) {
         </CollapsibleTrigger>
         <CollapsibleContent>
           <div className="px-3 pb-3 pt-0 space-y-2.5">
-            <p className="text-xs text-muted-foreground mb-3">
-              These observations are based on your data over time. They reflect tendencies, not certainties, and help us personalize your guidance.
-            </p>
-            {patterns.map((pattern) => (
-              <PatternItem key={pattern.id} pattern={pattern} />
-            ))}
+            {hasPatterns ? (
+              <>
+                <p className="text-xs text-muted-foreground mb-3">
+                  These observations are based on your data over time. They reflect tendencies, not certainties, and help us personalize your guidance.
+                </p>
+                {patterns.map((pattern) => (
+                  <PatternItem key={pattern.id} pattern={pattern} />
+                ))}
+              </>
+            ) : (
+              <div className="py-4 text-center space-y-2">
+                <p className="text-sm text-muted-foreground">
+                  We're learning about your unique patterns
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Keep syncing your data and we'll identify personalized insights within a few days. Patterns rotate to stay fresh and relevant.
+                </p>
+              </div>
+            )}
           </div>
         </CollapsibleContent>
       </div>

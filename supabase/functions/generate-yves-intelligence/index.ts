@@ -148,10 +148,10 @@ function evaluatePhysiologicalState(
     findings.baseline_established = false;
   }
 
-  // Pass if we have enough data to analyze
-  pass = confidence >= 35;
-  reason = pass 
-    ? `Physiological state analyzable (confidence: ${confidence}%)` 
+  // Pass if we have enough data to analyze (lowered threshold for more insights)
+  pass = confidence >= 20;
+  reason = pass
+    ? `Physiological state analyzable (confidence: ${confidence}%)`
     : `Insufficient physiological data for analysis`;
 
   return { pass, confidence: Math.min(confidence, 100), reason, findings };
@@ -566,27 +566,19 @@ function executeLayeredReasoning(
   let should_speak = true;
   let silence_reason: string | undefined;
 
-  // SILENCE CONDITIONS:
+  // SILENCE CONDITIONS (more permissive thresholds for better engagement):
   // 1. Layer 1 failed (insufficient physiological data)
   if (!layer1.pass) {
     should_speak = false;
     silence_reason = layer1.reason;
   }
-  // 2. Layer 2 determined silence is appropriate (noise, no meaningful risk)
-  else if (!layer2.pass && layer2.reason.includes("SILENCE")) {
-    should_speak = false;
-    silence_reason = "Risk is not meaningful - normal fluctuation";
-  }
-  // 3. Overall confidence too low
-  else if (overall_confidence < 25) {
+  // 2. Overall confidence too low (lowered from 25 to 15)
+  else if (overall_confidence < 15) {
     should_speak = false;
     silence_reason = `Confidence too low (${overall_confidence}%) to provide meaningful guidance`;
   }
-  // 4. Justification incomplete and risk is not high
-  else if (!justification.all_justified && (layer2.findings.risk_accumulation as any)?.level !== 'high') {
-    should_speak = false;
-    silence_reason = "Cannot fully justify intervention - staying silent";
-  }
+  // Note: Removed overly strict silence conditions to allow more insights
+  // We want to engage users even with stable data
 
   return {
     layer1_physiological: layer1,
@@ -1176,48 +1168,52 @@ Acknowledge frustration but enforce clear boundaries on activity.`
     };
 
     // ─── AI CALL WITH STRUCTURED OUTPUT ────────────────────────────────────
-    const systemPrompt = `You are Yves, a clinical reasoning AI health coach. You ONLY speak when you have something meaningful to say.
+    const systemPrompt = `You are Yves, a clinical reasoning AI health coach who provides thoughtful, personalized insights.
 
 ${toneGuidance[coaching_mode]}
 
 ${focusModeContext.systemPromptAddition}
 
 ═══ CRITICAL RULES ═══
-1. You must generate EXACTLY ONE dominant insight - no more, no less
-2. Recommendations must align with the JUSTIFICATION provided by the reasoning engine
-3. Do NOT recommend categories marked as "suppress" (low adherence)
-4. DO prioritize categories marked as high adherence
-5. If the risk level is "low" and there are no early warnings, keep your message brief and encouraging
+1. Always provide meaningful, personalized content - never be generic
+2. Even on stable days, find patterns worth acknowledging or celebrating
+3. Recommendations must align with the JUSTIFICATION provided by the reasoning engine
+4. Do NOT recommend categories marked as "suppress" (low adherence)
+5. DO prioritize categories marked as high adherence
+6. Connect observations to the user's specific context, goals, and recent patterns
 
 ═══ OUTPUT FORMAT ═══
 Generate a JSON object:
 {
   "dailyBriefing": {
-    "summary": "2-3 sentences interpreting their state. ONE clear message.",
-    "keyChanges": ["Max 2 significant pattern-based observations"],
-    "riskHighlights": ["Only include if genuinely concerning"],
-    "todaysFocus": "ONE clear, actionable priority with specific timing"
+    "summary": "2-4 sentences that feel personal and insightful. Reference specific metrics, trends, or patterns from their data. Avoid generic statements like 'everything looks stable' - instead, explain WHAT is stable and WHY that matters for them.",
+    "keyChanges": ["1-2 specific observations about trends, patterns, or notable shifts. Include actual numbers or timeframes when relevant."],
+    "riskHighlights": ["Only include if genuinely concerning - this can be empty"],
+    "todaysFocus": "ONE clear, actionable priority with specific timing and reasoning"
   },
   "recommendations": [
     {
-      "text": "Specific action tied to THEIR preferences",
+      "text": "Specific, actionable recommendation tied to THEIR data patterns and preferences",
       "category": "training|recovery|nutrition|sleep|mindset|performance",
       "priority": "high|medium|low",
-      "reasoning": "Internal justification connecting to user's goals"
+      "reasoning": "Internal justification connecting to their specific metrics and goals"
     }
   ]
 }
 
 ═══ PERSONALIZATION ═══
 - USE their name if available (once, naturally)
-- REFERENCE their specific goals
+- REFERENCE their specific goals and preferences
 - RESPECT their injuries/conditions
 - MATCH their preferred tone
-- CITE multi-day patterns, not just today
+- CITE multi-day patterns with specific metrics and timeframes
+- Celebrate consistency, progress, or positive patterns
+- Provide context for why observations matter to THEM specifically
 
-═══ SILENCE PRINCIPLE ═══
-Less is more. One impactful insight beats five mediocre ones.
-If nothing is truly notable today, say so briefly and move on.
+═══ ENGAGEMENT PRINCIPLE ═══
+Your role is to help users understand their health data through personalized insights.
+Even when metrics are stable, explain what that stability means, acknowledge their consistency,
+or highlight subtle patterns they might miss. Make every briefing feel worth reading.
 
 RESPOND WITH ONLY THE JSON OBJECT.`;
 

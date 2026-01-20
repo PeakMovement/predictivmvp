@@ -50,24 +50,36 @@ export const useDocuments = () => {
   useEffect(() => {
     void fetchDocuments();
 
-    // Subscribe to real-time updates
-    const channel = supabase
-      .channel('user_documents_changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'user_documents'
-        },
-        () => {
-          fetchDocuments();
-        }
-      )
-      .subscribe();
+    // Set up user-scoped real-time subscription
+    let channel: ReturnType<typeof supabase.channel> | null = null;
+    
+    const setupSubscription = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      
+      channel = supabase
+        .channel('user_documents_changes')
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'user_documents',
+            filter: `user_id=eq.${user.id}` // Filter by user_id for defense-in-depth
+          },
+          () => {
+            fetchDocuments();
+          }
+        )
+        .subscribe();
+    };
+    
+    setupSubscription();
 
     return () => {
-      supabase.removeChannel(channel);
+      if (channel) {
+        supabase.removeChannel(channel);
+      }
     };
   }, []);
 

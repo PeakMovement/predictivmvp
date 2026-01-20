@@ -189,26 +189,39 @@ export const useWearableMetrics = () => {
   }, [fetchMetrics]);
 
   useEffect(() => {
+    let channel: ReturnType<typeof supabase.channel> | null = null;
+    
+    const setupSubscription = async () => {
+      // Get current user for filtered subscription
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (user) {
+        channel = supabase
+          .channel("wearable_sessions_user_changes")
+          .on(
+            "postgres_changes",
+            {
+              event: "*",
+              schema: "public",
+              table: "wearable_sessions",
+              filter: `user_id=eq.${user.id}`, // CRITICAL: Filter by user_id to prevent cross-user data leakage
+            },
+            (payload) => {
+              console.log("🔔 Wearable session updated for current user:", payload);
+              fetchMetrics();
+            }
+          )
+          .subscribe();
+      }
+    };
+    
     fetchMetrics();
-
-    const channel = supabase
-      .channel("wearable_sessions_changes")
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "wearable_sessions",
-        },
-        (payload) => {
-          console.log("🔔 Wearable session updated:", payload);
-          fetchMetrics();
-        }
-      )
-      .subscribe();
+    setupSubscription();
 
     return () => {
-      supabase.removeChannel(channel);
+      if (channel) {
+        supabase.removeChannel(channel);
+      }
     };
   }, [fetchMetrics]);
 

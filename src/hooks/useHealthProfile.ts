@@ -96,24 +96,36 @@ export const useHealthProfile = () => {
   useEffect(() => {
     void fetchProfile();
 
-    // Subscribe to profile changes
-    const channel = supabase
-      .channel('health_profile_changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'user_health_profiles'
-        },
-        () => {
-          fetchProfile();
-        }
-      )
-      .subscribe();
+    // Set up user-scoped subscription
+    let channel: ReturnType<typeof supabase.channel> | null = null;
+    
+    const setupSubscription = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      
+      channel = supabase
+        .channel('health_profile_changes')
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'user_health_profiles',
+            filter: `user_id=eq.${user.id}` // Filter by user_id for defense-in-depth
+          },
+          () => {
+            fetchProfile();
+          }
+        )
+        .subscribe();
+    };
+    
+    setupSubscription();
 
     return () => {
-      supabase.removeChannel(channel);
+      if (channel) {
+        supabase.removeChannel(channel);
+      }
     };
   }, []);
 

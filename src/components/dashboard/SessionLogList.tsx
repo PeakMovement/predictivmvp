@@ -54,12 +54,21 @@ export const SessionLogList = () => {
     const fetchFallbackActivities = async () => {
       if (trends && trends.length === 0 && !isFetchingFallback) {
         setIsFetchingFallback(true);
+        
+        // Get current user for explicit filtering (defense-in-depth)
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+          setIsFetchingFallback(false);
+          return;
+        }
+        
         const sevenDaysAgo = new Date();
         sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
         
         const { data, error } = await supabase
           .from('wearable_auto_data')
           .select('fetched_at, activity')
+          .eq('user_id', user.id) // CRITICAL: Filter by user_id to prevent cross-user data leakage
           .gte('fetched_at', sevenDaysAgo.toISOString())
           .order('fetched_at', { ascending: false });
 

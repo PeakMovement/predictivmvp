@@ -503,7 +503,7 @@ ${query}
 `;
 
     // ─── BUILD TONE GUIDANCE BASED ON COACHING MODE ───────────────────────────
-    const toneGuidance = {
+    const toneGuidance: Record<CoachingMode, string> = {
       general_wellness: `
 CURRENT TONE: GENERAL WELLNESS
 • Be CALM and REASSURING - Create a sense of peace and balance

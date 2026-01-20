@@ -311,7 +311,8 @@ Deno.serve(async (req) => {
         console.log(`[generate-daily-briefing] Coaching mode: ${coaching_mode} for user ${uid}`);
 
         // ─── CALCULATE RELATIONSHIP METRICS ───────────────────────────────────
-        const calculateRelationshipStage = (): { stage: string; daysActive: number; engagementLevel: string } => {
+        type RelationshipStage = 'new' | 'regular' | 'established';
+        const calculateRelationshipStage = (): { stage: RelationshipStage; daysActive: number; engagementLevel: string } => {
           const createdAt = userProfile?.created_at || new Date().toISOString();
           const daysActive = Math.floor((Date.now() - new Date(createdAt).getTime()) / (1000 * 60 * 60 * 24));
 
@@ -327,7 +328,7 @@ Deno.serve(async (req) => {
           else if (recentEvents.length > 10) engagementLevel = 'high';
           else if (recentEvents.length > 5) engagementLevel = 'moderate';
 
-          let stage = 'new';
+          let stage: RelationshipStage = 'new';
           if (daysActive > 56) stage = 'established';
           else if (daysActive > 14) stage = 'regular';
 
@@ -674,7 +675,7 @@ Deno.serve(async (req) => {
         }
 
         // ─── BUILD TONE GUIDANCE BASED ON COACHING MODE ─────────────────────
-        let toneGuidance = {
+        const toneGuidance: Record<CoachingMode, string> = {
           general_wellness: `Adopt a CALM, REASSURING tone. Be supportive and low-pressure. Use gentle suggestions like "consider", "you might enjoy". Validate small wins. Focus on overall wellbeing.`,
           performance: `Adopt a CONFIDENT, MOTIVATING tone. Be directive and goal-oriented. Give clear instructions. Challenge them appropriately. Reference their goals and metrics to drive action.`,
           rehab: `Adopt a CAUTIOUS, PROTECTIVE tone. Prioritize safety above all. Be precise about what to do AND what to avoid. Acknowledge any frustration. Never suggest pushing through symptoms.`
@@ -747,7 +748,7 @@ PERSONALIZATION: The user's first name is "${userName}". Use it naturally ONCE a
           }
 
           // Build persona-specific writing guidelines
-          const personaGuidelines = {
+          const personaGuidelines: Record<PersonaType, string> = {
             analytical: `PERSONA: Analytical type. Use data-driven language with specific percentages and comparisons. Reference trends and patterns. Example: "Your HRV is 15% below your 7-day average, indicating accumulated fatigue."`,
             intuitive: `PERSONA: Intuitive type. Use body-focused, feeling-based language. Less numbers, more sensations. Example: "Your body's signals suggest it hasn't fully recovered - listen to that."`,
             achiever: `PERSONA: Achievement-oriented. Use goal-focused, forward-looking language. Frame recommendations as opportunities. Example: "This strong recovery window is perfect for hitting that interval workout."`,
@@ -756,7 +757,7 @@ PERSONALIZATION: The user's first name is "${userName}". Use it naturally ONCE a
           };
 
           // Build relationship stage guidance
-          const relationshipGuidance = {
+          const relationshipGuidance: Record<RelationshipStage, string> = {
             new: `RELATIONSHIP STAGE: New user (${relationshipMetrics.daysActive} days). Be more educational and explanatory. Define terms briefly. Build trust through transparency. Example: "ACWR (Acute:Chronic Workload Ratio) shows your training balance..."`,
             regular: `RELATIONSHIP STAGE: Regular user (${relationshipMetrics.daysActive} days). Use shared shorthand. Assume familiarity with metrics. Be more conversational. Example: "Your ACWR is climbing again..."`,
             established: `RELATIONSHIP STAGE: Established relationship (${relationshipMetrics.daysActive} days). Use insider language and reference patterns you've observed together. Example: "This matches your typical Tuesday dip we've been tracking..."`,

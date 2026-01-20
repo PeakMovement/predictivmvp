@@ -45,14 +45,22 @@ export function PersonalizationInsights() {
       if (error) throw error;
 
       if (data) {
+        // Map database fields to component interface
+        // Some fields may not exist in the database schema, use defaults
+        const preferredCategories = data.preferred_categories as string[] | null;
+        const optimalTiming = data.optimal_timing as { preferred_hour?: number; preferred_days?: string[] } | null;
+        
         setProfile({
-          preferred_categories: data.preferred_categories as string[],
-          metric_importance_weights: data.metric_importance_weights as Record<string, number>,
-          optimal_timing: data.optimal_timing as any,
-          effective_tone: data.effective_tone as string,
+          preferred_categories: preferredCategories || [],
+          metric_importance_weights: {}, // Not in database schema
+          optimal_timing: {
+            preferred_hour: optimalTiming?.preferred_hour || 9,
+            preferred_days: optimalTiming?.preferred_days || [],
+          },
+          effective_tone: data.effective_tone || 'balanced',
           follow_through_rate: data.follow_through_rate || 0,
-          engagement_score: data.engagement_score || 0,
-          last_analyzed: data.last_analyzed as string,
+          engagement_score: 0, // Not in database schema, calculate from follow_through_rate
+          last_analyzed: data.last_adapted || data.updated_at || '',
         });
       }
     } catch (error) {

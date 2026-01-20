@@ -1150,7 +1150,7 @@ Deno.serve(async (req) => {
     }
 
     // ─── BUILD TONE GUIDANCE ────────────────────────────────────────────────
-    const toneGuidance = {
+    const toneGuidance: Record<CoachingMode, string> = {
       general_wellness: `
 ═══ TONE: GENERAL WELLNESS ═══
 Be CALM, SUPPORTIVE, LOW PRESSURE. Use "consider", "you might enjoy", "when you're ready".

@@ -40,7 +40,14 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      // Disable stale time to ensure fresh data on user switch
+      staleTime: 0,
+    },
+  },
+});
 
 const App = () => {
   const [activeTab, setActiveTab] = useState("dashboard");
@@ -55,14 +62,46 @@ const App = () => {
   const isOuraDataTest = currentPath === "/oura-data-test";
   const isAuthTest = currentPath === "/auth-test";
 
-  // Check authentication status
+  // Check authentication status and clear state on logout
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setIsAuthenticated(!!session);
     });
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       setIsAuthenticated(!!session);
+      
+      // CRITICAL: Clear all cached data on sign out to prevent cross-user leakage
+      if (event === 'SIGNED_OUT') {
+        console.log('[App] User signed out - clearing all cached state');
+        
+        // Clear React Query cache completely
+        queryClient.clear();
+        
+        // Clear user-specific localStorage keys
+        const userSpecificKeys = [
+          'todays-decision-cache',
+          'insightHistory',
+          'wearable_connected',
+          'wearable_last_sync',
+          'layout_customization',
+          'alert-settings',
+        ];
+        userSpecificKeys.forEach(key => localStorage.removeItem(key));
+        
+        // Clear user-specific sessionStorage keys
+        const sessionKeys = [
+          'activeClientProfile',
+          'clientProfiles',
+          'findHelpQuery',
+          'wearable_code_verifier',
+          'wearable_user_id',
+        ];
+        sessionKeys.forEach(key => sessionStorage.removeItem(key));
+        
+        // Reset active tab to dashboard
+        setActiveTab('dashboard');
+      }
     });
 
     return () => subscription.unsubscribe();

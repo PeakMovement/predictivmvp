@@ -58,9 +58,18 @@ export async function queryYves(query: string): Promise<YvesQueryResponse> {
 
 export async function getInsightHistory(): Promise<InsightHistoryItem[]> {
   try {
+    // Get current user for explicit filtering (defense-in-depth, RLS also enforces)
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) {
+      console.log('[getInsightHistory] No authenticated user');
+      return [];
+    }
+
     const { data, error } = await supabase
       .from('insight_history')
       .select('*')
+      .eq('user_id', user.id) // Explicit user filter for defense-in-depth
       .order('created_at', { ascending: false })
       .limit(50);
 

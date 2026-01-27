@@ -1,6 +1,9 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { identifyRiskDrivers, RiskDriverResult, RiskMetrics, UserProfile, generateCorrectiveAction } from "@/lib/riskDrivers";
+import { identifyRiskDrivers, RiskDriverResult, RiskMetrics, UserProfile, generateCorrectiveAction, getLocalDateKey } from "@/lib/riskDrivers";
+
+// Cache version for invalidating old cache entries on structure changes
+const CACHE_VERSION = 1;
 
 export interface DecisionOption {
   label: string;
@@ -21,41 +24,59 @@ export interface TodaysDecision {
 interface CachedDecision extends TodaysDecision {
   generatedAt: string;
   date: string;
+  version: number;
 }
 
-function getTodayDateKey(): string {
-  return new Date().toISOString().split('T')[0];
+/**
+ * Get user-scoped cache key to prevent cross-user data leakage
+ */
+function getCacheKey(userId: string): string {
+  return `todays-decision-cache-${userId}`;
 }
 
-function getCachedDecision(): CachedDecision | null {
+/**
+ * Get cached decision for a specific user
+ * Validates version and date before returning
+ */
+function getCachedDecision(userId: string): CachedDecision | null {
   try {
-    const cached = localStorage.getItem('todays-decision-cache');
+    const cached = localStorage.getItem(getCacheKey(userId));
     if (!cached) return null;
 
     const parsed = JSON.parse(cached) as CachedDecision;
-    const todayKey = getTodayDateKey();
+    const todayKey = getLocalDateKey(); // Use local timezone
 
-    // Check if cached decision is from today
+    // Validate cache version
+    if (parsed.version !== CACHE_VERSION) {
+      localStorage.removeItem(getCacheKey(userId));
+      return null;
+    }
+
+    // Check if cached decision is from today (local timezone)
     if (parsed.date === todayKey) {
       return parsed;
     }
 
     // Clear stale cache
-    localStorage.removeItem('todays-decision-cache');
+    localStorage.removeItem(getCacheKey(userId));
     return null;
   } catch {
     return null;
   }
 }
 
-function setCachedDecision(decision: TodaysDecision): void {
+/**
+ * Cache decision for a specific user with version field
+ */
+function setCachedDecision(decision: TodaysDecision, userId: string): void {
   try {
     const cached: CachedDecision = {
       ...decision,
       generatedAt: new Date().toISOString(),
-      date: getTodayDateKey()
+      date: getLocalDateKey(), // Use local timezone
+      version: CACHE_VERSION
     };
-    localStorage.setItem('todays-decision-cache', JSON.stringify(cached));
+    localStorage.setItem(getCacheKey(userId), JSON.stringify(cached));
   } catch (error) {
     console.error('Failed to cache decision:', error);
   }
@@ -68,9 +89,16 @@ export function useTodaysDecision() {
 
   const fetchDecisionContext = async (forceRefresh = false) => {
     try {
-      // Check cache first unless forcing refresh
+      // Get user first - needed for user-scoped caching
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        setIsLoading(false);
+        return;
+      }
+
+      // Check cache first unless forcing refresh (user-scoped)
       if (!forceRefresh) {
-        const cached = getCachedDecision();
+        const cached = getCachedDecision(user.id);
         if (cached) {
           setDecision(cached);
           setLastFetchDate(cached.date);
@@ -80,11 +108,6 @@ export function useTodaysDecision() {
       }
 
       setIsLoading(true);
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        setIsLoading(false);
-        return;
-      }
 
         const sevenDaysAgo = new Date();
         sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
@@ -262,8 +285,8 @@ export function useTodaysDecision() {
         });
 
         if (generatedDecision) {
-          setCachedDecision(generatedDecision);
-          setLastFetchDate(getTodayDateKey());
+          setCachedDecision(generatedDecision, user.id);
+          setLastFetchDate(getLocalDateKey());
         }
         setDecision(generatedDecision);
       } catch (error) {
@@ -276,9 +299,9 @@ export function useTodaysDecision() {
   useEffect(() => {
     fetchDecisionContext();
 
-    // Check for date changes periodically (every minute)
+    // Check for date changes periodically (every minute) using local timezone
     const interval = setInterval(() => {
-      const currentDate = getTodayDateKey();
+      const currentDate = getLocalDateKey();
       if (lastFetchDate && lastFetchDate !== currentDate) {
         // Date has changed, refetch
         fetchDecisionContext(true);

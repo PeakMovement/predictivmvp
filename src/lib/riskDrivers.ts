@@ -4,6 +4,219 @@
  * Used by both frontend (useTodaysDecision) and backend (generate-yves-intelligence)
  */
 
+// ============================================
+// DATE-BASED ROTATION HELPERS (for presentation variety)
+// ============================================
+
+/**
+ * Get local date key for rotation (user's timezone)
+ * Returns YYYY-MM-DD format in user's local timezone
+ */
+export function getLocalDateKey(): string {
+  return new Date().toLocaleDateString('en-CA'); // Returns YYYY-MM-DD in local timezone
+}
+
+/**
+ * Calculate a deterministic rotation index based on local date
+ * Same date always returns same index for consistency
+ */
+export function getDateRotationIndex(variationCount: number): number {
+  const dateStr = getLocalDateKey();
+  let hash = 0;
+  for (let i = 0; i < dateStr.length; i++) {
+    hash = ((hash << 5) - hash) + dateStr.charCodeAt(i);
+    hash = hash & hash; // Convert to 32-bit integer
+  }
+  return Math.abs(hash) % variationCount;
+}
+
+// ============================================
+// EXERCISE SET VARIATIONS (rotated daily)
+// ============================================
+
+interface ExerciseSetVariation {
+  exercises: Array<{ name: string; prescription: string; notes?: string }>;
+}
+
+const REST_DAY_EXERCISE_VARIATIONS: ExerciseSetVariation[] = [
+  {
+    exercises: [
+      { name: 'Complete rest', prescription: 'Full day off', notes: 'Only move if it feels restorative' },
+      { name: 'OR: Gentle walk', prescription: '10-15 minutes if desired', notes: 'Keep effort very low' }
+    ]
+  },
+  {
+    exercises: [
+      { name: 'Deep breathing', prescription: '5 minutes box breathing (4-4-4-4)', notes: 'Focus on full exhales' },
+      { name: 'OR: Light stretching', prescription: '10 minutes gentle movement', notes: 'No forcing any position' }
+    ]
+  },
+  {
+    exercises: [
+      { name: 'Meditation or mindfulness', prescription: '10-15 minutes', notes: 'Mental recovery is recovery' },
+      { name: 'OR: Easy walk outdoors', prescription: '15-20 minutes', notes: 'Keep conversational pace' }
+    ]
+  }
+];
+
+const RECOVERY_EXERCISE_VARIATIONS: ExerciseSetVariation[] = [
+  {
+    exercises: [
+      { name: 'Box Breathing', prescription: '4 rounds of 4-4-4-4 seconds' },
+      { name: 'Gentle Walking', prescription: '10-15 minutes easy pace' },
+      { name: 'Light Stretching', prescription: '5-10 minutes, no forcing' }
+    ]
+  },
+  {
+    exercises: [
+      { name: 'Joint Circles', prescription: 'All major joints, 10 each direction' },
+      { name: 'Cat-Cow Stretches', prescription: '10-15 reps, slow and controlled' },
+      { name: 'Foam Rolling', prescription: '5-8 minutes, major muscle groups' }
+    ]
+  },
+  {
+    exercises: [
+      { name: 'Easy Movement', prescription: '15-20 minutes walk or swim' },
+      { name: 'Hip Mobility', prescription: '5 minutes each side' },
+      { name: 'Deep Breathing', prescription: '5 minutes relaxation focus' }
+    ]
+  }
+];
+
+const LIGHT_CARDIO_EXERCISE_VARIATIONS: ExerciseSetVariation[] = [
+  {
+    exercises: [
+      { name: 'Easy cycling or walking', prescription: '15-20 minutes steady state', notes: 'Keep effort conversational' },
+      { name: 'Hip circles', prescription: '10 each direction' },
+      { name: 'Arm circles', prescription: '10 each direction, each arm' }
+    ]
+  },
+  {
+    exercises: [
+      { name: 'Incline walking', prescription: '15-20 minutes, 2-4% grade', notes: 'Maintain easy breathing' },
+      { name: 'Thoracic rotations', prescription: '10 each side' },
+      { name: 'Ankle mobility circles', prescription: '10 each direction, each ankle' }
+    ]
+  },
+  {
+    exercises: [
+      { name: 'Easy swimming or elliptical', prescription: '15-20 minutes low effort', notes: 'Focus on smooth movement' },
+      { name: "World's greatest stretch", prescription: '5 each side' },
+      { name: 'Deep squat hold', prescription: '30-60s accumulated' }
+    ]
+  }
+];
+
+// ============================================
+// WHY-THIS-MATTERS TEXT VARIATIONS (rotated daily)
+// ============================================
+
+interface WhyTextVariation {
+  injuryRiskReduction: string;
+  todayBenefit: string;
+}
+
+const WHY_TEXT_VARIATIONS: Record<string, WhyTextVariation[]> = {
+  monotony: [
+    {
+      injuryRiskReduction: 'Varying training stimulus prevents overuse injuries and mental burnout. Your body adapts better with variety.',
+      todayBenefit: 'Fresh movement patterns will activate different muscle groups and reignite motivation.'
+    },
+    {
+      injuryRiskReduction: 'Repetitive stress accumulates. Cross-training distributes load across different tissues and joints.',
+      todayBenefit: "You'll work muscles you've been neglecting while giving overused areas time to recover."
+    },
+    {
+      injuryRiskReduction: 'Training variety builds a more resilient body. Different movements strengthen connective tissue from multiple angles.',
+      todayBenefit: 'Switching modalities today keeps training interesting and sustainable long-term.'
+    }
+  ],
+  acwr: [
+    {
+      injuryRiskReduction: 'High acute:chronic workload ratio is strongly linked to injury. Reducing volume today protects tendons, joints, and muscles.',
+      todayBenefit: "You'll maintain fitness while giving tissues time to strengthen and adapt."
+    },
+    {
+      injuryRiskReduction: 'Your recent training spike exceeds safe progression rates. Backing off now prevents tissue breakdown.',
+      todayBenefit: 'A lighter day allows your body to consolidate recent training gains.'
+    },
+    {
+      injuryRiskReduction: 'Workload imbalances increase injury probability significantly. Today\'s reduction brings you back to safe territory.',
+      todayBenefit: "You'll feel stronger in tomorrow's session because you recovered properly today."
+    }
+  ],
+  fatigue: [
+    {
+      injuryRiskReduction: 'Training on accumulated fatigue leads to poor form, reduced power, and higher injury risk. Recovery restores performance capacity.',
+      todayBenefit: 'Light movement promotes blood flow and recovery without adding stress.'
+    },
+    {
+      injuryRiskReduction: 'Fatigue impairs coordination and reaction time. Easy movement today protects you from technique breakdown injuries.',
+      todayBenefit: "You'll feel sharper tomorrow and perform better in your next hard session."
+    },
+    {
+      injuryRiskReduction: 'Accumulated fatigue means your body is still adapting to recent training. Pushing through delays that adaptation.',
+      todayBenefit: 'Recovery-focused movement helps your body complete the adaptation process from recent training.'
+    }
+  ],
+  strain: [
+    {
+      injuryRiskReduction: 'High strain accumulates micro-damage. Reducing load allows repair and prevents it becoming macro-damage (injury).',
+      todayBenefit: 'Lower intensity today means you can train harder and longer in the coming weeks.'
+    },
+    {
+      injuryRiskReduction: 'Accumulated training stress requires extra recovery time. Backing off now protects your tendons and joints.',
+      todayBenefit: 'Your body will use this lighter day to repair and strengthen tissues stressed by recent training.'
+    },
+    {
+      injuryRiskReduction: 'Your weekly load has exceeded safe recovery capacity. Today\'s lighter session prevents long-term setback.',
+      todayBenefit: 'Managing load now protects your ability to train consistently over the coming months.'
+    }
+  ],
+  sleep: [
+    {
+      injuryRiskReduction: 'Poor sleep impairs coordination, reaction time, and tissue repair—all injury risk factors. Easy training is safer training.',
+      todayBenefit: 'A lighter session today helps you recover faster and sleep better tonight.'
+    },
+    {
+      injuryRiskReduction: 'Sleep deficit reduces your body\'s ability to handle training stress. Lower intensity keeps you in a safe zone.',
+      todayBenefit: 'Finishing early gives your body more time to catch up on recovery tonight.'
+    },
+    {
+      injuryRiskReduction: 'Without quality sleep, your muscles and nervous system haven\'t fully recovered. Gentle movement is all your body can productively handle.',
+      todayBenefit: 'Easy movement will actually help regulate your sleep cycle for better rest tonight.'
+    }
+  ],
+  hrv: [
+    {
+      injuryRiskReduction: 'Low HRV signals your nervous system is stressed. Pushing through increases injury risk and delays recovery.',
+      todayBenefit: 'Gentle movement helps restore nervous system balance without adding stress.'
+    },
+    {
+      injuryRiskReduction: 'Suppressed HRV indicates your body is still processing stress. Adding training load compounds the problem.',
+      todayBenefit: 'Parasympathetic-activating activities like easy walking or breathing will help restore your HRV faster.'
+    },
+    {
+      injuryRiskReduction: 'Your autonomic nervous system needs recovery time. Training intensity would delay the return to baseline.',
+      todayBenefit: 'Restorative movement today sets you up for a strong training response once HRV normalizes.'
+    }
+  ],
+  symptoms: [
+    {
+      injuryRiskReduction: 'Training through symptoms often worsens the underlying issue. Protecting the area now prevents longer time off later.',
+      todayBenefit: 'Alternative movements maintain fitness while the affected area heals properly.'
+    },
+    {
+      injuryRiskReduction: 'Your body is signaling something needs attention. Modifying training prevents a minor issue from becoming a major setback.',
+      todayBenefit: 'Working around the affected area keeps you active while allowing healing.'
+    },
+    {
+      injuryRiskReduction: 'Symptoms indicate tissue is irritated or healing. Loading it now interrupts the repair process.',
+      todayBenefit: 'Cross-training today maintains cardiovascular fitness while protecting the symptomatic area.'
+    }
+  ]
+};
+
 export interface RiskMetrics {
   acwr: number | null;
   monotony: number | null;
@@ -895,7 +1108,8 @@ const WHY_THIS_MATTERS_TEMPLATES: Record<string, {
 
 function generateWhyThisMatters(
   primaryDriver: RiskDriver | null,
-  intensity: 'rest' | 'light' | 'moderate' | 'normal'
+  intensity: 'rest' | 'light' | 'moderate' | 'normal',
+  rotationIndex?: number
 ): WhyThisMattersContext | undefined {
   if (!primaryDriver) return undefined;
 
@@ -908,6 +1122,22 @@ function generateWhyThisMatters(
       todayBenefit: intensity === 'rest' 
         ? "Rest today sets you up for better training tomorrow."
         : "This session balances recovery with maintaining your fitness."
+    };
+  }
+
+  // Get text variations for this driver
+  const textVariations = WHY_TEXT_VARIATIONS[primaryDriver.id];
+  const rotation = rotationIndex ?? getDateRotationIndex(3);
+  
+  // Use rotated text if variations exist, otherwise use template defaults
+  if (textVariations && textVariations.length > 0) {
+    const variationIdx = rotation % textVariations.length;
+    const selectedVariation = textVariations[variationIdx];
+    
+    return {
+      triggerMetric: template.triggerTemplate(primaryDriver.value, primaryDriver.threshold),
+      injuryRiskReduction: selectedVariation.injuryRiskReduction,
+      todayBenefit: selectedVariation.todayBenefit
     };
   }
 
@@ -924,8 +1154,12 @@ function generateStructuredSession(
   userProfile: UserProfile,
   recommendedActivity: string,
   avoidActivities: string[],
-  primaryDriver?: RiskDriver | null
+  primaryDriver?: RiskDriver | null,
+  rotationIndex?: number
 ): StructuredSession {
+  // Calculate rotation index for exercise variations
+  const rotation = rotationIndex ?? getDateRotationIndex(3);
+  
   // Select appropriate template
   let templateKey: keyof typeof SESSION_TEMPLATES = 'moderate';
   
@@ -978,10 +1212,9 @@ function generateStructuredSession(
   switch (templateKey) {
     case 'rest':
       format = 'Optional gentle movement only';
-      exercises = [
-        { name: 'Complete rest', prescription: 'Full day off', notes: 'Only move if it feels restorative' },
-        { name: 'OR: Gentle walk', prescription: '10-15 minutes if desired', notes: 'Keep effort very low' }
-      ];
+      // Use rotated rest day exercises
+      const restVariation = REST_DAY_EXERCISE_VARIATIONS[rotation % REST_DAY_EXERCISE_VARIATIONS.length];
+      exercises = [...restVariation.exercises];
       safetyNotes = [
         'Rest is productive training',
         'Avoid the temptation to "do something"',
@@ -991,16 +1224,25 @@ function generateStructuredSession(
       
     case 'recovery':
       format = 'Circuit - move through exercises smoothly';
-      const recoveryExercises = filterExercises(['recovery', 'mobility']);
-      exercises = recoveryExercises.slice(0, 4).map(ex => ({
-        name: ex.name,
-        prescription: ex.prescription,
-        notes: ex.notes
-      }));
+      // Use rotated recovery exercises first, then supplement from library if needed
+      const recoveryVariation = RECOVERY_EXERCISE_VARIATIONS[rotation % RECOVERY_EXERCISE_VARIATIONS.length];
+      exercises = [...recoveryVariation.exercises];
+      
+      // Filter any exercises that conflict with injuries
+      exercises = exercises.filter(ex => {
+        const name = ex.name.toLowerCase();
+        return !injuries.some(injury => name.includes(injury) || injury.includes(name));
+      });
+      
+      // Supplement from library if we filtered too many
       if (exercises.length < 3) {
-        exercises.push({ name: 'Walking', prescription: '10 minutes easy pace' });
-        exercises.push({ name: 'Deep breathing', prescription: '5 minutes' });
+        const recoveryLib = filterExercises(['recovery', 'mobility']);
+        const needed = 3 - exercises.length;
+        recoveryLib.slice(0, needed).forEach(ex => {
+          exercises.push({ name: ex.name, prescription: ex.prescription, notes: ex.notes });
+        });
       }
+      
       safetyNotes = [
         'Movement should feel restorative, not taxing',
         'If anything causes discomfort, skip it',
@@ -1010,19 +1252,28 @@ function generateStructuredSession(
       
     case 'light':
       format = 'Steady state or easy circuit';
-      const lightCardio = filterExercises(['light_cardio', 'recovery']);
-      const mobilityWork = filterExercises(['mobility']);
+      // Use rotated light cardio exercises first
+      const lightVariation = LIGHT_CARDIO_EXERCISE_VARIATIONS[rotation % LIGHT_CARDIO_EXERCISE_VARIATIONS.length];
+      exercises = [...lightVariation.exercises];
       
-      if (lightCardio.length > 0) {
-        exercises.push({
-          name: lightCardio[0].name,
-          prescription: lightCardio[0].prescription,
-          notes: 'Main activity - keep effort conversational'
+      // Filter any exercises that conflict with injuries
+      exercises = exercises.filter(ex => {
+        const name = ex.name.toLowerCase();
+        return !injuries.some(injury => name.includes(injury) || injury.includes(name));
+      });
+      
+      // Supplement from library if we filtered too many
+      if (exercises.length < 3) {
+        const lightCardio = filterExercises(['light_cardio', 'recovery']);
+        const mobilityWork = filterExercises(['mobility']);
+        const allOptions = [...lightCardio, ...mobilityWork];
+        const needed = 3 - exercises.length;
+        allOptions.slice(0, needed).forEach(ex => {
+          if (!exercises.some(e => e.name === ex.name)) {
+            exercises.push({ name: ex.name, prescription: ex.prescription, notes: ex.notes });
+          }
         });
       }
-      mobilityWork.slice(0, 2).forEach(ex => {
-        exercises.push({ name: ex.name, prescription: ex.prescription });
-      });
       
       safetyNotes = [
         'Should be able to hold a conversation throughout',
@@ -1098,8 +1349,8 @@ function generateStructuredSession(
     : '';
   const title = `${template.titlePrefix} Session${activityName}`;
   
-  // Generate why-this-matters context
-  const whyThisMatters = generateWhyThisMatters(primaryDriver || null, intensity);
+  // Generate why-this-matters context with rotation for text variation
+  const whyThisMatters = generateWhyThisMatters(primaryDriver || null, intensity, rotation);
   
   return {
     title,
@@ -1138,6 +1389,8 @@ export function generateCorrectiveAction(
   userProfile?: UserProfile,
   symptoms?: Array<{ type: string; severity: string }>
 ): CorrectiveAction {
+  // Calculate rotation index at the start for consistent daily variation
+  const rotationIndex = getDateRotationIndex(3);
   // Default action when no significant risk
   if (!primary || riskLevel === 'low') {
     return {
@@ -1250,14 +1503,15 @@ export function generateCorrectiveAction(
       symptoms
     );
     
-    // Generate structured session with primary driver for "why this matters"
+    // Generate structured session with primary driver for "why this matters" and rotation
     const session = generateStructuredSession(
       action.strategy,
       action.intensity,
       userProfile,
       recommendedActivity,
       avoidActivities,
-      primary
+      primary,
+      rotationIndex
     );
     
     action = {
@@ -1283,7 +1537,8 @@ export function generateCorrectiveAction(
       userProfile || {},
       '',
       [],
-      primary
+      primary,
+      rotationIndex
     );
     action = { ...action, session };
   }

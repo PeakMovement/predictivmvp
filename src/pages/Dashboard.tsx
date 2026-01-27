@@ -174,7 +174,33 @@ export const Dashboard = () => {
             </div>
           ) : (
             <>
-              {/* Focus Mode Selector */}
+              {/* Daily Briefing - Now at the top */}
+              <LayoutBlock
+                blockId="dailyBriefing"
+                displayName="Daily Briefing"
+                pageId="dashboard"
+                size="wide"
+                visible={isSectionVisible('dailyBriefing')}
+              >
+                <div className={cn(
+                  "mb-8 transition-all duration-300",
+                  isCardMinimized('briefing') && "opacity-60 scale-[0.98]",
+                  isCardEmphasized('briefing') && "ring-2 ring-blue-500/30 rounded-xl"
+                )}>
+                  <DailyBriefingCard
+                    briefing={dailyBriefing}
+                    content={briefingContent}
+                    createdAt={briefingCreatedAt}
+                    isLoading={intelligenceLoading}
+                    isGenerating={intelligenceGenerating}
+                    cached={intelligenceCached}
+                    onRefresh={refreshIntelligence}
+                    focusMode={currentMode}
+                  />
+                </div>
+              </LayoutBlock>
+
+              {/* Focus Mode Selector - Below Daily Briefing */}
               <LayoutBlock
                 blockId="focusMode"
                 displayName="Focus Mode"
@@ -298,32 +324,6 @@ export const Dashboard = () => {
                     isCardEmphasized('todayActivity') && "ring-2 ring-primary/30 rounded-xl"
                   )}>
                     <TodayActivitySection />
-                  </div>
-                </LayoutBlock>
-
-                {/* Daily Briefing */}
-                <LayoutBlock
-                  blockId="dailyBriefing"
-                  displayName="Daily Briefing"
-                  pageId="dashboard"
-                  size="wide"
-                  visible={isSectionVisible('dailyBriefing')}
-                >
-                  <div className={cn(
-                    "transition-all duration-300",
-                    isCardMinimized('briefing') && "opacity-60 scale-[0.98]",
-                    isCardEmphasized('briefing') && "ring-2 ring-blue-500/30 rounded-xl"
-                  )}>
-                    <DailyBriefingCard
-                      briefing={dailyBriefing}
-                      content={briefingContent}
-                      createdAt={briefingCreatedAt}
-                      isLoading={intelligenceLoading}
-                      isGenerating={intelligenceGenerating}
-                      cached={intelligenceCached}
-                      onRefresh={refreshIntelligence}
-                      focusMode={currentMode}
-                    />
                   </div>
                 </LayoutBlock>
 

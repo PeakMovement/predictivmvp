@@ -9,15 +9,14 @@ import { cn } from "@/lib/utils";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { PersonalContextChips } from "./PersonalContextChips";
 import { ActiveGoalSection } from "./ActiveGoalSection";
-import { LearnedPatternsSection } from "./LearnedPatternsSection";
 import { TodaysBestDecision } from "./TodaysBestDecision";
-import { PlanAlignmentSection } from "./PlanAlignmentSection";
 import { WhyThisMatters } from "./WhyThisMatters";
 import { DocumentReference } from "./DocumentReference";
 import { BriefingFooter } from "./BriefingFooter";
 import { OneThingThatMatters } from "./OneThingThatMatters";
 import { usePersonalizedInsights } from "@/hooks/usePersonalizedInsights";
 import { useRelevantDocuments } from "@/hooks/useRelevantDocuments";
+import { InfoTooltip } from "@/components/ui/info-tooltip";
 import type { FocusMode } from "@/hooks/useDashboardFocusMode";
 
 interface DailyBriefingCardProps {
@@ -141,14 +140,8 @@ export function DailyBriefingCard({
         {/* Active Goal Section */}
         <ActiveGoalSection className="pb-2 border-b border-border/50" />
         
-        {/* Learned Patterns Section */}
-        <LearnedPatternsSection className="pb-2 border-b border-border/50" />
-        
         {/* Todays Best Decision Section */}
         <TodaysBestDecision className="pb-2 border-b border-border/50" />
-        
-        {/* Plan Alignment Section - only shows if user has uploaded plans */}
-        <PlanAlignmentSection className="pb-2 border-b border-border/50" />
         
         {!briefing ? (
           <div className="text-center py-6 space-y-3">
@@ -186,6 +179,7 @@ interface CollapsibleSectionProps {
   preview: string;
   children: React.ReactNode;
   variant?: "default" | "warning";
+  tooltip?: string;
 }
 
 function CollapsibleSection({ title, icon, preview, children, variant = "default" }: CollapsibleSectionProps) {

@@ -116,46 +116,49 @@ All colors MUST be HSL.
   }
 
   .light {
-    --background: 0 0% 100%;
-    --foreground: 240 10% 3.9%;
+    /* Eggshell-based warm backgrounds */
+    --background: 45 30% 96%;
+    --foreground: 30 10% 25%;
 
-    --card: 0 0% 100%;
-    --card-foreground: 240 10% 3.9%;
+    --card: 45 35% 97%;
+    --card-foreground: 30 10% 25%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 240 10% 3.9%;
+    --popover: 45 35% 97%;
+    --popover-foreground: 30 10% 25%;
 
-    --primary: 263 70% 50%;
-    --primary-foreground: 0 0% 98%;
+    /* Dusty violet accents */
+    --primary: 270 30% 55%;
+    --primary-foreground: 45 30% 97%;
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 240 5.9% 10%;
+    --secondary: 45 20% 92%;
+    --secondary-foreground: 30 15% 30%;
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    --muted: 40 15% 90%;
+    --muted-foreground: 30 10% 45%;
 
-    --accent: 263 70% 50%;
-    --accent-foreground: 0 0% 98%;
+    --accent: 270 30% 55%;
+    --accent-foreground: 45 30% 97%;
 
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 98%;
+    --destructive: 0 60% 55%;
+    --destructive-foreground: 45 30% 97%;
 
-    --border: 0 0% 82%;
-    --input: 0 0% 82%;
-    --ring: 263 70% 50%;
+    /* Warm borders */
+    --border: 35 15% 85%;
+    --input: 35 15% 85%;
+    --ring: 270 30% 55%;
 
-    /* Light mode glassmorphism */
-    --glass-bg: 0 0% 100% / 0.7;
-    --glass-border: 0 0% 82%;
-    --glass-highlight: 240 5% 96% / 0.5;
+    /* Light mode glassmorphism - warm tones */
+    --glass-bg: 45 30% 96% / 0.85;
+    --glass-border: 35 15% 80%;
+    --glass-highlight: 45 40% 98% / 0.6;
     
-    /* Light mode glow effects */
-    --glow-primary: 263 70% 50%;
-    --glow-intensity: 0 0 15px;
+    /* Light mode glow effects - dusty violet */
+    --glow-primary: 270 30% 55%;
+    --glow-intensity: 0 0 12px;
     
-    /* Light mode gradients */
-    --gradient-primary: linear-gradient(135deg, hsl(263 70% 50% / 0.6), hsl(280 70% 60% / 0.4));
-    --gradient-glass: linear-gradient(135deg, hsl(255 255 255 / 0.8), hsl(240 5% 96% / 0.6));
+    /* Light mode gradients - warm eggshell */
+    --gradient-primary: linear-gradient(135deg, hsl(270 30% 55% / 0.5), hsl(280 25% 60% / 0.3));
+    --gradient-glass: linear-gradient(135deg, hsl(45 30% 96% / 0.9), hsl(40 20% 92% / 0.7));
   }
 }
 

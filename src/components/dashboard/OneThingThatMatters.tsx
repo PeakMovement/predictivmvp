@@ -1,5 +1,6 @@
 import { Target } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { InfoTooltip } from "@/components/ui/info-tooltip";
 
 interface OneThingThatMattersProps {
   focus: string | null;
@@ -90,8 +91,9 @@ export function OneThingThatMatters({ focus, className }: OneThingThatMattersPro
         <div className="flex items-start gap-3">
           <Target className={cn("h-5 w-5 mt-0.5 shrink-0", styles.iconClass)} />
           <div className="space-y-1">
-            <h4 className="text-sm font-semibold text-foreground">
+            <h4 className="text-sm font-semibold text-foreground flex items-center">
               One thing that matters today
+              <InfoTooltip content="Your single most important focus for today based on all available data" />
             </h4>
             <p className={cn("text-sm leading-relaxed", styles.textClass)}>
               {cleanFocus}

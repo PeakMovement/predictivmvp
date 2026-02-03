@@ -21,6 +21,7 @@ import {
 import { cn } from "@/lib/utils";
 import { useTodaysDecision } from "@/hooks/useTodaysDecision";
 import { toast } from "sonner";
+import { InfoTooltip } from "@/components/ui/info-tooltip";
 
 interface TodaysBestDecisionProps {
   className?: string;
@@ -81,9 +82,9 @@ export function TodaysBestDecision({ className }: TodaysBestDecisionProps) {
                 <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
                   <Compass className="h-4 w-4 text-primary" />
                 </div>
-                <div>
+                <div className="flex items-center gap-1">
                   <h3 className="text-base font-bold text-foreground">Today's Best Decision</h3>
-                  <p className="text-xs text-muted-foreground">Your personalised guidance</p>
+                  <InfoTooltip content="Personalised recommendation based on your current metrics, risk level, and recovery state" />
                 </div>
               </div>
               <ChevronDown className={cn(
@@ -105,7 +106,7 @@ export function TodaysBestDecision({ className }: TodaysBestDecisionProps) {
         </div>
 
         <CollapsibleContent>
-          <div className="px-4 pb-4 space-y-4">
+          <div className="px-4 pb-4 space-y-3">
             {/* 1. Title (Bold) */}
             <div className="space-y-1">
               <h4 className="text-lg font-bold text-foreground">{decision.title}</h4>
@@ -130,6 +131,7 @@ export function TodaysBestDecision({ className }: TodaysBestDecisionProps) {
                     riskDrivers.riskLevel === 'low' && "text-muted-foreground"
                   )} />
                   <span className="text-sm font-semibold">Risk Driver</span>
+                  <InfoTooltip content="The primary factor influencing today's recommendation, identified from your wearable data" />
                 </div>
                 <p className="text-sm font-medium text-foreground">{riskDrivers.primary.label}</p>
                 {riskDrivers.secondary && (
@@ -322,7 +324,10 @@ export function TodaysBestDecision({ className }: TodaysBestDecisionProps) {
                       <AlertTriangle className="h-3 w-3 text-warning" />
                     </div>
                     <div>
-                      <p className="text-xs font-medium text-foreground">What triggered this</p>
+                      <p className="text-xs font-medium text-foreground flex items-center">
+                        What triggered this
+                        <InfoTooltip content="The specific metric or pattern that initiated this recommendation" />
+                      </p>
                       <p className="text-xs text-muted-foreground">{whyThisMatters.triggerMetric}</p>
                     </div>
                   </div>
@@ -333,7 +338,10 @@ export function TodaysBestDecision({ className }: TodaysBestDecisionProps) {
                       <Shield className="h-3 w-3 text-emerald-600 dark:text-emerald-400" />
                     </div>
                     <div>
-                      <p className="text-xs font-medium text-foreground">How this protects you</p>
+                      <p className="text-xs font-medium text-foreground flex items-center">
+                        How this protects you
+                        <InfoTooltip content="How following this guidance helps reduce injury risk" />
+                      </p>
                       <p className="text-xs text-muted-foreground">{whyThisMatters.injuryRiskReduction}</p>
                     </div>
                   </div>
@@ -344,7 +352,10 @@ export function TodaysBestDecision({ className }: TodaysBestDecisionProps) {
                       <Zap className="h-3 w-3 text-primary" />
                     </div>
                     <div>
-                      <p className="text-xs font-medium text-foreground">Your benefit today</p>
+                      <p className="text-xs font-medium text-foreground flex items-center">
+                        Your benefit today
+                        <InfoTooltip content="The immediate positive outcome you can expect from this session" />
+                      </p>
                       <p className="text-xs text-muted-foreground">{whyThisMatters.todayBenefit}</p>
                     </div>
                   </div>
@@ -353,7 +364,7 @@ export function TodaysBestDecision({ className }: TodaysBestDecisionProps) {
             )}
 
             {/* 5. CTAs */}
-            <div className="flex gap-2 pt-2">
+            <div className="flex gap-2">
               <Button 
                 variant="outline" 
                 className="flex-1 gap-2"

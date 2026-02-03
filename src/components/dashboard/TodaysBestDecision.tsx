@@ -5,23 +5,18 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import {
   ChevronDown,
   Compass,
-  AlertTriangle,
-  Shield,
-  Zap,
-  Sparkles,
-  CalendarPlus,
+  Heart,
   CheckCircle2,
   Clock,
-  Flame,
   Target,
   Dumbbell,
   Play,
-  RefreshCw
+  RefreshCw,
+  Info
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTodaysDecision } from "@/hooks/useTodaysDecision";
 import { toast } from "sonner";
-import { InfoTooltip } from "@/components/ui/info-tooltip";
 
 interface TodaysBestDecisionProps {
   className?: string;
@@ -31,6 +26,7 @@ export function TodaysBestDecision({ className }: TodaysBestDecisionProps) {
   const { decision, isLoading, refresh } = useTodaysDecision();
   const [isOpen, setIsOpen] = useState(true);
   const [isSessionExpanded, setIsSessionExpanded] = useState(false);
+  const [isDataExpanded, setIsDataExpanded] = useState(false);
   const [completedExercises, setCompletedExercises] = useState<Set<number>>(new Set());
 
   if (isLoading || !decision) {
@@ -42,20 +38,20 @@ export function TodaysBestDecision({ className }: TodaysBestDecisionProps) {
   const whyThisMatters = session?.whyThisMatters;
 
   const handleAddToPlan = () => {
-    toast.success("Session added to your plan", {
+    toast.success("Added to your plan", {
       description: session?.title || "Today's session"
     });
   };
 
   const handleLogCompleted = () => {
-    toast.success("Session logged as completed!", {
-      description: "Great work staying consistent 💪"
+    toast.success("Well done!", {
+      description: "Session logged. Keep up the great work 💪"
     });
   };
 
   const handleRefresh = () => {
     refresh();
-    toast.info("Refreshing today's decision...");
+    toast.info("Updating your guidance...");
   };
 
   const toggleExercise = (index: number) => {
@@ -72,19 +68,74 @@ export function TodaysBestDecision({ className }: TodaysBestDecisionProps) {
     ? Math.round((completedExercises.size / session.mainBlock.exercises.length) * 100)
     : 0;
 
+  // Generate calm, narrative observation text based on the risk driver
+  const generateObservationText = () => {
+    if (!riskDrivers?.primary) return null;
+    
+    const driver = riskDrivers.primary.id;
+    
+    const observations: Record<string, string> = {
+      'monotony': "Your recent training has followed a very similar pattern, and your body is showing signs of accumulated fatigue. This is common during consistent training blocks and doesn't mean anything is wrong. It simply suggests that adding some variation today would support recovery.",
+      'acwr': "Your training load has increased noticeably over the past week. Your body is adapting, but today is a good opportunity to give it a little extra support. A lighter session will help you absorb recent gains without pushing too hard.",
+      'strain': "You've been working hard lately, and the cumulative effort is showing in your numbers. This is actually a sign of consistent training—now is the time to let your body catch up so you can continue progressing.",
+      'hrv': "Your recovery metrics suggest your body could use a gentler day. This isn't unusual after demanding periods, and responding to these signals is exactly how sustainable progress happens.",
+      'sleep': "Your sleep patterns indicate you may not have fully recovered yet. On days like this, listening to your body and adjusting intensity helps maintain long-term consistency.",
+      'fatigue': "Your system is showing signs of accumulated fatigue. Rather than pushing through, today is an opportunity to train smarter—keeping you on track without adding unnecessary stress.",
+      'symptoms': "Your body has been sending signals that deserve attention. Today is a good day to focus on recovery and give your system a chance to restore balance."
+    };
+
+    return observations[driver] || riskDrivers.explanation || "Based on your recent patterns, we've identified an opportunity to optimize today's training for better results.";
+  };
+
+  // Generate calm recommendation text
+  const generateRecommendationText = () => {
+    if (!session) return null;
+    return `A ${session.title.toLowerCase()} is recommended to help you stay active while supporting recovery.`;
+  };
+
+  // Generate meaning paragraph
+  const generateMeaningText = () => {
+    if (!riskDrivers?.primary) return null;
+    
+    const driver = riskDrivers.primary.id;
+    
+    const meanings: Record<string, string> = {
+      'monotony': "When training stays too similar for too long, the body can struggle to recover and adapt. By changing the stimulus today, you reduce the risk of overuse strain, support your nervous system, and often regain motivation for harder sessions later in the week. Small adjustments like this help keep progress sustainable over time.",
+      'acwr': "Gradual load increases are essential for progress, but the body needs time to adapt to new demands. By moderating today's intensity, you're giving your tissues and nervous system time to strengthen, which ultimately allows you to handle more in the coming weeks.",
+      'strain': "Accumulated training stress needs to be balanced with recovery. Today's lighter approach isn't a step backward—it's an investment in your capacity to train harder later. Athletes who respect these rhythms tend to see more consistent long-term gains.",
+      'hrv': "Recovery isn't just about rest—it's when your body actually gets stronger. By adjusting today's session to match your current state, you're maximizing the return on all the hard work you've already put in.",
+      'sleep': "Sleep quality directly affects how your body responds to training. On lower-recovery days, gentler movement can actually improve subsequent sleep while keeping you active. It's a sustainable approach that pays dividends.",
+      'fatigue': "Fatigue is your body's way of asking for a different stimulus. Responding appropriately today helps prevent the accumulated stress that leads to plateaus or setbacks. This is how experienced athletes train year after year.",
+      'symptoms': "Your body communicates through subtle signals that experienced coaches learn to respect. By acknowledging these today, you're building a more sustainable training practice that supports long-term health and performance."
+    };
+
+    return meanings[driver] || whyThisMatters?.injuryRiskReduction || "Adjusting your training based on how your body is responding helps maintain consistent progress while reducing unnecessary strain.";
+  };
+
+  // Generate data transparency text
+  const generateDataText = () => {
+    if (!riskDrivers?.primary) return null;
+    
+    const value = riskDrivers.primary.value;
+    const label = riskDrivers.primary.label;
+    
+    return `${label} has been ${riskDrivers.riskLevel === 'high' ? 'notably elevated' : 'higher than usual'} recently${value ? ` (${value} compared to your typical range)` : ''}.`;
+  };
+
   return (
     <Card className={cn("overflow-hidden", className)}>
       <Collapsible open={isOpen} onOpenChange={setIsOpen}>
-        <div className="flex items-center justify-between p-4 border-b">
+        {/* Header */}
+        <div className="flex items-center justify-between p-4 border-b border-border/50">
           <CollapsibleTrigger asChild>
             <button className="flex-1 flex items-center justify-between text-left group hover:bg-muted/30 transition-colors -m-4 p-4 rounded-t-lg">
-              <div className="flex items-center gap-2">
-                <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
-                  <Compass className="h-4 w-4 text-primary" />
+              <div className="flex items-center gap-3">
+                <div className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center">
+                  <Compass className="h-4.5 w-4.5 text-primary" />
                 </div>
-                <div className="flex items-center gap-1">
-                  <h3 className="text-base font-bold text-foreground">Today's Best Decision</h3>
-                  <InfoTooltip content="Personalised recommendation based on your current metrics, risk level, and recovery state" />
+                <div>
+                  <h3 className="text-base font-semibold text-foreground">Today's training focus</h3>
+                  <p className="text-xs text-muted-foreground">Based on your recent training patterns</p>
                 </div>
               </div>
               <ChevronDown className={cn(
@@ -99,167 +150,150 @@ export function TodaysBestDecision({ className }: TodaysBestDecisionProps) {
             onClick={handleRefresh}
             disabled={isLoading}
             className="ml-2 h-8 w-8"
-            title="Refresh decision"
+            title="Refresh guidance"
           >
             <RefreshCw className={cn("h-4 w-4", isLoading && "animate-spin")} />
           </Button>
         </div>
 
         <CollapsibleContent>
-          <div className="px-4 pt-3 pb-4 space-y-3">
-            {/* 1. Title (Bold) */}
-            <div className="space-y-1">
-              <h4 className="text-lg font-bold text-foreground">{decision.title}</h4>
-              {decision.contextSummary && (
-                <p className="text-sm text-muted-foreground">{decision.contextSummary}</p>
-              )}
-            </div>
-
-            {/* 2. Risk Driver */}
+          <div className="p-5 space-y-5">
+            
+            {/* A. Observation Card - "What we're noticing today" */}
             {riskDrivers && riskDrivers.primary && (
-              <div className={cn(
-                "rounded-lg border p-3",
-                riskDrivers.riskLevel === 'high' && "bg-destructive/5 border-destructive/30",
-                riskDrivers.riskLevel === 'moderate' && "bg-warning/5 border-warning/30",
-                riskDrivers.riskLevel === 'low' && "bg-muted border-border"
-              )}>
-                <div className="flex items-center gap-2 mb-2">
-                  <AlertTriangle className={cn(
-                    "h-4 w-4",
-                    riskDrivers.riskLevel === 'high' && "text-destructive",
-                    riskDrivers.riskLevel === 'moderate' && "text-warning",
-                    riskDrivers.riskLevel === 'low' && "text-muted-foreground"
-                  )} />
-                  <span className="text-sm font-semibold">Risk Driver</span>
-                  <InfoTooltip content="The primary factor influencing today's recommendation, identified from your wearable data" />
+              <div className="rounded-xl bg-muted/40 border border-border/50 p-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <Info className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-sm font-medium text-muted-foreground">What we're noticing today</span>
                 </div>
-                <p className="text-sm font-medium text-foreground">{riskDrivers.primary.label}</p>
-                {riskDrivers.secondary && (
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Also: {riskDrivers.secondary.label}
-                  </p>
-                )}
-                <p className="text-xs text-muted-foreground mt-2">{riskDrivers.explanation}</p>
+                <p className="text-sm text-foreground leading-relaxed">
+                  {generateObservationText()}
+                </p>
               </div>
             )}
 
-            {/* 3. Personalised Session */}
+            {/* B. Recommendation Card - "Today's best option" */}
             {session && (
-              <div className="rounded-lg border border-primary/20 overflow-hidden">
-                <div className="bg-primary/5 p-3">
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="flex-1">
-                      <h5 className="text-sm font-bold text-foreground flex items-center gap-2">
-                        <Dumbbell className="h-4 w-4 text-primary" />
-                        {session.title}
-                      </h5>
-                      <p className="text-xs text-muted-foreground mt-0.5">{session.sessionGoal}</p>
-                    </div>
-                    {completedExercises.size > 0 && (
-                      <div className="text-xs font-medium text-primary bg-primary/10 px-2 py-0.5 rounded-full">
-                        {completionPercent}%
-                      </div>
-                    )}
+              <div className="rounded-xl bg-primary/8 border border-primary/20 overflow-hidden">
+                <div className="p-4">
+                  <div className="flex items-center gap-2 mb-3">
+                    <Heart className="h-4 w-4 text-primary" />
+                    <span className="text-sm font-medium text-primary">Today's best option</span>
                   </div>
                   
-                  {/* Quick stats */}
-                  <div className="flex flex-wrap gap-3 mt-2">
-                    <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                      <Clock className="h-3 w-3" />
-                      <span>{session.duration}</span>
-                    </div>
-                    <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                      <Flame className="h-3 w-3" />
-                      <span>{session.intensity.level}</span>
-                    </div>
-                    <div className="flex items-center gap-1 text-xs">
-                      <Target className="h-3 w-3 text-primary" />
-                      <span className="text-primary font-medium">{session.intensity.rpe}</span>
-                    </div>
+                  <p className="text-sm text-foreground leading-relaxed mb-3">
+                    {generateRecommendationText()}
+                  </p>
+                  
+                  {/* Inline session details */}
+                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground">
+                    <span className="flex items-center gap-1.5">
+                      <Clock className="h-3.5 w-3.5" />
+                      {session.duration}
+                    </span>
+                    <span className="text-border">·</span>
+                    <span className="flex items-center gap-1.5">
+                      <Target className="h-3.5 w-3.5" />
+                      {session.intensity.level} ({session.intensity.rpe})
+                    </span>
                   </div>
                 </div>
 
+                {/* Expandable session details */}
                 <Collapsible open={isSessionExpanded} onOpenChange={setIsSessionExpanded}>
                   <CollapsibleTrigger asChild>
-                    <button className="w-full p-2 flex items-center justify-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors border-t border-primary/10">
-                      <span>{isSessionExpanded ? "Hide details" : "View full session"}</span>
-                      <ChevronDown className={cn("h-3 w-3 transition-transform", isSessionExpanded && "rotate-180")} />
+                    <button className="w-full p-3 flex items-center justify-center gap-2 text-sm text-primary/80 hover:text-primary hover:bg-primary/5 transition-colors border-t border-primary/10">
+                      <span>{isSessionExpanded ? "Hide workout details" : "Would you like to see today's workout?"}</span>
+                      <ChevronDown className={cn("h-4 w-4 transition-transform", isSessionExpanded && "rotate-180")} />
                     </button>
                   </CollapsibleTrigger>
 
                   <CollapsibleContent>
-                    <div className="px-3 pb-3 space-y-3 border-t border-primary/10">
+                    <div className="px-4 pb-4 space-y-4 border-t border-primary/10 pt-4">
+                      {/* Session header */}
+                      <div className="flex items-center justify-between">
+                        <h5 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                          <Dumbbell className="h-4 w-4 text-primary" />
+                          {session.title}
+                        </h5>
+                        {completedExercises.size > 0 && (
+                          <div className="text-xs font-medium text-primary bg-primary/10 px-2.5 py-1 rounded-full">
+                            {completionPercent}% complete
+                          </div>
+                        )}
+                      </div>
+
                       {/* Intensity zone */}
                       {session.intensity.hrZone && (
-                        <div className="p-2 rounded-md bg-muted/50 text-xs mt-3">
+                        <div className="p-3 rounded-lg bg-muted/50 text-sm">
                           <span className="font-medium">Target zone:</span> {session.intensity.hrZone}
                         </div>
                       )}
 
                       {/* Warm-up */}
                       {session.warmup && (
-                        <div className="space-y-1">
-                          <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                            <Play className="h-3 w-3" />
-                            Warm-up ({session.warmup.duration})
+                        <div className="space-y-2">
+                          <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
+                            <Play className="h-3.5 w-3.5" />
+                            Warm-up · {session.warmup.duration}
                           </div>
-                          <ul className="space-y-0.5">
+                          <div className="pl-5 space-y-1">
                             {session.warmup.activities.map((activity, idx) => (
-                              <li key={idx} className="text-xs text-muted-foreground pl-4">
-                                • {activity}
-                              </li>
+                              <p key={idx} className="text-sm text-muted-foreground">
+                                {activity}
+                              </p>
                             ))}
-                          </ul>
+                          </div>
                         </div>
                       )}
 
-                      {/* Main block */}
+                      {/* Main exercises */}
                       <div className="space-y-2">
                         <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide">
-                            <Dumbbell className="h-3 w-3 text-primary" />
+                          <div className="flex items-center gap-2 text-xs font-medium text-foreground">
+                            <Dumbbell className="h-3.5 w-3.5 text-primary" />
                             Main Session
                           </div>
-                          <span className="text-[10px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
+                          <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded">
                             {session.mainBlock.format}
                           </span>
                         </div>
                         
-                        <div className="space-y-1.5">
+                        <div className="space-y-2">
                           {session.mainBlock.exercises.map((exercise, idx) => (
                             <button
                               key={idx}
                               onClick={() => toggleExercise(idx)}
                               className={cn(
-                                "w-full text-left p-2 rounded-md border transition-all",
+                                "w-full text-left p-3 rounded-lg border transition-all",
                                 completedExercises.has(idx)
                                   ? "bg-primary/10 border-primary/30"
-                                  : "bg-card hover:bg-muted/50 border-border"
+                                  : "bg-card hover:bg-muted/50 border-border/50"
                               )}
                             >
-                              <div className="flex items-start gap-2">
+                              <div className="flex items-start gap-3">
                                 <div className={cn(
-                                  "mt-0.5 h-4 w-4 rounded-full border flex items-center justify-center shrink-0",
+                                  "mt-0.5 h-5 w-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors",
                                   completedExercises.has(idx)
                                     ? "bg-primary border-primary"
-                                    : "border-muted-foreground/40"
+                                    : "border-muted-foreground/30"
                                 )}>
                                   {completedExercises.has(idx) && (
-                                    <CheckCircle2 className="h-3 w-3 text-primary-foreground" />
+                                    <CheckCircle2 className="h-3.5 w-3.5 text-primary-foreground" />
                                   )}
                                 </div>
                                 <div className="flex-1 min-w-0">
                                   <div className={cn(
                                     "text-sm font-medium",
-                                    completedExercises.has(idx) && "line-through opacity-70"
+                                    completedExercises.has(idx) && "line-through opacity-60"
                                   )}>
                                     {exercise.name}
                                   </div>
-                                  <div className="text-xs text-muted-foreground">
+                                  <div className="text-xs text-muted-foreground mt-0.5">
                                     {exercise.prescription}
                                   </div>
                                   {exercise.notes && (
-                                    <div className="text-[10px] text-primary/80 mt-0.5 italic">
+                                    <div className="text-xs text-primary/70 mt-1 italic">
                                       {exercise.notes}
                                     </div>
                                   )}
@@ -272,35 +306,32 @@ export function TodaysBestDecision({ className }: TodaysBestDecisionProps) {
 
                       {/* Cool-down */}
                       {session.cooldown && (
-                        <div className="space-y-1">
-                          <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                            <span className="text-base">🌙</span>
-                            Cool-down ({session.cooldown.duration})
+                        <div className="space-y-2">
+                          <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
+                            <span>🌙</span>
+                            Cool-down · {session.cooldown.duration}
                           </div>
-                          <ul className="space-y-0.5">
+                          <div className="pl-5 space-y-1">
                             {session.cooldown.activities.map((activity, idx) => (
-                              <li key={idx} className="text-xs text-muted-foreground pl-4">
-                                • {activity}
-                              </li>
+                              <p key={idx} className="text-sm text-muted-foreground">
+                                {activity}
+                              </p>
                             ))}
-                          </ul>
+                          </div>
                         </div>
                       )}
 
-                      {/* Safety notes */}
+                      {/* Safety considerations (calm language) */}
                       {session.safetyNotes.length > 0 && (
-                        <div className="p-2 rounded-md bg-warning/10 border border-warning/20 space-y-1">
-                          <div className="flex items-center gap-1.5 text-xs font-medium text-warning">
-                            <AlertTriangle className="h-3 w-3" />
-                            Safety Notes
-                          </div>
-                          <ul className="space-y-0.5">
+                        <div className="p-3 rounded-lg bg-muted/30 border border-border/50 space-y-2">
+                          <p className="text-xs font-medium text-muted-foreground">Things to keep in mind</p>
+                          <div className="space-y-1">
                             {session.safetyNotes.map((note, idx) => (
-                              <li key={idx} className="text-xs text-warning/90 pl-4">
-                                • {note}
-                              </li>
+                              <p key={idx} className="text-sm text-muted-foreground leading-relaxed">
+                                {note}
+                              </p>
                             ))}
-                          </ul>
+                          </div>
                         </div>
                       )}
                     </div>
@@ -309,76 +340,47 @@ export function TodaysBestDecision({ className }: TodaysBestDecisionProps) {
               </div>
             )}
 
-            {/* 4. Why It Matters */}
-            {whyThisMatters && (
-              <div className="rounded-lg bg-primary/5 p-3 space-y-2.5">
-                <div className="flex items-center gap-1.5 text-xs font-semibold text-primary uppercase tracking-wide">
-                  <Sparkles className="h-3.5 w-3.5" />
-                  Why this matters
+            {/* C. Meaning Block - "Why this matters to you" */}
+            {riskDrivers?.primary && (
+              <div className="rounded-xl bg-muted/20 border border-border/30 p-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <span className="text-sm font-medium text-muted-foreground">Why this matters to you</span>
                 </div>
-                
-                <div className="space-y-2">
-                  {/* Trigger metric */}
-                  <div className="flex items-start gap-2">
-                    <div className="mt-0.5 h-5 w-5 rounded-full bg-warning/20 flex items-center justify-center shrink-0">
-                      <AlertTriangle className="h-3 w-3 text-warning" />
-                    </div>
-                    <div>
-                      <p className="text-xs font-medium text-foreground flex items-center">
-                        What triggered this
-                        <InfoTooltip content="The specific metric or pattern that initiated this recommendation" />
-                      </p>
-                      <p className="text-xs text-muted-foreground">{whyThisMatters.triggerMetric}</p>
-                    </div>
-                  </div>
-                  
-                  {/* Injury risk reduction */}
-                  <div className="flex items-start gap-2">
-                    <div className="mt-0.5 h-5 w-5 rounded-full bg-emerald-500/20 flex items-center justify-center shrink-0">
-                      <Shield className="h-3 w-3 text-emerald-600 dark:text-emerald-400" />
-                    </div>
-                    <div>
-                      <p className="text-xs font-medium text-foreground flex items-center">
-                        How this protects you
-                        <InfoTooltip content="How following this guidance helps reduce injury risk" />
-                      </p>
-                      <p className="text-xs text-muted-foreground">{whyThisMatters.injuryRiskReduction}</p>
-                    </div>
-                  </div>
-                  
-                  {/* Today's benefit */}
-                  <div className="flex items-start gap-2">
-                    <div className="mt-0.5 h-5 w-5 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
-                      <Zap className="h-3 w-3 text-primary" />
-                    </div>
-                    <div>
-                      <p className="text-xs font-medium text-foreground flex items-center">
-                        Your benefit today
-                        <InfoTooltip content="The immediate positive outcome you can expect from this session" />
-                      </p>
-                      <p className="text-xs text-muted-foreground">{whyThisMatters.todayBenefit}</p>
-                    </div>
-                  </div>
-                </div>
+                <p className="text-sm text-foreground/80 leading-relaxed">
+                  {generateMeaningText()}
+                </p>
+
+                {/* Progressive disclosure - data transparency */}
+                <Collapsible open={isDataExpanded} onOpenChange={setIsDataExpanded}>
+                  <CollapsibleTrigger asChild>
+                    <button className="mt-4 flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors">
+                      <span>{isDataExpanded ? "Hide the data" : "See the data behind this decision"}</span>
+                      <ChevronDown className={cn("h-3 w-3 transition-transform", isDataExpanded && "rotate-180")} />
+                    </button>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <p className="mt-3 text-xs text-muted-foreground bg-muted/50 p-3 rounded-lg">
+                      {generateDataText()}
+                    </p>
+                  </CollapsibleContent>
+                </Collapsible>
               </div>
             )}
 
-            {/* 5. CTAs */}
-            <div className="flex gap-2">
+            {/* D. Action Buttons - First-person, supportive language */}
+            <div className="flex gap-3 pt-2">
               <Button 
                 variant="outline" 
-                className="flex-1 gap-2"
+                className="flex-1 h-11"
                 onClick={handleAddToPlan}
               >
-                <CalendarPlus className="h-4 w-4" />
-                Add to plan
+                Add this session to my plan
               </Button>
               <Button 
-                className="flex-1 gap-2"
+                className="flex-1 h-11"
                 onClick={handleLogCompleted}
               >
-                <CheckCircle2 className="h-4 w-4" />
-                Log completed
+                I've completed today's session
               </Button>
             </div>
           </div>

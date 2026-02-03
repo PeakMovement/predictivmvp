@@ -8,111 +8,117 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    --background: 240 10% 3.9%;
-    --foreground: 0 0% 98%;
+    /* Warm charcoal backgrounds */
+    --background: 30 8% 6%;
+    --foreground: 40 25% 92%;
 
-    --card: 240 10% 3.9%;
-    --card-foreground: 0 0% 98%;
+    --card: 30 8% 6%;
+    --card-foreground: 40 25% 92%;
 
-    --popover: 240 10% 3.9%;
-    --popover-foreground: 0 0% 98%;
+    --popover: 30 8% 6%;
+    --popover-foreground: 40 25% 92%;
 
-    --primary: 263 70% 50%;
-    --primary-foreground: 0 0% 98%;
+    /* Dusty violet primary */
+    --primary: 270 35% 55%;
+    --primary-foreground: 40 25% 95%;
 
-    --secondary: 240 3.7% 15.9%;
-    --secondary-foreground: 0 0% 98%;
+    --secondary: 30 6% 14%;
+    --secondary-foreground: 40 25% 92%;
 
-    --muted: 240 3.7% 15.9%;
-    --muted-foreground: 240 5% 64.9%;
+    --muted: 30 6% 14%;
+    --muted-foreground: 35 12% 60%;
 
-    --accent: 263 70% 50%;
-    --accent-foreground: 0 0% 98%;
+    --accent: 270 35% 55%;
+    --accent-foreground: 40 25% 95%;
 
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 98%;
+    --destructive: 0 65% 55%;
+    --destructive-foreground: 40 25% 95%;
 
-    --border: 240 3.7% 15.9%;
-    --input: 240 3.7% 15.9%;
-    --ring: 263 70% 50%;
+    /* Warm borders */
+    --border: 30 6% 16%;
+    --input: 30 6% 16%;
+    --ring: 270 35% 55%;
 
     --radius: 1rem;
 
-    /* Custom Predictiv tokens */
-    --card-bg: 240 20% 10% / 0.7;
-    --text-muted: 240 10% 74%;
+    /* Custom Predictiv tokens - warm */
+    --card-bg: 30 10% 8% / 0.7;
+    --text-muted: 35 10% 70%;
 
-    /* Glassmorphism design tokens */
-    --glass-bg: 240 10% 3.9% / 0.8;
-    --glass-border: 240 5% 64.9% / 0.2;
-    --glass-highlight: 0 0% 100% / 0.1;
+    /* Glassmorphism design tokens - warm */
+    --glass-bg: 30 8% 6% / 0.8;
+    --glass-border: 35 8% 50% / 0.2;
+    --glass-highlight: 40 20% 95% / 0.1;
     
-    /* Glow effects */
-    --glow-primary: 263 70% 50%;
+    /* Glow effects - dusty violet */
+    --glow-primary: 270 35% 55%;
     --glow-intensity: 0 0 20px;
     
-    /* Gradients */
-    --gradient-primary: linear-gradient(135deg, hsl(263 70% 50% / 0.8), hsl(280 70% 60% / 0.6));
-    --gradient-glass: linear-gradient(135deg, hsl(240 10% 3.9% / 0.9), hsl(240 5% 8% / 0.8));
+    /* Gradients - warm */
+    --gradient-primary: linear-gradient(135deg, hsl(270 35% 55% / 0.8), hsl(280 30% 60% / 0.6));
+    --gradient-glass: linear-gradient(135deg, hsl(30 8% 6% / 0.9), hsl(30 6% 10% / 0.8));
 
-    --sidebar-background: 0 0% 98%;
+    --sidebar-background: 40 25% 95%;
 
-    --sidebar-foreground: 240 5.3% 26.1%;
+    --sidebar-foreground: 30 10% 28%;
 
-    --sidebar-primary: 240 5.9% 10%;
+    --sidebar-primary: 30 8% 12%;
 
-    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-primary-foreground: 40 25% 95%;
 
-    --sidebar-accent: 240 4.8% 95.9%;
+    --sidebar-accent: 40 15% 93%;
 
-    --sidebar-accent-foreground: 240 5.9% 10%;
+    --sidebar-accent-foreground: 30 8% 12%;
 
-    --sidebar-border: 220 13% 91%;
+    --sidebar-border: 35 12% 88%;
 
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-ring: 270 35% 55%;
   }
 
   .dark {
-    --background: 240 10% 3.9%;
-    --foreground: 0 0% 98%;
+    /* Warm charcoal backgrounds */
+    --background: 30 8% 6%;
+    --foreground: 40 25% 92%;
 
-    --card: 240 10% 3.9%;
-    --card-foreground: 0 0% 98%;
+    --card: 30 8% 6%;
+    --card-foreground: 40 25% 92%;
 
-    --popover: 240 10% 3.9%;
-    --popover-foreground: 0 0% 98%;
+    --popover: 30 8% 6%;
+    --popover-foreground: 40 25% 92%;
 
-    --primary: 263 70% 50%;
-    --primary-foreground: 0 0% 98%;
+    /* Dusty violet primary */
+    --primary: 270 35% 55%;
+    --primary-foreground: 40 25% 95%;
 
-    --secondary: 240 3.7% 15.9%;
-    --secondary-foreground: 0 0% 98%;
+    --secondary: 30 6% 14%;
+    --secondary-foreground: 40 25% 92%;
 
-    --muted: 240 3.7% 15.9%;
-    --muted-foreground: 240 5% 64.9%;
+    --muted: 30 6% 14%;
+    --muted-foreground: 35 12% 60%;
 
-    --accent: 263 70% 50%;
-    --accent-foreground: 0 0% 98%;
+    --accent: 270 35% 55%;
+    --accent-foreground: 40 25% 95%;
 
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 98%;
+    --destructive: 0 65% 55%;
+    --destructive-foreground: 40 25% 95%;
 
-    --border: 240 3.7% 15.9%;
-    --input: 240 3.7% 15.9%;
-    --ring: 263 70% 50%;
+    /* Warm borders */
+    --border: 30 6% 16%;
+    --input: 30 6% 16%;
+    --ring: 270 35% 55%;
 
-    /* Dark mode glassmorphism */
-    --glass-bg: 240 10% 3.9% / 0.8;
-    --glass-border: 240 5% 64.9% / 0.2;
-    --glass-highlight: 0 0% 100% / 0.1;
+    /* Dark mode glassmorphism - warm */
+    --glass-bg: 30 8% 6% / 0.8;
+    --glass-border: 35 8% 50% / 0.2;
+    --glass-highlight: 40 20% 95% / 0.1;
     
-    /* Dark mode glow effects */
-    --glow-primary: 263 70% 50%;
+    /* Dark mode glow effects - dusty violet */
+    --glow-primary: 270 35% 55%;
     --glow-intensity: 0 0 20px;
     
-    /* Dark mode gradients */
-    --gradient-primary: linear-gradient(135deg, hsl(263 70% 50% / 0.8), hsl(280 70% 60% / 0.6));
-    --gradient-glass: linear-gradient(135deg, hsl(240 10% 3.9% / 0.9), hsl(240 5% 8% / 0.8));
+    /* Dark mode gradients - warm */
+    --gradient-primary: linear-gradient(135deg, hsl(270 35% 55% / 0.8), hsl(280 30% 60% / 0.6));
+    --gradient-glass: linear-gradient(135deg, hsl(30 8% 6% / 0.9), hsl(30 6% 10% / 0.8));
   }
 
   .light {
@@ -182,8 +188,8 @@ All colors MUST be HSL.
     min-height: 100vh;
     min-height: -webkit-fill-available;
     padding-bottom: env(safe-area-inset-bottom);
-    background: radial-gradient(circle at 50% 10%, rgba(120, 60, 255, 0.15), transparent 70%),
-                linear-gradient(to bottom, #0A0A0A 0%, #0E0E11 100%);
+    background: radial-gradient(circle at 50% 10%, hsl(270 35% 55% / 0.12), transparent 70%),
+                linear-gradient(to bottom, hsl(30 8% 6%) 0%, hsl(30 6% 8%) 100%);
     background-attachment: fixed;
   }
 

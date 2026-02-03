@@ -23,6 +23,12 @@ interface TrackEngagementRequest {
   metadata?: Record<string, unknown>;
 }
 
+// Helper to validate UUID format
+function isValidUUID(str: string): boolean {
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+  return uuidRegex.test(str);
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -80,46 +86,60 @@ Deno.serve(async (req) => {
       );
     }
 
+    // Validate target_id is a valid UUID if provided
+    // If not a valid UUID, store the original value in metadata instead
+    let targetId: string | null = null;
+    const metadata: Record<string, unknown> = body.metadata || {};
+    
+    if (body.target_id) {
+      if (isValidUUID(body.target_id)) {
+        targetId = body.target_id;
+      } else {
+        // Store non-UUID target_id in metadata for reference
+        metadata.original_target_id = body.target_id;
+        console.log(`[track-engagement] Non-UUID target_id "${body.target_id}" stored in metadata`);
+      }
+    }
+
     // Insert engagement event
     const { data, error } = await supabase.from("engagement_events").insert({
       user_id: user.id,
       event_type: body.event_type,
-      target_id: body.target_id || null,
+      target_id: targetId,
       target_type: body.target_type || null,
-      metadata: body.metadata || {},
+      metadata: metadata,
     }).select().single();
 
     if (error) throw error;
 
     // If this is a recommendation outcome, also update recommendation_outcomes table
-    if (body.event_type === 'recommendation_followed' || 
+    // Only proceed if we have a valid UUID for the recommendation_id
+    if ((body.event_type === 'recommendation_followed' || 
         body.event_type === 'recommendation_helpful' || 
-        body.event_type === 'recommendation_not_helpful') {
+        body.event_type === 'recommendation_not_helpful') && targetId) {
       
-      if (body.target_id) {
-        const outcomeType = body.event_type === 'recommendation_followed' ? 'followed' : 
-                           (body.event_type === 'recommendation_helpful' ? 'followed' : 'ignored');
-        const userFeedback = body.event_type === 'recommendation_helpful' ? 'helpful' :
-                            (body.event_type === 'recommendation_not_helpful' ? 'not_helpful' : 'neutral');
+      const outcomeType = body.event_type === 'recommendation_followed' ? 'followed' : 
+                         (body.event_type === 'recommendation_helpful' ? 'followed' : 'ignored');
+      const userFeedback = body.event_type === 'recommendation_helpful' ? 'helpful' :
+                          (body.event_type === 'recommendation_not_helpful' ? 'not_helpful' : 'neutral');
 
-        await supabase.from("recommendation_outcomes").insert({
-          user_id: user.id,
-          recommendation_id: body.target_id,
-          outcome_type: outcomeType,
-          user_feedback: userFeedback,
-          notes: body.metadata?.notes as string || null,
-        });
+      await supabase.from("recommendation_outcomes").insert({
+        user_id: user.id,
+        recommendation_id: targetId,
+        outcome_type: outcomeType,
+        user_feedback: userFeedback,
+        notes: body.metadata?.notes as string || null,
+      });
 
-        // Update the recommendation's feedback score if helpful/not helpful
-        if (body.event_type === 'recommendation_helpful' || body.event_type === 'recommendation_not_helpful') {
-          const feedbackScore = body.event_type === 'recommendation_helpful' ? 5 : 1;
-          await supabase.from("yves_recommendations")
-            .update({ 
-              feedback_score: feedbackScore,
-              acknowledged_at: new Date().toISOString()
-            })
-            .eq("id", body.target_id);
-        }
+      // Update the recommendation's feedback score if helpful/not helpful
+      if (body.event_type === 'recommendation_helpful' || body.event_type === 'recommendation_not_helpful') {
+        const feedbackScore = body.event_type === 'recommendation_helpful' ? 5 : 1;
+        await supabase.from("yves_recommendations")
+          .update({ 
+            feedback_score: feedbackScore,
+            acknowledged_at: new Date().toISOString()
+          })
+          .eq("id", targetId);
       }
     }
 

@@ -1,30 +1,97 @@
-import { Card } from "@/components/ui/card";
+import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
+import { ChevronRight } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { useYvesIntelligence } from '@/hooks/useYvesIntelligence';
+import { useTodaysDecision } from '@/hooks/useTodaysDecision';
+import { GreetingHeader } from '@/components/landing/GreetingHeader';
+import { PrimaryInsightCard } from '@/components/landing/PrimaryInsightCard';
+import { CondensedSessionCard } from '@/components/landing/CondensedSessionCard';
 
 const Index = () => {
+  const [userName, setUserName] = useState<string | null>(null);
+  const [isLoadingProfile, setIsLoadingProfile] = useState(true);
+
+  const { dailyBriefing, isLoading: isLoadingIntelligence, error: intelligenceError } = useYvesIntelligence('balance');
+  const { decision, isLoading: isLoadingDecision } = useTodaysDecision();
+
+  // Fetch user's first name from profiles table
+  useEffect(() => {
+    async function fetchUserName() {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+          setIsLoadingProfile(false);
+          return;
+        }
+
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('full_name')
+          .eq('id', user.id)
+          .maybeSingle();
+
+        if (profile?.full_name) {
+          // Extract first name
+          const firstName = profile.full_name.split(' ')[0];
+          setUserName(firstName);
+        }
+      } catch (error) {
+        console.error('Error fetching user profile:', error);
+      } finally {
+        setIsLoadingProfile(false);
+      }
+    }
+
+    fetchUserName();
+  }, []);
+
+  const isLoading = isLoadingProfile || isLoadingIntelligence;
+
+  // Parse error for user-friendly display
+  const getErrorMessage = (): string | null => {
+    if (!intelligenceError) return null;
+    
+    if (intelligenceError.includes('credits') || intelligenceError.includes('402')) {
+      return 'AI credits exhausted. Please add credits to continue receiving personalized insights.';
+    }
+    
+    return 'Unable to generate insights right now. Please try again later.';
+  };
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background p-4">
-      <div className="text-center max-w-2xl w-full">
-        <h1 className="mb-4 text-4xl font-bold">Predictiv Health Platform</h1>
-        <p className="text-xl text-muted-foreground mb-8">
-          Welcome to Predictiv - Your AI-Powered Health Analytics Platform
-        </p>
+    <div className="min-h-screen bg-background">
+      <div className="max-w-lg mx-auto px-4 py-8 pb-24 space-y-6">
+        {/* Greeting Section */}
+        <GreetingHeader 
+          userName={userName} 
+          isLoading={isLoadingProfile} 
+        />
 
-        <Card className="p-6">
-          <div className="text-left space-y-4">
-            <h3 className="text-lg font-semibold mb-4">System Status</h3>
-            <div className="space-y-2">
-              <p className="text-sm">✅ Analytics Engine: Active</p>
-              <p className="text-sm">✅ Trend Calculation: Ready</p>
-              <p className="text-sm">✅ Baseline Detection: Operational</p>
-              <p className="text-sm">✅ Yves AI Coach: Online</p>
-              <p className="text-sm">✅ Ōura Ring Integration: Connected</p>
-            </div>
-          </div>
-        </Card>
+        {/* Primary Insight Card */}
+        <PrimaryInsightCard
+          focus={dailyBriefing?.todaysFocus}
+          summary={dailyBriefing?.summary}
+          isLoading={isLoadingIntelligence}
+          error={getErrorMessage()}
+        />
 
-        <p className="mt-4 text-sm text-muted-foreground">
-          Navigate using the bottom menu to access your dashboard and health metrics
-        </p>
+        {/* Recommended Session (condensed) */}
+        <CondensedSessionCard 
+          decision={decision} 
+          isLoading={isLoadingDecision} 
+        />
+
+        {/* Navigation CTA */}
+        <div className="pt-4">
+          <Button asChild variant="ghost" className="w-full justify-between text-muted-foreground hover:text-foreground">
+            <Link to="/dashboard">
+              See full briefing
+              <ChevronRight className="h-4 w-4" />
+            </Link>
+          </Button>
+        </div>
       </div>
     </div>
   );

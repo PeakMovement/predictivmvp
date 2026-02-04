@@ -6,13 +6,8 @@ import { DailyBriefingCard } from "@/components/dashboard/DailyBriefingCard";
 import { BriefingDiagnostics } from "@/components/dashboard/BriefingDiagnostics";
 import { PersonalizationInsights } from "@/components/dashboard/PersonalizationInsights";
 import { RiskScoreCard } from "@/components/dashboard/RiskScoreCard";
-import { TodayActivitySection } from "@/components/dashboard/TodayActivitySection";
 import { useRefreshTrends } from "@/hooks/useTrendData";
 import { supabase } from "@/integrations/supabase/client";
-import { useWearableSessions } from "@/hooks/useWearableSessions";
-import { OuraReadinessCard } from "@/components/oura/OuraReadinessCard";
-import { OuraSleepCard } from "@/components/oura/OuraSleepCard";
-import { OuraActivityCard } from "@/components/oura/OuraActivityCard";
 import { useOuraTokenStatus } from "@/hooks/useOuraTokenStatus";
 import { useToast } from "@/hooks/use-toast";
 import { useYvesIntelligence } from "@/hooks/useYvesIntelligence";
@@ -40,7 +35,6 @@ const WelcomeHeader = ({ onCustomize, isCustomized }: { onCustomize: () => void;
 );
 
 export const Dashboard = () => {
-  // Dashboard component - focus mode removed
   const [userId, setUserId] = useState<string | null>(null);
   const { refreshAll } = useRefreshTrends();
   const { isConnected, isLoading: tokenLoading } = useOuraTokenStatus();
@@ -94,8 +88,6 @@ export const Dashboard = () => {
       });
     }
   }, [isConnected, tokenLoading, toast]);
-
-  const { data: session, isLoading } = useWearableSessions(userId || undefined);
 
   // Listen for sync events and refresh trends
   useEffect(() => {
@@ -187,54 +179,6 @@ export const Dashboard = () => {
                   visible={isSectionVisible('riskScore')}
                 >
                   <RiskScoreCard />
-                </LayoutBlock>
-
-                {/* Core Metrics: Sleep, Readiness, Activity */}
-                <LayoutBlock
-                  blockId="todaysScores"
-                  displayName="Todays Scores"
-                  pageId="dashboard"
-                  size="wide"
-                  visible={isSectionVisible('todaysScores')}
-                >
-                  <div>
-                    <h3 className="text-lg md:text-xl font-semibold text-foreground mb-4">Today's Scores</h3>
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                      <OuraReadinessCard
-                        score={session?.readiness_score ?? null}
-                        restingHR={session?.resting_hr ?? null}
-                        hrv={session?.hrv_avg ?? null}
-                        isLoading={isLoading}
-                      />
-                      <OuraSleepCard
-                        score={session?.sleep_score ?? null}
-                        totalSleep={null}
-                        deepSleep={null}
-                        remSleep={null}
-                        lightSleep={null}
-                        efficiency={null}
-                        isLoading={isLoading}
-                      />
-                      <OuraActivityCard
-                        score={session?.activity_score ?? null}
-                        steps={session?.total_steps ?? null}
-                        activeCalories={session?.active_calories ?? null}
-                        totalCalories={session?.total_calories ?? null}
-                        isLoading={isLoading}
-                      />
-                    </div>
-                  </div>
-                </LayoutBlock>
-
-                {/* Today's Activity Section */}
-                <LayoutBlock
-                  blockId="todayActivity"
-                  displayName="Today Activity"
-                  pageId="dashboard"
-                  size="wide"
-                  visible={isSectionVisible('todayActivity')}
-                >
-                  <TodayActivitySection />
                 </LayoutBlock>
 
                 {/* Recommendations */}

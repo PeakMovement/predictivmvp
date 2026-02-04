@@ -40,6 +40,7 @@ const WelcomeHeader = ({ onCustomize, isCustomized }: { onCustomize: () => void;
 );
 
 export const Dashboard = () => {
+  // Dashboard component - focus mode removed
   const [userId, setUserId] = useState<string | null>(null);
   const { refreshAll } = useRefreshTrends();
   const { isConnected, isLoading: tokenLoading } = useOuraTokenStatus();

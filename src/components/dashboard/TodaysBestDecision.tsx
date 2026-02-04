@@ -7,8 +7,6 @@ import {
   Compass,
   Heart,
   CheckCircle2,
-  Clock,
-  Target,
   Dumbbell,
   Play,
   RefreshCw,
@@ -90,7 +88,7 @@ export function TodaysBestDecision({ className }: TodaysBestDecisionProps) {
   // Generate calm recommendation text
   const generateRecommendationText = () => {
     if (!session) return null;
-    return `A ${session.title.toLowerCase()} is recommended to help you stay active while supporting recovery.`;
+    return `A ${session.title.toLowerCase()} is a good option today, allowing you to stay active while giving your body space to recover.`;
   };
 
   // Generate meaning paragraph
@@ -100,13 +98,13 @@ export function TodaysBestDecision({ className }: TodaysBestDecisionProps) {
     const driver = riskDrivers.primary.id;
     
     const meanings: Record<string, string> = {
-      'monotony': "When training stays too similar for too long, the body can struggle to recover and adapt. By changing the stimulus today, you reduce the risk of overuse strain, support your nervous system, and often regain motivation for harder sessions later in the week. Small adjustments like this help keep progress sustainable over time.",
-      'acwr': "Gradual load increases are essential for progress, but the body needs time to adapt to new demands. By moderating today's intensity, you're giving your tissues and nervous system time to strengthen, which ultimately allows you to handle more in the coming weeks.",
-      'strain': "Accumulated training stress needs to be balanced with recovery. Today's lighter approach isn't a step backward—it's an investment in your capacity to train harder later. Athletes who respect these rhythms tend to see more consistent long-term gains.",
+      'monotony': "When training stays too similar for too long, the body can struggle to recover and adapt. Adding some variety helps reduce strain, supports long-term progress, and often keeps motivation high.",
+      'acwr': "Gradual load increases are essential, but the body needs time to adapt. By moderating today's intensity, you're giving your system time to strengthen—allowing you to handle more in the coming weeks.",
+      'strain': "Accumulated effort needs to be balanced with recovery. Today's lighter approach isn't a step backward—it's an investment in your capacity to train harder later.",
       'hrv': "Recovery isn't just about rest—it's when your body actually gets stronger. By adjusting today's session to match your current state, you're maximizing the return on all the hard work you've already put in.",
-      'sleep': "Sleep quality directly affects how your body responds to training. On lower-recovery days, gentler movement can actually improve subsequent sleep while keeping you active. It's a sustainable approach that pays dividends.",
-      'fatigue': "Fatigue is your body's way of asking for a different stimulus. Responding appropriately today helps prevent the accumulated stress that leads to plateaus or setbacks. This is how experienced athletes train year after year.",
-      'symptoms': "Your body communicates through subtle signals that experienced coaches learn to respect. By acknowledging these today, you're building a more sustainable training practice that supports long-term health and performance."
+      'sleep': "Sleep quality directly affects how your body responds to training. Gentler movement on lower-recovery days can actually improve subsequent sleep while keeping you active.",
+      'fatigue': "Fatigue is your body's way of asking for a different stimulus. Responding appropriately today helps prevent the accumulated stress that leads to plateaus or setbacks.",
+      'symptoms': "Your body communicates through subtle signals that experienced coaches learn to respect. By acknowledging these today, you're building a more sustainable training practice."
     };
 
     return meanings[driver] || whyThisMatters?.injuryRiskReduction || "Adjusting your training based on how your body is responding helps maintain consistent progress while reducing unnecessary strain.";
@@ -186,17 +184,9 @@ export function TodaysBestDecision({ className }: TodaysBestDecisionProps) {
                   </p>
                   
                   {/* Inline session details */}
-                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground">
-                    <span className="flex items-center gap-1.5">
-                      <Clock className="h-3.5 w-3.5" />
-                      {session.duration}
-                    </span>
-                    <span className="text-border">·</span>
-                    <span className="flex items-center gap-1.5">
-                      <Target className="h-3.5 w-3.5" />
-                      {session.intensity.level} ({session.intensity.rpe})
-                    </span>
-                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    Around {session.duration} at {session.intensity.level.toLowerCase()} ({session.intensity.rpe}).
+                  </p>
                 </div>
 
                 {/* Expandable session details */}
@@ -354,7 +344,7 @@ export function TodaysBestDecision({ className }: TodaysBestDecisionProps) {
                 <Collapsible open={isDataExpanded} onOpenChange={setIsDataExpanded}>
                   <CollapsibleTrigger asChild>
                     <button className="mt-4 flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors">
-                      <span>{isDataExpanded ? "Hide the data" : "See the data behind this decision"}</span>
+                      <span>{isDataExpanded ? "Hide data details" : "See the data that informed this suggestion"}</span>
                       <ChevronDown className={cn("h-3 w-3 transition-transform", isDataExpanded && "rotate-180")} />
                     </button>
                   </CollapsibleTrigger>

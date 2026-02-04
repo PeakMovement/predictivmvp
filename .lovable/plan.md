@@ -1,81 +1,62 @@
 
-# Fix: Daily Content Rotation + Remove Focus Mode
+# Plan: Move Today's Scores to Health Page
 
-## Problem Analysis
+## Current State Analysis
 
-### Issue 1: Content Not Changing Daily
-The `TodaysBestDecision.tsx` component has **hardcoded text** for observations and meanings based on risk driver ID. Even though `src/lib/riskDrivers.ts` has a daily rotation system with:
-- `getDateRotationIndex()` - deterministic daily index
-- `WHY_TEXT_VARIATIONS` - multiple text variations per driver
+**Dashboard (/)** currently has:
+1. Daily Briefing (Yves) - KEEP
+2. Risk Score - KEEP  
+3. Today's Scores (Readiness, Sleep, Activity cards) - MOVE to Health
+4. Today's Activity Section - MOVE to Health
+5. Recommendations (Yves) - KEEP
+6. Briefing Diagnostics - KEEP
+7. Personalization Insights - KEEP
 
-The component doesn't use these - it has its own static text objects at lines 75-111.
+**Health page** already has:
+- Score Cards (Readiness, Sleep, Activity) - Already present
+- Detailed Metrics (HRV Card) - Already present
+- Today Activity Section - Already present
+- Data Source Info - Already present
 
-### Issue 2: Focus Mode Section
-User wants the entire Focus Mode feature removed from the Dashboard as it's not useful.
+## What This Plan Does
+
+Since the Health page already has the same components (score cards, activity section), this is primarily a **cleanup of the Dashboard** to remove duplicate sections.
 
 ---
 
-## Solution
+## Changes
 
-### Part 1: Enable Daily Text Rotation
+### 1. Dashboard.tsx - Remove Moved Sections
 
-**File: `src/components/dashboard/TodaysBestDecision.tsx`**
+**Remove from Dashboard:**
+- Today's Scores LayoutBlock (lines 192-227) - Remove entire section
+- Today's Activity LayoutBlock (lines 229-238) - Remove entire section
+- Related imports that are no longer needed:
+  - `OuraReadinessCard`
+  - `OuraSleepCard`
+  - `OuraActivityCard`
+  - `TodayActivitySection`
+  - `useWearableSessions`
 
-1. Import rotation helpers:
-```typescript
-import { getDateRotationIndex, WHY_TEXT_VARIATIONS } from "@/lib/riskDrivers";
-```
+**Keep on Dashboard:**
+- Daily Briefing (Yves intelligence)
+- Risk Score
+- Yves Recommendations
+- Briefing Diagnostics
+- Personalization Insights
+- Oura sync status (for connection confirmation)
+- useOuraTokenStatus (for connection toast)
 
-2. Create observation text variations (similar to existing WHY_TEXT_VARIATIONS):
-```typescript
-const OBSERVATION_VARIATIONS: Record<string, string[]> = {
-  'monotony': [
-    "Your recent training has followed a very similar pattern...",
-    "You've been doing the same type of training consistently...",
-    "Your workouts have been repetitive lately..."
-  ],
-  // ... variations for each driver
-};
-```
+### 2. Health.tsx - No Backend Changes Needed
 
-3. Update `generateObservationText()` to use rotation:
-```typescript
-const generateObservationText = () => {
-  const driver = riskDrivers.primary.id;
-  const variations = OBSERVATION_VARIATIONS[driver] || [];
-  const index = getDateRotationIndex(variations.length);
-  return variations[index] || defaultText;
-};
-```
+The Health page already:
+- Has its own `useWearableSessions` hook connection
+- Displays all three score cards (Readiness, Sleep, Activity)
+- Shows Today's Activity section
+- Has the detailed HRV metrics
+- Has `OuraSyncStatus` component
 
-4. Update `generateMeaningText()` to use `WHY_TEXT_VARIATIONS`:
-```typescript
-const generateMeaningText = () => {
-  const driver = riskDrivers.primary.id;
-  const variations = WHY_TEXT_VARIATIONS[driver] || [];
-  const index = getDateRotationIndex(variations.length);
-  return variations[index]?.injuryRiskReduction || defaultText;
-};
-```
-
-### Part 2: Remove Focus Mode Section
-
-**File: `src/pages/Dashboard.tsx`**
-
-1. Remove imports:
-   - `FocusModeSelector` (line 10)
-   - `CustomFocusEditor` (line 11)
-   - `useDashboardFocusMode` (line 21)
-
-2. Remove hook usage (lines 72-87)
-
-3. Remove `LayoutBlock` for Focus Mode (lines 203-220)
-
-4. Remove Custom Focus Editor section (lines 222-231)
-
-5. Remove focus mode references from other components:
-   - Remove `isCardEmphasized`, `isCardMinimized`, `getCardOrder` usage
-   - Remove `focusMode` prop from `DailyBriefingCard`
+All backend connections remain intact on the Health page.
 
 ---
 
@@ -83,36 +64,34 @@ const generateMeaningText = () => {
 
 | File | Changes |
 |------|---------|
-| `src/components/dashboard/TodaysBestDecision.tsx` | Add imports, create observation variations, update text generation functions |
-| `src/pages/Dashboard.tsx` | Remove FocusModeSelector, CustomFocusEditor, and all focus mode logic |
+| `src/pages/Dashboard.tsx` | Remove Today's Scores section, Today's Activity section, and unused imports |
 
 ---
 
-## Technical Details
+## Final Dashboard Structure
 
-### New Observation Variations Structure
+After changes, Dashboard will show (in order):
+1. Welcome Header with Oura sync status
+2. **Daily Briefing** (Yves intelligence)
+3. **Risk Score** card
+4. **Yves Recommendations** card
+5. Briefing Diagnostics
+6. Personalization Insights
 
-```typescript
-const OBSERVATION_VARIATIONS: Record<string, string[]> = {
-  'monotony': [
-    "Your recent training has followed a very similar pattern, and your body is showing signs of accumulated fatigue. This is common during consistent training blocks and doesn't mean anything is wrong. It simply suggests that adding some variation today would support recovery.",
-    "You've been training in a similar way for several days now. While consistency is valuable, your body responds best to varied stimuli. Today is a good opportunity to mix things up.",
-    "Your workout patterns have been quite repetitive recently. This isn't a problem, but introducing some variety today will help your body continue adapting effectively."
-  ],
-  'acwr': [
-    "Your training load has increased noticeably over the past week. Your body is adapting, but today is a good opportunity to give it a little extra support.",
-    "You've ramped up your training recently, which is great for progress. Your system could use a lighter day to consolidate those gains.",
-    "The intensity of your recent sessions has been higher than your usual baseline. A gentler approach today helps your body catch up."
-  ],
-  // Similar 3 variations for: strain, hrv, sleep, fatigue, symptoms
-};
-```
+## Final Health Page Structure
 
-### Cache Invalidation
-The existing cache in `useTodaysDecision.ts` already invalidates daily (line 56: `parsed.date === todayKey`), so the new text will appear each day when the cache refreshes.
+Health page remains unchanged with:
+1. Header with Oura sync status
+2. Score Cards (Readiness, Sleep, Activity)
+3. Detailed Metrics (HRV)
+4. Today's Activity
+5. Data Source Info
 
-### Testing Verification
-After implementation:
-- The observation and meaning text should differ day-to-day even if the same risk driver is identified
-- Focus Mode selector should no longer appear on Dashboard
-- All Dashboard functionality should remain intact without focus mode dependencies
+---
+
+## Technical Notes
+
+- No backend changes required - all hooks and Supabase connections remain
+- The Health page already has independent data fetching via `useWearableSessions`
+- Oura token status and sync listeners stay on Dashboard for connection management
+- Both pages will continue to receive real-time updates via Supabase channels

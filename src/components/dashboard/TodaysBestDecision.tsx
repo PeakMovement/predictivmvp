@@ -15,10 +15,89 @@ import {
 import { cn } from "@/lib/utils";
 import { useTodaysDecision } from "@/hooks/useTodaysDecision";
 import { toast } from "sonner";
+import { getDateRotationIndex } from "@/lib/riskDrivers";
 
 interface TodaysBestDecisionProps {
   className?: string;
 }
+
+// Observation text variations - rotated daily for freshness
+const OBSERVATION_VARIATIONS: Record<string, string[]> = {
+  'monotony': [
+    "Your recent training has followed a very similar pattern, with limited time for recovery. This is common during consistent training blocks and doesn't mean anything is wrong—it simply suggests adding some variation today would support recovery.",
+    "You've been training in a similar way for several days now. While consistency is valuable, your body responds best to varied stimuli. Today is a good opportunity to mix things up.",
+    "Your workout patterns have been quite repetitive recently. This isn't a problem, but introducing some variety today will help your body continue adapting effectively."
+  ],
+  'acwr': [
+    "Your training load has increased noticeably over the past week. Your body is adapting, but today is a good opportunity to give it a little extra support.",
+    "You've ramped up your training recently, which is great for progress. Your system could use a lighter day to consolidate those gains.",
+    "The intensity of your recent sessions has been higher than your usual baseline. A gentler approach today helps your body catch up."
+  ],
+  'strain': [
+    "You've been working hard lately, and the cumulative effort is showing in your numbers. This is actually a sign of consistent training—now is the time to let your body catch up.",
+    "Your recent training has accumulated more stress than usual. Taking it easier today isn't a step back—it's part of smart training.",
+    "The past few sessions have added up. Your body is ready to absorb those gains with a lighter day today."
+  ],
+  'hrv': [
+    "Your recovery metrics suggest your body could use a gentler day. This isn't unusual after demanding periods, and responding to these signals is exactly how sustainable progress happens.",
+    "Your heart rate variability indicates your nervous system is still processing recent stress. A lighter session today supports your body's natural recovery.",
+    "Your autonomic nervous system is showing signs of needing extra recovery. Easy movement today will help restore balance faster."
+  ],
+  'sleep': [
+    "Your sleep patterns indicate you may not have fully recovered yet. On days like this, listening to your body and adjusting intensity helps maintain long-term consistency.",
+    "Recent sleep data suggests your body hasn't had all the rest it needs. Gentler movement today can actually improve tonight's sleep while keeping you active.",
+    "Sleep quality directly affects how your body responds to training. Today is a good opportunity to let your system catch up."
+  ],
+  'fatigue': [
+    "Your system is showing signs of accumulated fatigue. Rather than pushing through, today is an opportunity to train smarter—keeping you on track without adding unnecessary stress.",
+    "Fatigue is your body's way of asking for a different stimulus. Responding appropriately today helps prevent the accumulated stress that leads to plateaus.",
+    "Your recent training has accumulated more fatigue than usual. A recovery-focused day helps your body complete the adaptation process."
+  ],
+  'symptoms': [
+    "Your body has been sending signals that deserve attention. Today is a good day to focus on recovery and give your system a chance to restore balance.",
+    "You've reported some discomfort recently. Your body communicates through these signals, and acknowledging them builds a more sustainable training practice.",
+    "Recent symptoms suggest your body needs a modified approach today. Working around the affected area keeps you active while allowing proper healing."
+  ]
+};
+
+// Meaning text variations - rotated daily for variety
+const MEANING_VARIATIONS: Record<string, string[]> = {
+  'monotony': [
+    "When training stays too similar for too long, the body can struggle to recover and adapt. Adding some variety helps reduce strain, supports long-term progress, and often keeps motivation high.",
+    "Repetitive stress accumulates over time. Cross-training distributes load across different tissues and joints, helping you stay healthy and progressing.",
+    "Training variety builds a more resilient body. Different movements strengthen connective tissue from multiple angles, keeping training sustainable."
+  ],
+  'acwr': [
+    "Gradual load increases are essential, but the body needs time to adapt. By moderating today's intensity, you're giving your system time to strengthen—allowing you to handle more in the coming weeks.",
+    "Your recent training spike has been productive, but backing off now prevents tissue overload. You'll feel stronger in tomorrow's session because you recovered properly today.",
+    "Workload balance is key to long-term progress. Today's reduction helps your body consolidate recent gains safely."
+  ],
+  'strain': [
+    "Accumulated effort needs to be balanced with recovery. Today's lighter approach isn't a step backward—it's an investment in your capacity to train harder later.",
+    "High strain accumulates micro-damage in tissues. Reducing load allows repair and prevents minor stress from becoming a setback.",
+    "Your weekly load has been high. Managing it now protects your ability to train consistently over the coming months."
+  ],
+  'hrv': [
+    "Recovery isn't just about rest—it's when your body actually gets stronger. By adjusting today's session to match your current state, you're maximizing the return on all the hard work you've already put in.",
+    "Low HRV signals your nervous system is still processing stress. Gentle movement helps restore nervous system balance without adding more load.",
+    "Your autonomic nervous system needs recovery time. Restorative movement today sets you up for a strong training response once HRV normalizes."
+  ],
+  'sleep': [
+    "Sleep quality directly affects how your body responds to training. Gentler movement on lower-recovery days can actually improve subsequent sleep while keeping you active.",
+    "Without quality sleep, muscles and nervous system haven't fully recovered. Easy movement is all your body can productively handle right now.",
+    "Sleep deficit reduces your body's ability to handle training stress. A lighter session today helps you recover faster and sleep better tonight."
+  ],
+  'fatigue': [
+    "Fatigue is your body's way of asking for a different stimulus. Responding appropriately today helps prevent the accumulated stress that leads to plateaus or setbacks.",
+    "Training on accumulated fatigue leads to poor form and higher injury risk. Light movement promotes blood flow and recovery without adding stress.",
+    "Fatigue impairs coordination and reaction time. Easy movement today protects you and sets you up for better performance tomorrow."
+  ],
+  'symptoms': [
+    "Your body communicates through subtle signals that experienced coaches learn to respect. By acknowledging these today, you're building a more sustainable training practice.",
+    "Training through symptoms often worsens the underlying issue. Protecting the area now prevents longer time off later.",
+    "Symptoms indicate tissue needs attention. Working around the affected area keeps you active while allowing proper healing."
+  ]
+};
 
 export function TodaysBestDecision({ className }: TodaysBestDecisionProps) {
   const { decision, isLoading, refresh } = useTodaysDecision();
@@ -66,23 +145,19 @@ export function TodaysBestDecision({ className }: TodaysBestDecisionProps) {
     ? Math.round((completedExercises.size / session.mainBlock.exercises.length) * 100)
     : 0;
 
-  // Generate calm, narrative observation text based on the risk driver
+  // Generate calm, narrative observation text based on the risk driver - rotated daily
   const generateObservationText = () => {
     if (!riskDrivers?.primary) return null;
     
     const driver = riskDrivers.primary.id;
+    const variations = OBSERVATION_VARIATIONS[driver];
     
-    const observations: Record<string, string> = {
-      'monotony': "Your recent training has followed a very similar pattern, and your body is showing signs of accumulated fatigue. This is common during consistent training blocks and doesn't mean anything is wrong. It simply suggests that adding some variation today would support recovery.",
-      'acwr': "Your training load has increased noticeably over the past week. Your body is adapting, but today is a good opportunity to give it a little extra support. A lighter session will help you absorb recent gains without pushing too hard.",
-      'strain': "You've been working hard lately, and the cumulative effort is showing in your numbers. This is actually a sign of consistent training—now is the time to let your body catch up so you can continue progressing.",
-      'hrv': "Your recovery metrics suggest your body could use a gentler day. This isn't unusual after demanding periods, and responding to these signals is exactly how sustainable progress happens.",
-      'sleep': "Your sleep patterns indicate you may not have fully recovered yet. On days like this, listening to your body and adjusting intensity helps maintain long-term consistency.",
-      'fatigue': "Your system is showing signs of accumulated fatigue. Rather than pushing through, today is an opportunity to train smarter—keeping you on track without adding unnecessary stress.",
-      'symptoms': "Your body has been sending signals that deserve attention. Today is a good day to focus on recovery and give your system a chance to restore balance."
-    };
+    if (variations && variations.length > 0) {
+      const index = getDateRotationIndex(variations.length);
+      return variations[index];
+    }
 
-    return observations[driver] || riskDrivers.explanation || "Based on your recent patterns, we've identified an opportunity to optimize today's training for better results.";
+    return riskDrivers.explanation || "Based on your recent patterns, we've identified an opportunity to optimize today's training for better results.";
   };
 
   // Generate calm recommendation text
@@ -91,23 +166,19 @@ export function TodaysBestDecision({ className }: TodaysBestDecisionProps) {
     return `A ${session.title.toLowerCase()} is a good option today, allowing you to stay active while giving your body space to recover.`;
   };
 
-  // Generate meaning paragraph
+  // Generate meaning paragraph - rotated daily
   const generateMeaningText = () => {
     if (!riskDrivers?.primary) return null;
     
     const driver = riskDrivers.primary.id;
+    const variations = MEANING_VARIATIONS[driver];
     
-    const meanings: Record<string, string> = {
-      'monotony': "When training stays too similar for too long, the body can struggle to recover and adapt. Adding some variety helps reduce strain, supports long-term progress, and often keeps motivation high.",
-      'acwr': "Gradual load increases are essential, but the body needs time to adapt. By moderating today's intensity, you're giving your system time to strengthen—allowing you to handle more in the coming weeks.",
-      'strain': "Accumulated effort needs to be balanced with recovery. Today's lighter approach isn't a step backward—it's an investment in your capacity to train harder later.",
-      'hrv': "Recovery isn't just about rest—it's when your body actually gets stronger. By adjusting today's session to match your current state, you're maximizing the return on all the hard work you've already put in.",
-      'sleep': "Sleep quality directly affects how your body responds to training. Gentler movement on lower-recovery days can actually improve subsequent sleep while keeping you active.",
-      'fatigue': "Fatigue is your body's way of asking for a different stimulus. Responding appropriately today helps prevent the accumulated stress that leads to plateaus or setbacks.",
-      'symptoms': "Your body communicates through subtle signals that experienced coaches learn to respect. By acknowledging these today, you're building a more sustainable training practice."
-    };
+    if (variations && variations.length > 0) {
+      const index = getDateRotationIndex(variations.length);
+      return variations[index];
+    }
 
-    return meanings[driver] || whyThisMatters?.injuryRiskReduction || "Adjusting your training based on how your body is responding helps maintain consistent progress while reducing unnecessary strain.";
+    return whyThisMatters?.injuryRiskReduction || "Adjusting your training based on how your body is responding helps maintain consistent progress while reducing unnecessary strain.";
   };
 
   // Generate data transparency text

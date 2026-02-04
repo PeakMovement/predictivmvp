@@ -7,8 +7,6 @@ import { BriefingDiagnostics } from "@/components/dashboard/BriefingDiagnostics"
 import { PersonalizationInsights } from "@/components/dashboard/PersonalizationInsights";
 import { RiskScoreCard } from "@/components/dashboard/RiskScoreCard";
 import { TodayActivitySection } from "@/components/dashboard/TodayActivitySection";
-import { FocusModeSelector } from "@/components/dashboard/FocusModeSelector";
-import { CustomFocusEditor } from "@/components/dashboard/CustomFocusEditor";
 import { useRefreshTrends } from "@/hooks/useTrendData";
 import { supabase } from "@/integrations/supabase/client";
 import { useWearableSessions } from "@/hooks/useWearableSessions";
@@ -18,12 +16,10 @@ import { OuraActivityCard } from "@/components/oura/OuraActivityCard";
 import { useOuraTokenStatus } from "@/hooks/useOuraTokenStatus";
 import { useToast } from "@/hooks/use-toast";
 import { useYvesIntelligence } from "@/hooks/useYvesIntelligence";
-import { useDashboardFocusMode } from "@/hooks/useDashboardFocusMode";
 import { useLayoutCustomization } from "@/hooks/useLayoutCustomization";
 import { CustomizeLayoutButton } from "@/components/layout/CustomizeLayoutButton";
 import { LayoutEditor } from "@/components/layout/LayoutEditor";
 import { LayoutBlock } from "@/components/layout/LayoutBlock";
-import { cn } from "@/lib/utils";
 
 const WelcomeHeader = ({ onCustomize, isCustomized }: { onCustomize: () => void; isCustomized: boolean }) => (
   <div className="text-center mb-8 md:mb-12 space-y-3 md:space-y-4 px-4 md:px-0">
@@ -69,23 +65,6 @@ export const Dashboard = () => {
     isSectionVisible,
   } = useLayoutCustomization('dashboard');
   
-  // Focus Mode for dashboard presentation
-  const {
-    currentMode,
-    setMode,
-    allModes,
-    isCardEmphasized,
-    isCardMinimized,
-    getCardOrder,
-    // Custom mode
-    isEditingCustom,
-    openCustomEditor,
-    saveCustomCardPreferences,
-    cancelCustomEditing,
-    getCardPreferencesForEditor,
-    hasCustomPreferences,
-  } = useDashboardFocusMode();
-  
   // Unified Yves Intelligence - single source of truth for briefing & recommendations
   const {
     dailyBriefing,
@@ -96,7 +75,7 @@ export const Dashboard = () => {
     isGenerating: intelligenceGenerating,
     cached: intelligenceCached,
     refresh: refreshIntelligence,
-  } = useYvesIntelligence(currentMode);
+  } = useYvesIntelligence('balance');
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
@@ -182,11 +161,7 @@ export const Dashboard = () => {
                 size="wide"
                 visible={isSectionVisible('dailyBriefing')}
               >
-                <div className={cn(
-                  "mb-8 transition-all duration-300",
-                  isCardMinimized('briefing') && "opacity-60 scale-[0.98]",
-                  isCardEmphasized('briefing') && "ring-2 ring-blue-500/30 rounded-xl"
-                )}>
+                <div className="mb-8 transition-all duration-300">
                   <DailyBriefingCard
                     briefing={dailyBriefing}
                     content={briefingContent}
@@ -195,42 +170,12 @@ export const Dashboard = () => {
                     isGenerating={intelligenceGenerating}
                     cached={intelligenceCached}
                     onRefresh={refreshIntelligence}
-                    focusMode={currentMode}
+                    focusMode="balance"
                   />
                 </div>
               </LayoutBlock>
 
-              {/* Focus Mode Selector - Below Daily Briefing */}
-              <LayoutBlock
-                blockId="focusMode"
-                displayName="Focus Mode"
-                pageId="dashboard"
-                size="wide"
-                visible={isSectionVisible('focusMode')}
-              >
-                <div className="mb-8 p-4 bg-glass backdrop-blur-xl border border-glass-border rounded-xl">
-                  <FocusModeSelector
-                    currentMode={currentMode}
-                    allModes={allModes}
-                    onModeChange={setMode}
-                    onEditCustom={openCustomEditor}
-                    hasCustomPreferences={hasCustomPreferences}
-                  />
-                </div>
-              </LayoutBlock>
-
-              {/* Custom Focus Editor */}
-              {isEditingCustom && (
-                <div className="mb-8 animate-fade-in">
-                  <CustomFocusEditor
-                    cardPreferences={getCardPreferencesForEditor()}
-                    onSave={saveCustomCardPreferences}
-                    onCancel={cancelCustomEditing}
-                  />
-                </div>
-              )}
-
-              {/* Dashboard Cards - Ordered by Focus Mode */}
+              {/* Dashboard Cards */}
               <div className="space-y-8">
                 {/* Risk Score */}
                 <LayoutBlock
@@ -240,16 +185,7 @@ export const Dashboard = () => {
                   size="wide"
                   visible={isSectionVisible('riskScore')}
                 >
-                  <div 
-                    className={cn(
-                      "transition-all duration-300",
-                      isCardMinimized('risk') && "opacity-60 scale-[0.98]",
-                      isCardEmphasized('risk') && "ring-2 ring-primary/30 rounded-xl"
-                    )}
-                    style={{ order: getCardOrder('risk') }}
-                  >
-                    <RiskScoreCard />
-                  </div>
+                  <RiskScoreCard />
                 </LayoutBlock>
 
                 {/* Core Metrics: Sleep, Readiness, Activity */}
@@ -260,52 +196,31 @@ export const Dashboard = () => {
                   size="wide"
                   visible={isSectionVisible('todaysScores')}
                 >
-                  <div className={cn(
-                    "transition-all duration-300",
-                    isCardMinimized('readiness') && isCardMinimized('sleep') && isCardMinimized('activity') && "opacity-60"
-                  )}>
+                  <div>
                     <h3 className="text-lg md:text-xl font-semibold text-foreground mb-4">Today's Scores</h3>
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                      <div className={cn(
-                        "transition-all duration-300",
-                        isCardEmphasized('readiness') && "ring-2 ring-primary/30 rounded-xl",
-                        isCardMinimized('readiness') && "opacity-60 scale-[0.98]"
-                      )}>
-                        <OuraReadinessCard
-                          score={session?.readiness_score ?? null}
-                          restingHR={session?.resting_hr ?? null}
-                          hrv={session?.hrv_avg ?? null}
-                          isLoading={isLoading}
-                        />
-                      </div>
-                      <div className={cn(
-                        "transition-all duration-300",
-                        isCardEmphasized('sleep') && "ring-2 ring-emerald-500/30 rounded-xl",
-                        isCardMinimized('sleep') && "opacity-60 scale-[0.98]"
-                      )}>
-                        <OuraSleepCard
-                          score={session?.sleep_score ?? null}
-                          totalSleep={null}
-                          deepSleep={null}
-                          remSleep={null}
-                          lightSleep={null}
-                          efficiency={null}
-                          isLoading={isLoading}
-                        />
-                      </div>
-                      <div className={cn(
-                        "transition-all duration-300",
-                        isCardEmphasized('activity') && "ring-2 ring-primary/30 rounded-xl",
-                        isCardMinimized('activity') && "opacity-60 scale-[0.98]"
-                      )}>
-                        <OuraActivityCard
-                          score={session?.activity_score ?? null}
-                          steps={session?.total_steps ?? null}
-                          activeCalories={session?.active_calories ?? null}
-                          totalCalories={session?.total_calories ?? null}
-                          isLoading={isLoading}
-                        />
-                      </div>
+                      <OuraReadinessCard
+                        score={session?.readiness_score ?? null}
+                        restingHR={session?.resting_hr ?? null}
+                        hrv={session?.hrv_avg ?? null}
+                        isLoading={isLoading}
+                      />
+                      <OuraSleepCard
+                        score={session?.sleep_score ?? null}
+                        totalSleep={null}
+                        deepSleep={null}
+                        remSleep={null}
+                        lightSleep={null}
+                        efficiency={null}
+                        isLoading={isLoading}
+                      />
+                      <OuraActivityCard
+                        score={session?.activity_score ?? null}
+                        steps={session?.total_steps ?? null}
+                        activeCalories={session?.active_calories ?? null}
+                        totalCalories={session?.total_calories ?? null}
+                        isLoading={isLoading}
+                      />
                     </div>
                   </div>
                 </LayoutBlock>
@@ -318,13 +233,7 @@ export const Dashboard = () => {
                   size="wide"
                   visible={isSectionVisible('todayActivity')}
                 >
-                  <div className={cn(
-                    "transition-all duration-300",
-                    isCardMinimized('todayActivity') && "opacity-60 scale-[0.98]",
-                    isCardEmphasized('todayActivity') && "ring-2 ring-primary/30 rounded-xl"
-                  )}>
-                    <TodayActivitySection />
-                  </div>
+                  <TodayActivitySection />
                 </LayoutBlock>
 
                 {/* Recommendations */}
@@ -336,16 +245,10 @@ export const Dashboard = () => {
                   visible={isSectionVisible('recommendations')}
                   className="mb-10"
                 >
-                  <div className={cn(
-                    "transition-all duration-300",
-                    isCardMinimized('recommendations') && "opacity-60 scale-[0.98]",
-                    isCardEmphasized('recommendations') && "ring-2 ring-blue-500/30 rounded-xl"
-                  )}>
-                    <YvesRecommendationsCard
-                      recommendations={recommendations}
-                      isLoading={intelligenceLoading}
-                    />
-                  </div>
+                  <YvesRecommendationsCard
+                    recommendations={recommendations}
+                    isLoading={intelligenceLoading}
+                  />
                 </LayoutBlock>
 
                 {/* Diagnostics (for troubleshooting) */}

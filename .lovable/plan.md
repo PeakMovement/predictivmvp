@@ -1,140 +1,92 @@
 
-# Dashboard Cleanup: Remove Sections & Add Info Tooltips
+# Copy Refinement Plan: Today's Training Focus Card
+
+## Overview
+This plan updates text content only — no layout, spacing, or component changes. All refinements aim to make the copy sound more natural, supportive, and conversational.
+
+---
 
 ## Changes Summary
 
-| Task | Action |
-|------|--------|
-| Remove "What we've learned about you" | Delete `LearnedPatternsSection` from DailyBriefingCard |
-| Remove "Plan alignment" | Delete `PlanAlignmentSection` from DailyBriefingCard |
-| Fix spacing under "Today's Best Decision" | Normalize padding/margins, remove inconsistent gaps |
-| Add info tooltips | Create `InfoTooltip` component, replace subtitle text with `?` hover icons |
-| "Attention Needed" diagnosis | Add diagnostic logging to show why riskHighlights may be empty |
+### 1. Recommendation Text (Line 93)
+
+**Current:**
+```
+A ${session.title.toLowerCase()} is recommended to help you stay active while supporting recovery.
+```
+
+**Updated:**
+```
+A ${session.title.toLowerCase()} is a good option today, allowing you to stay active while giving your body space to recover.
+```
 
 ---
 
-## File Changes
+### 2. Duration & Effort Display (Lines 189-199)
 
-### 1. Create `src/components/ui/info-tooltip.tsx` (NEW)
+**Current format:** Two separate badges showing duration and intensity
 
-A reusable component that shows a small `?` icon which reveals explanatory text on hover:
-
-```tsx
-// Props: content (the text to show on hover)
-// Usage: <InfoTooltip content="Your personalised guidance based on your data" />
-// Renders: Small muted ? icon with tooltip on hover
+**Updated format:** Single inline sentence:
+```
+Around {duration} at {intensity level} ({RPE}).
 ```
 
-### 2. Update `src/components/dashboard/DailyBriefingCard.tsx`
-
-**Remove imports:**
-- `LearnedPatternsSection` (line 12)
-- `PlanAlignmentSection` (line 14)
-
-**Remove JSX:**
-- Line 145: `<LearnedPatternsSection className="pb-2 border-b border-border/50" />`
-- Line 151: `<PlanAlignmentSection className="pb-2 border-b border-border/50" />`
-
-**Update CollapsibleSection:**
-- Add optional `tooltip` prop
-- When `tooltip` is provided, show `InfoTooltip` instead of preview text
-
-### 3. Update `src/components/dashboard/TodaysBestDecision.tsx`
-
-**Fix spacing:**
-- Line 108: Change `<div className="px-4 pb-4 space-y-4">` to `space-y-3` for tighter spacing
-- Line 356: Remove `pt-2` from CTA buttons div (line 356)
-
-**Replace subtitle text with tooltips:**
-
-| Current | New |
-|---------|-----|
-| `<p className="text-xs">Your personalised guidance</p>` | `<InfoTooltip content="..." />` |
-| `<span className="text-sm font-semibold">Risk Driver</span>` | Add `<InfoTooltip />` next to title |
-| "Why this matters" section labels | Add `<InfoTooltip />` icons |
-
-**Specific changes:**
-- Line 86-87: Replace subtitle `<p>` with inline `<InfoTooltip content="Personalised recommendations based on your current metrics and profile" />`
-- Line 132: Add tooltip after "Risk Driver" label explaining what a risk driver is
-- Lines 325, 336, 347: Add tooltips for "What triggered this", "How this protects you", "Your benefit today"
-
-### 4. Update `src/components/dashboard/OneThingThatMatters.tsx`
-
-- Line 93-95: Add `InfoTooltip` next to the heading "One thing that matters today"
+Example output: "Around 25–35 minutes at an easy to comfortable effort (RPE 3–4/10)."
 
 ---
 
-## Tooltip Content Examples
+### 3. Meaning Text Function (Lines 102-110)
 
-| Section | Tooltip Text |
-|---------|-------------|
-| Today's Best Decision | "Personalised recommendation based on your current metrics, risk level, and recovery state" |
-| Risk Driver | "The primary factor influencing today's recommendation, identified from your wearable data" |
-| What triggered this | "The specific metric or pattern that initiated this recommendation" |
-| How this protects you | "How following this guidance helps reduce injury risk" |
-| Your benefit today | "The immediate positive outcome you can expect from this session" |
-| One thing that matters | "Your single most important focus for today based on all available data" |
+Update the `meanings` object to use the new conversational style:
 
----
-
-## Visual Change
-
-**Before:**
-```
-Today's Best Decision
-Your personalised guidance
-```
-
-**After:**
-```
-Today's Best Decision [?]
-```
-*Hovering `?` shows: "Personalised recommendation based on your current metrics..."*
+| Driver | New Copy |
+|--------|----------|
+| monotony | "When training stays too similar for too long, the body can struggle to recover and adapt. Adding some variety helps reduce strain, supports long-term progress, and often keeps motivation high." |
+| acwr | "Gradual load increases are essential, but the body needs time to adapt. By moderating today's intensity, you're giving your system time to strengthen—allowing you to handle more in the coming weeks." |
+| strain | "Accumulated effort needs to be balanced with recovery. Today's lighter approach isn't a step backward—it's an investment in your capacity to train harder later." |
+| hrv | "Recovery isn't just about rest—it's when your body actually gets stronger. By adjusting today's session to match your current state, you're maximizing the return on all the hard work you've already put in." |
+| sleep | "Sleep quality directly affects how your body responds to training. Gentler movement on lower-recovery days can actually improve subsequent sleep while keeping you active." |
+| fatigue | "Fatigue is your body's way of asking for a different stimulus. Responding appropriately today helps prevent the accumulated stress that leads to plateaus or setbacks." |
+| symptoms | "Your body communicates through subtle signals that experienced coaches learn to respect. By acknowledging these today, you're building a more sustainable training practice." |
 
 ---
 
-## "Attention Needed" Section Analysis
+### 4. Data Disclosure CTA (Line 357)
 
-The `riskHighlights` array is populated by the edge function based on:
-1. Layer 2 risk trajectory evaluation
-2. Critical deviations (>15% from baseline)
-3. Recent symptom correlations
-4. Health anomalies with severity="high"
+**Current:**
+```
+See the data behind this decision
+```
 
-**Why it may appear empty:**
-- Signals classified as "noise" (single-day spike without pattern)
-- Risk accumulation score < 25 (considered "low")
-- No symptoms reported in last 3 days
-- No critical deviations detected
+**Updated:**
+```
+See the data that informed this suggestion
+```
 
-**Fix:** The edge function will continue to only show warnings when there's meaningful risk. This is intentional - "Silence is valid" when there's nothing to report. The section will automatically populate when genuine concerns exist.
+(Also update the "Hide the data" text to "Hide data details" for consistency)
+
+---
+
+## Files Modified
+
+| File | Change Type |
+|------|-------------|
+| `src/components/dashboard/TodaysBestDecision.tsx` | Copy refinements only |
 
 ---
 
 ## Technical Details
 
-### InfoTooltip Component Structure
-```tsx
-import { HelpCircle } from "lucide-react";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+### Line-by-line edits:
 
-export function InfoTooltip({ content }: { content: string }) {
-  return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <HelpCircle className="h-3.5 w-3.5 text-muted-foreground/50 
-          hover:text-muted-foreground cursor-help inline-block ml-1" />
-      </TooltipTrigger>
-      <TooltipContent className="max-w-[250px]">
-        <p className="text-xs">{content}</p>
-      </TooltipContent>
-    </Tooltip>
-  );
-}
-```
+1. **Line 93**: Update `generateRecommendationText()` return string
+2. **Lines 189-199**: Consolidate duration/intensity into single sentence format
+3. **Lines 102-110**: Update all entries in the `meanings` object
+4. **Line 357**: Update data disclosure CTA text
 
-### Files Modified
-1. `src/components/ui/info-tooltip.tsx` - NEW
-2. `src/components/dashboard/DailyBriefingCard.tsx` - Remove 2 sections
-3. `src/components/dashboard/TodaysBestDecision.tsx` - Fix spacing + add tooltips
-4. `src/components/dashboard/OneThingThatMatters.tsx` - Add tooltip
+### No changes to:
+- Component structure or hierarchy
+- Styling classes or spacing
+- State management or logic
+- Button labels (already updated to first-person style)
+- "Would you like to see today's workout?" CTA (already good)

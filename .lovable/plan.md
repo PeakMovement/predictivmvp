@@ -1,138 +1,125 @@
 
+# Add Google Calendar Integration to Weekly Planner
 
-# Apply Tooltip + PDF Features to Yves Recommendations
+## Overview
 
-## What Changes
+Add a new section to the Weekly Planner page that shows the user's next 7 days of Google Calendar events in a clean, scrollable container. This requires connecting the Google Calendar service, creating a backend edge function to fetch events, and building a frontend component to display them.
 
-Apply the same two enhancements from the "Today's Training Focus" card to each recommendation item in the Yves Recommendations card:
+## Setup Required: Google Calendar Connection
 
-1. **"Why this matters?" hover tooltip** -- Replace the static "Why this matters" block (lines 231-239) with a compact hover trigger, matching the pattern used in TodaysBestDecision
-2. **"Download recommendation" PDF button** -- Add a small button that generates a PDF containing the recommendation text, category, priority, and reasoning
+Before the code can work, you'll need to connect your Google Calendar. When I implement this, I'll prompt you to link your Google account through the Lovable connector system -- it's a one-click authorization flow, no API keys to manage manually.
 
----
+## Architecture
 
-## Changes to `src/components/dashboard/YvesRecommendationsCard.tsx`
-
-### New Imports (line 5-6)
-- Add `HelpCircle`, `Download` to lucide imports
-- Add `Tooltip`, `TooltipContent`, `TooltipTrigger`, `TooltipProvider` from radix
-- Add `jsPDF` from jspdf
-
-### RecommendationItem Component Changes (lines 231-239)
-
-**Before:**
-The "Why this matters" reasoning is shown as a permanently visible muted block taking up vertical space inside each expanded recommendation.
-
-**After:**
-- Replace the static reasoning block with a "Why this matters?" hover trigger using `TooltipProvider` + `Tooltip` + `TooltipTrigger` + `TooltipContent`
-- The trigger uses a `HelpCircle` icon and text, styled identically to the one in TodaysBestDecision
-- Reasoning text appears only on hover/tap in a max-width tooltip
-
-### PDF Download Button (added after tooltip, before feedback)
-
-Add a `handleDownloadPDF` function to `RecommendationItem` that generates a simple PDF containing:
-- Recommendation category and priority
-- The recommendation text
-- The "Why this matters" reasoning
-- Date generated
-
-A small "Download as PDF" button will appear in the expanded content area, between the tooltip row and the feedback buttons.
-
----
-
-## Final Expanded Recommendation Layout
-
+```text
++------------------+       +-------------------------+       +---------------------------+
+|  Planner Page    | ----> |  fetch-calendar-events  | ----> |  Google Calendar API      |
+|  (new component) |       |  (edge function)        |       |  via Lovable Gateway      |
++------------------+       +-------------------------+       +---------------------------+
 ```
-[Category Icon] [Category Label] [Priority Badge]
-  Preview text...
 
---- Expanded ---
-Main suggestion text
+The edge function acts as a secure proxy -- your Google credentials never touch the browser.
 
-[HelpCircle] Why this matters?  |  [Download] Download as PDF
+## What Gets Built
 
-Was this helpful?  [Yes] [No]      [I did this]
-```
+### 1. Edge Function: `fetch-calendar-events`
+
+A new Supabase edge function that:
+- Authenticates the request (requires logged-in user)
+- Calls the Google Calendar API through the Lovable gateway
+- Fetches events for the next 7 days from the user's primary calendar
+- Returns a clean list of events with title, start/end times, location, and description
+
+### 2. Frontend Hook: `useCalendarEvents`
+
+A React Query hook that:
+- Calls the edge function on mount
+- Caches the result for 5 minutes
+- Returns loading, error, and events states
+- Groups events by day for easy rendering
+
+### 3. Component: `CalendarEventsSection`
+
+A styled card that shows:
+- A header with a calendar icon and "Your Week Ahead" title
+- A "Connect Google Calendar" prompt if not connected (graceful fallback)
+- 7 day columns (or stacked cards on mobile) showing events grouped by date
+- Each event shows: time, title, and optionally location
+- Today's column highlighted with the same ring style used elsewhere
+- Empty days show "No events" in muted text
+- A refresh button in the header
+
+### 4. Planner Page Integration
+
+- Add the new section as a `LayoutBlock` with id `calendarEvents` and display name "Calendar"
+- Position it after the "Weekly Themes" block and before "Daily Briefings"
+- Register it in the layout customization defaults so users can show/hide/reorder it
 
 ---
 
 ## Technical Details
 
-### Tooltip (replacing lines 231-239)
+### Edge Function: `supabase/functions/fetch-calendar-events/index.ts`
 
-```tsx
-{recommendation.reasoning && (
-  <div className="flex items-center gap-4">
-    <TooltipProvider>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <button className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors">
-            <HelpCircle className="h-3.5 w-3.5" />
-            <span>Why this matters?</span>
-          </button>
-        </TooltipTrigger>
-        <TooltipContent className="max-w-[300px] p-3">
-          <p className="text-xs leading-relaxed">{recommendation.reasoning}</p>
-        </TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
+```ts
+const GATEWAY_URL = 'https://gateway.lovable.dev/google_calendar/calendar/v3';
 
-    <Button variant="ghost" size="sm" className="h-7 px-2 text-xs" onClick={handleDownloadPDF}>
-      <Download className="h-3 w-3 mr-1" /> Download as PDF
-    </Button>
-  </div>
-)}
+// Uses LOVABLE_API_KEY and GOOGLE_CALENDAR_API_KEY env vars
+// Fetches: GET /calendars/primary/events
+// Query params: timeMin (now), timeMax (now + 7 days), singleEvents=true, orderBy=startTime
+// Returns: { events: CalendarEvent[], connected: true }
+// On 401/missing keys: Returns { events: [], connected: false }
 ```
 
-### PDF Generation
+### Hook: `src/hooks/useCalendarEvents.ts`
 
+```ts
+// Calls the edge function via supabase.functions.invoke('fetch-calendar-events')
+// Groups events by date string (YYYY-MM-DD)
+// Returns: { events, eventsByDay, isLoading, error, isConnected, refresh }
+```
+
+### Component: `src/components/planner/CalendarEventsSection.tsx`
+
+- Renders a Card with a 7-day grid
+- Each day column shows: day name, date, and list of events
+- Events display time (formatted) and title
+- Uses existing Card, Badge, and Skeleton components
+- Graceful "not connected" state with a button to trigger connection
+
+### Layout Registration: `src/hooks/useLayoutCustomization.ts`
+
+Add to the `plan` default sections:
+```ts
+{ id: 'calendarEvents', name: 'Calendar', visible: true, order: 4 }
+```
+(Shifts dailyBriefings to order 5)
+
+### Planner Page: `src/pages/Planner.tsx`
+
+Add new LayoutBlock between themes and daily briefings:
 ```tsx
-const handleDownloadPDF = (e: React.MouseEvent) => {
-  e.stopPropagation();
-  const doc = new jsPDF();
-  let y = 20;
-
-  // Header
-  doc.setFontSize(16);
-  doc.setFont("helvetica", "bold");
-  doc.text(`${categoryIcon} ${categoryLabel}`, 20, y); y += 10;
-
-  // Priority
-  doc.setFontSize(11);
-  doc.setFont("helvetica", "normal");
-  doc.text(`Priority: ${recommendation.priority}`, 20, y); y += 10;
-
-  // Recommendation text
-  doc.setFont("helvetica", "bold");
-  doc.text("Recommendation", 20, y); y += 7;
-  doc.setFont("helvetica", "normal");
-  const textLines = doc.splitTextToSize(recommendation.text, 170);
-  doc.text(textLines, 20, y); y += textLines.length * 6 + 6;
-
-  // Why this matters
-  if (recommendation.reasoning) {
-    doc.setFont("helvetica", "bold");
-    doc.text("Why This Matters", 20, y); y += 7;
-    doc.setFont("helvetica", "normal");
-    const reasonLines = doc.splitTextToSize(recommendation.reasoning, 170);
-    doc.text(reasonLines, 20, y); y += reasonLines.length * 6 + 6;
-  }
-
-  // Date
-  doc.setFontSize(9);
-  doc.text(`Generated: ${new Date().toLocaleDateString()}`, 20, y);
-
-  doc.save(`yves-${recommendation.category}-recommendation.pdf`);
-};
+<LayoutBlock blockId="calendarEvents" displayName="Calendar" pageId="plan" size="wide"
+  visible={isSectionVisible('calendarEvents')}>
+  <CalendarEventsSection />
+</LayoutBlock>
 ```
 
 ---
 
-## File Modified
-
-| File | Changes |
+## Files to Create
+| File | Purpose |
 |------|---------|
-| `src/components/dashboard/YvesRecommendationsCard.tsx` | Replace static reasoning block with hover tooltip; add PDF download button per recommendation |
+| `supabase/functions/fetch-calendar-events/index.ts` | Edge function to fetch Google Calendar events |
+| `src/hooks/useCalendarEvents.ts` | React Query hook for calendar data |
+| `src/components/planner/CalendarEventsSection.tsx` | Calendar events display component |
 
-No backend changes. No logic changes to engagement tracking or feedback system.
+## Files to Modify
+| File | Change |
+|------|--------|
+| `src/pages/Planner.tsx` | Add CalendarEventsSection as a new LayoutBlock |
+| `src/hooks/useLayoutCustomization.ts` | Register `calendarEvents` in plan defaults |
 
+## No-Calendar Fallback
+
+If the user hasn't connected Google Calendar, the section will show a friendly prompt: "Connect your Google Calendar to see your upcoming events here" with a connect button. This ensures the planner page works perfectly even without the calendar connected.

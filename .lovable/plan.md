@@ -1,97 +1,38 @@
 
-# Plan: Move Today's Scores to Health Page
 
-## Current State Analysis
+# Fix: iPad Layout for "Add This Session" Buttons
 
-**Dashboard (/)** currently has:
-1. Daily Briefing (Yves) - KEEP
-2. Risk Score - KEEP  
-3. Today's Scores (Readiness, Sleep, Activity cards) - MOVE to Health
-4. Today's Activity Section - MOVE to Health
-5. Recommendations (Yves) - KEEP
-6. Briefing Diagnostics - KEEP
-7. Personalization Insights - KEEP
+## Problem
 
-**Health page** already has:
-- Score Cards (Readiness, Sleep, Activity) - Already present
-- Detailed Metrics (HRV Card) - Already present
-- Today Activity Section - Already present
-- Data Source Info - Already present
+On iPad-width screens (~820px), the two action buttons at the bottom of the "Today's training focus" card are displayed side-by-side with `flex-1`, causing:
+- Text getting cut off or wrapping awkwardly
+- Buttons appearing cramped and "warped"
 
-## What This Plan Does
+The current code (line 432):
+```html
+<div className="flex gap-3 pt-2">
+  <Button className="flex-1 h-11">Add this session to my plan</Button>
+  <Button className="flex-1 h-11">I've completed today's session</Button>
+</div>
+```
 
-Since the Health page already has the same components (score cards, activity section), this is primarily a **cleanup of the Dashboard** to remove duplicate sections.
+## Solution
 
----
+Make the buttons stack vertically on smaller screens and sit side-by-side only when there's enough room. This uses a responsive flex-direction approach.
 
 ## Changes
 
-### 1. Dashboard.tsx - Remove Moved Sections
+### File: `src/components/dashboard/TodaysBestDecision.tsx`
 
-**Remove from Dashboard:**
-- Today's Scores LayoutBlock (lines 192-227) - Remove entire section
-- Today's Activity LayoutBlock (lines 229-238) - Remove entire section
-- Related imports that are no longer needed:
-  - `OuraReadinessCard`
-  - `OuraSleepCard`
-  - `OuraActivityCard`
-  - `TodayActivitySection`
-  - `useWearableSessions`
+**Line 432**: Update the button container from horizontal-only to responsive stacking:
 
-**Keep on Dashboard:**
-- Daily Briefing (Yves intelligence)
-- Risk Score
-- Yves Recommendations
-- Briefing Diagnostics
-- Personalization Insights
-- Oura sync status (for connection confirmation)
-- useOuraTokenStatus (for connection toast)
+```html
+<div className="flex flex-col sm:flex-row gap-3 pt-2">
+```
 
-### 2. Health.tsx - No Backend Changes Needed
+This ensures:
+- **Mobile and iPad (below 640px container width)**: Buttons stack vertically, full width, no text truncation
+- **Desktop (640px+ container)**: Buttons sit side-by-side as before
 
-The Health page already:
-- Has its own `useWearableSessions` hook connection
-- Displays all three score cards (Readiness, Sleep, Activity)
-- Shows Today's Activity section
-- Has the detailed HRV metrics
-- Has `OuraSyncStatus` component
+No backend changes. No logic changes. Single line CSS class update.
 
-All backend connections remain intact on the Health page.
-
----
-
-## Files Modified
-
-| File | Changes |
-|------|---------|
-| `src/pages/Dashboard.tsx` | Remove Today's Scores section, Today's Activity section, and unused imports |
-
----
-
-## Final Dashboard Structure
-
-After changes, Dashboard will show (in order):
-1. Welcome Header with Oura sync status
-2. **Daily Briefing** (Yves intelligence)
-3. **Risk Score** card
-4. **Yves Recommendations** card
-5. Briefing Diagnostics
-6. Personalization Insights
-
-## Final Health Page Structure
-
-Health page remains unchanged with:
-1. Header with Oura sync status
-2. Score Cards (Readiness, Sleep, Activity)
-3. Detailed Metrics (HRV)
-4. Today's Activity
-5. Data Source Info
-
----
-
-## Technical Notes
-
-- No backend changes required - all hooks and Supabase connections remain
-- The Health page already has independent data fetching via `useWearableSessions`
-- Oura token status and sync listeners stay on Dashboard for connection management
-- Both pages will continue to receive real-time updates via Supabase channels

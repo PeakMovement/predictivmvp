@@ -1,12 +1,14 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import jsPDF from "jspdf";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ExternalLink, Lightbulb, ChevronDown, ThumbsUp, ThumbsDown, Check } from "lucide-react";
+import { ExternalLink, Lightbulb, ChevronDown, ThumbsUp, ThumbsDown, Check, HelpCircle, Download } from "lucide-react";
 import { YvesRecommendation } from "@/hooks/useYvesIntelligence";
 import { useEngagementTracking } from "@/hooks/useEngagementTracking";
 import { cn } from "@/lib/utils";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 import { useToast } from "@/hooks/use-toast";
 
 interface YvesRecommendationsCardProps {
@@ -183,6 +185,39 @@ function RecommendationItem({ recommendation, categoryLabel, categoryIcon, prior
     }
   };
 
+  const handleDownloadPDF = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const doc = new jsPDF();
+    let y = 20;
+
+    doc.setFontSize(16);
+    doc.setFont("helvetica", "bold");
+    doc.text(`${categoryIcon} ${categoryLabel}`, 20, y); y += 10;
+
+    doc.setFontSize(11);
+    doc.setFont("helvetica", "normal");
+    doc.text(`Priority: ${recommendation.priority}`, 20, y); y += 10;
+
+    doc.setFont("helvetica", "bold");
+    doc.text("Recommendation", 20, y); y += 7;
+    doc.setFont("helvetica", "normal");
+    const textLines = doc.splitTextToSize(recommendation.text, 170);
+    doc.text(textLines, 20, y); y += textLines.length * 6 + 6;
+
+    if (recommendation.reasoning) {
+      doc.setFont("helvetica", "bold");
+      doc.text("Why This Matters", 20, y); y += 7;
+      doc.setFont("helvetica", "normal");
+      const reasonLines = doc.splitTextToSize(recommendation.reasoning, 170);
+      doc.text(reasonLines, 20, y); y += reasonLines.length * 6 + 6;
+    }
+
+    doc.setFontSize(9);
+    doc.text(`Generated: ${new Date().toLocaleDateString()}`, 20, y);
+
+    doc.save(`yves-${recommendation.category}-recommendation.pdf`);
+  };
+
   return (
     <Collapsible open={isOpen} onOpenChange={setIsOpen}>
       <div className={cn(
@@ -228,13 +263,26 @@ function RecommendationItem({ recommendation, categoryLabel, categoryIcon, prior
               {recommendation.text}
             </p>
 
-            {/* Why this matters */}
+            {/* Why this matters tooltip + PDF download */}
             {recommendation.reasoning && (
-              <div className="p-2 rounded-md bg-muted/50">
-                <p className="text-xs text-muted-foreground">
-                  <span className="font-medium text-foreground">Why this matters: </span>
-                  {recommendation.reasoning}
-                </p>
+              <div className="flex items-center gap-4">
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors">
+                        <HelpCircle className="h-3.5 w-3.5" />
+                        <span>Why this matters?</span>
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent className="max-w-[300px] p-3">
+                      <p className="text-xs leading-relaxed">{recommendation.reasoning}</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+
+                <Button variant="ghost" size="sm" className="h-7 px-2 text-xs" onClick={handleDownloadPDF}>
+                  <Download className="h-3 w-3 mr-1" /> Download as PDF
+                </Button>
               </div>
             )}
 

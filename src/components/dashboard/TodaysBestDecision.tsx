@@ -429,7 +429,7 @@ export function TodaysBestDecision({ className }: TodaysBestDecisionProps) {
             )}
 
             {/* D. Action Buttons - First-person, supportive language */}
-            <div className="flex gap-3 pt-2">
+            <div className="flex flex-col sm:flex-row gap-3 pt-2">
               <Button 
                 variant="outline" 
                 className="flex-1 h-11"

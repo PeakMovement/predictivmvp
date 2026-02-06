@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 import {
   ChevronDown,
   Compass,
@@ -10,12 +11,15 @@ import {
   Dumbbell,
   Play,
   RefreshCw,
-  Info
+  Info,
+  HelpCircle,
+  Download
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTodaysDecision } from "@/hooks/useTodaysDecision";
 import { toast } from "sonner";
 import { getDateRotationIndex } from "@/lib/riskDrivers";
+import jsPDF from "jspdf";
 
 interface TodaysBestDecisionProps {
   className?: string;
@@ -129,6 +133,99 @@ export function TodaysBestDecision({ className }: TodaysBestDecisionProps) {
   const handleRefresh = () => {
     refresh();
     toast.info("Updating your guidance...");
+  };
+
+  const handleDownloadPDF = () => {
+    if (!session) return;
+    const doc = new jsPDF();
+    let y = 20;
+
+    // Title
+    doc.setFontSize(18);
+    doc.setFont("helvetica", "bold");
+    doc.text(session.title, 20, y);
+    y += 10;
+
+    // Goal
+    doc.setFontSize(11);
+    doc.setFont("helvetica", "normal");
+    doc.text(session.sessionGoal, 20, y);
+    y += 10;
+
+    // Duration & Intensity
+    doc.setFont("helvetica", "bold");
+    doc.text("Duration & Intensity", 20, y);
+    y += 7;
+    doc.setFont("helvetica", "normal");
+    doc.text(`Duration: ${session.duration}`, 24, y); y += 6;
+    doc.text(`Intensity: ${session.intensity.level} (${session.intensity.rpe})`, 24, y); y += 6;
+    if (session.intensity.hrZone) {
+      doc.text(`Target zone: ${session.intensity.hrZone}`, 24, y); y += 6;
+    }
+    y += 6;
+
+    // Warm-up
+    if (session.warmup) {
+      doc.setFont("helvetica", "bold");
+      doc.text(`Warm-up (${session.warmup.duration})`, 20, y);
+      y += 7;
+      doc.setFont("helvetica", "normal");
+      session.warmup.activities.forEach((activity) => {
+        doc.text(`• ${activity}`, 24, y); y += 6;
+      });
+      y += 4;
+    }
+
+    // Main exercises
+    doc.setFont("helvetica", "bold");
+    doc.text(`Main Session — ${session.mainBlock.format}`, 20, y);
+    y += 8;
+    session.mainBlock.exercises.forEach((exercise) => {
+      if (y > 270) { doc.addPage(); y = 20; }
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(11);
+      doc.text(exercise.name, 24, y); y += 6;
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(10);
+      doc.text(exercise.prescription, 28, y); y += 5;
+      if (exercise.notes) {
+        doc.setFont("helvetica", "italic");
+        const noteLines = doc.splitTextToSize(`Note: ${exercise.notes}`, 155);
+        doc.text(noteLines, 28, y); y += noteLines.length * 5;
+      }
+      doc.setFontSize(11);
+      y += 4;
+    });
+    y += 4;
+
+    // Cool-down
+    if (session.cooldown) {
+      if (y > 260) { doc.addPage(); y = 20; }
+      doc.setFont("helvetica", "bold");
+      doc.text(`Cool-down (${session.cooldown.duration})`, 20, y);
+      y += 7;
+      doc.setFont("helvetica", "normal");
+      session.cooldown.activities.forEach((activity) => {
+        doc.text(`• ${activity}`, 24, y); y += 6;
+      });
+      y += 4;
+    }
+
+    // Safety notes
+    if (session.safetyNotes.length > 0) {
+      if (y > 260) { doc.addPage(); y = 20; }
+      doc.setFont("helvetica", "bold");
+      doc.text("Safety Notes", 20, y);
+      y += 7;
+      doc.setFont("helvetica", "normal");
+      session.safetyNotes.forEach((note) => {
+        const noteLines = doc.splitTextToSize(`• ${note}`, 165);
+        doc.text(noteLines, 24, y); y += noteLines.length * 6;
+      });
+    }
+
+    doc.save(`${session.title.replace(/\s+/g, '-').toLowerCase()}-workout.pdf`);
+    toast.success("Workout guide downloaded!");
   };
 
   const toggleExercise = (index: number) => {
@@ -395,32 +492,44 @@ export function TodaysBestDecision({ className }: TodaysBestDecisionProps) {
                           </div>
                         </div>
                       )}
+
+                      {/* Download workout guide */}
+                      <Button variant="outline" size="sm" onClick={handleDownloadPDF} className="w-full sm:w-auto">
+                        <Download className="h-3.5 w-3.5 mr-1.5" />
+                        Download workout guide
+                      </Button>
                     </div>
                   </CollapsibleContent>
                 </Collapsible>
               </div>
             )}
 
-            {/* C. Meaning Block - "Why this matters to you" */}
+            {/* C. Why this matters tooltip + data transparency */}
             {riskDrivers?.primary && (
-              <div className="rounded-xl bg-muted/20 border border-border/30 p-4">
-                <div className="flex items-center gap-2 mb-3">
-                  <span className="text-sm font-medium text-muted-foreground">Why this matters to you</span>
-                </div>
-                <p className="text-sm text-foreground/80 leading-relaxed">
-                  {generateMeaningText()}
-                </p>
+              <div className="flex flex-wrap items-center gap-4 pt-1">
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors">
+                        <HelpCircle className="h-3.5 w-3.5" />
+                        <span>Why this matters?</span>
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent className="max-w-[300px] p-3">
+                      <p className="text-xs leading-relaxed">{generateMeaningText()}</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
 
-                {/* Progressive disclosure - data transparency */}
                 <Collapsible open={isDataExpanded} onOpenChange={setIsDataExpanded}>
                   <CollapsibleTrigger asChild>
-                    <button className="mt-4 flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors">
-                      <span>{isDataExpanded ? "Hide data details" : "See the data that informed this suggestion"}</span>
+                    <button className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors">
+                      <span>{isDataExpanded ? "Hide data details" : "See the data"}</span>
                       <ChevronDown className={cn("h-3 w-3 transition-transform", isDataExpanded && "rotate-180")} />
                     </button>
                   </CollapsibleTrigger>
                   <CollapsibleContent>
-                    <p className="mt-3 text-xs text-muted-foreground bg-muted/50 p-3 rounded-lg">
+                    <p className="mt-2 text-xs text-muted-foreground bg-muted/50 p-3 rounded-lg">
                       {generateDataText()}
                     </p>
                   </CollapsibleContent>

@@ -1,8 +1,8 @@
 import { format } from "date-fns";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useWeeklyBriefings, DayBriefing, WeeklyTheme, WeekIntent } from "@/hooks/useWeeklyBriefings";
-import { Calendar, Sparkles, Target, Heart, Zap, Scale, RefreshCw, Shield, AlertCircle, CheckCircle2 } from "lucide-react";
+import { useWeeklyBriefings, WeeklyTheme, WeekIntent } from "@/hooks/useWeeklyBriefings";
+import { Calendar, CalendarDays, Sparkles, Target, Heart, Zap, Scale, RefreshCw, Shield, AlertCircle, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useLayoutCustomization } from "@/hooks/useLayoutCustomization";
@@ -30,63 +30,6 @@ const toneStyles: Record<'coach' | 'warm' | 'strategic', { bg: string; border: s
     icon: <Scale className="h-4 w-4" />,
   },
 };
-
-function DayCard({ day, isToday }: { day: DayBriefing; isToday: boolean }) {
-  const tone = day.hasData ? (
-    day.category === 'training' ? 'coach' :
-    day.category === 'recovery' || day.category === 'wellbeing' ? 'warm' :
-    'strategic'
-  ) : 'strategic';
-
-  const styles = toneStyles[tone];
-
-  return (
-    <Card className={cn(
-      "p-4 transition-all duration-200",
-      isToday && "ring-2 ring-primary/50",
-      day.hasData ? styles.bg : "bg-muted/30"
-    )}>
-      <div className="flex items-center justify-between mb-2">
-        <div className="flex items-center gap-2">
-          <span className={cn(
-            "text-sm font-semibold",
-            isToday ? "text-primary" : "text-foreground"
-          )}>
-            {day.dayName}
-          </span>
-          {isToday && (
-            <span className="text-xs px-2 py-0.5 rounded-full bg-primary/20 text-primary">
-              Today
-            </span>
-          )}
-        </div>
-        <span className="text-xs text-muted-foreground">
-          {format(new Date(day.date), 'MMM d')}
-        </span>
-      </div>
-
-      {day.hasData ? (
-        <div className="space-y-2">
-          {day.todaysFocus && (
-            <div className={cn("flex items-start gap-2", styles.text)}>
-              {styles.icon}
-              <p className="text-sm leading-relaxed">{day.todaysFocus}</p>
-            </div>
-          )}
-          {!day.todaysFocus && day.summary && (
-            <p className="text-sm text-muted-foreground line-clamp-2">
-              {day.summary}
-            </p>
-          )}
-        </div>
-      ) : (
-        <p className="text-sm text-muted-foreground italic">
-          {new Date(day.date) > new Date() ? "Upcoming" : "No briefing recorded"}
-        </p>
-      )}
-    </Card>
-  );
-}
 
 function ThemeCard({ theme }: { theme: WeeklyTheme }) {
   const styles = toneStyles[theme.tone];
@@ -237,7 +180,7 @@ export function Planner() {
     isSectionVisible,
   } = useLayoutCustomization('plan');
 
-  const today = format(new Date(), 'yyyy-MM-dd');
+  
 
   if (isLoading) {
     return (
@@ -376,28 +319,32 @@ export function Planner() {
             </section>
           </LayoutBlock>
 
-          {/* Daily Overview */}
+          {/* Calendar Events */}
           <LayoutBlock
-            blockId="dailyBriefings"
-            displayName="Daily Briefings"
+            blockId="calendarEvents"
+            displayName="Calendar"
             pageId="plan"
             size="wide"
-            visible={isSectionVisible('dailyBriefings')}
+            visible={isSectionVisible('calendarEvents')}
           >
-            <section>
-              <h2 className="text-lg font-semibold text-foreground mb-4">
-                Day by Day
-              </h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                {overview.days.map((day) => (
-                  <DayCard 
-                    key={day.date} 
-                    day={day} 
-                    isToday={day.date === today}
-                  />
-                ))}
+            <Card className="p-8 border border-border/50">
+              <div className="flex flex-col items-center text-center space-y-4">
+                <div className="w-14 h-14 rounded-xl bg-primary/10 border border-primary/30 flex items-center justify-center">
+                  <CalendarDays className="h-7 w-7 text-primary" />
+                </div>
+                <h3 className="text-lg font-semibold text-foreground">Your Week Ahead</h3>
+                <p className="text-sm text-muted-foreground max-w-md">
+                  Connect your Google Calendar to see your upcoming events, meetings,
+                  and schedule right here alongside your weekly plan.
+                </p>
+                <Button className="gap-2">
+                  <CalendarDays className="h-4 w-4" /> Connect Google Calendar
+                </Button>
+                <p className="text-xs text-muted-foreground">
+                  Your events will appear here once connected
+                </p>
               </div>
-            </section>
+            </Card>
           </LayoutBlock>
 
           {/* Gentle guidance footer */}

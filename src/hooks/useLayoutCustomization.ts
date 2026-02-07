@@ -51,7 +51,7 @@ const defaultLayouts: Record<PageId, SectionConfig[]> = {
     { id: 'weekIntent', name: 'Week Intent', visible: true, order: 0 },
     { id: 'weeklyFocus', name: 'Weekly Focus', visible: true, order: 1 },
     { id: 'themes', name: 'Weekly Themes', visible: true, order: 2 },
-    { id: 'dailyBriefings', name: 'Daily Briefings', visible: true, order: 3 },
+    { id: 'calendarEvents', name: 'Calendar', visible: true, order: 3 },
   ],
   profile: [
     { id: 'account', name: 'Account', visible: true, order: 0 },

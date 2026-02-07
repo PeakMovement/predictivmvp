@@ -36,6 +36,7 @@ import PersonalCanvas from "@/pages/PersonalCanvas";
 import Login from "@/pages/Login";
 import Register from "@/pages/Register";
 import { Settings as SettingsIcon } from "lucide-react";
+import { SymptomCheckInSheet } from "@/components/symptoms/SymptomCheckInSheet";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
@@ -339,6 +340,7 @@ const App = () => {
                 <p>Settings</p>
               </TooltipContent>
             </Tooltip>
+            <SymptomCheckInSheet />
             <div className="transition-all duration-500 ease-out animate-fade-in">{renderContent()}</div>
             <BottomNavigation activeTab={activeTab} onNavigate={setActiveTab} />
             {/* Risk Alert Modal - auto-triggers on health thresholds */}

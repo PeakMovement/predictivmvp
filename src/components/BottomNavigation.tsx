@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Home, Dumbbell, Heart, FileText, User, ClipboardList, TrendingUp, Users, Sparkles, Stethoscope, Menu, X, Calendar, LayoutGrid } from "lucide-react";
+import { Home, Dumbbell, Heart, FileText, User, ClipboardList, TrendingUp, Users, Sparkles, Menu, X, Calendar, LayoutGrid } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 
@@ -10,7 +10,7 @@ const navItems = [
   { name: "yves-insights", icon: Sparkles, label: "Yves AI" },
   { name: "training", icon: Dumbbell, label: "Training" },
   { name: "health", icon: Heart, label: "Health" },
-  { name: "symptom-checkin", icon: Stethoscope, label: "Check In" },
+  
   { name: "my-documents", icon: FileText, label: "Docs" },
   { name: "profile-setup", icon: User, label: "Profile" },
   { name: "your-plan", icon: ClipboardList, label: "Plan" },

@@ -834,6 +834,14 @@ Generate a concise daily briefing (about 150 words) with 4 sections:
 3. Recommendations: 1-2 specific adjustments based on their data and any uploaded documents
 4. Motivation: Brief encouragement aligned with their goals
 
+═══ TONE MODE SELECTION (MANDATORY) ═══
+Before generating the briefing, determine exactly ONE tone mode. Never mix tones.
+• AFFIRMING — Positive trends, good adherence. Celebrate consistency.
+• GUIDING — Neutral trends. Calm adjustment suggestions.
+• CAUTIOUS — Rising risk, early warning signs. Measured but clear.
+• REASSURING — Post-alert, uncertainty, anxiety reduction.
+Selection is based on: deviation from baseline, consecutive days of a pattern, injury/symptom history, previous response to similar advice.
+
 ${toneGuidance[coaching_mode]}
 ${symptomAcknowledgement}${nameInstruction}${metricEmphasis}
 ${personaGuidelines[persona]}

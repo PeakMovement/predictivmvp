@@ -1,86 +1,137 @@
 
 
-# Fix Dark Mode and Light Mode Colors and Borders
+# Redesign Light Mode -- Clean, Vibrant, and Inviting
 
-## Problems Identified
+## Inspiration Analysis
 
-After reviewing the entire design system, here's what's causing the readability issues:
-
-### Dark Mode Issues
-1. **Invisible borders**: The border color (`30 6% 16%`) is almost identical to the background (`30 8% 6%`) -- only a 10% lightness difference, making card outlines nearly invisible.
-2. **Cards blend into the background**: `--card` is set to the exact same value as `--background` (`30 8% 6%`), so cards have zero visual separation from the page.
-3. **Glass borders too transparent**: `--glass-border` uses `0.2` opacity, which is barely visible on the dark background.
-4. **Hardcoded dark colors**: The bottom navigation uses a hardcoded `bg-[#0A0A0A]/90` that ignores the theme system entirely.
-5. **Login page uses hardcoded hex values** (`#0B0B0F`, `#111`, `border-gray-800`) instead of design tokens.
-
-### Light Mode Issues
-1. **Background is too bright/white**: `45 30% 96%` is essentially pure white with a warm tint -- not enough warmth to feel like "eggshell."
-2. **Body gradient ignores light mode**: The body background uses hardcoded dark HSL values (`hsl(30 8% 6%)`) which don't switch in light mode, causing a jarring mismatch.
-3. **Cards nearly invisible on background**: Card (`45 35% 97%`) is almost the same as background (`45 30% 96%`) -- only 1% lightness difference.
-4. **Borders too light**: `35 15% 85%` barely registers against the near-white background.
-5. **Text utility classes hardcoded**: `.text-heading` is `#FFFFFF` (white) which is invisible in light mode.
-
-### Shared Issues
-- The global `*` transition rule (300ms on all properties) applies to everything, which can cause visual lag and performance issues.
-- Several components use `border-0` on cards, removing the border entirely.
+From your reference images, the common design language is:
+- **Cool, clean white backgrounds** (no warm eggshell tinting)
+- **Pure white cards** sitting on a slightly gray page background with clear separation
+- **Crisp visible borders** -- thin but well-defined, light gray
+- **Deep indigo/navy text** for headings (not gray or black)
+- **Vibrant accent colors** -- deep violet primary, with green, blue, coral for statuses
+- **Subtle card shadows** instead of glassmorphism blur effects
+- **Rounded, airy cards** with generous padding
 
 ## What Will Change
 
-### 1. Dark Mode -- Warmer, More Defined (`index.css`)
+### 1. Light Mode CSS Variables (`src/index.css`)
 
-| Token | Current | New | Why |
-|-------|---------|-----|-----|
-| `--card` | `30 8% 6%` (same as bg) | `30 8% 10%` | Cards lift off the background |
-| `--border` | `30 6% 16%` | `30 8% 22%` | Borders become visible |
-| `--input` | `30 6% 16%` | `30 8% 18%` | Input fields stand out |
-| `--glass-border` | `35 8% 50% / 0.2` | `35 10% 60% / 0.3` | Glass edges more defined |
-| `--glass-highlight` | `40 20% 95% / 0.1` | `40 20% 95% / 0.15` | Subtle hover lift |
-| `--secondary` | `30 6% 14%` | `30 8% 14%` | Slightly warmer |
-| `--muted` | `30 6% 14%` | `30 8% 14%` | Slightly warmer |
+Replacing the warm eggshell palette with a clean, cool-neutral one:
 
-### 2. Light Mode -- Softer, More Readable (`index.css`)
+| Token | Current (eggshell) | New (clean) | Rationale |
+|-------|-------------------|-------------|-----------|
+| `--background` | `40 25% 93%` | `220 14% 96%` | Cool light gray, not warm |
+| `--foreground` | `30 10% 25%` | `230 25% 18%` | Deep navy-charcoal for text |
+| `--card` | `42 30% 97%` | `0 0% 100%` | Pure white cards |
+| `--card-foreground` | `30 10% 25%` | `230 25% 18%` | Consistent deep text |
+| `--popover` | `42 30% 97%` | `0 0% 100%` | Pure white popovers |
+| `--primary` | `270 30% 55%` | `252 56% 57%` | Richer, more vibrant violet (matching the reference indigo-violet) |
+| `--primary-foreground` | `42 30% 97%` | `0 0% 100%` | White on primary |
+| `--secondary` | `40 18% 89%` | `220 14% 93%` | Cool neutral secondary |
+| `--muted` | `38 14% 87%` | `220 14% 93%` | Cool neutral muted |
+| `--muted-foreground` | `30 10% 45%` | `220 9% 46%` | Cool gray for subtext |
+| `--accent` | `270 30% 55%` | `252 56% 57%` | Matches primary |
+| `--border` | `35 15% 78%` | `220 13% 87%` | Visible cool gray borders |
+| `--input` | `35 15% 80%` | `220 13% 87%` | Matches border |
+| `--ring` | `270 30% 55%` | `252 56% 57%` | Matches primary |
+| `--glass-bg` | `40 25% 93% / 0.85` | `0 0% 100% / 0.9` | Clean white glass |
+| `--glass-border` | `35 12% 72%` | `220 13% 87%` | Visible border |
+| `--glass-highlight` | `45 40% 98% / 0.6` | `0 0% 100% / 0.8` | White highlight |
+| `--glow-primary` | `270 30% 55%` | `252 56% 57%` | Updated primary glow |
+| `--gradient-primary` | warm eggshell tint | cool violet gradient | Clean violet gradient |
+| `--gradient-glass` | warm eggshell tint | cool white gradient | Clean white gradient |
+| `--destructive` | `0 60% 55%` | `0 72% 51%` | Slightly more vivid red |
 
-| Token | Current | New | Why |
-|-------|---------|-----|-----|
-| `--background` | `45 30% 96%` | `40 25% 93%` | Warmer, not harsh white |
-| `--card` | `45 35% 97%` | `42 30% 97%` | Cards clearly float above background |
-| `--popover` | `45 35% 97%` | `42 30% 97%` | Consistent with card |
-| `--border` | `35 15% 85%` | `35 15% 78%` | Borders visible against warm bg |
-| `--input` | `35 15% 85%` | `35 15% 80%` | Input fields stand out |
-| `--glass-border` | `35 15% 80%` | `35 12% 72%` | Glass edges visible |
-| `--secondary` | `45 20% 92%` | `40 18% 89%` | More contrast with background |
-| `--muted` | `40 15% 90%` | `38 14% 87%` | More contrast with background |
+### 2. Light Mode Body Gradient (`src/index.css`)
 
-### 3. Body Background -- Theme-Aware (`index.css`)
+Current: uses warm eggshell tones in the gradient. New: a clean cool-gray background with a very subtle violet tint at the top.
 
-The body gradient currently uses hardcoded dark values. I'll add a `.light body` override so light mode gets a soft warm gradient instead of the dark charcoal one.
+```text
+.light body {
+  background: radial-gradient(circle at 50% 0%, hsl(252 56% 57% / 0.04), transparent 60%),
+              hsl(220 14% 96%);
+}
+```
 
-### 4. Hardcoded Colors Cleanup
+### 3. Light Mode Glass Shadow (`tailwind.config.ts` or inline)
 
-- **BottomNavigation.tsx**: Replace `bg-[#0A0A0A]/90` with `bg-background/90`
-- **Login.tsx**: Replace `bg-[#0B0B0F]`, `bg-[#111]`, `border-gray-800` with design tokens
-- **index.css utility classes**: Make `.text-heading`, `.text-subtext`, `.text-muted-predictiv` use `hsl(var(--foreground))` style tokens instead of hardcoded hex
+The `shadow-glass` uses a hardcoded `rgba(0,0,0,0.37)` which is too dark for light mode. We will add a light-mode-aware card shadow in `index.css`:
 
-### 5. Card Border Visibility
+```text
+.light .shadow-glass {
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06), 0 4px 16px rgba(0, 0, 0, 0.04);
+}
+```
 
-- **PrimaryInsightCard.tsx**: Replace `border-0` with `border border-border/50` so cards have visible outlines
-- **CondensedSessionCard.tsx**: Already has `border border-border/50` -- no change needed
-- Keep the `border-glass-border` pattern on glass cards, but the updated glass-border value will make them visible
+This gives cards a subtle float effect without the heavy dark shadow.
+
+### 4. Light Mode Predictiv Card Override (`src/index.css`)
+
+The `.predictiv-card` uses a hardcoded violet rgba glow that looks off in light mode. Adding a clean light-mode override:
+
+```text
+.light .predictiv-card {
+  background: hsl(0 0% 100%);
+  border: 1px solid hsl(220 13% 87%);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06), 0 4px 16px rgba(0, 0, 0, 0.04);
+}
+
+.light .predictiv-card:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08), 0 8px 24px rgba(0, 0, 0, 0.06);
+}
+```
+
+### 5. Light Mode Card Border Utility (`src/index.css`)
+
+Update `.light .card-border` for crisper borders:
+
+```text
+.light .card-border {
+  border-color: hsl(220 13% 87%);
+}
+```
+
+### 6. Sidebar Variables (light mode)
+
+Update sidebar tokens for the cool palette:
+
+| Token | New Value |
+|-------|-----------|
+| `--sidebar-background` | `0 0% 100%` |
+| `--sidebar-foreground` | `230 25% 18%` |
+| `--sidebar-primary` | `252 56% 57%` |
+| `--sidebar-primary-foreground` | `0 0% 100%` |
+| `--sidebar-accent` | `220 14% 96%` |
+| `--sidebar-accent-foreground` | `230 25% 18%` |
+| `--sidebar-border` | `220 13% 91%` |
+| `--sidebar-ring` | `252 56% 57%` |
+
+### 7. Bottom Navigation Light Mode (`src/components/BottomNavigation.tsx`)
+
+The desktop bottom bar shadow uses a hardcoded `rgba(0,0,0,0.4)` that's too dark in light mode. We will soften the shadow for light mode by using a more theme-appropriate shadow utility.
 
 ## Files Changed
 
 | File | Change |
 |------|--------|
-| `src/index.css` | Update dark/light CSS variables, add light-mode body gradient, fix utility text classes |
-| `src/components/BottomNavigation.tsx` | Replace hardcoded `#0A0A0A` with `bg-background/90` |
-| `src/pages/Login.tsx` | Replace hardcoded hex colors with design tokens |
-| `src/components/landing/PrimaryInsightCard.tsx` | Replace `border-0` with subtle border |
+| `src/index.css` | Rewrite `.light` block with clean cool-neutral palette; update light body gradient; add light-mode shadow/card overrides |
+| `src/components/BottomNavigation.tsx` | Soften the desktop bar shadow for light mode |
 
 ## What Won't Change
 
-- The dusty violet primary accent color stays the same
-- The warm charcoal "feel" of dark mode stays -- just better contrast
-- The eggshell "feel" of light mode stays -- just less blinding
-- All existing component layouts and functionality remain untouched
-- The glassmorphism design language is preserved, just more visible
+- Dark mode stays exactly as it is -- no changes
+- The `:root` (default dark) variables stay the same
+- All component layouts, functionality, and structure remain untouched
+- The violet accent color family stays, just becomes more vibrant in light mode
+- Status colors (green/yellow/red for risk levels) stay consistent
+
+## Visual Result
+
+The light mode will shift from a warm, yellowish-tinted "eggshell" feel to a clean, modern, and inviting look with:
+- Crisp white cards floating on a cool light-gray background
+- Deep navy headings that feel professional yet approachable
+- Vibrant violet accents that pop against the clean white
+- Visible card borders giving clear structure without heaviness
+- Subtle, appropriate shadows instead of heavy glass effects
 

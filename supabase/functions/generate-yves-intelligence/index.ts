@@ -1222,7 +1222,7 @@ Generate a JSON object:
 }
 
 ═══ PERSONALIZATION ═══
-- USE their name if available (once, naturally)
+- NAME USAGE: Do NOT use the user's name by default. Only use it when it adds emotional or contextual value — praising consistency, expressing concern, referencing a previously reported issue, or acknowledging multi-day progress. Never start with the name. Never use it more than once. Never use it in purely technical statements.
 - REFERENCE their specific goals and preferences
 - RESPECT their injuries/conditions
 - MATCH their preferred tone

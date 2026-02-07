@@ -721,7 +721,7 @@ This should feel natural and human. Do NOT provide medical advice - just acknowl
           // Check if user has a name for personalization
           const userName = userProfile?.name?.split(' ')[0] || null;
           const nameInstruction = userName ? `
-PERSONALIZATION: The user's first name is "${userName}". Use it naturally ONCE at the start (e.g., "Good morning, ${userName}" or "${userName}, your body is asking for..."). Do not repeat it or use it mechanically.
+NAME USAGE: The user's first name is "${userName}". Do NOT use it by default. Only use the name when it adds emotional or contextual value — such as praising consistency, expressing concern, referencing a previously reported issue, or acknowledging multi-day progress. Never start with the name. Never use it more than once per response. Never use it in purely technical statements.
 ` : '';
 
           // Build sport-specific vocabulary guidance

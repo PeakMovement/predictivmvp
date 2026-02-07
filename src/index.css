@@ -12,20 +12,20 @@ All colors MUST be HSL.
     --background: 30 8% 6%;
     --foreground: 40 25% 92%;
 
-    --card: 30 8% 6%;
+    --card: 30 8% 10%;
     --card-foreground: 40 25% 92%;
 
-    --popover: 30 8% 6%;
+    --popover: 30 8% 10%;
     --popover-foreground: 40 25% 92%;
 
     /* Dusty violet primary */
     --primary: 270 35% 55%;
     --primary-foreground: 40 25% 95%;
 
-    --secondary: 30 6% 14%;
+    --secondary: 30 8% 14%;
     --secondary-foreground: 40 25% 92%;
 
-    --muted: 30 6% 14%;
+    --muted: 30 8% 14%;
     --muted-foreground: 35 12% 60%;
 
     --accent: 270 35% 55%;
@@ -34,21 +34,21 @@ All colors MUST be HSL.
     --destructive: 0 65% 55%;
     --destructive-foreground: 40 25% 95%;
 
-    /* Warm borders */
-    --border: 30 6% 16%;
-    --input: 30 6% 16%;
+    /* Warm borders - increased contrast */
+    --border: 30 8% 22%;
+    --input: 30 8% 18%;
     --ring: 270 35% 55%;
 
     --radius: 1rem;
 
     /* Custom Predictiv tokens - warm */
-    --card-bg: 30 10% 8% / 0.7;
+    --card-bg: 30 10% 10% / 0.7;
     --text-muted: 35 10% 70%;
 
     /* Glassmorphism design tokens - warm */
-    --glass-bg: 30 8% 6% / 0.8;
-    --glass-border: 35 8% 50% / 0.2;
-    --glass-highlight: 40 20% 95% / 0.1;
+    --glass-bg: 30 8% 10% / 0.8;
+    --glass-border: 35 10% 60% / 0.3;
+    --glass-highlight: 40 20% 95% / 0.15;
     
     /* Glow effects - dusty violet */
     --glow-primary: 270 35% 55%;
@@ -80,20 +80,20 @@ All colors MUST be HSL.
     --background: 30 8% 6%;
     --foreground: 40 25% 92%;
 
-    --card: 30 8% 6%;
+    --card: 30 8% 10%;
     --card-foreground: 40 25% 92%;
 
-    --popover: 30 8% 6%;
+    --popover: 30 8% 10%;
     --popover-foreground: 40 25% 92%;
 
     /* Dusty violet primary */
     --primary: 270 35% 55%;
     --primary-foreground: 40 25% 95%;
 
-    --secondary: 30 6% 14%;
+    --secondary: 30 8% 14%;
     --secondary-foreground: 40 25% 92%;
 
-    --muted: 30 6% 14%;
+    --muted: 30 8% 14%;
     --muted-foreground: 35 12% 60%;
 
     --accent: 270 35% 55%;
@@ -102,15 +102,15 @@ All colors MUST be HSL.
     --destructive: 0 65% 55%;
     --destructive-foreground: 40 25% 95%;
 
-    /* Warm borders */
-    --border: 30 6% 16%;
-    --input: 30 6% 16%;
+    /* Warm borders - increased contrast */
+    --border: 30 8% 22%;
+    --input: 30 8% 18%;
     --ring: 270 35% 55%;
 
     /* Dark mode glassmorphism - warm */
-    --glass-bg: 30 8% 6% / 0.8;
-    --glass-border: 35 8% 50% / 0.2;
-    --glass-highlight: 40 20% 95% / 0.1;
+    --glass-bg: 30 8% 10% / 0.8;
+    --glass-border: 35 10% 60% / 0.3;
+    --glass-highlight: 40 20% 95% / 0.15;
     
     /* Dark mode glow effects - dusty violet */
     --glow-primary: 270 35% 55%;
@@ -122,40 +122,40 @@ All colors MUST be HSL.
   }
 
   .light {
-    /* Eggshell-based warm backgrounds */
-    --background: 45 30% 96%;
+    /* Eggshell-based warm backgrounds - softened */
+    --background: 40 25% 93%;
     --foreground: 30 10% 25%;
 
-    --card: 45 35% 97%;
+    --card: 42 30% 97%;
     --card-foreground: 30 10% 25%;
 
-    --popover: 45 35% 97%;
+    --popover: 42 30% 97%;
     --popover-foreground: 30 10% 25%;
 
     /* Dusty violet accents */
     --primary: 270 30% 55%;
-    --primary-foreground: 45 30% 97%;
+    --primary-foreground: 42 30% 97%;
 
-    --secondary: 45 20% 92%;
+    --secondary: 40 18% 89%;
     --secondary-foreground: 30 15% 30%;
 
-    --muted: 40 15% 90%;
+    --muted: 38 14% 87%;
     --muted-foreground: 30 10% 45%;
 
     --accent: 270 30% 55%;
-    --accent-foreground: 45 30% 97%;
+    --accent-foreground: 42 30% 97%;
 
     --destructive: 0 60% 55%;
-    --destructive-foreground: 45 30% 97%;
+    --destructive-foreground: 42 30% 97%;
 
-    /* Warm borders */
-    --border: 35 15% 85%;
-    --input: 35 15% 85%;
+    /* Warm borders - increased contrast */
+    --border: 35 15% 78%;
+    --input: 35 15% 80%;
     --ring: 270 30% 55%;
 
     /* Light mode glassmorphism - warm tones */
-    --glass-bg: 45 30% 96% / 0.85;
-    --glass-border: 35 15% 80%;
+    --glass-bg: 40 25% 93% / 0.85;
+    --glass-border: 35 12% 72%;
     --glass-highlight: 45 40% 98% / 0.6;
     
     /* Light mode glow effects - dusty violet */
@@ -164,7 +164,7 @@ All colors MUST be HSL.
     
     /* Light mode gradients - warm eggshell */
     --gradient-primary: linear-gradient(135deg, hsl(270 30% 55% / 0.5), hsl(280 25% 60% / 0.3));
-    --gradient-glass: linear-gradient(135deg, hsl(45 30% 96% / 0.9), hsl(40 20% 92% / 0.7));
+    --gradient-glass: linear-gradient(135deg, hsl(40 25% 93% / 0.9), hsl(38 18% 89% / 0.7));
   }
 }
 
@@ -188,9 +188,21 @@ All colors MUST be HSL.
     min-height: 100vh;
     min-height: -webkit-fill-available;
     padding-bottom: env(safe-area-inset-bottom);
+    background: hsl(var(--background));
+    background-attachment: fixed;
+  }
+
+  /* Dark mode body gradient */
+  .dark body,
+  :root body {
     background: radial-gradient(circle at 50% 10%, hsl(270 35% 55% / 0.12), transparent 70%),
                 linear-gradient(to bottom, hsl(30 8% 6%) 0%, hsl(30 6% 8%) 100%);
-    background-attachment: fixed;
+  }
+
+  /* Light mode body gradient */
+  .light body {
+    background: radial-gradient(circle at 50% 10%, hsl(270 30% 55% / 0.06), transparent 70%),
+                linear-gradient(to bottom, hsl(40 25% 93%) 0%, hsl(38 20% 91%) 100%);
   }
 
   /* iOS Safe Area Support */
@@ -288,16 +300,16 @@ All colors MUST be HSL.
     box-shadow: 0 0 25px color-mix(in srgb, hsl(var(--primary)), #000 20%);
   }
 
-  /* Typography utilities */
+  /* Typography utilities - theme-aware */
   .text-heading {
-    color: #FFFFFF;
+    color: hsl(var(--foreground));
   }
 
   .text-subtext {
-    color: #D1C4E9;
+    color: hsl(var(--primary) / 0.7);
   }
 
   .text-muted-predictiv {
-    color: #B9B9C3;
+    color: hsl(var(--muted-foreground));
   }
 }

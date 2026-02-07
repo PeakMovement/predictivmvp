@@ -51,8 +51,8 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#0B0B0F] text-white px-4">
-      <div className="max-w-md w-full bg-[#111] p-8 rounded-2xl shadow-lg border border-gray-800">
+    <div className="min-h-screen flex items-center justify-center bg-background text-foreground px-4">
+      <div className="max-w-md w-full bg-card p-8 rounded-2xl shadow-lg border border-border">
         <h1 className="text-2xl font-semibold text-center mb-6">
           Sign into your account
         </h1>
@@ -66,7 +66,7 @@ export default function Login() {
               value={identifier}
               onChange={(e) => setIdentifier(e.target.value)}
               placeholder="you@example.com"
-              className="bg-gray-900 text-white border-gray-700 mt-1"
+              className="bg-secondary text-foreground border-border mt-1"
               required
             />
           </div>
@@ -79,34 +79,34 @@ export default function Login() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
-              className="bg-gray-900 text-white border-gray-700 mt-1"
+              className="bg-secondary text-foreground border-border mt-1"
               required
             />
           </div>
 
           {error && (
-            <p className="text-red-500 text-sm text-center">{error}</p>
+            <p className="text-destructive text-sm text-center">{error}</p>
           )}
 
           <Button
             type="submit"
-            className="w-full bg-blue-600 hover:bg-blue-700 mt-4"
+            className="w-full bg-primary hover:bg-primary/90 mt-4"
             disabled={isLoading}
           >
             {isLoading ? "Signing in..." : "Sign In"}
           </Button>
         </form>
 
-        <div className="text-center mt-4 text-sm text-gray-400">
+        <div className="text-center mt-4 text-sm text-muted-foreground">
           <p>
-            Don’t have an account?{" "}
-            <a href="/register" className="text-blue-500 hover:underline">
+            Don't have an account?{" "}
+            <a href="/register" className="text-primary hover:underline">
               Sign up
             </a>
           </p>
         </div>
 
-        <div className="text-center mt-2 text-xs text-gray-500">
+        <div className="text-center mt-2 text-xs text-muted-foreground">
           <p>
             Option to connect your phone for SMS alerts will appear later once
             Twilio setup is complete.

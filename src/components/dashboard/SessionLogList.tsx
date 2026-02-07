@@ -1,13 +1,15 @@
 import React, { useMemo, useState, useEffect } from "react";
-import { Activity, Calendar } from "lucide-react";
+import { Activity, Calendar, ChevronRight } from "lucide-react";
 import { useTrainingTrends } from "@/hooks/useTrainingTrends";
 import { supabase } from "@/integrations/supabase/client";
 import { estimateTrainingLoad } from "@/lib/metricsCalculator";
-import { format } from "date-fns";
+import { format, parse } from "date-fns";
+import { SessionDetailSheet } from "./SessionDetailSheet";
 
 interface Session {
   title: string;
   date: string;
+  dateRaw?: string; // YYYY-MM-DD for DB queries
   time?: string;
   load: number;
   calories?: number;
@@ -15,29 +17,34 @@ interface Session {
   duration?: number;
 }
 
-const SessionLogCard = ({ title, date, time, load, calories, distance, duration }: Session) => (
-  <div className="bg-glass backdrop-blur-xl border border-glass-border rounded-xl p-4 shadow-glass hover:bg-glass-highlight hover:scale-105 hover:-translate-y-1 transition-all duration-300 ease-out transform-gpu">
-    <div className="flex items-center justify-between mb-2">
+const SessionLogCard = ({
+  title, date, time, load, calories, distance, onClick,
+}: Session & { onClick?: () => void }) => (
+  <div
+    onClick={onClick}
+    className="bg-glass backdrop-blur-xl border border-glass-border rounded-xl p-3 shadow-glass hover:bg-glass-highlight transition-all duration-200 cursor-pointer group"
+  >
+    <div className="flex items-center justify-between mb-1.5">
       <div>
-        <h4 className="font-semibold text-foreground">{title}</h4>
+        <h4 className="font-semibold text-foreground text-sm">{title}</h4>
         {time && <p className="text-xs text-muted-foreground">{time}</p>}
       </div>
-      <span className="px-2 py-1 text-xs rounded-lg font-medium bg-blue-500/20 text-blue-400">Training</span>
+      <div className="flex items-center gap-1.5">
+        <span className="px-2 py-0.5 text-xs rounded-lg font-medium bg-blue-500/20 text-blue-400">Training</span>
+        <ChevronRight size={14} className="text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+      </div>
     </div>
     <div className="flex items-center justify-between text-sm">
       <div className="flex items-center gap-1 text-muted-foreground">
-        <Calendar size={14} />
+        <Calendar size={13} />
         <span className="text-xs">{date}</span>
       </div>
       <div className="flex items-center gap-2">
         {calories && (
           <span className="text-xs text-muted-foreground">{calories} cal</span>
         )}
-        {distance && (
-          <span className="text-xs text-muted-foreground">{distance.toFixed(2)} km</span>
-        )}
-        <Activity size={14} className="text-primary animate-bounce-subtle" />
-        <span className="font-medium text-foreground">{load > 0 ? load.toFixed(0) : "–"}</span>
+        <Activity size={13} className="text-primary" />
+        <span className="font-medium text-foreground text-sm">{load > 0 ? load.toFixed(0) : "–"}</span>
         <span className="text-muted-foreground text-xs">load</span>
       </div>
     </div>
@@ -47,6 +54,8 @@ const SessionLogCard = ({ title, date, time, load, calories, distance, duration 
 export const SessionLogList = () => {
   const { trends, isLoading } = useTrainingTrends({ days: 7 });
   const [fallbackSessions, setFallbackSessions] = useState<Session[]>([]);
+  const [selectedSession, setSelectedSession] = useState<Session | null>(null);
+  const [detailOpen, setDetailOpen] = useState(false);
   const [isFetchingFallback, setIsFetchingFallback] = useState(false);
 
   // Fetch from wearable_auto_data if trends are empty
@@ -83,11 +92,12 @@ export const SessionLogList = () => {
               activities.push({
                 title: (activity.name as string) || 'Workout',
                 date: format(new Date((activity.startDate as string) || record.fetched_at), 'MMM dd'),
+                dateRaw: format(new Date((activity.startDate as string) || record.fetched_at), 'yyyy-MM-dd'),
                 time: activity.startTime as string | undefined,
                 load: estimateTrainingLoad(activity),
                 calories: activity.calories as number | undefined,
                 distance: activity.distance as number | undefined,
-                duration: Math.round(((activity.activeDuration as number) || (activity.duration as number) || 0) / 1000 / 60), // Convert to minutes
+                duration: Math.round(((activity.activeDuration as number) || (activity.duration as number) || 0) / 1000 / 60),
               });
             });
           });
@@ -126,22 +136,28 @@ export const SessionLogList = () => {
       .map(trend => ({
         title: `Training Session`,
         date: format(new Date(trend.date), 'MMM dd'),
+        dateRaw: trend.date,
         load: Math.round(trend.training_load || 0),
       }));
   }, [trends, fallbackSessions]);
 
+  const handleSessionClick = (session: Session) => {
+    setSelectedSession(session);
+    setDetailOpen(true);
+  };
+
   if (isLoading || isFetchingFallback) {
     return (
-      <div className="bg-glass backdrop-blur-xl border border-glass-border rounded-2xl p-6 shadow-glass">
-        <div className="flex items-center gap-3 mb-6">
+      <div className="bg-glass backdrop-blur-xl border border-glass-border rounded-2xl p-4 shadow-glass">
+        <div className="flex items-center gap-3 mb-3">
           <div className="w-8 h-8 bg-primary/20 rounded-lg flex items-center justify-center">
             <Activity size={16} className="text-primary" />
           </div>
           <h3 className="text-lg font-semibold text-foreground">Recent Sessions</h3>
         </div>
-        <div className="space-y-4">
+        <div className="space-y-2">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="h-20 bg-glass/30 rounded-xl animate-pulse" />
+            <div key={i} className="h-16 bg-glass/30 rounded-xl animate-pulse" />
           ))}
         </div>
       </div>
@@ -149,28 +165,37 @@ export const SessionLogList = () => {
   }
 
   return (
-    <div className="bg-glass backdrop-blur-xl border border-glass-border rounded-2xl p-6 shadow-glass hover:bg-glass-highlight hover:scale-105 hover:-translate-y-1 transition-all duration-300 ease-out animate-fade-in transform-gpu">
-      <div className="flex items-center gap-3 mb-6">
-        <div className="w-8 h-8 bg-primary/20 rounded-lg flex items-center justify-center hover:scale-110 transition-transform duration-200">
-          <Activity size={16} className="text-primary" />
-        </div>
-        <h3 className="text-lg font-semibold text-foreground">Recent Sessions</h3>
-        <div className="px-2 py-1 text-xs font-medium bg-primary/20 text-primary rounded-full">
-          {sessions.length} Logged
-        </div>
-      </div>
-      <div className="space-y-4">
-        {sessions.length === 0 ? (
-          <div className="text-center py-8 text-muted-foreground">
-            <Activity size={32} className="mx-auto mb-2 opacity-50" />
-            <p>No recent sessions found</p>
+    <>
+      <div className="bg-glass backdrop-blur-xl border border-glass-border rounded-2xl p-4 shadow-glass animate-fade-in">
+        <div className="flex items-center gap-3 mb-3">
+          <div className="w-8 h-8 bg-primary/20 rounded-lg flex items-center justify-center">
+            <Activity size={16} className="text-primary" />
           </div>
-        ) : (
-          sessions.map((session, idx) => (
-            <SessionLogCard key={idx} {...session} />
-          ))
-        )}
+          <h3 className="text-lg font-semibold text-foreground">Recent Sessions</h3>
+          <div className="px-2 py-0.5 text-xs font-medium bg-primary/20 text-primary rounded-full">
+            {sessions.length} Logged
+          </div>
+        </div>
+        <div className="space-y-2">
+          {sessions.length === 0 ? (
+            <div className="text-center py-6 text-muted-foreground">
+              <Activity size={28} className="mx-auto mb-2 opacity-50" />
+              <p className="text-sm">No recent sessions found</p>
+            </div>
+          ) : (
+            sessions.map((session, idx) => (
+              <SessionLogCard key={idx} {...session} onClick={() => handleSessionClick(session)} />
+            ))
+          )}
+        </div>
       </div>
-    </div>
+
+      <SessionDetailSheet
+        open={detailOpen}
+        onOpenChange={setDetailOpen}
+        sessionDate={selectedSession?.date ?? null}
+        sessionDateRaw={selectedSession?.dateRaw}
+      />
+    </>
   );
 };

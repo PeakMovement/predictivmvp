@@ -55,8 +55,12 @@ export const RiskScoreCard = () => {
     const avgStrain = validStrain.length > 0 ? validStrain.reduce((sum, t) => sum + (t.strain || 0), 0) / validStrain.length : 0;
     const avgMonotony = validMonotony.length > 0 ? validMonotony.reduce((sum, t) => sum + (t.monotony || 0), 0) / validMonotony.length : 0;
     
-    // Fatigue Index: (Strain / 200) × 50 + (Monotony / 3) × 50
-    const fatigueIndex = Math.min(100, Math.round((avgStrain / 200) * 50 + (avgMonotony / 3) * 50));
+    // Cap monotony defensively (backend should already cap at 2.5, but protect against legacy data)
+    const cappedMonotony = Math.min(avgMonotony, 2.5);
+    
+    // Fatigue Index: (Strain / 300) × 50 + (Monotony / 2.5) × 50
+    // Strain denominator 300 matches actual daily strain range (~200-294)
+    const fatigueIndex = Math.min(100, Math.round((avgStrain / 300) * 50 + (cappedMonotony / 2.5) * 50));
     
     // Risk Score calculation
     let score = 0;
@@ -184,7 +188,7 @@ export const RiskScoreCard = () => {
             <p className="text-xs text-muted-foreground">ACWR</p>
             <p className={cn(
               "text-sm font-semibold",
-              metrics.acwr > 1.3 ? "text-yellow-400" : metrics.acwr > 1.5 ? "text-red-400" : "text-foreground"
+              metrics.acwr > 1.5 ? "text-red-400" : metrics.acwr > 1.3 ? "text-yellow-400" : "text-foreground"
             )}>{metrics.acwr.toFixed(2)}</p>
           </div>
           <div className="bg-glass/30 rounded-lg p-2">

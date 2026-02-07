@@ -282,7 +282,7 @@ serve(async (req) => {
             acute_load: safeNumber(acuteLoadAvg),
             acwr: safeNumber(acwr),
             acwr_trend: acwrTrend,
-            monotony: safeNumber(monotony),
+            monotony: safeNumber(monotony !== null ? Math.min(monotony, 2.5) : null),
             strain: safeNumber(strain),
             recovery_score: safeNumber(readinessCurrent),
           }, { onConflict: "user_id,period_date" });
@@ -306,7 +306,7 @@ serve(async (req) => {
             acwr: safeNumber(trainingAcwr),
             ewma: safeNumber(acuteLoadAvg), // EWMA approximated by acute load average
             strain: safeNumber(strain),
-            monotony: safeNumber(monotony),
+            monotony: safeNumber(monotony !== null ? Math.min(monotony, 2.5) : null),
             hrv: safeNumber(hrvCurrent),
             sleep_score: safeNumber(sleepCurrent),
             training_load: safeNumber(weeklyLoad),

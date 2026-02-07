@@ -146,7 +146,8 @@ export const BottomNavigation = ({ activeTab, onNavigate }: BottomNavigationProp
         "fixed bottom-0 left-0 right-0 z-50 flex justify-around items-center",
         "h-[72px] sm:h-[80px] bg-background/90 backdrop-blur-lg border-t border-border/40",
         "px-3 sm:px-4 pb-[calc(env(safe-area-inset-bottom)+4px)]",
-        "shadow-[0_-4px_20px_rgba(0,0,0,0.4)]"
+        "shadow-[0_-2px_10px_rgba(0,0,0,0.08)]",
+        "dark:shadow-[0_-4px_20px_rgba(0,0,0,0.4)]"
       )}
     >
       {navItems.map(({ name, icon: Icon, label }) => {

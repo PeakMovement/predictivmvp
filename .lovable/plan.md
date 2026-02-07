@@ -1,41 +1,37 @@
 
 
-# Finish Google Calendar Integration for Weekly Planner
+# Add Google Calendar to the Weekly Planner
 
-## Current State
+## What You'll Get
 
-Nothing from the approved plan has been built yet:
-- No edge function (`fetch-calendar-events`) exists
-- No hook (`useCalendarEvents`) exists
-- No component (`CalendarEventsSection`) exists
-- The Planner page and layout config haven't been updated
-- The Google Calendar connector has **not been linked** -- there is no `GOOGLE_CALENDAR_API_KEY` secret configured
+A new "Your Week Ahead" section on the Weekly Planner page that displays the next 7 days of your Google Calendar events in a clean, day-by-day container. If Google Calendar isn't connected yet, it shows a friendly prompt instead of breaking.
 
 ## Step 1: Connect Google Calendar
 
-Before any code will work, we need to link the Google Calendar connector to the project. I'll prompt you to authorize the connection through Lovable's connector system -- it's a one-click flow, no API keys to manage manually.
+First, I'll need to link your Google Calendar account through Lovable's connector system. You'll see a one-click authorization prompt -- no API keys to manage. This makes your calendar credentials securely available to the backend.
 
-## Step 2: Create the Edge Function
+## Step 2: Create the Backend (Edge Function)
 
 **New file:** `supabase/functions/fetch-calendar-events/index.ts`
 
-A Deno edge function that:
-- Checks for `LOVABLE_API_KEY` and `GOOGLE_CALENDAR_API_KEY` environment variables
-- If either is missing, returns `{ events: [], connected: false }` gracefully
-- Authenticates the calling user via the Authorization header
-- Calls `GET /calendars/primary/events` through the Lovable gateway at `https://gateway.lovable.dev/google_calendar/calendar/v3`
-- Passes `timeMin` (now) and `timeMax` (now + 7 days), `singleEvents=true`, `orderBy=startTime`
-- Returns a clean array of events with id, title, start, end, location, and description
+A secure edge function that:
+- Authenticates the request (must be logged in)
+- Checks for the required gateway credentials (`LOVABLE_API_KEY` and `GOOGLE_CALENDAR_API_KEY`)
+- If either is missing, returns `{ events: [], connected: false }` gracefully -- no errors
+- Calls the Google Calendar API through the Lovable gateway at `https://gateway.lovable.dev/google_calendar/calendar/v3/calendars/primary/events`
+- Fetches events for the next 7 days using `timeMin`, `timeMax`, `singleEvents=true`, `orderBy=startTime`
+- Returns a clean array of events with: id, title, start time, end time, location, and description
 
-**Config update:** `supabase/config.toml` -- add `[functions.fetch-calendar-events]` with `verify_jwt = false` (auth handled in code)
+**Config update:** Add `[functions.fetch-calendar-events]` with `verify_jwt = false` to `supabase/config.toml` (auth is handled in code, matching the existing pattern)
 
-## Step 3: Create the React Query Hook
+## Step 3: Create the Data Hook
 
 **New file:** `src/hooks/useCalendarEvents.ts`
 
+A React Query hook that:
 - Calls the edge function via `supabase.functions.invoke('fetch-calendar-events')`
-- Caches for 5 minutes with React Query
-- Groups events by date string (YYYY-MM-DD) for easy day-by-day rendering
+- Caches the result for 5 minutes
+- Groups events by date (YYYY-MM-DD) for easy day-by-day rendering
 - Returns: `events`, `eventsByDay`, `isLoading`, `error`, `isConnected`, `refresh`
 
 ## Step 4: Create the Calendar Component
@@ -43,36 +39,32 @@ A Deno edge function that:
 **New file:** `src/components/planner/CalendarEventsSection.tsx`
 
 A styled Card showing:
-- Header with calendar icon, "Your Week Ahead" title, and a refresh button
-- **Connected state**: 7 day columns (stacked on mobile) with day name, date, and event list per day. Today's column gets a `ring-2 ring-primary/50` highlight. Empty days show "No events" in muted text. Each event shows formatted time and title.
-- **Not-connected state**: A friendly prompt "Connect your Google Calendar to see your upcoming events here" -- purely informational since the connection is managed at the workspace level.
+- **Header**: Calendar icon, "Your Week Ahead" title, and a refresh button
+- **Connected state**: 7 day columns (stacked on mobile) with day name, date, and event list. Today's column gets a `ring-2 ring-primary/50` highlight. Empty days show "No events". Each event displays time and title, with optional location.
+- **Not-connected state**: A friendly prompt -- "Connect your Google Calendar to see your upcoming events here"
 - **Loading state**: Skeleton placeholders matching the 7-day grid
-
-Uses existing `Card`, `Badge`, `Skeleton`, and `Button` components.
 
 ## Step 5: Register in Layout System
 
 **Modified file:** `src/hooks/useLayoutCustomization.ts`
 
-Add to the `plan` default sections array:
-```
+Add to the `plan` default sections:
+```text
 { id: 'calendarEvents', name: 'Calendar', visible: true, order: 3 }
 ```
-Shift `dailyBriefings` to order 4.
+The existing `dailyBriefings` shifts to order 4. Users can show/hide/reorder this section using the existing layout customization controls.
 
-## Step 6: Add to Planner Page
+## Step 6: Add to the Planner Page
 
 **Modified file:** `src/pages/Planner.tsx`
 
-- Import `CalendarEventsSection`
-- Insert a new `LayoutBlock` between the "Weekly Themes" and "Daily Briefings" blocks:
-
+Insert a new `LayoutBlock` between "Weekly Themes" and "Daily Briefings":
+```text
+<LayoutBlock blockId="calendarEvents" displayName="Calendar" pageId="plan" size="wide"
+  visible={isSectionVisible('calendarEvents')}>
+  <CalendarEventsSection />
+</LayoutBlock>
 ```
-LayoutBlock blockId="calendarEvents" displayName="Calendar" pageId="plan" size="wide"
-  visible={isSectionVisible('calendarEvents')}
-```
-
-Users can show/hide/reorder it using the existing layout customization controls.
 
 ---
 
@@ -84,10 +76,10 @@ Users can show/hide/reorder it using the existing layout customization controls.
 | `supabase/config.toml` | Modify -- add function config entry |
 | `src/hooks/useCalendarEvents.ts` | Create -- React Query hook |
 | `src/components/planner/CalendarEventsSection.tsx` | Create -- 7-day calendar display component |
-| `src/hooks/useLayoutCustomization.ts` | Modify -- register `calendarEvents` block |
+| `src/hooks/useLayoutCustomization.ts` | Modify -- register `calendarEvents` in plan defaults |
 | `src/pages/Planner.tsx` | Modify -- add CalendarEventsSection LayoutBlock |
 
 ## No-Calendar Fallback
 
-If the connector isn't linked or credentials are missing, the section shows a friendly informational message instead of breaking. The rest of the Planner works exactly as before.
+If Google Calendar isn't connected, the section shows a friendly informational message. The rest of the Planner works exactly as before -- nothing breaks.
 

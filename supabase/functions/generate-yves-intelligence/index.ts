@@ -1218,6 +1218,7 @@ Do NOT follow a fixed paragraph structure.
 4. Do NOT recommend categories marked as "suppress" (low adherence)
 5. DO prioritize categories marked as high adherence
 6. Connect observations to the user's specific context, goals, and recent patterns
+7. Frame recommendations as options, not commands. Use "Today could be a good opportunity to…", "You might benefit from…", "It may be worth considering…". Never use "You should", "You must", or "Do this today". Support user autonomy.
 
 ═══ OUTPUT FORMAT ═══
 Generate a JSON object:

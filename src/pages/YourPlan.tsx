@@ -599,9 +599,10 @@ const WeeklyInsightsSection = () => {
       : null;
     
     // Fatigue Index: Inversely related to recovery, based on strain and monotony
-    // Formula: (Strain / 200) × 50 + (Monotony / 3) × 50, capped at 100
+    // Formula: (Strain / 300) × 50 + (cappedMonotony / 2.5) × 50, capped at 100
+    const cappedMonotony = Math.min(avgMonotony, 2.5);
     const fatigueIndex = avgStrain > 0 || avgMonotony > 0
-      ? Math.min(100, Math.round((avgStrain / 200) * 50 + (avgMonotony / 3) * 50))
+      ? Math.min(100, Math.round((avgStrain / 300) * 50 + (cappedMonotony / 2.5) * 50))
       : null;
     
     // Risk Score: Composite based on ACWR, strain, and fatigue

@@ -356,13 +356,15 @@ const THRESHOLDS = {
 
 /**
  * Calculate fatigue index from strain and monotony
- * Formula: (Strain / 200) × 50 + (Monotony / 3) × 50, capped at 100
+ * Formula: (Strain / 300) × 50 + (cappedMonotony / 2.5) × 50, capped at 100
+ * Monotony is capped at 2.5 per architecture spec to prevent inflation
  */
 export function calculateFatigueIndex(strain: number | null, monotony: number | null): number | null {
   if (strain === null && monotony === null) return null;
   
-  const strainContrib = strain !== null ? (strain / 200) * 50 : 0;
-  const monotonyContrib = monotony !== null ? (monotony / 3) * 50 : 0;
+  const cappedMonotony = monotony !== null ? Math.min(monotony, 2.5) : 0;
+  const strainContrib = strain !== null ? (strain / 300) * 50 : 0;
+  const monotonyContrib = (cappedMonotony / 2.5) * 50;
   
   return Math.min(Math.round(strainContrib + monotonyContrib), 100);
 }

@@ -1,85 +1,86 @@
 
 
-# Add Google Calendar to the Weekly Planner
+# Fix Dark Mode and Light Mode Colors and Borders
 
-## What You'll Get
+## Problems Identified
 
-A new "Your Week Ahead" section on the Weekly Planner page that displays the next 7 days of your Google Calendar events in a clean, day-by-day container. If Google Calendar isn't connected yet, it shows a friendly prompt instead of breaking.
+After reviewing the entire design system, here's what's causing the readability issues:
 
-## Step 1: Connect Google Calendar
+### Dark Mode Issues
+1. **Invisible borders**: The border color (`30 6% 16%`) is almost identical to the background (`30 8% 6%`) -- only a 10% lightness difference, making card outlines nearly invisible.
+2. **Cards blend into the background**: `--card` is set to the exact same value as `--background` (`30 8% 6%`), so cards have zero visual separation from the page.
+3. **Glass borders too transparent**: `--glass-border` uses `0.2` opacity, which is barely visible on the dark background.
+4. **Hardcoded dark colors**: The bottom navigation uses a hardcoded `bg-[#0A0A0A]/90` that ignores the theme system entirely.
+5. **Login page uses hardcoded hex values** (`#0B0B0F`, `#111`, `border-gray-800`) instead of design tokens.
 
-First, I'll need to link your Google Calendar account through Lovable's connector system. You'll see a one-click authorization prompt -- no API keys to manage. This makes your calendar credentials securely available to the backend.
+### Light Mode Issues
+1. **Background is too bright/white**: `45 30% 96%` is essentially pure white with a warm tint -- not enough warmth to feel like "eggshell."
+2. **Body gradient ignores light mode**: The body background uses hardcoded dark HSL values (`hsl(30 8% 6%)`) which don't switch in light mode, causing a jarring mismatch.
+3. **Cards nearly invisible on background**: Card (`45 35% 97%`) is almost the same as background (`45 30% 96%`) -- only 1% lightness difference.
+4. **Borders too light**: `35 15% 85%` barely registers against the near-white background.
+5. **Text utility classes hardcoded**: `.text-heading` is `#FFFFFF` (white) which is invisible in light mode.
 
-## Step 2: Create the Backend (Edge Function)
+### Shared Issues
+- The global `*` transition rule (300ms on all properties) applies to everything, which can cause visual lag and performance issues.
+- Several components use `border-0` on cards, removing the border entirely.
 
-**New file:** `supabase/functions/fetch-calendar-events/index.ts`
+## What Will Change
 
-A secure edge function that:
-- Authenticates the request (must be logged in)
-- Checks for the required gateway credentials (`LOVABLE_API_KEY` and `GOOGLE_CALENDAR_API_KEY`)
-- If either is missing, returns `{ events: [], connected: false }` gracefully -- no errors
-- Calls the Google Calendar API through the Lovable gateway at `https://gateway.lovable.dev/google_calendar/calendar/v3/calendars/primary/events`
-- Fetches events for the next 7 days using `timeMin`, `timeMax`, `singleEvents=true`, `orderBy=startTime`
-- Returns a clean array of events with: id, title, start time, end time, location, and description
+### 1. Dark Mode -- Warmer, More Defined (`index.css`)
 
-**Config update:** Add `[functions.fetch-calendar-events]` with `verify_jwt = false` to `supabase/config.toml` (auth is handled in code, matching the existing pattern)
+| Token | Current | New | Why |
+|-------|---------|-----|-----|
+| `--card` | `30 8% 6%` (same as bg) | `30 8% 10%` | Cards lift off the background |
+| `--border` | `30 6% 16%` | `30 8% 22%` | Borders become visible |
+| `--input` | `30 6% 16%` | `30 8% 18%` | Input fields stand out |
+| `--glass-border` | `35 8% 50% / 0.2` | `35 10% 60% / 0.3` | Glass edges more defined |
+| `--glass-highlight` | `40 20% 95% / 0.1` | `40 20% 95% / 0.15` | Subtle hover lift |
+| `--secondary` | `30 6% 14%` | `30 8% 14%` | Slightly warmer |
+| `--muted` | `30 6% 14%` | `30 8% 14%` | Slightly warmer |
 
-## Step 3: Create the Data Hook
+### 2. Light Mode -- Softer, More Readable (`index.css`)
 
-**New file:** `src/hooks/useCalendarEvents.ts`
+| Token | Current | New | Why |
+|-------|---------|-----|-----|
+| `--background` | `45 30% 96%` | `40 25% 93%` | Warmer, not harsh white |
+| `--card` | `45 35% 97%` | `42 30% 97%` | Cards clearly float above background |
+| `--popover` | `45 35% 97%` | `42 30% 97%` | Consistent with card |
+| `--border` | `35 15% 85%` | `35 15% 78%` | Borders visible against warm bg |
+| `--input` | `35 15% 85%` | `35 15% 80%` | Input fields stand out |
+| `--glass-border` | `35 15% 80%` | `35 12% 72%` | Glass edges visible |
+| `--secondary` | `45 20% 92%` | `40 18% 89%` | More contrast with background |
+| `--muted` | `40 15% 90%` | `38 14% 87%` | More contrast with background |
 
-A React Query hook that:
-- Calls the edge function via `supabase.functions.invoke('fetch-calendar-events')`
-- Caches the result for 5 minutes
-- Groups events by date (YYYY-MM-DD) for easy day-by-day rendering
-- Returns: `events`, `eventsByDay`, `isLoading`, `error`, `isConnected`, `refresh`
+### 3. Body Background -- Theme-Aware (`index.css`)
 
-## Step 4: Create the Calendar Component
+The body gradient currently uses hardcoded dark values. I'll add a `.light body` override so light mode gets a soft warm gradient instead of the dark charcoal one.
 
-**New file:** `src/components/planner/CalendarEventsSection.tsx`
+### 4. Hardcoded Colors Cleanup
 
-A styled Card showing:
-- **Header**: Calendar icon, "Your Week Ahead" title, and a refresh button
-- **Connected state**: 7 day columns (stacked on mobile) with day name, date, and event list. Today's column gets a `ring-2 ring-primary/50` highlight. Empty days show "No events". Each event displays time and title, with optional location.
-- **Not-connected state**: A friendly prompt -- "Connect your Google Calendar to see your upcoming events here"
-- **Loading state**: Skeleton placeholders matching the 7-day grid
+- **BottomNavigation.tsx**: Replace `bg-[#0A0A0A]/90` with `bg-background/90`
+- **Login.tsx**: Replace `bg-[#0B0B0F]`, `bg-[#111]`, `border-gray-800` with design tokens
+- **index.css utility classes**: Make `.text-heading`, `.text-subtext`, `.text-muted-predictiv` use `hsl(var(--foreground))` style tokens instead of hardcoded hex
 
-## Step 5: Register in Layout System
+### 5. Card Border Visibility
 
-**Modified file:** `src/hooks/useLayoutCustomization.ts`
+- **PrimaryInsightCard.tsx**: Replace `border-0` with `border border-border/50` so cards have visible outlines
+- **CondensedSessionCard.tsx**: Already has `border border-border/50` -- no change needed
+- Keep the `border-glass-border` pattern on glass cards, but the updated glass-border value will make them visible
 
-Add to the `plan` default sections:
-```text
-{ id: 'calendarEvents', name: 'Calendar', visible: true, order: 3 }
-```
-The existing `dailyBriefings` shifts to order 4. Users can show/hide/reorder this section using the existing layout customization controls.
+## Files Changed
 
-## Step 6: Add to the Planner Page
-
-**Modified file:** `src/pages/Planner.tsx`
-
-Insert a new `LayoutBlock` between "Weekly Themes" and "Daily Briefings":
-```text
-<LayoutBlock blockId="calendarEvents" displayName="Calendar" pageId="plan" size="wide"
-  visible={isSectionVisible('calendarEvents')}>
-  <CalendarEventsSection />
-</LayoutBlock>
-```
-
----
-
-## Files Summary
-
-| File | Action |
+| File | Change |
 |------|--------|
-| `supabase/functions/fetch-calendar-events/index.ts` | Create -- edge function for Google Calendar API |
-| `supabase/config.toml` | Modify -- add function config entry |
-| `src/hooks/useCalendarEvents.ts` | Create -- React Query hook |
-| `src/components/planner/CalendarEventsSection.tsx` | Create -- 7-day calendar display component |
-| `src/hooks/useLayoutCustomization.ts` | Modify -- register `calendarEvents` in plan defaults |
-| `src/pages/Planner.tsx` | Modify -- add CalendarEventsSection LayoutBlock |
+| `src/index.css` | Update dark/light CSS variables, add light-mode body gradient, fix utility text classes |
+| `src/components/BottomNavigation.tsx` | Replace hardcoded `#0A0A0A` with `bg-background/90` |
+| `src/pages/Login.tsx` | Replace hardcoded hex colors with design tokens |
+| `src/components/landing/PrimaryInsightCard.tsx` | Replace `border-0` with subtle border |
 
-## No-Calendar Fallback
+## What Won't Change
 
-If Google Calendar isn't connected, the section shows a friendly informational message. The rest of the Planner works exactly as before -- nothing breaks.
+- The dusty violet primary accent color stays the same
+- The warm charcoal "feel" of dark mode stays -- just better contrast
+- The eggshell "feel" of light mode stays -- just less blinding
+- All existing component layouts and functionality remain untouched
+- The glassmorphism design language is preserved, just more visible
 

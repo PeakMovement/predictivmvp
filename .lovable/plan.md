@@ -1,107 +1,49 @@
 
 
-# Connect Google Calendar to the Weekly Planner
+# Light Mode: Silver-Toned Backgrounds with Stronger Text Contrast
 
-## Overview
+## What Changes
 
-Wire up the "Connect Google Calendar" button so it actually connects the user's Google account via the Lovable connector gateway. Once connected, fetch the next 7 days of calendar events and display them grouped by day inside the existing card container -- replacing the empty-state prompt.
+The light mode palette gets two adjustments:
 
-## How It Works
+1. **Silver-toned backgrounds** -- The pure whites and cool grays shift to a subtle silver tone (slightly lower lightness, cool-neutral hue) so surfaces feel less stark and more refined.
 
-The Lovable platform provides a **Google Calendar connector** that handles OAuth behind the scenes. Once the connector is linked to the project, two secrets become available (`LOVABLE_API_KEY` and `GOOGLE_CALENDAR_API_KEY`). An edge function uses these to call the Google Calendar API through a gateway proxy -- no custom OAuth flow needed.
+2. **Darker, bolder text** -- All foreground/text colors move closer to true black so headings and body text pop crisply against the silver backdrop.
 
-### User Experience
+## Color Changes (all HSL)
 
-1. User clicks **"Connect Google Calendar"** on the Planner page
-2. A connector prompt appears asking them to sign in with Google
-3. Once connected, the calendar section automatically loads their next 7 days of events
-4. Events are displayed grouped by day with time, title, and optional location
-5. If the user has no upcoming events, a friendly "No events this week" message appears
-6. A "Disconnect" option will also be available
+| Token | Current | New | Purpose |
+|-------|---------|-----|---------|
+| `--background` | `220 14% 96%` | `220 10% 93%` | Page background: subtle silver instead of near-white |
+| `--foreground` | `230 25% 18%` | `230 20% 8%` | Primary text: near-black for strong readability |
+| `--card` | `0 0% 100%` | `220 10% 96%` | Card surfaces: light silver instead of pure white |
+| `--card-foreground` | `230 25% 18%` | `230 20% 8%` | Card text: near-black |
+| `--popover` | `0 0% 100%` | `220 10% 96%` | Popover surfaces: matching silver |
+| `--popover-foreground` | `230 25% 18%` | `230 20% 8%` | Popover text: near-black |
+| `--secondary` | `220 14% 93%` | `220 10% 90%` | Secondary surfaces: slightly deeper silver |
+| `--secondary-foreground` | `230 25% 25%` | `230 20% 10%` | Secondary text: darker |
+| `--muted` | `220 14% 93%` | `220 10% 90%` | Muted surfaces: matching secondary |
+| `--muted-foreground` | `220 9% 46%` | `220 12% 36%` | Small/muted text: noticeably darker for legibility |
+| `--glass-bg` | `0 0% 100% / 0.9` | `220 10% 96% / 0.92` | Glass panels: silver-tinted |
+| `--glass-highlight` | `0 0% 100% / 0.8` | `220 8% 98% / 0.8` | Glass highlights: subtle warm silver |
+| `--gradient-glass` | white-to-gray | silver-to-silver | Glass gradient: consistent silver palette |
+| Body gradient | `hsl(220 14% 96%)` | `hsl(220 10% 93%)` | Body base matches new background |
 
----
+## What Stays the Same
 
-## Technical Details
+- Primary accent color (violet `252 56% 57%`) -- unchanged
+- Border and input colors -- unchanged (already good contrast against silver)
+- Dark mode -- completely untouched
+- All component structure, layout, and animations -- no changes
+- Design tokens for glow, ring, destructive -- unchanged
 
-### Step 1 -- Link the Google Calendar Connector
-
-Use the `google_calendar` connector to prompt the user for Google account authorization. This makes `GOOGLE_CALENDAR_API_KEY` available as an edge function secret.
-
-### Step 2 -- Create Edge Function: `fetch-calendar-events`
-
-**File:** `supabase/functions/fetch-calendar-events/index.ts`
-
-This edge function:
-- Validates the user's auth token (same pattern as `oura-auth-initiate`)
-- Reads `LOVABLE_API_KEY` and `GOOGLE_CALENDAR_API_KEY` from environment
-- Calls the Google Calendar API via the gateway:
-  ```
-  GET https://gateway.lovable.dev/google_calendar/calendar/v3/calendars/primary/events
-  ```
-  With query params: `timeMin` (now), `timeMax` (7 days from now), `singleEvents=true`, `orderBy=startTime`, `maxResults=50`
-- Required headers:
-  - `Authorization: Bearer ${LOVABLE_API_KEY}`
-  - `X-Connection-Api-Key: ${GOOGLE_CALENDAR_API_KEY}`
-- Returns a cleaned array of events with: `id`, `summary`, `start`, `end`, `location`, `description`
-
-### Step 3 -- Create React Hook: `useCalendarEvents`
-
-**File:** `src/hooks/useCalendarEvents.ts`
-
-- Calls the `fetch-calendar-events` edge function with the user's auth token
-- Manages state: `events`, `isLoading`, `error`, `isConnected`
-- Groups events by date for easy rendering
-- Provides a `refresh()` function
-- Handles the "not connected" state gracefully (gateway returns an auth error if no connection)
-
-### Step 4 -- Update the Planner Page Calendar Section
-
-**File:** `src/pages/Planner.tsx`
-
-Replace the static empty-state card with a dynamic component that has three states:
-
-**State A -- Not Connected (current empty state):**
-Shows the existing "Connect Google Calendar" button. Clicking it triggers the connector flow.
-
-**State B -- Loading:**
-Shows skeleton placeholders inside the card.
-
-**State C -- Connected with Events:**
-Displays events grouped by day in a clean list:
-
-```
-Today, Feb 7
-  09:00  Team Standup           Google Meet
-  14:00  Product Review         Room 3B
-
-Saturday, Feb 8
-  10:00  Gym Session
-  16:00  Dinner Reservation     The Place
-
-Sunday, Feb 9
-  No events
-```
-
-Each day header uses the same tone styling as the rest of the planner. Events show time, title, and optional location in muted text.
-
-### Step 5 -- Update `deno.json` (if needed)
-
-No new imports are needed for the edge function beyond what's already available.
-
----
-
-## Files Changed
+## Files Modified
 
 | File | Change |
 |------|--------|
-| `supabase/functions/fetch-calendar-events/index.ts` | **New** -- Edge function to fetch events via gateway |
-| `src/hooks/useCalendarEvents.ts` | **New** -- React hook for calendar event state management |
-| `src/pages/Planner.tsx` | **Modified** -- Replace static card with dynamic calendar display |
+| `src/index.css` | Update `.light` CSS variables and body gradient |
 
-## What Won't Change
+## Result
 
-- The rest of the Planner page (Week Intent, Weekly Focus, Themes) is untouched
-- No database tables are needed -- events are fetched live from Google each time
-- Dark/light mode continues to work via theme tokens
-- Layout customization still works for hiding/reordering the calendar section
+Text will appear noticeably crisper and more readable. Backgrounds will have a refined silver warmth instead of clinical white, creating a premium feel where the silver sits behind the text and lets it stand out clearly.
 

@@ -1,49 +1,69 @@
 
 
-# Light Mode: Silver-Toned Backgrounds with Stronger Text Contrast
+## Compact Session List with Detail Popup
 
-## What Changes
+### Overview
+Shrink the "Recent Sessions" container on the Training page and make each session card clickable. Clicking opens a slide-out Sheet (matching the Symptom Check-in pattern) showing detailed metrics for that training day.
 
-The light mode palette gets two adjustments:
+### What the Detail Popup Will Show
 
-1. **Silver-toned backgrounds** -- The pure whites and cool grays shift to a subtle silver tone (slightly lower lightness, cool-neutral hue) so surfaces feel less stark and more refined.
+Since Oura provides daily summaries (not per-workout data), the popup will display a comprehensive **Training Day Summary** organized into sections:
 
-2. **Darker, bolder text** -- All foreground/text colors move closer to true black so headings and body text pop crisply against the silver backdrop.
+**Load Metrics** (from `training_trends` table):
+- Training Load
+- ACWR (Acute:Chronic Workload Ratio) with zone indicator (optimal/caution/risk)
+- Strain
+- Monotony
 
-## Color Changes (all HSL)
+**Physiological Data** (from `wearable_sessions` table):
+- HRV average
+- Resting Heart Rate
+- Activity Score (0-100)
+- Total Steps
+- Active Calories / Total Calories
 
-| Token | Current | New | Purpose |
-|-------|---------|-----|---------|
-| `--background` | `220 14% 96%` | `220 10% 93%` | Page background: subtle silver instead of near-white |
-| `--foreground` | `230 25% 18%` | `230 20% 8%` | Primary text: near-black for strong readability |
-| `--card` | `0 0% 100%` | `220 10% 96%` | Card surfaces: light silver instead of pure white |
-| `--card-foreground` | `230 25% 18%` | `230 20% 8%` | Card text: near-black |
-| `--popover` | `0 0% 100%` | `220 10% 96%` | Popover surfaces: matching silver |
-| `--popover-foreground` | `230 25% 18%` | `230 20% 8%` | Popover text: near-black |
-| `--secondary` | `220 14% 93%` | `220 10% 90%` | Secondary surfaces: slightly deeper silver |
-| `--secondary-foreground` | `230 25% 25%` | `230 20% 10%` | Secondary text: darker |
-| `--muted` | `220 14% 93%` | `220 10% 90%` | Muted surfaces: matching secondary |
-| `--muted-foreground` | `220 9% 46%` | `220 12% 36%` | Small/muted text: noticeably darker for legibility |
-| `--glass-bg` | `0 0% 100% / 0.9` | `220 10% 96% / 0.92` | Glass panels: silver-tinted |
-| `--glass-highlight` | `0 0% 100% / 0.8` | `220 8% 98% / 0.8` | Glass highlights: subtle warm silver |
-| `--gradient-glass` | white-to-gray | silver-to-silver | Glass gradient: consistent silver palette |
-| Body gradient | `hsl(220 14% 96%)` | `hsl(220 10% 93%)` | Body base matches new background |
+**Recovery Context** (from `wearable_sessions` table):
+- Sleep Score
+- Readiness Score
 
-## What Stays the Same
+Data that Oura does NOT provide and will NOT be shown: per-workout distance, pace, GPS route, individual workout type, or heart rate zone breakdowns.
 
-- Primary accent color (violet `252 56% 57%`) -- unchanged
-- Border and input colors -- unchanged (already good contrast against silver)
-- Dark mode -- completely untouched
-- All component structure, layout, and animations -- no changes
-- Design tokens for glow, ring, destructive -- unchanged
+---
 
-## Files Modified
+### Technical Details
 
-| File | Change |
-|------|--------|
-| `src/index.css` | Update `.light` CSS variables and body gradient |
+#### 1. Compact the SessionLogList Component
+**File:** `src/components/dashboard/SessionLogList.tsx`
 
-## Result
+- Reduce padding from `p-6` to `p-4` on the outer container
+- Reduce session card padding from `p-4` to `p-3`
+- Reduce spacing between cards from `space-y-4` to `space-y-2`
+- Reduce header margin from `mb-6` to `mb-3`
+- Remove the hover scale effect on the outer container (`hover:scale-105 hover:-translate-y-1`) -- it's too dramatic for a list
+- Add a `cursor-pointer` and `onClick` handler to each `SessionLogCard`
+- Add a small chevron-right icon on each card to signal it's clickable
 
-Text will appear noticeably crisper and more readable. Backgrounds will have a refined silver warmth instead of clinical white, creating a premium feel where the silver sits behind the text and lets it stand out clearly.
+#### 2. Create Session Detail Sheet Component
+**New file:** `src/components/dashboard/SessionDetailSheet.tsx`
+
+- Uses the same `Sheet` pattern as `SymptomCheckInSheet`
+- Accepts `session` data (date, load, calories, etc.) and an `open`/`onOpenChange` prop
+- On open, queries `wearable_sessions` for the matching date to get full physiological data (activity_score, resting_hr, hrv_avg, total_steps, active/total calories, sleep_score, readiness_score)
+- Also reads from `training_trends` for that date to get ACWR, strain, monotony
+- Displays data in organized sections with appropriate icons and color-coded indicators
+- Includes a `ScrollArea` for overflow content
+
+#### 3. Wire Up Click Handlers
+**File:** `src/components/dashboard/SessionLogList.tsx`
+
+- Add state for `selectedSession` and `detailOpen`
+- Pass `onClick` to each `SessionLogCard` that sets the selected session and opens the Sheet
+- Render `SessionDetailSheet` at the bottom of the component
+
+#### 4. Data Fetching in Detail Sheet
+The detail sheet will make two queries when opened:
+1. `wearable_sessions` filtered by `user_id` and `date` matching the session date
+2. `training_trends` filtered by `user_id` and `date` matching the session date
+
+Both queries are lightweight single-row lookups by primary key pattern (user_id + date).
 

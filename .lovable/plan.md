@@ -1,137 +1,78 @@
 
+# Replace "Day by Day" with Google Calendar Connection Box
 
-# Redesign Light Mode -- Clean, Vibrant, and Inviting
+## What Changes
 
-## Inspiration Analysis
+The existing "Daily Briefings" section (the 7-card day-by-day grid) on the Planner page will be replaced with a clean, inviting empty-state container that prompts the user to connect their Google Calendar. This is a UX-only change — no backend wiring yet.
 
-From your reference images, the common design language is:
-- **Cool, clean white backgrounds** (no warm eggshell tinting)
-- **Pure white cards** sitting on a slightly gray page background with clear separation
-- **Crisp visible borders** -- thin but well-defined, light gray
-- **Deep indigo/navy text** for headings (not gray or black)
-- **Vibrant accent colors** -- deep violet primary, with green, blue, coral for statuses
-- **Subtle card shadows** instead of glassmorphism blur effects
-- **Rounded, airy cards** with generous padding
+## What It Will Look Like
 
-## What Will Change
+A centered Card with:
+- A Google Calendar icon (using the Lucide `CalendarDays` icon)
+- A heading: "Your Week Ahead"
+- A brief description explaining the benefit of connecting
+- A prominent "Connect Google Calendar" button
+- A subtle footer note: "Your events will appear here once connected"
 
-### 1. Light Mode CSS Variables (`src/index.css`)
+The card will follow the same design system as the rest of the Planner — using theme tokens, the primary accent, and matching the existing card/border styles.
 
-Replacing the warm eggshell palette with a clean, cool-neutral one:
+## Technical Details
 
-| Token | Current (eggshell) | New (clean) | Rationale |
-|-------|-------------------|-------------|-----------|
-| `--background` | `40 25% 93%` | `220 14% 96%` | Cool light gray, not warm |
-| `--foreground` | `30 10% 25%` | `230 25% 18%` | Deep navy-charcoal for text |
-| `--card` | `42 30% 97%` | `0 0% 100%` | Pure white cards |
-| `--card-foreground` | `30 10% 25%` | `230 25% 18%` | Consistent deep text |
-| `--popover` | `42 30% 97%` | `0 0% 100%` | Pure white popovers |
-| `--primary` | `270 30% 55%` | `252 56% 57%` | Richer, more vibrant violet (matching the reference indigo-violet) |
-| `--primary-foreground` | `42 30% 97%` | `0 0% 100%` | White on primary |
-| `--secondary` | `40 18% 89%` | `220 14% 93%` | Cool neutral secondary |
-| `--muted` | `38 14% 87%` | `220 14% 93%` | Cool neutral muted |
-| `--muted-foreground` | `30 10% 45%` | `220 9% 46%` | Cool gray for subtext |
-| `--accent` | `270 30% 55%` | `252 56% 57%` | Matches primary |
-| `--border` | `35 15% 78%` | `220 13% 87%` | Visible cool gray borders |
-| `--input` | `35 15% 80%` | `220 13% 87%` | Matches border |
-| `--ring` | `270 30% 55%` | `252 56% 57%` | Matches primary |
-| `--glass-bg` | `40 25% 93% / 0.85` | `0 0% 100% / 0.9` | Clean white glass |
-| `--glass-border` | `35 12% 72%` | `220 13% 87%` | Visible border |
-| `--glass-highlight` | `45 40% 98% / 0.6` | `0 0% 100% / 0.8` | White highlight |
-| `--glow-primary` | `270 30% 55%` | `252 56% 57%` | Updated primary glow |
-| `--gradient-primary` | warm eggshell tint | cool violet gradient | Clean violet gradient |
-| `--gradient-glass` | warm eggshell tint | cool white gradient | Clean white gradient |
-| `--destructive` | `0 60% 55%` | `0 72% 51%` | Slightly more vivid red |
+### File: `src/pages/Planner.tsx`
 
-### 2. Light Mode Body Gradient (`src/index.css`)
+**Remove**: The `DayCard` component (lines 34-89) and `today` variable — they are no longer used.
 
-Current: uses warm eggshell tones in the gradient. New: a clean cool-gray background with a very subtle violet tint at the top.
+**Replace**: The `dailyBriefings` LayoutBlock content (lines 379-401). Instead of the day-by-day grid, it renders a new `CalendarConnectPlaceholder` component defined inline (or could be extracted).
+
+The new block content:
 
 ```text
-.light body {
-  background: radial-gradient(circle at 50% 0%, hsl(252 56% 57% / 0.04), transparent 60%),
-              hsl(220 14% 96%);
-}
+<Card className="p-8 border border-border/50">
+  <div className="flex flex-col items-center text-center space-y-4">
+    <div className="w-14 h-14 rounded-xl bg-primary/10 border border-primary/30 flex items-center justify-center">
+      <CalendarDays icon />
+    </div>
+    <h3 className="text-lg font-semibold text-foreground">Your Week Ahead</h3>
+    <p className="text-sm text-muted-foreground max-w-md">
+      Connect your Google Calendar to see your upcoming events, meetings,
+      and schedule right here alongside your weekly plan.
+    </p>
+    <Button className="gap-2">
+      <CalendarDays icon /> Connect Google Calendar
+    </Button>
+    <p className="text-xs text-muted-foreground">
+      Your events will appear here once connected
+    </p>
+  </div>
+</Card>
 ```
 
-### 3. Light Mode Glass Shadow (`tailwind.config.ts` or inline)
+**Update the LayoutBlock**: Change `blockId` from `"dailyBriefings"` to `"calendarEvents"` and `displayName` to `"Calendar"` so it's ready for the future integration.
 
-The `shadow-glass` uses a hardcoded `rgba(0,0,0,0.37)` which is too dark for light mode. We will add a light-mode-aware card shadow in `index.css`:
+### File: `src/hooks/useLayoutCustomization.ts`
+
+Update the `plan` default sections to rename the last entry:
 
 ```text
-.light .shadow-glass {
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06), 0 4px 16px rgba(0, 0, 0, 0.04);
-}
+Before: { id: 'dailyBriefings', name: 'Daily Briefings', visible: true, order: 3 }
+After:  { id: 'calendarEvents', name: 'Calendar', visible: true, order: 3 }
 ```
 
-This gives cards a subtle float effect without the heavy dark shadow.
+### File: `src/pages/Planner.tsx` (import cleanup)
 
-### 4. Light Mode Predictiv Card Override (`src/index.css`)
-
-The `.predictiv-card` uses a hardcoded violet rgba glow that looks off in light mode. Adding a clean light-mode override:
-
-```text
-.light .predictiv-card {
-  background: hsl(0 0% 100%);
-  border: 1px solid hsl(220 13% 87%);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06), 0 4px 16px rgba(0, 0, 0, 0.04);
-}
-
-.light .predictiv-card:hover {
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08), 0 8px 24px rgba(0, 0, 0, 0.06);
-}
-```
-
-### 5. Light Mode Card Border Utility (`src/index.css`)
-
-Update `.light .card-border` for crisper borders:
-
-```text
-.light .card-border {
-  border-color: hsl(220 13% 87%);
-}
-```
-
-### 6. Sidebar Variables (light mode)
-
-Update sidebar tokens for the cool palette:
-
-| Token | New Value |
-|-------|-----------|
-| `--sidebar-background` | `0 0% 100%` |
-| `--sidebar-foreground` | `230 25% 18%` |
-| `--sidebar-primary` | `252 56% 57%` |
-| `--sidebar-primary-foreground` | `0 0% 100%` |
-| `--sidebar-accent` | `220 14% 96%` |
-| `--sidebar-accent-foreground` | `230 25% 18%` |
-| `--sidebar-border` | `220 13% 91%` |
-| `--sidebar-ring` | `252 56% 57%` |
-
-### 7. Bottom Navigation Light Mode (`src/components/BottomNavigation.tsx`)
-
-The desktop bottom bar shadow uses a hardcoded `rgba(0,0,0,0.4)` that's too dark in light mode. We will soften the shadow for light mode by using a more theme-appropriate shadow utility.
+- Add `CalendarDays` to the Lucide import
+- Remove the unused `today` const (the `format` import stays since it's used in the header)
 
 ## Files Changed
 
 | File | Change |
 |------|--------|
-| `src/index.css` | Rewrite `.light` block with clean cool-neutral palette; update light body gradient; add light-mode shadow/card overrides |
-| `src/components/BottomNavigation.tsx` | Soften the desktop bar shadow for light mode |
+| `src/pages/Planner.tsx` | Remove `DayCard` component and `today` variable; replace daily briefings LayoutBlock with calendar connect placeholder; add `CalendarDays` import |
+| `src/hooks/useLayoutCustomization.ts` | Rename `dailyBriefings` to `calendarEvents` in the `plan` default layout |
 
 ## What Won't Change
 
-- Dark mode stays exactly as it is -- no changes
-- The `:root` (default dark) variables stay the same
-- All component layouts, functionality, and structure remain untouched
-- The violet accent color family stays, just becomes more vibrant in light mode
-- Status colors (green/yellow/red for risk levels) stay consistent
-
-## Visual Result
-
-The light mode will shift from a warm, yellowish-tinted "eggshell" feel to a clean, modern, and inviting look with:
-- Crisp white cards floating on a cool light-gray background
-- Deep navy headings that feel professional yet approachable
-- Vibrant violet accents that pop against the clean white
-- Visible card borders giving clear structure without heaviness
-- Subtle, appropriate shadows instead of heavy glass effects
-
+- The rest of the Planner page (Week Intent, Weekly Focus, Themes) remains untouched
+- Dark/light mode styling is unchanged — the new card uses theme tokens
+- Layout customization system continues to work (users can hide/reorder this section)
+- No backend or edge function changes

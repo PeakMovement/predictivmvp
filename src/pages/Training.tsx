@@ -29,6 +29,7 @@ import { useToast } from "@/hooks/use-toast";
 import { HealthDataRow, getHealthData } from "@/lib/healthDataStore";
 import { UnifiedTrendCard } from "@/components/trends/UnifiedTrendCard";
 import { useTrainingTrends } from "@/hooks/useTrainingTrends";
+import { useWearableSessions } from "@/hooks/useWearableSessions";
 import { SessionLogList } from "@/components/dashboard/SessionLogList";
 import { useLayoutCustomization } from "@/hooks/useLayoutCustomization";
 import { CustomizeLayoutButton } from "@/components/layout/CustomizeLayoutButton";
@@ -194,6 +195,7 @@ const CircularGauge = ({
 // ✅ Main Page Component
 export const Training = () => {
   const { trends, isLoading: trendsLoading, refresh, userId } = useTrainingTrends({ days: 7 });
+  const { data: wearableData } = useWearableSessions(userId || undefined);
   const [suggestions, setSuggestions] = useState<ReturnType<typeof generateSuggestions>>([]);
 
   // Layout customization
@@ -333,6 +335,18 @@ export const Training = () => {
                       <CircularGauge
                         title="Fatigue Index"
                         value={fatigueIndex}
+                        maxValue={100}
+                        unit="%"
+                      />
+                      <CircularGauge
+                        title="Total Calories"
+                        value={wearableData?.total_calories ? Math.round(wearableData.total_calories) : 0}
+                        maxValue={4000}
+                        unit="kcal"
+                      />
+                      <CircularGauge
+                        title="Readiness Score"
+                        value={wearableData?.readiness_score ?? 0}
                         maxValue={100}
                         unit="%"
                       />

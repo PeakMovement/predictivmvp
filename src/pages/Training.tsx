@@ -308,51 +308,50 @@ export const Training = () => {
                 visible={isSectionVisible('sessionLogs')}
                 className="mb-6 md:mb-8"
               >
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
-                  <div className="lg:col-span-2 w-full">
-                    <SessionLogList />
-                  </div>
-                  <LayoutBlock
-                    blockId="gauges"
-                    displayName="Training Gauges"
-                    pageId="training"
-                    size="standard"
-                    visible={isSectionVisible('gauges')}
-                  >
-                    <div className="space-y-4 md:space-y-6 w-full">
-                      <CircularGauge
-                        title="Training Monotony"
-                        value={latestAvailableTrend?.monotony ? parseFloat(latestAvailableTrend.monotony.toFixed(1)) : 0}
-                        maxValue={5}
-                        unit="ratio"
-                      />
-                      <CircularGauge
-                        title="Training Strain"
-                        value={latestAvailableTrend?.strain ? Math.round(latestAvailableTrend.strain) : 0}
-                        maxValue={200}
-                        unit="TSS"
-                      />
-                      <CircularGauge
-                        title="Fatigue Index"
-                        value={fatigueIndex}
-                        maxValue={100}
-                        unit="%"
-                      />
-                      <CircularGauge
-                        title="Total Calories"
-                        value={wearableData?.total_calories ? Math.round(wearableData.total_calories) : 0}
-                        maxValue={4000}
-                        unit="kcal"
-                      />
-                      <CircularGauge
-                        title="Readiness Score"
-                        value={wearableData?.readiness_score ?? 0}
-                        maxValue={100}
-                        unit="%"
-                      />
-                    </div>
-                  </LayoutBlock>
+              <div className="w-full">
+                  <SessionLogList />
                 </div>
+                <LayoutBlock
+                  blockId="gauges"
+                  displayName="Training Gauges"
+                  pageId="training"
+                  size="wide"
+                  visible={isSectionVisible('gauges')}
+                  className="mt-4 md:mt-6"
+                >
+                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+                    <CircularGauge
+                      title="Monotony"
+                      value={latestAvailableTrend?.monotony ? parseFloat(latestAvailableTrend.monotony.toFixed(1)) : 0}
+                      maxValue={5}
+                      unit="ratio"
+                    />
+                    <CircularGauge
+                      title="Strain"
+                      value={latestAvailableTrend?.strain ? Math.round(latestAvailableTrend.strain) : 0}
+                      maxValue={200}
+                      unit="TSS"
+                    />
+                    <CircularGauge
+                      title="Fatigue Index"
+                      value={fatigueIndex}
+                      maxValue={100}
+                      unit="%"
+                    />
+                    <CircularGauge
+                      title="Total Calories"
+                      value={wearableData?.total_calories ? Math.round(wearableData.total_calories) : 0}
+                      maxValue={4000}
+                      unit="kcal"
+                    />
+                    <CircularGauge
+                      title="Readiness"
+                      value={wearableData?.readiness_score ?? 0}
+                      maxValue={100}
+                      unit="%"
+                    />
+                  </div>
+                </LayoutBlock>
               </LayoutBlock>
 
               {/* Trend Analysis Carousel */}

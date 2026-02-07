@@ -66,8 +66,11 @@ const THRESHOLDS = {
 
 function calculateFatigueIndex(strain: number | null, monotony: number | null): number | null {
   if (strain === null && monotony === null) return null;
-  const strainContrib = strain !== null ? (strain / 200) * 50 : 0;
-  const monotonyContrib = monotony !== null ? (monotony / 3) * 50 : 0;
+  // Cap monotony at 2.5 per architecture spec (protects against legacy uncapped data)
+  const cappedMonotony = monotony !== null ? Math.min(monotony, 2.5) : null;
+  // Strain denominator 300 matches actual daily strain range (~200-294)
+  const strainContrib = strain !== null ? (strain / 300) * 50 : 0;
+  const monotonyContrib = cappedMonotony !== null ? (cappedMonotony / 2.5) * 50 : 0;
   return Math.min(Math.round(strainContrib + monotonyContrib), 100);
 }
 

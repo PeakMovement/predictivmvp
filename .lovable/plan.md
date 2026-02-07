@@ -1,78 +1,107 @@
 
-# Replace "Day by Day" with Google Calendar Connection Box
 
-## What Changes
+# Connect Google Calendar to the Weekly Planner
 
-The existing "Daily Briefings" section (the 7-card day-by-day grid) on the Planner page will be replaced with a clean, inviting empty-state container that prompts the user to connect their Google Calendar. This is a UX-only change — no backend wiring yet.
+## Overview
 
-## What It Will Look Like
+Wire up the "Connect Google Calendar" button so it actually connects the user's Google account via the Lovable connector gateway. Once connected, fetch the next 7 days of calendar events and display them grouped by day inside the existing card container -- replacing the empty-state prompt.
 
-A centered Card with:
-- A Google Calendar icon (using the Lucide `CalendarDays` icon)
-- A heading: "Your Week Ahead"
-- A brief description explaining the benefit of connecting
-- A prominent "Connect Google Calendar" button
-- A subtle footer note: "Your events will appear here once connected"
+## How It Works
 
-The card will follow the same design system as the rest of the Planner — using theme tokens, the primary accent, and matching the existing card/border styles.
+The Lovable platform provides a **Google Calendar connector** that handles OAuth behind the scenes. Once the connector is linked to the project, two secrets become available (`LOVABLE_API_KEY` and `GOOGLE_CALENDAR_API_KEY`). An edge function uses these to call the Google Calendar API through a gateway proxy -- no custom OAuth flow needed.
+
+### User Experience
+
+1. User clicks **"Connect Google Calendar"** on the Planner page
+2. A connector prompt appears asking them to sign in with Google
+3. Once connected, the calendar section automatically loads their next 7 days of events
+4. Events are displayed grouped by day with time, title, and optional location
+5. If the user has no upcoming events, a friendly "No events this week" message appears
+6. A "Disconnect" option will also be available
+
+---
 
 ## Technical Details
 
-### File: `src/pages/Planner.tsx`
+### Step 1 -- Link the Google Calendar Connector
 
-**Remove**: The `DayCard` component (lines 34-89) and `today` variable — they are no longer used.
+Use the `google_calendar` connector to prompt the user for Google account authorization. This makes `GOOGLE_CALENDAR_API_KEY` available as an edge function secret.
 
-**Replace**: The `dailyBriefings` LayoutBlock content (lines 379-401). Instead of the day-by-day grid, it renders a new `CalendarConnectPlaceholder` component defined inline (or could be extracted).
+### Step 2 -- Create Edge Function: `fetch-calendar-events`
 
-The new block content:
+**File:** `supabase/functions/fetch-calendar-events/index.ts`
 
-```text
-<Card className="p-8 border border-border/50">
-  <div className="flex flex-col items-center text-center space-y-4">
-    <div className="w-14 h-14 rounded-xl bg-primary/10 border border-primary/30 flex items-center justify-center">
-      <CalendarDays icon />
-    </div>
-    <h3 className="text-lg font-semibold text-foreground">Your Week Ahead</h3>
-    <p className="text-sm text-muted-foreground max-w-md">
-      Connect your Google Calendar to see your upcoming events, meetings,
-      and schedule right here alongside your weekly plan.
-    </p>
-    <Button className="gap-2">
-      <CalendarDays icon /> Connect Google Calendar
-    </Button>
-    <p className="text-xs text-muted-foreground">
-      Your events will appear here once connected
-    </p>
-  </div>
-</Card>
+This edge function:
+- Validates the user's auth token (same pattern as `oura-auth-initiate`)
+- Reads `LOVABLE_API_KEY` and `GOOGLE_CALENDAR_API_KEY` from environment
+- Calls the Google Calendar API via the gateway:
+  ```
+  GET https://gateway.lovable.dev/google_calendar/calendar/v3/calendars/primary/events
+  ```
+  With query params: `timeMin` (now), `timeMax` (7 days from now), `singleEvents=true`, `orderBy=startTime`, `maxResults=50`
+- Required headers:
+  - `Authorization: Bearer ${LOVABLE_API_KEY}`
+  - `X-Connection-Api-Key: ${GOOGLE_CALENDAR_API_KEY}`
+- Returns a cleaned array of events with: `id`, `summary`, `start`, `end`, `location`, `description`
+
+### Step 3 -- Create React Hook: `useCalendarEvents`
+
+**File:** `src/hooks/useCalendarEvents.ts`
+
+- Calls the `fetch-calendar-events` edge function with the user's auth token
+- Manages state: `events`, `isLoading`, `error`, `isConnected`
+- Groups events by date for easy rendering
+- Provides a `refresh()` function
+- Handles the "not connected" state gracefully (gateway returns an auth error if no connection)
+
+### Step 4 -- Update the Planner Page Calendar Section
+
+**File:** `src/pages/Planner.tsx`
+
+Replace the static empty-state card with a dynamic component that has three states:
+
+**State A -- Not Connected (current empty state):**
+Shows the existing "Connect Google Calendar" button. Clicking it triggers the connector flow.
+
+**State B -- Loading:**
+Shows skeleton placeholders inside the card.
+
+**State C -- Connected with Events:**
+Displays events grouped by day in a clean list:
+
+```
+Today, Feb 7
+  09:00  Team Standup           Google Meet
+  14:00  Product Review         Room 3B
+
+Saturday, Feb 8
+  10:00  Gym Session
+  16:00  Dinner Reservation     The Place
+
+Sunday, Feb 9
+  No events
 ```
 
-**Update the LayoutBlock**: Change `blockId` from `"dailyBriefings"` to `"calendarEvents"` and `displayName` to `"Calendar"` so it's ready for the future integration.
+Each day header uses the same tone styling as the rest of the planner. Events show time, title, and optional location in muted text.
 
-### File: `src/hooks/useLayoutCustomization.ts`
+### Step 5 -- Update `deno.json` (if needed)
 
-Update the `plan` default sections to rename the last entry:
+No new imports are needed for the edge function beyond what's already available.
 
-```text
-Before: { id: 'dailyBriefings', name: 'Daily Briefings', visible: true, order: 3 }
-After:  { id: 'calendarEvents', name: 'Calendar', visible: true, order: 3 }
-```
-
-### File: `src/pages/Planner.tsx` (import cleanup)
-
-- Add `CalendarDays` to the Lucide import
-- Remove the unused `today` const (the `format` import stays since it's used in the header)
+---
 
 ## Files Changed
 
 | File | Change |
 |------|--------|
-| `src/pages/Planner.tsx` | Remove `DayCard` component and `today` variable; replace daily briefings LayoutBlock with calendar connect placeholder; add `CalendarDays` import |
-| `src/hooks/useLayoutCustomization.ts` | Rename `dailyBriefings` to `calendarEvents` in the `plan` default layout |
+| `supabase/functions/fetch-calendar-events/index.ts` | **New** -- Edge function to fetch events via gateway |
+| `src/hooks/useCalendarEvents.ts` | **New** -- React hook for calendar event state management |
+| `src/pages/Planner.tsx` | **Modified** -- Replace static card with dynamic calendar display |
 
 ## What Won't Change
 
-- The rest of the Planner page (Week Intent, Weekly Focus, Themes) remains untouched
-- Dark/light mode styling is unchanged — the new card uses theme tokens
-- Layout customization system continues to work (users can hide/reorder this section)
-- No backend or edge function changes
+- The rest of the Planner page (Week Intent, Weekly Focus, Themes) is untouched
+- No database tables are needed -- events are fetched live from Google each time
+- Dark/light mode continues to work via theme tokens
+- Layout customization still works for hiding/reordering the calendar section
+

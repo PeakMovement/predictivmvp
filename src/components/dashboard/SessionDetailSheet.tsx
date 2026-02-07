@@ -50,6 +50,47 @@ const getAcwrZone = (acwr: number | null) => {
   return { label: "High Risk", color: "text-red-400", bg: "bg-red-500/20" };
 };
 
+const AcwrZoneBar = ({ acwr }: { acwr: number | null }) => {
+  if (acwr == null) return null;
+  const position = Math.min(100, Math.max(0, (acwr / 2.0) * 100));
+  const zone = getAcwrZone(acwr);
+
+  const zones = [
+    { label: "Under", from: 0, to: 40, color: "bg-blue-400/60" },
+    { label: "Optimal", from: 40, to: 65, color: "bg-emerald-400/60" },
+    { label: "Caution", from: 65, to: 75, color: "bg-amber-400/60" },
+    { label: "Risk", from: 75, to: 100, color: "bg-red-400/60" },
+  ];
+
+  return (
+    <div className="mt-2 space-y-1.5">
+      <div className="relative h-2.5 rounded-full overflow-hidden flex">
+        {zones.map((z) => (
+          <div
+            key={z.label}
+            className={`${z.color} h-full`}
+            style={{ width: `${z.to - z.from}%` }}
+          />
+        ))}
+        <div
+          className="absolute top-1/2 -translate-y-1/2 w-3.5 h-3.5 rounded-full bg-foreground border-2 border-background shadow-md transition-all duration-500"
+          style={{ left: `calc(${position}% - 7px)` }}
+        />
+      </div>
+      <div className="flex justify-between text-[10px] text-muted-foreground">
+        <span>0</span>
+        <span className="text-blue-400">0.8</span>
+        <span className="text-emerald-400">1.3</span>
+        <span className="text-amber-400">1.5</span>
+        <span>2.0</span>
+      </div>
+      <p className={`text-xs ${zone.color} font-medium text-center`}>
+        {zone.label} zone — ACWR {acwr.toFixed(2)}
+      </p>
+    </div>
+  );
+};
+
 const MetricRow = ({
   icon: Icon,
   label,
@@ -143,19 +184,22 @@ export const SessionDetailSheet = ({
                 </h4>
                 <div className="bg-card/50 rounded-xl border border-border/40 px-3 divide-y divide-border/30">
                   <MetricRow icon={Zap} label="Training Load" value={training?.training_load != null ? Math.round(training.training_load) : null} />
-                  <div className="flex items-center justify-between py-2">
-                    <div className="flex items-center gap-2 text-muted-foreground">
-                      <Gauge size={15} className="text-primary" />
-                      <span className="text-sm">ACWR</span>
+                  <div className="py-2">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2 text-muted-foreground">
+                        <Gauge size={15} className="text-primary" />
+                        <span className="text-sm">ACWR</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-medium text-foreground">
+                          {training?.acwr != null ? training.acwr.toFixed(2) : "–"}
+                        </span>
+                        <span className={`text-xs px-1.5 py-0.5 rounded-md font-medium ${acwrZone.color} ${acwrZone.bg}`}>
+                          {acwrZone.label}
+                        </span>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm font-medium text-foreground">
-                        {training?.acwr != null ? training.acwr.toFixed(2) : "–"}
-                      </span>
-                      <span className={`text-xs px-1.5 py-0.5 rounded-md font-medium ${acwrZone.color} ${acwrZone.bg}`}>
-                        {acwrZone.label}
-                      </span>
-                    </div>
+                    <AcwrZoneBar acwr={training?.acwr ?? null} />
                   </div>
                   <MetricRow icon={TrendingUp} label="Strain" value={training?.strain != null ? Math.round(training.strain) : null} />
                   <MetricRow icon={Brain} label="Monotony" value={training?.monotony != null ? training.monotony.toFixed(2) : null} />

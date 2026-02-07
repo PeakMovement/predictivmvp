@@ -562,7 +562,7 @@ Guidelines:
     // ─── BUILD NAME PERSONALIZATION INSTRUCTION ────────────────────────────
     const userName = userProfile?.name?.split(' ')[0] || null;
     const nameInstruction = userName ? `
-NAME PERSONALIZATION: The user's first name is "${userName}". Use it naturally ONCE in your response when appropriate (e.g., "Good question, ${userName}" or "${userName}, based on your data..."). Do not overuse or repeat it.
+NAME USAGE: The user's first name is "${userName}". Do NOT use it by default. Only use the name when it adds emotional or contextual value — such as praising consistency ("Your consistency has been impressive this week, ${userName}"), expressing concern, referencing a previously reported issue ("Given what you mentioned about your knee, ${userName}"), or acknowledging multi-day progress. Never start with the name. Never use it more than once per response. Never use it in purely technical statements.
 ` : '';
 
     try {

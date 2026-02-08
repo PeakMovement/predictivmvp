@@ -39,6 +39,8 @@ import { LayoutEditor } from "@/components/layout/LayoutEditor";
 import { LayoutBlock } from "@/components/layout/LayoutBlock";
 import { OnboardingSimulator } from "@/components/onboarding/OnboardingSimulator";
 import { GoogleCalendarConnection } from "@/components/GoogleCalendarConnection";
+import { ProfileSettings } from "@/components/settings/ProfileSettings";
+import { DataPrivacySettings } from "@/components/settings/DataPrivacySettings";
 
 export const Settings = ({ onNavigate }: { onNavigate?: (tab: string) => void }) => {
   const [notifications, setNotifications] = useState(true);
@@ -551,38 +553,7 @@ export const Settings = ({ onNavigate }: { onNavigate?: (tab: string) => void })
                 </div>
                 <h3 className="text-lg font-semibold text-foreground">Profile</h3>
               </div>
-              <div className="space-y-4">
-                <div className="flex items-center gap-4">
-                  <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center">
-                    <User size={32} className="text-muted-foreground" />
-                  </div>
-                  <div className="flex-1 space-y-2">
-                    <div>
-                      <Label htmlFor="name" className="text-sm text-muted-foreground">
-                        Name
-                      </Label>
-                      <Input
-                        id="name"
-                        placeholder="Your name"
-                        className="mt-1 bg-glass/30 border-glass-border"
-                        defaultValue="John Doe"
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="email" className="text-sm text-muted-foreground">
-                        Email
-                      </Label>
-                      <Input
-                        id="email"
-                        type="email"
-                        placeholder="your.email@example.com"
-                        className="mt-1 bg-glass/30 border-glass-border"
-                        defaultValue="john.doe@example.com"
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
+              <ProfileSettings />
             </div>
           </LayoutBlock>
 
@@ -1207,6 +1178,25 @@ export const Settings = ({ onNavigate }: { onNavigate?: (tab: string) => void })
               <span className="font-medium text-destructive">Sign Out</span>
             </Button>
           </div>
+
+          {/* Data & Privacy Section */}
+          <LayoutBlock
+            blockId="dataPrivacy"
+            displayName="Data & Privacy"
+            pageId="profile"
+            size="standard"
+            visible={isSectionVisible('dataPrivacy')}
+          >
+            <div className="bg-glass backdrop-blur-xl border border-glass-border rounded-2xl p-6 shadow-glass hover:bg-glass-highlight transition-all duration-300">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-8 h-8 bg-primary/20 rounded-lg flex items-center justify-center">
+                  <Database size={16} className="text-primary" />
+                </div>
+                <h3 className="text-lg font-semibold text-foreground">Data & Privacy</h3>
+              </div>
+              <DataPrivacySettings />
+            </div>
+          </LayoutBlock>
 
           {/* Developer Tools Section */}
           <div className="bg-glass backdrop-blur-xl border border-glass-border rounded-2xl p-6 shadow-glass hover:bg-glass-highlight transition-all duration-300">

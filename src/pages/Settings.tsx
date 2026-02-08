@@ -24,6 +24,7 @@ import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useTheme } from "@/components/ThemeProvider";
+import { useHighContrast } from "@/hooks/useHighContrast";
 import { getAlertSettings, saveAlertSettings } from "@/lib/alertConditions";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -79,6 +80,7 @@ export const Settings = ({ onNavigate }: { onNavigate?: (tab: string) => void })
   const [showOnboardingSimulator, setShowOnboardingSimulator] = useState(false);
 
   const { theme, setTheme } = useTheme();
+  const { isHighContrast, toggleHighContrast } = useHighContrast();
   const { toast } = useToast();
   const { isConnected } = useWearableSync();
 
@@ -1059,6 +1061,23 @@ export const Settings = ({ onNavigate }: { onNavigate?: (tab: string) => void })
                       <p className="font-medium text-foreground">Dark</p>
                     </div>
                   </button>
+                </div>
+              </div>
+
+              {/* High Contrast Mode */}
+              <div>
+                <div className="flex items-center justify-between">
+                  <div className="space-y-1">
+                    <Label className="text-sm font-medium text-foreground">High Contrast Mode</Label>
+                    <p className="text-xs text-muted-foreground">
+                      Enhance color contrast for better readability (WCAG AAA)
+                    </p>
+                  </div>
+                  <Switch
+                    checked={isHighContrast}
+                    onCheckedChange={toggleHighContrast}
+                    aria-label="Toggle high contrast mode"
+                  />
                 </div>
               </div>
 

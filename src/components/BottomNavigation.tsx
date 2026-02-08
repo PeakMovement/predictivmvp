@@ -60,12 +60,14 @@ export const BottomNavigation = ({ activeTab, onNavigate }: BottomNavigationProp
                   <button
                     key={name}
                     onClick={() => handleNavigate(name)}
+                    aria-label={`Navigate to ${label}`}
+                    aria-current={isActive ? 'page' : undefined}
                     className={cn(
                       "flex flex-col items-center justify-center p-3 rounded-xl transition-all",
                       "min-h-[72px] touch-manipulation",
                       "hover:bg-accent/50 active:scale-95",
-                      isActive 
-                        ? "bg-primary/15 text-primary border border-primary/30" 
+                      isActive
+                        ? "bg-primary/15 text-primary border border-primary/30"
                         : "bg-muted/30 text-muted-foreground border border-transparent"
                     )}
                   >
@@ -89,6 +91,7 @@ export const BottomNavigation = ({ activeTab, onNavigate }: BottomNavigationProp
             {/* Close button row */}
             <button
               onClick={() => setIsOpen(false)}
+              aria-label="Close navigation menu"
               className={cn(
                 "w-full mt-3 py-3 rounded-xl",
                 "bg-muted/50 text-muted-foreground",
@@ -113,6 +116,8 @@ export const BottomNavigation = ({ activeTab, onNavigate }: BottomNavigationProp
         >
           <button
             onClick={() => setIsOpen(!isOpen)}
+            aria-label={isOpen ? "Close navigation menu" : "Open navigation menu"}
+            aria-expanded={isOpen}
             className={cn(
               "pointer-events-auto",
               "flex items-center justify-center gap-2",
@@ -140,6 +145,8 @@ export const BottomNavigation = ({ activeTab, onNavigate }: BottomNavigationProp
   // Desktop/Tablet: Original horizontal navigation
   return (
     <nav
+      role="navigation"
+      aria-label="Main navigation"
       className={cn(
         "fixed bottom-0 left-0 right-0 z-50 flex justify-around items-center",
         "h-[72px] sm:h-[80px] bg-background/90 backdrop-blur-lg border-t border-border/40",
@@ -154,6 +161,8 @@ export const BottomNavigation = ({ activeTab, onNavigate }: BottomNavigationProp
           <button
             key={name}
             onClick={() => onNavigate(name)}
+            aria-label={`Navigate to ${label}`}
+            aria-current={isActive ? 'page' : undefined}
             className={cn(
               "flex flex-col items-center justify-center transition-all",
               "text-xs sm:text-sm font-medium",

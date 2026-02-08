@@ -98,6 +98,8 @@ export function PullToRefresh({
     <div
       ref={containerRef}
       className="relative h-full overflow-y-auto scrollable-content"
+      role="region"
+      aria-label="Scrollable content with pull-to-refresh"
     >
       {/* Pull indicator */}
       <div
@@ -106,6 +108,9 @@ export function PullToRefresh({
           'pointer-events-none z-50',
           pullDown > 0 || refreshing ? 'opacity-100' : 'opacity-0'
         )}
+        role="status"
+        aria-live="polite"
+        aria-atomic="true"
         style={{
           height: `${Math.max(pullDown, refreshing ? 60 : 0)}px`,
           transition: refreshing ? 'height 0.3s ease-out' : 'none',

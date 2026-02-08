@@ -18,6 +18,7 @@ import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { OnboardingFlow } from "@/components/onboarding/OnboardingFlow";
 import { OfflineBanner } from "@/components/OfflineBanner";
+import { AccessibilityWrapper } from "@/components/AccessibilityWrapper";
 
 const Dashboard = lazy(() => import("@/pages/Dashboard").then(m => ({ default: m.Dashboard })));
 const Training = lazy(() => import("@/pages/Training").then(m => ({ default: m.Training })));
@@ -555,35 +556,37 @@ const App = () => {
           <Toaster />
           <Sonner />
           <OfflineBanner />
-          <div className="relative overflow-hidden min-h-screen">
-            <ThemeToggle />
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button
-                  onClick={() => setActiveTab("settings")}
-                  className={cn(
-                    "fixed top-[80px] right-6 z-50",
-                    "w-12 h-12 rounded-xl bg-glass backdrop-blur-xl border-glass-border",
-                    "flex items-center justify-center",
-                    "hover:bg-glass-highlight hover:scale-110 active:scale-95",
-                    "transition-all duration-300 ease-out transform-gpu animate-fade-in",
-                  )}
-                  aria-label="Settings"
-                >
-                  <SettingsIcon size={20} className="text-primary drop-shadow-[0_0_8px_hsl(var(--primary)/0.6)]" />
-                </button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Settings</p>
-              </TooltipContent>
-            </Tooltip>
-            <SymptomCheckInSheet />
-            <YvesChatSheet />
-            <div className="transition-all duration-500 ease-out animate-fade-in">{renderContent()}</div>
-            <BottomNavigation activeTab={activeTab} onNavigate={setActiveTab} />
-            {/* Risk Alert Modal - auto-triggers on health thresholds */}
-            <RiskAlertPopup onNavigateToHelp={() => setActiveTab("find-help")} />
-          </div>
+          <AccessibilityWrapper>
+            <div className="relative overflow-hidden min-h-screen">
+              <ThemeToggle />
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    onClick={() => setActiveTab("settings")}
+                    className={cn(
+                      "fixed top-[80px] right-6 z-50",
+                      "w-12 h-12 rounded-xl bg-glass backdrop-blur-xl border-glass-border",
+                      "flex items-center justify-center",
+                      "hover:bg-glass-highlight hover:scale-110 active:scale-95",
+                      "transition-all duration-300 ease-out transform-gpu animate-fade-in",
+                    )}
+                    aria-label="Settings"
+                  >
+                    <SettingsIcon size={20} className="text-primary drop-shadow-[0_0_8px_hsl(var(--primary)/0.6)]" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Settings</p>
+                </TooltipContent>
+              </Tooltip>
+              <SymptomCheckInSheet />
+              <YvesChatSheet />
+              <div className="transition-all duration-500 ease-out animate-fade-in">{renderContent()}</div>
+              <BottomNavigation activeTab={activeTab} onNavigate={setActiveTab} />
+              {/* Risk Alert Modal - auto-triggers on health thresholds */}
+              <RiskAlertPopup onNavigateToHelp={() => setActiveTab("find-help")} />
+            </div>
+          </AccessibilityWrapper>
         </TooltipProvider>
       </QueryClientProvider>
     </ThemeProvider>

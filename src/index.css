@@ -205,6 +205,56 @@ All colors MUST be HSL.
                 hsl(220 10% 93%);
   }
 
+  /* High Contrast Mode */
+  .high-contrast {
+    /* Enhanced contrast backgrounds */
+    --background: 0 0% 0%;
+    --foreground: 0 0% 100%;
+
+    --card: 0 0% 10%;
+    --card-foreground: 0 0% 100%;
+
+    --popover: 0 0% 10%;
+    --popover-foreground: 0 0% 100%;
+
+    /* High contrast primary */
+    --primary: 210 100% 60%;
+    --primary-foreground: 0 0% 0%;
+
+    --secondary: 0 0% 20%;
+    --secondary-foreground: 0 0% 100%;
+
+    --muted: 0 0% 20%;
+    --muted-foreground: 0 0% 85%;
+
+    --accent: 210 100% 60%;
+    --accent-foreground: 0 0% 0%;
+
+    --destructive: 0 100% 50%;
+    --destructive-foreground: 0 0% 100%;
+
+    /* High contrast borders */
+    --border: 0 0% 40%;
+    --input: 0 0% 30%;
+    --ring: 210 100% 60%;
+  }
+
+  .high-contrast body {
+    background: hsl(var(--background));
+  }
+
+  .high-contrast .predictiv-card,
+  .high-contrast .card {
+    background: hsl(var(--card));
+    border: 2px solid hsl(var(--border));
+    backdrop-filter: none;
+  }
+
+  .high-contrast *:focus-visible {
+    outline: 4px solid hsl(var(--primary));
+    outline-offset: 2px;
+  }
+
   /* iOS Safe Area Support */
   @supports (padding: max(0px)) {
     body {
@@ -226,8 +276,52 @@ All colors MUST be HSL.
 
   /* Improved focus rings - consistent with primary color */
   *:focus-visible {
-    outline: 2px solid hsl(var(--primary));
+    outline: 3px solid hsl(var(--primary));
+    outline-offset: 3px;
+    border-radius: 4px;
+  }
+
+  /* Enhanced focus for interactive elements */
+  button:focus-visible,
+  a:focus-visible,
+  input:focus-visible,
+  select:focus-visible,
+  textarea:focus-visible {
+    outline: 3px solid hsl(var(--primary));
     outline-offset: 2px;
+    box-shadow: 0 0 0 4px hsl(var(--primary) / 0.1);
+  }
+
+  /* Screen reader only content */
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
+  }
+
+  /* Skip to main content link */
+  .skip-to-content {
+    position: absolute;
+    top: -100px;
+    left: 0;
+    background: hsl(var(--primary));
+    color: hsl(var(--primary-foreground));
+    padding: 1rem 2rem;
+    text-decoration: none;
+    z-index: 9999;
+    border-radius: 0 0 8px 0;
+    font-weight: 600;
+    transition: top 0.3s;
+  }
+
+  .skip-to-content:focus {
+    top: 0;
   }
 
   /* Ensure minimum touch targets for mobile (WCAG 2.5.5) */

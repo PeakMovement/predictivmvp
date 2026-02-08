@@ -1,5 +1,6 @@
-import { Moon, Clock, Zap } from "lucide-react";
+import { Moon, Clock, Zap, Info } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface OuraSleepCardProps {
   score: number | null;
@@ -77,21 +78,57 @@ export const OuraSleepCard = ({
   const strokeDashoffset = circumference - (scoreValue / 100) * circumference;
 
   const sleepStages = [
-    { label: "Deep", value: deepSleep, color: "bg-indigo-500", hours: deepSleep },
-    { label: "REM", value: remSleep, color: "bg-purple-500", hours: remSleep },
-    { label: "Light", value: lightSleep, color: "bg-blue-400", hours: lightSleep },
+    {
+      label: "Deep",
+      value: deepSleep,
+      color: "bg-indigo-500",
+      hours: deepSleep,
+      description: "Deep sleep is essential for physical recovery, immune function, and memory consolidation. Most deep sleep occurs in the first half of the night.",
+      normalRange: "13-23% of total sleep"
+    },
+    {
+      label: "REM",
+      value: remSleep,
+      color: "bg-purple-500",
+      hours: remSleep,
+      description: "REM (Rapid Eye Movement) sleep is crucial for emotional processing, creativity, and learning. Dreams occur during REM sleep.",
+      normalRange: "20-25% of total sleep"
+    },
+    {
+      label: "Light",
+      value: lightSleep,
+      color: "bg-blue-400",
+      hours: lightSleep,
+      description: "Light sleep helps with mental and physical restoration. It serves as a transition between wakefulness and deeper sleep stages.",
+      normalRange: "50-60% of total sleep"
+    },
   ];
 
   const totalStageHours = (deepSleep || 0) + (remSleep || 0) + (lightSleep || 0);
 
   return (
-    <div className="bg-glass backdrop-blur-xl border border-glass-border rounded-2xl p-6 shadow-glass hover-glow animate-fade-in">
-      <div className="flex items-center gap-3 mb-6">
-        <div className="w-10 h-10 bg-blue-500/20 rounded-xl flex items-center justify-center">
-          <Moon className="w-5 h-5 text-blue-500" />
+    <TooltipProvider>
+      <div className="bg-glass backdrop-blur-xl border border-glass-border rounded-2xl p-6 shadow-glass hover-glow animate-fade-in">
+        <div className="flex items-center gap-3 mb-6">
+          <div className="w-10 h-10 bg-blue-500/20 rounded-xl flex items-center justify-center">
+            <Moon className="w-5 h-5 text-blue-500" />
+          </div>
+          <h2 className="text-xl font-semibold text-foreground">Sleep</h2>
+          <Tooltip>
+            <TooltipTrigger>
+              <Info className="w-4 h-4 text-muted-foreground" />
+            </TooltipTrigger>
+            <TooltipContent className="max-w-xs">
+              <p className="font-semibold mb-1">Sleep Score (0-100)</p>
+              <p className="text-sm">A comprehensive measure of sleep quality based on duration, efficiency, restfulness, and timing.</p>
+              <p className="text-sm mt-2">
+                <span className="text-green-500">85+</span>: Excellent |{" "}
+                <span className="text-yellow-500">70-84</span>: Good |{" "}
+                <span className="text-red-500">&lt;70</span>: Pay attention
+              </p>
+            </TooltipContent>
+          </Tooltip>
         </div>
-        <h2 className="text-xl font-semibold text-foreground">Sleep</h2>
-      </div>
 
       {score !== null && (
         <div className="flex flex-col items-center mb-8">
@@ -167,13 +204,25 @@ export const OuraSleepCard = ({
 
           <div className="grid grid-cols-3 gap-3 mb-4">
             {sleepStages.map((stage) => (
-              <div key={stage.label} className="text-center">
-                <p className="text-xs text-muted-foreground mb-1">{stage.label}</p>
-                <p className="text-lg font-bold text-foreground">{formatHours(stage.hours)}</p>
-                <p className="text-xs text-muted-foreground">
-                  {totalStageHours > 0 ? Math.round(((stage.hours || 0) / totalStageHours) * 100) : 0}%
-                </p>
-              </div>
+              <Tooltip key={stage.label}>
+                <TooltipTrigger asChild>
+                  <div className="text-center cursor-help p-2 rounded-lg hover:bg-secondary/30 transition-colors">
+                    <div className="flex items-center justify-center gap-1 mb-1">
+                      <p className="text-xs text-muted-foreground">{stage.label}</p>
+                      <Info className="w-3 h-3 text-muted-foreground" />
+                    </div>
+                    <p className="text-lg font-bold text-foreground">{formatHours(stage.hours)}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {totalStageHours > 0 ? Math.round(((stage.hours || 0) / totalStageHours) * 100) : 0}%
+                    </p>
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent className="max-w-xs">
+                  <p className="font-semibold mb-1">{stage.label} Sleep</p>
+                  <p className="text-sm mb-2">{stage.description}</p>
+                  <p className="text-xs text-muted-foreground">Normal range: {stage.normalRange}</p>
+                </TooltipContent>
+              </Tooltip>
             ))}
           </div>
 
@@ -193,11 +242,12 @@ export const OuraSleepCard = ({
         </div>
       )}
 
-      <div className="mt-6 pt-6 border-t border-glass-border">
-        <p className="text-xs text-muted-foreground text-center">
-          Sleep score measures the quality and restorative value of your rest
-        </p>
+        <div className="mt-6 pt-6 border-t border-glass-border">
+          <p className="text-xs text-muted-foreground text-center">
+            Sleep score measures the quality and restorative value of your rest
+          </p>
+        </div>
       </div>
-    </div>
+    </TooltipProvider>
   );
 };

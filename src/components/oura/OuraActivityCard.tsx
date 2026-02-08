@@ -1,5 +1,6 @@
-import { Zap, Footprints, Flame } from "lucide-react";
+import { Zap, Footprints, Flame, Info } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface OuraActivityCardProps {
   score: number | null;
@@ -72,13 +73,28 @@ export const OuraActivityCard = ({
   const strokeDashoffset = circumference - (scoreValue / 100) * circumference;
 
   return (
-    <div className="bg-glass backdrop-blur-xl border border-glass-border rounded-2xl p-6 shadow-glass hover-glow animate-fade-in">
-      <div className="flex items-center gap-3 mb-6">
-        <div className="w-10 h-10 bg-orange-500/20 rounded-xl flex items-center justify-center">
-          <Zap className="w-5 h-5 text-orange-500" />
+    <TooltipProvider>
+      <div className="bg-glass backdrop-blur-xl border border-glass-border rounded-2xl p-6 shadow-glass hover-glow animate-fade-in">
+        <div className="flex items-center gap-3 mb-6">
+          <div className="w-10 h-10 bg-orange-500/20 rounded-xl flex items-center justify-center">
+            <Zap className="w-5 h-5 text-orange-500" />
+          </div>
+          <h2 className="text-xl font-semibold text-foreground">Activity</h2>
+          <Tooltip>
+            <TooltipTrigger>
+              <Info className="w-4 h-4 text-muted-foreground" />
+            </TooltipTrigger>
+            <TooltipContent className="max-w-xs">
+              <p className="font-semibold mb-1">Activity Score (0-100)</p>
+              <p className="text-sm">Measures your daily physical activity, including steps, calories, and movement intensity.</p>
+              <p className="text-sm mt-2">
+                <span className="text-green-500">85+</span>: Very active |{" "}
+                <span className="text-yellow-500">70-84</span>: Active |{" "}
+                <span className="text-red-500">&lt;70</span>: Increase activity
+              </p>
+            </TooltipContent>
+          </Tooltip>
         </div>
-        <h2 className="text-xl font-semibold text-foreground">Activity</h2>
-      </div>
 
       {score !== null && (
         <div className="flex flex-col items-center mb-8">
@@ -171,11 +187,12 @@ export const OuraActivityCard = ({
         )}
       </div>
 
-      <div className="mt-6 pt-6 border-t border-glass-border">
-        <p className="text-xs text-muted-foreground text-center">
-          Activity score measures your daily movement and training load
-        </p>
+        <div className="mt-6 pt-6 border-t border-glass-border">
+          <p className="text-xs text-muted-foreground text-center">
+            Activity score measures your daily movement and training load
+          </p>
+        </div>
       </div>
-    </div>
+    </TooltipProvider>
   );
 };

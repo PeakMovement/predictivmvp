@@ -9,6 +9,7 @@ import { TodayActivitySection } from "@/components/dashboard/TodayActivitySectio
 import OuraSyncStatus from "@/components/OuraSyncStatus";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { InfoIcon } from "lucide-react";
+import { HealthTrendsChart } from "@/components/health/HealthTrendsChart";
 import { useLayoutCustomization } from "@/hooks/useLayoutCustomization";
 import { CustomizeLayoutButton } from "@/components/layout/CustomizeLayoutButton";
 import { LayoutEditor } from "@/components/layout/LayoutEditor";
@@ -17,6 +18,19 @@ import { HealthPageSkeleton } from "@/components/LoadingStates";
 
 export const Health = () => {
   const [userId, setUserId] = useState<string | null>(null);
+  const [sleepData, setSleepData] = useState<{
+    totalSleep: number | null;
+    deepSleep: number | null;
+    remSleep: number | null;
+    lightSleep: number | null;
+    efficiency: number | null;
+  }>({
+    totalSleep: null,
+    deepSleep: null,
+    remSleep: null,
+    lightSleep: null,
+    efficiency: null,
+  });
 
   // Layout customization
   const {
@@ -46,6 +60,37 @@ export const Health = () => {
   const { data: session, isLoading } = useWearableSessions(userId || undefined);
 
   console.log("✅ Health page Oura data:", session);
+
+  // Fetch sleep stage data
+  useEffect(() => {
+    const fetchSleepData = async () => {
+      if (!userId || !session?.date) return;
+
+      const { data, error } = await supabase
+        .from("wearable_sessions")
+        .select("total_sleep_duration, deep_sleep_duration, rem_sleep_duration, light_sleep_duration, sleep_efficiency")
+        .eq("user_id", userId)
+        .eq("date", session.date)
+        .maybeSingle();
+
+      if (error) {
+        console.error("Error fetching sleep data:", error);
+        return;
+      }
+
+      if (data) {
+        setSleepData({
+          totalSleep: data.total_sleep_duration ? data.total_sleep_duration / 60 : null,
+          deepSleep: data.deep_sleep_duration ? data.deep_sleep_duration / 60 : null,
+          remSleep: data.rem_sleep_duration ? data.rem_sleep_duration / 60 : null,
+          lightSleep: data.light_sleep_duration ? data.light_sleep_duration / 60 : null,
+          efficiency: data.sleep_efficiency,
+        });
+      }
+    };
+
+    fetchSleepData();
+  }, [userId, session?.date]);
 
   // Show loading skeleton while user is being fetched
   if (userId === null || (userId && isLoading)) {
@@ -144,11 +189,11 @@ export const Health = () => {
                 />
                 <OuraSleepCard
                   score={session?.sleep_score ?? null}
-                  totalSleep={null}
-                  deepSleep={null}
-                  remSleep={null}
-                  lightSleep={null}
-                  efficiency={null}
+                  totalSleep={sleepData.totalSleep}
+                  deepSleep={sleepData.deepSleep}
+                  remSleep={sleepData.remSleep}
+                  lightSleep={sleepData.lightSleep}
+                  efficiency={sleepData.efficiency}
                   isLoading={isLoading}
                 />
                 <OuraActivityCard
@@ -159,6 +204,18 @@ export const Health = () => {
                   isLoading={isLoading}
                 />
               </div>
+            </LayoutBlock>
+
+            {/* Health Trends Chart */}
+            <LayoutBlock
+              blockId="healthTrends"
+              displayName="Health Trends"
+              pageId="health"
+              size="wide"
+              visible={isSectionVisible('healthTrends')}
+              className="mb-8"
+            >
+              <HealthTrendsChart />
             </LayoutBlock>
 
             {/* Detailed Metrics Section */}

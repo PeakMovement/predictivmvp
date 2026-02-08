@@ -6,6 +6,7 @@ import { DailyBriefingCard } from "@/components/dashboard/DailyBriefingCard";
 import { BriefingDiagnostics } from "@/components/dashboard/BriefingDiagnostics";
 import { PersonalizationInsights } from "@/components/dashboard/PersonalizationInsights";
 import { RiskScoreCard } from "@/components/dashboard/RiskScoreCard";
+import { QuickActionsPanel } from "@/components/dashboard/QuickActionsPanel";
 import { useRefreshTrends } from "@/hooks/useTrendData";
 import { supabase } from "@/integrations/supabase/client";
 import { useOuraTokenStatus } from "@/hooks/useOuraTokenStatus";
@@ -17,14 +18,26 @@ import { LayoutEditor } from "@/components/layout/LayoutEditor";
 import { LayoutBlock } from "@/components/layout/LayoutBlock";
 import { DashboardSkeleton } from "@/components/LoadingStates";
 
-const WelcomeHeader = ({ onCustomize, isCustomized }: { onCustomize: () => void; isCustomized: boolean }) => (
+const WelcomeHeader = ({
+  onCustomize,
+  isCustomized,
+  userName,
+  isLoadingProfile
+}: {
+  onCustomize: () => void;
+  isCustomized: boolean;
+  userName: string | null;
+  isLoadingProfile: boolean;
+}) => (
   <div className="text-center mb-8 md:mb-12 space-y-3 md:space-y-4 px-4 md:px-0">
     <div className="flex justify-end mb-2">
       <CustomizeLayoutButton onClick={onCustomize} isCustomized={isCustomized} />
     </div>
     <div className="animate-fade-in-slow">
       <h1 className="text-xl md:text-2xl font-light text-muted-foreground mb-1 md:mb-2">Hello,</h1>
-      <h2 className="text-3xl md:text-4xl font-bold text-foreground tracking-tight">Athlete</h2>
+      <h2 className="text-3xl md:text-4xl font-bold text-foreground tracking-tight">
+        {isLoadingProfile ? '...' : (userName || 'Athlete')}
+      </h2>
     </div>
     <div className="animate-slide-in" style={{ animationDelay: "0.2s", animationFillMode: "both" }}>
       <p className="text-muted-foreground text-base md:text-lg">Here's your training overview for today</p>
@@ -37,6 +50,9 @@ const WelcomeHeader = ({ onCustomize, isCustomized }: { onCustomize: () => void;
 
 export const Dashboard = () => {
   const [userId, setUserId] = useState<string | null>(null);
+  const [userName, setUserName] = useState<string | null>(null);
+  const [isLoadingProfile, setIsLoadingProfile] = useState(true);
+  const [debugMode, setDebugMode] = useState(false);
   const { refreshAll } = useRefreshTrends();
   const { isConnected, isLoading: tokenLoading } = useOuraTokenStatus();
   const { toast } = useToast();
@@ -73,10 +89,59 @@ export const Dashboard = () => {
     refresh: refreshIntelligence,
   } = useYvesIntelligence('balance');
 
+  // Check debug mode from localStorage
   useEffect(() => {
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      setUserId(user?.id || null);
-    });
+    const checkDebugMode = () => {
+      const debugEnabled = localStorage.getItem('debugMode') === 'true';
+      setDebugMode(debugEnabled);
+    };
+
+    checkDebugMode();
+
+    // Listen for storage changes (when user toggles in Settings)
+    window.addEventListener('storage', checkDebugMode);
+
+    // Also listen for custom event for same-window updates
+    window.addEventListener('debugModeChanged', checkDebugMode);
+
+    return () => {
+      window.removeEventListener('storage', checkDebugMode);
+      window.removeEventListener('debugModeChanged', checkDebugMode);
+    };
+  }, []);
+
+  // Fetch user ID and profile name
+  useEffect(() => {
+    async function fetchUserProfile() {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+          setIsLoadingProfile(false);
+          return;
+        }
+
+        setUserId(user.id);
+
+        // Fetch user's first name from profiles table
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('full_name')
+          .eq('id', user.id)
+          .maybeSingle();
+
+        if (profile?.full_name) {
+          // Extract first name
+          const firstName = profile.full_name.split(' ')[0];
+          setUserName(firstName);
+        }
+      } catch (error) {
+        console.error('Error fetching user profile:', error);
+      } finally {
+        setIsLoadingProfile(false);
+      }
+    }
+
+    fetchUserProfile();
   }, []);
 
   // Show confirmation toast ONCE when Oura Ring connection is detected
@@ -119,7 +184,12 @@ export const Dashboard = () => {
     <TooltipProvider>
       <div className="min-h-screen bg-background flex flex-col pb-24 md:pb-32">
         <div className="flex-grow container mx-auto px-4 md:px-6 pt-6 md:pt-8">
-          <WelcomeHeader onCustomize={openLayoutEditor} isCustomized={layoutCustomized} />
+          <WelcomeHeader
+            onCustomize={openLayoutEditor}
+            isCustomized={layoutCustomized}
+            userName={userName}
+            isLoadingProfile={isLoadingProfile}
+          />
 
           {/* Layout Editor */}
           {isLayoutEditing && (
@@ -169,6 +239,19 @@ export const Dashboard = () => {
                 </div>
               </LayoutBlock>
 
+              {/* Quick Actions Panel */}
+              <LayoutBlock
+                blockId="quickActions"
+                displayName="Quick Actions"
+                pageId="dashboard"
+                size="wide"
+                visible={isSectionVisible('quickActions')}
+              >
+                <div className="mb-8 transition-all duration-300">
+                  <QuickActionsPanel />
+                </div>
+              </LayoutBlock>
+
               {/* Dashboard Cards */}
               <div className="space-y-8">
                 {/* Risk Score */}
@@ -197,17 +280,19 @@ export const Dashboard = () => {
                   />
                 </LayoutBlock>
 
-                {/* Diagnostics (for troubleshooting) */}
-                <LayoutBlock
-                  blockId="briefingDiagnostics"
-                  displayName="Briefing Diagnostics"
-                  pageId="dashboard"
-                  size="wide"
-                  visible={true}
-                  className="mb-6"
-                >
-                  <BriefingDiagnostics />
-                </LayoutBlock>
+                {/* Diagnostics (for troubleshooting - only visible in debug mode) */}
+                {debugMode && (
+                  <LayoutBlock
+                    blockId="briefingDiagnostics"
+                    displayName="Briefing Diagnostics"
+                    pageId="dashboard"
+                    size="wide"
+                    visible={debugMode}
+                    className="mb-6"
+                  >
+                    <BriefingDiagnostics />
+                  </LayoutBlock>
+                )}
 
                 {/* Personalization Insights */}
                 <LayoutBlock

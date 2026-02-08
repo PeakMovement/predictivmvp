@@ -46,6 +46,7 @@ export const Settings = ({ onNavigate }: { onNavigate?: (tab: string) => void })
   const [notifications, setNotifications] = useState(true);
   const [primaryHue, setPrimaryHue] = useState(263);
   const [isDragging, setIsDragging] = useState(false);
+  const [debugMode, setDebugMode] = useState(false);
 
   // Yves preferences
   const [yvesPreferences, setYvesPreferences] = useState({
@@ -87,6 +88,10 @@ export const Settings = ({ onNavigate }: { onNavigate?: (tab: string) => void })
       setPrimaryHue(parseInt(savedHue));
       updatePrimaryColor(parseInt(savedHue));
     }
+
+    // Load debug mode from localStorage
+    const savedDebugMode = localStorage.getItem("debugMode");
+    setDebugMode(savedDebugMode === "true");
 
     // Load SMS alert settings
     const alertSettings = getAlertSettings();
@@ -434,7 +439,7 @@ export const Settings = ({ onNavigate }: { onNavigate?: (tab: string) => void })
     setIsSendingTestEmail(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      
+
       if (!user) {
         toast({
           title: "Authentication Required",
@@ -481,6 +486,21 @@ export const Settings = ({ onNavigate }: { onNavigate?: (tab: string) => void })
     } finally {
       setIsSendingTestEmail(false);
     }
+  };
+
+  const handleDebugModeToggle = (enabled: boolean) => {
+    setDebugMode(enabled);
+    localStorage.setItem("debugMode", enabled.toString());
+
+    // Dispatch custom event to notify other components
+    window.dispatchEvent(new Event('debugModeChanged'));
+
+    toast({
+      title: enabled ? "Debug Mode Enabled" : "Debug Mode Disabled",
+      description: enabled
+        ? "Diagnostic panels will now be visible on the Dashboard"
+        : "Diagnostic panels are now hidden",
+    });
   };
 
   // Layout customization
@@ -1278,6 +1298,24 @@ export const Settings = ({ onNavigate }: { onNavigate?: (tab: string) => void })
                   <ChevronRight size={16} className="text-muted-foreground" />
                 )}
               </Button>
+
+              <div className="w-full flex items-center justify-between p-4 rounded-xl border bg-glass/30 border-glass-border transition-all duration-200">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 bg-amber-500/20 rounded-lg flex items-center justify-center">
+                    <Info size={16} className="text-amber-500" />
+                  </div>
+                  <div className="text-left">
+                    <p className="font-medium text-foreground">Debug Mode</p>
+                    <p className="text-xs text-muted-foreground">
+                      Show diagnostic panels and troubleshooting tools
+                    </p>
+                  </div>
+                </div>
+                <Switch
+                  checked={debugMode}
+                  onCheckedChange={handleDebugModeToggle}
+                />
+              </div>
 
               <button
                 onClick={() => setShowSymptomChecker(true)}

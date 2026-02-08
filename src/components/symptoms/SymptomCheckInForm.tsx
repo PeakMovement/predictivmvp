@@ -70,9 +70,10 @@ type FormData = z.infer<typeof formSchema>;
 
 interface SymptomCheckInFormProps {
   onSuccess?: (checkinId: string) => void;
+  onRequestClose?: () => void;
 }
 
-export function SymptomCheckInForm({ onSuccess }: SymptomCheckInFormProps) {
+export function SymptomCheckInForm({ onSuccess, onRequestClose }: SymptomCheckInFormProps) {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -218,6 +219,9 @@ export function SymptomCheckInForm({ onSuccess }: SymptomCheckInFormProps) {
     }));
 
     setShowProfessionalPrompt(false);
+    
+    // Close the parent sheet before navigating
+    onRequestClose?.();
     
     // Use custom event to switch tabs (App.tsx listens to this)
     window.dispatchEvent(new CustomEvent('navigate-tab', { detail: 'find-help' }));

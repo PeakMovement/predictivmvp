@@ -4,10 +4,22 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card';
-import { InsightBox } from './InsightBox';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { ConversationThreads } from '@/components/yves/ConversationThreads';
+import { SuggestedQuestions } from '@/components/yves/SuggestedQuestions';
+import { VoiceInput } from '@/components/yves/VoiceInput';
 import { queryYves, getInsightHistory, getLovableAICredits, clearChatHistory, type InsightHistoryItem, type LovableAICredits } from '@/api/yves';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Send, Sparkles, Info, Activity, RefreshCw } from 'lucide-react';
+import { Loader2, Send, Sparkles, Info, Activity, Trash2 } from 'lucide-react';
 
 export function YvesChat() {
   const [query, setQuery] = useState('');
@@ -18,6 +30,7 @@ export function YvesChat() {
   const [loadingCredits, setLoadingCredits] = useState(false);
   const [hasWearableData, setHasWearableData] = useState<boolean | null>(null);
   const [clearingHistory, setClearingHistory] = useState(false);
+  const [showClearDialog, setShowClearDialog] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -110,19 +123,17 @@ export function YvesChat() {
       const result = await clearChatHistory();
 
       if (result.success) {
-        // Reset frontend state
         setInsights([]);
-        
-        // Clear any persisted storage (safeguard)
         localStorage.removeItem('chatInsights');
         sessionStorage.removeItem('chatInsights');
-        
+
         console.log('[Yves AI] Clear Chat executed, state reset.');
-        
+
         toast({
           title: 'Chat cleared',
           description: 'All conversation history has been deleted'
         });
+        setShowClearDialog(false);
       } else {
         toast({
           title: 'Error',
@@ -140,6 +151,14 @@ export function YvesChat() {
     } finally {
       setClearingHistory(false);
     }
+  };
+
+  const handleVoiceTranscript = (transcript: string) => {
+    setQuery(transcript);
+  };
+
+  const handleSuggestedQuestion = (question: string) => {
+    setQuery(question);
   };
 
   const getCreditsVariant = () => {
@@ -265,7 +284,11 @@ export function YvesChat() {
               className="min-h-[100px] resize-none"
               disabled={loading}
             />
-            <div className="flex justify-end">
+            <div className="flex justify-between items-center">
+              <VoiceInput
+                onTranscript={handleVoiceTranscript}
+                disabled={loading}
+              />
               <Button
                 onClick={handleSubmit}
                 disabled={loading || !query.trim()}
@@ -288,6 +311,13 @@ export function YvesChat() {
         </CardContent>
       </Card>
 
+      {insights.length === 0 && !fetchingHistory && (
+        <SuggestedQuestions
+          onSelectQuestion={handleSuggestedQuestion}
+          disabled={loading}
+        />
+      )}
+
       {fetchingHistory ? (
         <div className="flex items-center justify-center py-8">
           <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
@@ -296,47 +326,59 @@ export function YvesChat() {
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-              Recent Conversations
+              Conversation History
             </h2>
             <Button
               variant="outline"
               size="sm"
-              onClick={handleClearHistory}
+              onClick={() => setShowClearDialog(true)}
               disabled={clearingHistory}
               className="gap-2"
             >
-              {clearingHistory ? (
-                <>
-                  <Loader2 className="h-3 w-3 animate-spin" />
-                  Clearing...
-                </>
-              ) : (
-                <>
-                  <RefreshCw className="h-3 w-3" />
-                  Clear Chat
-                </>
-              )}
+              <Trash2 className="h-3 w-3" />
+              Clear History
             </Button>
           </div>
-          {insights.map((insight) => (
-            <InsightBox
-              key={insight.id}
-              query={insight.query}
-              response={insight.response}
-              timestamp={insight.created_at}
-            />
-          ))}
+          <ConversationThreads insights={insights} />
         </div>
       ) : (
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-12">
             <Sparkles className="h-12 w-12 text-gray-300 mb-4" />
             <p className="text-gray-500 text-center">
-              No conversations yet. Ask Yves a question to get started!
+              No conversations yet. Try one of the suggested questions above!
             </p>
           </CardContent>
         </Card>
       )}
+
+      <AlertDialog open={showClearDialog} onOpenChange={setShowClearDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Clear conversation history?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete all your conversations with Yves. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={clearingHistory}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleClearHistory}
+              disabled={clearingHistory}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {clearingHistory ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Clearing...
+                </>
+              ) : (
+                'Clear History'
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

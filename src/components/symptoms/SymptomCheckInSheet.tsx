@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import {
   Sheet,
   SheetContent,
@@ -16,18 +16,45 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Stethoscope, Brain, AlertTriangle, CheckCircle, Loader2, X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { toast } from "@/hooks/use-toast";
 
 export function SymptomCheckInSheet() {
   const [open, setOpen] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [latestCheckinId, setLatestCheckinId] = useState<string | null>(null);
+  const autoCloseTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const { interpretSymptom, interpretation, isLoading, error, clearInterpretation } =
     useHealthInterpretation();
 
+  // Clear auto-close timer on unmount or when sheet closes
+  const clearAutoCloseTimer = useCallback(() => {
+    if (autoCloseTimer.current) {
+      clearTimeout(autoCloseTimer.current);
+      autoCloseTimer.current = null;
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!open) clearAutoCloseTimer();
+  }, [open, clearAutoCloseTimer]);
+
   const handleSuccess = async (checkinId: string) => {
+    clearAutoCloseTimer();
     setLatestCheckinId(checkinId);
     setRefreshTrigger((prev) => prev + 1);
-    await interpretSymptom(checkinId);
+    const result = await interpretSymptom(checkinId);
+
+    // Auto-close for low-severity: no flagged conditions
+    if (result && (!result.flagged_conditions || result.flagged_conditions.length === 0)) {
+      autoCloseTimer.current = setTimeout(() => {
+        setOpen(false);
+        toast({
+          title: "Symptom Logged ✓",
+          description: result.summary?.slice(0, 120) || "Your symptom has been recorded.",
+        });
+        handleClear();
+      }, 3000);
+    }
   };
 
   const handleClear = () => {

@@ -35,6 +35,7 @@ import { AdminDashboard } from "@/pages/AdminDashboard";
 import PersonalCanvas from "@/pages/PersonalCanvas";
 import Login from "@/pages/Login";
 import Register from "@/pages/Register";
+import { GoogleCalendarCallback } from "@/pages/GoogleCalendarCallback";
 import { Settings as SettingsIcon } from "lucide-react";
 import { SymptomCheckInSheet } from "@/components/symptoms/SymptomCheckInSheet";
 import { YvesChatSheet } from "@/components/YvesChatSheet";
@@ -60,6 +61,7 @@ const App = () => {
   const isFitbitCallback = currentPath === "/fitbit/callback";
   const isOuraCallback = currentPath.startsWith("/oauth/callback/oura");
   const isPolarCallback = currentPath === "/auth/polar";
+  const isGoogleCalendarCallback = currentPath === "/google-calendar-callback";
   const isOuraTest = currentPath === "/oura-test";
   const isOuraDataTest = currentPath === "/oura-data-test";
   const isAuthTest = currentPath === "/auth-test";
@@ -229,6 +231,21 @@ const App = () => {
             <Toaster />
             <Sonner />
             <PolarCallback />
+          </TooltipProvider>
+        </QueryClientProvider>
+      </ThemeProvider>
+    );
+  }
+
+  // Handle Google Calendar callback route
+  if (isGoogleCalendarCallback) {
+    return (
+      <ThemeProvider defaultTheme="dark" storageKey="predictiv-theme">
+        <QueryClientProvider client={queryClient}>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
+            <GoogleCalendarCallback />
           </TooltipProvider>
         </QueryClientProvider>
       </ThemeProvider>

@@ -13,6 +13,7 @@ import { useLayoutCustomization } from "@/hooks/useLayoutCustomization";
 import { CustomizeLayoutButton } from "@/components/layout/CustomizeLayoutButton";
 import { LayoutEditor } from "@/components/layout/LayoutEditor";
 import { LayoutBlock } from "@/components/layout/LayoutBlock";
+import { HealthPageSkeleton } from "@/components/LoadingStates";
 
 export const Health = () => {
   const [userId, setUserId] = useState<string | null>(null);
@@ -45,6 +46,15 @@ export const Health = () => {
   const { data: session, isLoading } = useWearableSessions(userId || undefined);
 
   console.log("✅ Health page Oura data:", session);
+
+  // Show loading skeleton while user is being fetched
+  if (userId === null || (userId && isLoading)) {
+    return (
+      <div className="min-h-screen bg-background">
+        <HealthPageSkeleton />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background pb-[calc(6rem+env(safe-area-inset-bottom))] md:pb-32">

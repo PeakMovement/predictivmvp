@@ -15,6 +15,7 @@ import { useLayoutCustomization } from "@/hooks/useLayoutCustomization";
 import { CustomizeLayoutButton } from "@/components/layout/CustomizeLayoutButton";
 import { LayoutEditor } from "@/components/layout/LayoutEditor";
 import { LayoutBlock } from "@/components/layout/LayoutBlock";
+import { DashboardSkeleton } from "@/components/LoadingStates";
 
 const WelcomeHeader = ({ onCustomize, isCustomized }: { onCustomize: () => void; isCustomized: boolean }) => (
   <div className="text-center mb-8 md:mb-12 space-y-3 md:space-y-4 px-4 md:px-0">

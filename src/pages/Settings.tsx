@@ -38,6 +38,7 @@ import { CustomizeLayoutButton } from "@/components/layout/CustomizeLayoutButton
 import { LayoutEditor } from "@/components/layout/LayoutEditor";
 import { LayoutBlock } from "@/components/layout/LayoutBlock";
 import { OnboardingSimulator } from "@/components/onboarding/OnboardingSimulator";
+import { GoogleCalendarConnection } from "@/components/GoogleCalendarConnection";
 
 export const Settings = ({ onNavigate }: { onNavigate?: (tab: string) => void }) => {
   const [notifications, setNotifications] = useState(true);
@@ -988,6 +989,17 @@ export const Settings = ({ onNavigate }: { onNavigate?: (tab: string) => void })
                 </div>
               </div>
             </TooltipProvider>
+          </LayoutBlock>
+
+          {/* Google Calendar Integration Section */}
+          <LayoutBlock
+            blockId="googleCalendar"
+            displayName="Google Calendar"
+            pageId="profile"
+            size="standard"
+            visible={isSectionVisible('googleCalendar')}
+          >
+            <GoogleCalendarConnection />
           </LayoutBlock>
 
           {/* Theme Section */}

@@ -36,6 +36,7 @@ import PersonalCanvas from "@/pages/PersonalCanvas";
 import Login from "@/pages/Login";
 import Register from "@/pages/Register";
 import { GoogleCalendarCallback } from "@/pages/GoogleCalendarCallback";
+import AlertHistory from "@/pages/AlertHistory";
 import { Settings as SettingsIcon } from "lucide-react";
 import { SymptomCheckInSheet } from "@/components/symptoms/SymptomCheckInSheet";
 import { YvesChatSheet } from "@/components/YvesChatSheet";
@@ -68,6 +69,7 @@ const App = () => {
   const isOuraTest = currentPath === "/oura-test";
   const isOuraDataTest = currentPath === "/oura-data-test";
   const isAuthTest = currentPath === "/auth-test";
+  const isAlertHistory = currentPath === "/alert-history";
 
   // Check authentication status and clear state on logout
   useEffect(() => {
@@ -286,6 +288,49 @@ const App = () => {
             <Toaster />
             <Sonner />
             <GoogleCalendarCallback />
+          </TooltipProvider>
+        </QueryClientProvider>
+      </ThemeProvider>
+    );
+  }
+
+  // Handle Alert History route
+  if (isAlertHistory) {
+    if (isAuthenticated === false) {
+      window.location.href = "/";
+      return null;
+    }
+
+    if (isAuthenticated === null) {
+      return (
+        <ThemeProvider defaultTheme="dark" storageKey="predictiv-theme">
+          <QueryClientProvider client={queryClient}>
+            <TooltipProvider>
+              <div className="flex items-center justify-center min-h-screen">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+              </div>
+            </TooltipProvider>
+          </QueryClientProvider>
+        </ThemeProvider>
+      );
+    }
+
+    return (
+      <ThemeProvider defaultTheme="dark" storageKey="predictiv-theme">
+        <QueryClientProvider client={queryClient}>
+          <TooltipProvider>
+            <div className="min-h-screen bg-background">
+              <Toaster />
+              <Sonner />
+              <OfflineBanner />
+              <ThemeToggle />
+              <AlertHistory />
+              <BottomNavigation activeTab="settings" onTabChange={(tab) => {
+                if (tab !== "settings") {
+                  window.location.href = "/";
+                }
+              }} />
+            </div>
           </TooltipProvider>
         </QueryClientProvider>
       </ThemeProvider>

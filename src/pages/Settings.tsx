@@ -41,6 +41,7 @@ import { OnboardingSimulator } from "@/components/onboarding/OnboardingSimulator
 import { GoogleCalendarConnection } from "@/components/GoogleCalendarConnection";
 import { ProfileSettings } from "@/components/settings/ProfileSettings";
 import { DataPrivacySettings } from "@/components/settings/DataPrivacySettings";
+import { AlertCustomizationSettings } from "@/components/settings/AlertCustomizationSettings";
 
 export const Settings = ({ onNavigate }: { onNavigate?: (tab: string) => void }) => {
   const [notifications, setNotifications] = useState(true);
@@ -980,6 +981,30 @@ export const Settings = ({ onNavigate }: { onNavigate?: (tab: string) => void })
                 </div>
               </div>
             </TooltipProvider>
+          </LayoutBlock>
+
+          {/* Alert Customization Section */}
+          <LayoutBlock
+            blockId="alertCustomization"
+            displayName="Alert Settings"
+            pageId="profile"
+            size="standard"
+            visible={isSectionVisible('alertCustomization')}
+          >
+            <div className="space-y-4">
+              <div className="flex justify-end">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => window.location.href = "/alert-history"}
+                  className="gap-2"
+                >
+                  <Bell size={16} />
+                  View Alert History
+                </Button>
+              </div>
+              <AlertCustomizationSettings />
+            </div>
           </LayoutBlock>
 
           {/* Google Calendar Integration Section */}

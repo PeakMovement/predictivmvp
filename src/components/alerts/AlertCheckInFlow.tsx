@@ -33,7 +33,7 @@ interface AlertInfo {
 interface AlertCheckInFlowProps {
   alert: AlertInfo;
   onComplete: () => void;
-  onSnooze?: (duration: "1_day" | "3_days" | "1_week") => void;
+  onSnooze?: (duration: "1_hour" | "1_day" | "3_days" | "1_week") => void;
   onNavigateToHelp?: () => void;
 }
 
@@ -266,28 +266,36 @@ export function AlertCheckInFlow({ alert, onComplete, onSnooze, onNavigateToHelp
             {/* Snooze options */}
             {onSnooze && (
               <div className="pt-2 border-t border-border/50">
-                <p className="text-xs text-muted-foreground mb-2">Don't show this alert again for:</p>
-                <div className="flex gap-2">
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    className="flex-1 text-xs"
+                <p className="text-xs text-muted-foreground mb-2">Remind me again in:</p>
+                <div className="grid grid-cols-2 gap-2">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-xs"
+                    onClick={() => onSnooze("1_hour")}
+                  >
+                    1 hour
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-xs"
                     onClick={() => onSnooze("1_day")}
                   >
                     1 day
                   </Button>
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    className="flex-1 text-xs"
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-xs"
                     onClick={() => onSnooze("3_days")}
                   >
                     3 days
                   </Button>
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    className="flex-1 text-xs"
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-xs"
                     onClick={() => onSnooze("1_week")}
                   >
                     1 week

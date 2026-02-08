@@ -15,7 +15,7 @@ interface UseRiskAlertTriggerResult {
   currentAlert: RiskAlert | null;
   dismissAlert: () => void;
   checkForAlerts: () => Promise<void>;
-  snoozeAlert: (duration: "1_day" | "3_days" | "1_week") => void;
+  snoozeAlert: (duration: "1_hour" | "1_day" | "3_days" | "1_week") => void;
 }
 
 // Thresholds for triggering alerts
@@ -30,6 +30,7 @@ const RISK_THRESHOLDS = {
 
 // Snooze durations in hours
 const SNOOZE_DURATIONS = {
+  "1_hour": 1,
   "1_day": 24,
   "3_days": 72,
   "1_week": 168,

@@ -840,20 +840,27 @@ Deno.serve(async (req) => {
       recentRecommendationsResult,
       adaptationProfileResult,
       riskTrajectoriesResult,
+      pastBriefingsResult,
     ] = await Promise.all([
       supabase.from("user_documents").select("document_type, file_name, parsed_content, ai_summary, tags").eq("user_id", userId).eq("processing_status", "completed").order("uploaded_at", { ascending: false }).limit(10),
       supabase.from("yves_memory_bank").select("memory_key, memory_value").eq("user_id", userId),
       supabase.from("yves_recommendations").select("*").eq("user_id", userId).order("created_at", { ascending: false }).limit(10),
       supabase.from("user_adaptation_profile").select("*").eq("user_id", userId).maybeSingle(),
       supabase.from("risk_trajectories").select("*").eq("user_id", userId).order("calculation_date", { ascending: false }).limit(5),
+      supabase.from("daily_briefings").select("date, content").eq("user_id", userId).eq("category", "unified").order("date", { ascending: false }).limit(3),
     ]);
 
     // Extract data
     const wearableSummary = wearableSummaryResult.data || [];
     const wearableSessions = wearableSessionsResult.data || [];
     const trainingTrends = trainingTrendsResult.data || [];
-    const recoveryTrends = recoveryTrendsResult.data || [];
+    // Defensive cap: old recovery_trends rows may have uncapped monotony values (e.g. 36.39)
+    const recoveryTrends = (recoveryTrendsResult.data || []).map((r: any) => ({
+      ...r,
+      monotony: r.monotony !== null ? Math.min(r.monotony, 2.5) : null,
+    }));
     const healthAnomalies = healthAnomaliesResult.data || [];
+    const pastBriefings = pastBriefingsResult.data || [];
     const userBaselines = userBaselinesResult.data || [];
     const userDeviations = userDeviationsResult.data || [];
     const symptomCheckIns = symptomCheckInsResult.data || [];
@@ -1108,7 +1115,7 @@ Deno.serve(async (req) => {
       promptContext += "\n";
     }
 
-    // Training trends
+    // Training trends — balanced presentation of ALL key metrics
     if (trainingTrends.length > 0) {
       const latestTrend = trainingTrends[0];
       promptContext += "═══ TRAINING STATUS ═══\n\n";
@@ -1118,11 +1125,52 @@ Deno.serve(async (req) => {
         if (latestTrend.acwr > 1.5) promptContext += " ⚠️ HIGH RISK\n";
         else if (latestTrend.acwr > 1.3) promptContext += " ⚠️ ELEVATED\n";
         else if (latestTrend.acwr < 0.8) promptContext += " ℹ️ CAN INCREASE\n";
-        else promptContext += " ✓ OPTIMAL\n";
+        else promptContext += " ✓ OPTIMAL — acknowledge this positive!\n";
       }
-      if (latestTrend.monotony !== null && latestTrend.monotony > 2.0) {
-        promptContext += `Monotony: ${latestTrend.monotony.toFixed(2)} ⚠️ HIGH - needs variety\n`;
+
+      // Monotony: context-aware presentation instead of always-on alarm
+      if (latestTrend.monotony !== null) {
+        const cappedMonotony = Math.min(latestTrend.monotony, 2.5);
+        // Check if monotony has been at the same level for 3+ days
+        const recentMonotonyValues = trainingTrends.slice(0, 3).map((t: any) => t.monotony !== null ? Math.min(t.monotony, 2.5) : null).filter((v: number | null) => v !== null);
+        const monotonyStable = recentMonotonyValues.length >= 3 && Math.max(...recentMonotonyValues) - Math.min(...recentMonotonyValues) < 0.3;
+        
+        if (cappedMonotony > 2.0 && monotonyStable) {
+          promptContext += `Monotony: ${cappedMonotony.toFixed(2)} — stable (elevated but unchanged for ${recentMonotonyValues.length}+ days, already discussed)\n`;
+        } else if (cappedMonotony > 2.0) {
+          promptContext += `Monotony: ${cappedMonotony.toFixed(2)} ⚠️ HIGH - needs variety\n`;
+        } else {
+          promptContext += `Monotony: ${cappedMonotony.toFixed(2)} ✓ HEALTHY\n`;
+        }
       }
+
+      // Sleep trend (3-day direction)
+      if (wearableSessions.length >= 3) {
+        const sleepScores = wearableSessions.slice(0, 3).map((s: any) => s.sleep_score).filter((v: number | null) => v !== null);
+        if (sleepScores.length >= 2) {
+          const sleepDirection = sleepScores[0] > sleepScores[sleepScores.length - 1] + 3 ? 'improving ↑' : sleepScores[0] < sleepScores[sleepScores.length - 1] - 3 ? 'declining ↓' : 'stable →';
+          promptContext += `Sleep Trend (3-day): ${sleepDirection} (latest: ${sleepScores[0]})\n`;
+        }
+      }
+
+      // HRV trend (3-day direction)
+      if (wearableSessions.length >= 3) {
+        const hrvValues = wearableSessions.slice(0, 3).map((s: any) => s.hrv_avg).filter((v: number | null) => v !== null);
+        if (hrvValues.length >= 2) {
+          const hrvDirection = hrvValues[0] > hrvValues[hrvValues.length - 1] + 3 ? 'improving ↑' : hrvValues[0] < hrvValues[hrvValues.length - 1] - 3 ? 'declining ↓' : 'stable →';
+          promptContext += `HRV Trend (3-day): ${hrvDirection} (latest: ${hrvValues[0]}ms)\n`;
+        }
+      }
+
+      // Readiness trend (3-day direction)
+      if (wearableSessions.length >= 3) {
+        const readinessScores = wearableSessions.slice(0, 3).map((s: any) => s.readiness_score).filter((v: number | null) => v !== null);
+        if (readinessScores.length >= 2) {
+          const readinessDirection = readinessScores[0] > readinessScores[readinessScores.length - 1] + 3 ? 'improving ↑' : readinessScores[0] < readinessScores[readinessScores.length - 1] - 3 ? 'declining ↓' : 'stable →';
+          promptContext += `Readiness Trend (3-day): ${readinessDirection} (latest: ${readinessScores[0]})\n`;
+        }
+      }
+
       promptContext += "\n";
     }
 
@@ -1211,6 +1259,12 @@ Assemble output from these components — use 2–4 per output, never all at onc
 • Gentle closing question (optional) — invite reflection or check-in
 Do NOT follow a fixed paragraph structure.
 
+═══ TOPIC VARIETY (MANDATORY) ═══
+Do NOT repeat the same primary topic as recent briefings.
+Review the PAST BRIEFINGS section below. If you discussed training monotony or training variety yesterday, lead with a DIFFERENT observation today (sleep quality, HRV trends, readiness patterns, recovery wins, goal progress, activity consistency).
+Monotony can be mentioned briefly as ongoing context, but should NOT be the headline unless it has meaningfully changed since the last briefing.
+Rotate your lead topic across days. Each briefing should feel fresh.
+
 ═══ CRITICAL RULES ═══
 1. Always provide meaningful, personalized content - never be generic
 2. Even on stable days, find patterns worth acknowledging or celebrating
@@ -1221,6 +1275,7 @@ Do NOT follow a fixed paragraph structure.
 7. Frame recommendations as options, not commands. Use "Today could be a good opportunity to…", "You might benefit from…", "It may be worth considering…". Never use "You should", "You must", or "Do this today". Support user autonomy.
 8. ANTI-SURVEILLANCE: Never imply monitoring. Never say "We detected", "The system flagged", "Your data shows". Instead say "It looks like", "You've been trending toward", "Today suggests".
 9. MEMORY REFERENCING: Reference past behavior only when it improves clarity or trust. Allowed: "In the past, lighter days have helped you reset well.", "You've responded well to this approach before." No long history recaps or irrelevant old data. Memory should feel helpful, not heavy.
+10. TOPIC VARIETY: Never lead with the same topic as your most recent briefing. Vary your primary observation across sleep, HRV, readiness, training load, recovery, and goals.
 
 ═══ PRE-OUTPUT VALIDATION (MANDATORY) ═══
 Before delivering output, internally validate:
@@ -1266,7 +1321,17 @@ or highlight subtle patterns they might miss. Make every briefing feel worth rea
 
 RESPOND WITH ONLY THE JSON OBJECT.`;
 
-    const userPrompt = `Based on this user's data and the reasoning engine analysis, generate ONE dominant insight:\n\n${promptContext}`;
+    // Include past briefings in prompt context for topic variety
+    let pastBriefingsContext = "";
+    if (pastBriefings.length > 0) {
+      pastBriefingsContext = "\n═══ PAST BRIEFINGS (avoid repeating these topics) ═══\n\n";
+      pastBriefings.forEach((b: any) => {
+        const summary = b.content?.substring(0, 200) || "No content";
+        pastBriefingsContext += `${b.date}: ${summary}...\n\n`;
+      });
+    }
+
+    const userPrompt = `Based on this user's data and the reasoning engine analysis, generate ONE dominant insight:\n\n${promptContext}${pastBriefingsContext}`;
 
     console.log(`[generate-yves-intelligence] Calling AI for user ${userId} with ${promptContext.length} chars of context`);
 

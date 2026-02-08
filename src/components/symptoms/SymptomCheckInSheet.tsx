@@ -72,7 +72,7 @@ export function SymptomCheckInSheet() {
         <ScrollArea className="h-[calc(100vh-88px)]">
           <div className="px-6 py-6 space-y-6">
             {/* Form */}
-            <SymptomCheckInForm onSuccess={handleSuccess} />
+            <SymptomCheckInForm onSuccess={handleSuccess} onRequestClose={() => setOpen(false)} />
 
             {/* AI Interpretation Result */}
             {(latestCheckinId || isLoading) && (

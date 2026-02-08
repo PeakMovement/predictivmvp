@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, lazy, Suspense } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -7,36 +7,9 @@ import { ThemeProvider } from "@/components/ThemeProvider";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { BottomNavigation } from "@/components/BottomNavigation";
 import { RiskAlertPopup } from "@/components/alerts/RiskAlertPopup";
-import { Dashboard } from "@/pages/Dashboard";
-import { Training } from "@/pages/Training";
-import { Health } from "@/pages/Health";
-import { YourPlan } from "@/pages/YourPlan";
-import { Settings } from "@/pages/Settings";
-import { FindHelp } from "@/pages/FindHelp";
-import { InsightsTree } from "@/pages/InsightsTree";
-import { YvesChat } from "@/components/YvesChat";
-import TestSupabase from "@/pages/TestSupabase";
-import AuthTest from "@/pages/AuthTest";
-import FitbitSyncNow from "@/pages/FitbitSyncNow";
-import FitbitCallback from "@/pages/FitbitCallback";
-import { OuraCallback } from "@/pages/OuraCallback";
-import OuraDiagnostics from "@/pages/OuraDiagnostics";
-import { OuraConnectionTest } from "@/pages/OuraConnectionTest";
-import { OuraDataTest } from "@/pages/OuraDataTest";
-import PolarCallback from "@/pages/auth/polar";
-import MyBaselines from "@/pages/MyBaselines";
-import DeveloperBaselinesEngine from "@/pages/DeveloperBaselinesEngine";
-import MyDocuments from "@/pages/MyDocuments";
-import { SymptomCheckIn } from "@/pages/SymptomCheckIn";
-import PlanCompliance from "@/pages/PlanCompliance";
-import { Planner } from "@/pages/Planner";
-import { ProfileSetup } from "@/pages/ProfileSetup";
-import { AdminDashboard } from "@/pages/AdminDashboard";
-import PersonalCanvas from "@/pages/PersonalCanvas";
+import { PageLoadingFallback } from "@/components/LoadingFallback";
 import Login from "@/pages/Login";
 import Register from "@/pages/Register";
-import { GoogleCalendarCallback } from "@/pages/GoogleCalendarCallback";
-import AlertHistory from "@/pages/AlertHistory";
 import { Settings as SettingsIcon } from "lucide-react";
 import { SymptomCheckInSheet } from "@/components/symptoms/SymptomCheckInSheet";
 import { YvesChatSheet } from "@/components/YvesChatSheet";
@@ -45,6 +18,35 @@ import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { OnboardingFlow } from "@/components/onboarding/OnboardingFlow";
 import { OfflineBanner } from "@/components/OfflineBanner";
+
+const Dashboard = lazy(() => import("@/pages/Dashboard").then(m => ({ default: m.Dashboard })));
+const Training = lazy(() => import("@/pages/Training").then(m => ({ default: m.Training })));
+const Health = lazy(() => import("@/pages/Health").then(m => ({ default: m.Health })));
+const YourPlan = lazy(() => import("@/pages/YourPlan").then(m => ({ default: m.YourPlan })));
+const Settings = lazy(() => import("@/pages/Settings").then(m => ({ default: m.Settings })));
+const FindHelp = lazy(() => import("@/pages/FindHelp").then(m => ({ default: m.FindHelp })));
+const InsightsTree = lazy(() => import("@/pages/InsightsTree").then(m => ({ default: m.InsightsTree })));
+const YvesChat = lazy(() => import("@/components/YvesChat").then(m => ({ default: m.YvesChat })));
+const TestSupabase = lazy(() => import("@/pages/TestSupabase"));
+const AuthTest = lazy(() => import("@/pages/AuthTest"));
+const FitbitSyncNow = lazy(() => import("@/pages/FitbitSyncNow"));
+const FitbitCallback = lazy(() => import("@/pages/FitbitCallback"));
+const OuraCallback = lazy(() => import("@/pages/OuraCallback").then(m => ({ default: m.OuraCallback })));
+const OuraDiagnostics = lazy(() => import("@/pages/OuraDiagnostics"));
+const OuraConnectionTest = lazy(() => import("@/pages/OuraConnectionTest").then(m => ({ default: m.OuraConnectionTest })));
+const OuraDataTest = lazy(() => import("@/pages/OuraDataTest").then(m => ({ default: m.OuraDataTest })));
+const PolarCallback = lazy(() => import("@/pages/auth/polar"));
+const MyBaselines = lazy(() => import("@/pages/MyBaselines"));
+const DeveloperBaselinesEngine = lazy(() => import("@/pages/DeveloperBaselinesEngine"));
+const MyDocuments = lazy(() => import("@/pages/MyDocuments"));
+const SymptomCheckIn = lazy(() => import("@/pages/SymptomCheckIn").then(m => ({ default: m.SymptomCheckIn })));
+const PlanCompliance = lazy(() => import("@/pages/PlanCompliance"));
+const Planner = lazy(() => import("@/pages/Planner").then(m => ({ default: m.Planner })));
+const ProfileSetup = lazy(() => import("@/pages/ProfileSetup").then(m => ({ default: m.ProfileSetup })));
+const AdminDashboard = lazy(() => import("@/pages/AdminDashboard").then(m => ({ default: m.AdminDashboard })));
+const PersonalCanvas = lazy(() => import("@/pages/PersonalCanvas"));
+const GoogleCalendarCallback = lazy(() => import("@/pages/GoogleCalendarCallback").then(m => ({ default: m.GoogleCalendarCallback })));
+const AlertHistory = lazy(() => import("@/pages/AlertHistory"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -180,57 +182,143 @@ const App = () => {
     }
   }, [isDashboardRoute, activeTab]);
 
-  // Main tab navigation
+  // Main tab navigation with Suspense boundaries for lazy-loaded components
   const renderContent = () => {
     switch (activeTab) {
       case "dashboard":
-        return <Dashboard />;
+        return (
+          <Suspense fallback={<PageLoadingFallback />}>
+            <Dashboard />
+          </Suspense>
+        );
       case "planner":
-        return <Planner />;
+        return (
+          <Suspense fallback={<PageLoadingFallback />}>
+            <Planner />
+          </Suspense>
+        );
       case "training":
-        return <Training />;
+        return (
+          <Suspense fallback={<PageLoadingFallback />}>
+            <Training />
+          </Suspense>
+        );
       case "health":
-        return <Health />;
+        return (
+          <Suspense fallback={<PageLoadingFallback />}>
+            <Health />
+          </Suspense>
+        );
       case "your-plan":
-        return <YourPlan />;
+        return (
+          <Suspense fallback={<PageLoadingFallback />}>
+            <YourPlan />
+          </Suspense>
+        );
       case "plan-compliance":
-        return <PlanCompliance />;
+        return (
+          <Suspense fallback={<PageLoadingFallback />}>
+            <PlanCompliance />
+          </Suspense>
+        );
       case "my-documents":
-        return <MyDocuments />;
+        return (
+          <Suspense fallback={<PageLoadingFallback />}>
+            <MyDocuments />
+          </Suspense>
+        );
       case "mybaselines":
-        return <MyBaselines />;
+        return (
+          <Suspense fallback={<PageLoadingFallback />}>
+            <MyBaselines />
+          </Suspense>
+        );
       case "find-help":
-        return <FindHelp />;
+        return (
+          <Suspense fallback={<PageLoadingFallback />}>
+            <FindHelp />
+          </Suspense>
+        );
       case "symptom-checkin":
-        return <SymptomCheckIn />;
+        return (
+          <Suspense fallback={<PageLoadingFallback />}>
+            <SymptomCheckIn />
+          </Suspense>
+        );
       case "settings":
-        return <Settings onNavigate={setActiveTab} />;
+        return (
+          <Suspense fallback={<PageLoadingFallback />}>
+            <Settings onNavigate={setActiveTab} />
+          </Suspense>
+        );
       case "insights-tree":
-        return <InsightsTree onNavigate={setActiveTab} />;
+        return (
+          <Suspense fallback={<PageLoadingFallback />}>
+            <InsightsTree onNavigate={setActiveTab} />
+          </Suspense>
+        );
       case "yves-insights":
         return (
-          <div className="container mx-auto px-4 py-8 pb-24">
-            <YvesChat />
-          </div>
+          <Suspense fallback={<PageLoadingFallback />}>
+            <div className="container mx-auto px-4 py-8 pb-24">
+              <YvesChat />
+            </div>
+          </Suspense>
         );
       case "test-supabase":
-        return <TestSupabase />;
+        return (
+          <Suspense fallback={<PageLoadingFallback />}>
+            <TestSupabase />
+          </Suspense>
+        );
       case "auth-test":
-        return <AuthTest />;
+        return (
+          <Suspense fallback={<PageLoadingFallback />}>
+            <AuthTest />
+          </Suspense>
+        );
       case "fitbit-sync-now":
-        return <FitbitSyncNow />;
+        return (
+          <Suspense fallback={<PageLoadingFallback />}>
+            <FitbitSyncNow />
+          </Suspense>
+        );
       case "oura-diagnostics":
-        return <OuraDiagnostics />;
+        return (
+          <Suspense fallback={<PageLoadingFallback />}>
+            <OuraDiagnostics />
+          </Suspense>
+        );
       case "developer-baselines-engine":
-        return <DeveloperBaselinesEngine />;
+        return (
+          <Suspense fallback={<PageLoadingFallback />}>
+            <DeveloperBaselinesEngine />
+          </Suspense>
+        );
       case "profile-setup":
-        return <ProfileSetup />;
+        return (
+          <Suspense fallback={<PageLoadingFallback />}>
+            <ProfileSetup />
+          </Suspense>
+        );
       case "admin-dashboard":
-        return <AdminDashboard />;
+        return (
+          <Suspense fallback={<PageLoadingFallback />}>
+            <AdminDashboard />
+          </Suspense>
+        );
       case "personal-canvas":
-        return <PersonalCanvas />;
+        return (
+          <Suspense fallback={<PageLoadingFallback />}>
+            <PersonalCanvas />
+          </Suspense>
+        );
       default:
-        return <Dashboard />;
+        return (
+          <Suspense fallback={<PageLoadingFallback />}>
+            <Dashboard />
+          </Suspense>
+        );
     }
   };
 
@@ -242,7 +330,9 @@ const App = () => {
           <TooltipProvider>
             <Toaster />
             <Sonner />
-            <FitbitCallback />
+            <Suspense fallback={<PageLoadingFallback />}>
+              <FitbitCallback />
+            </Suspense>
           </TooltipProvider>
         </QueryClientProvider>
       </ThemeProvider>
@@ -257,7 +347,9 @@ const App = () => {
           <TooltipProvider>
             <Toaster />
             <Sonner />
-            <OuraCallback />
+            <Suspense fallback={<PageLoadingFallback />}>
+              <OuraCallback />
+            </Suspense>
           </TooltipProvider>
         </QueryClientProvider>
       </ThemeProvider>
@@ -272,7 +364,9 @@ const App = () => {
           <TooltipProvider>
             <Toaster />
             <Sonner />
-            <PolarCallback />
+            <Suspense fallback={<PageLoadingFallback />}>
+              <PolarCallback />
+            </Suspense>
           </TooltipProvider>
         </QueryClientProvider>
       </ThemeProvider>
@@ -287,7 +381,9 @@ const App = () => {
           <TooltipProvider>
             <Toaster />
             <Sonner />
-            <GoogleCalendarCallback />
+            <Suspense fallback={<PageLoadingFallback />}>
+              <GoogleCalendarCallback />
+            </Suspense>
           </TooltipProvider>
         </QueryClientProvider>
       </ThemeProvider>
@@ -324,7 +420,9 @@ const App = () => {
               <Sonner />
               <OfflineBanner />
               <ThemeToggle />
-              <AlertHistory />
+              <Suspense fallback={<PageLoadingFallback />}>
+                <AlertHistory />
+              </Suspense>
               <BottomNavigation activeTab="settings" onTabChange={(tab) => {
                 if (tab !== "settings") {
                   window.location.href = "/";
@@ -345,7 +443,9 @@ const App = () => {
           <TooltipProvider>
             <Toaster />
             <Sonner />
-            <OuraConnectionTest />
+            <Suspense fallback={<PageLoadingFallback />}>
+              <OuraConnectionTest />
+            </Suspense>
           </TooltipProvider>
         </QueryClientProvider>
       </ThemeProvider>
@@ -360,7 +460,9 @@ const App = () => {
           <TooltipProvider>
             <Toaster />
             <Sonner />
-            <OuraDataTest />
+            <Suspense fallback={<PageLoadingFallback />}>
+              <OuraDataTest />
+            </Suspense>
           </TooltipProvider>
         </QueryClientProvider>
       </ThemeProvider>
@@ -375,7 +477,9 @@ const App = () => {
           <TooltipProvider>
             <Toaster />
             <Sonner />
-            <AuthTest />
+            <Suspense fallback={<PageLoadingFallback />}>
+              <AuthTest />
+            </Suspense>
           </TooltipProvider>
         </QueryClientProvider>
       </ThemeProvider>

@@ -1,6 +1,7 @@
 /// <reference types="https://esm.sh/@supabase/functions-js/src/edge-runtime.d.ts" />
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { getValidOuraToken } from "../_shared/oura-token-refresh.ts";
+import { cache, buildCacheKey, getCachedOrFetch } from "../_shared/cache.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -147,68 +148,91 @@ Deno.serve(async (req: Request) => {
 
     console.log(`[fetch-oura-data] Fetching data from ${startDate} to ${endDate}`);
 
-    // Convert dates to ISO datetime for heartrate endpoint
-    const startDatetime = `${startDate}T00:00:00+00:00`;
-    const endDatetime = `${endDate}T23:59:59+00:00`;
+    // Check cache first (5 minute TTL)
+    const cacheKey = buildCacheKey('oura-data', user_id, startDate, endDate);
+    const fetchedData = await getCachedOrFetch(
+      cacheKey,
+      async () => {
+        // Convert dates to ISO datetime for heartrate endpoint
+        const startDatetime = `${startDate}T00:00:00+00:00`;
+        const endDatetime = `${endDate}T23:59:59+00:00`;
 
-    // UPGRADED: Now includes detailed sleep endpoint and heartrate for HR/HRV data
-    const endpoints = [
-      { name: "daily_readiness", url: `https://api.ouraring.com/v2/usercollection/daily_readiness?start_date=${startDate}&end_date=${endDate}` },
-      { name: "daily_sleep", url: `https://api.ouraring.com/v2/usercollection/daily_sleep?start_date=${startDate}&end_date=${endDate}` },
-      { name: "daily_activity", url: `https://api.ouraring.com/v2/usercollection/daily_activity?start_date=${startDate}&end_date=${endDate}` },
-      { name: "daily_spo2", url: `https://api.ouraring.com/v2/usercollection/daily_spo2?start_date=${startDate}&end_date=${endDate}` },
-      // CRITICAL: Detailed sleep endpoint contains actual HR and HRV values
-      { name: "sleep", url: `https://api.ouraring.com/v2/usercollection/sleep?start_date=${startDate}&end_date=${endDate}` },
-      // High-resolution heartrate endpoint for resting HR calculation
-      { name: "heartrate", url: `https://api.ouraring.com/v2/usercollection/heartrate?start_datetime=${encodeURIComponent(startDatetime)}&end_datetime=${encodeURIComponent(endDatetime)}` },
-    ];
+        // UPGRADED: Now includes detailed sleep endpoint and heartrate for HR/HRV data
+        const endpoints = [
+          { name: "daily_readiness", url: `https://api.ouraring.com/v2/usercollection/daily_readiness?start_date=${startDate}&end_date=${endDate}` },
+          { name: "daily_sleep", url: `https://api.ouraring.com/v2/usercollection/daily_sleep?start_date=${startDate}&end_date=${endDate}` },
+          { name: "daily_activity", url: `https://api.ouraring.com/v2/usercollection/daily_activity?start_date=${startDate}&end_date=${endDate}` },
+          { name: "daily_spo2", url: `https://api.ouraring.com/v2/usercollection/daily_spo2?start_date=${startDate}&end_date=${endDate}` },
+          // CRITICAL: Detailed sleep endpoint contains actual HR and HRV values
+          { name: "sleep", url: `https://api.ouraring.com/v2/usercollection/sleep?start_date=${startDate}&end_date=${endDate}` },
+          // High-resolution heartrate endpoint for resting HR calculation
+          { name: "heartrate", url: `https://api.ouraring.com/v2/usercollection/heartrate?start_datetime=${encodeURIComponent(startDatetime)}&end_datetime=${encodeURIComponent(endDatetime)}` },
+        ];
 
-    const fetchedData: Record<string, any[]> = {};
+        const data: Record<string, any[]> = {};
 
-    for (const endpoint of endpoints) {
-      try {
-        const res = await fetch(endpoint.url, {
-          headers: { Authorization: `Bearer ${accessToken}` },
-        });
-
-        if (!res.ok) {
-          console.error(`[fetch-oura-data] [ERROR] Failed to fetch ${endpoint.name}: HTTP ${res.status}`);
-
-          if (res.status === 401) {
-            await supabase.from("oura_logs").insert({
-              user_id,
-              status: "error",
-              error_message: `Token invalid during API call (HTTP 401) at ${endpoint.name}`,
+        for (const endpoint of endpoints) {
+          try {
+            const res = await fetch(endpoint.url, {
+              headers: { Authorization: `Bearer ${accessToken}` },
             });
 
-            return new Response(
-              JSON.stringify({ 
-                error: "Oura token expired or invalid. Please reconnect your Oura Ring.",
-                error_code: "TOKEN_EXPIRED",
-                success: false,
-              }),
-              {
-                status: 401,
-                headers: { ...corsHeaders, "Content-Type": "application/json" }
+            if (!res.ok) {
+              console.error(`[fetch-oura-data] [ERROR] Failed to fetch ${endpoint.name}: HTTP ${res.status}`);
+
+              if (res.status === 401) {
+                await supabase.from("oura_logs").insert({
+                  user_id,
+                  status: "error",
+                  error_message: `Token invalid during API call (HTTP 401) at ${endpoint.name}`,
+                });
+
+                throw new Error('TOKEN_EXPIRED');
               }
-            );
-          }
 
-          if (res.status === 429) {
-            console.warn(`[fetch-oura-data] Rate limited on ${endpoint.name}, skipping...`);
-          }
+              if (res.status === 429) {
+                console.warn(`[fetch-oura-data] Rate limited on ${endpoint.name}, skipping...`);
+              }
 
-          fetchedData[endpoint.name] = [];
-          continue;
+              data[endpoint.name] = [];
+              continue;
+            }
+
+            const jsonData = await res.json();
+            data[endpoint.name] = jsonData.data || [];
+            console.log(`[fetch-oura-data] [SUCCESS] Fetched ${data[endpoint.name].length} entries from ${endpoint.name}`);
+          } catch (fetchErr) {
+            if ((fetchErr as Error).message === 'TOKEN_EXPIRED') {
+              throw fetchErr;
+            }
+            console.error(`[fetch-oura-data] [ERROR] Exception fetching ${endpoint.name}:`, fetchErr);
+            data[endpoint.name] = [];
+          }
         }
 
-        const data = await res.json();
-        fetchedData[endpoint.name] = data.data || [];
-        console.log(`[fetch-oura-data] [SUCCESS] Fetched ${fetchedData[endpoint.name].length} entries from ${endpoint.name}`);
-      } catch (fetchErr) {
-        console.error(`[fetch-oura-data] [ERROR] Exception fetching ${endpoint.name}:`, fetchErr);
-        fetchedData[endpoint.name] = [];
+        return data;
+      },
+      300 // 5 minutes cache
+    ).catch(err => {
+      if (err.message === 'TOKEN_EXPIRED') {
+        throw err;
       }
+      console.error('[fetch-oura-data] Cache fetch error:', err);
+      return {};
+    });
+
+    // Handle token expiry from cached fetch
+    if (!fetchedData || Object.keys(fetchedData).length === 0) {
+      return new Response(
+        JSON.stringify({
+          error: "Failed to fetch Oura data",
+          success: false,
+        }),
+        {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" }
+        }
+      );
     }
 
     const readinessData = fetchedData.daily_readiness || [];

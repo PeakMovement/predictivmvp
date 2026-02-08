@@ -162,14 +162,23 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     );
 
+    const endDateTime = new Date(appointmentDateTime);
+    endDateTime.setHours(endDateTime.getHours() + 1);
+
     const { data: booking, error: bookingError } = await supabaseService
       .from('Bookings')
       .insert({
         user_id: user.id,
         clinician_id: physicianId,
         session_date: appointmentDateTime.toISOString(),
-        session_type: sessionType || 'consultation',
-        status: 'confirmed'
+        appointment_start: appointmentDateTime.toISOString(),
+        appointment_end: endDateTime.toISOString(),
+        session_type: sessionType || 'In-Person',
+        status: 'confirmed',
+        source: 'native',
+        patient_name: user.user_metadata?.full_name || user.email?.split('@')[0],
+        patient_email: user.email,
+        notes: notes || null
       })
       .select()
       .single();
@@ -183,6 +192,19 @@ serve(async (req) => {
     }
 
     console.log(`Booking created successfully: ${booking.id}`);
+
+    // Send confirmation email asynchronously
+    try {
+      await supabaseService.functions.invoke('send-booking-confirmation', {
+        body: {
+          booking_id: booking.id,
+          user_email: user.email
+        }
+      });
+      console.log('Confirmation email sent');
+    } catch (emailError) {
+      console.error('Failed to send confirmation email:', emailError);
+    }
 
     // Return success with full booking details
     return new Response(
@@ -204,6 +226,9 @@ serve(async (req) => {
           sessionType: booking.session_type
         },
         status: booking.status,
+        source: 'native',
+        userId: user.id,
+        createdAt: booking.created_at,
         message: `Appointment confirmed with ${physician.name} on ${appointmentDate} at ${appointmentTime}`
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

@@ -230,10 +230,17 @@ All colors MUST be HSL.
     outline-offset: 2px;
   }
 
-  /* Ensure minimum touch targets for mobile */
+  /* Ensure minimum touch targets for mobile (WCAG 2.5.5) */
   button, a, input, select, textarea {
     min-height: 44px;
     min-width: 44px;
+  }
+
+  /* Exception for icon-only buttons - add padding to increase hit area */
+  button.icon-only {
+    min-height: 44px;
+    min-width: 44px;
+    padding: 10px;
   }
 }
 
@@ -328,5 +335,39 @@ All colors MUST be HSL.
 
   .text-muted-predictiv {
     color: hsl(var(--muted-foreground));
+  }
+
+  /* Bottom navigation safe area utilities */
+  .pb-nav-safe {
+    padding-bottom: calc(6rem + env(safe-area-inset-bottom));
+  }
+
+  @media (min-width: 768px) {
+    .pb-nav-safe {
+      padding-bottom: 8rem;
+    }
+  }
+
+  .mb-nav-safe {
+    margin-bottom: calc(6rem + env(safe-area-inset-bottom));
+  }
+
+  @media (min-width: 768px) {
+    .mb-nav-safe {
+      margin-bottom: 8rem;
+    }
+  }
+
+  /* Touch target helpers */
+  .touch-target {
+    min-height: 44px;
+    min-width: 44px;
+    touch-action: manipulation;
+  }
+
+  .touch-target-lg {
+    min-height: 48px;
+    min-width: 48px;
+    touch-action: manipulation;
   }
 }

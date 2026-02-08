@@ -15,6 +15,9 @@ import { CustomizeLayoutButton } from "@/components/layout/CustomizeLayoutButton
 import { LayoutEditor } from "@/components/layout/LayoutEditor";
 import { LayoutBlock } from "@/components/layout/LayoutBlock";
 import { HealthPageSkeleton } from "@/components/LoadingStates";
+import { PullToRefresh } from "@/components/PullToRefresh";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { useToast } from "@/hooks/use-toast";
 
 export const Health = () => {
   const [userId, setUserId] = useState<string | null>(null);
@@ -51,13 +54,16 @@ export const Health = () => {
     isSectionVisible,
   } = useLayoutCustomization('health');
 
+  const isMobile = useIsMobile();
+  const { toast } = useToast();
+
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
       setUserId(user?.id || null);
     });
   }, []);
 
-  const { data: session, isLoading } = useWearableSessions(userId || undefined);
+  const { data: session, isLoading, refetch } = useWearableSessions(userId || undefined);
 
   console.log("✅ Health page Oura data:", session);
 
@@ -101,9 +107,25 @@ export const Health = () => {
     );
   }
 
-  return (
-    <div className="min-h-screen bg-background pb-[calc(6rem+env(safe-area-inset-bottom))] md:pb-32">
-      <div className="container mx-auto px-4 md:px-6 pt-6 md:pt-8 max-w-7xl">
+  const handleRefresh = async () => {
+    try {
+      await refetch();
+      toast({
+        title: "Refreshed",
+        description: "Health data has been updated",
+      });
+    } catch (error) {
+      console.error('Refresh error:', error);
+      toast({
+        title: "Refresh Failed",
+        description: "Unable to refresh health data. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const healthContent = (
+    <div className="container mx-auto px-4 md:px-6 pt-6 md:pt-8 max-w-7xl">
         {/* Header */}
         <LayoutBlock
           blockId="header"
@@ -274,7 +296,18 @@ export const Health = () => {
             </LayoutBlock>
           </>
         )}
-      </div>
+    </div>
+  );
+
+  return (
+    <div className="min-h-screen bg-background pb-nav-safe">
+      {isMobile ? (
+        <PullToRefresh onRefresh={handleRefresh}>
+          {healthContent}
+        </PullToRefresh>
+      ) : (
+        healthContent
+      )}
     </div>
   );
 };

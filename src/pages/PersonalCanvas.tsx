@@ -77,7 +77,7 @@ export default function PersonalCanvas() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-background pb-24">
+      <div className="min-h-screen bg-background pb-nav-safe">
         <div className="container max-w-6xl mx-auto px-4 py-8">
           <Skeleton className="h-10 w-64 mb-8" />
           <div className="space-y-6">
@@ -91,7 +91,7 @@ export default function PersonalCanvas() {
 
   if (!hasBlocks) {
     return (
-      <div className="min-h-screen bg-background pb-24">
+      <div className="min-h-screen bg-background pb-nav-safe">
         <CanvasEmptyState onOpenLibrary={() => setIsLibraryOpen(true)} />
         <BlockLibrary
           open={isLibraryOpen}
@@ -104,7 +104,7 @@ export default function PersonalCanvas() {
   }
 
   return (
-    <div className="min-h-screen bg-background pb-24">
+    <div className="min-h-screen bg-background pb-nav-safe">
       {/* Header */}
       <div className="sticky top-0 z-40 bg-background/95 backdrop-blur-sm border-b border-border/50">
         <div className="container max-w-6xl mx-auto px-4 py-4">

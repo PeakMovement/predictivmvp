@@ -524,7 +524,7 @@ export const Settings = ({ onNavigate }: { onNavigate?: (tab: string) => void })
   } = useLayoutCustomization('profile');
 
   return (
-    <div className="min-h-screen bg-background pb-[calc(6rem+env(safe-area-inset-bottom))] md:pb-32">
+    <div className="min-h-screen bg-background pb-nav-safe">
       <div className="container mx-auto px-4 md:px-6 pt-6 md:pt-8 max-w-3xl scrollable-content">
         {/* Header */}
         <div className="text-center mb-8 md:mb-12 space-y-3 md:space-y-4 px-4 md:px-0">

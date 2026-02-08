@@ -246,7 +246,7 @@ export function Planner() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-background pb-24">
+      <div className="min-h-screen bg-background pb-nav-safe">
         <div className="container mx-auto px-4 py-8">
           <div className="space-y-6">
             <Skeleton className="h-12 w-64" />
@@ -264,7 +264,7 @@ export function Planner() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-background pb-24">
+      <div className="min-h-screen bg-background pb-nav-safe">
         <div className="container mx-auto px-4 py-8">
           <Card className="p-8 text-center">
             <p className="text-muted-foreground mb-4">{error}</p>
@@ -280,7 +280,7 @@ export function Planner() {
 
   if (!overview) {
     return (
-      <div className="min-h-screen bg-background pb-24">
+      <div className="min-h-screen bg-background pb-nav-safe">
         <div className="container mx-auto px-4 py-8">
           <Card className="p-8 text-center">
             <Sparkles className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
@@ -295,7 +295,7 @@ export function Planner() {
   }
 
   return (
-    <div className="min-h-screen bg-background pb-24">
+    <div className="min-h-screen bg-background pb-nav-safe">
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">

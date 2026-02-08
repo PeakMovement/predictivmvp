@@ -39,6 +39,8 @@ import { LayoutBlock } from "@/components/layout/LayoutBlock";
 import { AccountabilityChallenges } from "@/components/training/AccountabilityChallenges";
 import { TrainingCalendar } from "@/components/training/TrainingCalendar";
 import { SessionComparison } from "@/components/training/SessionComparison";
+import { PullToRefresh } from "@/components/PullToRefresh";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const generateSuggestions = (csvData: HealthDataRow[]) => {
   if (csvData.length === 0) return [];
@@ -199,10 +201,12 @@ const CircularGauge = ({
 // ✅ Main Page Component
 export const Training = () => {
   const { trends, isLoading: trendsLoading, refresh, userId } = useTrainingTrends({ days: 7 });
-  const { data: wearableData } = useWearableSessions(userId || undefined);
+  const { data: wearableData, refetch: refetchWearable } = useWearableSessions(userId || undefined);
   const [suggestions, setSuggestions] = useState<ReturnType<typeof generateSuggestions>>([]);
   const [comparisonOpen, setComparisonOpen] = useState(false);
   const [comparisonSessions, setComparisonSessions] = useState<any[]>([]);
+  const isMobile = useIsMobile();
+  const { toast } = useToast();
 
   // Layout customization
   const {
@@ -295,10 +299,29 @@ export const Training = () => {
     }
   };
 
-  return (
+  const handleRefresh = async () => {
+    try {
+      await Promise.all([
+        refresh(),
+        refetchWearable()
+      ]);
+      toast({
+        title: "Refreshed",
+        description: "Training data has been updated",
+      });
+    } catch (error) {
+      console.error('Refresh error:', error);
+      toast({
+        title: "Refresh Failed",
+        description: "Unable to refresh training data. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const trainingContent = (
     <TooltipProvider>
-      <div className="min-h-screen bg-background pb-[calc(7rem+env(safe-area-inset-bottom))] md:pb-32">
-        <div className="container mx-auto px-4 md:px-6 pt-6 md:pt-8 max-w-7xl">
+      <div className="container mx-auto px-4 md:px-6 pt-6 md:pt-8 max-w-7xl">
           {/* Header */}
           <LayoutBlock
             blockId="header"
@@ -440,14 +463,25 @@ export const Training = () => {
           )}
         </div>
 
-        {/* Session Comparison Modal */}
-        <SessionComparison
-          open={comparisonOpen}
-          onOpenChange={setComparisonOpen}
-          session1={comparisonSessions[0] || null}
-          session2={comparisonSessions[1] || null}
-        />
-      </div>
+      {/* Session Comparison Modal */}
+      <SessionComparison
+        open={comparisonOpen}
+        onOpenChange={setComparisonOpen}
+        session1={comparisonSessions[0] || null}
+        session2={comparisonSessions[1] || null}
+      />
     </TooltipProvider>
+  );
+
+  return (
+    <div className="min-h-screen bg-background pb-nav-safe">
+      {isMobile ? (
+        <PullToRefresh onRefresh={handleRefresh}>
+          {trainingContent}
+        </PullToRefresh>
+      ) : (
+        trainingContent
+      )}
+    </div>
   );
 };

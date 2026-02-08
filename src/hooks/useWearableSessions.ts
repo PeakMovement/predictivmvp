@@ -23,6 +23,11 @@ export const useWearableSessions = (userId: string | undefined) => {
   const [data, setData] = useState<WearableSession | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
+  const [refetchTrigger, setRefetchTrigger] = useState(0);
+
+  const refetch = () => {
+    setRefetchTrigger(prev => prev + 1);
+  };
 
   useEffect(() => {
     const fetchWearableSession = async () => {
@@ -79,7 +84,7 @@ export const useWearableSessions = (userId: string | undefined) => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [userId]);
+  }, [userId, refetchTrigger]);
 
-  return { data, isLoading, error };
+  return { data, isLoading, error, refetch };
 };

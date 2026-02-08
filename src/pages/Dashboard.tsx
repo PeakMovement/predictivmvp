@@ -17,6 +17,8 @@ import { CustomizeLayoutButton } from "@/components/layout/CustomizeLayoutButton
 import { LayoutEditor } from "@/components/layout/LayoutEditor";
 import { LayoutBlock } from "@/components/layout/LayoutBlock";
 import { DashboardSkeleton } from "@/components/LoadingStates";
+import { PullToRefresh } from "@/components/PullToRefresh";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const WelcomeHeader = ({
   onCustomize,
@@ -57,6 +59,7 @@ export const Dashboard = () => {
   const { isConnected, isLoading: tokenLoading } = useOuraTokenStatus();
   const { toast } = useToast();
   const hasShownConnectionToast = useRef(false);
+  const isMobile = useIsMobile();
   
   // Layout customization
   const {
@@ -180,10 +183,28 @@ export const Dashboard = () => {
     };
   }, [refreshAll]);
 
-  return (
-    <TooltipProvider>
-      <div className="min-h-screen bg-background flex flex-col pb-24 md:pb-32">
-        <div className="flex-grow container mx-auto px-4 md:px-6 pt-6 md:pt-8">
+  const handleRefresh = async () => {
+    try {
+      await Promise.all([
+        refreshAll(),
+        refreshIntelligence()
+      ]);
+      toast({
+        title: "Refreshed",
+        description: "Dashboard data has been updated",
+      });
+    } catch (error) {
+      console.error('Refresh error:', error);
+      toast({
+        title: "Refresh Failed",
+        description: "Unable to refresh data. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const dashboardContent = (
+    <div className="container mx-auto px-4 md:px-6 pt-6 md:pt-8">
           <WelcomeHeader
             onCustomize={openLayoutEditor}
             isCustomized={layoutCustomized}
@@ -308,7 +329,19 @@ export const Dashboard = () => {
               </div>
             </>
           )}
-        </div>
+    </div>
+  );
+
+  return (
+    <TooltipProvider>
+      <div className="min-h-screen bg-background flex flex-col pb-nav-safe">
+        {isMobile ? (
+          <PullToRefresh onRefresh={handleRefresh}>
+            {dashboardContent}
+          </PullToRefresh>
+        ) : (
+          dashboardContent
+        )}
       </div>
     </TooltipProvider>
   );

@@ -1,4 +1,4 @@
-import { FileText, Trash2, Clock, CheckCircle, AlertCircle, RefreshCw } from 'lucide-react';
+import { FileText, Trash2, Clock, CheckCircle, AlertCircle, RefreshCw, Eye, History } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -8,6 +8,8 @@ import { format } from 'date-fns';
 interface DocumentCardProps {
   document: UserDocument;
   onDelete: (id: string, fileUrl: string) => void;
+  onPreview?: (document: UserDocument) => void;
+  onViewHistory?: (document: UserDocument) => void;
 }
 
 const typeIcons = {
@@ -29,7 +31,7 @@ const statusConfig = {
   failed: { icon: AlertCircle, color: 'text-red-500', label: 'Failed', animate: '' }
 };
 
-export const DocumentCard = ({ document, onDelete }: DocumentCardProps) => {
+export const DocumentCard = ({ document, onDelete, onPreview, onViewHistory }: DocumentCardProps) => {
   return (
     <Card className="bg-card border-border hover:border-primary/50 transition-all">
       <CardContent className="p-4">
@@ -82,6 +84,31 @@ export const DocumentCard = ({ document, onDelete }: DocumentCardProps) => {
                 ))}
               </div>
             )}
+
+            <div className="flex gap-2 pt-2">
+              {onPreview && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => onPreview(document)}
+                  className="flex-1"
+                >
+                  <Eye className="w-3 h-3 mr-1" />
+                  Preview
+                </Button>
+              )}
+              {onViewHistory && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => onViewHistory(document)}
+                  className="flex-1"
+                >
+                  <History className="w-3 h-3 mr-1" />
+                  History
+                </Button>
+              )}
+            </div>
           </div>
 
           <Button

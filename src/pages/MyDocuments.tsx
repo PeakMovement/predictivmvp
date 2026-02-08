@@ -4,8 +4,11 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { DocumentUploadZone } from '@/components/documents/DocumentUploadZone';
 import { DocumentCard } from '@/components/documents/DocumentCard';
-import { useDocuments } from '@/hooks/useDocuments';
-import { useState } from 'react';
+import { DocumentPreviewModal } from '@/components/documents/DocumentPreviewModal';
+import { DocumentVersionHistoryModal } from '@/components/documents/DocumentVersionHistoryModal';
+import { DocumentSearchFilters, DocumentSearchFilters as SearchFiltersType } from '@/components/documents/DocumentSearchFilters';
+import { useDocuments, UserDocument } from '@/hooks/useDocuments';
+import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useLayoutCustomization } from '@/hooks/useLayoutCustomization';
 import { CustomizeLayoutButton } from '@/components/layout/CustomizeLayoutButton';
@@ -13,8 +16,11 @@ import { LayoutEditor } from '@/components/layout/LayoutEditor';
 import { LayoutBlock } from '@/components/layout/LayoutBlock';
 
 const MyDocuments = () => {
-  const { documents, loading, uploading, uploadDocument, deleteDocument } = useDocuments();
+  const { documents, loading, uploading, uploadDocument, deleteDocument, refetch } = useDocuments();
   const [activeFilter, setActiveFilter] = useState<'all' | 'nutrition' | 'medical' | 'training'>('all');
+  const [searchFilters, setSearchFilters] = useState<SearchFiltersType>({});
+  const [previewDocument, setPreviewDocument] = useState<UserDocument | null>(null);
+  const [historyDocument, setHistoryDocument] = useState<UserDocument | null>(null);
   const navigate = useNavigate();
 
   // Layout customization
@@ -36,14 +42,62 @@ const MyDocuments = () => {
     isSectionVisible,
   } = useLayoutCustomization('docs');
 
-  const filteredDocuments = activeFilter === 'all' 
-    ? documents 
-    : documents.filter(doc => doc.document_type === activeFilter);
+  const filteredDocuments = useMemo(() => {
+    let filtered = documents;
+
+    if (activeFilter !== 'all') {
+      filtered = filtered.filter(doc => doc.document_type === activeFilter);
+    }
+
+    if (searchFilters.documentType && searchFilters.documentType !== 'all') {
+      filtered = filtered.filter(doc => doc.document_type === searchFilters.documentType);
+    }
+
+    if (searchFilters.processingStatus && searchFilters.processingStatus !== 'all') {
+      filtered = filtered.filter(doc => doc.processing_status === searchFilters.processingStatus);
+    }
+
+    if (searchFilters.query) {
+      const query = searchFilters.query.toLowerCase();
+      filtered = filtered.filter(doc => {
+        return (
+          doc.file_name.toLowerCase().includes(query) ||
+          doc.ai_summary?.toLowerCase().includes(query) ||
+          doc.tags?.some(tag => tag.toLowerCase().includes(query))
+        );
+      });
+    }
+
+    if (searchFilters.dateFrom) {
+      filtered = filtered.filter(doc =>
+        new Date(doc.uploaded_at) >= searchFilters.dateFrom!
+      );
+    }
+
+    if (searchFilters.dateTo) {
+      const endOfDay = new Date(searchFilters.dateTo);
+      endOfDay.setHours(23, 59, 59, 999);
+      filtered = filtered.filter(doc =>
+        new Date(doc.uploaded_at) <= endOfDay
+      );
+    }
+
+    return filtered;
+  }, [documents, activeFilter, searchFilters]);
 
   const documentCounts = {
     nutrition: documents.filter(d => d.document_type === 'nutrition').length,
     medical: documents.filter(d => d.document_type === 'medical').length,
     training: documents.filter(d => d.document_type === 'training').length,
+  };
+
+  const handleClearFilters = () => {
+    setSearchFilters({});
+    setActiveFilter('all');
+  };
+
+  const handleVersionRestored = () => {
+    refetch();
   };
 
   return (
@@ -175,7 +229,7 @@ const MyDocuments = () => {
         visible={isSectionVisible('library')}
       >
         <Card className="bg-glass border-glass-border">
-          <CardHeader>
+          <CardHeader className="space-y-4">
             <div className="flex items-center justify-between">
               <CardTitle className="text-lg">Document Library</CardTitle>
               <div className="flex items-center gap-2">
@@ -190,6 +244,12 @@ const MyDocuments = () => {
                 </Tabs>
               </div>
             </div>
+
+            <DocumentSearchFilters
+              filters={searchFilters}
+              onFiltersChange={setSearchFilters}
+              onClearFilters={handleClearFilters}
+            />
           </CardHeader>
           <CardContent>
             {loading ? (
@@ -199,8 +259,24 @@ const MyDocuments = () => {
             ) : filteredDocuments.length === 0 ? (
               <div className="text-center py-12 text-muted-foreground">
                 <FileText className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                <p>No documents uploaded yet</p>
-                <p className="text-sm">Upload your first document to get started</p>
+                {documents.length === 0 ? (
+                  <>
+                    <p>No documents uploaded yet</p>
+                    <p className="text-sm">Upload your first document to get started</p>
+                  </>
+                ) : (
+                  <>
+                    <p>No documents match your filters</p>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="mt-3"
+                      onClick={handleClearFilters}
+                    >
+                      Clear Filters
+                    </Button>
+                  </>
+                )}
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -209,6 +285,8 @@ const MyDocuments = () => {
                     key={doc.id}
                     document={doc}
                     onDelete={deleteDocument}
+                    onPreview={setPreviewDocument}
+                    onViewHistory={setHistoryDocument}
                   />
                 ))}
               </div>
@@ -216,6 +294,19 @@ const MyDocuments = () => {
           </CardContent>
         </Card>
       </LayoutBlock>
+
+      <DocumentPreviewModal
+        document={previewDocument}
+        open={previewDocument !== null}
+        onClose={() => setPreviewDocument(null)}
+      />
+
+      <DocumentVersionHistoryModal
+        document={historyDocument}
+        open={historyDocument !== null}
+        onClose={() => setHistoryDocument(null)}
+        onRestored={handleVersionRestored}
+      />
     </div>
   );
 };

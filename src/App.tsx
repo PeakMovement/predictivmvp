@@ -37,6 +37,7 @@ import Login from "@/pages/Login";
 import Register from "@/pages/Register";
 import { Settings as SettingsIcon } from "lucide-react";
 import { SymptomCheckInSheet } from "@/components/symptoms/SymptomCheckInSheet";
+import { YvesChatSheet } from "@/components/YvesChatSheet";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
@@ -341,6 +342,7 @@ const App = () => {
               </TooltipContent>
             </Tooltip>
             <SymptomCheckInSheet />
+            <YvesChatSheet />
             <div className="transition-all duration-500 ease-out animate-fade-in">{renderContent()}</div>
             <BottomNavigation activeTab={activeTab} onNavigate={setActiveTab} />
             {/* Risk Alert Modal - auto-triggers on health thresholds */}

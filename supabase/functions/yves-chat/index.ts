@@ -1,5 +1,6 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { getAIProvider } from "../_shared/ai-provider.ts";
+import { RateLimiter, RATE_LIMIT_CONFIGS } from "../_shared/rate-limiter.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -37,6 +38,17 @@ Deno.serve(async (req) => {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
+    }
+
+    // ─── RATE LIMITING ───────────────────────────────────────────────────────
+    const rateLimiter = new RateLimiter();
+    const rateLimitResult = await rateLimiter.checkRateLimit(
+      user.id,
+      RATE_LIMIT_CONFIGS.AI_CHAT
+    );
+
+    if (!rateLimitResult.allowed) {
+      return rateLimiter.createRateLimitResponse(rateLimitResult);
     }
 
     // ─── INPUT VALIDATION ─────────────────────────────────────────────────────

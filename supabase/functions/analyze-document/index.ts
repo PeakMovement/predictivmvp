@@ -1,6 +1,7 @@
 
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { getAIProvider } from "../_shared/ai-provider.ts";
+import { RateLimiter, RATE_LIMIT_CONFIGS } from "../_shared/rate-limiter.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -17,6 +18,39 @@ Deno.serve(async (req) => {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+    // ─── AUTH ────────────────────────────────────────────────────────────────
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader) {
+      return new Response(JSON.stringify({ error: "No authorization header" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const token = authHeader.replace("Bearer ", "");
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser(token);
+
+    if (userError || !user) {
+      return new Response(JSON.stringify({ error: "Invalid token" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // ─── RATE LIMITING ───────────────────────────────────────────────────────
+    const rateLimiter = new RateLimiter();
+    const rateLimitResult = await rateLimiter.checkRateLimit(
+      user.id,
+      RATE_LIMIT_CONFIGS.DOCUMENT_UPLOAD
+    );
+
+    if (!rateLimitResult.allowed) {
+      return rateLimiter.createRateLimitResponse(rateLimitResult);
+    }
 
     // ─── INPUT VALIDATION ─────────────────────────────────────────────────────
     let body: unknown;

@@ -19,6 +19,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { OnboardingFlow } from "@/components/onboarding/OnboardingFlow";
 import { OfflineBanner } from "@/components/OfflineBanner";
 import { AccessibilityWrapper } from "@/components/AccessibilityWrapper";
+import { SessionTimeoutWarning } from "@/components/SessionTimeoutWarning";
+import { useSessionTimeout } from "@/hooks/useSessionTimeout";
 
 const Dashboard = lazy(() => import("@/pages/Dashboard").then(m => ({ default: m.Dashboard })));
 const Training = lazy(() => import("@/pages/Training").then(m => ({ default: m.Training })));
@@ -62,6 +64,16 @@ const App = () => {
   const [activeTab, setActiveTab] = useState("dashboard");
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const [needsOnboarding, setNeedsOnboarding] = useState<boolean | null>(null);
+
+  const sessionTimeout = useSessionTimeout({
+    onWarning: () => {
+      console.log('[App] Session expiring soon');
+    },
+    onTimeout: () => {
+      console.log('[App] Session expired - logging out');
+      window.location.href = '/';
+    },
+  });
 
   const currentPath = window.location.pathname;
   const isDashboardRoute = currentPath === "/dashboard";
@@ -556,6 +568,13 @@ const App = () => {
           <Toaster />
           <Sonner />
           <OfflineBanner />
+          <SessionTimeoutWarning
+            open={sessionTimeout.showWarning}
+            timeRemaining={sessionTimeout.timeRemaining}
+            onExtendSession={sessionTimeout.extendSession}
+            onLogout={sessionTimeout.logout}
+            onDismiss={sessionTimeout.dismissWarning}
+          />
           <AccessibilityWrapper>
             <div className="relative overflow-hidden min-h-screen">
               <ThemeToggle />

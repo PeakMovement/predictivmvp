@@ -1,49 +1,32 @@
 
 
-# Fix Fatigue Index Showing 100% -- Remaining Broken Formulas
+# Auto-Close Symptom Sheet on "Find a Professional"
 
 ## Problem
 
-The last fix correctly updated the Fatigue Index formula in `RiskScoreCard.tsx` and the two backend edge functions, but the **same broken formula still exists in 3 other files**. Your Training page gauge and Your Plan page are still using the old calculation with uncapped monotony, which is why you're still seeing 100%.
+After logging a symptom with red-flag keywords or high severity (7+), a dialog appears asking "Would you like us to help you find a professional?" Clicking "Yes, find help" navigates to the Help tab but the Symptom Check-In sheet stays open, blocking the view.
 
-## Files Still Using the Broken Formula
+## Solution
 
-### 1. Training Page (`src/pages/Training.tsx`, line 223-228)
-This is the **Fatigue Index gauge** you see on the Training page. It uses the old formula:
-```text
-(strain / 200) * 50 + (monotony / 3) * 50  -- no monotony cap
-```
+Pass a close callback from the Sheet into the Form so the sheet closes automatically when the user clicks "Yes, find help."
 
-### 2. Your Plan Page (`src/pages/YourPlan.tsx`, line 601-604)
-The Your Plan page calculates its own fatigue index for the metrics summary and PDF export, using the same broken formula.
+## Changes
 
-### 3. Risk Drivers Library (`src/lib/riskDrivers.ts`, line 361-367)
-A shared utility function `calculateFatigueIndex()` used by the risk driver identification engine on the frontend -- also uses the old formula with no monotony cap.
+### 1. SymptomCheckInForm (`src/components/symptoms/SymptomCheckInForm.tsx`)
 
-## Fix (Same Pattern Applied to All 3)
+- Add an optional `onRequestClose` prop to the component interface
+- Call `onRequestClose()` inside `handleFindProfessional` right before dispatching the `navigate-tab` event
 
-Each location will be updated to:
-1. Cap monotony at 2.5
-2. Use strain denominator of 300 (matching actual data range)
-3. Use monotony denominator of 2.5 (matching the cap)
+### 2. SymptomCheckInSheet (`src/components/symptoms/SymptomCheckInSheet.tsx`)
 
-The corrected formula everywhere:
-```text
-cappedMonotony = min(monotony, 2.5)
-fatigueIndex = min(100, round((strain / 300) * 50 + (cappedMonotony / 2.5) * 50))
-```
+- Pass `onRequestClose={() => setOpen(false)}` to the `SymptomCheckInForm` component
 
-## Expected Result
-
-With your current data (strain ~266, monotony ~67 raw but capped to 2.5):
-- Old result: 100% (permanently maxed)
-- New result: ~94% (high but meaningful, will vary with actual training load changes)
+This is a minimal two-line change that cleanly closes the sheet before navigating to the Help tab, giving the user a seamless transition from symptom logging to finding a professional.
 
 ## Technical Details
 
-| File | Lines | Change |
-|------|-------|--------|
-| `src/pages/Training.tsx` | 223-228 | Cap monotony at 2.5, change denominators to 300 and 2.5 |
-| `src/pages/YourPlan.tsx` | 601-604 | Cap monotony at 2.5, change denominators to 300 and 2.5 |
-| `src/lib/riskDrivers.ts` | 361-367 | Cap monotony at 2.5, change denominators to 300 and 2.5 |
+| File | Change |
+|------|--------|
+| `src/components/symptoms/SymptomCheckInForm.tsx` | Add `onRequestClose?: () => void` prop, call it in `handleFindProfessional` |
+| `src/components/symptoms/SymptomCheckInSheet.tsx` | Pass `onRequestClose={() => setOpen(false)}` to `SymptomCheckInForm` |
 

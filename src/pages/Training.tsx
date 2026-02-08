@@ -28,6 +28,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { HealthDataRow, getHealthData } from "@/lib/healthDataStore";
 import { UnifiedTrendCard } from "@/components/trends/UnifiedTrendCard";
+import { supabase } from "@/integrations/supabase/client";
 import { useTrainingTrends } from "@/hooks/useTrainingTrends";
 import { useWearableSessions } from "@/hooks/useWearableSessions";
 import { SessionLogList } from "@/components/dashboard/SessionLogList";
@@ -35,6 +36,9 @@ import { useLayoutCustomization } from "@/hooks/useLayoutCustomization";
 import { CustomizeLayoutButton } from "@/components/layout/CustomizeLayoutButton";
 import { LayoutEditor } from "@/components/layout/LayoutEditor";
 import { LayoutBlock } from "@/components/layout/LayoutBlock";
+import { AccountabilityChallenges } from "@/components/training/AccountabilityChallenges";
+import { TrainingCalendar } from "@/components/training/TrainingCalendar";
+import { SessionComparison } from "@/components/training/SessionComparison";
 
 const generateSuggestions = (csvData: HealthDataRow[]) => {
   if (csvData.length === 0) return [];
@@ -197,6 +201,8 @@ export const Training = () => {
   const { trends, isLoading: trendsLoading, refresh, userId } = useTrainingTrends({ days: 7 });
   const { data: wearableData } = useWearableSessions(userId || undefined);
   const [suggestions, setSuggestions] = useState<ReturnType<typeof generateSuggestions>>([]);
+  const [comparisonOpen, setComparisonOpen] = useState(false);
+  const [comparisonSessions, setComparisonSessions] = useState<any[]>([]);
 
   // Layout customization
   const {
@@ -233,17 +239,61 @@ export const Training = () => {
     const newSuggestions = generateSuggestions(csvData);
     setSuggestions(newSuggestions);
   }, []);
-  
+
   // Listen for Ōura data refresh
   useEffect(() => {
     const handleDataRefreshed = () => {
       console.log("[Training] Ōura Ring data refreshed, reloading trends...");
       refresh();
     };
-    
+
     window.addEventListener("wearable_trends_refresh", handleDataRefreshed);
     return () => window.removeEventListener("wearable_trends_refresh", handleDataRefreshed);
   }, [refresh]);
+
+  const handleCompareRequested = async (session1: any, session2: any) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      // Fetch full session data for both sessions
+      const fetchSessionData = async (session: any) => {
+        const { data } = await supabase
+          .from("wearable_sessions")
+          .select("*")
+          .eq("user_id", user.id)
+          .eq("date", session.dateRaw || session.date)
+          .maybeSingle();
+
+        if (data) {
+          return {
+            ...data,
+            session_type: session.title,
+          };
+        }
+
+        // Fallback to session data from list
+        return {
+          id: Math.random().toString(),
+          date: session.dateRaw || session.date,
+          session_type: session.title,
+          duration_minutes: session.duration || 0,
+          calories_burned: session.calories || 0,
+          avg_heart_rate: 0,
+          training_load: session.load || 0,
+          perceived_exertion: 0,
+        };
+      };
+
+      const fullSession1 = await fetchSessionData(session1);
+      const fullSession2 = await fetchSessionData(session2);
+
+      setComparisonSessions([fullSession1, fullSession2]);
+      setComparisonOpen(true);
+    } catch (error) {
+      console.error("Error fetching session data for comparison:", error);
+    }
+  };
 
   return (
     <TooltipProvider>
@@ -297,7 +347,28 @@ export const Training = () => {
           {userId && (
             <>
               {/* Accountability Challenges */}
-              <div className="mb-6 md:mb-8">{/* your AccountabilityChallenges component here */}</div>
+              <LayoutBlock
+                blockId="accountabilityChallenges"
+                displayName="Accountability Challenges"
+                pageId="training"
+                size="wide"
+                visible={isSectionVisible('accountabilityChallenges')}
+                className="mb-6 md:mb-8"
+              >
+                <AccountabilityChallenges />
+              </LayoutBlock>
+
+              {/* Training Calendar */}
+              <LayoutBlock
+                blockId="trainingCalendar"
+                displayName="Training Calendar"
+                pageId="training"
+                size="wide"
+                visible={isSectionVisible('trainingCalendar')}
+                className="mb-6 md:mb-8"
+              >
+                <TrainingCalendar />
+              </LayoutBlock>
 
               {/* Session Logs and Gauges */}
               <LayoutBlock
@@ -309,7 +380,7 @@ export const Training = () => {
                 className="mb-6 md:mb-8"
               >
               <div className="w-full">
-                  <SessionLogList />
+                  <SessionLogList onCompareRequested={handleCompareRequested} />
                 </div>
                 <LayoutBlock
                   blockId="gauges"
@@ -368,6 +439,14 @@ export const Training = () => {
             </>
           )}
         </div>
+
+        {/* Session Comparison Modal */}
+        <SessionComparison
+          open={comparisonOpen}
+          onOpenChange={setComparisonOpen}
+          session1={comparisonSessions[0] || null}
+          session2={comparisonSessions[1] || null}
+        />
       </div>
     </TooltipProvider>
   );

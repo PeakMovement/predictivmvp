@@ -42,6 +42,8 @@ import { YvesChatSheet } from "@/components/YvesChatSheet";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
+import { OnboardingFlow } from "@/components/onboarding/OnboardingFlow";
+import { OfflineBanner } from "@/components/OfflineBanner";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -55,6 +57,7 @@ const queryClient = new QueryClient({
 const App = () => {
   const [activeTab, setActiveTab] = useState("dashboard");
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+  const [needsOnboarding, setNeedsOnboarding] = useState<boolean | null>(null);
 
   const currentPath = window.location.pathname;
   const isDashboardRoute = currentPath === "/dashboard";
@@ -110,6 +113,43 @@ const App = () => {
 
     return () => subscription.unsubscribe();
   }, []);
+
+  // Check onboarding status for authenticated users
+  useEffect(() => {
+    const checkOnboardingStatus = async () => {
+      if (!isAuthenticated) {
+        setNeedsOnboarding(null);
+        return;
+      }
+
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+
+        const { data } = await supabase
+          .from("user_profiles")
+          .select("onboarding_completed, onboarding_skipped")
+          .eq("user_id", user.id)
+          .maybeSingle();
+
+        const shouldShowOnboarding = !data?.onboarding_completed && !data?.onboarding_skipped;
+        setNeedsOnboarding(shouldShowOnboarding);
+      } catch (error) {
+        console.error("Error checking onboarding status:", error);
+        setNeedsOnboarding(false);
+      }
+    };
+
+    checkOnboardingStatus();
+  }, [isAuthenticated]);
+
+  const handleOnboardingComplete = () => {
+    setNeedsOnboarding(false);
+  };
+
+  const handleOnboardingSkip = () => {
+    setNeedsOnboarding(false);
+  };
 
   useEffect(() => {
     const handleNavigateInsights = () => setActiveTab("insights-tree");
@@ -312,7 +352,7 @@ const App = () => {
   if (!isAuthenticated) {
     const currentPath = window.location.pathname;
     const isRegisterRoute = currentPath === "/register";
-    
+
     return (
       <ThemeProvider defaultTheme="dark" storageKey="predictiv-theme">
         <QueryClientProvider client={queryClient}>
@@ -330,12 +370,42 @@ const App = () => {
     );
   }
 
+  // Show onboarding for new users
+  if (needsOnboarding === true) {
+    return (
+      <ThemeProvider defaultTheme="dark" storageKey="predictiv-theme">
+        <QueryClientProvider client={queryClient}>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
+            <OnboardingFlow
+              onComplete={handleOnboardingComplete}
+              onSkip={handleOnboardingSkip}
+            />
+          </TooltipProvider>
+        </QueryClientProvider>
+      </ThemeProvider>
+    );
+  }
+
+  // Show loading while checking onboarding status
+  if (needsOnboarding === null) {
+    return (
+      <ThemeProvider defaultTheme="dark" storageKey="predictiv-theme">
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="animate-glow-pulse text-primary text-xl">Loading...</div>
+        </div>
+      </ThemeProvider>
+    );
+  }
+
   return (
     <ThemeProvider defaultTheme="dark" storageKey="predictiv-theme">
       <QueryClientProvider client={queryClient}>
         <TooltipProvider>
           <Toaster />
           <Sonner />
+          <OfflineBanner />
           <div className="relative overflow-hidden min-h-screen">
             <ThemeToggle />
             <Tooltip>

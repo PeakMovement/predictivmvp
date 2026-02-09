@@ -1,10 +1,20 @@
 import { useState, useRef } from 'react';
-import { GripVertical, Eye, EyeOff, ChevronUp, ChevronDown, RotateCcw, X, Check, Sparkles, ChevronRight, ChevronDown as CollapseIcon, MonitorPlay } from 'lucide-react';
+import { GripVertical, Eye, EyeOff, ChevronUp, ChevronDown, RotateCcw, X, Check, Sparkles, ChevronRight, ChevronDown as CollapseIcon, MonitorPlay, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { cn } from '@/lib/utils';
 import { SectionConfig } from '@/hooks/useLayoutCustomization';
 
@@ -37,7 +47,13 @@ export function LayoutEditor({
 }: LayoutEditorProps) {
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
+  const [showResetDialog, setShowResetDialog] = useState(false);
   const dragNodeRef = useRef<HTMLDivElement | null>(null);
+
+  const handleResetConfirm = () => {
+    onReset();
+    setShowResetDialog(false);
+  };
 
   const handleDragStart = (e: React.DragEvent, index: number) => {
     setDraggedIndex(index);
@@ -271,13 +287,13 @@ export function LayoutEditor({
           <Button
             variant="outline"
             size="sm"
-            onClick={onReset}
+            onClick={() => setShowResetDialog(true)}
             className="text-muted-foreground hover:text-foreground"
           >
             <RotateCcw className="w-4 h-4 mr-2" />
             Reset to default
           </Button>
-          
+
           <div className="flex items-center gap-2">
             <Button variant="ghost" size="sm" onClick={onCancel}>
               Cancel
@@ -289,6 +305,37 @@ export function LayoutEditor({
           </div>
         </div>
       </CardContent>
+
+      {/* Reset Confirmation Dialog */}
+      <AlertDialog open={showResetDialog} onOpenChange={setShowResetDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-amber-500" />
+              Reset Layout to Default?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              This will reset your layout configuration to the default settings.
+              All your customizations for this page will be lost.
+              <div className="mt-3 p-3 bg-muted rounded-lg">
+                <p className="text-sm font-medium text-foreground mb-1">What will be reset:</p>
+                <ul className="text-sm space-y-1 text-muted-foreground">
+                  <li>• Section order and arrangement</li>
+                  <li>• Visibility settings</li>
+                  <li>• Collapse preferences</li>
+                </ul>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleResetConfirm} className="bg-amber-500 hover:bg-amber-600">
+              <RotateCcw className="h-4 w-4 mr-2" />
+              Reset to Default
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Card>
   );
 }

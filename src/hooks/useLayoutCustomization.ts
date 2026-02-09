@@ -15,9 +15,13 @@ export interface SectionConfig {
 
 export interface PageLayout {
   sections: SectionConfig[];
+  version?: number;
+  lastUpdated?: string;
 }
 
 export type PageId = 'dashboard' | 'health' | 'training' | 'baselines' | 'plan' | 'profile' | 'docs';
+
+const CURRENT_LAYOUT_VERSION = 2;
 
 // Default sections for each page
 const defaultLayouts: Record<PageId, SectionConfig[]> = {
@@ -95,16 +99,47 @@ function mergeWithDefaults(saved: SectionConfig[], pageId: PageId): SectionConfi
 }
 
 const LOCAL_STORAGE_KEY = 'layout_customization';
+const LOCAL_STORAGE_VERSION_KEY = 'layout_version';
 
 // Get layouts from localStorage (fallback for anonymous users)
 function getLocalLayouts(): Record<PageId, PageLayout> | null {
   try {
     const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
-    if (stored) {
-      return JSON.parse(stored);
+    const storedVersion = localStorage.getItem(LOCAL_STORAGE_VERSION_KEY);
+
+    if (!stored) {
+      return null;
     }
+
+    const parsed = JSON.parse(stored);
+
+    // Check if this is valid JSON object
+    if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) {
+      console.warn('Invalid layout data in localStorage, resetting');
+      localStorage.removeItem(LOCAL_STORAGE_KEY);
+      localStorage.removeItem(LOCAL_STORAGE_VERSION_KEY);
+      return null;
+    }
+
+    // Check version compatibility
+    const version = storedVersion ? parseInt(storedVersion, 10) : 1;
+    if (version < CURRENT_LAYOUT_VERSION) {
+      console.log(`Migrating layout from version ${version} to ${CURRENT_LAYOUT_VERSION}`);
+      const migrated = migrateLayout(parsed, version);
+      saveLocalLayouts(migrated);
+      return migrated;
+    }
+
+    return parsed;
   } catch (error) {
     console.error('Error loading layout from localStorage:', error);
+    // Clear corrupted data
+    try {
+      localStorage.removeItem(LOCAL_STORAGE_KEY);
+      localStorage.removeItem(LOCAL_STORAGE_VERSION_KEY);
+    } catch {
+      // Ignore cleanup errors
+    }
   }
   return null;
 }
@@ -112,10 +147,57 @@ function getLocalLayouts(): Record<PageId, PageLayout> | null {
 // Save layouts to localStorage
 function saveLocalLayouts(layouts: Record<PageId, PageLayout>) {
   try {
-    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(layouts));
+    // Add version and timestamp to each layout
+    const versionedLayouts: Record<PageId, PageLayout> = {};
+    for (const [key, layout] of Object.entries(layouts)) {
+      versionedLayouts[key as PageId] = {
+        ...layout,
+        version: CURRENT_LAYOUT_VERSION,
+        lastUpdated: new Date().toISOString(),
+      };
+    }
+
+    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(versionedLayouts));
+    localStorage.setItem(LOCAL_STORAGE_VERSION_KEY, CURRENT_LAYOUT_VERSION.toString());
   } catch (error) {
     console.error('Error saving layout to localStorage:', error);
+    // Check if it's a quota exceeded error
+    if (error instanceof DOMException && error.name === 'QuotaExceededError') {
+      console.error('localStorage quota exceeded, clearing old data');
+      try {
+        localStorage.removeItem(LOCAL_STORAGE_KEY);
+        localStorage.removeItem(LOCAL_STORAGE_VERSION_KEY);
+      } catch {
+        // Ignore cleanup errors
+      }
+    }
   }
+}
+
+// Migrate layout from old version to new version
+function migrateLayout(
+  layouts: Record<PageId, PageLayout>,
+  fromVersion: number
+): Record<PageId, PageLayout> {
+  let migrated = { ...layouts };
+
+  // Migration from v1 to v2: Add version and lastUpdated fields
+  if (fromVersion < 2) {
+    console.log('Migrating from v1 to v2: Adding metadata');
+    migrated = Object.entries(migrated).reduce((acc, [key, layout]) => {
+      acc[key as PageId] = {
+        ...layout,
+        version: 2,
+        lastUpdated: new Date().toISOString(),
+      };
+      return acc;
+    }, {} as Record<PageId, PageLayout>);
+  }
+
+  // Future migrations can be added here
+  // if (fromVersion < 3) { ... }
+
+  return migrated;
 }
 
 export function useLayoutCustomization(pageId: PageId) {
@@ -264,10 +346,17 @@ export function useLayoutCustomization(pageId: PageId) {
   // Save the edited layout
   const saveLayout = useCallback(async (newSections: SectionConfig[]) => {
     const currentLayouts = (userId && remoteLayouts) ? remoteLayouts : (getLocalLayouts() || {} as Record<PageId, PageLayout>);
-    const updatedLayouts = { ...currentLayouts, [pageId]: { sections: newSections } };
-    
+    const updatedLayouts = {
+      ...currentLayouts,
+      [pageId]: {
+        sections: newSections,
+        version: CURRENT_LAYOUT_VERSION,
+        lastUpdated: new Date().toISOString(),
+      }
+    };
+
     await persistLayouts(updatedLayouts);
-    
+
     setIsEditing(false);
     setEditingSections([]);
     setPreviewMode(false);
@@ -278,12 +367,43 @@ export function useLayoutCustomization(pageId: PageId) {
   // Reset to default layout
   const resetToDefault = useCallback(async () => {
     const currentLayouts = (userId && remoteLayouts) ? remoteLayouts : (getLocalLayouts() || {} as Record<PageId, PageLayout>);
-    const updatedLayouts = { ...currentLayouts, [pageId]: { sections: [...defaultLayouts[pageId]] } };
-    
+    const updatedLayouts = {
+      ...currentLayouts,
+      [pageId]: {
+        sections: [...defaultLayouts[pageId]],
+        version: CURRENT_LAYOUT_VERSION,
+        lastUpdated: new Date().toISOString(),
+      }
+    };
+
     await persistLayouts(updatedLayouts);
     setEditingSections([...defaultLayouts[pageId]]);
     window.dispatchEvent(new Event('layout_updated'));
   }, [pageId, userId, remoteLayouts, persistLayouts]);
+
+  // Clear layout cache (for corrupted data recovery)
+  const clearLayoutCache = useCallback(async () => {
+    try {
+      // Clear localStorage
+      localStorage.removeItem(LOCAL_STORAGE_KEY);
+      localStorage.removeItem(LOCAL_STORAGE_VERSION_KEY);
+
+      // Clear remote layouts if authenticated
+      if (userId) {
+        await supabase
+          .from('profiles')
+          .update({ layout_preferences: null })
+          .eq('id', userId);
+        setRemoteLayouts(null);
+      }
+
+      // Reset to defaults
+      setEditingSections([...defaultLayouts[pageId]]);
+      window.dispatchEvent(new Event('layout_updated'));
+    } catch (error) {
+      console.error('Error clearing layout cache:', error);
+    }
+  }, [pageId, userId]);
 
   // Toggle section visibility
   const toggleSectionVisibility = useCallback((sectionId: string) => {
@@ -368,6 +488,7 @@ export function useLayoutCustomization(pageId: PageId) {
     closeEditor,
     saveLayout,
     resetToDefault,
+    clearLayoutCache,
     toggleSectionVisibility,
     toggleCollapseByDefault,
     togglePreviewMode,

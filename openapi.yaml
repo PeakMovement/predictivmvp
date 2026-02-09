@@ -1,0 +1,708 @@
+openapi: 3.0.3
+info:
+  title: Predictiv Health API
+  description: |
+    API for Predictiv Health platform providing AI-powered health insights,
+    wearable device integration, and personalized health recommendations.
+  version: 1.0.0
+  contact:
+    name: Predictiv Health API Support
+    email: support@predictivhealth.com
+  license:
+    name: Proprietary
+    url: https://predictivhealth.com/license
+
+servers:
+  - url: https://your-project.supabase.co/functions/v1
+    description: Production server
+  - url: http://localhost:54321/functions/v1
+    description: Development server
+
+security:
+  - bearerAuth: []
+  - apiKey: []
+
+tags:
+  - name: AI & Intelligence
+    description: AI-powered health analysis and recommendations
+  - name: Wearable Integration
+    description: Integration with wearable devices (Oura, Polar, Fitbit)
+  - name: Health Analysis
+    description: Health metrics analysis and insights
+  - name: User Management
+    description: User profile and health data management
+  - name: Notifications
+    description: Email and SMS notifications
+  - name: System
+    description: System health and diagnostics
+
+paths:
+  /yves-chat:
+    post:
+      tags:
+        - AI & Intelligence
+      summary: Chat with Yves AI assistant
+      description: Send a message to the Yves AI health assistant and receive personalized responses
+      operationId: yvesChat
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - message
+              properties:
+                message:
+                  type: string
+                  description: User's question or message
+                  example: "How's my recovery today?"
+                thread_id:
+                  type: string
+                  description: Optional conversation thread ID
+                  example: "thread_abc123"
+                include_context:
+                  type: boolean
+                  description: Include health data context
+                  default: true
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/YvesChatResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+
+  /generate-daily-briefing:
+    post:
+      tags:
+        - AI & Intelligence
+      summary: Generate daily health briefing
+      description: Generate personalized daily health briefing with insights and recommendations
+      operationId: generateDailyBriefing
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                force_regenerate:
+                  type: boolean
+                  description: Skip cache and generate new briefing
+                  default: false
+                focus_mode:
+                  type: string
+                  enum: [recovery, performance, pain_management, balance, custom]
+                  description: Focus mode for tailored content
+                  example: "recovery"
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DailyBriefingResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /fetch-oura-data:
+    post:
+      tags:
+        - Wearable Integration
+      summary: Fetch Oura Ring data
+      description: Fetch latest health data from connected Oura Ring
+      operationId: fetchOuraData
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                data_types:
+                  type: array
+                  items:
+                    type: string
+                    enum: [sleep, readiness, activity, heart_rate, workout]
+                  description: Types of data to fetch
+                  example: ["sleep", "readiness", "activity"]
+                start_date:
+                  type: string
+                  format: date
+                  description: Start date for data range
+                  example: "2026-02-01"
+                end_date:
+                  type: string
+                  format: date
+                  description: End date for data range
+                  example: "2026-02-08"
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OuraDataResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+
+  /oura-auth:
+    get:
+      tags:
+        - Wearable Integration
+      summary: Complete Oura OAuth flow
+      description: Handle Oura OAuth callback and store access tokens
+      operationId: ouraAuth
+      parameters:
+        - name: code
+          in: query
+          required: true
+          schema:
+            type: string
+          description: OAuth authorization code
+        - name: state
+          in: query
+          required: true
+          schema:
+            type: string
+          description: State parameter for CSRF protection
+      responses:
+        '200':
+          description: Successful authentication
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Oura connected successfully"
+                  expires_at:
+                    type: string
+                    format: date-time
+                    example: "2026-08-08T14:30:00Z"
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+
+  /calculate-baseline:
+    post:
+      tags:
+        - Health Analysis
+      summary: Calculate baseline metrics
+      description: Calculate user's baseline for specified health metric
+      operationId: calculateBaseline
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - metric
+              properties:
+                metric:
+                  type: string
+                  enum: [hrv, rhr, sleep_score, readiness, strain]
+                  description: Metric to calculate baseline for
+                  example: "hrv"
+                days:
+                  type: integer
+                  minimum: 7
+                  maximum: 90
+                  default: 30
+                  description: Number of days to analyze
+                  example: 30
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BaselineResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /detect-health-anomalies:
+    post:
+      tags:
+        - Health Analysis
+      summary: Detect health anomalies
+      description: Detect anomalies in health metrics using statistical analysis
+      operationId: detectHealthAnomalies
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                days:
+                  type: integer
+                  minimum: 1
+                  maximum: 30
+                  default: 7
+                  description: Days to analyze
+                  example: 7
+                sensitivity:
+                  type: string
+                  enum: [low, medium, high]
+                  default: medium
+                  description: Anomaly detection sensitivity
+                  example: "medium"
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnomaliesResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /health-check:
+    get:
+      tags:
+        - System
+      summary: System health check
+      description: Check overall system health and service status
+      operationId: healthCheck
+      security: []  # Public endpoint
+      responses:
+        '200':
+          description: System is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthCheckResponse'
+        '503':
+          description: System is unhealthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthCheckResponse'
+
+  /wearable-diagnostics:
+    get:
+      tags:
+        - System
+      summary: Wearable diagnostics
+      description: Get diagnostic information about wearable integrations
+      operationId: wearableDiagnostics
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WearableDiagnosticsResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Supabase user JWT token
+    apiKey:
+      type: apiKey
+      in: header
+      name: apikey
+      description: Supabase anonymous key
+
+  schemas:
+    YvesChatResponse:
+      type: object
+      properties:
+        response:
+          type: string
+          description: AI-generated response
+          example: "Based on your recent data, your recovery is excellent..."
+        thread_id:
+          type: string
+          description: Conversation thread ID
+          example: "thread_abc123"
+        context_used:
+          type: object
+          description: Health context used in response
+          properties:
+            sleep_score:
+              type: number
+              example: 85
+            hrv:
+              type: number
+              example: 65
+            readiness:
+              type: number
+              example: 82
+        suggestions:
+          type: array
+          items:
+            type: string
+          description: Actionable suggestions
+          example: ["Consider a moderate intensity workout", "Aim for 7-8 hours of sleep"]
+        created_at:
+          type: string
+          format: date-time
+          example: "2026-02-08T14:30:00Z"
+
+    DailyBriefingResponse:
+      type: object
+      properties:
+        briefing:
+          type: object
+          properties:
+            id:
+              type: string
+              example: "brief_123"
+            content:
+              type: string
+              example: "Your sleep quality was excellent last night..."
+            key_metrics:
+              type: object
+              properties:
+                sleep_score:
+                  type: number
+                  example: 85
+                hrv:
+                  type: number
+                  example: 65
+                strain:
+                  type: number
+                  example: 8.5
+                recovery_score:
+                  type: number
+                  example: 82
+            health_trends:
+              type: object
+              properties:
+                improving:
+                  type: array
+                  items:
+                    type: string
+                  example: ["sleep_quality", "hrv"]
+                declining:
+                  type: array
+                  items:
+                    type: string
+                  example: []
+                stable:
+                  type: array
+                  items:
+                    type: string
+                  example: ["activity_level"]
+            recommendations:
+              type: array
+              items:
+                type: string
+              example: ["Consider a moderate intensity workout", "Stay hydrated"]
+            alerts:
+              type: array
+              items:
+                type: object
+              example: []
+        cached:
+          type: boolean
+          example: false
+        generated_at:
+          type: string
+          format: date-time
+          example: "2026-02-08T06:00:00Z"
+
+    OuraDataResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        records_synced:
+          type: object
+          properties:
+            sleep:
+              type: integer
+              example: 7
+            readiness:
+              type: integer
+              example: 7
+            activity:
+              type: integer
+              example: 7
+        last_sync:
+          type: string
+          format: date-time
+          example: "2026-02-08T14:30:00Z"
+
+    BaselineResponse:
+      type: object
+      properties:
+        metric:
+          type: string
+          example: "hrv"
+        baseline:
+          type: number
+          format: double
+          example: 62.5
+        std_deviation:
+          type: number
+          format: double
+          example: 8.3
+        confidence:
+          type: number
+          format: double
+          minimum: 0
+          maximum: 1
+          example: 0.92
+        data_points:
+          type: integer
+          example: 28
+        calculated_at:
+          type: string
+          format: date-time
+          example: "2026-02-08T14:30:00Z"
+
+    AnomaliesResponse:
+      type: object
+      properties:
+        anomalies:
+          type: array
+          items:
+            type: object
+            properties:
+              date:
+                type: string
+                format: date
+                example: "2026-02-07"
+              metric:
+                type: string
+                example: "hrv"
+              value:
+                type: number
+                example: 45
+              baseline:
+                type: number
+                example: 62.5
+              z_score:
+                type: number
+                example: -2.1
+              severity:
+                type: string
+                enum: [low, moderate, high]
+                example: "high"
+              description:
+                type: string
+                example: "HRV dropped significantly below baseline"
+        risk_level:
+          type: string
+          enum: [low, moderate, high]
+          example: "moderate"
+        recommendations:
+          type: array
+          items:
+            type: string
+          example: ["Consider taking a rest day", "Focus on sleep quality"]
+
+    HealthCheckResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [healthy, degraded, unhealthy]
+          example: "healthy"
+        version:
+          type: string
+          example: "1.0.0"
+        timestamp:
+          type: string
+          format: date-time
+          example: "2026-02-08T14:30:00Z"
+        services:
+          type: object
+          properties:
+            database:
+              type: string
+              enum: [healthy, unhealthy]
+              example: "healthy"
+            openai:
+              type: string
+              enum: [healthy, unhealthy]
+              example: "healthy"
+            oura_api:
+              type: string
+              enum: [healthy, unhealthy]
+              example: "healthy"
+            polar_api:
+              type: string
+              enum: [healthy, unhealthy]
+              example: "healthy"
+
+    WearableDiagnosticsResponse:
+      type: object
+      properties:
+        user_id:
+          type: string
+          example: "user_123"
+        connections:
+          type: object
+          properties:
+            oura:
+              type: object
+              properties:
+                connected:
+                  type: boolean
+                  example: true
+                last_sync:
+                  type: string
+                  format: date-time
+                  example: "2026-02-08T06:00:00Z"
+                token_expires:
+                  type: string
+                  format: date-time
+                  example: "2026-08-08T00:00:00Z"
+                status:
+                  type: string
+                  enum: [healthy, warning, error, not_connected]
+                  example: "healthy"
+        recent_syncs:
+          type: array
+          items:
+            type: object
+            properties:
+              source:
+                type: string
+                example: "oura"
+              type:
+                type: string
+                example: "sleep"
+              timestamp:
+                type: string
+                format: date-time
+                example: "2026-02-08T06:00:00Z"
+              records:
+                type: integer
+                example: 1
+              status:
+                type: string
+                enum: [success, error]
+                example: "success"
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Error type
+          example: "Invalid input"
+        message:
+          type: string
+          description: Human-readable error message
+          example: "The provided data is invalid"
+        details:
+          type: object
+          description: Additional error context
+          example: { "field": "message", "reason": "required" }
+
+  responses:
+    BadRequest:
+      description: Bad request - invalid input
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: "Bad Request"
+            message: "Invalid request body"
+            details: { "field": "message", "reason": "required" }
+
+    Unauthorized:
+      description: Unauthorized - missing or invalid authentication
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: "Unauthorized"
+            message: "Authentication required"
+
+    Forbidden:
+      description: Forbidden - insufficient permissions
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: "Forbidden"
+            message: "Oura token expired - reauthorization required"
+
+    TooManyRequests:
+      description: Too many requests - rate limit exceeded
+      headers:
+        X-RateLimit-Limit:
+          schema:
+            type: integer
+          description: Request limit per time window
+        X-RateLimit-Remaining:
+          schema:
+            type: integer
+          description: Remaining requests in current window
+        X-RateLimit-Reset:
+          schema:
+            type: integer
+          description: Unix timestamp when limit resets
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/Error'
+              - type: object
+                properties:
+                  retry_after:
+                    type: integer
+                    description: Seconds to wait before retrying
+          example:
+            error: "Rate limit exceeded"
+            message: "Too many requests. Please try again later."
+            retry_after: 60
+
+    InternalServerError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: "Internal Server Error"
+            message: "An unexpected error occurred"
+
+    ServiceUnavailable:
+      description: Service unavailable - external API failure
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: "Service Unavailable"
+            message: "External API is currently unavailable"

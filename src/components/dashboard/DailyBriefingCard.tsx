@@ -1,3 +1,24 @@
+/**
+ * DailyBriefingCard Component
+ *
+ * Displays the AI-generated daily health briefing from Yves with personalized insights,
+ * health trends, recommendations, and context-aware information based on the user's focus mode.
+ *
+ * @component
+ * @example
+ * ```tsx
+ * <DailyBriefingCard
+ *   briefing={briefingData}
+ *   content="Your sleep quality was excellent..."
+ *   createdAt="2026-02-08T06:00:00Z"
+ *   isLoading={false}
+ *   isGenerating={false}
+ *   cached={false}
+ *   onRefresh={handleRefresh}
+ *   focusMode="recovery"
+ * />
+ * ```
+ */
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -19,14 +40,25 @@ import { useRelevantDocuments } from "@/hooks/useRelevantDocuments";
 import { InfoTooltip } from "@/components/ui/info-tooltip";
 import type { FocusMode } from "@/hooks/useDashboardFocusMode";
 
+/**
+ * Props for the DailyBriefingCard component
+ */
 interface DailyBriefingCardProps {
+  /** The complete briefing data object from Yves, or null if not yet loaded */
   briefing: YvesDailyBriefing | null;
+  /** The main briefing content text, or null if not available */
   content: string | null;
+  /** ISO timestamp of when the briefing was created */
   createdAt: string | null;
+  /** Whether the initial briefing data is being loaded */
   isLoading: boolean;
+  /** Whether a new briefing is currently being generated */
   isGenerating: boolean;
+  /** Whether this briefing was served from cache */
   cached: boolean;
+  /** Callback function to refresh/regenerate the briefing */
   onRefresh: () => void;
+  /** Optional focus mode that tailors the briefing content (recovery, performance, pain_management, balance, custom) */
   focusMode?: FocusMode;
 }
 

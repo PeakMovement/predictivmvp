@@ -1,16 +1,54 @@
+/**
+ * RiskScoreCard Component
+ *
+ * Calculates and displays the user's injury risk score based on training load metrics.
+ * Uses 7-day averages of ACWR (Acute:Chronic Workload Ratio), strain, and monotony
+ * to determine risk level (low, moderate, high).
+ *
+ * @component
+ * @example
+ * ```tsx
+ * <RiskScoreCard />
+ * ```
+ *
+ * Risk Calculation:
+ * - ACWR > 1.5: +40 points (high acute load spike)
+ * - ACWR > 1.3: +25 points (moderate spike)
+ * - ACWR > 1.0: +10 points (slight increase)
+ * - Strain > 150: +30 points (high training stress)
+ * - Strain > 100: +15 points (moderate stress)
+ * - Fatigue Index > 70: +30 points (high fatigue)
+ * - Fatigue Index > 50: +15 points (moderate fatigue)
+ *
+ * Risk Levels:
+ * - High: Score > 60
+ * - Moderate: Score 30-60
+ * - Low: Score < 30
+ */
 import { AlertTriangle, Shield, ShieldCheck, ShieldAlert } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useMemo, useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
+/**
+ * Recovery trend data structure from the database
+ */
 interface RecoveryTrend {
+  /** Acute:Chronic Workload Ratio - training load balance indicator */
   acwr: number | null;
+  /** Training strain score (0-300 typical range) */
   strain: number | null;
+  /** Training monotony score (capped at 2.5) */
   monotony: number | null;
+  /** Overall recovery score (0-100) */
   recovery_score: number | null;
+  /** Date of the trend data point */
   period_date: string;
 }
 
+/**
+ * RiskScoreCard Component - Displays injury risk assessment
+ */
 export const RiskScoreCard = () => {
   const [trends, setTrends] = useState<RecoveryTrend[]>([]);
   const [isLoading, setIsLoading] = useState(true);

@@ -50,6 +50,7 @@ const AdminDashboard = lazy(() => import("@/pages/AdminDashboard").then(m => ({ 
 const PersonalCanvas = lazy(() => import("@/pages/PersonalCanvas"));
 const GoogleCalendarCallback = lazy(() => import("@/pages/GoogleCalendarCallback").then(m => ({ default: m.GoogleCalendarCallback })));
 const AlertHistory = lazy(() => import("@/pages/AlertHistory"));
+const MetricsDashboard = lazy(() => import("@/pages/MetricsDashboard"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -324,6 +325,12 @@ const App = () => {
         return (
           <Suspense fallback={<PageLoadingFallback />}>
             <PersonalCanvas />
+          </Suspense>
+        );
+      case "metrics-dashboard":
+        return (
+          <Suspense fallback={<PageLoadingFallback />}>
+            <MetricsDashboard />
           </Suspense>
         );
       default:

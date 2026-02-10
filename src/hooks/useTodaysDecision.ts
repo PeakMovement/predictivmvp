@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { identifyRiskDrivers, RiskDriverResult, RiskMetrics, UserProfile, generateCorrectiveAction, getLocalDateKey } from "@/lib/riskDrivers";
+import { identifyRiskDrivers, RiskDriverResult, RiskMetrics, UserProfile, generateCorrectiveAction, getLocalDateKey, getDateRotationIndex } from "@/lib/riskDrivers";
 
 // Cache version for invalidating old cache entries on structure changes
 const CACHE_VERSION = 1;
@@ -19,6 +19,7 @@ export interface TodaysDecision {
   contextSummary: string;
   riskDrivers?: RiskDriverResult;
   generatedAt?: string;
+  rotationSeed: number;
 }
 
 interface CachedDecision extends TodaysDecision {
@@ -88,6 +89,10 @@ export function useTodaysDecision() {
   const [lastFetchDate, setLastFetchDate] = useState<string | null>(null);
 
   const fetchDecisionContext = async (forceRefresh = false) => {
+    // On force refresh, use a random rotation seed; otherwise use date-based
+    const rotationSeed = forceRefresh
+      ? Math.floor(Math.random() * 1000)
+      : getDateRotationIndex(3);
     try {
       // Get user first - needed for user-scoped caching
       const { data: { user } } = await supabase.auth.getUser();
@@ -264,7 +269,8 @@ export function useTodaysDecision() {
           riskDrivers.secondary,
           riskDrivers.riskLevel,
           userProfileData,
-          symptomsForMatching
+          symptomsForMatching,
+          rotationSeed % 3
         );
         
         // Update riskDrivers with personalized action
@@ -281,7 +287,8 @@ export function useTodaysDecision() {
           sleepQuality,
           activityLevel: profile?.activity_level,
           riskDrivers,
-          userProfile: userProfileData
+          userProfile: userProfileData,
+          rotationSeed
         });
 
         if (generatedDecision) {
@@ -329,10 +336,11 @@ interface DecisionContext {
   activityLevel: string | null;
   riskDrivers?: RiskDriverResult;
   userProfile?: UserProfile;
+  rotationSeed: number;
 }
 
 function generateDecision(context: DecisionContext): TodaysDecision | null {
-  const { readinessScore, sleepScore, avgReadiness, primaryGoal, stressLevel, sleepQuality, riskDrivers } = context;
+  const { readinessScore, sleepScore, avgReadiness, primaryGoal, stressLevel, sleepQuality, riskDrivers, rotationSeed } = context;
 
   // Need at least some data to generate a decision
   if (readinessScore === null && sleepScore === null && (!riskDrivers || riskDrivers.riskLevel === 'low')) {
@@ -381,6 +389,7 @@ function generateDecision(context: DecisionContext): TodaysDecision | null {
       title: "Training intensity today",
       contextSummary: buildContextSummary(context),
       riskDrivers: riskDrivers,
+      rotationSeed,
       options: [
         {
           label: "Light movement or active recovery",
@@ -408,6 +417,7 @@ function generateDecision(context: DecisionContext): TodaysDecision | null {
       title: "Session approach today",
       contextSummary: buildContextSummary(context),
       riskDrivers: riskDrivers,
+      rotationSeed,
       options: [
         {
           label: "Moderate effort with good form",
@@ -435,6 +445,7 @@ function generateDecision(context: DecisionContext): TodaysDecision | null {
       title: "Making the most of today",
       contextSummary: buildContextSummary(context),
       riskDrivers: riskDrivers,
+      rotationSeed,
       options: [
         {
           label: "Productive training session",

@@ -113,7 +113,7 @@ export function useProviders() {
 
       setState(prev => ({
         ...prev,
-        providers: data || [],
+        providers: (data || []) as Provider[],
         isLoading: false,
         error: null,
       }));
@@ -137,7 +137,7 @@ export function useProviders() {
 
       if (error) throw error;
 
-      setState(prev => ({ ...prev, selectedProvider: data }));
+      setState(prev => ({ ...prev, selectedProvider: data as Provider }));
       return data;
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to fetch provider';

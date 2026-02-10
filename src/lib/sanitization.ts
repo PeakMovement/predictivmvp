@@ -18,7 +18,7 @@ export const sanitizeHTML = (
     KEEP_CONTENT?: boolean;
   }
 ): string => {
-  const config: DOMPurify.Config = {
+  const config: Record<string, unknown> = {
     ALLOWED_TAGS: options?.ALLOWED_TAGS || [
       'b', 'i', 'em', 'strong', 'u', 'p', 'br',
       'ul', 'ol', 'li', 'a', 'span', 'div',
@@ -34,7 +34,7 @@ export const sanitizeHTML = (
     SAFE_FOR_TEMPLATES: true,
   };
 
-  return DOMPurify.sanitize(dirty, config);
+  return DOMPurify.sanitize(dirty, config) as string;
 };
 
 /**

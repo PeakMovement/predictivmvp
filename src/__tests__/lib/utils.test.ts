@@ -52,7 +52,7 @@ describe('cn utility function', () => {
   it('should handle complex nested conditions', () => {
     const isActive = true;
     const isDisabled = false;
-    const variant = 'primary';
+    const variant: string = 'primary';
 
     const result = cn(
       'base',

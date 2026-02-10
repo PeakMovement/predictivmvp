@@ -51,7 +51,7 @@ export default function MetricsDashboard() {
   const { toast } = useToast();
 
   const { metrics, isLoading: metricsLoading } = useWearableMetrics();
-  const { sessions, isLoading: sessionsLoading } = useWearableSessions();
+  const { data: latestSession, isLoading: sessionsLoading } = useWearableSessions(undefined);
 
   const isLoading = metricsLoading || sessionsLoading;
 

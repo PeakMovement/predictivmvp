@@ -113,7 +113,7 @@ export function VoiceInput({ onTranscript, disabled }: VoiceInputProps) {
     <div className="relative">
       <Button
         type="button"
-        variant={isRecording ? "destructive" : "outline"}
+        variant={isRecording ? "default" : "outline"}
         size="icon"
         onClick={toggleRecording}
         disabled={disabled}

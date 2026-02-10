@@ -1,45 +1,51 @@
 
-# Fix: Monotony Alert Firing Incorrectly at 0% Above Normal
 
-## The Problem
+# Fix: Refresh Button Not Generating New Content
 
-Two related bugs are causing the same monotony alert to appear every day with "0% above normal levels":
+## Root Cause
 
-1. **Monotony is capped at 2.5** by the trend calculation engine (by design, to prevent runaway values). The alert threshold for "critical" monotony is also 2.5. The check uses `>=` (greater than or equal), so when monotony equals its own cap, the alert always fires -- even though being at the cap does not necessarily mean the user has a real problem.
+There are two bugs working together to prevent refresh from producing new content:
 
-2. **The percentage message shows 0%** because `(2.5 / 2.5 - 1) * 100 = 0`. So the user sees "Your monotony is 0% above normal levels," which is confusing and undermines trust.
+### Bug 1: useEffect race condition (Frontend)
+When `refresh()` is called, it invokes `fetchIntelligence(true)` (force refresh). However, `fetchIntelligence` is a `useCallback` dependency of the `useEffect` on line 161. React re-runs that effect, which calls `fetchIntelligence(false)` -- overwriting the fresh response with the cached one. The edge function logs confirm this: they show `force_refresh: false` even after tapping refresh.
 
-3. **It never changes** because the capped monotony value is essentially static -- it sits at 2.5 most days, so the alert re-fires every 24 hours after cooldown expires.
+### Bug 2: Silent-response upsert missing `focus_mode` (Backend)
+The silent/silence-response upsert at line 935 of the edge function writes to `daily_briefings` without `focus_mode`. The cache lookup filters by `focus_mode`, so these rows are invisible to the cache check. This means on every non-forced load, a new row is generated but returns identical content because the underlying wearable data hasn't changed between clicks.
 
-## The Fix
+## Changes
 
-### 1. Change the monotony threshold logic (`src/hooks/useRiskAlertTrigger.ts`)
+### 1. `src/hooks/useYvesIntelligence.ts` -- Fix the race condition
 
-- Change the monotony critical threshold from `2.5` to **strictly greater than** the cap, or more practically: **only alert when monotony is genuinely elevated above a meaningful threshold**.
-- Since monotony is capped at 2.5, alerting at `>= 2.5` is pointless. Change the condition to use the `high` threshold (2.0) with a **strictly greater than** check, and only fire when the value meaningfully exceeds it.
-- Updated thresholds:
-  - `monotony.high`: 1.8 (warning-level, not used for popup alerts)
-  - `monotony.critical`: 2.2 (must be **strictly exceeded**, i.e., `> 2.2`)
-- This means capped-at-2.5 values will still trigger, but only when monotony is genuinely high (above 2.2), and the percentage will be meaningful (e.g., "14% above normal").
+- Add a `ref` to track whether a manual refresh is in progress
+- When `isRefreshing` ref is true, skip the useEffect's automatic fetch
+- Clear the ref after the manual refresh completes
+- This ensures clicking refresh actually sends `force_refresh: true` to the edge function without being overridden
 
-### 2. Require meaningful percentage above threshold
+### 2. `supabase/functions/generate-yves-intelligence/index.ts` -- Fix silent upsert
 
-- Add a guard: if `percentAboveThreshold` is 0 or negative for any metric, skip the alert. A 0% deviation means the value is at baseline, not above it.
-- This prevents confusing "0% above normal" messages for all metric types, not just monotony.
+- Add `focus_mode: focusMode` to the silent-response upsert at line 935 so it matches the cache key used by the lookup query
+- This prevents orphaned rows that bypass cache and cause unnecessary regeneration
 
-### 3. Use strict greater-than for all threshold checks
+## Technical Details
 
-- Change all `>=` comparisons to `>` for critical thresholds. Being exactly at the threshold boundary should not trigger a critical alert.
+### Frontend fix (useYvesIntelligence.ts)
 
-## Files to Change
+```text
+Before:
+  refresh() -> fetchIntelligence(true) -> edge function called
+  useEffect triggers -> fetchIntelligence(false) -> cache returned, overwrites state
 
-| File | Change |
-|------|--------|
-| `src/hooks/useRiskAlertTrigger.ts` | Lower monotony critical to 2.2, change `>=` to `>` for all threshold checks, skip alerts where percentAboveThreshold is 0 or less |
+After:
+  refresh() -> sets isRefreshing ref -> fetchIntelligence(true) -> edge function called -> clears ref
+  useEffect triggers -> sees isRefreshing ref -> skips fetch
+```
 
-## What This Means for You
+### Backend fix (generate-yves-intelligence/index.ts)
 
-- You will stop seeing the daily "Training Monotony Alert" with "0% above normal"
-- Alerts will only appear when metrics are meaningfully above their thresholds
-- The snooze and cooldown system continues to work as before
-- No changes to the Today's Best Decision card or Daily Briefing -- those use separate logic
+Add `focus_mode: focusMode` to the silent-response upsert block so all upserts use a consistent key structure.
+
+## What This Means For You
+
+- Tapping the refresh button on the Daily Briefing will now actually call the AI to generate fresh content
+- The recommendations card will also update with new suggestions on refresh
+- Content will genuinely change each time you refresh (the topic variety engine is already in place -- it just wasn't being reached)

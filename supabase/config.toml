@@ -143,3 +143,6 @@ verify_jwt = true
 
 [functions.garmin-auth-initiate]
 verify_jwt = false
+
+[functions.garmin-auth]
+verify_jwt = false

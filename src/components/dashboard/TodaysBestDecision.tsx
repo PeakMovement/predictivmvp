@@ -18,7 +18,6 @@ import {
 import { cn } from "@/lib/utils";
 import { useTodaysDecision } from "@/hooks/useTodaysDecision";
 import { toast } from "sonner";
-import { getDateRotationIndex } from "@/lib/riskDrivers";
 import jsPDF from "jspdf";
 
 interface TodaysBestDecisionProps {
@@ -250,7 +249,7 @@ export function TodaysBestDecision({ className }: TodaysBestDecisionProps) {
     const variations = OBSERVATION_VARIATIONS[driver];
     
     if (variations && variations.length > 0) {
-      const index = getDateRotationIndex(variations.length);
+      const index = (decision.rotationSeed ?? 0) % variations.length;
       return variations[index];
     }
 
@@ -271,7 +270,7 @@ export function TodaysBestDecision({ className }: TodaysBestDecisionProps) {
     const variations = MEANING_VARIATIONS[driver];
     
     if (variations && variations.length > 0) {
-      const index = getDateRotationIndex(variations.length);
+      const index = (decision.rotationSeed ?? 0) % variations.length;
       return variations[index];
     }
 

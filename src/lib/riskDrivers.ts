@@ -1390,10 +1390,11 @@ export function generateCorrectiveAction(
   secondary: RiskDriver | null,
   riskLevel: 'low' | 'moderate' | 'high',
   userProfile?: UserProfile,
-  symptoms?: Array<{ type: string; severity: string }>
+  symptoms?: Array<{ type: string; severity: string }>,
+  rotationIndex?: number
 ): CorrectiveAction {
-  // Calculate rotation index at the start for consistent daily variation
-  const rotationIndex = getDateRotationIndex(3);
+  // Use provided rotation index or calculate from date
+  const rotation = rotationIndex ?? getDateRotationIndex(3);
   // Default action when no significant risk
   if (!primary || riskLevel === 'low') {
     return {

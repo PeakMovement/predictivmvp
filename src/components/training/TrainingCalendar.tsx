@@ -207,7 +207,18 @@ export const TrainingCalendar = () => {
                 onSelect={handleDateSelect}
                 modifiers={modifiers}
                 modifiersStyles={modifiersStyles}
-                className="rounded-md border border-border/50"
+                className="rounded-md border border-border/50 w-full"
+                classNames={{
+                  months: "w-full",
+                  month: "w-full",
+                  table: "w-full",
+                  head_row: "w-full",
+                  row: "w-full",
+                  head_cell: "w-full text-muted-foreground font-normal text-sm",
+                  cell: "w-full h-12 text-center relative",
+                  day: "w-full h-full",
+                  nav: "w-full flex justify-between",
+                }}
                 components={{
                   Day: ({ date }) => <DayContent date={date} />,
                 }}

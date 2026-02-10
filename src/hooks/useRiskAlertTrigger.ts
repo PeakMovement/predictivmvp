@@ -21,8 +21,8 @@ interface UseRiskAlertTriggerResult {
 // Thresholds for triggering alerts
 const RISK_THRESHOLDS = {
   acwr: { high: 1.5, critical: 1.8 },
-  strain: { high: 1200, critical: 1500 }, // Adjusted for capped monotony formula
-  monotony: { high: 2.0, critical: 2.5 },
+  strain: { high: 1200, critical: 1500 },
+  monotony: { high: 1.8, critical: 2.2 }, // Lowered from 2.5 (cap value) to avoid 0% alerts
   hrv_drop: 20, // % drop from baseline
   readiness_low: 50,
   sleep_low: 60
@@ -180,43 +180,49 @@ export function useRiskAlertTrigger(): UseRiskAlertTriggerResult {
 
       if (recoveryTrends) {
         // Check ACWR
-        if (recoveryTrends.acwr && recoveryTrends.acwr >= RISK_THRESHOLDS.acwr.critical) {
+        if (recoveryTrends.acwr && recoveryTrends.acwr > RISK_THRESHOLDS.acwr.critical) {
           const percentAbove = Math.round((recoveryTrends.acwr / RISK_THRESHOLDS.acwr.critical - 1) * 100);
-          alertToSet = {
-            type: "high_risk",
-            metric: "ACWR",
-            value: recoveryTrends.acwr,
-            threshold: RISK_THRESHOLDS.acwr.critical,
-            percentAboveThreshold: percentAbove,
-            message: "Your training load ratio is critically high. Consider reducing intensity to prevent injury."
-          };
-          emailAlertType = "injury_risk";
+          if (percentAbove > 0) {
+            alertToSet = {
+              type: "high_risk",
+              metric: "ACWR",
+              value: recoveryTrends.acwr,
+              threshold: RISK_THRESHOLDS.acwr.critical,
+              percentAboveThreshold: percentAbove,
+              message: "Your training load ratio is critically high. Consider reducing intensity to prevent injury."
+            };
+            emailAlertType = "injury_risk";
+          }
         }
         // Check strain
-        else if (recoveryTrends.strain && recoveryTrends.strain >= RISK_THRESHOLDS.strain.critical) {
+        else if (recoveryTrends.strain && recoveryTrends.strain > RISK_THRESHOLDS.strain.critical) {
           const percentAbove = Math.round((recoveryTrends.strain / RISK_THRESHOLDS.strain.critical - 1) * 100);
-          alertToSet = {
-            type: "high_risk",
-            metric: "Strain",
-            value: recoveryTrends.strain,
-            threshold: RISK_THRESHOLDS.strain.critical,
-            percentAboveThreshold: percentAbove,
-            message: "Your accumulated training strain is very high. Recovery is recommended."
-          };
-          emailAlertType = "injury_risk";
+          if (percentAbove > 0) {
+            alertToSet = {
+              type: "high_risk",
+              metric: "Strain",
+              value: recoveryTrends.strain,
+              threshold: RISK_THRESHOLDS.strain.critical,
+              percentAboveThreshold: percentAbove,
+              message: "Your accumulated training strain is very high. Recovery is recommended."
+            };
+            emailAlertType = "injury_risk";
+          }
         }
         // Check monotony
-        else if (recoveryTrends.monotony && recoveryTrends.monotony >= RISK_THRESHOLDS.monotony.critical) {
+        else if (recoveryTrends.monotony && recoveryTrends.monotony > RISK_THRESHOLDS.monotony.critical) {
           const percentAbove = Math.round((recoveryTrends.monotony / RISK_THRESHOLDS.monotony.critical - 1) * 100);
-          alertToSet = {
-            type: "high_risk",
-            metric: "Monotony",
-            value: recoveryTrends.monotony,
-            threshold: RISK_THRESHOLDS.monotony.critical,
-            percentAboveThreshold: percentAbove,
-            message: "Your training variation is very low. Consider diversifying your workouts."
-          };
-          emailAlertType = "risk_threshold";
+          if (percentAbove > 0) {
+            alertToSet = {
+              type: "high_risk",
+              metric: "Monotony",
+              value: recoveryTrends.monotony,
+              threshold: RISK_THRESHOLDS.monotony.critical,
+              percentAboveThreshold: percentAbove,
+              message: "Your training variation is very low. Consider diversifying your workouts."
+            };
+            emailAlertType = "risk_threshold";
+          }
         }
       }
 

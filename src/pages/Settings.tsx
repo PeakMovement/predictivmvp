@@ -31,6 +31,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useWearableSync } from "@/hooks/useWearableSync";
 import { getUserContext, updateUserContext } from "@/api/yves";
 import { ConnectPolarButton } from "@/components/ConnectPolarButton";
+import { ConnectGarminButton } from "@/components/ConnectGarminButton";
 import { PolarSyncButton } from "@/components/PolarSyncButton";
 import { SymptomCheckInForm } from "@/components/symptoms/SymptomCheckInForm";
 import { TonePreferenceSettings } from "@/components/settings/TonePreferenceSettings";
@@ -63,6 +64,9 @@ export const Settings = ({ onNavigate }: { onNavigate?: (tab: string) => void })
 
   // Polar connection state
   const [isPolarConnected, setIsPolarConnected] = useState(false);
+
+  // Garmin connection state
+  const [isGarminConnected, setIsGarminConnected] = useState(false);
 
   // SMS Alert settings
   const [smsEnabled, setSmsEnabled] = useState(false);
@@ -130,6 +134,27 @@ export const Settings = ({ onNavigate }: { onNavigate?: (tab: string) => void })
     // Check Polar connection status
     checkPolarConnection();
 
+    // Check Garmin connection status
+    checkGarminConnection();
+
+    // Handle garmin_connected query param
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("garmin_connected") === "true") {
+      setIsGarminConnected(true);
+      toast({
+        title: "Garmin Connected",
+        description: "Your Garmin device has been successfully connected.",
+      });
+      window.history.replaceState({}, "", window.location.pathname);
+    } else if (params.get("garmin_error")) {
+      toast({
+        title: "Garmin Connection Failed",
+        description: `Error: ${params.get("garmin_error")}. Please try again.`,
+        variant: "destructive",
+      });
+      window.history.replaceState({}, "", window.location.pathname);
+    }
+
     return () => {
       window.removeEventListener("wearable_trends_refresh", handleRefresh);
       window.removeEventListener("oura_trends_refresh", handleRefresh);
@@ -152,6 +177,24 @@ export const Settings = ({ onNavigate }: { onNavigate?: (tab: string) => void })
       setIsPolarConnected(!!data);
     } catch (error) {
       console.error("Error checking Polar connection:", error);
+    }
+  };
+
+  const checkGarminConnection = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data } = await supabase
+        .from("wearable_tokens")
+        .select("user_id")
+        .eq("user_id", user.id)
+        .eq("scope", "garmin")
+        .maybeSingle();
+
+      setIsGarminConnected(!!data);
+    } catch (error) {
+      console.error("Error checking Garmin connection:", error);
     }
   };
 
@@ -764,6 +807,47 @@ export const Settings = ({ onNavigate }: { onNavigate?: (tab: string) => void })
                     <ConnectPolarButton
                       isConnected={isPolarConnected}
                       onConnectionChange={checkPolarConnection}
+                    />
+                  </div>
+                </div>
+
+                {/* Garmin Card */}
+                <div className="w-full flex items-center justify-between p-4 rounded-xl border bg-glass/30 border-glass-border hover:bg-glass-highlight transition-all duration-200">
+                  <div className="flex items-center gap-3 flex-1">
+                    <div className="w-10 h-10 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-full flex items-center justify-center">
+                      <svg
+                        width="20"
+                        height="20"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="text-white"
+                      >
+                        <path d="M12 2L2 7l10 5 10-5-10-5z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
+                        <path d="M2 17l10 5 10-5" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
+                        <path d="M2 12l10 5 10-5" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
+                      </svg>
+                    </div>
+                    <div className="text-left flex-1">
+                      <p className="font-medium text-foreground flex items-center gap-2">
+                        Garmin
+                        {isGarminConnected && (
+                          <span className="text-xs px-2 py-0.5 rounded-full bg-green-500/20 text-green-400 border border-green-500/30">
+                            ✓ Connected
+                          </span>
+                        )}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {isGarminConnected
+                          ? "Syncing your Garmin health data"
+                          : "Connect and sync your Garmin health data"}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <ConnectGarminButton
+                      isConnected={isGarminConnected}
+                      onConnectionChange={checkGarminConnection}
                     />
                   </div>
                 </div>

@@ -2962,7 +2962,7 @@ export type Database = {
           fitbit_user_id: string | null
           refresh_token: string | null
           refresh_token_encrypted: string | null
-          scope: string | null
+          scope: string
           token_type: string | null
           updated_at: string | null
           user_id: string
@@ -2977,7 +2977,7 @@ export type Database = {
           fitbit_user_id?: string | null
           refresh_token?: string | null
           refresh_token_encrypted?: string | null
-          scope?: string | null
+          scope?: string
           token_type?: string | null
           updated_at?: string | null
           user_id: string
@@ -2992,7 +2992,7 @@ export type Database = {
           fitbit_user_id?: string | null
           refresh_token?: string | null
           refresh_token_encrypted?: string | null
-          scope?: string | null
+          scope?: string
           token_type?: string | null
           updated_at?: string | null
           user_id?: string

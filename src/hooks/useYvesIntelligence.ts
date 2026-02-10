@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import type { FocusMode } from "./useDashboardFocusMode";
@@ -45,6 +45,7 @@ export function useYvesIntelligence(focusMode?: FocusMode) {
     cached: false,
   });
   const { toast } = useToast();
+  const isManualRefreshRef = useRef(false);
 
   const fetchIntelligence = useCallback(async (forceRefresh = false, currentFocusMode?: FocusMode) => {
     try {
@@ -155,10 +156,19 @@ export function useYvesIntelligence(focusMode?: FocusMode) {
   }, [toast, focusMode]);
 
   const refresh = useCallback((newFocusMode?: FocusMode) => {
-    fetchIntelligence(true, newFocusMode);
+    isManualRefreshRef.current = true;
+    fetchIntelligence(true, newFocusMode).finally(() => {
+      isManualRefreshRef.current = false;
+    });
   }, [fetchIntelligence]);
 
   useEffect(() => {
+    // Skip automatic fetch if a manual refresh is in progress
+    if (isManualRefreshRef.current) {
+      console.log(`[useYvesIntelligence] Skipping auto-fetch — manual refresh in progress`);
+      return;
+    }
+
     const shouldForceRefresh = state.previousFocusMode && state.previousFocusMode !== focusMode;
 
     if (shouldForceRefresh) {

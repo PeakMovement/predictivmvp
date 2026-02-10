@@ -942,6 +942,7 @@ Deno.serve(async (req) => {
           silent: true 
         },
         category: "unified",
+        focus_mode: focusMode,
       });
 
       return new Response(

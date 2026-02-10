@@ -742,6 +742,33 @@ export type Database = {
         }
         Relationships: []
       }
+      garmin_oauth_state: {
+        Row: {
+          code_verifier: string
+          created_at: string
+          expires_at: string
+          id: string
+          state: string
+          user_id: string
+        }
+        Insert: {
+          code_verifier: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          state: string
+          user_id: string
+        }
+        Update: {
+          code_verifier?: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          state?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       google_calendar_events: {
         Row: {
           attendees: Json | null
@@ -3286,6 +3313,7 @@ export type Database = {
       }
     }
     Functions: {
+      cleanup_expired_garmin_oauth_state: { Args: never; Returns: undefined }
       cleanup_expired_rate_limits: { Args: never; Returns: undefined }
       cleanup_old_pattern_views: { Args: never; Returns: undefined }
       get_latest_insights: {

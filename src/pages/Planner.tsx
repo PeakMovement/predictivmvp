@@ -295,8 +295,8 @@ export function Planner() {
   }
 
   return (
-    <div className="min-h-screen bg-background pb-nav-safe">
-      <div className="container mx-auto px-4 py-8">
+    <div className="min-h-screen bg-background pb-nav-safe overflow-x-hidden">
+      <div className="container mx-auto px-4 py-8 max-w-full overflow-hidden">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-3">

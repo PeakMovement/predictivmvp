@@ -51,7 +51,7 @@ export const useUserChallenges = (weekStart?: Date) => {
 
       if (fetchError) throw fetchError;
 
-      setChallenges(data || []);
+      setChallenges((data || []) as UserChallenge[]);
     } catch (err) {
       console.error("Error fetching challenges:", err);
       setError("Failed to load challenges");

@@ -148,7 +148,7 @@ function getLocalLayouts(): Record<PageId, PageLayout> | null {
 function saveLocalLayouts(layouts: Record<PageId, PageLayout>) {
   try {
     // Add version and timestamp to each layout
-    const versionedLayouts: Record<PageId, PageLayout> = {};
+    const versionedLayouts = {} as Record<PageId, PageLayout>;
     for (const [key, layout] of Object.entries(layouts)) {
       versionedLayouts[key as PageId] = {
         ...layout,
@@ -184,7 +184,7 @@ function migrateLayout(
   // Migration from v1 to v2: Add version and lastUpdated fields
   if (fromVersion < 2) {
     console.log('Migrating from v1 to v2: Adding metadata');
-    migrated = Object.entries(migrated).reduce((acc, [key, layout]) => {
+    migrated = Object.entries(migrated).reduce<Record<PageId, PageLayout>>((acc, [key, layout]) => {
       acc[key as PageId] = {
         ...layout,
         version: 2,

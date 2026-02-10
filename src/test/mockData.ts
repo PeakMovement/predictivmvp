@@ -1,10 +1,13 @@
-import { YvesDailyBriefing } from '@/hooks/useYvesIntelligence';
+// Mock data for tests - uses loose types to allow testing various shapes
 
-export const mockBriefing: YvesDailyBriefing = {
+export const mockBriefing = {
   id: 'test-briefing-1',
   user_id: 'test-user-1',
   briefing_date: '2026-02-08',
+  summary: 'Your sleep quality was excellent last night with 8 hours of restful sleep.',
   content: 'Your sleep quality was excellent last night with 8 hours of restful sleep. Your HRV is 15% above your baseline, indicating good recovery.',
+  keyChanges: ['Sleep improved by 10%', 'HRV up 15%'],
+  riskHighlights: [],
   key_metrics: {
     sleep_score: 85,
     hrv: 65,
@@ -26,7 +29,7 @@ export const mockBriefing: YvesDailyBriefing = {
   updated_at: '2026-02-08T06:00:00Z',
 };
 
-export const mockBriefingWithAlerts: YvesDailyBriefing = {
+export const mockBriefingWithAlerts = {
   ...mockBriefing,
   alerts: [
     {
@@ -42,10 +45,13 @@ export const mockBriefingWithAlerts: YvesDailyBriefing = {
   ],
 };
 
-export const mockEmptyBriefing: YvesDailyBriefing = {
+export const mockEmptyBriefing = {
   id: 'test-briefing-empty',
   user_id: 'test-user-1',
   briefing_date: '2026-02-08',
+  summary: '',
+  keyChanges: [],
+  riskHighlights: [],
   content: null,
   key_metrics: null,
   health_trends: null,

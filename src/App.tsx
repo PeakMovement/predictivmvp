@@ -443,7 +443,7 @@ const App = () => {
               <Suspense fallback={<PageLoadingFallback />}>
                 <AlertHistory />
               </Suspense>
-              <BottomNavigation activeTab="settings" onTabChange={(tab) => {
+              <BottomNavigation activeTab="settings" onNavigate={(tab) => {
                 if (tab !== "settings") {
                   window.location.href = "/";
                 }

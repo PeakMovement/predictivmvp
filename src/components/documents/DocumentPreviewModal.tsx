@@ -70,13 +70,13 @@ export function DocumentPreviewModal({
   const handleDownload = () => {
     if (!document) return;
 
-    const link = document.createElement('a');
+    const link = window.document.createElement('a');
     link.href = document.file_url;
     link.download = document.file_name;
     link.target = '_blank';
-    document.body.appendChild(link);
+    window.document.body.appendChild(link);
     link.click();
-    document.body.removeChild(link);
+    window.document.body.removeChild(link);
 
     toast.success('Download started');
   };

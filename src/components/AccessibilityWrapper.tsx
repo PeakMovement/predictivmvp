@@ -66,8 +66,8 @@ export function AccessibilityWrapper({ children }: AccessibilityWrapperProps) {
     const shortcuts = Object.entries(KEYBOARD_SHORTCUTS)
       .map(([, value]) => {
         const keys = [];
-        if (value.ctrl) keys.push('Ctrl');
-        if (value.shift) keys.push('Shift');
+        if ('ctrl' in value && value.ctrl) keys.push('Ctrl');
+        if ('shift' in value && value.shift) keys.push('Shift');
         keys.push(value.key.toUpperCase());
         return `${keys.join('+')} - ${value.description}`;
       })

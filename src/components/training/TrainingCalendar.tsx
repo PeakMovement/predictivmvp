@@ -75,7 +75,7 @@ export const TrainingCalendar = () => {
 
       if (error) throw error;
 
-      setSessions(data || []);
+      setSessions((data || []) as unknown as WearableSession[]);
     } catch (error) {
       console.error("Error fetching sessions:", error);
       toast({

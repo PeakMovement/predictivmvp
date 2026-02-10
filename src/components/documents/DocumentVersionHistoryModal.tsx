@@ -116,20 +116,20 @@ export function DocumentVersionHistoryModal({
   };
 
   const handleDownloadVersion = (version: DocumentVersion) => {
-    const link = document.createElement('a');
+    const link = window.document.createElement('a');
     link.href = version.file_url;
     link.download = version.file_name;
     link.target = '_blank';
-    document.body.appendChild(link);
+    window.document.body.appendChild(link);
     link.click();
-    document.body.removeChild(link);
+    window.document.body.removeChild(link);
 
     toast.success('Download started');
   };
 
   if (!document) return null;
 
-  const currentVersion = document.version || 1;
+  const currentVersion = (document as any).version || 1;
 
   return (
     <>
@@ -154,9 +154,9 @@ export function DocumentVersionHistoryModal({
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-2">
                         <Badge variant="default">Current Version {currentVersion}</Badge>
-                        {document.version_notes && (
+                        {(document as any).version_notes && (
                           <span className="text-xs text-muted-foreground">
-                            {document.version_notes}
+                            {(document as any).version_notes}
                           </span>
                         )}
                       </div>

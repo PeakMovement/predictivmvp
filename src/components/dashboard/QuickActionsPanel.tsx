@@ -143,7 +143,7 @@ export const QuickActionsPanel = () => {
       </Card>
 
       {/* Yves Chat Sheet */}
-      <YvesChatSheet open={isChatOpen} onOpenChange={setIsChatOpen} />
+      <YvesChatSheet />
     </>
   );
 };

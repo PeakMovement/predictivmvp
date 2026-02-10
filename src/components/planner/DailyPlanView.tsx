@@ -41,7 +41,7 @@ export const DailyPlanView = ({ selectedDate, onDateChange }: DailyPlanViewProps
       if (!user) return;
 
       // Check if user has connected Google Calendar
-      const { data: connection } = await supabase
+      const { data: connection } = await (supabase as any)
         .from("google_calendar_connections")
         .select("*")
         .eq("user_id", user.id)

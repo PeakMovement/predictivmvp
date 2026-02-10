@@ -260,8 +260,9 @@ Deno.serve(async (req) => {
       const avgHRV = trainingTrends.reduce((sum, t) => sum + (t.hrv || 0), 0) / trainingTrends.length;
       const avgSleepScore = trainingTrends.reduce((sum, t) => sum + (t.sleep_score || 0), 0) / trainingTrends.length;
       
-      // Calculate Fatigue Index: (Strain / 200) × 50 + (Monotony / 3) × 50
-      fatigueIndex = Math.min(100, Math.round((avgStrain / 200) * 50 + (avgMonotony / 3) * 50));
+      // Calculate Fatigue Index: (Strain / 2000) × 50 + (cappedMonotony / 2.5) × 50
+      const cappedMonotony = Math.min(avgMonotony, 2.5);
+      fatigueIndex = Math.min(100, Math.round((Math.min(avgStrain, 2000) / 2000) * 50 + (cappedMonotony / 2.5) * 50));
       
       // Calculate Risk Score
       if (avgACWR > 1.5) riskScore += 40;

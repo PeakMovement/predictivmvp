@@ -38,6 +38,18 @@ interface GarminSleep {
   validation?: string;
 }
 
+interface GarminActivity {
+  activityId: string;
+  activityName?: string;
+  activityType?: string;
+  startTimeInSeconds: number;
+  durationInSeconds?: number;
+  distanceInMeters?: number;
+  averageHeartRateInBeatsPerMinute?: number;
+  maxHeartRateInBeatsPerMinute?: number;
+  calories?: number;
+}
+
 // ── Helper: fetch from Garmin API with error handling ────────────────
 
 async function garminFetch<T>(
@@ -219,13 +231,15 @@ async function syncUserGarminData(
     uploadEndTimeInSeconds: now.toString(),
   };
 
-  // ── Fetch dailies + sleeps in parallel ────────────────────────────
+  // ── Fetch dailies + sleeps + activities in parallel ──────────────
   let dailies: GarminDaily[] = [];
   let sleeps: GarminSleep[] = [];
+  let activities: GarminActivity[] = [];
 
-  const [dailiesResult, sleepsResult] = await Promise.allSettled([
+  const [dailiesResult, sleepsResult, activitiesResult] = await Promise.allSettled([
     garminFetch<GarminDaily>("/dailies", accessToken, timeParams),
     garminFetch<GarminSleep>("/sleeps", accessToken, timeParams),
+    garminFetch<GarminActivity>("/activities", accessToken, timeParams),
   ]);
 
   if (dailiesResult.status === "fulfilled") {
@@ -242,7 +256,14 @@ async function syncUserGarminData(
     console.error(`[fetch-garmin-data] User ${userId}: sleeps fetch failed: ${sleepsResult.reason}`);
   }
 
-  if (dailies.length === 0 && sleeps.length === 0) {
+  if (activitiesResult.status === "fulfilled") {
+    activities = activitiesResult.value;
+    console.log(`[fetch-garmin-data] User ${userId}: ${activities.length} activities`);
+  } else {
+    console.error(`[fetch-garmin-data] User ${userId}: activities fetch failed: ${activitiesResult.reason}`);
+  }
+
+  if (dailies.length === 0 && sleeps.length === 0 && activities.length === 0) {
     console.log(`[fetch-garmin-data] User ${userId}: No data returned from Garmin`);
     return { user_id: userId, success: true, records: 0 };
   }
@@ -251,11 +272,12 @@ async function syncUserGarminData(
   const dateMap = new Map<string, {
     daily?: GarminDaily;
     sleep?: GarminSleep;
+    activities: GarminActivity[];
   }>();
 
   for (const d of dailies) {
     if (!d.calendarDate) continue;
-    const existing = dateMap.get(d.calendarDate) || {};
+    const existing = dateMap.get(d.calendarDate) || { activities: [] };
     existing.daily = d;
     dateMap.set(d.calendarDate, existing);
   }
@@ -263,7 +285,7 @@ async function syncUserGarminData(
   // For sleeps, pick the longest sleep per date (primary sleep)
   for (const s of sleeps) {
     if (!s.calendarDate) continue;
-    const existing = dateMap.get(s.calendarDate) || {};
+    const existing = dateMap.get(s.calendarDate) || { activities: [] };
     if (
       !existing.sleep ||
       (s.durationInSeconds || 0) > (existing.sleep.durationInSeconds || 0)
@@ -273,9 +295,34 @@ async function syncUserGarminData(
     dateMap.set(s.calendarDate, existing);
   }
 
+  // Group activities by date (convert timestamp to date)
+  for (const activity of activities) {
+    const activityDate = new Date(activity.startTimeInSeconds * 1000)
+      .toISOString()
+      .split("T")[0];
+    const existing = dateMap.get(activityDate) || { activities: [] };
+    existing.activities.push(activity);
+    dateMap.set(activityDate, existing);
+  }
+
   // ── Build upsert rows ─────────────────────────────────────────────
   const rows = Array.from(dateMap.entries()).map(([date, data]) => {
-    const { daily, sleep } = data;
+    const { daily, sleep, activities } = data;
+
+    // Calculate distance metrics from activities
+    let totalDistanceKm = 0;
+    let runningDistanceKm = 0;
+
+    for (const activity of activities) {
+      const distanceInKm = (activity.distanceInMeters || 0) / 1000;
+      totalDistanceKm += distanceInKm;
+
+      // Check if this is a running activity
+      if (activity.activityType?.toUpperCase().includes("RUNNING") ||
+          activity.activityType?.toUpperCase().includes("RUN")) {
+        runningDistanceKm += distanceInKm;
+      }
+    }
 
     return {
       user_id: userId,
@@ -304,6 +351,9 @@ async function syncUserGarminData(
         ? Math.round(sleep.lightSleepDurationInSeconds / 60)
         : null,
       sleep_efficiency: null as number | null,
+      // Distance metrics
+      total_distance_km: totalDistanceKm > 0 ? totalDistanceKm : null,
+      running_distance_km: runningDistanceKm > 0 ? runningDistanceKm : null,
       // Not available from these endpoints
       readiness_score: null as number | null,
       spo2_avg: null as number | null,

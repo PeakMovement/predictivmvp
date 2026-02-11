@@ -31,6 +31,7 @@ import { UnifiedTrendCard } from "@/components/trends/UnifiedTrendCard";
 import { supabase } from "@/integrations/supabase/client";
 import { useTrainingTrends } from "@/hooks/useTrainingTrends";
 import { useWearableSessions } from "@/hooks/useWearableSessions";
+import { useGarminRunningDistance } from "@/hooks/useGarminRunningDistance";
 import { SessionLogList } from "@/components/dashboard/SessionLogList";
 import { useLayoutCustomization } from "@/hooks/useLayoutCustomization";
 import { CustomizeLayoutButton } from "@/components/layout/CustomizeLayoutButton";
@@ -202,6 +203,7 @@ const CircularGauge = ({
 export const Training = () => {
   const { trends, isLoading: trendsLoading, refresh, userId } = useTrainingTrends({ days: 7 });
   const { data: wearableData, refetch: refetchWearable } = useWearableSessions(userId || undefined);
+  const { runningDistance, isLoading: runningDistanceLoading } = useGarminRunningDistance();
   const [suggestions, setSuggestions] = useState<ReturnType<typeof generateSuggestions>>([]);
   const [comparisonOpen, setComparisonOpen] = useState(false);
   const [comparisonSessions, setComparisonSessions] = useState<any[]>([]);
@@ -413,7 +415,7 @@ export const Training = () => {
                   visible={isSectionVisible('gauges')}
                   className="mt-4 md:mt-6"
                 >
-                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 xl:grid-cols-6 gap-4">
                     <CircularGauge
                       title="Monotony"
                       value={latestAvailableTrend?.monotony ? parseFloat(latestAvailableTrend.monotony.toFixed(1)) : 0}
@@ -443,6 +445,12 @@ export const Training = () => {
                       value={wearableData?.readiness_score ?? 0}
                       maxValue={100}
                       unit="%"
+                    />
+                    <CircularGauge
+                      title="Running Distance"
+                      value={runningDistanceLoading ? 0 : parseFloat(runningDistance.toFixed(1))}
+                      maxValue={50}
+                      unit="km"
                     />
                   </div>
                 </LayoutBlock>

@@ -75,7 +75,7 @@ export const useWearableSync = (): WearableSyncState => {
         .from("wearable_sessions")
         .select("fetched_at")
         .eq("user_id", user.id)
-        .eq("source", "oura")
+        .in("source", ["oura", "garmin", "polar"])
         .order("date", { ascending: false })
         .limit(1)
         .maybeSingle();

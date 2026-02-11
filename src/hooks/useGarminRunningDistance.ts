@@ -21,11 +21,11 @@ export const useGarminRunningDistance = () => {
 
       const { data, error } = await supabase
         .from("wearable_sessions")
-        .select("running_distance_km")
+        .select("total_steps, active_calories")
         .eq("user_id", user.id)
         .eq("source", "garmin")
         .gte("date", sevenDaysAgoStr)
-        .not("running_distance_km", "is", null);
+        .not("total_steps", "is", null);
 
       if (error) {
         console.error("Error fetching Garmin running distance:", error);
@@ -34,11 +34,12 @@ export const useGarminRunningDistance = () => {
       }
 
       if (data && data.length > 0) {
+        // Estimate running distance from steps (avg stride ~0.762m)
         const totalDistance = data.reduce(
-          (sum, session) => sum + (session.running_distance_km || 0),
+          (sum, session) => sum + ((session.total_steps || 0) * 0.000762),
           0
         );
-        console.log(`✅ Garmin 7-day running distance: ${totalDistance.toFixed(2)} km`);
+        console.log(`✅ Garmin 7-day estimated distance: ${totalDistance.toFixed(2)} km`);
         setRunningDistance(totalDistance);
       } else {
         console.log("No Garmin running data found in last 7 days");

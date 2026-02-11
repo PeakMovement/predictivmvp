@@ -1,4 +1,4 @@
-import { createClient } from "npm:@supabase/supabase-js@2";
+import { createClient, SupabaseClient } from "npm:@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -193,7 +193,7 @@ Deno.serve(async (req: Request) => {
 // ── Per-user sync logic ──────────────────────────────────────────────
 
 async function syncUserGarminData(
-  supabase: ReturnType<typeof createClient>,
+  supabase: SupabaseClient,
   userId: string,
 ): Promise<{ user_id: string; success: boolean; records: number; error?: string }> {
   console.log(`[fetch-garmin-data] Syncing Garmin data for user: ${userId}`);
@@ -307,39 +307,21 @@ async function syncUserGarminData(
 
   // ── Build upsert rows ─────────────────────────────────────────────
   const rows = Array.from(dateMap.entries()).map(([date, data]) => {
-    const { daily, sleep, activities } = data;
-
-    // Calculate distance metrics from activities
-    let totalDistanceKm = 0;
-    let runningDistanceKm = 0;
-
-    for (const activity of activities) {
-      const distanceInKm = (activity.distanceInMeters || 0) / 1000;
-      totalDistanceKm += distanceInKm;
-
-      // Check if this is a running activity
-      if (activity.activityType?.toUpperCase().includes("RUNNING") ||
-          activity.activityType?.toUpperCase().includes("RUN")) {
-        runningDistanceKm += distanceInKm;
-      }
-    }
+    const { daily, sleep } = data;
 
     return {
       user_id: userId,
       source: "garmin",
       date,
-      // Activity
       total_steps: daily?.steps ?? null,
       total_calories: daily?.totalKilocalories ?? null,
       active_calories: daily?.activeKilocalories ?? null,
-      activity_score: null as number | null, // Garmin doesn't provide an activity score
-      // Heart
+      activity_score: null as number | null,
       resting_hr: daily?.restingHeartRateInBeatsPerMinute ?? null,
-      hrv_avg: null as number | null, // HRV requires beat-to-beat data (separate endpoint)
-      // Sleep
+      hrv_avg: null as number | null,
       sleep_score: sleep?.overallSleepScoreValue ?? null,
       total_sleep_duration: sleep?.durationInSeconds
-        ? Math.round(sleep.durationInSeconds / 60) // Convert to minutes
+        ? Math.round(sleep.durationInSeconds / 60)
         : null,
       deep_sleep_duration: sleep?.deepSleepDurationInSeconds
         ? Math.round(sleep.deepSleepDurationInSeconds / 60)
@@ -351,13 +333,8 @@ async function syncUserGarminData(
         ? Math.round(sleep.lightSleepDurationInSeconds / 60)
         : null,
       sleep_efficiency: null as number | null,
-      // Distance metrics
-      total_distance_km: totalDistanceKm > 0 ? totalDistanceKm : null,
-      running_distance_km: runningDistanceKm > 0 ? runningDistanceKm : null,
-      // Not available from these endpoints
       readiness_score: null as number | null,
       spo2_avg: null as number | null,
-      // Metadata
       fetched_at: new Date().toISOString(),
     };
   });
@@ -383,7 +360,7 @@ async function syncUserGarminData(
 // ── Token refresh ────────────────────────────────────────────────────
 
 async function refreshGarminToken(
-  supabase: ReturnType<typeof createClient>,
+  supabase: SupabaseClient,
   userId: string,
   refreshToken: string | null,
 ): Promise<{ success: boolean; access_token?: string }> {

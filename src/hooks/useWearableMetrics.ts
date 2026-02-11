@@ -123,7 +123,7 @@ export const useWearableMetrics = () => {
         .from("wearable_sessions")
         .select("*")
         .eq("user_id", user.id)
-        .eq("source", "oura")
+        .in("source", ["oura", "garmin"])
         .order("date", { ascending: false })
         .limit(1)
         .maybeSingle();

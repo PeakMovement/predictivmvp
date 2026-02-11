@@ -24,16 +24,55 @@ export const QuickActionsPanel = () => {
         return;
       }
 
-      // Call the fetch-oura-data edge function
-      const { data, error } = await supabase.functions.invoke('fetch-oura-data', {
-        body: { userId: user.id }
-      });
+      // Detect connected wearable provider(s)
+      const { data: tokens, error: tokensError } = await supabase
+        .from("wearable_tokens")
+        .select("scope")
+        .eq("user_id", user.id);
 
-      if (error) throw error;
+      if (tokensError) throw tokensError;
+
+      if (!tokens || tokens.length === 0) {
+        toast({
+          title: "No device connected",
+          description: "Connect a wearable device in Settings first",
+        });
+        return;
+      }
+
+      // Map provider scope to edge function name
+      const providerFunctionMap: Record<string, string> = {
+        oura: "fetch-oura-data",
+        garmin: "fetch-garmin-data",
+        polar: "fetch-polar-sleep",
+      };
+
+      const syncResults: string[] = [];
+
+      for (const token of tokens) {
+        const functionName = providerFunctionMap[token.scope];
+        if (!functionName) {
+          console.warn(`[sync] Unknown provider: ${token.scope}`);
+          continue;
+        }
+
+        const { error } = await supabase.functions.invoke(functionName, {
+          body: token.scope === "oura"
+            ? { userId: user.id }
+            : { user_id: user.id },
+        });
+
+        if (error) {
+          console.error(`[sync] ${token.scope} sync failed:`, error);
+          syncResults.push(`${token.scope}: failed`);
+        } else {
+          syncResults.push(`${token.scope}: success`);
+        }
+      }
 
       toast({
-        title: "Sync initiated",
-        description: "Your Oura data is being updated in the background",
+        title: "Sync complete",
+        description: syncResults.join(", "),
       });
     } catch (error: any) {
       console.error('Error syncing data:', error);

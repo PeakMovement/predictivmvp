@@ -218,8 +218,8 @@ Deno.serve(async (req: Request) => {
         throw err;
       }
       console.error('[fetch-oura-data] Cache fetch error:', err);
-      return {};
-    });
+      return {} as Record<string, any[]>;
+    }) as Record<string, any[]>;
 
     // Handle token expiry from cached fetch
     if (!fetchedData || Object.keys(fetchedData).length === 0) {

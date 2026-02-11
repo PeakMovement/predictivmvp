@@ -2859,11 +2859,13 @@ export type Database = {
           readiness_score: number | null
           rem_sleep_duration: number | null
           resting_hr: number | null
+          running_distance_km: number | null
           sleep_efficiency: number | null
           sleep_score: number | null
           source: string
           spo2_avg: number | null
           total_calories: number | null
+          total_distance_km: number | null
           total_sleep_duration: number | null
           total_steps: number | null
           user_id: string
@@ -2880,11 +2882,13 @@ export type Database = {
           readiness_score?: number | null
           rem_sleep_duration?: number | null
           resting_hr?: number | null
+          running_distance_km?: number | null
           sleep_efficiency?: number | null
           sleep_score?: number | null
           source: string
           spo2_avg?: number | null
           total_calories?: number | null
+          total_distance_km?: number | null
           total_sleep_duration?: number | null
           total_steps?: number | null
           user_id: string
@@ -2901,11 +2905,13 @@ export type Database = {
           readiness_score?: number | null
           rem_sleep_duration?: number | null
           resting_hr?: number | null
+          running_distance_km?: number | null
           sleep_efficiency?: number | null
           sleep_score?: number | null
           source?: string
           spo2_avg?: number | null
           total_calories?: number | null
+          total_distance_km?: number | null
           total_sleep_duration?: number | null
           total_steps?: number | null
           user_id?: string

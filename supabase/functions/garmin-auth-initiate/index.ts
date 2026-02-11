@@ -138,6 +138,8 @@ Deno.serve(async (req: Request) => {
     }
 
     // ── 5. Build Garmin authorization URL ────────────────────────────
+    // Per official spec: https://connect.garmin.com/oauth2Confirm
+    // Scopes are NOT passed in the URL — they are managed in the Garmin Developer Portal.
     const authUrl =
       `https://connect.garmin.com/oauth2Confirm?` +
       `response_type=code` +
@@ -147,6 +149,11 @@ Deno.serve(async (req: Request) => {
       `&code_challenge_method=S256` +
       `&state=${encodeURIComponent(state)}`;
 
+    // Diagnostic log — redacts secrets, shows structure for debugging
+    console.log(`[garmin-auth-initiate] [DIAG] client_id: ${clientId.substring(0, 8)}...`);
+    console.log(`[garmin-auth-initiate] [DIAG] redirect_uri: ${redirectUri}`);
+    console.log(`[garmin-auth-initiate] [DIAG] code_challenge_method: S256`);
+    console.log(`[garmin-auth-initiate] [DIAG] full auth URL (no secret): ${authUrl}`);
     console.log(`[garmin-auth-initiate] [SUCCESS] Authorization URL generated for user: ${userId}`);
 
     return new Response(

@@ -255,7 +255,6 @@ export const Dashboard = () => {
                     isGenerating={intelligenceGenerating}
                     cached={intelligenceCached}
                     onRefresh={refreshIntelligence}
-                    focusMode="balance"
                   />
                 </div>
               </LayoutBlock>

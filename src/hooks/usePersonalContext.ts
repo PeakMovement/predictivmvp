@@ -99,13 +99,6 @@ export function usePersonalContext() {
               category: 'stress',
               tone: 'warm',
             });
-          } else if (level === 'moderate') {
-            contextChips.push({
-              id: 'stress-level',
-              label: 'Balanced workload phase',
-              category: 'stress',
-              tone: 'warm',
-            });
           }
         }
 

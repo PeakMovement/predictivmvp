@@ -109,9 +109,9 @@ export async function sendRiskAlertEmail(
 
 // Session storage key for cooldown tracking
 const ALERT_COOLDOWN_KEY = "risk_alert_shown";
-// LocalStorage key for 24-hour cooldown
+// LocalStorage key for 7-day cooldown
 const ALERT_DAILY_COOLDOWN_KEY = "risk_alert_daily_cooldown";
-const COOLDOWN_HOURS = 24;
+const COOLDOWN_HOURS = 168; // 7 days
 
 function getDailyCooldowns(): Record<string, number> {
   try {
@@ -140,14 +140,14 @@ function isOnDailyCooldown(alertKey: string): boolean {
   const cooldowns = getDailyCooldowns();
   const cooldownValue = cooldowns[alertKey];
   if (!cooldownValue) return false;
-  
+
   // Check if this is an expiry time (snooze) or start time (regular cooldown)
   // If value is in the future, it's an expiry time
   if (cooldownValue > Date.now()) {
     return true; // Still on snooze
   }
-  
-  // Regular 24-hour cooldown check
+
+  // Regular 7-day cooldown check
   const hoursSince = (Date.now() - cooldownValue) / (1000 * 60 * 60);
   return hoursSince < COOLDOWN_HOURS;
 }
@@ -320,13 +320,13 @@ export function useRiskAlertTrigger(): UseRiskAlertTriggerResult {
           return;
         }
 
-        // Skip if on 24-hour cooldown (persists across sessions)
+        // Skip if on 7-day cooldown (persists across sessions)
         if (isOnDailyCooldown(alertKey)) {
-          console.log(`[useRiskAlertTrigger] Alert ${alertKey} on 24h cooldown, skipping`);
+          console.log(`[useRiskAlertTrigger] Alert ${alertKey} on 7-day cooldown, skipping`);
           return;
         }
-        
-        // Mark this alert as shown in session storage AND 24h cooldown
+
+        // Mark this alert as shown in session storage AND 7-day cooldown
         shownSet.add(alertKey);
         sessionStorage.setItem(ALERT_COOLDOWN_KEY, JSON.stringify([...shownSet]));
         setDailyCooldown(alertKey);

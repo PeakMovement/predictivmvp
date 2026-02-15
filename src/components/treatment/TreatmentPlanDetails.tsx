@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { ArrowLeft, Calendar, CheckCircle2, Clock, DollarSign, TrendingUp } from 'lucide-react';
+import { ArrowLeft, Calendar, CheckCircle2, Clock, Banknote, TrendingUp } from 'lucide-react';
 
 interface TreatmentPlanDetailsProps {
   plan: TreatmentPlan;
@@ -38,7 +38,7 @@ export function TreatmentPlanDetails({ plan, onBack, onConfirm }: TreatmentPlanD
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-muted/50 rounded-lg">
             <div className="flex items-center gap-3">
               <div className="p-2 rounded-full bg-primary/10">
-                <DollarSign className="h-5 w-5 text-primary" />
+                <Banknote className="h-5 w-5 text-primary" />
               </div>
               <div>
                 <div className="text-sm text-muted-foreground">Total Investment</div>

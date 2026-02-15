@@ -1080,6 +1080,81 @@ export type Database = {
         }
         Relationships: []
       }
+      healthcare_practitioners: {
+        Row: {
+          accepts_medical_aid: boolean | null
+          available_times: Json | null
+          bio: string | null
+          calendly_url: string | null
+          city: string | null
+          consultation_fee: number | null
+          contact_email: string | null
+          contact_phone: string | null
+          created_at: string | null
+          full_name: string
+          id: string
+          languages: string[] | null
+          location: string
+          online_available: boolean | null
+          profile_image_url: string | null
+          province: string | null
+          qualifications: string[] | null
+          rating: number | null
+          specialty: string
+          title: string
+          updated_at: string | null
+          years_experience: number | null
+        }
+        Insert: {
+          accepts_medical_aid?: boolean | null
+          available_times?: Json | null
+          bio?: string | null
+          calendly_url?: string | null
+          city?: string | null
+          consultation_fee?: number | null
+          contact_email?: string | null
+          contact_phone?: string | null
+          created_at?: string | null
+          full_name: string
+          id?: string
+          languages?: string[] | null
+          location: string
+          online_available?: boolean | null
+          profile_image_url?: string | null
+          province?: string | null
+          qualifications?: string[] | null
+          rating?: number | null
+          specialty: string
+          title: string
+          updated_at?: string | null
+          years_experience?: number | null
+        }
+        Update: {
+          accepts_medical_aid?: boolean | null
+          available_times?: Json | null
+          bio?: string | null
+          calendly_url?: string | null
+          city?: string | null
+          consultation_fee?: number | null
+          contact_email?: string | null
+          contact_phone?: string | null
+          created_at?: string | null
+          full_name?: string
+          id?: string
+          languages?: string[] | null
+          location?: string
+          online_available?: boolean | null
+          profile_image_url?: string | null
+          province?: string | null
+          qualifications?: string[] | null
+          rating?: number | null
+          specialty?: string
+          title?: string
+          updated_at?: string | null
+          years_experience?: number | null
+        }
+        Relationships: []
+      }
       insight_feedback: {
         Row: {
           action_taken: string | null
@@ -1373,6 +1448,45 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      practitioner_specialties: {
+        Row: {
+          created_at: string | null
+          id: string
+          practitioner_id: string
+          proficiency_level: string | null
+          service_category_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          practitioner_id: string
+          proficiency_level?: string | null
+          service_category_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          practitioner_id?: string
+          proficiency_level?: string | null
+          service_category_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "practitioner_specialties_practitioner_id_fkey"
+            columns: ["practitioner_id"]
+            isOneToOne: false
+            referencedRelation: "healthcare_practitioners"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "practitioner_specialties_service_category_id_fkey"
+            columns: ["service_category_id"]
+            isOneToOne: false
+            referencedRelation: "service_categories"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
@@ -1737,6 +1851,39 @@ export type Database = {
         }
         Relationships: []
       }
+      service_categories: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          display_name: string
+          icon: string | null
+          id: string
+          name: string
+          typical_cost_range_max: number | null
+          typical_cost_range_min: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          display_name: string
+          icon?: string | null
+          id?: string
+          name: string
+          typical_cost_range_max?: number | null
+          typical_cost_range_min?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          display_name?: string
+          icon?: string | null
+          id?: string
+          name?: string
+          typical_cost_range_max?: number | null
+          typical_cost_range_min?: number | null
+        }
+        Relationships: []
+      }
       symptom_check_ins: {
         Row: {
           body_location: string | null
@@ -1940,6 +2087,161 @@ export type Database = {
           strain?: number | null
           training_load?: number | null
           user_id?: string
+        }
+        Relationships: []
+      }
+      treatment_plan_feedback: {
+        Row: {
+          created_at: string | null
+          feedback_text: string | null
+          id: string
+          improvements_needed: string[] | null
+          rating: number | null
+          treatment_plan_id: string
+          user_id: string
+          was_helpful: boolean | null
+        }
+        Insert: {
+          created_at?: string | null
+          feedback_text?: string | null
+          id?: string
+          improvements_needed?: string[] | null
+          rating?: number | null
+          treatment_plan_id: string
+          user_id: string
+          was_helpful?: boolean | null
+        }
+        Update: {
+          created_at?: string | null
+          feedback_text?: string | null
+          id?: string
+          improvements_needed?: string[] | null
+          rating?: number | null
+          treatment_plan_id?: string
+          user_id?: string
+          was_helpful?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "treatment_plan_feedback_treatment_plan_id_fkey"
+            columns: ["treatment_plan_id"]
+            isOneToOne: false
+            referencedRelation: "treatment_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      treatment_plan_services: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          display_order: number | null
+          evidence_level: string | null
+          frequency: string | null
+          id: string
+          price_per_session: number
+          rationale: string | null
+          service_category_id: string
+          sessions: number
+          treatment_plan_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          display_order?: number | null
+          evidence_level?: string | null
+          frequency?: string | null
+          id?: string
+          price_per_session: number
+          rationale?: string | null
+          service_category_id: string
+          sessions?: number
+          treatment_plan_id: string
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          display_order?: number | null
+          evidence_level?: string | null
+          frequency?: string | null
+          id?: string
+          price_per_session?: number
+          rationale?: string | null
+          service_category_id?: string
+          sessions?: number
+          treatment_plan_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "treatment_plan_services_service_category_id_fkey"
+            columns: ["service_category_id"]
+            isOneToOne: false
+            referencedRelation: "service_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "treatment_plan_services_treatment_plan_id_fkey"
+            columns: ["treatment_plan_id"]
+            isOneToOne: false
+            referencedRelation: "treatment_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      treatment_plans: {
+        Row: {
+          analyzed_symptoms: string[] | null
+          complexity_score: number | null
+          created_at: string | null
+          description: string | null
+          goal: string | null
+          id: string
+          is_favorite: boolean | null
+          match_score: number | null
+          name: string
+          plan_type: string
+          status: string | null
+          time_frame: string | null
+          total_cost: number
+          updated_at: string | null
+          user_id: string
+          user_input: string | null
+        }
+        Insert: {
+          analyzed_symptoms?: string[] | null
+          complexity_score?: number | null
+          created_at?: string | null
+          description?: string | null
+          goal?: string | null
+          id?: string
+          is_favorite?: boolean | null
+          match_score?: number | null
+          name: string
+          plan_type: string
+          status?: string | null
+          time_frame?: string | null
+          total_cost?: number
+          updated_at?: string | null
+          user_id: string
+          user_input?: string | null
+        }
+        Update: {
+          analyzed_symptoms?: string[] | null
+          complexity_score?: number | null
+          created_at?: string | null
+          description?: string | null
+          goal?: string | null
+          id?: string
+          is_favorite?: boolean | null
+          match_score?: number | null
+          name?: string
+          plan_type?: string
+          status?: string | null
+          time_frame?: string | null
+          total_cost?: number
+          updated_at?: string | null
+          user_id?: string
+          user_input?: string | null
         }
         Relationships: []
       }
@@ -2716,6 +3018,54 @@ export type Database = {
           intensity_preference?: string | null
           preferred_activities?: string[] | null
           training_frequency?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_treatment_preferences: {
+        Row: {
+          allergies: string[] | null
+          chronic_conditions: string[] | null
+          created_at: string | null
+          current_medications: string[] | null
+          id: string
+          max_budget_monthly: number | null
+          medical_aid_provider: string | null
+          prefer_online: boolean | null
+          preferred_gender: string | null
+          preferred_languages: string[] | null
+          preferred_location: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          allergies?: string[] | null
+          chronic_conditions?: string[] | null
+          created_at?: string | null
+          current_medications?: string[] | null
+          id?: string
+          max_budget_monthly?: number | null
+          medical_aid_provider?: string | null
+          prefer_online?: boolean | null
+          preferred_gender?: string | null
+          preferred_languages?: string[] | null
+          preferred_location?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          allergies?: string[] | null
+          chronic_conditions?: string[] | null
+          created_at?: string | null
+          current_medications?: string[] | null
+          id?: string
+          max_budget_monthly?: number | null
+          medical_aid_provider?: string | null
+          prefer_online?: boolean | null
+          preferred_gender?: string | null
+          preferred_languages?: string[] | null
+          preferred_location?: string | null
           updated_at?: string | null
           user_id?: string
         }

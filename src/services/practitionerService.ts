@@ -106,6 +106,7 @@ export const MOCK_PRACTITIONERS: HealthcarePractitioner[] = [
     consultationFee: 750,
     acceptsMedicalAid: true,
     specialties: ['doctor'],
+    calendlyUrl: 'https://calendly.com/example',
   },
   {
     id: '2',
@@ -142,6 +143,7 @@ export const MOCK_PRACTITIONERS: HealthcarePractitioner[] = [
     consultationFee: 1200,
     acceptsMedicalAid: true,
     specialties: ['psychologist'],
+    calendlyUrl: 'https://calendly.com/example',
   },
   {
     id: '4',

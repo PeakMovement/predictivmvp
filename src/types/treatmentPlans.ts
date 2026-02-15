@@ -82,6 +82,7 @@ export interface HealthcarePractitioner {
   contactPhone?: string;
   profileImageUrl?: string;
   specialties?: ServiceCategory[];
+  calendlyUrl?: string;
 }
 
 export interface UserTreatmentPreferences {

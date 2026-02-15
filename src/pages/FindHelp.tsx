@@ -6,14 +6,42 @@ import { TreatmentPlanInput } from '@/components/treatment/TreatmentPlanInput';
 import { TreatmentPlanCard } from '@/components/treatment/TreatmentPlanCard';
 import { TreatmentPlanDetails } from '@/components/treatment/TreatmentPlanDetails';
 import { PractitionerCard } from '@/components/treatment/PractitionerCard';
+import { BookingModal } from '@/components/help/BookingModal';
+import { CalendlyBookingModal } from '@/components/help/CalendlyBookingModal';
+import { BookingConfirmationModal } from '@/components/help/BookingConfirmationModal';
 import { generateTreatmentPlans, saveTreatmentPlan } from '@/services/treatmentPlanService';
 import { searchPractitioners, MOCK_PRACTITIONERS } from '@/services/practitionerService';
 import { TreatmentPlan, HealthcarePractitioner, ServiceCategory } from '@/types/treatmentPlans';
 import { supabase } from '@/integrations/supabase/client';
+import { useBookings } from '@/hooks/useBookings';
+import type { Provider } from '@/hooks/useProviders';
 
 type ViewMode = 'input' | 'plans' | 'plan-details' | 'practitioners';
 
+function mapPractitionerToProvider(practitioner: HealthcarePractitioner): Provider {
+  return {
+    id: practitioner.id,
+    name: practitioner.fullName,
+    specialty: practitioner.specialty,
+    location: practitioner.location,
+    rating: practitioner.rating,
+    match_score: 0.85,
+    experience_years: practitioner.yearsExperience || 0,
+    consultation_fee: practitioner.consultationFee || 0,
+    accepts_medical_aid: practitioner.acceptsMedicalAid,
+    telehealth_available: practitioner.onlineAvailable,
+    languages: practitioner.languages || [],
+    qualifications: practitioner.qualifications?.join(', ') || '',
+    bio: practitioner.bio,
+    calendly_url: practitioner.calendlyUrl,
+    available_slots: [],
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  };
+}
+
 export const FindHelp = () => {
+  const { lastBooking, clearLastBooking } = useBookings();
   const [viewMode, setViewMode] = useState<ViewMode>('input');
   const [isGenerating, setIsGenerating] = useState(false);
   const [isLoadingPractitioners, setIsLoadingPractitioners] = useState(false);
@@ -21,6 +49,7 @@ export const FindHelp = () => {
   const [generatedPlans, setGeneratedPlans] = useState<TreatmentPlan[]>([]);
   const [selectedPlan, setSelectedPlan] = useState<TreatmentPlan | null>(null);
   const [practitioners, setPractitioners] = useState<HealthcarePractitioner[]>([]);
+  const [bookingPractitioner, setBookingPractitioner] = useState<Provider | null>(null);
 
   useEffect(() => {
     const stored = sessionStorage.getItem('findHelpQuery');
@@ -186,10 +215,7 @@ export const FindHelp = () => {
                 key={practitioner.id}
                 practitioner={practitioner}
                 onBook={() => {
-                  toast({
-                    title: "Booking",
-                    description: `Booking with ${practitioner.fullName}`,
-                  });
+                  setBookingPractitioner(mapPractitionerToProvider(practitioner));
                 }}
                 onViewProfile={() => {
                   toast({
@@ -207,6 +233,33 @@ export const FindHelp = () => {
             </Button>
           </div>
         </div>
+
+        {bookingPractitioner?.calendly_url ? (
+          <CalendlyBookingModal
+            provider={bookingPractitioner}
+            open={bookingPractitioner !== null}
+            onClose={() => setBookingPractitioner(null)}
+          />
+        ) : (
+          <BookingModal
+            provider={bookingPractitioner}
+            open={bookingPractitioner !== null}
+            onClose={() => setBookingPractitioner(null)}
+            onSuccess={() => {
+              setBookingPractitioner(null);
+              toast({
+                title: "Booking Confirmed",
+                description: "Your appointment has been scheduled successfully.",
+              });
+            }}
+          />
+        )}
+
+        <BookingConfirmationModal
+          booking={lastBooking}
+          open={lastBooking !== null}
+          onClose={clearLastBooking}
+        />
       </div>
     );
   }

@@ -1,35 +1,34 @@
 import { useState, useEffect } from 'react';
-import { Sparkles, Zap, User, Loader2 } from 'lucide-react';
+import { Loader2, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Card } from '@/components/ui/card';
-import { ProviderCard } from '@/components/help/ProviderCard';
-import { ProviderDetailModal } from '@/components/help/ProviderDetailModal';
-import { BookingModal } from '@/components/help/BookingModal';
-import { CalendlyBookingModal } from '@/components/help/CalendlyBookingModal';
-import { BookingConfirmationModal } from '@/components/help/BookingConfirmationModal';
-import { useProviders, Provider } from '@/hooks/useProviders';
-import { useBookings } from '@/hooks/useBookings';
+import { toast } from '@/hooks/use-toast';
+import { TreatmentPlanInput } from '@/components/treatment/TreatmentPlanInput';
+import { TreatmentPlanCard } from '@/components/treatment/TreatmentPlanCard';
+import { TreatmentPlanDetails } from '@/components/treatment/TreatmentPlanDetails';
+import { PractitionerCard } from '@/components/treatment/PractitionerCard';
+import { generateTreatmentPlans, saveTreatmentPlan } from '@/services/treatmentPlanService';
+import { searchPractitioners, MOCK_PRACTITIONERS } from '@/services/practitionerService';
+import { TreatmentPlan, HealthcarePractitioner, ServiceCategory } from '@/types/treatmentPlans';
+import { supabase } from '@/integrations/supabase/client';
+
+type ViewMode = 'input' | 'plans' | 'plan-details' | 'practitioners';
 
 export const FindHelp = () => {
-  const { providers, isLoading, searchProviders } = useProviders();
-  const { lastBooking, clearLastBooking } = useBookings();
-
-  const [healthConcern, setHealthConcern] = useState('');
-  const [selectedProvider, setSelectedProvider] = useState<Provider | null>(null);
-  const [bookingProvider, setBookingProvider] = useState<Provider | null>(null);
-  const [showResults, setShowResults] = useState(false);
+  const [viewMode, setViewMode] = useState<ViewMode>('input');
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [isLoadingPractitioners, setIsLoadingPractitioners] = useState(false);
+  const [userInput, setUserInput] = useState('');
+  const [generatedPlans, setGeneratedPlans] = useState<TreatmentPlan[]>([]);
+  const [selectedPlan, setSelectedPlan] = useState<TreatmentPlan | null>(null);
+  const [practitioners, setPractitioners] = useState<HealthcarePractitioner[]>([]);
 
   useEffect(() => {
     const stored = sessionStorage.getItem('findHelpQuery');
     if (stored) {
       try {
-        const { q, severity } = JSON.parse(stored);
+        const { q } = JSON.parse(stored);
         if (q) {
-          const concern = severity ? `${q} (Severity: ${severity})` : q;
-          setHealthConcern(concern);
-          setTimeout(() => handleFindPhysician(concern), 100);
+          handleGeneratePlan(q);
         }
         sessionStorage.removeItem('findHelpQuery');
       } catch (e) {
@@ -38,130 +37,224 @@ export const FindHelp = () => {
     }
   }, []);
 
-  const handleFindPhysician = async (concern?: string) => {
-    const searchText = concern || healthConcern;
-    if (!searchText.trim()) return;
+  const handleGeneratePlan = async (input: string) => {
+    setIsGenerating(true);
+    setUserInput(input);
 
-    await searchProviders({ query: searchText });
-    setShowResults(true);
+    try {
+      const plans = await generateTreatmentPlans(input);
+      setGeneratedPlans(plans);
+      setViewMode('plans');
+
+      toast({
+        title: "Plans Generated",
+        description: `Created ${plans.length} personalized treatment plan${plans.length > 1 ? 's' : ''} for you.`,
+      });
+    } catch (error) {
+      console.error('Error generating plans:', error);
+      toast({
+        title: "Error",
+        description: "Failed to generate treatment plans. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsGenerating(false);
+    }
   };
 
-  const handleExampleClick = (example: string) => {
-    setHealthConcern(example);
-    handleFindPhysician(example);
+  const handleSelectPlan = (plan: TreatmentPlan) => {
+    setSelectedPlan(plan);
+    setViewMode('plan-details');
   };
 
-  const handleProviderSelect = (provider: Provider) => {
-    setSelectedProvider(provider);
+  const handleConfirmPlan = async () => {
+    if (!selectedPlan) return;
+
+    setIsLoadingPractitioners(true);
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+
+      if (user) {
+        await saveTreatmentPlan(selectedPlan, user.id, userInput);
+      }
+
+      const serviceCategories = selectedPlan.services.map(s => s.type) as ServiceCategory[];
+
+      let matchedPractitioners: HealthcarePractitioner[];
+      try {
+        matchedPractitioners = await searchPractitioners({
+          serviceCategories,
+        });
+      } catch (error) {
+        console.log('Using mock practitioners as fallback');
+        matchedPractitioners = MOCK_PRACTITIONERS.filter(p =>
+          p.specialties?.some(s => serviceCategories.includes(s))
+        );
+      }
+
+      if (matchedPractitioners.length === 0) {
+        matchedPractitioners = MOCK_PRACTITIONERS.slice(0, 3);
+      }
+
+      setPractitioners(matchedPractitioners);
+      setViewMode('practitioners');
+
+      toast({
+        title: "Practitioners Found",
+        description: `Found ${matchedPractitioners.length} healthcare providers for your plan.`,
+      });
+    } catch (error) {
+      console.error('Error finding practitioners:', error);
+      toast({
+        title: "Error",
+        description: "Failed to find practitioners. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoadingPractitioners(false);
+    }
   };
 
-  const handleBookProvider = (provider: Provider) => {
-    setBookingProvider(provider);
+  const handleBackToInput = () => {
+    setViewMode('input');
+    setGeneratedPlans([]);
+    setSelectedPlan(null);
+    setPractitioners([]);
   };
 
-  const handleBookingSuccess = () => {
-    setBookingProvider(null);
+  const handleBackToPlans = () => {
+    setViewMode('plans');
+    setSelectedPlan(null);
   };
 
-  const handleCloseConfirmation = () => {
-    clearLastBooking();
-  };
+  if (isLoadingPractitioners) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto mb-4" />
+          <p className="text-lg font-medium">Finding the best practitioners for you...</p>
+          <p className="text-sm text-muted-foreground mt-2">
+            Matching your needs with qualified healthcare providers
+          </p>
+        </div>
+      </div>
+    );
+  }
 
-  const exampleSearches = [
-    'Lower back pain, R1000, Johannesburg',
-    'Skin issues - acne, R800, Cape Town',
-    'Chest pain, specialist needed, R1200, Durban',
-  ];
-
-  if (showResults) {
+  if (viewMode === 'practitioners' && practitioners.length > 0) {
     return (
       <div className="min-h-screen bg-background">
         <div className="container mx-auto px-4 py-6 max-w-7xl">
           <Button
             variant="ghost"
-            onClick={() => setShowResults(false)}
+            onClick={handleBackToPlans}
             className="mb-6"
           >
-            ← Back to Search
+            ← Back to Plans
           </Button>
 
-          <div className="mb-6">
-            <h2 className="text-2xl font-bold mb-2">Search Results</h2>
+          <div className="mb-8">
+            <div className="flex items-center gap-3 mb-2">
+              <Users className="h-8 w-8 text-primary" />
+              <h1 className="text-3xl font-bold">Recommended Practitioners</h1>
+            </div>
             <p className="text-muted-foreground">
-              {isLoading ? 'Searching...' : `${providers.length} providers found`}
+              {practitioners.length} healthcare provider{practitioners.length > 1 ? 's' : ''} matched to your treatment plan
             </p>
           </div>
 
-          {isLoading ? (
-            <div className="flex items-center justify-center py-12">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            </div>
-          ) : providers.length === 0 ? (
-            <div className="text-center py-12">
-              <div className="inline-block p-4 rounded-full bg-muted/50 mb-4">
-                <svg
-                  className="h-12 w-12 text-muted-foreground"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M12 12h.01M12 12h.01M12 12h.01M12 21a9 9 0 100-18 9 9 0 000 18z"
-                  />
-                </svg>
+          {selectedPlan && (
+            <div className="mb-6 p-4 bg-primary/5 border border-primary/20 rounded-lg">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="font-semibold">{selectedPlan.name}</h3>
+                  <p className="text-sm text-muted-foreground">
+                    {selectedPlan.services.length} services · R {selectedPlan.totalCost.toLocaleString()}
+                  </p>
+                </div>
+                <Button variant="outline" size="sm" onClick={handleBackToPlans}>
+                  Change Plan
+                </Button>
               </div>
-              <h3 className="text-lg font-semibold mb-2">No providers found</h3>
-              <p className="text-muted-foreground mb-4">
-                Try refining your search or adjusting your criteria
-              </p>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {providers.map((provider) => (
-                <ProviderCard
-                  key={provider.id}
-                  provider={provider}
-                  onSelect={handleProviderSelect}
-                  onBook={handleBookProvider}
-                />
-              ))}
             </div>
           )}
+
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {practitioners.map((practitioner) => (
+              <PractitionerCard
+                key={practitioner.id}
+                practitioner={practitioner}
+                onBook={() => {
+                  toast({
+                    title: "Booking",
+                    description: `Booking with ${practitioner.fullName}`,
+                  });
+                }}
+                onViewProfile={() => {
+                  toast({
+                    title: "Profile",
+                    description: `Viewing ${practitioner.fullName}'s profile`,
+                  });
+                }}
+              />
+            ))}
+          </div>
+
+          <div className="mt-8 text-center">
+            <Button onClick={handleBackToInput} variant="outline">
+              Start New Search
+            </Button>
+          </div>
         </div>
+      </div>
+    );
+  }
 
-        <ProviderDetailModal
-          provider={selectedProvider}
-          open={selectedProvider !== null}
-          onClose={() => setSelectedProvider(null)}
-          onBook={(provider) => {
-            setSelectedProvider(null);
-            handleBookProvider(provider);
-          }}
-        />
-
-        {bookingProvider?.calendly_url ? (
-          <CalendlyBookingModal
-            provider={bookingProvider}
-            open={bookingProvider !== null}
-            onClose={() => setBookingProvider(null)}
+  if (viewMode === 'plan-details' && selectedPlan) {
+    return (
+      <div className="min-h-screen bg-background">
+        <div className="container mx-auto px-4 py-6 max-w-4xl">
+          <TreatmentPlanDetails
+            plan={selectedPlan}
+            onBack={handleBackToPlans}
+            onConfirm={handleConfirmPlan}
           />
-        ) : (
-          <BookingModal
-            provider={bookingProvider}
-            open={bookingProvider !== null}
-            onClose={() => setBookingProvider(null)}
-            onSuccess={handleBookingSuccess}
-          />
-        )}
+        </div>
+      </div>
+    );
+  }
 
-        <BookingConfirmationModal
-          booking={lastBooking}
-          open={lastBooking !== null}
-          onClose={handleCloseConfirmation}
-        />
+  if (viewMode === 'plans' && generatedPlans.length > 0) {
+    return (
+      <div className="min-h-screen bg-background">
+        <div className="container mx-auto px-4 py-6 max-w-7xl">
+          <Button
+            variant="ghost"
+            onClick={handleBackToInput}
+            className="mb-6"
+          >
+            ← New Search
+          </Button>
+
+          <div className="mb-8">
+            <h2 className="text-3xl font-bold mb-2">Your Personalized Treatment Plans</h2>
+            <p className="text-muted-foreground">
+              {generatedPlans.length} plan{generatedPlans.length > 1 ? 's' : ''} tailored to your needs
+            </p>
+          </div>
+
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {generatedPlans.map((plan) => (
+              <TreatmentPlanCard
+                key={plan.id}
+                plan={plan}
+                onSelect={() => handleSelectPlan(plan)}
+                onViewDetails={() => handleSelectPlan(plan)}
+              />
+            ))}
+          </div>
+        </div>
       </div>
     );
   }
@@ -169,103 +262,10 @@ export const FindHelp = () => {
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-muted/20">
       <div className="container mx-auto px-4 py-12 max-w-4xl">
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-violet-500/10 mb-4">
-            <Sparkles className="h-8 w-8 text-violet-500" />
-          </div>
-          <h1 className="text-4xl font-bold mb-3">AI Health Assistant</h1>
-          <p className="text-lg text-muted-foreground">
-            Find the right physician for your health needs
-          </p>
-        </div>
-
-        <Tabs defaultValue="quick" className="mb-8">
-          <TabsList className="grid w-full grid-cols-2 mb-6">
-            <TabsTrigger value="quick" className="gap-2">
-              <Zap className="h-4 w-4" />
-              Quick Search
-            </TabsTrigger>
-            <TabsTrigger value="detailed" className="gap-2">
-              <User className="h-4 w-4" />
-              Detailed Assessment
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="quick" className="space-y-6">
-            <Card className="p-6">
-              <div className="space-y-4">
-                <div className="flex items-start gap-2">
-                  <User className="h-5 w-5 text-violet-500 mt-1" />
-                  <div className="flex-1">
-                    <label className="text-sm font-medium mb-2 block">
-                      Describe your health concern <span className="text-red-500">*</span>
-                    </label>
-                    <Textarea
-                      value={healthConcern}
-                      onChange={(e) => setHealthConcern(e.target.value)}
-                      placeholder="Describe your health concern, budget, and preferred location..."
-                      className="min-h-[120px] resize-none"
-                    />
-                    <p className="text-xs text-muted-foreground mt-2">
-                      * Please try to mention the budget, issue and location if possible
-                    </p>
-                  </div>
-                </div>
-
-                <Button
-                  onClick={() => handleFindPhysician()}
-                  disabled={!healthConcern.trim() || isLoading}
-                  className="w-full bg-violet-600 hover:bg-violet-700 text-white py-6 text-lg"
-                  size="lg"
-                >
-                  {isLoading ? (
-                    <>
-                      <Loader2 className="h-5 w-5 mr-2 animate-spin" />
-                      Finding Physicians...
-                    </>
-                  ) : (
-                    <>
-                      <Sparkles className="h-5 w-5 mr-2" />
-                      Find My Physician
-                    </>
-                  )}
-                </Button>
-              </div>
-            </Card>
-
-            <div>
-              <div className="flex items-center gap-2 mb-4">
-                <Sparkles className="h-4 w-4 text-violet-500" />
-                <h3 className="text-sm font-medium">Try these examples</h3>
-              </div>
-              <div className="space-y-2">
-                {exampleSearches.map((example, index) => (
-                  <button
-                    key={index}
-                    onClick={() => handleExampleClick(example)}
-                    className="w-full text-left px-4 py-3 rounded-lg border border-border hover:border-violet-500/50 hover:bg-violet-500/5 transition-colors flex items-center gap-3 group"
-                  >
-                    <User className="h-4 w-4 text-violet-500 opacity-60 group-hover:opacity-100" />
-                    <span className="text-sm">{example}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-          </TabsContent>
-
-          <TabsContent value="detailed" className="space-y-6">
-            <Card className="p-6">
-              <div className="text-center py-12">
-                <User className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-                <h3 className="text-lg font-semibold mb-2">Detailed Assessment</h3>
-                <p className="text-muted-foreground mb-4">
-                  Complete a comprehensive health assessment to get personalized provider recommendations
-                </p>
-                <Button variant="outline">Coming Soon</Button>
-              </div>
-            </Card>
-          </TabsContent>
-        </Tabs>
+        <TreatmentPlanInput
+          onGenerate={handleGeneratePlan}
+          isLoading={isGenerating}
+        />
       </div>
     </div>
   );

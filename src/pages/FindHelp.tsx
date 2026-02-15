@@ -5,6 +5,7 @@ import { ProviderSearchFilters } from '@/components/help/ProviderSearchFilters';
 import { ProviderCard } from '@/components/help/ProviderCard';
 import { ProviderDetailModal } from '@/components/help/ProviderDetailModal';
 import { BookingModal } from '@/components/help/BookingModal';
+import { CalendlyBookingModal } from '@/components/help/CalendlyBookingModal';
 import { BookingConfirmationModal } from '@/components/help/BookingConfirmationModal';
 import { useProviders, Provider, SearchFilters } from '@/hooks/useProviders';
 import { useBookings } from '@/hooks/useBookings';
@@ -199,12 +200,20 @@ export const FindHelp = () => {
         }}
       />
 
-      <BookingModal
-        provider={bookingProvider}
-        open={bookingProvider !== null}
-        onClose={() => setBookingProvider(null)}
-        onSuccess={handleBookingSuccess}
-      />
+      {bookingProvider?.calendly_url ? (
+        <CalendlyBookingModal
+          provider={bookingProvider}
+          open={bookingProvider !== null}
+          onClose={() => setBookingProvider(null)}
+        />
+      ) : (
+        <BookingModal
+          provider={bookingProvider}
+          open={bookingProvider !== null}
+          onClose={() => setBookingProvider(null)}
+          onSuccess={handleBookingSuccess}
+        />
+      )}
 
       <BookingConfirmationModal
         booking={lastBooking}

@@ -36,6 +36,7 @@ import {
 import { Provider, ProviderReview, useProviders } from '@/hooks/useProviders';
 import { ReviewForm } from './ReviewForm';
 import { Skeleton } from '@/components/ui/skeleton';
+import { CalendlyEmbed } from './CalendlyEmbed';
 
 interface ProviderDetailModalProps {
   provider: Provider | null;
@@ -63,6 +64,7 @@ export function ProviderDetailModal({
   const [showReviewForm, setShowReviewForm] = useState(false);
   const [editingReview, setEditingReview] = useState<ProviderReview | null>(null);
   const [deletingReviewId, setDeletingReviewId] = useState<string | null>(null);
+  const [showCalendlyEmbed, setShowCalendlyEmbed] = useState(false);
 
   useEffect(() => {
     if (provider && open) {
@@ -435,14 +437,39 @@ export function ProviderDetailModal({
             </div>
           </div>
 
-          <div className="flex gap-2 pt-4 border-t">
-            <Button onClick={() => onBook(provider)} className="flex-1">
-              Book Appointment
-            </Button>
-            <Button onClick={onClose} variant="outline" className="flex-1">
-              Close
-            </Button>
-          </div>
+          {showCalendlyEmbed && provider.calendly_url ? (
+            <div className="pt-4 border-t">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold">Book Your Appointment</h3>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowCalendlyEmbed(false)}
+                >
+                  Back to Details
+                </Button>
+              </div>
+              <CalendlyEmbed calendlyUrl={provider.calendly_url} providerName={provider.name} />
+            </div>
+          ) : (
+            <div className="flex gap-2 pt-4 border-t">
+              <Button
+                onClick={() => {
+                  if (provider.calendly_url) {
+                    setShowCalendlyEmbed(true);
+                  } else {
+                    onBook(provider);
+                  }
+                }}
+                className="flex-1"
+              >
+                Book Appointment
+              </Button>
+              <Button onClick={onClose} variant="outline" className="flex-1">
+                Close
+              </Button>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
 

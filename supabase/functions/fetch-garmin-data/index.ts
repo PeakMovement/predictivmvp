@@ -239,10 +239,13 @@ async function syncUserGarminData(
   for (let d = DAYS_TO_FETCH - 1; d >= 0; d--) {
     const dayStart = todayMidnight - d * DAY_SECONDS;
     const dayEnd = dayStart + DAY_SECONDS;
+    const dayDate = new Date(dayStart * 1000).toISOString().split("T")[0];
     const params = {
       uploadStartTimeInSeconds: dayStart.toString(),
       uploadEndTimeInSeconds: dayEnd.toString(),
     };
+
+    console.log(`[fetch-garmin-data] User ${userId} | Day ${dayDate} | range ${dayStart}-${dayEnd}`);
 
     const [dailiesResult, sleepsResult, activitiesResult] = await Promise.allSettled([
       garminFetch<GarminDaily>("/dailies", accessToken, params),
@@ -250,9 +253,26 @@ async function syncUserGarminData(
       garminFetch<GarminActivity>("/activities", accessToken, params),
     ]);
 
-    if (dailiesResult.status === "fulfilled") dailies.push(...dailiesResult.value);
-    if (sleepsResult.status === "fulfilled") sleeps.push(...sleepsResult.value);
-    if (activitiesResult.status === "fulfilled") activities.push(...activitiesResult.value);
+    if (dailiesResult.status === "fulfilled") {
+      console.log(`[fetch-garmin-data] User ${userId} | ${dayDate} dailies: ${JSON.stringify(dailiesResult.value).substring(0, 500)}`);
+      dailies.push(...dailiesResult.value);
+    } else {
+      console.error(`[fetch-garmin-data] User ${userId} | ${dayDate} dailies FAILED: ${dailiesResult.reason}`);
+    }
+
+    if (sleepsResult.status === "fulfilled") {
+      console.log(`[fetch-garmin-data] User ${userId} | ${dayDate} sleeps: ${JSON.stringify(sleepsResult.value).substring(0, 500)}`);
+      sleeps.push(...sleepsResult.value);
+    } else {
+      console.error(`[fetch-garmin-data] User ${userId} | ${dayDate} sleeps FAILED: ${sleepsResult.reason}`);
+    }
+
+    if (activitiesResult.status === "fulfilled") {
+      console.log(`[fetch-garmin-data] User ${userId} | ${dayDate} activities RAW: ${JSON.stringify(activitiesResult.value).substring(0, 1000)}`);
+      activities.push(...activitiesResult.value);
+    } else {
+      console.error(`[fetch-garmin-data] User ${userId} | ${dayDate} activities FAILED: ${activitiesResult.reason}`);
+    }
   }
 
   console.log(`[fetch-garmin-data] User ${userId}: ${dailies.length} dailies, ${sleeps.length} sleeps, ${activities.length} activities`);

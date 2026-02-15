@@ -1,37 +1,35 @@
 import { useState, useEffect } from 'react';
-import { Map as MapIcon, List, Loader2 } from 'lucide-react';
+import { Sparkles, Zap, User, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { ProviderSearchFilters } from '@/components/help/ProviderSearchFilters';
+import { Textarea } from '@/components/ui/textarea';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Card } from '@/components/ui/card';
 import { ProviderCard } from '@/components/help/ProviderCard';
 import { ProviderDetailModal } from '@/components/help/ProviderDetailModal';
 import { BookingModal } from '@/components/help/BookingModal';
 import { CalendlyBookingModal } from '@/components/help/CalendlyBookingModal';
 import { BookingConfirmationModal } from '@/components/help/BookingConfirmationModal';
-import { useProviders, Provider, SearchFilters } from '@/hooks/useProviders';
+import { useProviders, Provider } from '@/hooks/useProviders';
 import { useBookings } from '@/hooks/useBookings';
-import { useIsMobile } from '@/hooks/use-mobile';
 
 export const FindHelp = () => {
-  const isMobile = useIsMobile();
   const { providers, isLoading, searchProviders } = useProviders();
   const { lastBooking, clearLastBooking } = useBookings();
 
-  const [filters, setFilters] = useState<SearchFilters>({});
+  const [healthConcern, setHealthConcern] = useState('');
   const [selectedProvider, setSelectedProvider] = useState<Provider | null>(null);
   const [bookingProvider, setBookingProvider] = useState<Provider | null>(null);
-  const [showMap, setShowMap] = useState(false);
-  const [hasSearched, setHasSearched] = useState(false);
+  const [showResults, setShowResults] = useState(false);
 
   useEffect(() => {
-    handleSearch();
-
     const stored = sessionStorage.getItem('findHelpQuery');
     if (stored) {
       try {
         const { q, severity } = JSON.parse(stored);
         if (q) {
-          setFilters({ query: q });
-          setTimeout(() => handleSearch({ query: q }), 100);
+          const concern = severity ? `${q} (Severity: ${severity})` : q;
+          setHealthConcern(concern);
+          setTimeout(() => handleFindPhysician(concern), 100);
         }
         sessionStorage.removeItem('findHelpQuery');
       } catch (e) {
@@ -40,14 +38,17 @@ export const FindHelp = () => {
     }
   }, []);
 
-  const handleSearch = async (overrideFilters?: SearchFilters) => {
-    const searchFilters = overrideFilters || filters;
-    await searchProviders(searchFilters);
-    setHasSearched(true);
+  const handleFindPhysician = async (concern?: string) => {
+    const searchText = concern || healthConcern;
+    if (!searchText.trim()) return;
+
+    await searchProviders({ query: searchText });
+    setShowResults(true);
   };
 
-  const handleFiltersChange = (newFilters: SearchFilters) => {
-    setFilters(newFilters);
+  const handleExampleClick = (example: string) => {
+    setHealthConcern(example);
+    handleFindPhysician(example);
   };
 
   const handleProviderSelect = (provider: Provider) => {
@@ -66,160 +67,206 @@ export const FindHelp = () => {
     clearLastBooking();
   };
 
+  const exampleSearches = [
+    'Lower back pain, R1000, Johannesburg',
+    'Skin issues - acne, R800, Cape Town',
+    'Chest pain, specialist needed, R1200, Durban',
+  ];
+
+  if (showResults) {
+    return (
+      <div className="min-h-screen bg-background">
+        <div className="container mx-auto px-4 py-6 max-w-7xl">
+          <Button
+            variant="ghost"
+            onClick={() => setShowResults(false)}
+            className="mb-6"
+          >
+            ← Back to Search
+          </Button>
+
+          <div className="mb-6">
+            <h2 className="text-2xl font-bold mb-2">Search Results</h2>
+            <p className="text-muted-foreground">
+              {isLoading ? 'Searching...' : `${providers.length} providers found`}
+            </p>
+          </div>
+
+          {isLoading ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+          ) : providers.length === 0 ? (
+            <div className="text-center py-12">
+              <div className="inline-block p-4 rounded-full bg-muted/50 mb-4">
+                <svg
+                  className="h-12 w-12 text-muted-foreground"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M12 12h.01M12 12h.01M12 12h.01M12 21a9 9 0 100-18 9 9 0 000 18z"
+                  />
+                </svg>
+              </div>
+              <h3 className="text-lg font-semibold mb-2">No providers found</h3>
+              <p className="text-muted-foreground mb-4">
+                Try refining your search or adjusting your criteria
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {providers.map((provider) => (
+                <ProviderCard
+                  key={provider.id}
+                  provider={provider}
+                  onSelect={handleProviderSelect}
+                  onBook={handleBookProvider}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+
+        <ProviderDetailModal
+          provider={selectedProvider}
+          open={selectedProvider !== null}
+          onClose={() => setSelectedProvider(null)}
+          onBook={(provider) => {
+            setSelectedProvider(null);
+            handleBookProvider(provider);
+          }}
+        />
+
+        {bookingProvider?.calendly_url ? (
+          <CalendlyBookingModal
+            provider={bookingProvider}
+            open={bookingProvider !== null}
+            onClose={() => setBookingProvider(null)}
+          />
+        ) : (
+          <BookingModal
+            provider={bookingProvider}
+            open={bookingProvider !== null}
+            onClose={() => setBookingProvider(null)}
+            onSuccess={handleBookingSuccess}
+          />
+        )}
+
+        <BookingConfirmationModal
+          booking={lastBooking}
+          open={lastBooking !== null}
+          onClose={handleCloseConfirmation}
+        />
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-background">
-      <div className="container mx-auto px-4 py-6 max-w-7xl">
-        <div className="mb-6">
-          <h1 className="text-3xl font-bold mb-2">Find Healthcare Providers</h1>
-          <p className="text-muted-foreground">
-            Search for specialists, book appointments, and read reviews from other patients
+    <div className="min-h-screen bg-gradient-to-b from-background to-muted/20">
+      <div className="container mx-auto px-4 py-12 max-w-4xl">
+        <div className="text-center mb-8">
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-violet-500/10 mb-4">
+            <Sparkles className="h-8 w-8 text-violet-500" />
+          </div>
+          <h1 className="text-4xl font-bold mb-3">AI Health Assistant</h1>
+          <p className="text-lg text-muted-foreground">
+            Find the right physician for your health needs
           </p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-          {!isMobile && (
-            <aside className="lg:col-span-1">
-              <div className="sticky top-6">
-                <ProviderSearchFilters
-                  filters={filters}
-                  onFiltersChange={handleFiltersChange}
-                  onSearch={handleSearch}
-                />
-              </div>
-            </aside>
-          )}
+        <Tabs defaultValue="quick" className="mb-8">
+          <TabsList className="grid w-full grid-cols-2 mb-6">
+            <TabsTrigger value="quick" className="gap-2">
+              <Zap className="h-4 w-4" />
+              Quick Search
+            </TabsTrigger>
+            <TabsTrigger value="detailed" className="gap-2">
+              <User className="h-4 w-4" />
+              Detailed Assessment
+            </TabsTrigger>
+          </TabsList>
 
-          <main className={isMobile ? 'col-span-1' : 'lg:col-span-3'}>
-            {isMobile && (
-              <div className="mb-4">
-                <ProviderSearchFilters
-                  filters={filters}
-                  onFiltersChange={handleFiltersChange}
-                  onSearch={handleSearch}
-                  isMobile
-                />
-              </div>
-            )}
-
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                {hasSearched && (
-                  <p className="text-sm text-muted-foreground">
-                    {isLoading ? 'Searching...' : `${providers.length} providers found`}
-                  </p>
-                )}
-              </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setShowMap(!showMap)}
-                className="gap-2"
-              >
-                {showMap ? (
-                  <>
-                    <List className="h-4 w-4" />
-                    List View
-                  </>
-                ) : (
-                  <>
-                    <MapIcon className="h-4 w-4" />
-                    Map View
-                  </>
-                )}
-              </Button>
-            </div>
-
-            {showMap && (
-              <div className="mb-6 rounded-lg border bg-muted/50 h-[400px] flex items-center justify-center">
-                <div className="text-center text-muted-foreground">
-                  <MapIcon className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                  <p>Map view coming soon</p>
-                  <p className="text-sm mt-1">Interactive map with provider locations</p>
-                </div>
-              </div>
-            )}
-
-            {isLoading ? (
-              <div className="flex items-center justify-center py-12">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
-              </div>
-            ) : providers.length === 0 && hasSearched ? (
-              <div className="text-center py-12">
-                <div className="inline-block p-4 rounded-full bg-muted/50 mb-4">
-                  <svg
-                    className="h-12 w-12 text-muted-foreground"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M12 12h.01M12 12h.01M12 12h.01M12 21a9 9 0 100-18 9 9 0 000 18z"
+          <TabsContent value="quick" className="space-y-6">
+            <Card className="p-6">
+              <div className="space-y-4">
+                <div className="flex items-start gap-2">
+                  <User className="h-5 w-5 text-violet-500 mt-1" />
+                  <div className="flex-1">
+                    <label className="text-sm font-medium mb-2 block">
+                      Describe your health concern <span className="text-red-500">*</span>
+                    </label>
+                    <Textarea
+                      value={healthConcern}
+                      onChange={(e) => setHealthConcern(e.target.value)}
+                      placeholder="Describe your health concern, budget, and preferred location..."
+                      className="min-h-[120px] resize-none"
                     />
-                  </svg>
+                    <p className="text-xs text-muted-foreground mt-2">
+                      * Please try to mention the budget, issue and location if possible
+                    </p>
+                  </div>
                 </div>
-                <h3 className="text-lg font-semibold mb-2">No providers found</h3>
-                <p className="text-muted-foreground mb-4">
-                  Try adjusting your search filters to find more providers
-                </p>
+
                 <Button
-                  variant="outline"
-                  onClick={() => {
-                    setFilters({});
-                    handleSearch({});
-                  }}
+                  onClick={() => handleFindPhysician()}
+                  disabled={!healthConcern.trim() || isLoading}
+                  className="w-full bg-violet-600 hover:bg-violet-700 text-white py-6 text-lg"
+                  size="lg"
                 >
-                  Clear Filters
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+                      Finding Physicians...
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="h-5 w-5 mr-2" />
+                      Find My Physician
+                    </>
+                  )}
                 </Button>
               </div>
-            ) : (
-              <div className="space-y-4">
-                {providers.map((provider) => (
-                  <ProviderCard
-                    key={provider.id}
-                    provider={provider}
-                    onSelect={handleProviderSelect}
-                    onBook={handleBookProvider}
-                  />
+            </Card>
+
+            <div>
+              <div className="flex items-center gap-2 mb-4">
+                <Sparkles className="h-4 w-4 text-violet-500" />
+                <h3 className="text-sm font-medium">Try these examples</h3>
+              </div>
+              <div className="space-y-2">
+                {exampleSearches.map((example, index) => (
+                  <button
+                    key={index}
+                    onClick={() => handleExampleClick(example)}
+                    className="w-full text-left px-4 py-3 rounded-lg border border-border hover:border-violet-500/50 hover:bg-violet-500/5 transition-colors flex items-center gap-3 group"
+                  >
+                    <User className="h-4 w-4 text-violet-500 opacity-60 group-hover:opacity-100" />
+                    <span className="text-sm">{example}</span>
+                  </button>
                 ))}
               </div>
-            )}
-          </main>
-        </div>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="detailed" className="space-y-6">
+            <Card className="p-6">
+              <div className="text-center py-12">
+                <User className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+                <h3 className="text-lg font-semibold mb-2">Detailed Assessment</h3>
+                <p className="text-muted-foreground mb-4">
+                  Complete a comprehensive health assessment to get personalized provider recommendations
+                </p>
+                <Button variant="outline">Coming Soon</Button>
+              </div>
+            </Card>
+          </TabsContent>
+        </Tabs>
       </div>
-
-      <ProviderDetailModal
-        provider={selectedProvider}
-        open={selectedProvider !== null}
-        onClose={() => setSelectedProvider(null)}
-        onBook={(provider) => {
-          setSelectedProvider(null);
-          handleBookProvider(provider);
-        }}
-      />
-
-      {bookingProvider?.calendly_url ? (
-        <CalendlyBookingModal
-          provider={bookingProvider}
-          open={bookingProvider !== null}
-          onClose={() => setBookingProvider(null)}
-        />
-      ) : (
-        <BookingModal
-          provider={bookingProvider}
-          open={bookingProvider !== null}
-          onClose={() => setBookingProvider(null)}
-          onSuccess={handleBookingSuccess}
-        />
-      )}
-
-      <BookingConfirmationModal
-        booking={lastBooking}
-        open={lastBooking !== null}
-        onClose={handleCloseConfirmation}
-      />
     </div>
   );
 };

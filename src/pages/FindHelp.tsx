@@ -174,7 +174,7 @@ export const FindHelp = () => {
   if (viewMode === 'practitioners' && practitioners.length > 0) {
     return (
       <div className="min-h-screen bg-background">
-        <div className="container mx-auto px-4 py-6 max-w-7xl">
+        <div className="container mx-auto px-4 py-6 pb-28 max-w-7xl">
           <Button
             variant="ghost"
             onClick={handleBackToPlans}
@@ -267,7 +267,7 @@ export const FindHelp = () => {
   if (viewMode === 'plan-details' && selectedPlan) {
     return (
       <div className="min-h-screen bg-background">
-        <div className="container mx-auto px-4 py-6 max-w-4xl">
+        <div className="container mx-auto px-4 py-6 pb-28 max-w-4xl">
           <TreatmentPlanDetails
             plan={selectedPlan}
             onBack={handleBackToPlans}
@@ -281,7 +281,7 @@ export const FindHelp = () => {
   if (viewMode === 'plans' && generatedPlans.length > 0) {
     return (
       <div className="min-h-screen bg-background">
-        <div className="container mx-auto px-4 py-6 max-w-7xl">
+        <div className="container mx-auto px-4 py-6 pb-28 max-w-7xl">
           <Button
             variant="ghost"
             onClick={handleBackToInput}
@@ -314,7 +314,7 @@ export const FindHelp = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-muted/20">
-      <div className="container mx-auto px-4 py-12 max-w-4xl">
+      <div className="container mx-auto px-4 py-12 pb-28 max-w-4xl">
         <TreatmentPlanInput
           onGenerate={handleGeneratePlan}
           isLoading={isGenerating}

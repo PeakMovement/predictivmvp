@@ -21,12 +21,21 @@ export interface Provider {
   availability?: 'immediate' | 'same_day' | 'next_day' | 'within_week' | 'within_month';
   accepting_new_patients?: boolean;
   years_experience?: number;
+  experience_years?: number;
   education?: string;
   hospital_affiliations?: string[];
   languages?: string[];
   telehealth_available?: boolean;
   verified?: boolean;
   calendly_url?: string;
+  match_score?: number;
+  consultation_fee?: number;
+  accepts_medical_aid?: boolean;
+  qualifications?: string;
+  bio?: string;
+  available_slots?: string[];
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface ProviderReview {

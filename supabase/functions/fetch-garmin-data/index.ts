@@ -222,46 +222,40 @@ async function syncUserGarminData(
 
   const accessToken = tokenRow.access_token;
 
-  // ── Define time range (last 7 days) ───────────────────────────────
-  const now = Math.floor(Date.now() / 1000);
-  const sevenDaysAgo = now - 7 * 24 * 60 * 60;
+  // ── Define time range (last 7 days, paginated by day) ─────────────
+  // Garmin Wellness API enforces a max range of 86400 seconds (24h) per request.
+  // We paginate day-by-day to cover a full 7-day window.
+  const DAYS_TO_FETCH = 7;
+  const DAY_SECONDS = 86400;
 
-  const timeParams = {
-    uploadStartTimeInSeconds: sevenDaysAgo.toString(),
-    uploadEndTimeInSeconds: now.toString(),
-  };
-
-  // ── Fetch dailies + sleeps + activities in parallel ──────────────
   let dailies: GarminDaily[] = [];
   let sleeps: GarminSleep[] = [];
   let activities: GarminActivity[] = [];
 
-  const [dailiesResult, sleepsResult, activitiesResult] = await Promise.allSettled([
-    garminFetch<GarminDaily>("/dailies", accessToken, timeParams),
-    garminFetch<GarminSleep>("/sleeps", accessToken, timeParams),
-    garminFetch<GarminActivity>("/activities", accessToken, timeParams),
-  ]);
+  // Build day boundaries (midnight-to-midnight UTC for each of the last 7 days)
+  const nowEpoch = Math.floor(Date.now() / 1000);
+  const todayMidnight = nowEpoch - (nowEpoch % DAY_SECONDS);
 
-  if (dailiesResult.status === "fulfilled") {
-    dailies = dailiesResult.value;
-    console.log(`[fetch-garmin-data] User ${userId}: ${dailies.length} daily summaries`);
-  } else {
-    console.error(`[fetch-garmin-data] User ${userId}: dailies fetch failed: ${dailiesResult.reason}`);
+  for (let d = DAYS_TO_FETCH - 1; d >= 0; d--) {
+    const dayStart = todayMidnight - d * DAY_SECONDS;
+    const dayEnd = dayStart + DAY_SECONDS;
+    const params = {
+      uploadStartTimeInSeconds: dayStart.toString(),
+      uploadEndTimeInSeconds: dayEnd.toString(),
+    };
+
+    const [dailiesResult, sleepsResult, activitiesResult] = await Promise.allSettled([
+      garminFetch<GarminDaily>("/dailies", accessToken, params),
+      garminFetch<GarminSleep>("/sleeps", accessToken, params),
+      garminFetch<GarminActivity>("/activities", accessToken, params),
+    ]);
+
+    if (dailiesResult.status === "fulfilled") dailies.push(...dailiesResult.value);
+    if (sleepsResult.status === "fulfilled") sleeps.push(...sleepsResult.value);
+    if (activitiesResult.status === "fulfilled") activities.push(...activitiesResult.value);
   }
 
-  if (sleepsResult.status === "fulfilled") {
-    sleeps = sleepsResult.value;
-    console.log(`[fetch-garmin-data] User ${userId}: ${sleeps.length} sleep records`);
-  } else {
-    console.error(`[fetch-garmin-data] User ${userId}: sleeps fetch failed: ${sleepsResult.reason}`);
-  }
-
-  if (activitiesResult.status === "fulfilled") {
-    activities = activitiesResult.value;
-    console.log(`[fetch-garmin-data] User ${userId}: ${activities.length} activities`);
-  } else {
-    console.error(`[fetch-garmin-data] User ${userId}: activities fetch failed: ${activitiesResult.reason}`);
-  }
+  console.log(`[fetch-garmin-data] User ${userId}: ${dailies.length} dailies, ${sleeps.length} sleeps, ${activities.length} activities`);
 
   if (dailies.length === 0 && sleeps.length === 0 && activities.length === 0) {
     console.log(`[fetch-garmin-data] User ${userId}: No data returned from Garmin`);

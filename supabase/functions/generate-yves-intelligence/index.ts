@@ -885,6 +885,63 @@ Deno.serve(async (req) => {
     const riskTrajectories = riskTrajectoriesResult.data || [];
 
     // ═══════════════════════════════════════════════════════════════════════
+    // COMPUTE METRIC DELTAS (today vs yesterday, today vs 7-day avg)
+    // ═══════════════════════════════════════════════════════════════════════
+    const computeDeltas = () => {
+      const deltas: Record<string, { todayValue: number | null; yesterdayValue: number | null; dayOverDay: number | null; avg7d: number | null; vsAvg7d: number | null }> = {};
+      
+      const metricKeys = [
+        { key: 'sleep_score', label: 'sleep_score' },
+        { key: 'readiness_score', label: 'readiness_score' },
+        { key: 'hrv_avg', label: 'hrv' },
+        { key: 'resting_hr', label: 'resting_hr' },
+      ];
+
+      for (const { key, label } of metricKeys) {
+        const values = wearableSessions.map((s: any) => s[key]).filter((v: any) => v !== null && v !== undefined);
+        const todayVal = values[0] ?? null;
+        const yesterdayVal = values[1] ?? null;
+        const avg7d = values.length >= 3 ? Math.round((values.reduce((a: number, b: number) => a + b, 0) / values.length) * 10) / 10 : null;
+        
+        deltas[label] = {
+          todayValue: todayVal,
+          yesterdayValue: yesterdayVal,
+          dayOverDay: todayVal !== null && yesterdayVal !== null ? Math.round((todayVal - yesterdayVal) * 10) / 10 : null,
+          avg7d,
+          vsAvg7d: todayVal !== null && avg7d !== null ? Math.round((todayVal - avg7d) * 10) / 10 : null,
+        };
+      }
+
+      // Training trend deltas (ACWR, strain, monotony, training_load)
+      const trendMetrics = [
+        { key: 'acwr', label: 'acwr' },
+        { key: 'strain', label: 'strain' },
+        { key: 'monotony', label: 'monotony' },
+        { key: 'training_load', label: 'training_load' },
+      ];
+
+      for (const { key, label } of trendMetrics) {
+        const values = trainingTrends.map((t: any) => t[key]).filter((v: any) => v !== null && v !== undefined);
+        const todayVal = values[0] ?? null;
+        const yesterdayVal = values[1] ?? null;
+        const avg7d = values.length >= 3 ? Math.round((values.reduce((a: number, b: number) => a + b, 0) / values.length) * 100) / 100 : null;
+
+        deltas[label] = {
+          todayValue: todayVal,
+          yesterdayValue: yesterdayVal,
+          dayOverDay: todayVal !== null && yesterdayVal !== null ? Math.round((todayVal - yesterdayVal) * 100) / 100 : null,
+          avg7d,
+          vsAvg7d: todayVal !== null && avg7d !== null ? Math.round((todayVal - avg7d) * 100) / 100 : null,
+        };
+      }
+
+      return deltas;
+    };
+
+    const metricDeltas = computeDeltas();
+    console.log(`[generate-yves-intelligence] Computed metric deltas for user ${userId}:`, JSON.stringify(metricDeltas));
+
+    // ═══════════════════════════════════════════════════════════════════════
     // EXECUTE 4-LAYER REASONING ENGINE
     // ═══════════════════════════════════════════════════════════════════════
     const reasoningContext = executeLayeredReasoning(
@@ -1083,38 +1140,47 @@ Deno.serve(async (req) => {
     }
     promptContext += "\n";
 
-    // Current health state
+    // Current health state with deltas
     promptContext += "═══ CURRENT HEALTH STATE ═══\n\n";
 
     if (wearableSessions.length > 0) {
       const latestSession = wearableSessions[0];
-      const previousSession = wearableSessions[1];
-
       promptContext += `Today (${latestSession.date}):\n`;
-      
-      if (latestSession.readiness_score !== null) {
-        const readinessChange = previousSession?.readiness_score 
-          ? latestSession.readiness_score - previousSession.readiness_score 
-          : 0;
-        promptContext += `• Readiness Score: ${latestSession.readiness_score}/100 (${readinessChange >= 0 ? '+' : ''}${readinessChange} vs yesterday)\n`;
-      }
-      
-      if (latestSession.sleep_score !== null) {
-        const sleepChange = previousSession?.sleep_score 
-          ? latestSession.sleep_score - previousSession.sleep_score 
-          : 0;
-        promptContext += `• Sleep Score: ${latestSession.sleep_score}/100 (${sleepChange >= 0 ? '+' : ''}${sleepChange} vs yesterday)\n`;
-      }
-      
-      if (latestSession.hrv_avg !== null) {
-        promptContext += `• HRV: ${latestSession.hrv_avg}ms\n`;
-      }
-      
-      if (latestSession.resting_hr !== null) {
-        promptContext += `• Resting HR: ${latestSession.resting_hr}bpm\n`;
-      }
+
+      const formatDelta = (d: { todayValue: number | null; dayOverDay: number | null; avg7d: number | null; vsAvg7d: number | null } | undefined, unit = '') => {
+        if (!d || d.todayValue === null) return null;
+        let line = `${d.todayValue}${unit}`;
+        if (d.dayOverDay !== null) line += ` (${d.dayOverDay >= 0 ? '+' : ''}${d.dayOverDay} vs yesterday`;
+        if (d.vsAvg7d !== null) line += `, ${d.vsAvg7d >= 0 ? '+' : ''}${d.vsAvg7d} vs 7-day avg of ${d.avg7d}${unit}`;
+        if (d.dayOverDay !== null) line += `)`;
+        return line;
+      };
+
+      const readinessLine = formatDelta(metricDeltas.readiness_score, '/100');
+      if (readinessLine) promptContext += `• Readiness Score: ${readinessLine}\n`;
+
+      const sleepLine = formatDelta(metricDeltas.sleep_score, '/100');
+      if (sleepLine) promptContext += `• Sleep Score: ${sleepLine}\n`;
+
+      const hrvLine = formatDelta(metricDeltas.hrv, 'ms');
+      if (hrvLine) promptContext += `• HRV: ${hrvLine}\n`;
+
+      const rhrLine = formatDelta(metricDeltas.resting_hr, 'bpm');
+      if (rhrLine) promptContext += `• Resting HR: ${rhrLine}\n`;
+
       promptContext += "\n";
     }
+
+    // Explicit delta summary for AI reasoning
+    promptContext += "═══ METRIC DELTAS (CHANGES) ═══\n\n";
+    for (const [metric, d] of Object.entries(metricDeltas)) {
+      if (d.todayValue === null) continue;
+      const direction = d.dayOverDay !== null
+        ? (d.dayOverDay > 0 ? '↑ improving' : d.dayOverDay < 0 ? '↓ declining' : '→ stable')
+        : '? unknown';
+      promptContext += `${metric}: today=${d.todayValue}, vs yesterday=${d.dayOverDay ?? 'N/A'} (${direction}), vs 7d avg=${d.vsAvg7d ?? 'N/A'}\n`;
+    }
+    promptContext += "\n";
 
     // Training trends — balanced presentation of ALL key metrics
     if (trainingTrends.length > 0) {
@@ -1322,17 +1388,27 @@ or highlight subtle patterns they might miss. Make every briefing feel worth rea
 
 RESPOND WITH ONLY THE JSON OBJECT.`;
 
-    // Include past briefings in prompt context for topic variety
+    // Include past briefings in prompt context (expanded to 1000 chars for better topic avoidance)
     let pastBriefingsContext = "";
     if (pastBriefings.length > 0) {
       pastBriefingsContext = "\n═══ PAST BRIEFINGS (avoid repeating these topics) ═══\n\n";
       pastBriefings.forEach((b: any) => {
-        const summary = b.content?.substring(0, 200) || "No content";
-        pastBriefingsContext += `${b.date}: ${summary}...\n\n`;
+        const summary = b.content?.substring(0, 1000) || "No content";
+        pastBriefingsContext += `${b.date}: ${summary}\n\n`;
       });
     }
 
-    const userPrompt = `Based on this user's data and the reasoning engine analysis, generate ONE dominant insight:\n\n${promptContext}${pastBriefingsContext}`;
+    // Include memory bank for deep personalization
+    let memoryContext = "";
+    if (memoryBank.length > 0) {
+      memoryContext = "\n═══ USER MEMORY (past observations & preferences) ═══\n\n";
+      memoryBank.forEach((m: any) => {
+        memoryContext += `• ${m.memory_key}: ${m.memory_value}\n`;
+      });
+      memoryContext += "\n";
+    }
+
+    const userPrompt = `Based on this user's data and the reasoning engine analysis, generate ONE dominant insight:\n\n${promptContext}${pastBriefingsContext}${memoryContext}`;
 
     console.log(`[generate-yves-intelligence] Calling AI for user ${userId} with ${promptContext.length} chars of context`);
 

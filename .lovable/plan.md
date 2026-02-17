@@ -1,51 +1,58 @@
 
 
-# Fix: Refresh Button Not Generating New Content
+## Fix: Persistent Alert Dismissal for Training Monotony Alert
 
-## Root Cause
+### Problem
+The "Health Check" / "Training Monotony Alert" keeps reappearing because:
+1. The "Got it" button only clears in-memory state -- it does not set a durable cooldown
+2. The localStorage cooldown set on first display gets wiped when the preview reloads
+3. The user's monotony value genuinely exceeds the 2.2 threshold, so the alert re-triggers on every page load
 
-There are two bugs working together to prevent refresh from producing new content:
+### Solution
+Store alert dismissals in the Supabase database instead of (only) localStorage, so they survive across sessions, devices, and preview rebuilds.
 
-### Bug 1: useEffect race condition (Frontend)
-When `refresh()` is called, it invokes `fetchIntelligence(true)` (force refresh). However, `fetchIntelligence` is a `useCallback` dependency of the `useEffect` on line 161. React re-runs that effect, which calls `fetchIntelligence(false)` -- overwriting the fresh response with the cached one. The edge function logs confirm this: they show `force_refresh: false` even after tapping refresh.
+### Implementation Steps
 
-### Bug 2: Silent-response upsert missing `focus_mode` (Backend)
-The silent/silence-response upsert at line 935 of the edge function writes to `daily_briefings` without `focus_mode`. The cache lookup filters by `focus_mode`, so these rows are invisible to the cache check. This means on every non-forced load, a new row is generated but returns identical content because the underlying wearable data hasn't changed between clicks.
+**Step 1 -- Create a `risk_alert_dismissals` table**
+- Columns: `id`, `user_id`, `alert_key` (e.g., "Monotony_high_risk"), `dismissed_at`, `snooze_until`
+- RLS: users can only read/write their own rows
+- The hook will check this table before showing any alert
 
-## Changes
+**Step 2 -- Update `useRiskAlertTrigger` hook**
+- On alert check: query `risk_alert_dismissals` for the current user and alert key
+- If a row exists where `snooze_until > now()` OR `dismissed_at` is within the last 7 days, skip the alert
+- Keep localStorage as a fast local cache to avoid unnecessary DB queries on every load
 
-### 1. `src/hooks/useYvesIntelligence.ts` -- Fix the race condition
+**Step 3 -- Update `dismissAlert` to persist**
+- When "Got it" is clicked, insert/upsert a row into `risk_alert_dismissals` with `dismissed_at = now()` and `snooze_until = now + 7 days`
+- When a snooze duration is selected, set `snooze_until` to the appropriate future time
 
-- Add a `ref` to track whether a manual refresh is in progress
-- When `isRefreshing` ref is true, skip the useEffect's automatic fetch
-- Clear the ref after the manual refresh completes
-- This ensures clicking refresh actually sends `force_refresh: true` to the edge function without being overridden
+**Step 4 -- Update `RiskAlertPopup` component**
+- Pass the user ID down so the dismiss/snooze handlers can write to the database
+- No visual changes needed
 
-### 2. `supabase/functions/generate-yves-intelligence/index.ts` -- Fix silent upsert
-
-- Add `focus_mode: focusMode` to the silent-response upsert at line 935 so it matches the cache key used by the lookup query
-- This prevents orphaned rows that bypass cache and cause unnecessary regeneration
-
-## Technical Details
-
-### Frontend fix (useYvesIntelligence.ts)
+### Technical Details
 
 ```text
-Before:
-  refresh() -> fetchIntelligence(true) -> edge function called
-  useEffect triggers -> fetchIntelligence(false) -> cache returned, overwrites state
-
-After:
-  refresh() -> sets isRefreshing ref -> fetchIntelligence(true) -> edge function called -> clears ref
-  useEffect triggers -> sees isRefreshing ref -> skips fetch
+risk_alert_dismissals table:
++----------+---------+-----------+--------------+---------------+
+| id (uuid)| user_id | alert_key | dismissed_at | snooze_until  |
++----------+---------+-----------+--------------+---------------+
 ```
 
-### Backend fix (generate-yves-intelligence/index.ts)
+The `checkForAlerts` function will add a DB check early in the flow:
+```text
+1. Get user
+2. Query risk_alert_dismissals WHERE user_id = user AND alert_key = key
+3. If snooze_until > now → skip
+4. If dismissed_at within 7 days → skip
+5. Otherwise → show alert as normal
+```
 
-Add `focus_mode: focusMode` to the silent-response upsert block so all upserts use a consistent key structure.
+The `dismissAlert` function will change from just `setCurrentAlert(null)` to also upserting a dismissal record.
 
-## What This Means For You
+### What This Fixes
+- Alert will NOT reappear after clicking "Got it" -- even across page reloads and rebuilds
+- Snooze durations will be respected persistently
+- No changes to the visual UI
 
-- Tapping the refresh button on the Daily Briefing will now actually call the AI to generate fresh content
-- The recommendations card will also update with new suggestions on refresh
-- Content will genuinely change each time you refresh (the topic variety engine is already in place -- it just wasn't being reached)

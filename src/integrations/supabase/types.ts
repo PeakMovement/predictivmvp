@@ -382,7 +382,9 @@ export type Database = {
           date: string
           focus_context: Json | null
           focus_mode: string | null
+          generation_id: string | null
           id: string
+          refresh_nonce: string | null
           user_id: string
         }
         Insert: {
@@ -393,7 +395,9 @@ export type Database = {
           date: string
           focus_context?: Json | null
           focus_mode?: string | null
+          generation_id?: string | null
           id?: string
+          refresh_nonce?: string | null
           user_id: string
         }
         Update: {
@@ -404,7 +408,9 @@ export type Database = {
           date?: string
           focus_context?: Json | null
           focus_mode?: string | null
+          generation_id?: string | null
           id?: string
+          refresh_nonce?: string | null
           user_id?: string
         }
         Relationships: []

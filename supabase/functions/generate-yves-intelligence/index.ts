@@ -12,6 +12,7 @@ interface YvesIntelligenceRequest {
   user_id?: string;
   focus_mode?: FocusMode;
   force_refresh?: boolean;
+  refresh_nonce?: string;
 }
 
 interface YvesIntelligenceOutput {
@@ -610,11 +611,13 @@ Deno.serve(async (req) => {
     let userId: string | null = null;
     let focusMode: FocusMode | null = null;
     let forceRefresh = false;
+    let refreshNonce: string | null = null;
     try {
       const body = await req.json() as YvesIntelligenceRequest;
       userId = body.user_id || null;
       focusMode = body.focus_mode || null;
       forceRefresh = body.force_refresh || false;
+      refreshNonce = body.refresh_nonce || null;
     } catch {
       // No body provided
     }
@@ -650,40 +653,44 @@ Deno.serve(async (req) => {
       focusMode = (focusPrefs?.focus_mode as FocusMode) || 'balance';
     }
 
-    // Check for cached intelligence with matching focus mode
-    const { data: existingIntelligence } = await supabase
-      .from("daily_briefings")
-      .select("*")
-      .eq("user_id", userId)
-      .eq("date", today)
-      .eq("category", "unified")
-      .eq("focus_mode", focusMode)
-      .maybeSingle();
+    // On force_refresh, skip cache entirely — do NOT even query for existing briefing
+    if (!forceRefresh) {
+      const { data: existingIntelligence } = await supabase
+        .from("daily_briefings")
+        .select("*")
+        .eq("user_id", userId)
+        .eq("date", today)
+        .eq("category", "unified")
+        .eq("focus_mode", focusMode)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
 
-    // Check if we should use cache
-    if (!forceRefresh && existingIntelligence && existingIntelligence.context_used) {
-      // Check cache age (6-hour TTL)
-      const cacheAge = Date.now() - new Date(existingIntelligence.created_at).getTime();
-      const sixHoursInMs = 6 * 60 * 60 * 1000;
+      if (existingIntelligence && existingIntelligence.context_used) {
+        // Check cache age (6-hour TTL)
+        const cacheAge = Date.now() - new Date(existingIntelligence.created_at).getTime();
+        const sixHoursInMs = 6 * 60 * 60 * 1000;
 
-      if (cacheAge < sixHoursInMs) {
-        console.log(`[generate-yves-intelligence] Returning cached intelligence for user ${userId} (age: ${Math.round(cacheAge / 1000 / 60)} minutes)`);
-        return new Response(
-          JSON.stringify({
-            success: true,
-            cached: true,
-            data: existingIntelligence.context_used as YvesIntelligenceOutput,
-            content: existingIntelligence.content,
-            created_at: existingIntelligence.created_at,
-            focus_mode: focusMode,
-          }),
-          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      } else {
-        console.log(`[generate-yves-intelligence] Cache expired for user ${userId} (age: ${Math.round(cacheAge / 1000 / 60)} minutes), regenerating`);
+        if (cacheAge < sixHoursInMs) {
+          console.log(`[generate-yves-intelligence] Returning cached intelligence for user ${userId} (age: ${Math.round(cacheAge / 1000 / 60)} minutes)`);
+          return new Response(
+            JSON.stringify({
+              success: true,
+              cached: true,
+              data: existingIntelligence.context_used as YvesIntelligenceOutput,
+              content: existingIntelligence.content,
+              created_at: existingIntelligence.created_at,
+              focus_mode: focusMode,
+              generation_id: existingIntelligence.generation_id,
+            }),
+            { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        } else {
+          console.log(`[generate-yves-intelligence] Cache expired for user ${userId} (age: ${Math.round(cacheAge / 1000 / 60)} minutes), regenerating`);
+        }
       }
-    } else if (forceRefresh) {
-      console.log(`[generate-yves-intelligence] Force refresh requested for user ${userId}, bypassing cache`);
+    } else {
+      console.log(`[generate-yves-intelligence] Force refresh requested for user ${userId}, fully bypassing all caches`);
     }
 
     // ─── CHECK DATA MATURITY FIRST ────────────────────────────────────────────
@@ -989,7 +996,8 @@ Deno.serve(async (req) => {
       };
 
       // Store the silent response with reasoning context
-      await supabase.from("daily_briefings").upsert({
+      const silentGenerationId = crypto.randomUUID();
+      const silentRow = {
         user_id: userId,
         date: today,
         content: silentResponse.dailyBriefing.summary,
@@ -1000,7 +1008,15 @@ Deno.serve(async (req) => {
         },
         category: "unified",
         focus_mode: focusMode,
-      });
+        generation_id: silentGenerationId,
+        refresh_nonce: refreshNonce,
+      };
+      
+      if (forceRefresh) {
+        await supabase.from("daily_briefings").insert(silentRow);
+      } else {
+        await supabase.from("daily_briefings").upsert(silentRow);
+      }
 
       return new Response(
         JSON.stringify({
@@ -1331,6 +1347,7 @@ Do NOT repeat the same primary topic as recent briefings.
 Review the PAST BRIEFINGS section below. If you discussed training monotony or training variety yesterday, lead with a DIFFERENT observation today (sleep quality, HRV trends, readiness patterns, recovery wins, goal progress, activity consistency).
 Monotony can be mentioned briefly as ongoing context, but should NOT be the headline unless it has meaningfully changed since the last briefing.
 Rotate your lead topic across days. Each briefing should feel fresh.
+${forceRefresh ? `\n═══ NOVELTY MODE: ACTIVE ═══\nThis is a manual refresh. The user explicitly wants FRESH content.\nRULES:\n1. Do NOT reuse the same opening line as any recent briefing shown below\n2. Do NOT lead with the same primary recommendation category unless the data absolutely demands it\n3. Choose a DIFFERENT angle or lens on the same data (e.g., if last time you led with sleep, now lead with recovery or training load)\n4. Use different sentence structures and vocabulary\n5. You MUST include a "novelty_note" field in your JSON output explaining what you changed vs the previous briefing\n` : ''}
 
 ═══ CRITICAL RULES ═══
 1. Always provide meaningful, personalized content - never be generic
@@ -1369,7 +1386,7 @@ Generate a JSON object:
       "priority": "high|medium|low",
       "reasoning": "Internal justification connecting to their specific metrics and goals"
     }
-  ]
+  ]${forceRefresh ? `,\n  "novelty_note": "Brief explanation of what is different in this output vs the previous one (e.g., 'Led with HRV recovery angle instead of training load; used affirming tone instead of cautious')"` : ''}
 }
 
 ═══ PERSONALIZATION ═══
@@ -1388,14 +1405,25 @@ or highlight subtle patterns they might miss. Make every briefing feel worth rea
 
 RESPOND WITH ONLY THE JSON OBJECT.`;
 
-    // Include past briefings in prompt context (expanded to 1000 chars for better topic avoidance)
+    // Include past briefings in prompt context — for novelty mode, include last summary + last 3 topic categories
     let pastBriefingsContext = "";
     if (pastBriefings.length > 0) {
-      pastBriefingsContext = "\n═══ PAST BRIEFINGS (avoid repeating these topics) ═══\n\n";
-      pastBriefings.forEach((b: any) => {
-        const summary = b.content?.substring(0, 1000) || "No content";
-        pastBriefingsContext += `${b.date}: ${summary}\n\n`;
-      });
+      if (forceRefresh) {
+        // Novelty mode: provide last 1 full summary + last 3 used lead topics for avoidance
+        pastBriefingsContext = "\n═══ PAST BRIEFINGS (NOVELTY MODE — you MUST produce different content) ═══\n\n";
+        pastBriefingsContext += `LAST BRIEFING (${pastBriefings[0].date}):\n${pastBriefings[0].content?.substring(0, 500) || "No content"}\n\n`;
+        const recentTopics = pastBriefings.slice(0, 3).map((b: any) => {
+          const firstSentence = b.content?.split('.')[0] || '';
+          return `${b.date}: "${firstSentence}"`;
+        });
+        pastBriefingsContext += `LAST 3 OPENING LINES (do NOT repeat these):\n${recentTopics.join('\n')}\n\n`;
+      } else {
+        pastBriefingsContext = "\n═══ PAST BRIEFINGS (avoid repeating these topics) ═══\n\n";
+        pastBriefings.forEach((b: any) => {
+          const summary = b.content?.substring(0, 1000) || "No content";
+          pastBriefingsContext += `${b.date}: ${summary}\n\n`;
+        });
+      }
     }
 
     // Include memory bank for deep personalization
@@ -1527,16 +1555,18 @@ RESPOND WITH ONLY THE JSON OBJECT.`;
         : '');
 
     // ─── SAVE TO DATABASE WITH REASONING CONTEXT ────────────────────────────
-    console.log(`[generate-yves-intelligence] Saving briefing to database for user ${userId}, date: ${today}, category: unified, focus_mode: ${focusMode}`);
+    const generationId = crypto.randomUUID();
+    console.log(`[generate-yves-intelligence] Saving briefing to database for user ${userId}, date: ${today}, category: unified, focus_mode: ${focusMode}, generation_id: ${generationId}`);
 
-    const { data: savedBriefing, error: saveError } = await supabase.from("daily_briefings").upsert({
+    const briefingRow = {
       user_id: userId,
       date: today,
       content: briefingContent.trim(),
       context_used: {
         ...intelligenceData,
         reasoning: reasoningContext,
-        coaching_mode
+        coaching_mode,
+        novelty_note: (intelligenceData as any).novelty_note || null,
       },
       category: "unified",
       focus_mode: focusMode,
@@ -1544,8 +1574,15 @@ RESPOND WITH ONLY THE JSON OBJECT.`;
         mode: focusMode,
         emphasis: focusModeContext.topicEmphasis,
         applied_at: new Date().toISOString()
-      }
-    }).select();
+      },
+      generation_id: generationId,
+      refresh_nonce: refreshNonce,
+    };
+
+    // On force_refresh, always INSERT a new row (never upsert/overwrite)
+    const { data: savedBriefing, error: saveError } = forceRefresh
+      ? await supabase.from("daily_briefings").insert(briefingRow).select()
+      : await supabase.from("daily_briefings").upsert(briefingRow).select();
 
     if (saveError) {
       console.error(`[generate-yves-intelligence] Database save error for user ${userId}:`, saveError);
@@ -1574,6 +1611,8 @@ RESPOND WITH ONLY THE JSON OBJECT.`;
         content: briefingContent.trim(),
         created_at: new Date().toISOString(),
         focus_mode: focusMode,
+        generation_id: generationId,
+        refresh_nonce: refreshNonce,
         reasoning: {
           should_speak: true,
           confidence: reasoningContext.overall_confidence,

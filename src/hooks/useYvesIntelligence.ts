@@ -32,6 +32,8 @@ interface IntelligenceState {
   cached: boolean;
   focusMode?: FocusMode;
   previousFocusMode?: FocusMode;
+  generationId?: string | null;
+  refreshNonce?: string | null;
 }
 
 export function useYvesIntelligence(focusMode?: FocusMode) {
@@ -43,6 +45,8 @@ export function useYvesIntelligence(focusMode?: FocusMode) {
     isGenerating: false,
     error: null,
     cached: false,
+    generationId: null,
+    refreshNonce: null,
   });
   const { toast } = useToast();
   const isManualRefreshRef = useRef(false);
@@ -64,6 +68,9 @@ export function useYvesIntelligence(focusMode?: FocusMode) {
 
       const activeFocusMode = currentFocusMode || focusMode;
 
+      // Generate a unique nonce for each refresh click
+      const refreshNonce = forceRefresh ? crypto.randomUUID() : undefined;
+
       // If not force refresh, try to get cached data first (only if same focus mode)
       if (!forceRefresh && activeFocusMode) {
         const today = new Date().toISOString().split("T")[0];
@@ -74,6 +81,8 @@ export function useYvesIntelligence(focusMode?: FocusMode) {
           .eq("date", today)
           .eq("category", "unified")
           .eq("focus_mode", activeFocusMode)
+          .order("created_at", { ascending: false })
+          .limit(1)
           .maybeSingle();
 
         if (cachedData?.context_used) {
@@ -87,19 +96,22 @@ export function useYvesIntelligence(focusMode?: FocusMode) {
             error: null,
             cached: true,
             focusMode: activeFocusMode,
+            generationId: (cachedData as any).generation_id || null,
+            refreshNonce: (cachedData as any).refresh_nonce || null,
           });
           return;
         }
       }
 
       // Call edge function to generate fresh intelligence
-      console.log(`[useYvesIntelligence] Invoking generate-yves-intelligence for user ${user.id}, focus_mode: ${activeFocusMode}, force_refresh: ${forceRefresh}`);
+      console.log(`[useYvesIntelligence] Invoking generate-yves-intelligence for user ${user.id}, focus_mode: ${activeFocusMode}, force_refresh: ${forceRefresh}${refreshNonce ? `, nonce: ${refreshNonce}` : ''}`);
 
       const { data, error } = await supabase.functions.invoke("generate-yves-intelligence", {
         body: {
           user_id: user.id,
           focus_mode: activeFocusMode,
           force_refresh: forceRefresh,
+          refresh_nonce: refreshNonce,
         },
       });
 
@@ -108,7 +120,8 @@ export function useYvesIntelligence(focusMode?: FocusMode) {
         cached: data?.cached,
         hasData: !!data?.data,
         error: error || data?.error,
-        reasoning: data?.reasoning
+        reasoning: data?.reasoning,
+        generation_id: data?.generation_id,
       });
 
       if (error) throw error;
@@ -123,6 +136,8 @@ export function useYvesIntelligence(focusMode?: FocusMode) {
           error: null,
           cached: data.cached || false,
           focusMode: activeFocusMode,
+          generationId: data.generation_id || null,
+          refreshNonce: data.refresh_nonce || refreshNonce || null,
         });
 
         if (forceRefresh && !data.cached) {

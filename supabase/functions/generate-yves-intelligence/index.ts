@@ -1298,6 +1298,120 @@ Be CAUTIOUS, PROTECTIVE, PRECISE. Prioritize safety above all.
 Acknowledge frustration but enforce clear boundaries on activity.`
     };
 
+    // ═══════════════════════════════════════════════════════════════════════
+    // FACTS PACK (deterministic — identical across refreshes if data unchanged)
+    // ═══════════════════════════════════════════════════════════════════════
+    const buildFactsPack = () => {
+      // Top 3 deltas by absolute magnitude
+      const allDeltas = Object.entries(metricDeltas)
+        .filter(([_, d]) => d.todayValue !== null && d.dayOverDay !== null)
+        .map(([metric, d]) => ({
+          metric,
+          value: d.todayValue!,
+          delta: d.dayOverDay!,
+          direction: d.dayOverDay! > 0 ? 'up' : d.dayOverDay! < 0 ? 'down' : 'stable',
+          vs_avg: d.vsAvg7d,
+        }))
+        .sort((a, b) => Math.abs(b.delta) - Math.abs(a.delta))
+        .slice(0, 3);
+
+      // Training summary last 48h
+      const last2Sessions = wearableSessions.slice(0, 2);
+      const trainingSummary48h = last2Sessions.map((s: any) => ({
+        date: s.date,
+        activity_score: s.activity_score,
+        strain: trainingTrends.find((t: any) => t.date === s.date)?.strain ?? null,
+        steps: s.steps,
+      }));
+
+      // Risk flags
+      const riskFlags: string[] = [];
+      const latestTrend = trainingTrends[0];
+      if (latestTrend?.acwr > 1.3) riskFlags.push(`ACWR elevated: ${latestTrend.acwr.toFixed(2)}`);
+      if (latestTrend?.monotony > 2.0) riskFlags.push(`Monotony high: ${Math.min(latestTrend.monotony, 2.5).toFixed(2)}`);
+      if (latestTrend?.strain > 1200) riskFlags.push(`Strain elevated: ${latestTrend.strain.toFixed(0)}`);
+      const decliningMetrics = allDeltas.filter(d => d.direction === 'down' && Math.abs(d.delta) > 10);
+      if (decliningMetrics.length >= 2) riskFlags.push(`Multiple metrics declining: ${decliningMetrics.map(d => d.metric).join(', ')}`);
+
+      // Goal + constraint
+      const goals = userProfile?.goals || userWellnessGoals?.goals || [];
+      const constraints: string[] = [];
+      if (userInjuries?.injuries?.length > 0) constraints.push(...userInjuries.injuries);
+      if (userMedical?.conditions?.length > 0) constraints.push(...userMedical.conditions);
+
+      return {
+        date_used: today,
+        top_3_deltas: allDeltas,
+        training_summary_48h: trainingSummary48h,
+        risk_flags: riskFlags,
+        goals: goals.slice(0, 3),
+        constraints: constraints.slice(0, 3),
+      };
+    };
+
+    const factsPack = buildFactsPack();
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // CREATIVE FRAMING PACK (changes every refresh via nonce-based rotation)
+    // ═══════════════════════════════════════════════════════════════════════
+    const buildCreativeFramingPack = () => {
+      // Deterministic seed from nonce (or date for non-refresh)
+      const seed = refreshNonce || today;
+      const hashCode = (s: string) => {
+        let h = 0;
+        for (let i = 0; i < s.length; i++) {
+          h = ((h << 5) - h + s.charCodeAt(i)) | 0;
+        }
+        return Math.abs(h);
+      };
+      const hash = hashCode(seed);
+
+      const briefingTemplates = [
+        'narrative',      // Story-like flow connecting metrics to daily life
+        'headline_drill', // Bold headline → supporting detail → action
+        'compare_contrast', // Yesterday vs today, what shifted and why
+        'question_led',   // Opens with a reflective question, then answers it with data
+        'milestone_check', // Framed around progress toward a goal or baseline
+        'pattern_spotlight', // Highlights a multi-day pattern emerging from noise
+      ];
+
+      const toneVariants = [
+        'coach',       // Warm, directive, experienced
+        'analyst',     // Data-forward, precise, measured
+        'supportive',  // Empathetic, validating, encouraging
+        'direct',      // Concise, no-nonsense, action-first
+        'minimalist',  // Sparse, poetic, zen-like calm
+      ];
+
+      const focusLenses = [
+        'recovery',    // How well the body is bouncing back
+        'performance', // Training readiness and load capacity
+        'risk',        // Injury/overtraining warning signals
+        'habit',       // Consistency and routine adherence
+        'mobility',    // Movement quality, stiffness, flexibility
+        'nutrition',   // Fueling, hydration, energy balance
+      ];
+
+      // Filter focus lenses by focus_mode compatibility
+      const allowedLenses: Record<string, string[]> = {
+        recovery: ['recovery', 'risk', 'habit', 'mobility'],
+        performance: ['performance', 'recovery', 'risk', 'habit'],
+        pain_management: ['recovery', 'risk', 'mobility', 'habit'],
+        balance: ['recovery', 'performance', 'risk', 'habit', 'mobility', 'nutrition'],
+        custom: ['recovery', 'performance', 'risk', 'habit', 'mobility', 'nutrition'],
+      };
+
+      const validLenses = allowedLenses[focusMode || 'balance'] || focusLenses;
+
+      const template = briefingTemplates[hash % briefingTemplates.length];
+      const tone = toneVariants[(hash >> 3) % toneVariants.length];
+      const lens = validLenses[(hash >> 6) % validLenses.length];
+
+      return { template, tone, lens };
+    };
+
+    const creativePack = buildCreativeFramingPack();
+
     // ─── AI CALL WITH STRUCTURED OUTPUT ────────────────────────────────────
     const systemPrompt = `You are Yves, a calm, highly experienced performance coach and clinician who provides thoughtful, personalized insights.
 
@@ -1324,6 +1438,29 @@ The counterfactual is optional. Never include more than one.
 ${toneGuidance[coaching_mode]}
 
 ${focusModeContext.systemPromptAddition}
+
+═══ FACTS PACK (IMMUTABLE — do NOT alter these facts) ═══
+The following facts are deterministic and MUST be reflected accurately in your output.
+Do NOT invent, round differently, or contradict any of these values.
+- Date: ${factsPack.date_used}
+- Top 3 metric changes: ${factsPack.top_3_deltas.map(d => `${d.metric}: ${d.value} (${d.direction} ${Math.abs(d.delta)}${d.vs_avg !== null ? `, vs 7d avg: ${d.vs_avg > 0 ? '+' : ''}${d.vs_avg}` : ''})`).join('; ')}
+- Training last 48h: ${factsPack.training_summary_48h.map(s => `${s.date}: activity=${s.activity_score ?? 'N/A'}, strain=${s.strain ?? 'N/A'}, steps=${s.steps ?? 'N/A'}`).join(' | ')}
+- Risk flags: ${factsPack.risk_flags.length > 0 ? factsPack.risk_flags.join('; ') : 'None'}
+- Goals: ${factsPack.goals.length > 0 ? factsPack.goals.join(', ') : 'Not set'}
+- Constraints: ${factsPack.constraints.length > 0 ? factsPack.constraints.join(', ') : 'None'}
+
+═══ CREATIVE FRAMING PACK (MUST follow these creative instructions) ═══
+- Briefing template: ${creativePack.template}
+  ${creativePack.template === 'narrative' ? '→ Write as a flowing story connecting metrics to daily life' : ''}${creativePack.template === 'headline_drill' ? '→ Start with a bold 1-sentence headline, then drill into supporting detail, end with action' : ''}${creativePack.template === 'compare_contrast' ? '→ Frame as "yesterday vs today" — what shifted and why it matters' : ''}${creativePack.template === 'question_led' ? '→ Open with a reflective question, then answer it with data' : ''}${creativePack.template === 'milestone_check' ? '→ Frame around progress toward a goal or baseline comparison' : ''}${creativePack.template === 'pattern_spotlight' ? '→ Highlight a multi-day pattern emerging from noise' : ''}
+- Tone variant: ${creativePack.tone}
+  ${creativePack.tone === 'coach' ? '→ Warm, directive, experienced. Like a trusted coach in the locker room.' : ''}${creativePack.tone === 'analyst' ? '→ Data-forward, precise, measured. Lead with numbers, explain significance.' : ''}${creativePack.tone === 'supportive' ? '→ Empathetic, validating, encouraging. Acknowledge effort before advising.' : ''}${creativePack.tone === 'direct' ? '→ Concise, no-nonsense, action-first. Cut the preamble, get to the point.' : ''}${creativePack.tone === 'minimalist' ? '→ Sparse, poetic, zen-like calm. Few words, maximum impact.' : ''}
+- Today's focus lens: ${creativePack.lens}
+  → Frame your primary observation and recommendation through the "${creativePack.lens}" lens
+
+═══ SEPARATION RULE (CRITICAL) ═══
+1. The FACTS (metrics, deltas, risk flags) must NOT change across refreshes unless the underlying data changed.
+2. The WORDING, STRUCTURE, and FRAMING must change each refresh based on the creative framing pack above.
+3. You must use the specified template structure, tone variant, and focus lens. These are not suggestions — they are instructions.
 
 ═══ TONE MODE SELECTION (MANDATORY) ═══
 Before generating output, determine exactly ONE tone mode based on the user's current context. Never mix tones in a single output.
@@ -1368,6 +1505,9 @@ Before delivering output, internally validate:
 3. Is the tone appropriate?
 4. Is the language calm and respectful?
 5. Would this encourage trust, not compliance?
+6. Do the facts (metrics, deltas) exactly match the FACTS PACK?
+7. Does the structure follow the assigned TEMPLATE?
+8. Does the tone match the assigned TONE VARIANT?
 If any answer is "no", revise before output.
 
 ═══ OUTPUT FORMAT ═══
@@ -1386,7 +1526,16 @@ Generate a JSON object:
       "priority": "high|medium|low",
       "reasoning": "Internal justification connecting to their specific metrics and goals"
     }
-  ]${forceRefresh ? `,\n  "novelty_note": "Brief explanation of what is different in this output vs the previous one (e.g., 'Led with HRV recovery angle instead of training load; used affirming tone instead of cautious')"` : ''}
+  ],
+  "facts_used": {
+    "top_3_deltas": ${JSON.stringify(factsPack.top_3_deltas)},
+    "risk_flags": ${JSON.stringify(factsPack.risk_flags)}
+  },
+  "creative_framing_used": {
+    "template": "${creativePack.template}",
+    "tone": "${creativePack.tone}",
+    "lens": "${creativePack.lens}"
+  }${forceRefresh ? `,\n  "novelty_note": "Brief explanation of what is different in this output vs the previous one"` : ''}
 }
 
 ═══ PERSONALIZATION ═══
@@ -1405,11 +1554,10 @@ or highlight subtle patterns they might miss. Make every briefing feel worth rea
 
 RESPOND WITH ONLY THE JSON OBJECT.`;
 
-    // Include past briefings in prompt context — for novelty mode, include last summary + last 3 topic categories
+    // Include past briefings in prompt context
     let pastBriefingsContext = "";
     if (pastBriefings.length > 0) {
       if (forceRefresh) {
-        // Novelty mode: provide last 1 full summary + last 3 used lead topics for avoidance
         pastBriefingsContext = "\n═══ PAST BRIEFINGS (NOVELTY MODE — you MUST produce different content) ═══\n\n";
         pastBriefingsContext += `LAST BRIEFING (${pastBriefings[0].date}):\n${pastBriefings[0].content?.substring(0, 500) || "No content"}\n\n`;
         const recentTopics = pastBriefings.slice(0, 3).map((b: any) => {
@@ -1452,7 +1600,7 @@ RESPOND WITH ONLY THE JSON OBJECT.`;
           { role: "system", content: systemPrompt },
           { role: "user", content: userPrompt }
         ],
-        max_tokens: 800,
+        max_tokens: 1200,
       }),
     });
 
@@ -1500,6 +1648,8 @@ RESPOND WITH ONLY THE JSON OBJECT.`;
     let intelligenceData: YvesIntelligenceOutput;
     try {
       content = content.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+      // Fix common AI JSON issues: unescaped newlines in string values
+      content = content.replace(/(?<=":[ ]*"[^"]*)\n(?=[^"]*")/g, ' ');
       intelligenceData = JSON.parse(content);
       console.log(`[generate-yves-intelligence] Successfully parsed AI response for user ${userId}`);
       
@@ -1567,6 +1717,8 @@ RESPOND WITH ONLY THE JSON OBJECT.`;
         reasoning: reasoningContext,
         coaching_mode,
         novelty_note: (intelligenceData as any).novelty_note || null,
+        facts_pack: factsPack,
+        creative_framing: creativePack,
       },
       category: "unified",
       focus_mode: focusMode,

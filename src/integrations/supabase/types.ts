@@ -1806,6 +1806,33 @@ export type Database = {
           },
         ]
       }
+      risk_alert_dismissals: {
+        Row: {
+          alert_key: string
+          created_at: string
+          dismissed_at: string
+          id: string
+          snooze_until: string | null
+          user_id: string
+        }
+        Insert: {
+          alert_key: string
+          created_at?: string
+          dismissed_at?: string
+          id?: string
+          snooze_until?: string | null
+          user_id: string
+        }
+        Update: {
+          alert_key?: string
+          created_at?: string
+          dismissed_at?: string
+          id?: string
+          snooze_until?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       risk_trajectories: {
         Row: {
           baseline_value: number | null

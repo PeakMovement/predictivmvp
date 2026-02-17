@@ -1,0 +1,2 @@
+ALTER TABLE public.daily_briefings DROP CONSTRAINT daily_briefings_category_check;
+ALTER TABLE public.daily_briefings ADD CONSTRAINT daily_briefings_category_check CHECK (category = ANY (ARRAY['full'::text, 'recovery'::text, 'sleep'::text, 'activity'::text, 'goals'::text, 'tip'::text, 'unified'::text]));

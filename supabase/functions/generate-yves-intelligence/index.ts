@@ -1352,6 +1352,61 @@ Acknowledge frustration but enforce clear boundaries on activity.`
     const factsPack = buildFactsPack();
 
     // ═══════════════════════════════════════════════════════════════════════
+    // PERSONAL PROFILE CARD (compact, server-side, injected into prompt)
+    // ═══════════════════════════════════════════════════════════════════════
+    const buildPersonalProfileCard = () => {
+      // user_name
+      const userName = userProfile?.name || memoryBank.find((m: any) => m.memory_key === 'preferred_name')?.memory_value || null;
+
+      // primary_goal (1 line)
+      const goalSources = [
+        userWellnessGoals?.priority,
+        ...(userProfile?.goals || []),
+        ...(userWellnessGoals?.goals || []),
+      ].filter(Boolean);
+      const primaryGoal = goalSources.length > 0 ? goalSources[0] : null;
+
+      // primary_constraint (injury/medical/training limitation) (1 line)
+      const constraintSources: string[] = [];
+      if (userInjuries?.injuries?.length > 0) constraintSources.push(...userInjuries.injuries);
+      if (userMedical?.conditions?.length > 0) constraintSources.push(...userMedical.conditions);
+      if (userMedical?.medications?.length > 0) constraintSources.push(`on ${userMedical.medications[0]}`);
+      // Check memory bank for injury history
+      const injuryMemory = memoryBank.find((m: any) => m.memory_key === 'injury_history');
+      if (injuryMemory && constraintSources.length === 0) constraintSources.push(injuryMemory.memory_value);
+      const primaryConstraint = constraintSources.length > 0 ? constraintSources.slice(0, 2).join('; ') : null;
+
+      // adherence_pattern (what they actually follow vs ignore) (1 line)
+      const highAdherence = (adherenceRanking?.prioritize_high_adherence || []) as string[];
+      const lowAdherence = (adherenceRanking?.suppress_low_adherence || []) as string[];
+      let adherencePattern: string | null = null;
+      if (highAdherence.length > 0 || lowAdherence.length > 0) {
+        const parts: string[] = [];
+        if (highAdherence.length > 0) parts.push(`follows: ${highAdherence.join(', ')}`);
+        if (lowAdherence.length > 0) parts.push(`ignores: ${lowAdherence.join(', ')}`);
+        adherencePattern = parts.join(' | ');
+      }
+      // Fallback: use follow-through rate
+      if (!adherencePattern && adaptationProfile?.follow_through_rate !== null && adaptationProfile?.follow_through_rate !== undefined) {
+        adherencePattern = `${adaptationProfile.follow_through_rate}% overall follow-through`;
+      }
+
+      // preference (timing / training type / disliked categories) (1 line)
+      const prefParts: string[] = [];
+      const trainingPref = memoryBank.find((m: any) => m.memory_key === 'preferred_training');
+      if (trainingPref) prefParts.push(trainingPref.memory_value);
+      if (userTraining?.preferred_activities?.length > 0) prefParts.push(`likes ${userTraining.preferred_activities.slice(0, 2).join(', ')}`);
+      if (userLifestyle?.wake_time) prefParts.push(`wakes ${userLifestyle.wake_time}`);
+      if (userRecovery?.preferred_methods?.length > 0) prefParts.push(`recovery: ${userRecovery.preferred_methods[0]}`);
+      const preference = prefParts.length > 0 ? prefParts.slice(0, 2).join(' | ') : null;
+
+      return { userName, primaryGoal, primaryConstraint, adherencePattern, preference, suppressedCategories: lowAdherence };
+    };
+
+    const profileCard = buildPersonalProfileCard();
+    console.log(`[generate-yves-intelligence] Profile card:`, profileCard);
+
+    // ═══════════════════════════════════════════════════════════════════════
     // CREATIVE FRAMING PACK (changes every refresh via nonce-based rotation)
     // ═══════════════════════════════════════════════════════════════════════
     const buildCreativeFramingPack = () => {
@@ -1479,6 +1534,23 @@ Assemble output from these components — use 2–4 per output, never all at onc
 • Gentle closing question (optional) — invite reflection or check-in
 Do NOT follow a fixed paragraph structure.
 
+═══ PERSONAL PROFILE CARD ═══
+This is WHO you are talking to. Use this to make every output personal.
+- Name: ${profileCard.userName || 'Unknown'}
+- Primary goal: ${profileCard.primaryGoal || 'Not set'}
+- Primary constraint: ${profileCard.primaryConstraint || 'None known'}
+- Adherence pattern: ${profileCard.adherencePattern || 'No data yet'}
+- Preference: ${profileCard.preference || 'No preferences recorded'}
+- Suppressed categories (DO NOT recommend): ${profileCard.suppressedCategories.length > 0 ? profileCard.suppressedCategories.join(', ') : 'None'}
+
+═══ MANDATORY PERSONALIZATION RULES ═══
+1. You MUST reference the user's primary goal within the first 2 sentences of the summary.
+2. You MUST reference at least 1 real metric delta (from the FACTS PACK) in your summary.
+3. You MUST include at least 1 recommendation that matches the user's high-adherence pattern (a "high-probability action" they are likely to follow).
+4. You MUST NOT recommend anything in suppressed categories listed above.
+5. If a constraint exists, recommendations must respect it (e.g., no running if knee injury).
+6. NAME USAGE: Use the user's name at most ONCE in the entire output. Only when it adds emotional value (praising consistency, expressing concern). Never start with the name. Never use it in technical statements.
+
 ═══ TOPIC VARIETY (MANDATORY) ═══
 Do NOT repeat the same primary topic as recent briefings.
 Review the PAST BRIEFINGS section below. If you discussed training monotony or training variety yesterday, lead with a DIFFERENT observation today (sleep quality, HRV trends, readiness patterns, recovery wins, goal progress, activity consistency).
@@ -1490,7 +1562,7 @@ ${forceRefresh ? `\n═══ NOVELTY MODE: ACTIVE ═══\nThis is a manual r
 1. Always provide meaningful, personalized content - never be generic
 2. Even on stable days, find patterns worth acknowledging or celebrating
 3. Recommendations must align with the JUSTIFICATION provided by the reasoning engine
-4. Do NOT recommend categories marked as "suppress" (low adherence)
+4. Do NOT recommend categories marked as "suppress" (low adherence) — see PERSONAL PROFILE CARD
 5. DO prioritize categories marked as high adherence
 6. Connect observations to the user's specific context, goals, and recent patterns
 7. Frame recommendations as options, not commands. Use "Today could be a good opportunity to…", "You might benefit from…", "It may be worth considering…". Never use "You should", "You must", or "Do this today". Support user autonomy.
@@ -1719,6 +1791,7 @@ RESPOND WITH ONLY THE JSON OBJECT.`;
         novelty_note: (intelligenceData as any).novelty_note || null,
         facts_pack: factsPack,
         creative_framing: creativePack,
+        personal_profile_card: profileCard,
       },
       category: "unified",
       focus_mode: focusMode,

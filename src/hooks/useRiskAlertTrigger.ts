@@ -166,6 +166,16 @@ export function useRiskAlertTrigger(): UseRiskAlertTriggerResult {
       const shownAlerts = sessionStorage.getItem(ALERT_COOLDOWN_KEY);
       const shownSet = shownAlerts ? new Set(JSON.parse(shownAlerts)) : new Set();
 
+      // Fetch all DB dismissals for this user
+      const { data: dbDismissals } = await supabase
+        .from("risk_alert_dismissals")
+        .select("alert_key, dismissed_at, snooze_until")
+        .eq("user_id", user.id);
+
+      const dismissalMap = new Map(
+        (dbDismissals || []).map(d => [d.alert_key, d])
+      );
+
       // Check recovery trends for ACWR, strain, monotony
       const { data: recoveryTrends } = await supabase
         .from("recovery_trends")
@@ -320,13 +330,33 @@ export function useRiskAlertTrigger(): UseRiskAlertTriggerResult {
           return;
         }
 
-        // Skip if on 7-day cooldown (persists across sessions)
+        // Skip if on DB-backed cooldown
+        const dbDismissal = dismissalMap.get(alertKey);
+        if (dbDismissal) {
+          const now = new Date();
+          // Check snooze
+          if (dbDismissal.snooze_until && new Date(dbDismissal.snooze_until) > now) {
+            console.log(`[useRiskAlertTrigger] Alert ${alertKey} snoozed until ${dbDismissal.snooze_until}, skipping`);
+            return;
+          }
+          // Check 7-day dismiss cooldown
+          if (dbDismissal.dismissed_at) {
+            const dismissedAt = new Date(dbDismissal.dismissed_at);
+            const hoursSince = (now.getTime() - dismissedAt.getTime()) / (1000 * 60 * 60);
+            if (hoursSince < COOLDOWN_HOURS) {
+              console.log(`[useRiskAlertTrigger] Alert ${alertKey} dismissed ${Math.round(hoursSince)}h ago, skipping`);
+              return;
+            }
+          }
+        }
+
+        // Also check localStorage as fast fallback
         if (isOnDailyCooldown(alertKey)) {
-          console.log(`[useRiskAlertTrigger] Alert ${alertKey} on 7-day cooldown, skipping`);
+          console.log(`[useRiskAlertTrigger] Alert ${alertKey} on local cooldown, skipping`);
           return;
         }
 
-        // Mark this alert as shown in session storage AND 7-day cooldown
+        // Mark this alert as shown in session storage AND local cooldown
         shownSet.add(alertKey);
         sessionStorage.setItem(ALERT_COOLDOWN_KEY, JSON.stringify([...shownSet]));
         setDailyCooldown(alertKey);
@@ -361,13 +391,50 @@ export function useRiskAlertTrigger(): UseRiskAlertTriggerResult {
     }
   }, []);
 
-  const dismissAlert = useCallback(() => {
-    setCurrentAlert(null);
-  }, []);
-
-  const snoozeAlert = useCallback((duration: SnoozeDuration) => {
+  const dismissAlert = useCallback(async () => {
     if (currentAlert) {
       const alertKey = `${currentAlert.metric}_${currentAlert.type}`;
+      const snoozeUntil = new Date(Date.now() + COOLDOWN_HOURS * 60 * 60 * 1000).toISOString();
+      
+      // Persist to DB
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        await supabase
+          .from("risk_alert_dismissals")
+          .upsert({
+            user_id: user.id,
+            alert_key: alertKey,
+            dismissed_at: new Date().toISOString(),
+            snooze_until: snoozeUntil,
+          }, { onConflict: "user_id,alert_key" });
+      }
+      
+      // Also set local cooldown
+      setDailyCooldown(alertKey);
+    }
+    setCurrentAlert(null);
+  }, [currentAlert]);
+
+  const snoozeAlert = useCallback(async (duration: SnoozeDuration) => {
+    if (currentAlert) {
+      const alertKey = `${currentAlert.metric}_${currentAlert.type}`;
+      const hoursToSnooze = SNOOZE_DURATIONS[duration];
+      const snoozeUntil = new Date(Date.now() + hoursToSnooze * 60 * 60 * 1000).toISOString();
+      
+      // Persist to DB
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        await supabase
+          .from("risk_alert_dismissals")
+          .upsert({
+            user_id: user.id,
+            alert_key: alertKey,
+            dismissed_at: new Date().toISOString(),
+            snooze_until: snoozeUntil,
+          }, { onConflict: "user_id,alert_key" });
+      }
+      
+      // Also set local cooldown
       setSnoozeCooldown(alertKey, duration);
       console.log(`[useRiskAlertTrigger] Snoozed ${alertKey} for ${duration.replace('_', ' ')}`);
       setCurrentAlert(null);

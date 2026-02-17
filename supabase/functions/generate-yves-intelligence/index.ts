@@ -15,6 +15,13 @@ interface YvesIntelligenceRequest {
   refresh_nonce?: string;
 }
 
+// Deterministic hash using Web Crypto (available in Deno)
+async function sha256Hex(input: string): Promise<string> {
+  const data = new TextEncoder().encode(input);
+  const hashBuffer = await crypto.subtle.digest("SHA-256", data);
+  return Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, "0")).join("");
+}
+
 interface YvesIntelligenceOutput {
   dailyBriefing: {
     summary: string;
@@ -654,6 +661,8 @@ Deno.serve(async (req) => {
     }
 
     // On force_refresh, skip cache entirely — do NOT even query for existing briefing
+    let cachedBriefing: any = null;
+    let cacheStillValid = false;
     if (!forceRefresh) {
       const { data: existingIntelligence } = await supabase
         .from("daily_briefings")
@@ -667,24 +676,17 @@ Deno.serve(async (req) => {
         .maybeSingle();
 
       if (existingIntelligence && existingIntelligence.context_used) {
-        // Check cache age (6-hour TTL)
+        // Store for later signature comparison (after data is loaded)
+        cachedBriefing = existingIntelligence;
+
+        // Check cache age (6-hour TTL) — fast path
         const cacheAge = Date.now() - new Date(existingIntelligence.created_at).getTime();
         const sixHoursInMs = 6 * 60 * 60 * 1000;
 
         if (cacheAge < sixHoursInMs) {
-          console.log(`[generate-yves-intelligence] Returning cached intelligence for user ${userId} (age: ${Math.round(cacheAge / 1000 / 60)} minutes)`);
-          return new Response(
-            JSON.stringify({
-              success: true,
-              cached: true,
-              data: existingIntelligence.context_used as YvesIntelligenceOutput,
-              content: existingIntelligence.content,
-              created_at: existingIntelligence.created_at,
-              focus_mode: focusMode,
-              generation_id: existingIntelligence.generation_id,
-            }),
-            { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-          );
+          // Tentatively use cache — will be invalidated later if data_signature changed
+          cacheStillValid = true;
+          console.log(`[generate-yves-intelligence] Cache within TTL for user ${userId} (age: ${Math.round(cacheAge / 1000 / 60)} minutes) — will verify signature after data load`);
         } else {
           console.log(`[generate-yves-intelligence] Cache expired for user ${userId} (age: ${Math.round(cacheAge / 1000 / 60)} minutes), regenerating`);
         }
@@ -1023,6 +1025,54 @@ Deno.serve(async (req) => {
 
     const metricDeltas = computeDeltas();
     console.log(`[generate-yves-intelligence] Computed metric deltas for user ${userId}:`, JSON.stringify(metricDeltas));
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // DATA SIGNATURE (deterministic hash of all inputs that affect output)
+    // ═══════════════════════════════════════════════════════════════════════
+    const lastSyncAt = wearableSessions[0]?.synced_at || wearableSessions[0]?.date || null;
+    const lastSessionAt = wearableSessions[0]?.date || null;
+    const lastSymptomCheckinAt = symptomCheckIns[0]?.created_at || null;
+
+    const deltaSignatureInput = Object.entries(metricDeltas)
+      .filter(([_, d]) => d.todayValue !== null)
+      .map(([metric, d]) => `${metric}:${d.todayValue}:${d.dayOverDay}`)
+      .sort()
+      .join('|');
+
+    const signatureInput = [
+      `sync:${lastSyncAt}`,
+      `session:${lastSessionAt}`,
+      `symptom:${lastSymptomCheckinAt}`,
+      `deltas:${deltaSignatureInput}`,
+      `focus:${focusMode}`,
+    ].join('||');
+
+    const dataSignature = await sha256Hex(signatureInput);
+    console.log(`[generate-yves-intelligence] Data signature: ${dataSignature.substring(0, 12)}... (input: ${signatureInput.substring(0, 80)}...)`);
+
+    // ─── SIGNATURE-BASED CACHE DECISION ─────────────────────────────────────
+    if (cacheStillValid && cachedBriefing && !forceRefresh) {
+      const cachedSignature = (cachedBriefing.context_used as any)?.data_signature;
+      if (cachedSignature === dataSignature) {
+        console.log(`[generate-yves-intelligence] Data signature MATCHES cached — returning cached intelligence`);
+        return new Response(
+          JSON.stringify({
+            success: true,
+            cached: true,
+            cache_reason: 'signature_match',
+            data: cachedBriefing.context_used as YvesIntelligenceOutput,
+            content: cachedBriefing.content,
+            created_at: cachedBriefing.created_at,
+            focus_mode: focusMode,
+            generation_id: cachedBriefing.generation_id,
+            data_signature: dataSignature,
+          }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      } else {
+        console.log(`[generate-yves-intelligence] Data signature CHANGED (cached: ${cachedSignature?.substring(0, 12)}... → new: ${dataSignature.substring(0, 12)}...) — regenerating despite valid TTL`);
+      }
+    }
 
     // ═══════════════════════════════════════════════════════════════════════
     // EXECUTE 4-LAYER REASONING ENGINE
@@ -1751,7 +1801,10 @@ RESPOND WITH ONLY THE JSON OBJECT.`;
 
     const userPrompt = `Based on this user's data and the reasoning engine analysis, generate ONE dominant insight:\n\n${promptContext}${pastBriefingsContext}${memoryContext}`;
 
-    console.log(`[generate-yves-intelligence] Calling AI for user ${userId} with ${promptContext.length} chars of context`);
+    // Compute prompt and system prompt hashes for auditability
+    const promptContextHash = await sha256Hex(userPrompt);
+    const systemPromptHash = await sha256Hex(systemPrompt);
+    console.log(`[generate-yves-intelligence] Calling AI for user ${userId} with ${promptContext.length} chars of context, data_sig: ${dataSignature.substring(0, 12)}, prompt_hash: ${promptContextHash.substring(0, 12)}, sys_hash: ${systemPromptHash.substring(0, 12)}`);
 
     const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -1886,6 +1939,9 @@ RESPOND WITH ONLY THE JSON OBJECT.`;
         creative_framing: creativePack,
         personal_profile_card: profileCard,
         continuity_memory: continuityMemory,
+        data_signature: dataSignature,
+        prompt_context_hash: promptContextHash,
+        system_prompt_hash: systemPromptHash,
       },
       category: "unified",
       focus_mode: focusMode,
@@ -1932,6 +1988,9 @@ RESPOND WITH ONLY THE JSON OBJECT.`;
         focus_mode: focusMode,
         generation_id: generationId,
         refresh_nonce: refreshNonce,
+        data_signature: dataSignature,
+        prompt_context_hash: promptContextHash.substring(0, 16),
+        system_prompt_hash: systemPromptHash.substring(0, 16),
         reasoning: {
           should_speak: true,
           confidence: reasoningContext.overall_confidence,

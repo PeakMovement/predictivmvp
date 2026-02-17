@@ -841,6 +841,13 @@ Deno.serve(async (req) => {
     ]);
 
     // Batch 3: Documents, memory & adaptation profile
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    const yesterdayStr = yesterday.toISOString().split("T")[0];
+    const threeDaysAgoDate = new Date();
+    threeDaysAgoDate.setDate(threeDaysAgoDate.getDate() - 3);
+    const threeDaysAgoStr2 = threeDaysAgoDate.toISOString().split("T")[0];
+
     const [
       userDocumentsResult,
       memoryBankResult,
@@ -848,13 +855,15 @@ Deno.serve(async (req) => {
       adaptationProfileResult,
       riskTrajectoriesResult,
       pastBriefingsResult,
+      engagementEventsResult,
     ] = await Promise.all([
       supabase.from("user_documents").select("document_type, file_name, parsed_content, ai_summary, tags").eq("user_id", userId).eq("processing_status", "completed").order("uploaded_at", { ascending: false }).limit(10),
       supabase.from("yves_memory_bank").select("memory_key, memory_value").eq("user_id", userId),
       supabase.from("yves_recommendations").select("*").eq("user_id", userId).order("created_at", { ascending: false }).limit(10),
       supabase.from("user_adaptation_profile").select("*").eq("user_id", userId).maybeSingle(),
       supabase.from("risk_trajectories").select("*").eq("user_id", userId).order("calculation_date", { ascending: false }).limit(5),
-      supabase.from("daily_briefings").select("date, content").eq("user_id", userId).eq("category", "unified").order("date", { ascending: false }).limit(3),
+      supabase.from("daily_briefings").select("date, content, context_used").eq("user_id", userId).eq("category", "unified").order("created_at", { ascending: false }).limit(5),
+      supabase.from("engagement_events").select("event_type, metadata, created_at").eq("user_id", userId).gte("created_at", yesterdayStr).order("created_at", { ascending: false }).limit(20),
     ]);
 
     // Extract data
@@ -890,6 +899,73 @@ Deno.serve(async (req) => {
     const recentRecommendations = recentRecommendationsResult.data || [];
     const adaptationProfile = adaptationProfileResult.data;
     const riskTrajectories = riskTrajectoriesResult.data || [];
+    const engagementEvents = engagementEventsResult.data || [];
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // CONTINUITY MEMORY (yesterday's context + engagement + topic history)
+    // ═══════════════════════════════════════════════════════════════════════
+    const buildContinuityMemory = () => {
+      // Find yesterday's briefing
+      const yesterdayBriefing = pastBriefings.find((b: any) => b.date === yesterdayStr);
+      const contextUsed = yesterdayBriefing?.context_used as any;
+
+      // Yesterday's commitment (todaysFocus from yesterday's briefing)
+      const yesterdayCommitment = contextUsed?.dailyBriefing?.todaysFocus
+        ? String(contextUsed.dailyBriefing.todaysFocus).substring(0, 140)
+        : null;
+
+      // Yesterday's recommendation categories
+      const yesterdayRecCategories: string[] = (contextUsed?.recommendations || [])
+        .map((r: any) => r.category)
+        .filter(Boolean);
+
+      // Engagement signal: check if user engaged with yesterday's briefing
+      const briefingEvents = engagementEvents.filter((e: any) => {
+        const eventDate = new Date(e.created_at).toISOString().split("T")[0];
+        return eventDate === yesterdayStr || eventDate === today;
+      });
+      const engagedEvents = briefingEvents.filter((e: any) =>
+        ['recommendation_followed', 'briefing_expanded', 'recommendation_viewed', 'app_opened'].includes(e.event_type)
+      );
+      const dismissedEvents = briefingEvents.filter((e: any) =>
+        ['recommendation_dismissed', 'briefing_dismissed'].includes(e.event_type)
+      );
+      let engagementSignal: 'engaged' | 'dismissed' | 'unknown' = 'unknown';
+      if (dismissedEvents.length > engagedEvents.length) {
+        engagementSignal = 'dismissed';
+      } else if (engagedEvents.length > 0) {
+        engagementSignal = 'engaged';
+      }
+
+      // Topics used last 3 days (from past briefings context_used)
+      const topicsLast3Days: string[] = [];
+      for (const b of pastBriefings.slice(0, 3)) {
+        const ctx = b.context_used as any;
+        if (ctx?.creative_framing?.lens) topicsLast3Days.push(ctx.creative_framing.lens);
+        const recCats = (ctx?.recommendations || []).map((r: any) => r.category).filter(Boolean);
+        topicsLast3Days.push(...recCats);
+      }
+      // Deduplicate
+      const uniqueTopics = [...new Set(topicsLast3Days)];
+
+      // Dismissal rate (from Layer 3 findings or compute from engagement)
+      const totalBriefingInteractions = engagedEvents.length + dismissedEvents.length;
+      const dismissalRate = totalBriefingInteractions > 0
+        ? Math.round((dismissedEvents.length / totalBriefingInteractions) * 100)
+        : null;
+
+      return {
+        yesterday_commitment: yesterdayCommitment,
+        yesterday_rec_categories: yesterdayRecCategories,
+        engagement_signal: engagementSignal,
+        topics_used_last_3_days: uniqueTopics,
+        dismissal_rate: dismissalRate,
+        should_shorten: dismissalRate !== null && dismissalRate > 40,
+      };
+    };
+
+    const continuityMemory = buildContinuityMemory();
+    console.log(`[generate-yves-intelligence] Continuity memory:`, continuityMemory);
 
     // ═══════════════════════════════════════════════════════════════════════
     // COMPUTE METRIC DELTAS (today vs yesterday, today vs 7-day avg)
@@ -1543,6 +1619,14 @@ This is WHO you are talking to. Use this to make every output personal.
 - Preference: ${profileCard.preference || 'No preferences recorded'}
 - Suppressed categories (DO NOT recommend): ${profileCard.suppressedCategories.length > 0 ? profileCard.suppressedCategories.join(', ') : 'None'}
 
+═══ CONTINUITY MEMORY (what happened yesterday) ═══
+- Yesterday's commitment: ${continuityMemory.yesterday_commitment || 'None (first day or no previous briefing)'}
+- Yesterday's recommendation categories: ${continuityMemory.yesterday_rec_categories.length > 0 ? continuityMemory.yesterday_rec_categories.join(', ') : 'None'}
+- Engagement signal: ${continuityMemory.engagement_signal}
+- Topics used last 3 days: ${continuityMemory.topics_used_last_3_days.length > 0 ? continuityMemory.topics_used_last_3_days.join(', ') : 'None'}
+- Dismissal rate: ${continuityMemory.dismissal_rate !== null ? continuityMemory.dismissal_rate + '%' : 'Unknown'}
+${continuityMemory.should_shorten ? '⚠️ HIGH DISMISSAL RATE — shorten output to 1-2 sentences summary, 1 recommendation max. Skip low-adherence categories entirely.' : ''}
+
 ═══ MANDATORY PERSONALIZATION RULES ═══
 1. You MUST reference the user's primary goal within the first 2 sentences of the summary.
 2. You MUST reference at least 1 real metric delta (from the FACTS PACK) in your summary.
@@ -1550,6 +1634,14 @@ This is WHO you are talking to. Use this to make every output personal.
 4. You MUST NOT recommend anything in suppressed categories listed above.
 5. If a constraint exists, recommendations must respect it (e.g., no running if knee injury).
 6. NAME USAGE: Use the user's name at most ONCE in the entire output. Only when it adds emotional value (praising consistency, expressing concern). Never start with the name. Never use it in technical statements.
+
+═══ CONTINUITY RULES (MANDATORY) ═══
+1. If yesterday_commitment exists, your summary MUST start by referencing it in 1 line (e.g., "Yesterday you set out to [commitment] — here's how today builds on that."). This is the FIRST sentence.
+2. Do NOT repeat the same recommendation CATEGORY as yesterday unless a risk flag explicitly requires it. Yesterday's categories: ${continuityMemory.yesterday_rec_categories.join(', ') || 'none'}.
+3. Avoid topics already covered in the last 3 days: ${continuityMemory.topics_used_last_3_days.join(', ') || 'none'}. Pick a fresh angle.
+4. If engagement_signal is "dismissed", be shorter and more direct. Don't over-explain.
+5. If engagement_signal is "engaged", you may reference that positively ("Good to see you acted on yesterday's focus.").
+6. If dismissal_rate > 40%, cap output to 1-2 sentences in summary, max 1 recommendation, and skip all low-adherence categories.
 
 ═══ TOPIC VARIETY (MANDATORY) ═══
 Do NOT repeat the same primary topic as recent briefings.
@@ -1589,7 +1681,8 @@ Generate a JSON object:
     "summary": "2-4 sentences that feel personal and insightful. Reference specific metrics, trends, or patterns from their data. Avoid generic statements like 'everything looks stable' - instead, explain WHAT is stable and WHY that matters for them.",
     "keyChanges": ["1-2 specific observations about trends, patterns, or notable shifts. Include actual numbers or timeframes when relevant."],
     "riskHighlights": ["Only include if genuinely concerning - this can be empty"],
-    "todaysFocus": "ONE clear, actionable priority with specific timing and reasoning"
+    "todaysFocus": "ONE clear, actionable priority with specific timing and reasoning",
+    "commitment": "A short (max 140 chars) commitment string summarizing what the user could aim for today. This is stored and referenced tomorrow."
   },
   "recommendations": [
     {
@@ -1792,6 +1885,7 @@ RESPOND WITH ONLY THE JSON OBJECT.`;
         facts_pack: factsPack,
         creative_framing: creativePack,
         personal_profile_card: profileCard,
+        continuity_memory: continuityMemory,
       },
       category: "unified",
       focus_mode: focusMode,

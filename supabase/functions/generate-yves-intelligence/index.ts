@@ -574,19 +574,25 @@ function executeLayeredReasoning(
   let should_speak = true;
   let silence_reason: string | undefined;
 
-  // SILENCE CONDITIONS (more permissive thresholds for better engagement):
-  // 1. Layer 1 failed (insufficient physiological data)
-  if (!layer1.pass) {
+  // SILENCE CONDITIONS (permissive — users with any context should get personalized briefings):
+  // Check if user has non-wearable context (symptoms, profile, interests)
+  const hasNonWearableContext = symptomCheckIns.length > 0
+    || (userProfile?.name || userProfile?.activity_level || userProfile?.goals?.length > 0)
+    || (userInterests?.hobbies || userInterests?.interests)
+    || (userTraining?.preferred_activities || userTraining?.training_frequency);
+
+  // 1. Layer 1 failed (insufficient physiological data) — but ONLY silence if user has NO other context
+  if (!layer1.pass && !hasNonWearableContext) {
     should_speak = false;
     silence_reason = layer1.reason;
   }
-  // 2. Overall confidence too low (lowered from 25 to 15)
-  else if (overall_confidence < 15) {
+  // 2. Overall confidence too low AND no alternative context
+  else if (overall_confidence < 15 && !hasNonWearableContext) {
     should_speak = false;
     silence_reason = `Confidence too low (${overall_confidence}%) to provide meaningful guidance`;
   }
-  // Note: Removed overly strict silence conditions to allow more insights
-  // We want to engage users even with stable data
+  // Note: Users with symptom check-ins, profile data, or interests always get personalized briefings
+  // even without wearable data — the AI uses whatever context is available
 
   return {
     layer1_physiological: layer1,
@@ -622,7 +628,10 @@ Deno.serve(async (req) => {
     try {
       const body = await req.json() as YvesIntelligenceRequest;
       userId = body.user_id || null;
-      focusMode = body.focus_mode || null;
+      // Normalize focus_mode aliases (e.g., "balanced" → "balance")
+      const focusModeAliases: Record<string, string> = { balanced: 'balance' };
+      const rawFocusMode = body.focus_mode || null;
+      focusMode = (rawFocusMode ? (focusModeAliases[rawFocusMode] || rawFocusMode) : null) as FocusMode | null;
       forceRefresh = body.force_refresh || false;
       refreshNonce = body.refresh_nonce || null;
     } catch {
@@ -765,7 +774,8 @@ Deno.serve(async (req) => {
         content: onboardingIntelligence.dailyBriefing.summary,
         context_used: onboardingIntelligence,
         category: "unified",
-      });
+        focus_mode: focusMode || '',
+      }, { onConflict: "user_id,date,category,focus_mode" });
 
       return new Response(
         JSON.stringify({
@@ -1140,7 +1150,7 @@ Deno.serve(async (req) => {
           silent: true 
         },
         category: "unified",
-        focus_mode: focusMode,
+        focus_mode: focusMode || '',
         generation_id: silentGenerationId,
         refresh_nonce: refreshNonce,
       };
@@ -1981,7 +1991,7 @@ RESPOND WITH ONLY THE JSON OBJECT.`;
         system_prompt_hash: systemPromptHash,
       },
       category: "unified",
-      focus_mode: focusMode,
+      focus_mode: focusMode || '',
       focus_context: {
         mode: focusMode,
         emphasis: focusModeContext.topicEmphasis,

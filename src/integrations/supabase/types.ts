@@ -381,7 +381,7 @@ export type Database = {
           created_at: string | null
           date: string
           focus_context: Json | null
-          focus_mode: string | null
+          focus_mode: string
           generation_id: string | null
           id: string
           refresh_nonce: string | null
@@ -394,7 +394,7 @@ export type Database = {
           created_at?: string | null
           date: string
           focus_context?: Json | null
-          focus_mode?: string | null
+          focus_mode?: string
           generation_id?: string | null
           id?: string
           refresh_nonce?: string | null
@@ -407,7 +407,7 @@ export type Database = {
           created_at?: string | null
           date?: string
           focus_context?: Json | null
-          focus_mode?: string | null
+          focus_mode?: string
           generation_id?: string | null
           id?: string
           refresh_nonce?: string | null

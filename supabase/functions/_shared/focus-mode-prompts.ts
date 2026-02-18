@@ -174,7 +174,10 @@ and tailor your briefing accordingly. Provide balanced guidance across their sel
     }
   };
 
-  return contexts[focusMode];
+  // Handle aliases (e.g., "balanced" → "balance")
+  const aliases: Record<string, FocusMode> = { balanced: 'balance' };
+  const resolvedMode = aliases[focusMode] || focusMode;
+  return contexts[resolvedMode] || contexts['balance'];
 }
 
 export function filterRecommendationsByFocus(

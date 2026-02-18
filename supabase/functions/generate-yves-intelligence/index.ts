@@ -1488,26 +1488,57 @@ Acknowledge frustration but enforce clear boundaries on activity.`
     // PERSONAL PROFILE CARD (compact, server-side, injected into prompt)
     // ═══════════════════════════════════════════════════════════════════════
     const buildPersonalProfileCard = () => {
-      // user_name
+      // user_name — profile > memory bank > null
       const userName = userProfile?.name || memoryBank.find((m: any) => m.memory_key === 'preferred_name')?.memory_value || null;
 
-      // primary_goal (1 line)
+      // primary_goal — wellness goals > profile goals > memory bank goals > null
       const goalSources = [
         userWellnessGoals?.priority,
         ...(userProfile?.goals || []),
         ...(userWellnessGoals?.goals || []),
       ].filter(Boolean);
+      // Fallback: check memory bank for goals
+      if (goalSources.length === 0) {
+        const goalMemory = memoryBank.find((m: any) => m.memory_key === 'user_goals');
+        if (goalMemory) {
+          try {
+            const parsed = JSON.parse(goalMemory.memory_value);
+            if (parsed.goals?.length) goalSources.push(...parsed.goals);
+          } catch { /* ignore parse errors */ }
+        }
+      }
       const primaryGoal = goalSources.length > 0 ? goalSources[0] : null;
 
-      // primary_constraint (injury/medical/training limitation) (1 line)
+      // primary_constraint — injuries > medical conditions > memory bank > symptom check-ins
       const constraintSources: string[] = [];
       if (userInjuries?.injuries?.length > 0) constraintSources.push(...userInjuries.injuries);
       if (userMedical?.conditions?.length > 0) constraintSources.push(...userMedical.conditions);
       if (userMedical?.medications?.length > 0) constraintSources.push(`on ${userMedical.medications[0]}`);
-      // Check memory bank for injury history
-      const injuryMemory = memoryBank.find((m: any) => m.memory_key === 'injury_history');
-      if (injuryMemory && constraintSources.length === 0) constraintSources.push(injuryMemory.memory_value);
+      // Fallback: memory bank injury/medical context
+      if (constraintSources.length === 0) {
+        const injuryMemory = memoryBank.find((m: any) => m.memory_key === 'injury_history');
+        if (injuryMemory) constraintSources.push(injuryMemory.memory_value);
+        const medicalMemory = memoryBank.find((m: any) => m.memory_key === 'medical_context');
+        if (medicalMemory) {
+          try {
+            const parsed = JSON.parse(medicalMemory.memory_value);
+            if (parsed.medical_notes) constraintSources.push(parsed.medical_notes);
+          } catch { /* ignore */ }
+        }
+      }
+      // Fallback: recent severe symptom check-ins as implicit constraints
+      if (constraintSources.length === 0 && symptomCheckIns?.length > 0) {
+        const severeSymptoms = symptomCheckIns
+          .filter((s: any) => s.severity === 'severe' || s.severity === 'moderate')
+          .slice(0, 2);
+        for (const s of severeSymptoms) {
+          constraintSources.push(`${s.symptom_type}: ${s.description || s.severity}`);
+        }
+      }
       const primaryConstraint = constraintSources.length > 0 ? constraintSources.slice(0, 2).join('; ') : null;
+
+      // activity_level — direct from profile
+      const activityLevel = userProfile?.activity_level || null;
 
       // adherence_pattern (what they actually follow vs ignore) (1 line)
       const highAdherence = (adherenceRanking?.prioritize_high_adherence || []) as string[];
@@ -1533,7 +1564,7 @@ Acknowledge frustration but enforce clear boundaries on activity.`
       if (userRecovery?.preferred_methods?.length > 0) prefParts.push(`recovery: ${userRecovery.preferred_methods[0]}`);
       const preference = prefParts.length > 0 ? prefParts.slice(0, 2).join(' | ') : null;
 
-      return { userName, primaryGoal, primaryConstraint, adherencePattern, preference, suppressedCategories: lowAdherence };
+      return { userName, primaryGoal, primaryConstraint, activityLevel, adherencePattern, preference, suppressedCategories: lowAdherence };
     };
 
     const profileCard = buildPersonalProfileCard();

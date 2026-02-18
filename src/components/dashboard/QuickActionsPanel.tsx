@@ -92,7 +92,7 @@ export const QuickActionsPanel = () => {
       icon: Activity,
       label: "Log Symptom",
       description: "Record how you feel",
-      href: "/symptom-check-in",
+      onClick: () => window.dispatchEvent(new Event("open-symptom-checkin")),
       color: "text-blue-500",
       bgColor: "bg-blue-500/10",
       hoverColor: "hover:bg-blue-500/20",

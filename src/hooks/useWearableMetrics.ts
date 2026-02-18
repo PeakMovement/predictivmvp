@@ -135,12 +135,12 @@ export const useWearableMetrics = () => {
       }
 
       if (data) {
-        console.log("✅ Oura data loaded from wearable_sessions:", data);
+        console.log(`✅ Wearable data loaded from wearable_sessions (${data.source}):`, data);
         const parsed = parseOuraMetrics(data as WearableSessionRow);
         setMetrics(parsed);
         setLastSync(data.fetched_at);
       } else {
-        console.log("No Oura data found in wearable_sessions");
+        console.log("No wearable data found in wearable_sessions");
         setMetrics(null);
       }
     } catch (error) {
@@ -158,28 +158,60 @@ export const useWearableMetrics = () => {
         throw new Error("Not authenticated");
       }
 
-      console.log("🔄 Triggering Oura sync...");
+      console.log("🔄 Triggering wearable sync...");
 
-      const { data, error } = await supabase.functions.invoke('fetch-oura-data', {
-        body: { user_id: user.id }
-      });
+      // Check which wearable sources are connected
+      const { data: tokens } = await supabase
+        .from("wearable_tokens")
+        .select("scope")
+        .eq("user_id", user.id);
 
-      if (error) {
-        console.error("Oura sync error:", error);
-        throw new Error(error.message);
+      const connectedSources = tokens?.map(t => t.scope) || [];
+      const syncPromises = [];
+
+      // Sync Oura if connected
+      if (connectedSources.includes("oura")) {
+        console.log("🔄 Syncing Oura data...");
+        syncPromises.push(
+          supabase.functions.invoke('fetch-oura-data', {
+            body: { user_id: user.id }
+          })
+        );
       }
 
-      console.log("✅ Oura sync response:", data);
+      // Sync Garmin if connected
+      if (connectedSources.includes("garmin")) {
+        console.log("🔄 Syncing Garmin data...");
+        syncPromises.push(
+          supabase.functions.invoke('fetch-garmin-data', {
+            body: { user_id: user.id }
+          })
+        );
+      }
+
+      if (syncPromises.length === 0) {
+        throw new Error("No wearable devices connected");
+      }
+
+      const results = await Promise.allSettled(syncPromises);
+
+      // Check if any sync failed
+      const failed = results.filter(r => r.status === 'rejected');
+      if (failed.length > 0) {
+        console.error("Some syncs failed:", failed);
+      }
+
+      console.log("✅ Wearable sync completed");
 
       await new Promise(resolve => setTimeout(resolve, 2000));
       await fetchMetrics();
 
       toast({
         title: "Data Refreshed",
-        description: "Ōura Ring data has been updated successfully",
+        description: "Your wearable data has been updated successfully",
       });
     } catch (error) {
-      console.error('Failed to refresh Oura data:', error);
+      console.error('Failed to refresh wearable data:', error);
       toast({
         title: "Refresh Failed",
         description: error instanceof Error ? error.message : "Could not refresh data. Please try again.",

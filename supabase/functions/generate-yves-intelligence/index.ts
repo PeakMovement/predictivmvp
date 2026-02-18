@@ -695,46 +695,53 @@ Deno.serve(async (req) => {
       console.log(`[generate-yves-intelligence] Force refresh requested for user ${userId}, fully bypassing all caches`);
     }
 
-    // ─── CHECK DATA MATURITY FIRST ────────────────────────────────────────────
-    let { data: dataMaturity, error: maturityError } = await supabase
-      .from("user_data_maturity")
-      .select("*")
-      .eq("user_id", userId)
-      .maybeSingle();
+    // ─── ALWAYS RECALCULATE MATURITY FRESH ────────────────────────────────
+    // Never rely on cached/stale maturity values — recalculate on every request
+    console.log(`[generate-yves-intelligence] Force-recalculating data maturity for user ${userId}...`);
+    let dataMaturity: any = null;
+    try {
+      const maturityCalcResponse = await supabase.functions.invoke("calculate-data-maturity", {
+        body: { user_id: userId }
+      });
 
-    // If no maturity data exists, calculate it now
-    if (!dataMaturity && !maturityError) {
-      console.log(`[generate-yves-intelligence] No maturity data found for user ${userId}, calculating now...`);
-      try {
-        const maturityCalcResponse = await supabase.functions.invoke("calculate-data-maturity", {
-          body: { user_id: userId }
-        });
-
-        if (maturityCalcResponse.data?.success) {
-          // Refetch the maturity data
-          const refetch = await supabase
-            .from("user_data_maturity")
-            .select("*")
-            .eq("user_id", userId)
-            .maybeSingle();
-          dataMaturity = refetch.data;
-          console.log(`[generate-yves-intelligence] Successfully calculated maturity for user ${userId}`);
-        }
-      } catch (calcError) {
-        console.error(`[generate-yves-intelligence] Failed to calculate maturity for user ${userId}:`, calcError);
+      if (maturityCalcResponse.data?.success) {
+        dataMaturity = maturityCalcResponse.data.data;
+        console.log(`[generate-yves-intelligence] Fresh maturity calculated:`, dataMaturity);
+      } else {
+        console.warn(`[generate-yves-intelligence] Maturity calc returned non-success, falling back to DB`);
+        const { data: fallback } = await supabase
+          .from("user_data_maturity")
+          .select("*")
+          .eq("user_id", userId)
+          .maybeSingle();
+        dataMaturity = fallback;
       }
+    } catch (calcError) {
+      console.error(`[generate-yves-intelligence] Maturity calc failed, falling back to DB:`, calcError);
+      const { data: fallback } = await supabase
+        .from("user_data_maturity")
+        .select("*")
+        .eq("user_id", userId)
+        .maybeSingle();
+      dataMaturity = fallback;
     }
 
-    console.log(`[generate-yves-intelligence] Data maturity check for user ${userId}:`, {
+    console.log(`[generate-yves-intelligence] Data maturity for user ${userId}:`, {
       maturity_level: dataMaturity?.maturity_level || 'not_found',
       maturity_score: dataMaturity?.maturity_score,
       data_days: dataMaturity?.data_days,
+      profile_completeness: dataMaturity?.profile_completeness,
+      symptom_checkins_count: dataMaturity?.symptom_checkins_count,
       wearable_connected: dataMaturity?.wearable_connected,
-      error: maturityError
     });
 
-    // If maturity is insufficient, return encouraging onboarding message
-    if (dataMaturity?.maturity_level === 'insufficient') {
+    // Only block if truly zero data — any partial data should allow personalized briefing
+    const hasAnyUsableData = (dataMaturity?.maturity_score ?? 0) > 0
+      || (dataMaturity?.symptom_checkins_count ?? 0) > 0
+      || (dataMaturity?.profile_completeness ?? 0) > 0
+      || (dataMaturity?.documents_count ?? 0) > 0;
+
+    if (dataMaturity?.maturity_level === 'insufficient' && !hasAnyUsableData) {
       console.log(`[generate-yves-intelligence] User ${userId} has insufficient data maturity - returning onboarding guidance`);
       
       const onboardingIntelligence: YvesIntelligenceOutput = {

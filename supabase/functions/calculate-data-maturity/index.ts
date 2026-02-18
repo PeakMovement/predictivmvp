@@ -152,13 +152,13 @@ Deno.serve(async (req) => {
     // Total maturity score (0-100)
     const maturityScore = wearableScore + normalizedProfileScore + documentsScore + symptomsScore;
 
-    // Determine maturity level
+    // Determine maturity level — lowered thresholds so partial data isn't blocked
     let maturityLevel: 'insufficient' | 'emerging' | 'established' | 'mature';
-    if (maturityScore < 20 || dataDays < 3) {
-      maturityLevel = 'insufficient';
-    } else if (maturityScore < 45 || dataDays < 7) {
+    if (maturityScore === 0 && profileScore === 0 && symptomCheckInsCount === 0 && documentsCount === 0) {
+      maturityLevel = 'insufficient'; // Truly zero data
+    } else if (maturityScore < 30 || dataDays < 5) {
       maturityLevel = 'emerging';
-    } else if (maturityScore < 70 || dataDays < 14) {
+    } else if (maturityScore < 60 || dataDays < 14) {
       maturityLevel = 'established';
     } else {
       maturityLevel = 'mature';

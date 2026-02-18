@@ -161,6 +161,23 @@ export function SymptomCheckInForm({ onSuccess, onRequestClose }: SymptomCheckIn
 
       if (error) throw error;
 
+      // Auto-capture symptom to memory bank for AI personalization
+      try {
+        await supabase.from("yves_memory_bank").upsert({
+          user_id: user.id,
+          memory_key: `symptom_${checkin?.id || Date.now()}`,
+          memory_value: JSON.stringify({
+            type: "general",
+            severity: getSeverityString(data.severity),
+            description: data.description,
+            date: new Date().toISOString().split("T")[0],
+          }),
+          last_updated: new Date().toISOString(),
+        }, { onConflict: "user_id,memory_key" });
+      } catch (memErr) {
+        console.warn("Failed to capture symptom to memory bank:", memErr);
+      }
+
       toast({
         title: "Symptom logged",
         description: "Your symptom has been recorded successfully.",

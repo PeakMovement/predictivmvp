@@ -150,5 +150,8 @@ verify_jwt = false
 [functions.fetch-garmin-data]
 verify_jwt = false
 
+[functions.fetch-garmin-auto]
+verify_jwt = false
+
 [functions.admin-user-overview]
 verify_jwt = false

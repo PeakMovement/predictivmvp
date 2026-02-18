@@ -136,6 +136,49 @@ export const OnboardingFlow = ({ onComplete, onSkip }: OnboardingFlowProps) => {
           onConflict: "user_id",
         });
 
+      // Auto-capture profile completion to memory bank
+      try {
+        const [profileRes, trainingRes, medicalRes] = await Promise.all([
+          supabase.from("user_profile").select("name, goals, activity_level").eq("user_id", userId).maybeSingle(),
+          supabase.from("user_training").select("preferred_activities, training_frequency").eq("user_id", userId).maybeSingle(),
+          supabase.from("user_medical").select("conditions, medications").eq("user_id", userId).maybeSingle(),
+        ]);
+
+        const memoryEntries: Array<{ user_id: string; memory_key: string; memory_value: string; last_updated: string }> = [];
+        const now = new Date().toISOString();
+
+        if (profileRes.data?.goals?.length) {
+          memoryEntries.push({
+            user_id: userId,
+            memory_key: "user_goals",
+            memory_value: JSON.stringify({ goals: profileRes.data.goals, activity_level: profileRes.data.activity_level }),
+            last_updated: now,
+          });
+        }
+        if (trainingRes.data?.preferred_activities) {
+          memoryEntries.push({
+            user_id: userId,
+            memory_key: "preferred_training",
+            memory_value: JSON.stringify(trainingRes.data),
+            last_updated: now,
+          });
+        }
+        if (medicalRes.data?.conditions || medicalRes.data?.medications) {
+          memoryEntries.push({
+            user_id: userId,
+            memory_key: "medical_context",
+            memory_value: JSON.stringify(medicalRes.data),
+            last_updated: now,
+          });
+        }
+
+        for (const entry of memoryEntries) {
+          await supabase.from("yves_memory_bank").upsert(entry, { onConflict: "user_id,memory_key" });
+        }
+      } catch (memErr) {
+        console.warn("Failed to capture profile to memory bank:", memErr);
+      }
+
       toast({
         title: "Welcome to Predictiv!",
         description: "Your account is all set up",

@@ -1983,6 +1983,42 @@ RESPOND WITH ONLY THE JSON OBJECT.`;
       });
     }
 
+    // ─── AUTO-CAPTURE BRIEFING OUTCOME TO MEMORY BANK ─────────────────────
+    try {
+      const briefingMemoryEntries = [
+        {
+          user_id: userId,
+          memory_key: "last_briefing_topic",
+          memory_value: JSON.stringify({
+            date: today,
+            focus_mode: focusMode,
+            todaysFocus: intelligenceData.dailyBriefing.todaysFocus || null,
+            keyChanges: intelligenceData.dailyBriefing.keyChanges?.slice(0, 3) || [],
+            topRecommendation: intelligenceData.recommendations[0]?.text || null,
+            topCategory: intelligenceData.recommendations[0]?.category || null,
+          }),
+          last_updated: new Date().toISOString(),
+        },
+        {
+          user_id: userId,
+          memory_key: "briefing_history_summary",
+          memory_value: JSON.stringify({
+            last_updated: today,
+            recent_topics: intelligenceData.dailyBriefing.riskHighlights?.slice(0, 3) || [],
+            recent_categories: [...new Set(intelligenceData.recommendations.map(r => r.category))],
+          }),
+          last_updated: new Date().toISOString(),
+        },
+      ];
+
+      for (const entry of briefingMemoryEntries) {
+        await supabase.from("yves_memory_bank").upsert(entry, { onConflict: "user_id,memory_key" });
+      }
+      console.log(`[generate-yves-intelligence] Auto-captured briefing outcome to memory bank for user ${userId}`);
+    } catch (memError) {
+      console.warn(`[generate-yves-intelligence] Failed to auto-capture briefing memory:`, memError);
+    }
+
     console.log(`[generate-yves-intelligence] Intelligence generated for user ${userId} (confidence: ${reasoningContext.overall_confidence}%)`);
 
     return new Response(

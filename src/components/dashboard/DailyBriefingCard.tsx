@@ -93,7 +93,7 @@ export function DailyBriefingCard({
           <Button
             variant="ghost"
             size="icon"
-            onClick={onRefresh}
+            onClick={() => onRefresh()}
             disabled={isGenerating}
             title="Refresh briefing"
           >
@@ -126,7 +126,7 @@ export function DailyBriefingCard({
             <p className="text-muted-foreground">
               Click refresh to generate your personalized daily briefing
             </p>
-            <Button onClick={onRefresh} disabled={isGenerating}>
+            <Button onClick={() => onRefresh()} disabled={isGenerating}>
               {isGenerating ? (
                 <>
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />

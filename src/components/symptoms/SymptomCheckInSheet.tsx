@@ -37,6 +37,13 @@ export function SymptomCheckInSheet() {
     if (!open) clearAutoCloseTimer();
   }, [open, clearAutoCloseTimer]);
 
+  // Listen for external open requests
+  useEffect(() => {
+    const handleOpenSymptomSheet = () => setOpen(true);
+    window.addEventListener("open-symptom-checkin", handleOpenSymptomSheet);
+    return () => window.removeEventListener("open-symptom-checkin", handleOpenSymptomSheet);
+  }, []);
+
   const handleSuccess = async (checkinId: string) => {
     clearAutoCloseTimer();
     setLatestCheckinId(checkinId);

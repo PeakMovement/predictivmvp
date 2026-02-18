@@ -1,20 +1,128 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { User } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 interface OnboardingProfileProps {
   onNext: () => void;
   onBack: () => void;
 }
 
-export const OnboardingProfile = ({ }: OnboardingProfileProps) => {
+export const OnboardingProfile = ({ onNext }: OnboardingProfileProps) => {
   const [name, setName] = useState("");
   const [age, setAge] = useState("");
   const [goal, setGoal] = useState("");
   const [notes, setNotes] = useState("");
+  const [userId, setUserId] = useState<string | null>(null);
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (user) setUserId(user.id);
+    });
+  }, []);
+
+  // Save profile data to all relevant sub-tables whenever fields change
+  // This is called by the parent OnboardingFlow when "Next" is clicked
+  useEffect(() => {
+    if (!userId) return;
+
+    const saveTimeout = setTimeout(async () => {
+      try {
+        // Save to user_profile (core profile table)
+        // Save to user_profile (core profile table)
+        const profileUpdate: Record<string, any> = {
+          updated_at: new Date().toISOString(),
+        };
+        if (name) profileUpdate.name = name;
+        if (age) {
+          const dob = new Date();
+          dob.setFullYear(dob.getFullYear() - parseInt(age));
+          profileUpdate.dob = dob.toISOString().split("T")[0];
+        }
+        if (goal) profileUpdate.goals = [goal];
+
+        // Check if profile exists first
+        const { data: existing } = await supabase
+          .from("user_profile")
+          .select("user_id")
+          .eq("user_id", userId)
+          .maybeSingle();
+
+        if (existing) {
+          await supabase
+            .from("user_profile")
+            .update(profileUpdate)
+            .eq("user_id", userId);
+        } else {
+          await supabase
+            .from("user_profile")
+            .insert({ user_id: userId, ...profileUpdate } as any);
+        }
+
+        // Save medical notes if provided
+        if (notes) {
+          const { data: existingMed } = await supabase
+            .from("user_medical")
+            .select("user_id")
+            .eq("user_id", userId)
+            .maybeSingle();
+
+          if (existingMed) {
+            await supabase
+              .from("user_medical")
+              .update({ medical_notes: notes, updated_at: new Date().toISOString() })
+              .eq("user_id", userId);
+          } else {
+            await supabase
+              .from("user_medical")
+              .insert({ user_id: userId, medical_notes: notes, updated_at: new Date().toISOString() } as any);
+          }
+        }
+
+        // Write to memory bank for AI personalization
+        const memoryEntries: Array<{ user_id: string; memory_key: string; memory_value: string; last_updated: string }> = [];
+        const now = new Date().toISOString();
+
+        if (name) {
+          memoryEntries.push({
+            user_id: userId,
+            memory_key: "preferred_name",
+            memory_value: name,
+            last_updated: now,
+          });
+        }
+        if (goal) {
+          memoryEntries.push({
+            user_id: userId,
+            memory_key: "user_goals",
+            memory_value: JSON.stringify({ goals: [goal] }),
+            last_updated: now,
+          });
+        }
+        if (notes) {
+          memoryEntries.push({
+            user_id: userId,
+            memory_key: "medical_context",
+            memory_value: JSON.stringify({ medical_notes: notes }),
+            last_updated: now,
+          });
+        }
+
+        for (const entry of memoryEntries) {
+          await supabase
+            .from("yves_memory_bank")
+            .upsert(entry, { onConflict: "user_id,memory_key" });
+        }
+      } catch (error) {
+        console.error("Error saving onboarding profile:", error);
+      }
+    }, 500); // Debounce saves
+
+    return () => clearTimeout(saveTimeout);
+  }, [name, age, goal, notes, userId]);
 
   return (
     <div className="space-y-6">

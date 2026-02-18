@@ -64,13 +64,24 @@ Deno.serve(async (req) => {
       supabase.from("user_medical").select("conditions, medications").eq("user_id", user_id).maybeSingle(),
     ]);
 
-    if (profileRes.data?.goals?.length) {
-      entries.push({
-        user_id,
-        memory_key: "user_goals",
-        memory_value: JSON.stringify({ goals: profileRes.data.goals, activity_level: profileRes.data.activity_level }),
-        last_updated: new Date().toISOString(),
-      });
+    if (profileRes.data) {
+      const pd = profileRes.data;
+      if (pd.name) {
+        entries.push({
+          user_id,
+          memory_key: "preferred_name",
+          memory_value: pd.name,
+          last_updated: new Date().toISOString(),
+        });
+      }
+      if (pd.goals?.length || pd.activity_level) {
+        entries.push({
+          user_id,
+          memory_key: "user_goals",
+          memory_value: JSON.stringify({ goals: pd.goals || [], activity_level: pd.activity_level }),
+          last_updated: new Date().toISOString(),
+        });
+      }
     }
     if (trainingRes.data) {
       entries.push({

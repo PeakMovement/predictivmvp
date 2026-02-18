@@ -1145,11 +1145,10 @@ Deno.serve(async (req) => {
         refresh_nonce: refreshNonce,
       };
       
-      if (forceRefresh) {
-        await supabase.from("daily_briefings").insert(silentRow);
-      } else {
-        await supabase.from("daily_briefings").upsert(silentRow);
-      }
+      // Always upsert — unique constraint on (user_id, date, category, focus_mode) prevents duplicates
+      await supabase.from("daily_briefings").upsert(silentRow, {
+        onConflict: "user_id,date,category,focus_mode",
+      });
 
       return new Response(
         JSON.stringify({
@@ -1992,10 +1991,12 @@ RESPOND WITH ONLY THE JSON OBJECT.`;
       refresh_nonce: refreshNonce,
     };
 
-    // On force_refresh, always INSERT a new row (never upsert/overwrite)
-    const { data: savedBriefing, error: saveError } = forceRefresh
-      ? await supabase.from("daily_briefings").insert(briefingRow).select()
-      : await supabase.from("daily_briefings").upsert(briefingRow).select();
+    // Always upsert — unique constraint on (user_id, date, category, focus_mode) prevents duplicates
+    // force_refresh overwrites the existing row for today rather than inserting a duplicate
+    const { data: savedBriefing, error: saveError } = await supabase
+      .from("daily_briefings")
+      .upsert(briefingRow, { onConflict: "user_id,date,category,focus_mode" })
+      .select();
 
     if (saveError) {
       console.error(`[generate-yves-intelligence] Database save error for user ${userId}:`, saveError);

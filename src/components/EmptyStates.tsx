@@ -136,7 +136,7 @@ export const EmptyWearableState = ({
     <EmptyState
       icon={<Watch className="h-12 w-12" />}
       title="No wearable connected"
-      description="Connect your Oura Ring, Polar, or Fitbit device to start tracking your health metrics."
+      description="Connect your Ōura Ring or Garmin device to start tracking your health metrics."
       action={{
         label: "Connect Device",
         onClick: onConnect,

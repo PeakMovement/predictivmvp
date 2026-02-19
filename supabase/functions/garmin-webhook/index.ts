@@ -114,31 +114,36 @@ Deno.serve(async (req: Request) => {
 
     // Process each data type Garmin may push
     const results: string[] = [];
+    const affectedUserIds = new Set<string>();
 
     if (payload.dailies && Array.isArray(payload.dailies)) {
-      const count = await processDailies(supabase, payload.dailies as GarminPushDaily[]);
+      const { count, userIds } = await processDailies(supabase, payload.dailies as GarminPushDaily[]);
       results.push(`dailies: ${count}`);
+      userIds.forEach(id => affectedUserIds.add(id));
     }
 
     if (payload.sleeps && Array.isArray(payload.sleeps)) {
-      const count = await processSleeps(supabase, payload.sleeps as GarminPushSleep[]);
+      const { count, userIds } = await processSleeps(supabase, payload.sleeps as GarminPushSleep[]);
       results.push(`sleeps: ${count}`);
+      userIds.forEach(id => affectedUserIds.add(id));
     }
 
     if (payload.activities && Array.isArray(payload.activities)) {
-      const count = await processActivities(supabase, payload.activities as GarminPushActivity[]);
+      const { count, userIds } = await processActivities(supabase, payload.activities as GarminPushActivity[]);
       results.push(`activities: ${count}`);
+      userIds.forEach(id => affectedUserIds.add(id));
     }
 
     if (payload.activityDetails && Array.isArray(payload.activityDetails)) {
-      // Activity details are richer versions; process same as activities
-      const count = await processActivities(supabase, payload.activityDetails as GarminPushActivity[]);
+      const { count, userIds } = await processActivities(supabase, payload.activityDetails as GarminPushActivity[]);
       results.push(`activityDetails: ${count}`);
+      userIds.forEach(id => affectedUserIds.add(id));
     }
 
     if (payload.hrvSummaries && Array.isArray(payload.hrvSummaries)) {
-      const count = await processHRVSummaries(supabase, payload.hrvSummaries as GarminPushHRVSummary[]);
+      const { count, userIds } = await processHRVSummaries(supabase, payload.hrvSummaries as GarminPushHRVSummary[]);
       results.push(`hrvSummaries: ${count}`);
+      userIds.forEach(id => affectedUserIds.add(id));
     }
 
     if (payload.deregistrations && Array.isArray(payload.deregistrations)) {
@@ -153,6 +158,27 @@ Deno.serve(async (req: Request) => {
 
     const duration = Date.now() - startTime;
     console.log(`[garmin-webhook] [COMPLETE] Processed ${results.join(", ")} in ${duration}ms`);
+
+    // Fire trend recalculation for all affected users asynchronously.
+    // This is deliberately fire-and-forget so we respond to Garmin within 30s.
+    if (affectedUserIds.size > 0) {
+      const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+      const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+      for (const uid of affectedUserIds) {
+        fetch(`${supabaseUrl}/functions/v1/calculate-oura-trends`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${serviceKey}`,
+          },
+          body: JSON.stringify({ user_id: uid }),
+        }).then(() => {
+          console.log(`[garmin-webhook] [TRENDS] Triggered recalculation for user ${uid}`);
+        }).catch((e) => {
+          console.error(`[garmin-webhook] [TRENDS] Failed to trigger recalculation for ${uid}: ${e}`);
+        });
+      }
+    }
 
     return new Response("OK", { status: 200, headers: corsHeaders });
   } catch (err) {
@@ -191,8 +217,9 @@ async function resolveUserId(
 async function processDailies(
   supabase: ReturnType<typeof createClient>,
   dailies: GarminPushDaily[],
-): Promise<number> {
+): Promise<{ count: number; userIds: string[] }> {
   let count = 0;
+  const userIds: string[] = [];
 
   for (const d of dailies) {
     const userId = await resolveUserId(supabase, d.userAccessToken);
@@ -220,14 +247,14 @@ async function processDailies(
       console.error(`[garmin-webhook] [ERROR] Daily upsert ${date} user ${userId}: ${error.message}`);
     } else {
       count++;
+      userIds.push(userId);
       console.log(`[garmin-webhook] [OK] Daily saved: user=${userId} date=${date} steps=${d.steps}`);
     }
 
-    // Also update wearable_summary
     await upsertSummary(supabase, userId, date);
   }
 
-  return count;
+  return { count, userIds };
 }
 
 // ── Process Sleeps ───────────────────────────────────────────────────
@@ -235,8 +262,9 @@ async function processDailies(
 async function processSleeps(
   supabase: ReturnType<typeof createClient>,
   sleeps: GarminPushSleep[],
-): Promise<number> {
+): Promise<{ count: number; userIds: string[] }> {
   let count = 0;
+  const userIds: string[] = [];
 
   for (const s of sleeps) {
     const userId = await resolveUserId(supabase, s.userAccessToken);
@@ -266,13 +294,14 @@ async function processSleeps(
       console.error(`[garmin-webhook] [ERROR] Sleep upsert ${date} user ${userId}: ${error.message}`);
     } else {
       count++;
+      userIds.push(userId);
       console.log(`[garmin-webhook] [OK] Sleep saved: user=${userId} date=${date} score=${s.overallSleepScoreValue}`);
     }
 
     await upsertSummary(supabase, userId, date);
   }
 
-  return count;
+  return { count, userIds };
 }
 
 // ── Process Activities ───────────────────────────────────────────────
@@ -280,8 +309,9 @@ async function processSleeps(
 async function processActivities(
   supabase: ReturnType<typeof createClient>,
   activities: GarminPushActivity[],
-): Promise<number> {
+): Promise<{ count: number; userIds: string[] }> {
   let count = 0;
+  const userIds: string[] = [];
 
   // Group activities by user+date, accumulate distances
   const grouped = new Map<string, {
@@ -341,13 +371,14 @@ async function processActivities(
       console.error(`[garmin-webhook] [ERROR] Activity upsert ${data.date} user ${data.userId}: ${error.message}`);
     } else {
       count++;
+      userIds.push(data.userId);
       console.log(`[garmin-webhook] [OK] Activity saved: user=${data.userId} date=${data.date} dist=${data.totalDistanceM}m`);
     }
 
     await upsertSummary(supabase, data.userId, data.date);
   }
 
-  return count;
+  return { count, userIds };
 }
 
 // ── Process HRV Summaries ────────────────────────────────────────────
@@ -355,8 +386,9 @@ async function processActivities(
 async function processHRVSummaries(
   supabase: ReturnType<typeof createClient>,
   summaries: GarminPushHRVSummary[],
-): Promise<number> {
+): Promise<{ count: number; userIds: string[] }> {
   let count = 0;
+  const userIds: string[] = [];
 
   for (const h of summaries) {
     const userId = await resolveUserId(supabase, h.userAccessToken);
@@ -381,6 +413,7 @@ async function processHRVSummaries(
       console.error(`[garmin-webhook] [ERROR] HRV upsert ${date} user ${userId}: ${error.message}`);
     } else {
       count++;
+      userIds.push(userId);
       console.log(`[garmin-webhook] [OK] HRV saved: user=${userId} date=${date} avg=${h.lastNightAvg}`);
     }
 
@@ -390,7 +423,7 @@ async function processHRVSummaries(
       .upsert({ user_id: userId, date, hrv: h.lastNightAvg ?? null }, { onConflict: "user_id,date" });
   }
 
-  return count;
+  return { count, userIds };
 }
 
 // ── Process Deregistrations ──────────────────────────────────────────
@@ -456,7 +489,7 @@ async function upsertSummary(
   date: string,
 ): Promise<void> {
   try {
-    // Fetch last 7 sessions for summary calculations
+    // Fetch up to 28 sessions (need at least 1 to write a training_trends row)
     const { data: sessions } = await supabase
       .from("wearable_sessions")
       .select("*")
@@ -464,9 +497,9 @@ async function upsertSummary(
       .eq("source", "garmin")
       .lte("date", date)
       .order("date", { ascending: false })
-      .limit(7);
+      .limit(28);
 
-    if (!sessions || sessions.length < 7) return;
+    if (!sessions || sessions.length === 0) return;
 
     const calculateLoad = (s: Record<string, unknown>) => {
       const activeCal = (s.active_calories as number) || 0;
@@ -475,14 +508,21 @@ async function upsertSummary(
       return steps / 10000;
     };
 
-    const loads = sessions.map(calculateLoad);
+    // Use up to 7 most recent sessions for acute window
+    const acuteSessions = sessions.slice(0, Math.min(7, sessions.length));
+    const loads = acuteSessions.map(calculateLoad);
     const mean = loads.reduce((a, b) => a + b, 0) / loads.length;
     const variance = loads.reduce((sum, l) => sum + Math.pow(l - mean, 2), 0) / loads.length;
     const std = Math.sqrt(variance);
 
     const strain = Math.min(loads.reduce((a, b) => a + b, 0), 2000);
     const monotony = Math.min(std > 0 ? mean / std : 0, 2.5);
-    const avgSleep = sessions.reduce((sum, s) => sum + ((s.sleep_score as number) || 0), 0) / sessions.length;
+    const avgSleep = acuteSessions.reduce((sum, s) => sum + ((s.sleep_score as number) || 0), 0) / acuteSessions.length;
+
+    // ACWR: acute (7d avg) / chronic (28d avg)
+    const chronicLoads = sessions.map(calculateLoad);
+    const chronicMean = chronicLoads.reduce((a, b) => a + b, 0) / chronicLoads.length;
+    const acwr = chronicMean > 0 ? Math.round((mean / chronicMean) * 100) / 100 : null;
 
     await supabase.from("wearable_summary").upsert({
       user_id: userId,
@@ -490,25 +530,27 @@ async function upsertSummary(
       source: "garmin",
       strain: Math.round(strain * 100) / 100,
       monotony: Math.round(monotony * 100) / 100,
-      acwr: null, // Need 28 days for ACWR
+      acwr,
       readiness_index: null,
       avg_sleep_score: Math.round(avgSleep * 100) / 100,
     }, { onConflict: "user_id,source,date" });
 
-    // Also upsert training_trends
+    // Upsert training_trends so Today's Activity section shows data immediately
     const todaySession = sessions.find(s => s.date === date);
-    if (todaySession) {
-      const acuteLoad = loads.reduce((a, b) => a + b, 0) / 7;
-      await supabase.from("training_trends").upsert({
-        user_id: userId,
-        date,
-        training_load: Math.round(calculateLoad(todaySession) * 100) / 100,
-        acute_load: Math.round(acuteLoad * 100) / 100,
-        strain: Math.round(strain * 100) / 100,
-        monotony: Math.round(monotony * 100) / 100,
-        sleep_score: (todaySession.sleep_score as number) || null,
-      }, { onConflict: "user_id,date" });
-    }
+    const acuteLoad = mean;
+    await supabase.from("training_trends").upsert({
+      user_id: userId,
+      date,
+      training_load: todaySession ? Math.round(calculateLoad(todaySession) * 100) / 100 : Math.round(mean * 100) / 100,
+      acute_load: Math.round(acuteLoad * 100) / 100,
+      chronic_load: Math.round(chronicMean * 100) / 100,
+      acwr,
+      strain: Math.round(strain * 100) / 100,
+      monotony: Math.round(monotony * 100) / 100,
+      sleep_score: todaySession ? ((todaySession.sleep_score as number) || null) : null,
+    }, { onConflict: "user_id,date" });
+
+    console.log(`[garmin-webhook] [SUMMARY] user=${userId} date=${date} acwr=${acwr} strain=${strain} sessions=${sessions.length}`);
   } catch (err) {
     console.error(`[garmin-webhook] [ERROR] Summary calc for ${userId}/${date}: ${err instanceof Error ? err.message : String(err)}`);
   }

@@ -1,90 +1,67 @@
 
-## UX Changes: Remove Polar & Update Health Page Heading
+## Why Garmin Data Is Not Showing
 
-### What Is Being Changed
+### The Real Problem: Garmin API Pull Access Is Not Enabled
 
-Two distinct updates across the codebase:
+The `fetch-garmin-data` edge function is calling the Garmin Wellness API (`https://apis.garmin.com/wellness-api/rest`) and getting back `HTTP 400 — InvalidPullTokenException` on every single request. This error is specific: it means the Garmin Developer Portal application does **not have "Wellness API Pull Access" granted**. Without pull access, the app can only receive data via push (webhooks), not request data on demand.
 
-1. **Remove all Polar references** from the UI (Settings page connected devices section, imports, state, and any other visible mention)
-2. **Update the Health page header** from "Ōura Ring Metrics" to "Health Metrics" with a dynamic subtext listing connected devices
+This is confirmed by the logs — **every single API call fails**, for every user, every day, every endpoint (`/dailies`, `/sleeps`, `/activities`). The tokens themselves are valid (they're fresh JWTs, not expired). The problem is a Garmin portal permission, not a code error.
 
----
-
-### Files to Change
-
-#### 1. `src/pages/Settings.tsx`
-
-**Imports (lines 33–35):** Remove the three Polar-related imports:
-```typescript
-// REMOVE:
-import { ConnectPolarButton } from "@/components/ConnectPolarButton";
-import { PolarSyncButton } from "@/components/PolarSyncButton";
-```
-
-**State (lines 65–66):** Remove the Polar connection state variable:
-```typescript
-// REMOVE:
-const [isPolarConnected, setIsPolarConnected] = useState(false);
-```
-
-**useEffect (line 135):** Remove the call to `checkPolarConnection()` inside the effect.
-
-**`checkPolarConnection` function (lines 164–181):** Remove the entire function.
-
-**Polar device card in the Connected Devices section (lines 763–812):** Remove the entire Polar device card block (the `<div>` wrapping the blue Polar entry with `ConnectPolarButton` and `PolarSyncButton`).
+**Result:** Zero rows exist in `wearable_sessions` with `source = 'garmin'`. No data ever arrives, so nothing displays on the dashboard.
 
 ---
 
-#### 2. `src/pages/Health.tsx`
+### The Secondary Code Bug: Running Distance Ignores the Real Column
 
-**Header text (lines 141–144):** Update from:
-```tsx
-<h1 className="text-2xl md:text-3xl font-bold text-foreground mb-2">Ōura Ring Metrics</h1>
-<p className="text-sm md:text-base text-muted-foreground mb-4">
-  Real time health and wellness data from your Ōura Ring
-</p>
-```
-To:
-```tsx
-<h1 className="text-2xl md:text-3xl font-bold text-foreground mb-2">Health Metrics</h1>
-<p className="text-sm md:text-base text-muted-foreground mb-4">
-  Based on your data from Ōura Ring & Garmin
-</p>
-```
-
-The subtext "Based on your data from Ōura Ring & Garmin" reflects the two devices currently supported. Since `OuraSyncStatus` is already displayed directly below this header and dynamically shows which devices are connected (Oura, Garmin, or both), the static subtext will accurately describe the data sources.
+Even once pull access is enabled and data starts flowing, `useGarminRunningDistance` calculates distance by estimating from steps using a stride factor instead of reading the `running_distance_km` column that `fetch-garmin-data` already writes to `wearable_sessions`. This means the displayed distance will be inaccurate even after the API starts working.
 
 ---
 
-#### 3. `src/components/EmptyStates.tsx` (minor cleanup)
+### What Needs to Happen
 
-**Line 139:** Update the description from:
-```
-"Connect your Oura Ring, Polar, or Fitbit device to start tracking your health metrics."
-```
-To:
-```
-"Connect your Ōura Ring or Garmin device to start tracking your health metrics."
-```
+#### Step 1 — You must enable "Wellness API Pull Access" in the Garmin Developer Portal (not a code change)
 
----
+This is required before any code fix will help. Without this, the pull sync will keep failing.
 
-### What Is NOT Changed
+Go to **developer.garmin.com** → your application → **API Access** → enable **"Health & Wellness API Pull"**. You may need to submit a request to Garmin for this — it is not automatically granted and requires approval from Garmin's team. The webhook push access (which you already set up) is separate from pull access.
 
-- `src/pages/auth/polar.tsx` — The OAuth callback route is kept in place. Existing connected Polar users should still be able to complete their auth flow. Only the visible UI surface (Settings device card) is removed.
-- `src/App.tsx` — The `PolarCallback` route handler and lazy import remain intact for the same reason.
-- The `ConnectPolarButton.tsx` and `PolarSyncButton.tsx` component files remain in the codebase but are no longer imported in Settings.
+#### Step 2 — Fix `useGarminRunningDistance` to use actual GPS distance
+
+Instead of estimating distance from steps, the hook should read the `running_distance_km` column directly from `wearable_sessions`. This gives accurate GPS-tracked distance for runs and other activities.
+
+**Change in `src/hooks/useGarminRunningDistance.ts`:**
+- Query: add `running_distance_km, total_distance_km` to the select
+- Calculation: use `running_distance_km` directly (sum across days), with a fallback to the step-based estimate only if the column is null
+
+#### Step 3 — Improve the "no data" state to surface why Garmin data is missing
+
+Currently, when the Garmin sync fails, the UI silently shows nothing with no explanation. We should add a subtle diagnostic message in the Training and Dashboard pages that tells the user when Garmin is connected but no data has synced yet, so they know the device connection is there but data is pending.
 
 ---
 
 ### Technical Details
 
-| Location | Change | Lines |
+| Problem | Root Cause | Fix Required |
 |---|---|---|
-| `Settings.tsx` imports | Remove ConnectPolarButton + PolarSyncButton imports | 33–35 |
-| `Settings.tsx` state | Remove `isPolarConnected` state | 65–66 |
-| `Settings.tsx` useEffect | Remove `checkPolarConnection()` call | 135 |
-| `Settings.tsx` function | Remove entire `checkPolarConnection` function | 164–181 |
-| `Settings.tsx` UI | Remove Polar device card from Connected Devices section | 763–812 |
-| `Health.tsx` header | Change h1 text + subtext paragraph | 141–144 |
-| `EmptyStates.tsx` | Remove "Polar" from no-device description | 139 |
+| Zero Garmin data in database | `InvalidPullTokenException` — pull access not enabled in Garmin Developer Portal | Garmin portal permission (non-code action required from you) |
+| Running distance always 0 | `useGarminRunningDistance` estimates from steps instead of reading `running_distance_km` column | Code fix in `src/hooks/useGarminRunningDistance.ts` |
+| Today's Activity shows nothing | `training_trends` table has no rows for this user — Garmin sync never populates it | Resolved once Garmin pull access is enabled and sync runs |
+| Session log shows nothing | Same as above — `training_trends` is empty for this user | Resolved once Garmin pull access is enabled |
+
+---
+
+### What I Can Fix Now
+
+I can immediately fix the `useGarminRunningDistance` hook to correctly read `running_distance_km` from the database column (accurate GPS distance) rather than estimating from steps.
+
+However, **the data will not appear until you enable Wellness API Pull Access in the Garmin Developer Portal**. That is a Garmin approval process and cannot be fixed in code.
+
+### Action Required From You
+
+1. Log into developer.garmin.com
+2. Open your application
+3. Navigate to API Access settings
+4. Request or enable "Health & Wellness API Pull Access"
+5. Once approved, the next automated sync (every 30 minutes) will populate the database and data will appear on screen
+
+If Garmin pull access cannot be approved immediately, the webhook (push) integration is already working — data will arrive whenever Garmin pushes activity events to the endpoint. The push path does not require pull access and is already correctly set up.

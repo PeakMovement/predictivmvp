@@ -1,65 +1,90 @@
 
-## Investigation Summary
+## UX Changes: Remove Polar & Update Health Page Heading
 
-### Root Cause #1 — Broken Verification Links for New Users
+### What Is Being Changed
 
-In `src/pages/Register.tsx`, the `emailRedirectTo` is set to:
-```typescript
-emailRedirectTo: `${window.location.origin}/`
-```
+Two distinct updates across the codebase:
 
-During development, `window.location.origin` is `http://localhost:3000`. This gets embedded in the verification email Supabase sends out. When a user clicks that link from their email client, it tries to reach `localhost:3000` on their own machine — which is a dead end. That is why users see "Email link is invalid or has expired" in the auth logs. The fix is to hardcode the production preview URL so verification emails always point to the live app.
-
-### Root Cause #2 — `matthewhow94@gmail.com` Cannot Log In
-
-The account is **fully confirmed** (`email_confirmed_at` is set). The issue is that the user is trying to log in with a password (`Retireby40*`) that was never set — the original signup may have had a different password. The fix is to update the password via Supabase's admin API using a SQL migration that calls `auth.admin` functions.
-
-### What Is Working
-- The account `matthewhow94@gmail.com` exists and is email-confirmed
-- The `user_profiles` record exists for that user
-- The login form itself is functional
+1. **Remove all Polar references** from the UI (Settings page connected devices section, imports, state, and any other visible mention)
+2. **Update the Health page header** from "Ōura Ring Metrics" to "Health Metrics" with a dynamic subtext listing connected devices
 
 ---
 
-## Plan
+### Files to Change
 
-### Step 1 — Set Password for `matthewhow94@gmail.com`
+#### 1. `src/pages/Settings.tsx`
 
-Run a database migration that uses Supabase's built-in `auth.users` update to set the password hash for the existing confirmed account. This requires calling the internal admin function via SQL:
-
-```sql
-UPDATE auth.users
-SET encrypted_password = crypt('Retireby40*', gen_salt('bf'))
-WHERE email = 'matthewhow94@gmail.com';
-```
-
-This will allow the user to immediately log in with the provided password.
-
-### Step 2 — Fix `emailRedirectTo` in `Register.tsx`
-
-Change the redirect URL from the dynamic `window.location.origin` to the fixed production preview URL so that all future confirmation emails point to the live app:
-
+**Imports (lines 33–35):** Remove the three Polar-related imports:
 ```typescript
-// Before (broken — embeds localhost in emails during dev):
-emailRedirectTo: `${window.location.origin}/`
-
-// After (correct — always points to live app):
-emailRedirectTo: `https://id-preview--496b78dd-5429-4d22-8cdf-157ebd1425c9.lovable.app/`
+// REMOVE:
+import { ConnectPolarButton } from "@/components/ConnectPolarButton";
+import { PolarSyncButton } from "@/components/PolarSyncButton";
 ```
 
-This ensures that when Supabase sends a verification email to any new user, the link in that email resolves to the running application and completes the token exchange correctly.
+**State (lines 65–66):** Remove the Polar connection state variable:
+```typescript
+// REMOVE:
+const [isPolarConnected, setIsPolarConnected] = useState(false);
+```
 
-### Step 3 — Verify the Full Flow After Changes
+**useEffect (line 135):** Remove the call to `checkPolarConnection()` inside the effect.
 
-After the migration runs and the code change is saved:
-- Confirm `matthewhow94@gmail.com` can log in with `Retireby40*`
-- Register a test new user and confirm the verification email link now resolves correctly
+**`checkPolarConnection` function (lines 164–181):** Remove the entire function.
+
+**Polar device card in the Connected Devices section (lines 763–812):** Remove the entire Polar device card block (the `<div>` wrapping the blue Polar entry with `ConnectPolarButton` and `PolarSyncButton`).
 
 ---
 
-## Technical Details
+#### 2. `src/pages/Health.tsx`
 
-| Issue | Location | Fix |
+**Header text (lines 141–144):** Update from:
+```tsx
+<h1 className="text-2xl md:text-3xl font-bold text-foreground mb-2">Ōura Ring Metrics</h1>
+<p className="text-sm md:text-base text-muted-foreground mb-4">
+  Real time health and wellness data from your Ōura Ring
+</p>
+```
+To:
+```tsx
+<h1 className="text-2xl md:text-3xl font-bold text-foreground mb-2">Health Metrics</h1>
+<p className="text-sm md:text-base text-muted-foreground mb-4">
+  Based on your data from Ōura Ring & Garmin
+</p>
+```
+
+The subtext "Based on your data from Ōura Ring & Garmin" reflects the two devices currently supported. Since `OuraSyncStatus` is already displayed directly below this header and dynamically shows which devices are connected (Oura, Garmin, or both), the static subtext will accurately describe the data sources.
+
+---
+
+#### 3. `src/components/EmptyStates.tsx` (minor cleanup)
+
+**Line 139:** Update the description from:
+```
+"Connect your Oura Ring, Polar, or Fitbit device to start tracking your health metrics."
+```
+To:
+```
+"Connect your Ōura Ring or Garmin device to start tracking your health metrics."
+```
+
+---
+
+### What Is NOT Changed
+
+- `src/pages/auth/polar.tsx` — The OAuth callback route is kept in place. Existing connected Polar users should still be able to complete their auth flow. Only the visible UI surface (Settings device card) is removed.
+- `src/App.tsx` — The `PolarCallback` route handler and lazy import remain intact for the same reason.
+- The `ConnectPolarButton.tsx` and `PolarSyncButton.tsx` component files remain in the codebase but are no longer imported in Settings.
+
+---
+
+### Technical Details
+
+| Location | Change | Lines |
 |---|---|---|
-| Password not set for existing user | `auth.users` table | SQL UPDATE to set encrypted password |
-| Verification links point to localhost | `src/pages/Register.tsx` line ~55 | Hardcode production URL in `emailRedirectTo` |
+| `Settings.tsx` imports | Remove ConnectPolarButton + PolarSyncButton imports | 33–35 |
+| `Settings.tsx` state | Remove `isPolarConnected` state | 65–66 |
+| `Settings.tsx` useEffect | Remove `checkPolarConnection()` call | 135 |
+| `Settings.tsx` function | Remove entire `checkPolarConnection` function | 164–181 |
+| `Settings.tsx` UI | Remove Polar device card from Connected Devices section | 763–812 |
+| `Health.tsx` header | Change h1 text + subtext paragraph | 141–144 |
+| `EmptyStates.tsx` | Remove "Polar" from no-device description | 139 |

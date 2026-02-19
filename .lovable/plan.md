@@ -1,58 +1,65 @@
 
+## Investigation Summary
 
-## Fix: Persistent Alert Dismissal for Training Monotony Alert
+### Root Cause #1 — Broken Verification Links for New Users
 
-### Problem
-The "Health Check" / "Training Monotony Alert" keeps reappearing because:
-1. The "Got it" button only clears in-memory state -- it does not set a durable cooldown
-2. The localStorage cooldown set on first display gets wiped when the preview reloads
-3. The user's monotony value genuinely exceeds the 2.2 threshold, so the alert re-triggers on every page load
-
-### Solution
-Store alert dismissals in the Supabase database instead of (only) localStorage, so they survive across sessions, devices, and preview rebuilds.
-
-### Implementation Steps
-
-**Step 1 -- Create a `risk_alert_dismissals` table**
-- Columns: `id`, `user_id`, `alert_key` (e.g., "Monotony_high_risk"), `dismissed_at`, `snooze_until`
-- RLS: users can only read/write their own rows
-- The hook will check this table before showing any alert
-
-**Step 2 -- Update `useRiskAlertTrigger` hook**
-- On alert check: query `risk_alert_dismissals` for the current user and alert key
-- If a row exists where `snooze_until > now()` OR `dismissed_at` is within the last 7 days, skip the alert
-- Keep localStorage as a fast local cache to avoid unnecessary DB queries on every load
-
-**Step 3 -- Update `dismissAlert` to persist**
-- When "Got it" is clicked, insert/upsert a row into `risk_alert_dismissals` with `dismissed_at = now()` and `snooze_until = now + 7 days`
-- When a snooze duration is selected, set `snooze_until` to the appropriate future time
-
-**Step 4 -- Update `RiskAlertPopup` component**
-- Pass the user ID down so the dismiss/snooze handlers can write to the database
-- No visual changes needed
-
-### Technical Details
-
-```text
-risk_alert_dismissals table:
-+----------+---------+-----------+--------------+---------------+
-| id (uuid)| user_id | alert_key | dismissed_at | snooze_until  |
-+----------+---------+-----------+--------------+---------------+
+In `src/pages/Register.tsx`, the `emailRedirectTo` is set to:
+```typescript
+emailRedirectTo: `${window.location.origin}/`
 ```
 
-The `checkForAlerts` function will add a DB check early in the flow:
-```text
-1. Get user
-2. Query risk_alert_dismissals WHERE user_id = user AND alert_key = key
-3. If snooze_until > now → skip
-4. If dismissed_at within 7 days → skip
-5. Otherwise → show alert as normal
+During development, `window.location.origin` is `http://localhost:3000`. This gets embedded in the verification email Supabase sends out. When a user clicks that link from their email client, it tries to reach `localhost:3000` on their own machine — which is a dead end. That is why users see "Email link is invalid or has expired" in the auth logs. The fix is to hardcode the production preview URL so verification emails always point to the live app.
+
+### Root Cause #2 — `matthewhow94@gmail.com` Cannot Log In
+
+The account is **fully confirmed** (`email_confirmed_at` is set). The issue is that the user is trying to log in with a password (`Retireby40*`) that was never set — the original signup may have had a different password. The fix is to update the password via Supabase's admin API using a SQL migration that calls `auth.admin` functions.
+
+### What Is Working
+- The account `matthewhow94@gmail.com` exists and is email-confirmed
+- The `user_profiles` record exists for that user
+- The login form itself is functional
+
+---
+
+## Plan
+
+### Step 1 — Set Password for `matthewhow94@gmail.com`
+
+Run a database migration that uses Supabase's built-in `auth.users` update to set the password hash for the existing confirmed account. This requires calling the internal admin function via SQL:
+
+```sql
+UPDATE auth.users
+SET encrypted_password = crypt('Retireby40*', gen_salt('bf'))
+WHERE email = 'matthewhow94@gmail.com';
 ```
 
-The `dismissAlert` function will change from just `setCurrentAlert(null)` to also upserting a dismissal record.
+This will allow the user to immediately log in with the provided password.
 
-### What This Fixes
-- Alert will NOT reappear after clicking "Got it" -- even across page reloads and rebuilds
-- Snooze durations will be respected persistently
-- No changes to the visual UI
+### Step 2 — Fix `emailRedirectTo` in `Register.tsx`
 
+Change the redirect URL from the dynamic `window.location.origin` to the fixed production preview URL so that all future confirmation emails point to the live app:
+
+```typescript
+// Before (broken — embeds localhost in emails during dev):
+emailRedirectTo: `${window.location.origin}/`
+
+// After (correct — always points to live app):
+emailRedirectTo: `https://id-preview--496b78dd-5429-4d22-8cdf-157ebd1425c9.lovable.app/`
+```
+
+This ensures that when Supabase sends a verification email to any new user, the link in that email resolves to the running application and completes the token exchange correctly.
+
+### Step 3 — Verify the Full Flow After Changes
+
+After the migration runs and the code change is saved:
+- Confirm `matthewhow94@gmail.com` can log in with `Retireby40*`
+- Register a test new user and confirm the verification email link now resolves correctly
+
+---
+
+## Technical Details
+
+| Issue | Location | Fix |
+|---|---|---|
+| Password not set for existing user | `auth.users` table | SQL UPDATE to set encrypted password |
+| Verification links point to localhost | `src/pages/Register.tsx` line ~55 | Hardcode production URL in `emailRedirectTo` |

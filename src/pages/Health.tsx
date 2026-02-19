@@ -138,9 +138,9 @@ export const Health = () => {
             <div className="flex justify-end mb-2">
               <CustomizeLayoutButton onClick={openLayoutEditor} isCustomized={layoutCustomized} />
             </div>
-            <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-2">Ōura Ring Metrics</h1>
+            <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-2">Health Metrics</h1>
             <p className="text-sm md:text-base text-muted-foreground mb-4">
-              Real time health and wellness data from your Ōura Ring
+              Based on your data from Ōura Ring & Garmin
             </p>
             <div className="flex justify-center">
               <OuraSyncStatus />

@@ -13,6 +13,7 @@ import {
   Check,
   X,
   CalendarPlus,
+  WifiOff,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState, useEffect } from "react";
@@ -207,6 +208,7 @@ export const Training = () => {
   const [suggestions, setSuggestions] = useState<ReturnType<typeof generateSuggestions>>([]);
   const [comparisonOpen, setComparisonOpen] = useState(false);
   const [comparisonSessions, setComparisonSessions] = useState<any[]>([]);
+  const [garminConnected, setGarminConnected] = useState(false);
   const isMobile = useIsMobile();
   const { toast } = useToast();
 
@@ -239,6 +241,25 @@ export const Training = () => {
         (Math.min(latestAvailableTrend.monotony || 0, 2.5) / 2.5) * 50
       ))
     : 0;
+
+  // Check if Garmin token exists (connected but no data)
+  useEffect(() => {
+    const checkGarmin = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const { data } = await supabase
+        .from("wearable_tokens")
+        .select("scope")
+        .eq("user_id", user.id)
+        .eq("scope", "garmin")
+        .maybeSingle();
+      setGarminConnected(!!data);
+    };
+    checkGarmin();
+  }, []);
+
+  const garminHasData = !trendsLoading && (trends?.length ?? 0) > 0;
+  const showGarminPending = garminConnected && !garminHasData && !trendsLoading;
 
   useEffect(() => {
     const csvData = getHealthData();
@@ -363,13 +384,23 @@ export const Training = () => {
           )}
 
           {!userId && (
-            <div className="text-center py-12 px-4 bg-glass backdrop-blur-xl border border-glass-border rounded-2xl mb-8">
+            <div className="text-center py-12 px-4 bg-card/50 backdrop-blur-xl border border-border/50 rounded-2xl mb-8">
               <p className="text-muted-foreground mb-4">No user authenticated</p>
               <p className="text-sm text-muted-foreground">Please log in to view your training data</p>
             </div>
           )}
 
+          {showGarminPending && (
+            <div className="flex items-center gap-3 px-4 py-3 mb-6 rounded-xl border border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400 text-sm animate-fade-in">
+              <WifiOff className="h-4 w-4 shrink-0" />
+              <span>
+                <strong>Garmin is connected</strong> but no workout data has synced yet. Enable Wellness API Pull Access in your Garmin Developer Portal, or data will arrive automatically when your device pushes via webhook.
+              </span>
+            </div>
+          )}
+
           {userId && (
+
             <>
               {/* Accountability Challenges */}
               <LayoutBlock

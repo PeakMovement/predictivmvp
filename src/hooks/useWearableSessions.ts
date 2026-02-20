@@ -19,7 +19,7 @@ interface WearableSession {
   fetched_at: string | null;
 }
 
-export const useWearableSessions = (userId: string | undefined) => {
+export const useWearableSessions = (userId: string | undefined, source?: string) => {
   const [data, setData] = useState<WearableSession | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
@@ -40,14 +40,20 @@ export const useWearableSessions = (userId: string | undefined) => {
         setIsLoading(true);
         setError(null);
 
-        const { data: sessionData, error: fetchError } = await supabase
+        let query = supabase
           .from("wearable_sessions")
           .select("*")
           .eq("user_id", userId)
           .not("total_calories", "is", null)
           .order("date", { ascending: false })
-          .limit(1)
-          .maybeSingle();
+          .limit(1);
+
+        // Filter by source when specified
+        if (source && source !== "auto") {
+          query = query.eq("source", source);
+        }
+
+        const { data: sessionData, error: fetchError } = await query.maybeSingle();
 
         if (fetchError) throw fetchError;
 
@@ -66,7 +72,7 @@ export const useWearableSessions = (userId: string | undefined) => {
     if (!userId) return;
 
     const channel = supabase
-      .channel("wearable_sessions_changes")
+      .channel(`wearable_sessions_changes_${source ?? "all"}`)
       .on(
         "postgres_changes",
         {
@@ -85,7 +91,7 @@ export const useWearableSessions = (userId: string | undefined) => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [userId, refetchTrigger]);
+  }, [userId, source, refetchTrigger]);
 
   return { data, isLoading, error, refetch };
 };

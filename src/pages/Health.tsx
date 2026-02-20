@@ -10,6 +10,7 @@ import OuraSyncStatus from "@/components/OuraSyncStatus";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { InfoIcon } from "lucide-react";
 import { HealthTrendsChart } from "@/components/health/HealthTrendsChart";
+import { DeviceSourceSwitcher } from "@/components/DeviceSourceSwitcher";
 import { useLayoutCustomization } from "@/hooks/useLayoutCustomization";
 import { CustomizeLayoutButton } from "@/components/layout/CustomizeLayoutButton";
 import { LayoutEditor } from "@/components/layout/LayoutEditor";
@@ -21,6 +22,8 @@ import { useToast } from "@/hooks/use-toast";
 
 export const Health = () => {
   const [userId, setUserId] = useState<string | null>(null);
+  const [availableSources, setAvailableSources] = useState<string[]>([]);
+  const [selectedSource, setSelectedSource] = useState<string>("oura");
   const [sleepData, setSleepData] = useState<{
     totalSleep: number | null;
     deepSleep: number | null;
@@ -63,7 +66,25 @@ export const Health = () => {
     });
   }, []);
 
-  const { data: session, isLoading, refetch } = useWearableSessions(userId || undefined);
+  // Detect available device sources from wearable_sessions
+  useEffect(() => {
+    if (!userId) return;
+    supabase
+      .from("wearable_sessions")
+      .select("source")
+      .eq("user_id", userId)
+      .then(({ data }) => {
+        if (!data) return;
+        const unique = [...new Set(data.map((r) => r.source))].sort();
+        setAvailableSources(unique);
+        // Auto-select first source if current selection not present
+        if (unique.length > 0 && !unique.includes(selectedSource)) {
+          setSelectedSource(unique[0]);
+        }
+      });
+  }, [userId]);
+
+  const { data: session, isLoading, refetch } = useWearableSessions(userId || undefined, selectedSource);
 
   console.log("✅ Health page Oura data:", session);
 
@@ -77,6 +98,7 @@ export const Health = () => {
         .select("total_sleep_duration, deep_sleep_duration, rem_sleep_duration, light_sleep_duration, sleep_efficiency")
         .eq("user_id", userId)
         .eq("date", session.date)
+        .eq("source", selectedSource)
         .maybeSingle();
 
       if (error) {
@@ -202,6 +224,13 @@ export const Health = () => {
               visible={isSectionVisible('scoreCards')}
               className="mb-8"
             >
+              {/* Device Source Switcher */}
+              <DeviceSourceSwitcher
+                availableSources={availableSources}
+                selectedSource={selectedSource}
+                onSourceChange={setSelectedSource}
+                className="mb-4"
+              />
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <OuraReadinessCard
                   score={session?.readiness_score ?? null}
@@ -237,7 +266,7 @@ export const Health = () => {
               visible={isSectionVisible('healthTrends')}
               className="mb-8"
             >
-              <HealthTrendsChart />
+              <HealthTrendsChart source={selectedSource} />
             </LayoutBlock>
 
             {/* Detailed Metrics Section */}

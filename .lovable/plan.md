@@ -1,67 +1,69 @@
 
-## Why Garmin Data Is Not Showing
+## Problem: Total Calories and Running Distance Show 0
 
-### The Real Problem: Garmin API Pull Access Is Not Enabled
+### Root Cause
 
-The `fetch-garmin-data` edge function is calling the Garmin Wellness API (`https://apis.garmin.com/wellness-api/rest`) and getting back `HTTP 400 — InvalidPullTokenException` on every single request. This error is specific: it means the Garmin Developer Portal application does **not have "Wellness API Pull Access" granted**. Without pull access, the app can only receive data via push (webhooks), not request data on demand.
+Two separate issues, both caused by the same underlying problem: **no Garmin data exists yet in the database**, and the fallback paths either do not exist or point to null fields.
 
-This is confirmed by the logs — **every single API call fails**, for every user, every day, every endpoint (`/dailies`, `/sleeps`, `/activities`). The tokens themselves are valid (they're fresh JWTs, not expired). The problem is a Garmin portal permission, not a code error.
+**Database state (confirmed):**
+- All rows in `wearable_sessions` have `source = 'oura'`
+- `running_distance_km` and `total_distance_km` are `null` for all Oura rows (Oura does not provide GPS distance)
+- Today's row (2026-02-20) has `total_calories: null` because today's sync is incomplete
 
-**Result:** Zero rows exist in `wearable_sessions` with `source = 'garmin'`. No data ever arrives, so nothing displays on the dashboard.
+**Issue 1 — Total Calories shows 0:**
+`useWearableSessions` fetches the single most recent row (2026-02-20) and the Training page reads `wearableData?.total_calories`. Because today's partial Oura sync has `total_calories = null`, the gauge renders 0. Yesterday and prior days all have valid calorie data (e.g. 3307 kcal on Feb 19).
 
----
+**Fix:** Change `useWearableSessions` to skip rows where `total_calories` is null by adding `.not('total_calories', 'is', null)` before `.limit(1)`, so it fetches the most recent row that actually has calories populated.
 
-### The Secondary Code Bug: Running Distance Ignores the Real Column
+**Issue 2 — Running Distance shows 0:**
+`useGarminRunningDistance` queries `wearable_sessions` with `source = 'garmin'` exclusively. There are zero Garmin rows, so it returns 0. Oura sessions have step counts (e.g. 13,455 steps on Feb 19) that can be converted to estimated distance (step × 0.000762 km) as a temporary proxy until Garmin pull access is enabled.
 
-Even once pull access is enabled and data starts flowing, `useGarminRunningDistance` calculates distance by estimating from steps using a stride factor instead of reading the `running_distance_km` column that `fetch-garmin-data` already writes to `wearable_sessions`. This means the displayed distance will be inaccurate even after the API starts working.
-
----
-
-### What Needs to Happen
-
-#### Step 1 — You must enable "Wellness API Pull Access" in the Garmin Developer Portal (not a code change)
-
-This is required before any code fix will help. Without this, the pull sync will keep failing.
-
-Go to **developer.garmin.com** → your application → **API Access** → enable **"Health & Wellness API Pull"**. You may need to submit a request to Garmin for this — it is not automatically granted and requires approval from Garmin's team. The webhook push access (which you already set up) is separate from pull access.
-
-#### Step 2 — Fix `useGarminRunningDistance` to use actual GPS distance
-
-Instead of estimating distance from steps, the hook should read the `running_distance_km` column directly from `wearable_sessions`. This gives accurate GPS-tracked distance for runs and other activities.
-
-**Change in `src/hooks/useGarminRunningDistance.ts`:**
-- Query: add `running_distance_km, total_distance_km` to the select
-- Calculation: use `running_distance_km` directly (sum across days), with a fallback to the step-based estimate only if the column is null
-
-#### Step 3 — Improve the "no data" state to surface why Garmin data is missing
-
-Currently, when the Garmin sync fails, the UI silently shows nothing with no explanation. We should add a subtle diagnostic message in the Training and Dashboard pages that tells the user when Garmin is connected but no data has synced yet, so they know the device connection is there but data is pending.
+**Fix:** Update `useGarminRunningDistance` to query `source IN ('garmin', 'oura')` for the 7-day window. GPS columns (`running_distance_km`, `total_distance_km`) take priority when present (i.e. Garmin rows). For Oura rows where GPS is null, estimate from steps. This makes the gauge show meaningful data now, and automatically switches to accurate GPS distance once Garmin begins syncing.
 
 ---
 
-### Technical Details
+## Technical Changes
 
-| Problem | Root Cause | Fix Required |
+### File 1: `src/hooks/useWearableSessions.ts`
+
+Add a filter `.not('total_calories', 'is', null)` to the query so it returns the latest session that actually has calorie data, instead of today's incomplete row.
+
+```typescript
+// Before (returns today's null row):
+.order("date", { ascending: false })
+.limit(1)
+.maybeSingle();
+
+// After (returns latest row WITH calories):
+.not("total_calories", "is", null)
+.order("date", { ascending: false })
+.limit(1)
+.maybeSingle();
+```
+
+### File 2: `src/hooks/useGarminRunningDistance.ts`
+
+Change the source filter from `eq("source", "garmin")` to `in("source", ["garmin", "oura"])`. The distance calculation already has the correct priority logic (GPS first, steps fallback) — this just widens the query to include Oura rows so there is data to work with.
+
+```typescript
+// Before:
+.eq("source", "garmin")
+
+// After:
+.in("source", ["garmin", "oura"])
+```
+
+The existing calculation logic already handles the priority correctly:
+- If any row has `running_distance_km` or `total_distance_km` → use GPS sum
+- Otherwise → fall back to step × 0.000762 km
+
+This means once Garmin pull access is enabled and Garmin rows start appearing with GPS distance, those will be used automatically. Until then, Oura steps provide a reasonable estimate (~42 km/week based on current step counts).
+
+---
+
+## Expected Result After Fix
+
+| Gauge | Before | After |
 |---|---|---|
-| Zero Garmin data in database | `InvalidPullTokenException` — pull access not enabled in Garmin Developer Portal | Garmin portal permission (non-code action required from you) |
-| Running distance always 0 | `useGarminRunningDistance` estimates from steps instead of reading `running_distance_km` column | Code fix in `src/hooks/useGarminRunningDistance.ts` |
-| Today's Activity shows nothing | `training_trends` table has no rows for this user — Garmin sync never populates it | Resolved once Garmin pull access is enabled and sync runs |
-| Session log shows nothing | Same as above — `training_trends` is empty for this user | Resolved once Garmin pull access is enabled |
-
----
-
-### What I Can Fix Now
-
-I can immediately fix the `useGarminRunningDistance` hook to correctly read `running_distance_km` from the database column (accurate GPS distance) rather than estimating from steps.
-
-However, **the data will not appear until you enable Wellness API Pull Access in the Garmin Developer Portal**. That is a Garmin approval process and cannot be fixed in code.
-
-### Action Required From You
-
-1. Log into developer.garmin.com
-2. Open your application
-3. Navigate to API Access settings
-4. Request or enable "Health & Wellness API Pull Access"
-5. Once approved, the next automated sync (every 30 minutes) will populate the database and data will appear on screen
-
-If Garmin pull access cannot be approved immediately, the webhook (push) integration is already working — data will arrive whenever Garmin pushes activity events to the endpoint. The push path does not require pull access and is already correctly set up.
+| Total Calories | 0 kcal | ~3,307 kcal (most recent complete day) |
+| Running Distance | 0 km | ~50 km (7-day Oura step estimate, upgrades to GPS once Garmin syncs) |

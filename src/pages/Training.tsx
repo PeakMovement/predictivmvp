@@ -43,6 +43,7 @@ import { TrainingCalendar } from "@/components/training/TrainingCalendar";
 import { SessionComparison } from "@/components/training/SessionComparison";
 import { PullToRefresh } from "@/components/PullToRefresh";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { DeviceSourceSwitcher } from "@/components/DeviceSourceSwitcher";
 
 const generateSuggestions = (csvData: HealthDataRow[]) => {
   if (csvData.length === 0) return [];
@@ -203,7 +204,9 @@ const CircularGauge = ({
 // ✅ Main Page Component
 export const Training = () => {
   const { trends, isLoading: trendsLoading, refresh, userId } = useTrainingTrends({ days: 7 });
-  const { data: wearableData, refetch: refetchWearable } = useWearableSessions(userId || undefined);
+  const [availableSources, setAvailableSources] = useState<string[]>([]);
+  const [selectedSource, setSelectedSource] = useState<string>("oura");
+  const { data: wearableData, refetch: refetchWearable } = useWearableSessions(userId || undefined, selectedSource);
   const { runningDistance, isEstimated: runningDistanceIsEstimated, isLoading: runningDistanceLoading } = useGarminRunningDistance();
   const [suggestions, setSuggestions] = useState<ReturnType<typeof generateSuggestions>>([]);
   const [comparisonOpen, setComparisonOpen] = useState(false);
@@ -241,6 +244,23 @@ export const Training = () => {
         (Math.min(latestAvailableTrend.monotony || 0, 2.5) / 2.5) * 50
       ))
     : 0;
+
+  // Detect available device sources from wearable_sessions
+  useEffect(() => {
+    if (!userId) return;
+    supabase
+      .from("wearable_sessions")
+      .select("source")
+      .eq("user_id", userId)
+      .then(({ data }) => {
+        if (!data) return;
+        const unique = [...new Set(data.map((r) => r.source))].sort();
+        setAvailableSources(unique);
+        if (unique.length > 0 && !unique.includes(selectedSource)) {
+          setSelectedSource(unique[0]);
+        }
+      });
+  }, [userId]);
 
   // Check if Garmin token exists (connected but no data)
   useEffect(() => {
@@ -446,6 +466,13 @@ export const Training = () => {
                   visible={isSectionVisible('gauges')}
                   className="mt-4 md:mt-6"
                 >
+                  {/* Device Source Switcher for gauges */}
+                  <DeviceSourceSwitcher
+                    availableSources={availableSources}
+                    selectedSource={selectedSource}
+                    onSourceChange={setSelectedSource}
+                    className="mb-4"
+                  />
                   <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 xl:grid-cols-6 gap-4">
                     <CircularGauge
                       title="Monotony"

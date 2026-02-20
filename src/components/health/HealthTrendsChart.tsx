@@ -20,6 +20,10 @@ import { format, subDays } from "date-fns";
 
 type DateRange = 7 | 30;
 
+interface HealthTrendsChartProps {
+  source?: string;
+}
+
 interface HealthMetrics {
   date: string;
   hrv_avg: number | null;
@@ -62,7 +66,7 @@ const metricInfo = {
   },
 };
 
-export const HealthTrendsChart = () => {
+export const HealthTrendsChart = ({ source }: HealthTrendsChartProps) => {
   const [dateRange, setDateRange] = useState<DateRange>(7);
   const [metrics, setMetrics] = useState<HealthMetrics[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -71,7 +75,7 @@ export const HealthTrendsChart = () => {
 
   useEffect(() => {
     fetchTrends();
-  }, [dateRange]);
+  }, [dateRange, source]);
 
   const fetchTrends = async () => {
     try {
@@ -82,13 +86,19 @@ export const HealthTrendsChart = () => {
       const startDate = format(subDays(new Date(), dateRange), "yyyy-MM-dd");
       const endDate = format(new Date(), "yyyy-MM-dd");
 
-      const { data, error } = await supabase
+      let query = supabase
         .from("wearable_sessions")
         .select("date, hrv_avg, resting_hr, sleep_score, readiness_score, activity_score")
         .eq("user_id", user.id)
         .gte("date", startDate)
         .lte("date", endDate)
         .order("date", { ascending: true });
+
+      if (source && source !== "auto") {
+        query = query.eq("source", source);
+      }
+
+      const { data, error } = await query;
 
       if (error) throw error;
 

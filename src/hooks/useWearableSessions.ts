@@ -44,6 +44,7 @@ export const useWearableSessions = (userId: string | undefined) => {
           .from("wearable_sessions")
           .select("*")
           .eq("user_id", userId)
+          .not("total_calories", "is", null)
           .order("date", { ascending: false })
           .limit(1)
           .maybeSingle();

@@ -1286,45 +1286,86 @@ RESPOND WITH ONLY THE JSON OBJECT.`;
     const systemPromptHash = await sha256Hex(systemPrompt);
     console.log(`[generate-yves-intelligence] Calling AI for user ${userId} with ${promptContext.length} chars of context, data_sig: ${dataSignature.substring(0, 12)}, prompt_hash: ${promptContextHash.substring(0, 12)}, sys_hash: ${systemPromptHash.substring(0, 12)}`);
 
-    const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${lovableApiKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: userPrompt }
-        ],
-        max_tokens: 1200,
-      }),
-    });
-
-    if (!aiResponse.ok) {
-      const errorText = await aiResponse.text();
-      console.error(`[generate-yves-intelligence] AI API error for user ${userId}:`, {
-        status: aiResponse.status,
-        statusText: aiResponse.statusText,
-        error: errorText
+    // Helper: call a single AI endpoint
+    const callAI = async (url: string, authHeader: string, model: string) => {
+      return fetch(url, {
+        method: "POST",
+        headers: { "Authorization": authHeader, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model,
+          messages: [
+            { role: "system", content: systemPrompt },
+            { role: "user", content: userPrompt }
+          ],
+          max_tokens: 1200,
+        }),
       });
-      
-      if (aiResponse.status === 429) {
-        return new Response(
-          JSON.stringify({ success: false, error: "Rate limit exceeded. Please try again later." }),
-          { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
+    };
+
+    // AI provider chain: Lovable gateway → OpenAI direct fallback
+    const aiProviders = [
+      {
+        name: "lovable-gateway",
+        call: () => callAI(
+          "https://ai.gateway.lovable.dev/v1/chat/completions",
+          `Bearer ${lovableApiKey}`,
+          "google/gemini-2.5-flash"
+        ),
+      },
+      {
+        name: "openai-direct",
+        call: () => {
+          const openaiKey = Deno.env.get("OPENAI_API_KEY");
+          if (!openaiKey) throw new Error("OPENAI_API_KEY not configured");
+          return callAI(
+            "https://api.openai.com/v1/chat/completions",
+            `Bearer ${openaiKey}`,
+            "gpt-4o-mini"
+          );
+        },
+      },
+    ];
+
+    let aiResponse: Response | null = null;
+    let usedProvider = "unknown";
+
+    for (const provider of aiProviders) {
+      try {
+        const resp = await provider.call();
+        // Retry next provider on 5xx or 502/503 gateway errors
+        if (!resp.ok && (resp.status >= 500 || resp.status === 429 || resp.status === 402)) {
+          const errText = await resp.text();
+          console.error(`[generate-yves-intelligence] Provider ${provider.name} failed (${resp.status}):`, errText.substring(0, 200));
+          if (resp.status === 429) {
+            return new Response(
+              JSON.stringify({ success: false, error: "Rate limit exceeded. Please try again later." }),
+              { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+            );
+          }
+          if (resp.status === 402) {
+            return new Response(
+              JSON.stringify({ success: false, error: "AI credits exhausted. Please add credits." }),
+              { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+            );
+          }
+          // 5xx → try next provider
+          continue;
+        }
+        aiResponse = resp;
+        usedProvider = provider.name;
+        console.log(`[generate-yves-intelligence] Using provider: ${provider.name}`);
+        break;
+      } catch (providerErr) {
+        console.error(`[generate-yves-intelligence] Provider ${provider.name} threw:`, providerErr);
+        // Continue to next provider
       }
-      if (aiResponse.status === 402) {
-        return new Response(
-          JSON.stringify({ success: false, error: "AI credits exhausted. Please add credits." }),
-          { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
-      
+    }
+
+    if (!aiResponse || !aiResponse.ok) {
+      const status = aiResponse?.status ?? 503;
+      console.error(`[generate-yves-intelligence] All AI providers failed for user ${userId}`);
       return new Response(
-        JSON.stringify({ success: false, error: `AI error: ${aiResponse.status}` }),
+        JSON.stringify({ success: false, error: `AI error: ${status}` }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }

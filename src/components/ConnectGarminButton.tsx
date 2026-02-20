@@ -43,13 +43,23 @@ export const ConnectGarminButton = ({ isConnected, onConnectionChange }: Connect
   if (isConnected) {
     return (
       <Button
-        onClick={onConnectionChange}
+        onClick={connectGarmin}
+        disabled={isLoading}
         size="sm"
         variant="outline"
         className="bg-glass/30 border-glass-border hover:bg-glass-highlight hover:scale-105 active:scale-95 transition-all duration-200"
       >
-        <RefreshCw size={14} className="mr-2" />
-        Reconnect
+        {isLoading ? (
+          <>
+            <RefreshCw size={14} className="mr-2 animate-spin" />
+            Reconnecting...
+          </>
+        ) : (
+          <>
+            <RefreshCw size={14} className="mr-2" />
+            Reconnect
+          </>
+        )}
       </Button>
     );
   }

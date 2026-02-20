@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 export const useGarminRunningDistance = () => {
   const [runningDistance, setRunningDistance] = useState<number>(0);
+  const [isEstimated, setIsEstimated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
   const fetchRunningDistance = useCallback(async () => {
@@ -45,6 +46,7 @@ export const useGarminRunningDistance = () => {
               sum + (session.running_distance_km ?? session.total_distance_km ?? 0),
             0
           );
+          setIsEstimated(false);
           console.log(`✅ Garmin 7-day GPS distance: ${totalDistance.toFixed(2)} km`);
         } else {
           // Fallback: estimate from steps (avg stride ~0.762m)
@@ -52,6 +54,7 @@ export const useGarminRunningDistance = () => {
             (sum, session) => sum + ((session.total_steps || 0) * 0.000762),
             0
           );
+          setIsEstimated(true);
           console.log(`✅ Garmin 7-day step-estimated distance: ${totalDistance.toFixed(2)} km`);
         }
         setRunningDistance(totalDistance);
@@ -105,6 +108,7 @@ export const useGarminRunningDistance = () => {
 
   return {
     runningDistance,
+    isEstimated,
     isLoading,
     refresh: fetchRunningDistance,
   };

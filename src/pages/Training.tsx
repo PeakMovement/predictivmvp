@@ -204,7 +204,7 @@ const CircularGauge = ({
 export const Training = () => {
   const { trends, isLoading: trendsLoading, refresh, userId } = useTrainingTrends({ days: 7 });
   const { data: wearableData, refetch: refetchWearable } = useWearableSessions(userId || undefined);
-  const { runningDistance, isLoading: runningDistanceLoading } = useGarminRunningDistance();
+  const { runningDistance, isEstimated: runningDistanceIsEstimated, isLoading: runningDistanceLoading } = useGarminRunningDistance();
   const [suggestions, setSuggestions] = useState<ReturnType<typeof generateSuggestions>>([]);
   const [comparisonOpen, setComparisonOpen] = useState(false);
   const [comparisonSessions, setComparisonSessions] = useState<any[]>([]);
@@ -477,12 +477,28 @@ export const Training = () => {
                       maxValue={100}
                       unit="%"
                     />
-                    <CircularGauge
-                      title="Running Distance"
-                      value={runningDistanceLoading ? 0 : parseFloat(runningDistance.toFixed(1))}
-                      maxValue={50}
-                      unit="km"
-                    />
+                    <div className="flex flex-col items-center gap-1">
+                      <CircularGauge
+                        title="Running Distance"
+                        value={runningDistanceLoading ? 0 : parseFloat(runningDistance.toFixed(1))}
+                        maxValue={50}
+                        unit="km"
+                      />
+                      {runningDistanceIsEstimated && !runningDistanceLoading && (
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <p className="text-[10px] text-muted-foreground text-center cursor-help underline decoration-dotted max-w-[100px] leading-tight">
+                                Estimated from steps
+                              </p>
+                            </TooltipTrigger>
+                            <TooltipContent side="bottom" className="max-w-[200px] text-center text-xs">
+                              GPS distance will show once Garmin syncs
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      )}
+                    </div>
                   </div>
                 </LayoutBlock>
               </LayoutBlock>

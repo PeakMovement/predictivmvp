@@ -66,7 +66,8 @@ export const Health = () => {
     });
   }, []);
 
-  // Detect available device sources from wearable_sessions
+  // Detect available device sources from wearable_sessions (real devices only)
+  const KNOWN_SOURCES = ["oura", "garmin", "polar"];
   useEffect(() => {
     if (!userId) return;
     supabase
@@ -75,7 +76,9 @@ export const Health = () => {
       .eq("user_id", userId)
       .then(({ data }) => {
         if (!data) return;
-        const unique = [...new Set(data.map((r) => r.source))].sort();
+        const unique = [...new Set(data.map((r) => r.source))]
+          .filter((s) => KNOWN_SOURCES.includes(s))
+          .sort();
         setAvailableSources(unique);
         // Auto-select first source if current selection not present
         if (unique.length > 0 && !unique.includes(selectedSource)) {

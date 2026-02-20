@@ -1,69 +1,109 @@
 
-## Problem: Total Calories and Running Distance Show 0
+## Device Source Switcher for Wearable Data Sections
 
-### Root Cause
+### The Problem
 
-Two separate issues, both caused by the same underlying problem: **no Garmin data exists yet in the database**, and the fallback paths either do not exist or point to null fields.
+When both Oura Ring and Garmin are connected, `wearable_sessions` will contain rows from both sources on the same dates. Currently all queries just return the most recent row regardless of device, which means data from both devices gets silently blended or one overwrites the other. Each device measures different things (e.g. Oura has SpO2 and sleep stages; Garmin will have GPS distance and step counts) and mixing them is incorrect.
 
-**Database state (confirmed):**
-- All rows in `wearable_sessions` have `source = 'oura'`
-- `running_distance_km` and `total_distance_km` are `null` for all Oura rows (Oura does not provide GPS distance)
-- Today's row (2026-02-20) has `total_calories: null` because today's sync is incomplete
+### Scope: Which Sections Need a Switcher
 
-**Issue 1 — Total Calories shows 0:**
-`useWearableSessions` fetches the single most recent row (2026-02-20) and the Training page reads `wearableData?.total_calories`. Because today's partial Oura sync has `total_calories = null`, the gauge renders 0. Yesterday and prior days all have valid calorie data (e.g. 3307 kcal on Feb 19).
+Only sections that query `wearable_sessions` directly and will receive rows from multiple devices need the switcher. Based on the codebase analysis:
 
-**Fix:** Change `useWearableSessions` to skip rows where `total_calories` is null by adding `.not('total_calories', 'is', null)` before `.limit(1)`, so it fetches the most recent row that actually has calories populated.
+**1. Health Page — Score Cards + HRV + Sleep Detail + Trends Chart**
+All four card groups (Readiness, Sleep, Activity, HRV/HR) and `HealthTrendsChart` pull from `wearable_sessions`. This is the primary place for the device switcher.
 
-**Issue 2 — Running Distance shows 0:**
-`useGarminRunningDistance` queries `wearable_sessions` with `source = 'garmin'` exclusively. There are zero Garmin rows, so it returns 0. Oura sessions have step counts (e.g. 13,455 steps on Feb 19) that can be converted to estimated distance (step × 0.000762 km) as a temporary proxy until Garmin pull access is enabled.
+**2. Training Page — Gauges (Total Calories, Readiness)**
+The `CircularGauge` components for Total Calories and Readiness pull from `useWearableSessions`.
 
-**Fix:** Update `useGarminRunningDistance` to query `source IN ('garmin', 'oura')` for the 7-day window. GPS columns (`running_distance_km`, `total_distance_km`) take priority when present (i.e. Garmin rows). For Oura rows where GPS is null, estimate from steps. This makes the gauge show meaningful data now, and automatically switches to accurate GPS distance once Garmin begins syncing.
-
----
-
-## Technical Changes
-
-### File 1: `src/hooks/useWearableSessions.ts`
-
-Add a filter `.not('total_calories', 'is', null)` to the query so it returns the latest session that actually has calorie data, instead of today's incomplete row.
-
-```typescript
-// Before (returns today's null row):
-.order("date", { ascending: false })
-.limit(1)
-.maybeSingle();
-
-// After (returns latest row WITH calories):
-.not("total_calories", "is", null)
-.order("date", { ascending: false })
-.limit(1)
-.maybeSingle();
-```
-
-### File 2: `src/hooks/useGarminRunningDistance.ts`
-
-Change the source filter from `eq("source", "garmin")` to `in("source", ["garmin", "oura"])`. The distance calculation already has the correct priority logic (GPS first, steps fallback) — this just widens the query to include Oura rows so there is data to work with.
-
-```typescript
-// Before:
-.eq("source", "garmin")
-
-// After:
-.in("source", ["garmin", "oura"])
-```
-
-The existing calculation logic already handles the priority correctly:
-- If any row has `running_distance_km` or `total_distance_km` → use GPS sum
-- Otherwise → fall back to step × 0.000762 km
-
-This means once Garmin pull access is enabled and Garmin rows start appearing with GPS distance, those will be used automatically. Until then, Oura steps provide a reasonable estimate (~42 km/week based on current step counts).
+**Does NOT need a switcher:**
+- `training_trends` (no source column — computed load metrics)
+- Session Logs (per-session records, already source-labelled)
+- Dashboard (AI briefing, risk score, recommendations — not raw device rows)
+- Running Distance gauge (already has its own Garmin/Oura priority logic)
 
 ---
 
-## Expected Result After Fix
+### Implementation Plan
 
-| Gauge | Before | After |
-|---|---|---|
-| Total Calories | 0 kcal | ~3,307 kcal (most recent complete day) |
-| Running Distance | 0 km | ~50 km (7-day Oura step estimate, upgrades to GPS once Garmin syncs) |
+#### Step 1 — Create a reusable `DeviceSourceSwitcher` component
+
+A small pill-style toggle that appears at the top of a section. It:
+- Takes an array of available sources (`['oura', 'garmin']`) detected from the DB
+- Shows device names with their icons (Oura ring icon, Garmin icon using Lucide Watch/Activity)
+- Emits the selected source string to the parent
+- Is hidden/disabled if only one device is connected (no point switching)
+
+File: `src/components/DeviceSourceSwitcher.tsx`
+
+```
+[ Ōura Ring ]  [ Garmin ]   ← pill toggle, active device highlighted
+```
+
+#### Step 2 — Update `useWearableSessions` to accept a `source` filter
+
+Add an optional `source?: string` parameter. When provided, add `.eq("source", source)` to the query. When omitted or `"auto"`, fall back to the current behaviour (most recent any-source row).
+
+This keeps backward compatibility — the Dashboard and other pages that don't use the switcher continue to work as-is.
+
+#### Step 3 — Update Health page (`src/pages/Health.tsx`)
+
+- On mount, query `wearable_sessions` `DISTINCT source` for the current user to detect which devices have data.
+- Render `DeviceSourceSwitcher` at the top of the Score Cards section (below the sync status, above the 3 score cards).
+- Pass the selected source down into `useWearableSessions(userId, selectedSource)`.
+- Also pass `selectedSource` to `HealthTrendsChart` so the trends chart filters by that source too.
+
+#### Step 4 — Update `HealthTrendsChart` to accept a `source` prop
+
+Add `source?: string` prop. When provided, add `.eq("source", source)` to the Supabase query inside `fetchTrends`. This ensures the 7/30-day line chart reflects only the selected device's data.
+
+#### Step 5 — Update Training page (`src/pages/Training.tsx`)
+
+- Add same device detection logic.
+- Render `DeviceSourceSwitcher` above the gauges block.
+- Pass selected source to `useWearableSessions(userId, selectedSource)` so the Total Calories and Readiness gauges show per-device values.
+
+---
+
+### What the Switcher Looks Like
+
+```text
++------------------------------------------+
+|  Data from:  [ Ōura Ring ]  [ Garmin ]   |
++------------------------------------------+
+|   Readiness      Sleep       Activity    |
+|     82            76           71        |
++------------------------------------------+
+```
+
+- Only renders when 2+ device sources have rows in `wearable_sessions`
+- If only Oura has data today (common now), the switcher either hides or shows Garmin as "No data yet" greyed out
+- Active device is highlighted with the primary colour pill
+
+---
+
+### Technical Details
+
+**Device detection query (run once on mount):**
+```sql
+SELECT DISTINCT source 
+FROM wearable_sessions 
+WHERE user_id = $1
+ORDER BY source
+```
+
+**Modified `useWearableSessions` signature:**
+```typescript
+export const useWearableSessions = (
+  userId: string | undefined,
+  source?: string   // new optional param
+) => { ... }
+```
+
+**Files to change:**
+1. `src/components/DeviceSourceSwitcher.tsx` — new file
+2. `src/hooks/useWearableSessions.ts` — add optional `source` param
+3. `src/pages/Health.tsx` — add switcher + source state + device detection
+4. `src/components/health/HealthTrendsChart.tsx` — add `source` prop
+5. `src/pages/Training.tsx` — add switcher + source state above gauges
+
+No database changes required. No new packages needed.

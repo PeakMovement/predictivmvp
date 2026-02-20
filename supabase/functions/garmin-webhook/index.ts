@@ -76,17 +76,35 @@ interface GarminPermissionChange {
   userAccessToken: string;
 }
 
+// ── Always-200 response helper ───────────────────────────────────────
+
+const ok200 = () =>
+  new Response("OK", {
+    status: 200,
+    headers: { ...corsHeaders, "Content-Type": "text/plain" },
+  });
+
 // ── Main handler ─────────────────────────────────────────────────────
 
 Deno.serve(async (req: Request) => {
+  // Outermost safety net — Garmin must always get HTTP 200
+  try {
+    return await handleRequest(req);
+  } catch (fatal) {
+    console.error(`[garmin-webhook] [FATAL-OUTER] ${fatal instanceof Error ? fatal.message : String(fatal)}`);
+    return ok200();
+  }
+});
+
+async function handleRequest(req: Request): Promise<Response> {
   if (req.method === "OPTIONS") {
-    return new Response(null, { status: 200, headers: corsHeaders });
+    return ok200();
   }
 
   // Garmin sends GET for endpoint validation
   if (req.method === "GET") {
     console.log("[garmin-webhook] GET validation request received");
-    return new Response("OK", { status: 200, headers: corsHeaders });
+    return ok200();
   }
 
   const startTime = Date.now();
@@ -97,7 +115,7 @@ Deno.serve(async (req: Request) => {
 
     if (!supabaseUrl || !supabaseServiceKey) {
       console.error("[garmin-webhook] [ERROR] Missing Supabase credentials");
-      return new Response("OK", { status: 200, headers: corsHeaders });
+      return ok200();
     }
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
@@ -107,7 +125,7 @@ Deno.serve(async (req: Request) => {
       payload = await req.json();
     } catch {
       console.error("[garmin-webhook] [ERROR] Invalid JSON body");
-      return new Response("OK", { status: 200, headers: corsHeaders });
+      return ok200();
     }
 
     console.log(`[garmin-webhook] [RECEIVED] Keys: ${Object.keys(payload).join(", ")}`);
@@ -180,14 +198,14 @@ Deno.serve(async (req: Request) => {
       }
     }
 
-    return new Response("OK", { status: 200, headers: corsHeaders });
+    return ok200();
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
-    console.error(`[garmin-webhook] [FATAL] ${msg}`);
+    console.error(`[garmin-webhook] [INNER-CATCH] ${msg}`);
     // Always return 200 to Garmin to prevent retries that could cause deregistration
-    return new Response("OK", { status: 200, headers: corsHeaders });
+    return ok200();
   }
-});
+}
 
 // ── Resolve Garmin userAccessToken → internal user_id ────────────────
 

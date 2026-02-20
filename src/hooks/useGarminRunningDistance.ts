@@ -23,7 +23,7 @@ export const useGarminRunningDistance = () => {
         .from("wearable_sessions")
         .select("total_steps, active_calories, running_distance_km, total_distance_km")
         .eq("user_id", user.id)
-        .eq("source", "garmin")
+        .in("source", ["garmin", "oura"])
         .gte("date", sevenDaysAgoStr);
 
       if (error) {

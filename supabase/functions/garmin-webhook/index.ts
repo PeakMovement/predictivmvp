@@ -211,8 +211,13 @@ async function handleRequest(req: Request): Promise<Response> {
 
 async function resolveUserId(
   supabase: ReturnType<typeof createClient>,
-  garminUserAccessToken: string,
+  garminUserAccessToken: string | undefined,
 ): Promise<string | null> {
+  if (!garminUserAccessToken) {
+    console.warn(`[garmin-webhook] No userAccessToken in payload, skipping resolve`);
+    return null;
+  }
+
   // The userAccessToken from Garmin push payloads is the OAuth access token
   // we stored during auth. Look it up in wearable_tokens.
   const { data, error } = await supabase

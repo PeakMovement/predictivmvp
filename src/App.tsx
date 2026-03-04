@@ -30,66 +30,61 @@ import { AccessibilityWrapper } from "@/components/AccessibilityWrapper";
 import { SessionTimeoutWarning } from "@/components/SessionTimeoutWarning";
 import { useSessionTimeout } from "@/hooks/useSessionTimeout";
 
-// ── Lazy-loaded pages ─────────────────────────────────────────────────────────
-const Dashboard = lazy(() => import("@/pages/Dashboard").then(m => ({ default: m.Dashboard })));
-const Training = lazy(() => import("@/pages/Training").then(m => ({ default: m.Training })));
-const Health = lazy(() => import("@/pages/Health").then(m => ({ default: m.Health })));
-const YourPlan = lazy(() => import("@/pages/YourPlan").then(m => ({ default: m.YourPlan })));
-const Settings = lazy(() => import("@/pages/Settings").then(m => ({ default: m.Settings })));
-const FindHelp = lazy(() => import("@/pages/FindHelp").then(m => ({ default: m.FindHelp })));
-const InsightsTree = lazy(() => import("@/pages/InsightsTree").then(m => ({ default: m.InsightsTree })));
-const YvesChat = lazy(() => import("@/components/YvesChat").then(m => ({ default: m.YvesChat })));
-const FitbitCallback = lazy(() => import("@/pages/FitbitCallback"));
-const OuraCallback = lazy(() => import("@/pages/OuraCallback").then(m => ({ default: m.OuraCallback })));
-const PolarCallback = lazy(() => import("@/pages/auth/polar"));
-const MyBaselines = lazy(() => import("@/pages/MyBaselines"));
-const MyDocuments = lazy(() => import("@/pages/MyDocuments"));
-const SymptomCheckIn = lazy(() => import("@/pages/SymptomCheckIn").then(m => ({ default: m.SymptomCheckIn })));
-const PlanCompliance = lazy(() => import("@/pages/PlanCompliance"));
-const Planner = lazy(() => import("@/pages/Planner").then(m => ({ default: m.Planner })));
-const ProfileSetup = lazy(() => import("@/pages/ProfileSetup").then(m => ({ default: m.ProfileSetup })));
-const AdminDashboard = lazy(() => import("@/pages/AdminDashboard").then(m => ({ default: m.AdminDashboard })));
-const PersonalCanvas = lazy(() => import("@/pages/PersonalCanvas"));
+const Dashboard          = lazy(() => import("@/pages/Dashboard").then(m => ({ default: m.Dashboard })));
+const Training           = lazy(() => import("@/pages/Training").then(m => ({ default: m.Training })));
+const Health             = lazy(() => import("@/pages/Health").then(m => ({ default: m.Health })));
+const YourPlan           = lazy(() => import("@/pages/YourPlan").then(m => ({ default: m.YourPlan })));
+const Settings           = lazy(() => import("@/pages/Settings").then(m => ({ default: m.Settings })));
+const FindHelp           = lazy(() => import("@/pages/FindHelp").then(m => ({ default: m.FindHelp })));
+const InsightsTree       = lazy(() => import("@/pages/InsightsTree").then(m => ({ default: m.InsightsTree })));
+const YvesChat           = lazy(() => import("@/components/YvesChat").then(m => ({ default: m.YvesChat })));
+const FitbitCallback     = lazy(() => import("@/pages/FitbitCallback"));
+const OuraCallback       = lazy(() => import("@/pages/OuraCallback").then(m => ({ default: m.OuraCallback })));
+const PolarCallback      = lazy(() => import("@/pages/auth/polar"));
+const MyBaselines        = lazy(() => import("@/pages/MyBaselines"));
+const MyDocuments        = lazy(() => import("@/pages/MyDocuments"));
+const SymptomCheckIn     = lazy(() => import("@/pages/SymptomCheckIn").then(m => ({ default: m.SymptomCheckIn })));
+const PlanCompliance     = lazy(() => import("@/pages/PlanCompliance"));
+const Planner            = lazy(() => import("@/pages/Planner").then(m => ({ default: m.Planner })));
+const ProfileSetup       = lazy(() => import("@/pages/ProfileSetup").then(m => ({ default: m.ProfileSetup })));
+const AdminDashboard     = lazy(() => import("@/pages/AdminDashboard").then(m => ({ default: m.AdminDashboard })));
+const PersonalCanvas     = lazy(() => import("@/pages/PersonalCanvas"));
 const GoogleCalendarCallback = lazy(() => import("@/pages/GoogleCalendarCallback").then(m => ({ default: m.GoogleCalendarCallback })));
-const AlertHistory = lazy(() => import("@/pages/AlertHistory"));
-const MetricsDashboard = lazy(() => import("@/pages/MetricsDashboard"));
+const AlertHistory       = lazy(() => import("@/pages/AlertHistory"));
+const MetricsDashboard   = lazy(() => import("@/pages/MetricsDashboard"));
 
 const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: { staleTime: 0 },
-  },
+  defaultOptions: { queries: { staleTime: 0 } },
 });
 
-// ── Tab ↔ URL path mapping ────────────────────────────────────────────────────
 const TAB_PATHS: Record<string, string> = {
-  "dashboard":         "/dashboard",
-  "planner":           "/planner",
-  "training":          "/training",
-  "health":            "/health",
-  "your-plan":         "/your-plan",
-  "plan-compliance":   "/plan-compliance",
-  "my-documents":      "/my-documents",
-  "mybaselines":       "/my-baselines",
-  "find-help":         "/find-help",
-  "symptom-checkin":   "/symptom-checkin",
-  "settings":          "/settings",
-  "insights-tree":     "/insights-tree",
-  "yves-insights":     "/yves-insights",
-  "profile-setup":     "/profile-setup",
-  "admin-dashboard":   "/admin-dashboard",
-  "personal-canvas":   "/personal-canvas",
-  "metrics-dashboard": "/metrics-dashboard",
-  "alert-history":     "/alert-history",
+  "dashboard":          "/dashboard",
+  "planner":            "/planner",
+  "training":           "/training",
+  "health":             "/health",
+  "your-plan":          "/your-plan",
+  "plan-compliance":    "/plan-compliance",
+  "my-documents":       "/my-documents",
+  "mybaselines":        "/my-baselines",
+  "find-help":          "/find-help",
+  "symptom-checkin":    "/symptom-checkin",
+  "settings":           "/settings",
+  "insights-tree":      "/insights-tree",
+  "yves-insights":      "/yves-insights",
+  "profile-setup":      "/profile-setup",
+  "admin-dashboard":    "/admin-dashboard",
+  "personal-canvas":    "/personal-canvas",
+  "metrics-dashboard":  "/metrics-dashboard",
+  "alert-history":      "/alert-history",
 };
 
 const PATH_TO_TAB: Record<string, string> = Object.fromEntries(
   Object.entries(TAB_PATHS).map(([tab, path]) => [path, tab])
 );
 
-// ── Authenticated shell ───────────────────────────────────────────────────────
 const AuthenticatedApp = () => {
-  const navigate = useNavigate();
-  const location = useLocation();
+  const navigate  = useNavigate();
+  const location  = useLocation();
   const activeTab = PATH_TO_TAB[location.pathname] ?? "dashboard";
 
   const sessionTimeout = useSessionTimeout({
@@ -107,24 +102,23 @@ const AuthenticatedApp = () => {
 
   useEffect(() => {
     const onInsights = () => handleNavigate("insights-tree");
-    const onYves = () => handleNavigate("yves-insights");
-    const onTab = (e: CustomEvent) => {
-      if (e.detail) handleNavigate(e.detail);
-    };
+    const onYves     = () => handleNavigate("yves-insights");
+    const onTab      = (e: CustomEvent) => { if (e.detail) handleNavigate(e.detail); };
 
-    window.addEventListener("navigate-insights", onInsights as EventListener);
-    window.addEventListener("navigate-yves-insights", onYves as EventListener);
-    window.addEventListener("navigate-tab", onTab as EventListener);
+    window.addEventListener("navigate-insights",      onInsights as EventListener);
+    window.addEventListener("navigate-yves-insights", onYves     as EventListener);
+    window.addEventListener("navigate-tab",           onTab      as EventListener);
 
     return () => {
-      window.removeEventListener("navigate-insights", onInsights as EventListener);
-      window.removeEventListener("navigate-yves-insights", onYves as EventListener);
-      window.removeEventListener("navigate-tab", onTab as EventListener);
+      window.removeEventListener("navigate-insights",      onInsights as EventListener);
+      window.removeEventListener("navigate-yves-insights", onYves     as EventListener);
+      window.removeEventListener("navigate-tab",           onTab      as EventListener);
     };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <AccessibilityWrapper>
+      <OfflineBanner />
       <SessionTimeoutWarning
         open={sessionTimeout.showWarning}
         timeRemaining={sessionTimeout.timeRemaining}
@@ -132,8 +126,6 @@ const AuthenticatedApp = () => {
         onLogout={sessionTimeout.logout}
         onDismiss={sessionTimeout.dismissWarning}
       />
-      <OfflineBanner />
-
       <div className="relative overflow-hidden min-h-screen">
         <ThemeToggle />
         <Tooltip>
@@ -152,9 +144,7 @@ const AuthenticatedApp = () => {
               <SettingsIcon size={20} className="text-primary drop-shadow-[0_0_8px_hsl(var(--primary)/0.6)]" />
             </button>
           </TooltipTrigger>
-          <TooltipContent>
-            <p>Settings</p>
-          </TooltipContent>
+          <TooltipContent><p>Settings</p></TooltipContent>
         </Tooltip>
 
         <SymptomCheckInSheet />
@@ -163,35 +153,26 @@ const AuthenticatedApp = () => {
         <div className="transition-all duration-500 ease-out animate-fade-in">
           <Suspense fallback={<PageLoadingFallback />}>
             <Routes>
-              <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/planner" element={<Planner />} />
-              <Route path="/training" element={<Training />} />
-              <Route path="/health" element={<Health />} />
-              <Route path="/your-plan" element={<YourPlan />} />
-              <Route path="/plan-compliance" element={<PlanCompliance />} />
-              <Route path="/my-documents" element={<MyDocuments />} />
-              <Route path="/my-baselines" element={<MyBaselines />} />
-              <Route path="/find-help" element={<FindHelp />} />
-              <Route path="/symptom-checkin" element={<SymptomCheckIn />} />
-              <Route path="/settings" element={<Settings onNavigate={handleNavigate} />} />
-              <Route path="/insights-tree" element={<InsightsTree onNavigate={handleNavigate} />} />
-              <Route
-                path="/yves-insights"
-                element={
-                  <div className="container mx-auto px-4 py-8 pb-24">
-                    <YvesChat />
-                  </div>
-                }
-              />
-              <Route path="/profile-setup" element={<ProfileSetup />} />
-              <Route path="/admin-dashboard" element={<AdminDashboard />} />
-              <Route path="/personal-canvas" element={<PersonalCanvas />} />
-              <Route path="/metrics-dashboard" element={<MetricsDashboard />} />
-              <Route path="/alert-history" element={<AlertHistory />} />
-
-              {/* Default: redirect / and unknown paths to /dashboard */}
-              <Route path="/" element={<Navigate to="/dashboard" replace />} />
-              <Route path="*" element={<Navigate to="/dashboard" replace />} />
+              <Route path="/"                   element={<Navigate to="/dashboard" replace />} />
+              <Route path="/dashboard"          element={<Dashboard />} />
+              <Route path="/planner"            element={<Planner />} />
+              <Route path="/training"           element={<Training />} />
+              <Route path="/health"             element={<Health />} />
+              <Route path="/your-plan"          element={<YourPlan />} />
+              <Route path="/plan-compliance"    element={<PlanCompliance />} />
+              <Route path="/my-documents"       element={<MyDocuments />} />
+              <Route path="/my-baselines"       element={<MyBaselines />} />
+              <Route path="/find-help"          element={<FindHelp />} />
+              <Route path="/symptom-checkin"    element={<SymptomCheckIn />} />
+              <Route path="/settings"           element={<Settings onNavigate={handleNavigate} />} />
+              <Route path="/insights-tree"      element={<InsightsTree onNavigate={handleNavigate} />} />
+              <Route path="/yves-insights"      element={<div className="container mx-auto px-4 py-8 pb-24"><YvesChat /></div>} />
+              <Route path="/profile-setup"      element={<ProfileSetup />} />
+              <Route path="/admin-dashboard"    element={<AdminDashboard />} />
+              <Route path="/personal-canvas"    element={<PersonalCanvas />} />
+              <Route path="/metrics-dashboard"  element={<MetricsDashboard />} />
+              <Route path="/alert-history"      element={<AlertHistory />} />
+              <Route path="*"                   element={<Navigate to="/dashboard" replace />} />
             </Routes>
           </Suspense>
         </div>
@@ -203,7 +184,6 @@ const AuthenticatedApp = () => {
   );
 };
 
-// ── Root app with auth gate ───────────────────────────────────────────────────
 const AppInner = () => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const [needsOnboarding, setNeedsOnboarding] = useState<boolean | null>(null);
@@ -224,9 +204,7 @@ const AppInner = () => {
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       setIsAuthenticated(!!session);
-
       if (event === "SIGNED_OUT") {
-        console.log("[App] User signed out - clearing all cached state");
         queryClient.clear();
         const lsKeys = [
           "todays-decision-cache", "insightHistory", "wearable_connected",
@@ -245,22 +223,16 @@ const AppInner = () => {
   }, []);
 
   useEffect(() => {
-    if (!isAuthenticated) {
-      setNeedsOnboarding(null);
-      return;
-    }
-
+    if (!isAuthenticated) { setNeedsOnboarding(null); return; }
     (async () => {
       try {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) return;
-
         const { data } = await supabase
           .from("user_profiles")
           .select("onboarding_completed, onboarding_skipped")
           .eq("user_id", user.id)
           .maybeSingle();
-
         setNeedsOnboarding(!data?.onboarding_completed && !data?.onboarding_skipped);
       } catch {
         setNeedsOnboarding(false);
@@ -268,21 +240,19 @@ const AppInner = () => {
     })();
   }, [isAuthenticated]);
 
-  // OAuth callback routes — render without auth gate
   if (isOAuthRoute) {
     return (
       <Suspense fallback={<PageLoadingFallback />}>
         <Routes>
-          <Route path="/fitbit/callback" element={<FitbitCallback />} />
-          <Route path="/oauth/callback/oura" element={<OuraCallback />} />
-          <Route path="/auth/polar" element={<PolarCallback />} />
+          <Route path="/fitbit/callback"          element={<FitbitCallback />} />
+          <Route path="/oauth/callback/oura"      element={<OuraCallback />} />
+          <Route path="/auth/polar"               element={<PolarCallback />} />
           <Route path="/google-calendar-callback" element={<GoogleCalendarCallback />} />
         </Routes>
       </Suspense>
     );
   }
 
-  // Loading auth state
   if (isAuthenticated === null) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -291,19 +261,17 @@ const AppInner = () => {
     );
   }
 
-  // Not authenticated — login / register
   if (!isAuthenticated) {
     return (
       <Suspense fallback={<PageLoadingFallback />}>
         <Routes>
           <Route path="/register" element={<Register />} />
-          <Route path="*" element={<Login />} />
+          <Route path="*"         element={<Login />} />
         </Routes>
       </Suspense>
     );
   }
 
-  // Loading onboarding state
   if (needsOnboarding === null) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -312,7 +280,6 @@ const AppInner = () => {
     );
   }
 
-  // Show onboarding
   if (needsOnboarding === true) {
     return (
       <OnboardingFlow
@@ -325,7 +292,6 @@ const AppInner = () => {
   return <AuthenticatedApp />;
 };
 
-// ── Top-level providers ───────────────────────────────────────────────────────
 const App = () => (
   <ThemeProvider defaultTheme="dark" storageKey="predictiv-theme">
     <QueryClientProvider client={queryClient}>

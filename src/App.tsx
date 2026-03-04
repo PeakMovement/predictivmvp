@@ -3,6 +3,14 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import {
+  BrowserRouter,
+  Routes,
+  Route,
+  Navigate,
+  useNavigate,
+  useLocation,
+} from "react-router-dom";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { BottomNavigation } from "@/components/BottomNavigation";
@@ -22,6 +30,7 @@ import { AccessibilityWrapper } from "@/components/AccessibilityWrapper";
 import { SessionTimeoutWarning } from "@/components/SessionTimeoutWarning";
 import { useSessionTimeout } from "@/hooks/useSessionTimeout";
 
+// ── Lazy-loaded pages ─────────────────────────────────────────────────────────
 const Dashboard = lazy(() => import("@/pages/Dashboard").then(m => ({ default: m.Dashboard })));
 const Training = lazy(() => import("@/pages/Training").then(m => ({ default: m.Training })));
 const Health = lazy(() => import("@/pages/Health").then(m => ({ default: m.Health })));
@@ -30,17 +39,10 @@ const Settings = lazy(() => import("@/pages/Settings").then(m => ({ default: m.S
 const FindHelp = lazy(() => import("@/pages/FindHelp").then(m => ({ default: m.FindHelp })));
 const InsightsTree = lazy(() => import("@/pages/InsightsTree").then(m => ({ default: m.InsightsTree })));
 const YvesChat = lazy(() => import("@/components/YvesChat").then(m => ({ default: m.YvesChat })));
-const TestSupabase = lazy(() => import("@/pages/TestSupabase"));
-const AuthTest = lazy(() => import("@/pages/AuthTest"));
-const FitbitSyncNow = lazy(() => import("@/pages/FitbitSyncNow"));
 const FitbitCallback = lazy(() => import("@/pages/FitbitCallback"));
 const OuraCallback = lazy(() => import("@/pages/OuraCallback").then(m => ({ default: m.OuraCallback })));
-const OuraDiagnostics = lazy(() => import("@/pages/OuraDiagnostics"));
-const OuraConnectionTest = lazy(() => import("@/pages/OuraConnectionTest").then(m => ({ default: m.OuraConnectionTest })));
-const OuraDataTest = lazy(() => import("@/pages/OuraDataTest").then(m => ({ default: m.OuraDataTest })));
 const PolarCallback = lazy(() => import("@/pages/auth/polar"));
 const MyBaselines = lazy(() => import("@/pages/MyBaselines"));
-const DeveloperBaselinesEngine = lazy(() => import("@/pages/DeveloperBaselinesEngine"));
 const MyDocuments = lazy(() => import("@/pages/MyDocuments"));
 const SymptomCheckIn = lazy(() => import("@/pages/SymptomCheckIn").then(m => ({ default: m.SymptomCheckIn })));
 const PlanCompliance = lazy(() => import("@/pages/PlanCompliance"));
@@ -54,40 +56,167 @@ const MetricsDashboard = lazy(() => import("@/pages/MetricsDashboard"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
-    queries: {
-      // Disable stale time to ensure fresh data on user switch
-      staleTime: 0,
-    },
+    queries: { staleTime: 0 },
   },
 });
 
-const App = () => {
-  const [activeTab, setActiveTab] = useState("dashboard");
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
-  const [needsOnboarding, setNeedsOnboarding] = useState<boolean | null>(null);
+// ── Tab ↔ URL path mapping ────────────────────────────────────────────────────
+const TAB_PATHS: Record<string, string> = {
+  "dashboard":         "/dashboard",
+  "planner":           "/planner",
+  "training":          "/training",
+  "health":            "/health",
+  "your-plan":         "/your-plan",
+  "plan-compliance":   "/plan-compliance",
+  "my-documents":      "/my-documents",
+  "mybaselines":       "/my-baselines",
+  "find-help":         "/find-help",
+  "symptom-checkin":   "/symptom-checkin",
+  "settings":          "/settings",
+  "insights-tree":     "/insights-tree",
+  "yves-insights":     "/yves-insights",
+  "profile-setup":     "/profile-setup",
+  "admin-dashboard":   "/admin-dashboard",
+  "personal-canvas":   "/personal-canvas",
+  "metrics-dashboard": "/metrics-dashboard",
+  "alert-history":     "/alert-history",
+};
+
+const PATH_TO_TAB: Record<string, string> = Object.fromEntries(
+  Object.entries(TAB_PATHS).map(([tab, path]) => [path, tab])
+);
+
+// ── Authenticated shell ───────────────────────────────────────────────────────
+const AuthenticatedApp = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const activeTab = PATH_TO_TAB[location.pathname] ?? "dashboard";
 
   const sessionTimeout = useSessionTimeout({
-    onWarning: () => {
-      console.log('[App] Session expiring soon');
-    },
+    onWarning: () => console.log("[App] Session expiring soon"),
     onTimeout: () => {
-      console.log('[App] Session expired - logging out');
-      window.location.href = '/';
+      console.log("[App] Session expired - logging out");
+      navigate("/");
     },
   });
 
-  const currentPath = window.location.pathname;
-  const isDashboardRoute = currentPath === "/dashboard";
-  const isFitbitCallback = currentPath === "/fitbit/callback";
-  const isOuraCallback = currentPath.startsWith("/oauth/callback/oura");
-  const isPolarCallback = currentPath === "/auth/polar";
-  const isGoogleCalendarCallback = currentPath === "/google-calendar-callback";
-  const isOuraTest = currentPath === "/oura-test";
-  const isOuraDataTest = currentPath === "/oura-data-test";
-  const isAuthTest = currentPath === "/auth-test";
-  const isAlertHistory = currentPath === "/alert-history";
+  const handleNavigate = (tab: string) => {
+    const path = TAB_PATHS[tab];
+    if (path) navigate(path);
+  };
 
-  // Check authentication status and clear state on logout
+  useEffect(() => {
+    const onInsights = () => handleNavigate("insights-tree");
+    const onYves = () => handleNavigate("yves-insights");
+    const onTab = (e: CustomEvent) => {
+      if (e.detail) handleNavigate(e.detail);
+    };
+
+    window.addEventListener("navigate-insights", onInsights as EventListener);
+    window.addEventListener("navigate-yves-insights", onYves as EventListener);
+    window.addEventListener("navigate-tab", onTab as EventListener);
+
+    return () => {
+      window.removeEventListener("navigate-insights", onInsights as EventListener);
+      window.removeEventListener("navigate-yves-insights", onYves as EventListener);
+      window.removeEventListener("navigate-tab", onTab as EventListener);
+    };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  return (
+    <AccessibilityWrapper>
+      <SessionTimeoutWarning
+        open={sessionTimeout.showWarning}
+        timeRemaining={sessionTimeout.timeRemaining}
+        onExtendSession={sessionTimeout.extendSession}
+        onLogout={sessionTimeout.logout}
+        onDismiss={sessionTimeout.dismissWarning}
+      />
+      <OfflineBanner />
+
+      <div className="relative overflow-hidden min-h-screen">
+        <ThemeToggle />
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              onClick={() => handleNavigate("settings")}
+              className={cn(
+                "fixed top-[80px] right-6 z-50",
+                "w-12 h-12 rounded-xl bg-glass backdrop-blur-xl border-glass-border",
+                "flex items-center justify-center",
+                "hover:bg-glass-highlight hover:scale-110 active:scale-95",
+                "transition-all duration-300 ease-out transform-gpu animate-fade-in",
+              )}
+              aria-label="Settings"
+            >
+              <SettingsIcon size={20} className="text-primary drop-shadow-[0_0_8px_hsl(var(--primary)/0.6)]" />
+            </button>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>Settings</p>
+          </TooltipContent>
+        </Tooltip>
+
+        <SymptomCheckInSheet />
+        <YvesChatSheet />
+
+        <div className="transition-all duration-500 ease-out animate-fade-in">
+          <Suspense fallback={<PageLoadingFallback />}>
+            <Routes>
+              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/planner" element={<Planner />} />
+              <Route path="/training" element={<Training />} />
+              <Route path="/health" element={<Health />} />
+              <Route path="/your-plan" element={<YourPlan />} />
+              <Route path="/plan-compliance" element={<PlanCompliance />} />
+              <Route path="/my-documents" element={<MyDocuments />} />
+              <Route path="/my-baselines" element={<MyBaselines />} />
+              <Route path="/find-help" element={<FindHelp />} />
+              <Route path="/symptom-checkin" element={<SymptomCheckIn />} />
+              <Route path="/settings" element={<Settings onNavigate={handleNavigate} />} />
+              <Route path="/insights-tree" element={<InsightsTree onNavigate={handleNavigate} />} />
+              <Route
+                path="/yves-insights"
+                element={
+                  <div className="container mx-auto px-4 py-8 pb-24">
+                    <YvesChat />
+                  </div>
+                }
+              />
+              <Route path="/profile-setup" element={<ProfileSetup />} />
+              <Route path="/admin-dashboard" element={<AdminDashboard />} />
+              <Route path="/personal-canvas" element={<PersonalCanvas />} />
+              <Route path="/metrics-dashboard" element={<MetricsDashboard />} />
+              <Route path="/alert-history" element={<AlertHistory />} />
+
+              {/* Default: redirect / and unknown paths to /dashboard */}
+              <Route path="/" element={<Navigate to="/dashboard" replace />} />
+              <Route path="*" element={<Navigate to="/dashboard" replace />} />
+            </Routes>
+          </Suspense>
+        </div>
+
+        <BottomNavigation activeTab={activeTab} onNavigate={handleNavigate} />
+        <RiskAlertPopup onNavigateToHelp={() => handleNavigate("find-help")} />
+      </div>
+    </AccessibilityWrapper>
+  );
+};
+
+// ── Root app with auth gate ───────────────────────────────────────────────────
+const AppInner = () => {
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+  const [needsOnboarding, setNeedsOnboarding] = useState<boolean | null>(null);
+  const location = useLocation();
+
+  const OAUTH_PATHS = [
+    "/fitbit/callback",
+    "/oauth/callback/oura",
+    "/auth/polar",
+    "/google-calendar-callback",
+  ];
+  const isOAuthRoute = OAUTH_PATHS.some(p => location.pathname.startsWith(p));
+
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setIsAuthenticated(!!session);
@@ -95,51 +224,33 @@ const App = () => {
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       setIsAuthenticated(!!session);
-      
-      // CRITICAL: Clear all cached data on sign out to prevent cross-user leakage
-      if (event === 'SIGNED_OUT') {
-        console.log('[App] User signed out - clearing all cached state');
-        
-        // Clear React Query cache completely
+
+      if (event === "SIGNED_OUT") {
+        console.log("[App] User signed out - clearing all cached state");
         queryClient.clear();
-        
-        // Clear user-specific localStorage keys
-        const userSpecificKeys = [
-          'todays-decision-cache',
-          'insightHistory',
-          'wearable_connected',
-          'wearable_last_sync',
-          'layout_customization',
-          'alert-settings',
+        const lsKeys = [
+          "todays-decision-cache", "insightHistory", "wearable_connected",
+          "wearable_last_sync", "layout_customization", "alert-settings",
         ];
-        userSpecificKeys.forEach(key => localStorage.removeItem(key));
-        
-        // Clear user-specific sessionStorage keys
-        const sessionKeys = [
-          'activeClientProfile',
-          'clientProfiles',
-          'findHelpQuery',
-          'wearable_code_verifier',
-          'wearable_user_id',
+        lsKeys.forEach(k => localStorage.removeItem(k));
+        const ssKeys = [
+          "activeClientProfile", "clientProfiles", "findHelpQuery",
+          "wearable_code_verifier", "wearable_user_id",
         ];
-        sessionKeys.forEach(key => sessionStorage.removeItem(key));
-        
-        // Reset active tab to dashboard
-        setActiveTab('dashboard');
+        ssKeys.forEach(k => sessionStorage.removeItem(k));
       }
     });
 
     return () => subscription.unsubscribe();
   }, []);
 
-  // Check onboarding status for authenticated users
   useEffect(() => {
-    const checkOnboardingStatus = async () => {
-      if (!isAuthenticated) {
-        setNeedsOnboarding(null);
-        return;
-      }
+    if (!isAuthenticated) {
+      setNeedsOnboarding(null);
+      return;
+    }
 
+    (async () => {
       try {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) return;
@@ -150,473 +261,83 @@ const App = () => {
           .eq("user_id", user.id)
           .maybeSingle();
 
-        const shouldShowOnboarding = !data?.onboarding_completed && !data?.onboarding_skipped;
-        setNeedsOnboarding(shouldShowOnboarding);
-      } catch (error) {
-        console.error("Error checking onboarding status:", error);
+        setNeedsOnboarding(!data?.onboarding_completed && !data?.onboarding_skipped);
+      } catch {
         setNeedsOnboarding(false);
       }
-    };
-
-    checkOnboardingStatus();
+    })();
   }, [isAuthenticated]);
 
-  const handleOnboardingComplete = () => {
-    setNeedsOnboarding(false);
-  };
-
-  const handleOnboardingSkip = () => {
-    setNeedsOnboarding(false);
-  };
-
-  useEffect(() => {
-    const handleNavigateInsights = () => setActiveTab("insights-tree");
-    const handleNavigateYves = () => setActiveTab("yves-insights");
-    const handleNavigateTab = (e: CustomEvent) => {
-      if (e.detail) {
-        setActiveTab(e.detail);
-      }
-    };
-
-    window.addEventListener("navigate-insights", handleNavigateInsights as EventListener);
-    window.addEventListener("navigate-yves-insights", handleNavigateYves as EventListener);
-    window.addEventListener("navigate-tab", handleNavigateTab as EventListener);
-
-    return () => {
-      window.removeEventListener("navigate-insights", handleNavigateInsights as EventListener);
-      window.removeEventListener("navigate-yves-insights", handleNavigateYves as EventListener);
-      window.removeEventListener("navigate-tab", handleNavigateTab as EventListener);
-    };
-  }, []);
-
-  // Sync tab when navigating directly to /dashboard
-  useEffect(() => {
-    if (isDashboardRoute && activeTab !== "dashboard") {
-      setActiveTab("dashboard");
-    }
-  }, [isDashboardRoute, activeTab]);
-
-  // Main tab navigation with Suspense boundaries for lazy-loaded components
-  const renderContent = () => {
-    switch (activeTab) {
-      case "dashboard":
-        return (
-          <Suspense fallback={<PageLoadingFallback />}>
-            <Dashboard />
-          </Suspense>
-        );
-      case "planner":
-        return (
-          <Suspense fallback={<PageLoadingFallback />}>
-            <Planner />
-          </Suspense>
-        );
-      case "training":
-        return (
-          <Suspense fallback={<PageLoadingFallback />}>
-            <Training />
-          </Suspense>
-        );
-      case "health":
-        return (
-          <Suspense fallback={<PageLoadingFallback />}>
-            <Health />
-          </Suspense>
-        );
-      case "your-plan":
-        return (
-          <Suspense fallback={<PageLoadingFallback />}>
-            <YourPlan />
-          </Suspense>
-        );
-      case "plan-compliance":
-        return (
-          <Suspense fallback={<PageLoadingFallback />}>
-            <PlanCompliance />
-          </Suspense>
-        );
-      case "my-documents":
-        return (
-          <Suspense fallback={<PageLoadingFallback />}>
-            <MyDocuments />
-          </Suspense>
-        );
-      case "mybaselines":
-        return (
-          <Suspense fallback={<PageLoadingFallback />}>
-            <MyBaselines />
-          </Suspense>
-        );
-      case "find-help":
-        return (
-          <Suspense fallback={<PageLoadingFallback />}>
-            <FindHelp />
-          </Suspense>
-        );
-      case "symptom-checkin":
-        return (
-          <Suspense fallback={<PageLoadingFallback />}>
-            <SymptomCheckIn />
-          </Suspense>
-        );
-      case "settings":
-        return (
-          <Suspense fallback={<PageLoadingFallback />}>
-            <Settings onNavigate={setActiveTab} />
-          </Suspense>
-        );
-      case "insights-tree":
-        return (
-          <Suspense fallback={<PageLoadingFallback />}>
-            <InsightsTree onNavigate={setActiveTab} />
-          </Suspense>
-        );
-      case "yves-insights":
-        return (
-          <Suspense fallback={<PageLoadingFallback />}>
-            <div className="container mx-auto px-4 py-8 pb-24">
-              <YvesChat />
-            </div>
-          </Suspense>
-        );
-      case "test-supabase":
-        return (
-          <Suspense fallback={<PageLoadingFallback />}>
-            <TestSupabase />
-          </Suspense>
-        );
-      case "auth-test":
-        return (
-          <Suspense fallback={<PageLoadingFallback />}>
-            <AuthTest />
-          </Suspense>
-        );
-      case "fitbit-sync-now":
-        return (
-          <Suspense fallback={<PageLoadingFallback />}>
-            <FitbitSyncNow />
-          </Suspense>
-        );
-      case "oura-diagnostics":
-        return (
-          <Suspense fallback={<PageLoadingFallback />}>
-            <OuraDiagnostics />
-          </Suspense>
-        );
-      case "developer-baselines-engine":
-        return (
-          <Suspense fallback={<PageLoadingFallback />}>
-            <DeveloperBaselinesEngine />
-          </Suspense>
-        );
-      case "profile-setup":
-        return (
-          <Suspense fallback={<PageLoadingFallback />}>
-            <ProfileSetup />
-          </Suspense>
-        );
-      case "admin-dashboard":
-        return (
-          <Suspense fallback={<PageLoadingFallback />}>
-            <AdminDashboard />
-          </Suspense>
-        );
-      case "personal-canvas":
-        return (
-          <Suspense fallback={<PageLoadingFallback />}>
-            <PersonalCanvas />
-          </Suspense>
-        );
-      case "metrics-dashboard":
-        return (
-          <Suspense fallback={<PageLoadingFallback />}>
-            <MetricsDashboard />
-          </Suspense>
-        );
-      default:
-        return (
-          <Suspense fallback={<PageLoadingFallback />}>
-            <Dashboard />
-          </Suspense>
-        );
-    }
-  };
-
-  // Handle Fitbit callback route (requires auth but separate flow)
-  if (isFitbitCallback) {
+  // OAuth callback routes — render without auth gate
+  if (isOAuthRoute) {
     return (
-      <ThemeProvider defaultTheme="dark" storageKey="predictiv-theme">
-        <QueryClientProvider client={queryClient}>
-          <TooltipProvider>
-            <Toaster />
-            <Sonner />
-            <Suspense fallback={<PageLoadingFallback />}>
-              <FitbitCallback />
-            </Suspense>
-          </TooltipProvider>
-        </QueryClientProvider>
-      </ThemeProvider>
+      <Suspense fallback={<PageLoadingFallback />}>
+        <Routes>
+          <Route path="/fitbit/callback" element={<FitbitCallback />} />
+          <Route path="/oauth/callback/oura" element={<OuraCallback />} />
+          <Route path="/auth/polar" element={<PolarCallback />} />
+          <Route path="/google-calendar-callback" element={<GoogleCalendarCallback />} />
+        </Routes>
+      </Suspense>
     );
   }
 
-  // Handle Ōura callback route
-  if (isOuraCallback) {
-    return (
-      <ThemeProvider defaultTheme="dark" storageKey="predictiv-theme">
-        <QueryClientProvider client={queryClient}>
-          <TooltipProvider>
-            <Toaster />
-            <Sonner />
-            <Suspense fallback={<PageLoadingFallback />}>
-              <OuraCallback />
-            </Suspense>
-          </TooltipProvider>
-        </QueryClientProvider>
-      </ThemeProvider>
-    );
-  }
-
-  // Handle Polar callback route
-  if (isPolarCallback) {
-    return (
-      <ThemeProvider defaultTheme="dark" storageKey="predictiv-theme">
-        <QueryClientProvider client={queryClient}>
-          <TooltipProvider>
-            <Toaster />
-            <Sonner />
-            <Suspense fallback={<PageLoadingFallback />}>
-              <PolarCallback />
-            </Suspense>
-          </TooltipProvider>
-        </QueryClientProvider>
-      </ThemeProvider>
-    );
-  }
-
-  // Handle Google Calendar callback route
-  if (isGoogleCalendarCallback) {
-    return (
-      <ThemeProvider defaultTheme="dark" storageKey="predictiv-theme">
-        <QueryClientProvider client={queryClient}>
-          <TooltipProvider>
-            <Toaster />
-            <Sonner />
-            <Suspense fallback={<PageLoadingFallback />}>
-              <GoogleCalendarCallback />
-            </Suspense>
-          </TooltipProvider>
-        </QueryClientProvider>
-      </ThemeProvider>
-    );
-  }
-
-  // Handle Alert History route
-  if (isAlertHistory) {
-    if (isAuthenticated === false) {
-      window.location.href = "/";
-      return null;
-    }
-
-    if (isAuthenticated === null) {
-      return (
-        <ThemeProvider defaultTheme="dark" storageKey="predictiv-theme">
-          <QueryClientProvider client={queryClient}>
-            <TooltipProvider>
-              <div className="flex items-center justify-center min-h-screen">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-              </div>
-            </TooltipProvider>
-          </QueryClientProvider>
-        </ThemeProvider>
-      );
-    }
-
-    return (
-      <ThemeProvider defaultTheme="dark" storageKey="predictiv-theme">
-        <QueryClientProvider client={queryClient}>
-          <TooltipProvider>
-            <div className="min-h-screen bg-background">
-              <Toaster />
-              <Sonner />
-              <OfflineBanner />
-              <ThemeToggle />
-              <Suspense fallback={<PageLoadingFallback />}>
-                <AlertHistory />
-              </Suspense>
-              <BottomNavigation activeTab="settings" onNavigate={(tab) => {
-                if (tab !== "settings") {
-                  window.location.href = "/";
-                }
-              }} />
-            </div>
-          </TooltipProvider>
-        </QueryClientProvider>
-      </ThemeProvider>
-    );
-  }
-
-  // Handle Ōura connection test route
-  if (isOuraTest) {
-    return (
-      <ThemeProvider defaultTheme="dark" storageKey="predictiv-theme">
-        <QueryClientProvider client={queryClient}>
-          <TooltipProvider>
-            <Toaster />
-            <Sonner />
-            <Suspense fallback={<PageLoadingFallback />}>
-              <OuraConnectionTest />
-            </Suspense>
-          </TooltipProvider>
-        </QueryClientProvider>
-      </ThemeProvider>
-    );
-  }
-
-  // Handle Oura Data Test route
-  if (isOuraDataTest) {
-    return (
-      <ThemeProvider defaultTheme="dark" storageKey="predictiv-theme">
-        <QueryClientProvider client={queryClient}>
-          <TooltipProvider>
-            <Toaster />
-            <Sonner />
-            <Suspense fallback={<PageLoadingFallback />}>
-              <OuraDataTest />
-            </Suspense>
-          </TooltipProvider>
-        </QueryClientProvider>
-      </ThemeProvider>
-    );
-  }
-
-  // Handle Auth Test route (accessible without auth for testing)
-  if (isAuthTest) {
-    return (
-      <ThemeProvider defaultTheme="dark" storageKey="predictiv-theme">
-        <QueryClientProvider client={queryClient}>
-          <TooltipProvider>
-            <Toaster />
-            <Sonner />
-            <Suspense fallback={<PageLoadingFallback />}>
-              <AuthTest />
-            </Suspense>
-          </TooltipProvider>
-        </QueryClientProvider>
-      </ThemeProvider>
-    );
-  }
-
-  // Show loading while checking auth
+  // Loading auth state
   if (isAuthenticated === null) {
     return (
-      <ThemeProvider defaultTheme="dark" storageKey="predictiv-theme">
-        <div className="min-h-screen flex items-center justify-center">
-          <div className="animate-glow-pulse text-primary text-xl">Loading...</div>
-        </div>
-      </ThemeProvider>
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-glow-pulse text-primary text-xl">Loading...</div>
+      </div>
     );
   }
 
-  // Show login/register if not authenticated
+  // Not authenticated — login / register
   if (!isAuthenticated) {
-    const currentPath = window.location.pathname;
-    const isRegisterRoute = currentPath === "/register";
-
     return (
-      <ThemeProvider defaultTheme="dark" storageKey="predictiv-theme">
-        <QueryClientProvider client={queryClient}>
-          <TooltipProvider>
-            <Toaster />
-            <Sonner />
-            {isRegisterRoute ? (
-              <Register />
-        ) : (
-          <Login />
-        )}
-          </TooltipProvider>
-        </QueryClientProvider>
-      </ThemeProvider>
+      <Suspense fallback={<PageLoadingFallback />}>
+        <Routes>
+          <Route path="/register" element={<Register />} />
+          <Route path="*" element={<Login />} />
+        </Routes>
+      </Suspense>
     );
   }
 
-  // Show onboarding for new users
-  if (needsOnboarding === true) {
-    return (
-      <ThemeProvider defaultTheme="dark" storageKey="predictiv-theme">
-        <QueryClientProvider client={queryClient}>
-          <TooltipProvider>
-            <Toaster />
-            <Sonner />
-            <OnboardingFlow
-              onComplete={handleOnboardingComplete}
-              onSkip={handleOnboardingSkip}
-            />
-          </TooltipProvider>
-        </QueryClientProvider>
-      </ThemeProvider>
-    );
-  }
-
-  // Show loading while checking onboarding status
+  // Loading onboarding state
   if (needsOnboarding === null) {
     return (
-      <ThemeProvider defaultTheme="dark" storageKey="predictiv-theme">
-        <div className="min-h-screen flex items-center justify-center">
-          <div className="animate-glow-pulse text-primary text-xl">Loading...</div>
-        </div>
-      </ThemeProvider>
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-glow-pulse text-primary text-xl">Loading...</div>
+      </div>
     );
   }
 
-  return (
-    <ThemeProvider defaultTheme="dark" storageKey="predictiv-theme">
-      <QueryClientProvider client={queryClient}>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <OfflineBanner />
-          <SessionTimeoutWarning
-            open={sessionTimeout.showWarning}
-            timeRemaining={sessionTimeout.timeRemaining}
-            onExtendSession={sessionTimeout.extendSession}
-            onLogout={sessionTimeout.logout}
-            onDismiss={sessionTimeout.dismissWarning}
-          />
-          <AccessibilityWrapper>
-            <div className="relative overflow-hidden min-h-screen">
-              <ThemeToggle />
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <button
-                    onClick={() => setActiveTab("settings")}
-                    className={cn(
-                      "fixed top-[80px] right-6 z-50",
-                      "w-12 h-12 rounded-xl bg-glass backdrop-blur-xl border-glass-border",
-                      "flex items-center justify-center",
-                      "hover:bg-glass-highlight hover:scale-110 active:scale-95",
-                      "transition-all duration-300 ease-out transform-gpu animate-fade-in",
-                    )}
-                    aria-label="Settings"
-                  >
-                    <SettingsIcon size={20} className="text-primary drop-shadow-[0_0_8px_hsl(var(--primary)/0.6)]" />
-                  </button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Settings</p>
-                </TooltipContent>
-              </Tooltip>
-              <SymptomCheckInSheet />
-              <YvesChatSheet />
-              <div className="transition-all duration-500 ease-out animate-fade-in">{renderContent()}</div>
-              <BottomNavigation activeTab={activeTab} onNavigate={setActiveTab} />
-              {/* Risk Alert Modal - auto-triggers on health thresholds */}
-              <RiskAlertPopup onNavigateToHelp={() => setActiveTab("find-help")} />
-            </div>
-          </AccessibilityWrapper>
-        </TooltipProvider>
-      </QueryClientProvider>
-    </ThemeProvider>
-  );
+  // Show onboarding
+  if (needsOnboarding === true) {
+    return (
+      <OnboardingFlow
+        onComplete={() => setNeedsOnboarding(false)}
+        onSkip={() => setNeedsOnboarding(false)}
+      />
+    );
+  }
+
+  return <AuthenticatedApp />;
 };
+
+// ── Top-level providers ───────────────────────────────────────────────────────
+const App = () => (
+  <ThemeProvider defaultTheme="dark" storageKey="predictiv-theme">
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <AppInner />
+        </BrowserRouter>
+      </TooltipProvider>
+    </QueryClientProvider>
+  </ThemeProvider>
+);
 
 export default App;

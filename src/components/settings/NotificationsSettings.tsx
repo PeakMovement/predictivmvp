@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Bell, Mail, HelpCircle, Send } from "lucide-react";
+import { Bell, Mail, CircleHelp as HelpCircle, Send } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";

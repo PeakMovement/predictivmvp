@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTodaysDecision } from "@/hooks/useTodaysDecision";
+import { useTrainingFocusRecommendation } from "@/hooks/useTrainingFocusRecommendation";
 import { toast } from "sonner";
 import jsPDF from "jspdf";
 
@@ -103,17 +104,20 @@ const MEANING_VARIATIONS: Record<string, string[]> = {
 };
 
 export function TodaysBestDecision({ className }: TodaysBestDecisionProps) {
-  const { decision, isLoading, refresh } = useTodaysDecision();
+  const { rec: yvesRec, isLoading: yvesLoading, refresh: refreshYves } = useTrainingFocusRecommendation();
+  const { decision, isLoading: ruleLoading, refresh: refreshRule } = useTodaysDecision();
   const [isOpen, setIsOpen] = useState(true);
   const [isSessionExpanded, setIsSessionExpanded] = useState(false);
   const [isDataExpanded, setIsDataExpanded] = useState(false);
   const [completedExercises, setCompletedExercises] = useState<Set<number>>(new Set());
 
-  if (isLoading || !decision) {
+  const isLoading = yvesLoading || (!yvesRec && ruleLoading);
+
+  if (isLoading || (!yvesRec && !decision)) {
     return null;
   }
 
-  const riskDrivers = decision.riskDrivers;
+  const riskDrivers = decision?.riskDrivers;
   const session = riskDrivers?.correctiveAction?.session;
   const whyThisMatters = session?.whyThisMatters;
 
@@ -130,7 +134,8 @@ export function TodaysBestDecision({ className }: TodaysBestDecisionProps) {
   };
 
   const handleRefresh = () => {
-    refresh();
+    refreshYves();
+    if (!yvesRec) refreshRule();
     toast.info("Updating your guidance...");
   };
 
@@ -300,7 +305,7 @@ export function TodaysBestDecision({ className }: TodaysBestDecisionProps) {
                 </div>
                 <div>
                   <h3 className="text-base font-semibold text-foreground">Today's training focus</h3>
-                  <p className="text-xs text-muted-foreground">Based on your recent training patterns</p>
+                  <p className="text-xs text-muted-foreground">{yvesRec ? "Powered by Yves · Updated today" : "Based on your recent training patterns"}</p>
                 </div>
               </div>
               <ChevronDown className={cn(
@@ -323,235 +328,278 @@ export function TodaysBestDecision({ className }: TodaysBestDecisionProps) {
 
         <CollapsibleContent>
           <div className="p-5 space-y-5">
-            
-            {/* A. Observation Card - "What we're noticing today" */}
-            {riskDrivers && riskDrivers.primary && (
-              <div className="rounded-xl bg-muted/40 border border-border/50 p-4">
-                <div className="flex items-center gap-2 mb-3">
-                  <Info className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm font-medium text-muted-foreground">What we're noticing today</span>
-                </div>
-                <p className="text-sm text-foreground leading-relaxed">
-                  {generateObservationText()}
-                </p>
-              </div>
-            )}
 
-            {/* B. Recommendation Card - "Today's best option" */}
-            {session && (
-              <div className="rounded-xl bg-primary/8 border border-primary/20 overflow-hidden">
-                <div className="p-4">
+            {yvesRec ? (
+              <>
+                {/* A. Observation — Yves internal reasoning */}
+                {yvesRec.internal_reasoning && (
+                  <div className="rounded-xl bg-muted/40 border border-border/50 p-4">
+                    <div className="flex items-center gap-2 mb-3">
+                      <Info className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-sm font-medium text-muted-foreground">What we're noticing today</span>
+                    </div>
+                    <p className="text-sm text-foreground leading-relaxed">
+                      {yvesRec.internal_reasoning}
+                    </p>
+                  </div>
+                )}
+
+                {/* B. Recommendation — Yves recommendation_text */}
+                <div className="rounded-xl bg-primary/8 border border-primary/20 p-4">
                   <div className="flex items-center gap-2 mb-3">
                     <Heart className="h-4 w-4 text-primary" />
-                    <span className="text-sm font-medium text-primary">Today's best option</span>
+                    <span className="text-sm font-medium text-primary">Today's recommendation</span>
                   </div>
-                  
-                  <p className="text-sm text-foreground leading-relaxed mb-3">
-                    {generateRecommendationText()}
-                  </p>
-                  
-                  {/* Inline session details */}
-                  <p className="text-sm text-muted-foreground">
-                    Around {session.duration} at {session.intensity.level.toLowerCase()} ({session.intensity.rpe}).
+                  <p className="text-sm text-foreground leading-relaxed">
+                    {yvesRec.recommendation_text}
                   </p>
                 </div>
 
-                {/* Expandable session details */}
-                <Collapsible open={isSessionExpanded} onOpenChange={setIsSessionExpanded}>
-                  <CollapsibleTrigger asChild>
-                    <button className="w-full p-3 flex items-center justify-center gap-2 text-sm text-primary/80 hover:text-primary hover:bg-primary/5 transition-colors border-t border-primary/10">
-                      <span>{isSessionExpanded ? "Hide workout details" : "Would you like to see today's workout?"}</span>
-                      <ChevronDown className={cn("h-4 w-4 transition-transform", isSessionExpanded && "rotate-180")} />
-                    </button>
-                  </CollapsibleTrigger>
+                {/* C. Why this matters + data sources */}
+                <div className="flex flex-wrap items-center gap-4 pt-1">
+                  {yvesRec.internal_reasoning && (
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <button className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors">
+                            <HelpCircle className="h-3.5 w-3.5" />
+                            <span>Why this matters?</span>
+                          </button>
+                        </TooltipTrigger>
+                        <TooltipContent className="max-w-[300px] p-3">
+                          <p className="text-xs leading-relaxed">{yvesRec.internal_reasoning}</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  )}
 
-                  <CollapsibleContent>
-                    <div className="px-4 pb-4 space-y-4 border-t border-primary/10 pt-4">
-                      {/* Session header */}
-                      <div className="flex items-center justify-between">
-                        <h5 className="text-sm font-semibold text-foreground flex items-center gap-2">
-                          <Dumbbell className="h-4 w-4 text-primary" />
-                          {session.title}
-                        </h5>
-                        {completedExercises.size > 0 && (
-                          <div className="text-xs font-medium text-primary bg-primary/10 px-2.5 py-1 rounded-full">
-                            {completionPercent}% complete
-                          </div>
-                        )}
-                      </div>
+                  {yvesRec.data_sources && yvesRec.data_sources.length > 0 && (
+                    <Collapsible open={isDataExpanded} onOpenChange={setIsDataExpanded}>
+                      <CollapsibleTrigger asChild>
+                        <button className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors">
+                          <span>{isDataExpanded ? "Hide data details" : "See the data"}</span>
+                          <ChevronDown className={cn("h-3 w-3 transition-transform", isDataExpanded && "rotate-180")} />
+                        </button>
+                      </CollapsibleTrigger>
+                      <CollapsibleContent>
+                        <p className="mt-2 text-xs text-muted-foreground bg-muted/50 p-3 rounded-lg">
+                          Based on: {yvesRec.data_sources.join(", ")}
+                        </p>
+                      </CollapsibleContent>
+                    </Collapsible>
+                  )}
+                </div>
 
-                      {/* Intensity zone */}
-                      {session.intensity.hrZone && (
-                        <div className="p-3 rounded-lg bg-muted/50 text-sm">
-                          <span className="font-medium">Target zone:</span> {session.intensity.hrZone}
-                        </div>
-                      )}
-
-                      {/* Warm-up */}
-                      {session.warmup && (
-                        <div className="space-y-2">
-                          <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
-                            <Play className="h-3.5 w-3.5" />
-                            Warm-up · {session.warmup.duration}
-                          </div>
-                          <div className="pl-5 space-y-1">
-                            {session.warmup.activities.map((activity, idx) => (
-                              <p key={idx} className="text-sm text-muted-foreground">
-                                {activity}
-                              </p>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Main exercises */}
-                      <div className="space-y-2">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2 text-xs font-medium text-foreground">
-                            <Dumbbell className="h-3.5 w-3.5 text-primary" />
-                            Main Session
-                          </div>
-                          <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded">
-                            {session.mainBlock.format}
-                          </span>
-                        </div>
-                        
-                        <div className="space-y-2">
-                          {session.mainBlock.exercises.map((exercise, idx) => (
-                            <button
-                              key={idx}
-                              onClick={() => toggleExercise(idx)}
-                              className={cn(
-                                "w-full text-left p-3 rounded-lg border transition-all",
-                                completedExercises.has(idx)
-                                  ? "bg-primary/10 border-primary/30"
-                                  : "bg-card hover:bg-muted/50 border-border/50"
-                              )}
-                            >
-                              <div className="flex items-start gap-3">
-                                <div className={cn(
-                                  "mt-0.5 h-5 w-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors",
-                                  completedExercises.has(idx)
-                                    ? "bg-primary border-primary"
-                                    : "border-muted-foreground/30"
-                                )}>
-                                  {completedExercises.has(idx) && (
-                                    <CheckCircle2 className="h-3.5 w-3.5 text-primary-foreground" />
-                                  )}
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                  <div className={cn(
-                                    "text-sm font-medium",
-                                    completedExercises.has(idx) && "line-through opacity-60"
-                                  )}>
-                                    {exercise.name}
-                                  </div>
-                                  <div className="text-xs text-muted-foreground mt-0.5">
-                                    {exercise.prescription}
-                                  </div>
-                                  {exercise.notes && (
-                                    <div className="text-xs text-primary/70 mt-1 italic">
-                                      {exercise.notes}
-                                    </div>
-                                  )}
-                                </div>
-                              </div>
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-
-                      {/* Cool-down */}
-                      {session.cooldown && (
-                        <div className="space-y-2">
-                          <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
-                            <span>🌙</span>
-                            Cool-down · {session.cooldown.duration}
-                          </div>
-                          <div className="pl-5 space-y-1">
-                            {session.cooldown.activities.map((activity, idx) => (
-                              <p key={idx} className="text-sm text-muted-foreground">
-                                {activity}
-                              </p>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Safety considerations (calm language) */}
-                      {session.safetyNotes.length > 0 && (
-                        <div className="p-3 rounded-lg bg-muted/30 border border-border/50 space-y-2">
-                          <p className="text-xs font-medium text-muted-foreground">Things to keep in mind</p>
-                          <div className="space-y-1">
-                            {session.safetyNotes.map((note, idx) => (
-                              <p key={idx} className="text-sm text-muted-foreground leading-relaxed">
-                                {note}
-                              </p>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Download workout guide */}
-                      <Button variant="outline" size="sm" onClick={handleDownloadPDF} className="w-full sm:w-auto">
-                        <Download className="h-3.5 w-3.5 mr-1.5" />
-                        Download workout guide
-                      </Button>
+                {/* D. Action Buttons */}
+                <div className="flex flex-col sm:flex-row gap-3 pt-2">
+                  <Button variant="outline" className="flex-1 h-11" onClick={handleAddToPlan}>
+                    Add this session to my plan
+                  </Button>
+                  <Button className="flex-1 h-11" onClick={handleLogCompleted}>
+                    I've completed today's session
+                  </Button>
+                </div>
+              </>
+            ) : (
+              <>
+                {/* A. Observation Card - "What we're noticing today" */}
+                {riskDrivers && riskDrivers.primary && (
+                  <div className="rounded-xl bg-muted/40 border border-border/50 p-4">
+                    <div className="flex items-center gap-2 mb-3">
+                      <Info className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-sm font-medium text-muted-foreground">What we're noticing today</span>
                     </div>
-                  </CollapsibleContent>
-                </Collapsible>
-              </div>
-            )}
-
-            {/* C. Why this matters tooltip + data transparency */}
-            {riskDrivers?.primary && (
-              <div className="flex flex-wrap items-center gap-4 pt-1">
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <button className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors">
-                        <HelpCircle className="h-3.5 w-3.5" />
-                        <span>Why this matters?</span>
-                      </button>
-                    </TooltipTrigger>
-                    <TooltipContent className="max-w-[300px] p-3">
-                      <p className="text-xs leading-relaxed">{generateMeaningText()}</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-
-                <Collapsible open={isDataExpanded} onOpenChange={setIsDataExpanded}>
-                  <CollapsibleTrigger asChild>
-                    <button className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors">
-                      <span>{isDataExpanded ? "Hide data details" : "See the data"}</span>
-                      <ChevronDown className={cn("h-3 w-3 transition-transform", isDataExpanded && "rotate-180")} />
-                    </button>
-                  </CollapsibleTrigger>
-                  <CollapsibleContent>
-                    <p className="mt-2 text-xs text-muted-foreground bg-muted/50 p-3 rounded-lg">
-                      {generateDataText()}
+                    <p className="text-sm text-foreground leading-relaxed">
+                      {generateObservationText()}
                     </p>
-                  </CollapsibleContent>
-                </Collapsible>
-              </div>
-            )}
+                  </div>
+                )}
 
-            {/* D. Action Buttons - First-person, supportive language */}
-            <div className="flex flex-col sm:flex-row gap-3 pt-2">
-              <Button 
-                variant="outline" 
-                className="flex-1 h-11"
-                onClick={handleAddToPlan}
-              >
-                Add this session to my plan
-              </Button>
-              <Button 
-                className="flex-1 h-11"
-                onClick={handleLogCompleted}
-              >
-                I've completed today's session
-              </Button>
-            </div>
+                {/* B. Recommendation Card - "Today's best option" */}
+                {session && (
+                  <div className="rounded-xl bg-primary/8 border border-primary/20 overflow-hidden">
+                    <div className="p-4">
+                      <div className="flex items-center gap-2 mb-3">
+                        <Heart className="h-4 w-4 text-primary" />
+                        <span className="text-sm font-medium text-primary">Today's best option</span>
+                      </div>
+                      <p className="text-sm text-foreground leading-relaxed mb-3">
+                        {generateRecommendationText()}
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        Around {session.duration} at {session.intensity.level.toLowerCase()} ({session.intensity.rpe}).
+                      </p>
+                    </div>
+
+                    <Collapsible open={isSessionExpanded} onOpenChange={setIsSessionExpanded}>
+                      <CollapsibleTrigger asChild>
+                        <button className="w-full p-3 flex items-center justify-center gap-2 text-sm text-primary/80 hover:text-primary hover:bg-primary/5 transition-colors border-t border-primary/10">
+                          <span>{isSessionExpanded ? "Hide workout details" : "Would you like to see today's workout?"}</span>
+                          <ChevronDown className={cn("h-4 w-4 transition-transform", isSessionExpanded && "rotate-180")} />
+                        </button>
+                      </CollapsibleTrigger>
+
+                      <CollapsibleContent>
+                        <div className="px-4 pb-4 space-y-4 border-t border-primary/10 pt-4">
+                          <div className="flex items-center justify-between">
+                            <h5 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                              <Dumbbell className="h-4 w-4 text-primary" />
+                              {session.title}
+                            </h5>
+                            {completedExercises.size > 0 && (
+                              <div className="text-xs font-medium text-primary bg-primary/10 px-2.5 py-1 rounded-full">
+                                {completionPercent}% complete
+                              </div>
+                            )}
+                          </div>
+
+                          {session.intensity.hrZone && (
+                            <div className="p-3 rounded-lg bg-muted/50 text-sm">
+                              <span className="font-medium">Target zone:</span> {session.intensity.hrZone}
+                            </div>
+                          )}
+
+                          {session.warmup && (
+                            <div className="space-y-2">
+                              <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
+                                <Play className="h-3.5 w-3.5" />
+                                Warm-up · {session.warmup.duration}
+                              </div>
+                              <div className="pl-5 space-y-1">
+                                {session.warmup.activities.map((activity, idx) => (
+                                  <p key={idx} className="text-sm text-muted-foreground">{activity}</p>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+
+                          <div className="space-y-2">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-2 text-xs font-medium text-foreground">
+                                <Dumbbell className="h-3.5 w-3.5 text-primary" />
+                                Main Session
+                              </div>
+                              <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded">
+                                {session.mainBlock.format}
+                              </span>
+                            </div>
+                            <div className="space-y-2">
+                              {session.mainBlock.exercises.map((exercise, idx) => (
+                                <button
+                                  key={idx}
+                                  onClick={() => toggleExercise(idx)}
+                                  className={cn(
+                                    "w-full text-left p-3 rounded-lg border transition-all",
+                                    completedExercises.has(idx)
+                                      ? "bg-primary/10 border-primary/30"
+                                      : "bg-card hover:bg-muted/50 border-border/50"
+                                  )}
+                                >
+                                  <div className="flex items-start gap-3">
+                                    <div className={cn(
+                                      "mt-0.5 h-5 w-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors",
+                                      completedExercises.has(idx)
+                                        ? "bg-primary border-primary"
+                                        : "border-muted-foreground/30"
+                                    )}>
+                                      {completedExercises.has(idx) && (
+                                        <CheckCircle2 className="h-3.5 w-3.5 text-primary-foreground" />
+                                      )}
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                      <div className={cn("text-sm font-medium", completedExercises.has(idx) && "line-through opacity-60")}>
+                                        {exercise.name}
+                                      </div>
+                                      <div className="text-xs text-muted-foreground mt-0.5">{exercise.prescription}</div>
+                                      {exercise.notes && (
+                                        <div className="text-xs text-primary/70 mt-1 italic">{exercise.notes}</div>
+                                      )}
+                                    </div>
+                                  </div>
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+
+                          {session.cooldown && (
+                            <div className="space-y-2">
+                              <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
+                                <span>🌙</span>
+                                Cool-down · {session.cooldown.duration}
+                              </div>
+                              <div className="pl-5 space-y-1">
+                                {session.cooldown.activities.map((activity, idx) => (
+                                  <p key={idx} className="text-sm text-muted-foreground">{activity}</p>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+
+                          {session.safetyNotes.length > 0 && (
+                            <div className="p-3 rounded-lg bg-muted/30 border border-border/50 space-y-2">
+                              <p className="text-xs font-medium text-muted-foreground">Things to keep in mind</p>
+                              <div className="space-y-1">
+                                {session.safetyNotes.map((note, idx) => (
+                                  <p key={idx} className="text-sm text-muted-foreground leading-relaxed">{note}</p>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+
+                          <Button variant="outline" size="sm" onClick={handleDownloadPDF} className="w-full sm:w-auto">
+                            <Download className="h-3.5 w-3.5 mr-1.5" />
+                            Download workout guide
+                          </Button>
+                        </div>
+                      </CollapsibleContent>
+                    </Collapsible>
+                  </div>
+                )}
+
+                {/* C. Why this matters tooltip + data transparency */}
+                {riskDrivers?.primary && (
+                  <div className="flex flex-wrap items-center gap-4 pt-1">
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <button className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors">
+                            <HelpCircle className="h-3.5 w-3.5" />
+                            <span>Why this matters?</span>
+                          </button>
+                        </TooltipTrigger>
+                        <TooltipContent className="max-w-[300px] p-3">
+                          <p className="text-xs leading-relaxed">{generateMeaningText()}</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+
+                    <Collapsible open={isDataExpanded} onOpenChange={setIsDataExpanded}>
+                      <CollapsibleTrigger asChild>
+                        <button className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors">
+                          <span>{isDataExpanded ? "Hide data details" : "See the data"}</span>
+                          <ChevronDown className={cn("h-3 w-3 transition-transform", isDataExpanded && "rotate-180")} />
+                        </button>
+                      </CollapsibleTrigger>
+                      <CollapsibleContent>
+                        <p className="mt-2 text-xs text-muted-foreground bg-muted/50 p-3 rounded-lg">
+                          {generateDataText()}
+                        </p>
+                      </CollapsibleContent>
+                    </Collapsible>
+                  </div>
+                )}
+
+                {/* D. Action Buttons */}
+                <div className="flex flex-col sm:flex-row gap-3 pt-2">
+                  <Button variant="outline" className="flex-1 h-11" onClick={handleAddToPlan}>
+                    Add this session to my plan
+                  </Button>
+                  <Button className="flex-1 h-11" onClick={handleLogCompleted}>
+                    I've completed today's session
+                  </Button>
+                </div>
+              </>
+            )}
           </div>
         </CollapsibleContent>
       </Collapsible>

@@ -193,28 +193,49 @@ export const useWearableMetrics = () => {
         throw new Error("No wearable devices connected");
       }
 
+      const deviceNames: Record<string, string> = { oura: "Oura Ring", garmin: "Garmin", polar: "Polar" };
+      const connectedLabels = connectedSources.map(s => deviceNames[s] ?? s);
       const results = await Promise.allSettled(syncPromises);
 
-      // Check if any sync failed
-      const failed = results.filter(r => r.status === 'rejected');
-      if (failed.length > 0) {
-        console.error("Some syncs failed:", failed);
-      }
+      const failedIndexes = results
+        .map((r, i) => (r.status === "rejected" ? i : -1))
+        .filter(i => i >= 0);
+      const succeededIndexes = results
+        .map((r, i) => (r.status === "fulfilled" ? i : -1))
+        .filter(i => i >= 0);
 
-      console.log("✅ Wearable sync completed");
+      if (failedIndexes.length > 0) {
+        console.error("Some syncs failed:", failedIndexes.map(i => results[i]));
+      }
 
       await new Promise(resolve => setTimeout(resolve, 2000));
       await fetchMetrics();
 
-      toast({
-        title: "Data Refreshed",
-        description: "Your wearable data has been updated successfully",
-      });
+      const succeededLabels = succeededIndexes.map(i => connectedLabels[i]);
+      const failedLabels = failedIndexes.map(i => connectedLabels[i]);
+
+      if (failedLabels.length > 0 && succeededLabels.length === 0) {
+        toast({
+          title: "Sync failed",
+          description: `Couldn't reach ${failedLabels.join(" or ")}. Check your connection or reconnect in Settings.`,
+          variant: "destructive",
+        });
+      } else if (failedLabels.length > 0) {
+        toast({
+          title: "Partially synced",
+          description: `${succeededLabels.join(" & ")} updated. ${failedLabels.join(" & ")} failed — try reconnecting in Settings.`,
+        });
+      } else {
+        toast({
+          title: "Data refreshed",
+          description: `${succeededLabels.join(" & ")} data is up to date.`,
+        });
+      }
     } catch (error) {
       console.error('Failed to refresh wearable data:', error);
       toast({
-        title: "Refresh Failed",
-        description: error instanceof Error ? error.message : "Could not refresh data. Please try again.",
+        title: "Sync failed",
+        description: error instanceof Error ? error.message : "Could not reach your device. Please try again.",
         variant: "destructive",
       });
     }

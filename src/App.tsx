@@ -2,7 +2,7 @@ import { useState, useEffect, lazy, Suspense } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClient, QueryClientProvider, QueryCache } from "@tanstack/react-query";
 import {
   Routes,
   Route,
@@ -55,6 +55,12 @@ const MetricsDashboard   = lazy(() => import("@/pages/MetricsDashboard"));
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { staleTime: 0 } },
+  queryCache: new QueryCache({
+    onError: (error, query) => {
+      const onError = query.meta?.onError as ((e: Error) => void) | undefined;
+      if (onError) onError(error as Error);
+    },
+  }),
 });
 
 const TAB_PATHS: Record<string, string> = {

@@ -1,5 +1,6 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "@/hooks/use-toast";
 
 interface DailyTrend {
   period_date: string;
@@ -111,6 +112,15 @@ async function fetchWithAuth(functionName: string, params?: Record<string, strin
   }
 }
 
+function onTrendError(err: Error) {
+  // Only toast after all retries exhausted (React Query calls this once on final failure)
+  if (err.message.includes("timeout")) {
+    toast({ title: "Slow connection", description: "Health trend data is taking too long to load. Try refreshing.", variant: "destructive" });
+  } else if (!err.message.includes("Not authenticated")) {
+    toast({ title: "Couldn't load trend data", description: "Your health trends are temporarily unavailable. Pull to refresh or try again shortly.", variant: "destructive" });
+  }
+}
+
 export function useDailyHealthTrends(startDate?: string, endDate?: string) {
   return useQuery({
     queryKey: ["daily-health-trends", startDate, endDate],
@@ -123,6 +133,7 @@ export function useDailyHealthTrends(startDate?: string, endDate?: string) {
     },
     staleTime: 5 * 60 * 1000,
     retry: 2,
+    meta: { onError: onTrendError },
   });
 }
 
@@ -135,6 +146,7 @@ export function useWeeklyHealthTrends() {
     },
     staleTime: 5 * 60 * 1000,
     retry: 2,
+    meta: { onError: onTrendError },
   });
 }
 
@@ -150,6 +162,7 @@ export function useRecoveryTrends(startDate?: string, endDate?: string) {
     },
     staleTime: 5 * 60 * 1000,
     retry: 2,
+    meta: { onError: onTrendError },
   });
 }
 
@@ -165,6 +178,7 @@ export function useActivityTrends(startDate?: string, endDate?: string) {
     },
     staleTime: 5 * 60 * 1000,
     retry: 2,
+    meta: { onError: onTrendError },
   });
 }
 

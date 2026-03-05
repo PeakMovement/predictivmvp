@@ -47,7 +47,9 @@ export const QuickActionsPanel = () => {
         polar: "fetch-polar-sleep",
       };
 
-      const syncResults: string[] = [];
+      const deviceNames: Record<string, string> = { oura: "Oura Ring", garmin: "Garmin", polar: "Polar" };
+      const succeeded: string[] = [];
+      const failed: string[] = [];
 
       for (const token of tokens) {
         const functionName = providerFunctionMap[token.scope];
@@ -62,18 +64,32 @@ export const QuickActionsPanel = () => {
             : { user_id: user.id },
         });
 
+        const label = deviceNames[token.scope] ?? token.scope;
         if (error) {
           console.error(`[sync] ${token.scope} sync failed:`, error);
-          syncResults.push(`${token.scope}: failed`);
+          failed.push(label);
         } else {
-          syncResults.push(`${token.scope}: success`);
+          succeeded.push(label);
         }
       }
 
-      toast({
-        title: "Sync complete",
-        description: syncResults.join(", "),
-      });
+      if (failed.length > 0 && succeeded.length === 0) {
+        toast({
+          title: "Sync failed",
+          description: `Couldn't reach ${failed.join(" or ")}. Check your connection and try again, or reconnect in Settings.`,
+          variant: "destructive",
+        });
+      } else if (failed.length > 0) {
+        toast({
+          title: "Partially synced",
+          description: `${succeeded.join(" & ")} updated. ${failed.join(" & ")} failed — try reconnecting in Settings.`,
+        });
+      } else {
+        toast({
+          title: "Sync complete",
+          description: `${succeeded.join(" & ")} data is up to date.`,
+        });
+      }
     } catch (error: any) {
       console.error('Error syncing data:', error);
       toast({

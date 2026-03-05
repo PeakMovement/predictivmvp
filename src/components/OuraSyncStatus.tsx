@@ -1,11 +1,13 @@
 import { formatDistanceToNowStrict } from "date-fns";
 import { useOuraTokenStatus } from "@/hooks/useOuraTokenStatus";
-import { CheckCircle2, Circle } from "lucide-react";
+import { CheckCircle2, Circle, AlertTriangle, WifiOff } from "lucide-react";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
+const STALE_HOURS = 24;
+
 const OuraSyncStatus = () => {
-  const { isConnected: ouraConnected, lastSync: ouraLastSync } = useOuraTokenStatus();
+  const { isConnected: ouraConnected, lastSync: ouraLastSync, errorCode } = useOuraTokenStatus();
   const [garminConnected, setGarminConnected] = useState(false);
   const [garminLastSync, setGarminLastSync] = useState<Date | null>(null);
 
@@ -16,7 +18,7 @@ const OuraSyncStatus = () => {
 
       const { data: token } = await supabase
         .from("wearable_tokens")
-        .select("*")
+        .select("scope")
         .eq("user_id", user.id)
         .eq("scope", "garmin")
         .maybeSingle();
@@ -42,38 +44,52 @@ const OuraSyncStatus = () => {
     checkGarminStatus();
   }, []);
 
-  const connectedDevices = [];
-  if (ouraConnected) connectedDevices.push("Oura");
+  const connectedDevices: string[] = [];
+  if (ouraConnected) connectedDevices.push("Oura Ring");
   if (garminConnected) connectedDevices.push("Garmin");
 
   const latestSync = [ouraLastSync, garminLastSync]
     .filter(Boolean)
     .sort((a, b) => (b?.getTime() || 0) - (a?.getTime() || 0))[0];
 
-  const getTimeSinceSync = () => {
-    if (!latestSync) return "Auto-sync enabled • Data updates automatically";
-    return `Synced ${formatDistanceToNowStrict(latestSync)} ago`;
-  };
+  const tokenExpired = errorCode === "TOKEN_EXPIRED";
+  const hoursSinceSync = latestSync
+    ? (Date.now() - latestSync.getTime()) / (1000 * 60 * 60)
+    : null;
+  const isStale = hoursSinceSync !== null && hoursSinceSync > STALE_HOURS;
 
   const getStatusIcon = () => {
+    if (tokenExpired) return <WifiOff className="h-3 w-3 text-amber-500" />;
+    if (isStale) return <AlertTriangle className="h-3 w-3 text-amber-500" />;
     if (connectedDevices.length > 0) return <CheckCircle2 className="h-3 w-3 text-green-500" />;
     return <Circle className="h-3 w-3 text-muted-foreground" />;
   };
 
   const getDeviceText = () => {
+    if (tokenExpired) return "Oura connection expired — reconnect in Settings";
     if (connectedDevices.length === 0) return "No devices connected";
-    if (connectedDevices.length === 1) return connectedDevices[0];
     return connectedDevices.join(" & ");
   };
+
+  const getSyncText = () => {
+    if (tokenExpired) return null;
+    if (!latestSync) return "Waiting for first sync";
+    const distance = formatDistanceToNowStrict(latestSync);
+    if (isStale) return `Last synced ${distance} ago — data may be out of date`;
+    return `Synced ${distance} ago`;
+  };
+
+  const syncText = getSyncText();
+  const syncColor = tokenExpired || isStale ? "text-amber-500" : "text-green-500/80";
 
   return (
     <div className="flex flex-col items-center gap-1 text-xs text-muted-foreground">
       <div className="flex items-center gap-1.5">
         {getStatusIcon()}
-        <span>{getDeviceText()}</span>
+        <span className={tokenExpired ? "text-amber-500" : undefined}>{getDeviceText()}</span>
       </div>
-      {connectedDevices.length > 0 && (
-        <span className="text-green-500/80">{getTimeSinceSync()}</span>
+      {syncText && (
+        <span className={syncColor}>{syncText}</span>
       )}
     </div>
   );

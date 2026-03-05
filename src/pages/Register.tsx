@@ -52,7 +52,7 @@ export default function Register() {
             username,
             phone_number: phone || null,
           },
-          emailRedirectTo: `https://id-preview--496b78dd-5429-4d22-8cdf-157ebd1425c9.lovable.app/`,
+          emailRedirectTo: `${window.location.origin}/`,
         },
       });
 

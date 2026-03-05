@@ -17,6 +17,8 @@ import { RiskAlertPopup } from "@/components/alerts/RiskAlertPopup";
 import { PageLoadingFallback } from "@/components/LoadingFallback";
 import Login from "@/pages/Login";
 import Register from "@/pages/Register";
+import ForgotPassword from "@/pages/ForgotPassword";
+import ResetPassword from "@/pages/ResetPassword";
 import { Settings as SettingsIcon } from "lucide-react";
 import { SymptomCheckInSheet } from "@/components/symptoms/SymptomCheckInSheet";
 import { YvesChatSheet } from "@/components/YvesChatSheet";
@@ -191,6 +193,7 @@ const AppInner = () => {
     "/oauth/callback/oura",
     "/auth/polar",
     "/google-calendar-callback",
+    "/reset-password",
   ];
   const isOAuthRoute = OAUTH_PATHS.some(p => location.pathname.startsWith(p));
 
@@ -244,6 +247,7 @@ const AppInner = () => {
           <Route path="/oauth/callback/oura"      element={<OuraCallback />} />
           <Route path="/auth/polar"               element={<PolarCallback />} />
           <Route path="/google-calendar-callback" element={<GoogleCalendarCallback />} />
+          <Route path="/reset-password"           element={<ResetPassword />} />
         </Routes>
       </Suspense>
     );
@@ -261,8 +265,9 @@ const AppInner = () => {
     return (
       <Suspense fallback={<PageLoadingFallback />}>
         <Routes>
-          <Route path="/register" element={<Register />} />
-          <Route path="*"         element={<Login />} />
+          <Route path="/register"        element={<Register />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="*"                element={<Login />} />
         </Routes>
       </Suspense>
     );

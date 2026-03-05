@@ -1,6 +1,8 @@
--- Enable pg_cron and pg_net extensions if not already enabled
-create extension if not exists pg_cron;
-create extension if not exists pg_net;
+-- pg_cron and pg_net are managed at platform level, already enabled
+
+-- Remove existing jobs if present (idempotent)
+select cron.unschedule('detect-health-anomalies-daily') where exists (select 1 from cron.job where jobname = 'detect-health-anomalies-daily');
+select cron.unschedule('adapt-user-model-weekly') where exists (select 1 from cron.job where jobname = 'adapt-user-model-weekly');
 
 -- Detect health anomalies daily at 7:00 AM UTC (after overnight wearable sync)
 select cron.schedule(

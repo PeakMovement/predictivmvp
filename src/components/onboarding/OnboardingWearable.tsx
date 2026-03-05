@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Smartphone, CheckCircle2 } from "lucide-react";
+import { Watch, CheckCircle2, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
@@ -9,66 +9,126 @@ interface OnboardingWearableProps {
   onBack: () => void;
 }
 
+interface ConnectionStatus {
+  oura: boolean;
+  garmin: boolean;
+  polar: boolean;
+}
+
 export const OnboardingWearable = ({}: OnboardingWearableProps) => {
-  const [isConnected, setIsConnected] = useState(false);
-  const [isConnecting, setIsConnecting] = useState(false);
+  const [connected, setConnected] = useState<ConnectionStatus>({ oura: false, garmin: false, polar: false });
+  const [connecting, setConnecting] = useState<"oura" | "garmin" | "polar" | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
-    checkConnection();
+    checkAllConnections();
   }, []);
 
-  const checkConnection = async () => {
+  const checkAllConnections = async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      const { data } = await supabase
-        .from("wearable_tokens")
-        .select("id")
-        .eq("user_id", user.id)
-        .maybeSingle();
+      const [wearableRes, polarRes] = await Promise.all([
+        supabase.from("wearable_tokens").select("scope").eq("user_id", user.id),
+        supabase.from("polar_tokens").select("id").eq("user_id", user.id).maybeSingle(),
+      ]);
 
-      setIsConnected(!!data);
-    } catch (error) {
-      console.error("Error checking connection:", error);
+      const scopes = wearableRes.data?.map((r) => r.scope) ?? [];
+      setConnected({
+        oura: scopes.includes("oura"),
+        garmin: scopes.includes("garmin"),
+        polar: !!polarRes.data,
+      });
+    } catch (err) {
+      console.error("Error checking wearable connections:", err);
     }
   };
 
   const connectOura = async () => {
-    setIsConnecting(true);
+    setConnecting("oura");
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        throw new Error("You must be logged in to connect your Oura Ring");
-      }
-
+      if (!user) throw new Error("You must be logged in");
       const { data, error } = await supabase.functions.invoke("oura-auth-initiate", {
         body: { user_id: user.id },
       });
-
-      if (error || !data?.auth_url) {
-        throw new Error(data?.error || "Failed to build Oura auth URL");
-      }
-
+      if (error || !data?.auth_url) throw new Error(data?.error || "Failed to build Oura auth URL");
       window.location.href = data.auth_url;
     } catch (err) {
-      console.error("[connectOura] Error:", err);
-      toast({
-        title: "Connection Failed",
-        description: err instanceof Error ? err.message : "Failed to start Oura connection",
-        variant: "destructive",
-      });
-    } finally {
-      setIsConnecting(false);
+      toast({ title: "Connection failed", description: err instanceof Error ? err.message : "Failed to start Oura connection", variant: "destructive" });
+      setConnecting(null);
     }
   };
+
+  const connectGarmin = async () => {
+    setConnecting("garmin");
+    try {
+      const { data, error } = await supabase.functions.invoke("garmin-auth-initiate");
+      if (error || !data?.auth_url) throw new Error(data?.error || "Failed to initiate Garmin connection");
+      window.location.href = data.auth_url;
+    } catch (err) {
+      toast({ title: "Connection failed", description: err instanceof Error ? err.message : "Failed to start Garmin connection", variant: "destructive" });
+      setConnecting(null);
+    }
+  };
+
+  const connectPolar = async () => {
+    setConnecting("polar");
+    try {
+      const session = (await supabase.auth.getSession()).data.session;
+      if (!session) throw new Error("You must be logged in");
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/polar-auth-initiate`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${session.access_token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+      if (!response.ok) throw new Error("Failed to initiate Polar connection");
+      const data = await response.json();
+      if (!data?.auth_url) throw new Error("No authorization URL received");
+      window.location.href = data.auth_url;
+    } catch (err) {
+      toast({ title: "Connection failed", description: err instanceof Error ? err.message : "Failed to start Polar connection", variant: "destructive" });
+      setConnecting(null);
+    }
+  };
+
+  const anyConnected = connected.oura || connected.garmin || connected.polar;
+
+  const devices = [
+    {
+      id: "oura" as const,
+      name: "Oura Ring",
+      description: "Sleep, activity, and recovery",
+      gradient: "from-purple-500 to-indigo-500",
+      connect: connectOura,
+    },
+    {
+      id: "garmin" as const,
+      name: "Garmin",
+      description: "GPS, heart rate, and performance",
+      gradient: "from-blue-500 to-cyan-500",
+      connect: connectGarmin,
+    },
+    {
+      id: "polar" as const,
+      name: "Polar",
+      description: "Heart rate, sleep, and training load",
+      gradient: "from-red-500 to-orange-500",
+      connect: connectPolar,
+    },
+  ];
 
   return (
     <div className="space-y-6">
       <div className="text-center space-y-2">
         <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
-          <Smartphone className="h-8 w-8 text-primary" />
+          <Watch className="h-8 w-8 text-primary" />
         </div>
         <h2 className="text-2xl font-bold text-foreground">Connect Your Wearable</h2>
         <p className="text-muted-foreground">
@@ -76,49 +136,51 @@ export const OnboardingWearable = ({}: OnboardingWearableProps) => {
         </p>
       </div>
 
-      <div className="space-y-4">
-        <div className="border rounded-lg p-6 space-y-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-indigo-500 rounded-full flex items-center justify-center">
-                <div className="w-5 h-5 rounded-full border-2 border-white"></div>
+      <div className="space-y-3">
+        {devices.map((device) => (
+          <div key={device.id} className="border rounded-lg p-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className={`w-10 h-10 bg-gradient-to-br ${device.gradient} rounded-full flex items-center justify-center shrink-0`}>
+                  <div className="w-4 h-4 rounded-full border-2 border-white" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-foreground text-sm">{device.name}</h3>
+                  <p className="text-xs text-muted-foreground">
+                    {connected[device.id] ? "Connected" : device.description}
+                  </p>
+                </div>
               </div>
-              <div>
-                <h3 className="font-semibold text-foreground">Oura Ring</h3>
-                <p className="text-sm text-muted-foreground">
-                  {isConnected ? "Connected" : "Track sleep, activity, and recovery"}
-                </p>
-              </div>
+              {connected[device.id] ? (
+                <CheckCircle2 className="h-5 w-5 text-green-500 shrink-0" />
+              ) : (
+                <Button
+                  onClick={device.connect}
+                  disabled={connecting !== null}
+                  size="sm"
+                >
+                  {connecting === device.id ? (
+                    <><Loader2 className="h-3 w-3 mr-1.5 animate-spin" />Connecting...</>
+                  ) : (
+                    "Connect"
+                  )}
+                </Button>
+              )}
             </div>
-            {isConnected ? (
-              <CheckCircle2 className="h-6 w-6 text-green-500" />
-            ) : (
-              <Button
-                onClick={connectOura}
-                disabled={isConnecting}
-                size="sm"
-              >
-                {isConnecting ? "Connecting..." : "Connect"}
-              </Button>
-            )}
           </div>
-        </div>
+        ))}
+      </div>
 
-        <div className="bg-muted/50 rounded-lg p-4 space-y-2">
-          <h4 className="font-medium text-foreground text-sm">Why connect a wearable?</h4>
-          <ul className="text-sm text-muted-foreground space-y-1">
-            <li>✓ Automatic health data syncing</li>
-            <li>✓ AI-powered insights and recommendations</li>
-            <li>✓ Track trends over time</li>
-            <li>✓ Get personalized daily briefings</li>
-          </ul>
+      {anyConnected && (
+        <div className="bg-green-500/10 border border-green-500/20 rounded-lg p-3 text-sm text-green-600 dark:text-green-400">
+          Device connected — your data will start syncing in the background.
         </div>
+      )}
 
-        <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-4">
-          <p className="text-sm text-blue-600 dark:text-blue-400">
-            You can skip this step and connect later from Settings if you prefer.
-          </p>
-        </div>
+      <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-3">
+        <p className="text-sm text-blue-600 dark:text-blue-400">
+          You can skip this step and connect later from Settings.
+        </p>
       </div>
     </div>
   );

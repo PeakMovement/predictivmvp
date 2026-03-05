@@ -170,6 +170,30 @@ export const RiskScoreCard = () => {
     );
   }
 
+  if (riskLevel === "unknown") {
+    return (
+      <div className="bg-glass backdrop-blur-xl border border-glass-border rounded-2xl p-6 shadow-glass">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="w-10 h-10 rounded-lg flex items-center justify-center border text-muted-foreground bg-muted/20 border-muted/30">
+            <Shield size={24} />
+          </div>
+          <div>
+            <h3 className="text-lg font-semibold text-foreground">Risk Score</h3>
+            <p className="text-xs text-muted-foreground">7-day injury risk assessment</p>
+          </div>
+        </div>
+        <div className="rounded-lg border border-muted/30 bg-muted/10 p-4 text-center space-y-2">
+          <p className="text-sm text-muted-foreground">
+            No training data yet. Connect a wearable and sync to see your injury risk score.
+          </p>
+          <p className="text-xs text-muted-foreground">
+            Risk is calculated from 7 days of heart rate, load, and sleep data.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="bg-glass backdrop-blur-xl border border-glass-border rounded-2xl p-6 shadow-glass hover:bg-glass-highlight transition-all duration-300">
       <div className="flex items-center justify-between mb-4">
@@ -189,14 +213,14 @@ export const RiskScoreCard = () => {
           "px-3 py-1.5 rounded-full text-sm font-semibold border",
           getStatusColor()
         )}>
-          {riskLevel === "unknown" ? "—" : riskScore}
+          {riskScore}
         </div>
       </div>
-      
+
       {/* Progress Bar */}
       <div className="mb-4">
         <div className="h-3 bg-muted/30 rounded-full overflow-hidden">
-          <div 
+          <div
             className={cn("h-full rounded-full transition-all duration-500", getProgressColor())}
             style={{ width: `${riskScore}%` }}
           />
@@ -207,7 +231,7 @@ export const RiskScoreCard = () => {
           <span>High</span>
         </div>
       </div>
-      
+
       {/* Status Message */}
       <div className={cn(
         "p-3 rounded-lg border text-sm",
@@ -218,33 +242,31 @@ export const RiskScoreCard = () => {
           <span>{getMessage()}</span>
         </div>
       </div>
-      
+
       {/* Contributing Factors */}
-      {riskLevel !== "unknown" && (
-        <div className="mt-4 grid grid-cols-3 gap-2 text-center">
-          <div className="bg-glass/30 rounded-lg p-2">
-            <p className="text-xs text-muted-foreground">ACWR</p>
-            <p className={cn(
-              "text-sm font-semibold",
-              metrics.acwr > 1.5 ? "text-red-400" : metrics.acwr > 1.3 ? "text-yellow-400" : "text-foreground"
-            )}>{metrics.acwr.toFixed(2)}</p>
-          </div>
-          <div className="bg-glass/30 rounded-lg p-2">
-            <p className="text-xs text-muted-foreground">Strain</p>
-            <p className={cn(
-              "text-sm font-semibold",
-              metrics.strain > 150 ? "text-red-400" : metrics.strain > 100 ? "text-yellow-400" : "text-foreground"
-            )}>{metrics.strain.toFixed(0)}</p>
-          </div>
-          <div className="bg-glass/30 rounded-lg p-2">
-            <p className="text-xs text-muted-foreground">Fatigue</p>
-            <p className={cn(
-              "text-sm font-semibold",
-              metrics.fatigueIndex > 70 ? "text-red-400" : metrics.fatigueIndex > 50 ? "text-yellow-400" : "text-foreground"
-            )}>{metrics.fatigueIndex}%</p>
-          </div>
+      <div className="mt-4 grid grid-cols-3 gap-2 text-center">
+        <div className="bg-glass/30 rounded-lg p-2">
+          <p className="text-xs text-muted-foreground">ACWR</p>
+          <p className={cn(
+            "text-sm font-semibold",
+            metrics.acwr > 1.5 ? "text-red-400" : metrics.acwr > 1.3 ? "text-yellow-400" : "text-foreground"
+          )}>{metrics.acwr.toFixed(2)}</p>
         </div>
-      )}
+        <div className="bg-glass/30 rounded-lg p-2">
+          <p className="text-xs text-muted-foreground">Strain</p>
+          <p className={cn(
+            "text-sm font-semibold",
+            metrics.strain > 150 ? "text-red-400" : metrics.strain > 100 ? "text-yellow-400" : "text-foreground"
+          )}>{metrics.strain.toFixed(0)}</p>
+        </div>
+        <div className="bg-glass/30 rounded-lg p-2">
+          <p className="text-xs text-muted-foreground">Fatigue</p>
+          <p className={cn(
+            "text-sm font-semibold",
+            metrics.fatigueIndex > 70 ? "text-red-400" : metrics.fatigueIndex > 50 ? "text-yellow-400" : "text-foreground"
+          )}>{metrics.fatigueIndex}%</p>
+        </div>
+      </div>
     </div>
   );
 };

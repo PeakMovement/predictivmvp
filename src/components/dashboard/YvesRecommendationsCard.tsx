@@ -94,12 +94,16 @@ export function YvesRecommendationsCard({ recommendations, isLoading }: YvesReco
       <CardContent className="space-y-3">
         {recommendations.length === 0 ? (
           <div className="text-center py-6 space-y-2">
-            <p className="text-muted-foreground">
-              Yves will generate personalized recommendations once your daily briefing is ready.
+            <Lightbulb className="h-10 w-10 text-muted-foreground/40 mx-auto mb-3" />
+            <p className="text-sm text-muted-foreground font-medium">
+              No recommendations yet
             </p>
-            <Button 
-              variant="outline" 
-              className="mt-4" 
+            <p className="text-xs text-muted-foreground max-w-xs mx-auto">
+              Generate your daily briefing above, or connect a wearable so Yves has enough data to personalise your plan.
+            </p>
+            <Button
+              variant="outline"
+              className="mt-4"
               onClick={() => window.dispatchEvent(new CustomEvent("navigate-tab", { detail: "yves-insights" }))}
             >
               Chat with Yves <ExternalLink className="ml-2 h-4 w-4" />

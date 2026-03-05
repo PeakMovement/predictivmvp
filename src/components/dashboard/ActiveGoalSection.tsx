@@ -27,7 +27,16 @@ export function ActiveGoalSection({ className }: ActiveGoalSectionProps) {
           .maybeSingle();
 
         if (data?.goals && data.goals.length > 0) {
-          setPrimaryGoal(data.goals[0]);
+          const goalLabels: Record<string, string> = {
+            performance: "Improve Athletic Performance",
+            recovery: "Optimize Recovery",
+            health: "General Health & Wellness",
+            weight: "Weight Management",
+            sleep: "Better Sleep Quality",
+            stress: "Reduce Stress",
+          };
+          const raw = data.goals[0];
+          setPrimaryGoal(goalLabels[raw] ?? raw);
         }
       } catch (error) {
         console.error('Error fetching user goal:', error);

@@ -125,8 +125,44 @@ function TodaysBestDecision({ className }, ref) {
 
   const isLoading = yvesLoading || (!yvesRec && ruleLoading);
 
-  if (isLoading || (!yvesRec && !decision)) {
-    return null;
+  if (isLoading) {
+    return (
+      <Card className={cn("overflow-hidden", className)}>
+        <div className="flex items-center gap-3 p-4">
+          <div className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+            <Compass className="h-4.5 w-4.5 text-primary" />
+          </div>
+          <div className="space-y-1.5 flex-1">
+            <div className="h-4 bg-muted/40 rounded w-1/3 animate-pulse" />
+            <div className="h-3 bg-muted/30 rounded w-1/2 animate-pulse" />
+          </div>
+        </div>
+      </Card>
+    );
+  }
+
+  if (!yvesRec && !decision) {
+    return (
+      <Card className={cn("overflow-hidden", className)}>
+        <div className="flex items-center gap-3 p-4 border-b border-border/50">
+          <div className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+            <Compass className="h-4.5 w-4.5 text-primary" />
+          </div>
+          <div>
+            <h3 className="text-base font-semibold text-foreground">Today's training focus</h3>
+            <p className="text-xs text-muted-foreground">Powered by Yves</p>
+          </div>
+        </div>
+        <div className="p-5 text-center space-y-2">
+          <p className="text-sm text-muted-foreground">
+            Sync at least a week of data from your wearable to unlock personalised daily training guidance.
+          </p>
+          <p className="text-xs text-muted-foreground">
+            Yves uses heart rate, sleep, and load trends to recommend the right session for you each day.
+          </p>
+        </div>
+      </Card>
+    );
   }
 
   const riskDrivers = decision?.riskDrivers;

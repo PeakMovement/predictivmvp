@@ -1,0 +1,160 @@
+project_id = "ixtwbkikyuexskdgfpfq"
+
+[functions.calculate-data-maturity]
+verify_jwt = false
+
+[functions.evaluate-escalation-rules]
+verify_jwt = false
+
+[functions.track-engagement]
+verify_jwt = true
+
+[functions.adapt-user-model]
+verify_jwt = false
+
+[functions.analyze-document]
+verify_jwt = true
+
+[functions.oura-auth]
+verify_jwt = false
+
+[functions.fetch-oura-auto]
+verify_jwt = false
+
+[functions.generate-daily-briefing]
+verify_jwt = false
+
+[functions.lovable-ai-credits]
+verify_jwt = true
+
+[functions.wearable-diagnostics]
+verify_jwt = false
+
+[functions.yves-tree]
+verify_jwt = true
+
+[functions.send-sms-alert]
+verify_jwt = false
+
+[functions.calc-trends]
+verify_jwt = false
+
+[functions.calculate-baseline]
+verify_jwt = false
+
+[functions.calculate-deviation]
+verify_jwt = false
+
+[functions.build-health-profile]
+verify_jwt = true
+
+[functions.calculate-plan-adherence]
+verify_jwt = false
+
+[functions.generate-yves-recommendations]
+verify_jwt = true
+
+[functions.yves-chat]
+verify_jwt = true
+
+[functions.yves-memory-update]
+verify_jwt = true
+
+[functions.wearable-fetch-data]
+verify_jwt = false
+
+[functions.fetch-oura-data]
+verify_jwt = false
+
+[functions.oura-auth-initiate]
+verify_jwt = false
+
+[functions.calculate-oura-trends]
+verify_jwt = false
+
+[functions.get-daily-health-trends]
+verify_jwt = true
+
+[functions.get-weekly-health-trends]
+verify_jwt = true
+
+[functions.get-recovery-trends]
+verify_jwt = true
+
+[functions.get-activity-trends]
+verify_jwt = true
+
+[functions.detect-health-anomalies]
+verify_jwt = false
+
+[functions.system-health-check]
+verify_jwt = false
+
+[functions.predict-provider]
+verify_jwt = true
+
+[functions.interpret-health-event]
+verify_jwt = true
+
+[functions.match-provider]
+verify_jwt = true
+
+[functions.trigger-risk-alert]
+verify_jwt = false
+
+[functions.send-risk-email]
+verify_jwt = false
+
+[functions.symptom-analysis]
+verify_jwt = true
+
+[functions.physician-match-advanced]
+verify_jwt = true
+
+[functions.generate-treatment-plan]
+verify_jwt = true
+
+[functions.seed-physicians]
+verify_jwt = false
+
+[functions.create-booking]
+verify_jwt = true
+
+[functions.get-bookings]
+verify_jwt = true
+
+[functions.save-medical-session]
+verify_jwt = true
+
+[functions.get-medical-session]
+verify_jwt = true
+
+[functions.complete-medical-session]
+verify_jwt = true
+
+[functions.calendly-webhook]
+verify_jwt = false
+
+[functions.send-daily-summary-email]
+verify_jwt = false
+
+[functions.generate-yves-intelligence]
+verify_jwt = true
+
+[functions.garmin-auth-initiate]
+verify_jwt = false
+
+[functions.garmin-auth]
+verify_jwt = false
+
+[functions.fetch-garmin-data]
+verify_jwt = false
+
+[functions.fetch-garmin-auto]
+verify_jwt = false
+
+[functions.garmin-webhook]
+verify_jwt = false
+
+[functions.admin-user-overview]
+verify_jwt = false

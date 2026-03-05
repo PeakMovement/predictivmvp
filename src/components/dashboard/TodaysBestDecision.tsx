@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { forwardRef, useImperativeHandle, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
@@ -20,6 +20,10 @@ import { useTodaysDecision } from "@/hooks/useTodaysDecision";
 import { useTrainingFocusRecommendation } from "@/hooks/useTrainingFocusRecommendation";
 import { toast } from "sonner";
 import jsPDF from "jspdf";
+
+export interface TodaysBestDecisionHandle {
+  refresh: () => void;
+}
 
 interface TodaysBestDecisionProps {
   className?: string;
@@ -103,9 +107,17 @@ const MEANING_VARIATIONS: Record<string, string[]> = {
   ]
 };
 
-export function TodaysBestDecision({ className }: TodaysBestDecisionProps) {
+export const TodaysBestDecision = forwardRef<TodaysBestDecisionHandle, TodaysBestDecisionProps>(
+function TodaysBestDecision({ className }, ref) {
   const { rec: yvesRec, isLoading: yvesLoading, refresh: refreshYves } = useTrainingFocusRecommendation();
   const { decision, isLoading: ruleLoading, refresh: refreshRule } = useTodaysDecision();
+
+  useImperativeHandle(ref, () => ({
+    refresh: () => {
+      refreshYves();
+      if (!yvesRec) refreshRule();
+    },
+  }));
   const [isOpen, setIsOpen] = useState(true);
   const [isSessionExpanded, setIsSessionExpanded] = useState(false);
   const [isDataExpanded, setIsDataExpanded] = useState(false);
@@ -605,4 +617,4 @@ export function TodaysBestDecision({ className }: TodaysBestDecisionProps) {
       </Collapsible>
     </Card>
   );
-}
+});

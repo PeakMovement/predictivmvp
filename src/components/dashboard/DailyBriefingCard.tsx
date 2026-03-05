@@ -19,7 +19,7 @@
  * />
  * ```
  */
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Loader2, RefreshCw, Sparkles, Calendar, AlertTriangle, TrendingUp, ChevronDown, Brain } from "lucide-react";
@@ -29,7 +29,7 @@ import { cn } from "@/lib/utils";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { PersonalContextChips } from "./PersonalContextChips";
 import { ActiveGoalSection } from "./ActiveGoalSection";
-import { TodaysBestDecision } from "./TodaysBestDecision";
+import { TodaysBestDecision, TodaysBestDecisionHandle } from "./TodaysBestDecision";
 import { WhyThisMatters } from "./WhyThisMatters";
 import { DocumentReference } from "./DocumentReference";
 import { BriefingFooter } from "./BriefingFooter";
@@ -66,6 +66,8 @@ export function DailyBriefingCard({
   cached,
   onRefresh,
 }: DailyBriefingCardProps) {
+  const trainingFocusRef = useRef<TodaysBestDecisionHandle>(null);
+
   if (isLoading) {
     return (
       <Card className="animate-fade-in bg-glass backdrop-blur-xl border-glass-border">
@@ -93,7 +95,7 @@ export function DailyBriefingCard({
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => onRefresh()}
+            onClick={() => { onRefresh(); trainingFocusRef.current?.refresh(); }}
             disabled={isGenerating}
             title="Refresh briefing"
           >
@@ -119,7 +121,7 @@ export function DailyBriefingCard({
         <ActiveGoalSection className="pb-2 border-b border-border/50" />
         
         {/* Todays Best Decision Section */}
-        <TodaysBestDecision className="pb-2 border-b border-border/50" />
+        <TodaysBestDecision ref={trainingFocusRef} className="pb-2 border-b border-border/50" />
         
         {!briefing ? (
           <div className="text-center py-6 space-y-3">

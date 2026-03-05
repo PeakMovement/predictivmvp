@@ -37,7 +37,6 @@ const Settings           = lazy(() => import("@/pages/Settings").then(m => ({ de
 const FindHelp           = lazy(() => import("@/pages/FindHelp").then(m => ({ default: m.FindHelp })));
 const InsightsTree       = lazy(() => import("@/pages/InsightsTree").then(m => ({ default: m.InsightsTree })));
 const YvesChat           = lazy(() => import("@/components/YvesChat").then(m => ({ default: m.YvesChat })));
-const FitbitCallback     = lazy(() => import("@/pages/FitbitCallback"));
 const OuraCallback       = lazy(() => import("@/pages/OuraCallback").then(m => ({ default: m.OuraCallback })));
 const PolarCallback      = lazy(() => import("@/pages/auth/polar"));
 const MyBaselines        = lazy(() => import("@/pages/MyBaselines"));
@@ -189,7 +188,6 @@ const AppInner = () => {
   const location = useLocation();
 
   const OAUTH_PATHS = [
-    "/fitbit/callback",
     "/oauth/callback/oura",
     "/auth/polar",
     "/google-calendar-callback",
@@ -243,7 +241,6 @@ const AppInner = () => {
     return (
       <Suspense fallback={<PageLoadingFallback />}>
         <Routes>
-          <Route path="/fitbit/callback"          element={<FitbitCallback />} />
           <Route path="/oauth/callback/oura"      element={<OuraCallback />} />
           <Route path="/auth/polar"               element={<PolarCallback />} />
           <Route path="/google-calendar-callback" element={<GoogleCalendarCallback />} />

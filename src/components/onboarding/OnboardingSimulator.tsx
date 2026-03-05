@@ -293,7 +293,7 @@ export function OnboardingSimulator({
                 {[
                   { id: "oura", name: "Ōura Ring", icon: "💍" },
                   { id: "polar", name: "Polar", icon: "⌚" },
-                  { id: "fitbit", name: "Fitbit", icon: "📱" },
+                  { id: "garmin", name: "Garmin", icon: "⌚" },
                   { id: "apple", name: "Apple Watch", icon: "🍎", disabled: true },
                   { id: "other", name: "Other", icon: "📊" },
                   { id: "none", name: "None yet", icon: "🔜" },

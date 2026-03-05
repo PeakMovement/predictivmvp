@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { FitbitTrend } from "@/types/fitbit";
+import { TrainingTrend } from "@/types/wearables";
 
 interface UseTrainingTrendsOptions {
   days?: number;
@@ -8,8 +8,8 @@ interface UseTrainingTrendsOptions {
 }
 
 interface UseTrainingTrendsReturn {
-  trends: FitbitTrend[];
-  latestTrend: FitbitTrend | null;
+  trends: TrainingTrend[];
+  latestTrend: TrainingTrend | null;
   isLoading: boolean;
   lastUpdate: string | null;
   refresh: () => Promise<void>;
@@ -18,8 +18,8 @@ interface UseTrainingTrendsReturn {
 
 export const useTrainingTrends = (options: UseTrainingTrendsOptions = {}): UseTrainingTrendsReturn => {
   const { days = 30, userId: providedUserId } = options;
-  const [trends, setTrends] = useState<FitbitTrend[]>([]);
-  const [latestTrend, setLatestTrend] = useState<FitbitTrend | null>(null);
+  const [trends, setTrends] = useState<TrainingTrend[]>([]);
+  const [latestTrend, setLatestTrend] = useState<TrainingTrend | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [lastUpdate, setLastUpdate] = useState<string | null>(null);
   const [resolvedUserId, setResolvedUserId] = useState<string | null>(null);

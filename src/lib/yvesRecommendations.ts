@@ -9,7 +9,7 @@ export interface YvesProfile {
   reasoning?: string;
 }
 
-export interface FitbitTrend {
+export interface TrainingTrend {
   acwr?: number;
   strain?: number;
   monotony?: number;
@@ -28,7 +28,7 @@ export interface YvesRecommendation {
 export const generateYvesRecommendations = async (
   userId: string,
   yvesProfiles: YvesProfile[],
-  latestTrend: FitbitTrend | null
+  latestTrend: TrainingTrend | null
 ): Promise<YvesRecommendation[]> => {
   try {
     // Fetch health profile
@@ -92,7 +92,7 @@ Focus on the most critical issues first. If no health profile exists, recommend 
 // Fallback recommendations if AI fails
 function getDefaultRecommendations(
   yvesProfiles: YvesProfile[],
-  latestTrend: FitbitTrend | null,
+  latestTrend: TrainingTrend | null,
   profile: any
 ): YvesRecommendation[] {
   const recommendations: YvesRecommendation[] = [];

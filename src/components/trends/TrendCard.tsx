@@ -12,7 +12,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { TrendMetric, TrendDataPoint } from "@/types/fitbit";
+import { TrendMetric, TrendDataPoint } from "@/types/wearables";
 
 interface TrendCardProps {
   metric: TrendMetric;

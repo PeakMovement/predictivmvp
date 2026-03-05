@@ -17,7 +17,6 @@ interface UserOverviewTableProps {
 
 const deviceLabel: Record<string, string> = {
   oura: "Oura",
-  fitbit: "Fitbit",
   garmin: "Garmin",
   polar: "Polar",
 };

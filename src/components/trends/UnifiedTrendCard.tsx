@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { useTrainingTrends } from "@/hooks/useTrainingTrends";
-import { TrendMetric } from "@/types/fitbit";
+import { TrendMetric } from "@/types/wearables";
 
 export const UnifiedTrendCard = () => {
   const { trends, isLoading, refresh } = useTrainingTrends({ days: 30 });

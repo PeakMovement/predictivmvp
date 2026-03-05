@@ -158,3 +158,12 @@ verify_jwt = false
 
 [functions.admin-user-overview]
 verify_jwt = false
+
+[functions.generate-insights]
+verify_jwt = false
+
+[functions.record-feedback]
+verify_jwt = false
+
+[functions.sync-calendar-to-planner]
+verify_jwt = true

@@ -59,7 +59,14 @@ export const GoogleCalendarCallback = () => {
 
       if (result.success) {
         setStatus("success");
-        setMessage("Google Calendar connected successfully!");
+        setMessage("Google Calendar connected successfully! Syncing your events...");
+
+        // Trigger calendar-to-planner sync after successful auth
+        try {
+          await supabase.functions.invoke("sync-calendar-to-planner");
+        } catch (syncErr) {
+          console.warn("Calendar sync after auth failed (non-fatal):", syncErr);
+        }
 
         setTimeout(() => {
           navigate("/settings");

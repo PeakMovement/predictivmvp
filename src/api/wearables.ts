@@ -141,7 +141,7 @@ async function getLegacyTrainingTrends(
       monotony: trend.monotony as number | null,
       acwr: trend.acwr as number | null,
       readiness_index: null, // Not in legacy data
-      source: "fitbit", // Assume legacy data is from Fitbit
+      source: "legacy",
       updated_at: (trend.created_at as string) || new Date().toISOString(),
     }));
   } catch (error) {

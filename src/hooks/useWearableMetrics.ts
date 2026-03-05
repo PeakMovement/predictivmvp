@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { ParsedFitbitMetrics } from "@/types/fitbit";
+import { WearableMetrics } from "@/types/wearables";
 import { toast } from "@/hooks/use-toast";
 
 // Interface matching the actual wearable_sessions DB schema
@@ -22,11 +22,11 @@ interface WearableSessionRow {
 }
 
 export const useWearableMetrics = () => {
-  const [metrics, setMetrics] = useState<ParsedFitbitMetrics | null>(null);
+  const [metrics, setMetrics] = useState<WearableMetrics | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [lastSync, setLastSync] = useState<string | null>(null);
 
-  const parseOuraMetrics = useCallback((data: WearableSessionRow): ParsedFitbitMetrics => {
+  const parseOuraMetrics = useCallback((data: WearableSessionRow): WearableMetrics => {
     const steps = data.total_steps || 0;
     const distanceKm = steps * 0.000762;
 
@@ -39,7 +39,7 @@ export const useWearableMetrics = () => {
     const lightlyActiveMinutes = Math.max(0, 480 - estimatedActiveMinutes);
 
     const restingHR = data.resting_hr || 0;
-    const heartRateZones: ParsedFitbitMetrics['heartRateZones'] = restingHR > 0 ? [
+    const heartRateZones: WearableMetrics['heartRateZones'] = restingHR > 0 ? [
       {
         name: "Out of Range" as const,
         min: 30,

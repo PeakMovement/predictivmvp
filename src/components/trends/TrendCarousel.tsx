@@ -1,6 +1,6 @@
 import { useTrainingTrends } from "@/hooks/useTrainingTrends";
 import { TrendCard } from "./TrendCard";
-import { TrendMetric } from "@/types/fitbit";
+import { TrendMetric } from "@/types/wearables";
 import {
   Carousel,
   CarouselContent,

@@ -3,10 +3,10 @@ import { useWearableMetrics } from "./useWearableMetrics";
 import { getHealthData } from "@/lib/healthDataStore";
 
 export const useUnifiedMetrics = () => {
-  const { metrics, isLoading: fitbitLoading, refresh } = useWearableMetrics();
+  const { metrics, isLoading: metricsLoading, refresh } = useWearableMetrics();
   const [refreshKey, setRefreshKey] = useState(0);
-  
-  // Listen for Fitbit data refresh events
+
+  // Listen for wearable data refresh events
   useEffect(() => {
     const handleDataRefreshed = () => {
       console.log("[useUnifiedMetrics] Wearable data refreshed, reloading...");
@@ -47,9 +47,9 @@ export const useUnifiedMetrics = () => {
     steps,
     heartRate,
     caloriesOut,
-    metrics, // Pass through all fitbit metrics
-    dataSource: metrics ? 'fitbit' : currentDayData ? 'csv' : null,
-    isLoading: fitbitLoading
+    metrics, // Pass through all wearable metrics
+    dataSource: metrics ? 'wearable' : currentDayData ? 'csv' : null,
+    isLoading: metricsLoading
   };
 };
 

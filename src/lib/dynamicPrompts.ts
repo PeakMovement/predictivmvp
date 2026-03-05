@@ -1,4 +1,4 @@
-import { FitbitTrend } from "@/types/fitbit";
+import { TrainingTrend } from "@/types/wearables";
 
 interface YvesProfile {
   metric: string;
@@ -10,7 +10,7 @@ interface YvesProfile {
 
 interface DynamicPromptContext {
   yvesProfiles: YvesProfile[];
-  latestTrend: FitbitTrend | null;
+  latestTrend: TrainingTrend | null;
   timeOfDay: 'morning' | 'afternoon' | 'evening';
 }
 
@@ -32,7 +32,7 @@ const getTimeOfDay = (): 'morning' | 'afternoon' | 'evening' => {
 
 export const generateDynamicTodaysPlan = (
   yvesProfiles: YvesProfile[],
-  latestTrend: FitbitTrend | null
+  latestTrend: TrainingTrend | null
 ): string => {
   const timeOfDay = getTimeOfDay();
   const recommendations: string[] = [];
@@ -101,7 +101,7 @@ export const generateDynamicTodaysPlan = (
 
 export const generateDynamicDailyNudge = (
   yvesProfiles: YvesProfile[],
-  latestTrend: FitbitTrend | null
+  latestTrend: TrainingTrend | null
 ): string => {
   const timeOfDay = getTimeOfDay();
   

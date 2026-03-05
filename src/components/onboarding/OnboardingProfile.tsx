@@ -62,6 +62,15 @@ export const OnboardingProfile = ({ onNext }: OnboardingProfileProps) => {
             .insert({ user_id: userId, ...profileUpdate } as any);
         }
 
+        // Also write full_name to profiles (auth metadata table) so the
+        // dashboard greeting can read it without joining user_profile.
+        if (name) {
+          await supabase
+            .from("profiles")
+            .update({ full_name: name })
+            .eq("id", userId);
+        }
+
         // Save medical notes if provided
         if (notes) {
           const { data: existingMed } = await supabase

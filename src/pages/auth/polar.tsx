@@ -54,7 +54,7 @@ export default function PolarCallback() {
         setStatus("success");
 
         setTimeout(() => {
-          navigate("/settings");
+          window.location.href = "/";
         }, 2000);
       } catch (error) {
         console.error("Polar callback error:", error);
@@ -95,7 +95,7 @@ export default function PolarCallback() {
                 <h2 className="text-2xl font-bold text-foreground mb-2">Polar Connected!</h2>
                 <p className="text-muted-foreground">Your Polar device has been successfully connected.</p>
               </div>
-              <p className="text-sm text-muted-foreground">Redirecting to settings...</p>
+              <p className="text-sm text-muted-foreground">Redirecting to your dashboard...</p>
             </>
           )}
 

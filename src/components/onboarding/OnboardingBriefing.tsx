@@ -1,4 +1,6 @@
-import { Sparkles, Calendar, TrendingUp, MessageCircle } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Sparkles, Calendar, TrendingUp, MessageCircle, Loader2 } from "lucide-react";
+import { generateBriefing } from "@/api/dailyBriefing";
 
 interface OnboardingBriefingProps {
   onNext: () => void;
@@ -6,6 +8,12 @@ interface OnboardingBriefingProps {
 }
 
 export const OnboardingBriefing = ({}: OnboardingBriefingProps) => {
+  const [generating, setGenerating] = useState(true);
+
+  useEffect(() => {
+    generateBriefing("full").finally(() => setGenerating(false));
+  }, []);
+
   return (
     <div className="space-y-6">
       <div className="text-center space-y-2">
@@ -67,9 +75,16 @@ export const OnboardingBriefing = ({}: OnboardingBriefingProps) => {
       </div>
 
       <div className="text-center">
-        <p className="text-sm text-muted-foreground">
-          Ready to get started?
-        </p>
+        {generating ? (
+          <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            Generating your first briefing…
+          </div>
+        ) : (
+          <p className="text-sm text-green-600 dark:text-green-400 font-medium">
+            Your first briefing is ready on the dashboard.
+          </p>
+        )}
       </div>
     </div>
   );

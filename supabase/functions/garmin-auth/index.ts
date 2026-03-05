@@ -212,11 +212,26 @@ Deno.serve(async (req: Request) => {
       .delete()
       .lt("expires_at", new Date().toISOString());
 
-    // ── 9. Redirect user back to app ──────────────────────────────────
+    // ── 9. Trigger initial Garmin data backfill (fire-and-forget) ─────
+    try {
+      const supabaseFunctionUrl = `${supabaseUrl}/functions/v1/fetch-garmin-data`;
+      fetch(supabaseFunctionUrl, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${supabaseServiceKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ user_id: userId }),
+      }).catch((e) => console.warn("[garmin-auth] Data backfill fetch failed:", e));
+    } catch (e) {
+      console.warn("[garmin-auth] Could not trigger data backfill:", e);
+    }
+
+    // ── 10. Redirect user back to app ─────────────────────────────────
     return new Response(null, {
       status: 302,
       headers: {
-        Location: `${FRONTEND_URL}/settings?garmin_connected=true`,
+        Location: `${FRONTEND_URL}/`,
       },
     });
   } catch (err) {

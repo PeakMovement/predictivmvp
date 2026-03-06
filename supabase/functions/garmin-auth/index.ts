@@ -13,8 +13,7 @@ const GARMIN_TOKEN_URL =
 
 // Frontend URL to redirect user after OAuth completes
 const FRONTEND_URL =
-  Deno.env.get("FRONTEND_URL") ||
-  "https://id-preview--496b78dd-5429-4d22-8cdf-157ebd1425c9.lovable.app";
+  Deno.env.get("FRONTEND_URL") || "https://predictiv.app";
 
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
@@ -206,13 +205,38 @@ Deno.serve(async (req: Request) => {
 
     console.log(`[garmin-auth] [SUCCESS] Garmin tokens stored for user: ${userId}`);
 
-    // ── 8. Clean up any remaining expired PKCE states ─────────────────
+    // ── 8. Fetch and store Garmin's stable userId for webhook matching ─
+    // Push notifications include a stable userId that survives token refresh.
+    // Storing it now lets the webhook resolve users even after tokens rotate.
+    try {
+      const garminUserRes = await fetch(
+        "https://apis.garmin.com/wellness-api/rest/user/id",
+        { headers: { Authorization: `Bearer ${tokenData.access_token}` } },
+      );
+      if (garminUserRes.ok) {
+        const garminUserData = await garminUserRes.json();
+        if (garminUserData.userId) {
+          await supabase
+            .from("wearable_tokens")
+            .update({ provider_user_id: garminUserData.userId })
+            .eq("user_id", userId)
+            .eq("scope", "garmin");
+          console.log(`[garmin-auth] Stored Garmin provider userId for user: ${userId}`);
+        }
+      } else {
+        console.warn(`[garmin-auth] Could not fetch Garmin userId (${garminUserRes.status}) — webhook matching will fall back to access_token`);
+      }
+    } catch (e) {
+      console.warn("[garmin-auth] Garmin userId fetch failed (non-fatal):", e instanceof Error ? e.message : String(e));
+    }
+
+    // ── 10. Clean up any remaining expired PKCE states ────────────────
     await supabase
       .from("garmin_oauth_state")
       .delete()
       .lt("expires_at", new Date().toISOString());
 
-    // ── 9. Trigger initial Garmin data backfill (fire-and-forget) ─────
+    // ── 11. Trigger initial Garmin data backfill (fire-and-forget) ────
     try {
       const supabaseFunctionUrl = `${supabaseUrl}/functions/v1/fetch-garmin-data`;
       fetch(supabaseFunctionUrl, {
@@ -227,7 +251,7 @@ Deno.serve(async (req: Request) => {
       console.warn("[garmin-auth] Could not trigger data backfill:", e);
     }
 
-    // ── 10. Redirect user back to app ─────────────────────────────────
+    // ── 12. Redirect user back to app ─────────────────────────────────
     return new Response(null, {
       status: 302,
       headers: {

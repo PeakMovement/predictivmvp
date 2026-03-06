@@ -207,22 +207,40 @@ async function handleRequest(req: Request): Promise<Response> {
   }
 }
 
-// ── Resolve Garmin userAccessToken → internal user_id ────────────────
+// ── Resolve Garmin push identifiers → internal user_id ───────────────
+// Strategy:
+//   1. Try stable provider_user_id (Garmin's UUID for the user) — survives token refresh
+//   2. Fall back to access_token match — works until first token rotation
+//   3. On access_token match, opportunistically save provider_user_id for next time
 
 async function resolveUserId(
   supabase: ReturnType<typeof createClient>,
   garminUserAccessToken: string | undefined,
+  garminUserId: string | undefined,
 ): Promise<string | null> {
+  // ── Attempt 1: stable Garmin userId (provider_user_id) ───────────────
+  if (garminUserId) {
+    const { data } = await supabase
+      .from("wearable_tokens")
+      .select("user_id, provider_user_id")
+      .eq("scope", "garmin")
+      .eq("provider_user_id", garminUserId)
+      .maybeSingle();
+
+    if (data?.user_id) {
+      return data.user_id;
+    }
+  }
+
+  // ── Attempt 2: access_token (works before first refresh) ─────────────
   if (!garminUserAccessToken) {
-    console.warn(`[garmin-webhook] No userAccessToken in payload, skipping resolve`);
+    console.warn(`[garmin-webhook] No identifiers in payload, cannot resolve user`);
     return null;
   }
 
-  // The userAccessToken from Garmin push payloads is the OAuth access token
-  // we stored during auth. Look it up in wearable_tokens.
   const { data, error } = await supabase
     .from("wearable_tokens")
-    .select("user_id")
+    .select("user_id, provider_user_id")
     .eq("scope", "garmin")
     .eq("access_token", garminUserAccessToken)
     .maybeSingle();
@@ -230,6 +248,17 @@ async function resolveUserId(
   if (error || !data) {
     console.warn(`[garmin-webhook] Could not resolve user for token: ${garminUserAccessToken.substring(0, 10)}...`);
     return null;
+  }
+
+  // ── Opportunistically store the stable Garmin userId for next time ────
+  if (garminUserId && !data.provider_user_id) {
+    supabase
+      .from("wearable_tokens")
+      .update({ provider_user_id: garminUserId })
+      .eq("user_id", data.user_id)
+      .eq("scope", "garmin")
+      .then(() => console.log(`[garmin-webhook] Saved provider_user_id for user ${data.user_id}`))
+      .catch(() => {});
   }
 
   return data.user_id;
@@ -245,7 +274,7 @@ async function processDailies(
   const userIds: string[] = [];
 
   for (const d of dailies) {
-    const userId = await resolveUserId(supabase, d.userAccessToken);
+    const userId = await resolveUserId(supabase, d.userAccessToken, d.userId);
     if (!userId) continue;
 
     const date = d.calendarDate;
@@ -290,7 +319,7 @@ async function processSleeps(
   const userIds: string[] = [];
 
   for (const s of sleeps) {
-    const userId = await resolveUserId(supabase, s.userAccessToken);
+    const userId = await resolveUserId(supabase, s.userAccessToken, s.userId);
     if (!userId) continue;
 
     const date = s.calendarDate;
@@ -346,7 +375,7 @@ async function processActivities(
   }>();
 
   for (const a of activities) {
-    const userId = await resolveUserId(supabase, a.userAccessToken);
+    const userId = await resolveUserId(supabase, a.userAccessToken, a.userId);
     if (!userId) continue;
 
     const date = new Date(a.startTimeInSeconds * 1000).toISOString().split("T")[0];
@@ -414,7 +443,7 @@ async function processHRVSummaries(
   const userIds: string[] = [];
 
   for (const h of summaries) {
-    const userId = await resolveUserId(supabase, h.userAccessToken);
+    const userId = await resolveUserId(supabase, h.userAccessToken, h.userId);
     if (!userId) continue;
 
     const date = h.calendarDate;
@@ -456,7 +485,7 @@ async function processDeregistrations(
   deregistrations: GarminDeregistration[],
 ): Promise<void> {
   for (const d of deregistrations) {
-    const userId = await resolveUserId(supabase, d.userAccessToken);
+    const userId = await resolveUserId(supabase, d.userAccessToken, d.userId);
     if (!userId) {
       console.warn(`[garmin-webhook] Deregistration: could not resolve user`);
       continue;
@@ -491,7 +520,7 @@ async function processPermissionChanges(
   changes: GarminPermissionChange[],
 ): Promise<void> {
   for (const c of changes) {
-    const userId = await resolveUserId(supabase, c.userAccessToken);
+    const userId = await resolveUserId(supabase, c.userAccessToken, c.userId);
     console.log(`[garmin-webhook] [INFO] Permission change for user ${userId || "unknown"}`);
 
     if (userId) {

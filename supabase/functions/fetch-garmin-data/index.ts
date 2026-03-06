@@ -93,8 +93,19 @@ async function garminFetch<T>(
   }
 
   const data = await res.json();
-  // Garmin may return an array directly or an object; normalize
-  const items = Array.isArray(data) ? data : [];
+  // Garmin Wellness API wraps results in a named key matching the endpoint segment
+  // e.g. GET /dailies → { "dailies": [...] }, GET /sleeps → { "sleeps": [...] }
+  const endpointKey = endpoint.replace(/^\//, ""); // strip leading slash
+  let items: T[];
+  if (Array.isArray(data)) {
+    items = data;
+  } else if (data && Array.isArray((data as Record<string, unknown>)[endpointKey])) {
+    items = (data as Record<string, unknown>)[endpointKey] as T[];
+  } else {
+    // Unexpected shape — log the actual response for debugging
+    console.warn(`[fetch-garmin-data] Unexpected response shape for ${endpoint}:`, JSON.stringify(data).substring(0, 200));
+    items = [];
+  }
   console.log(`[fetch-garmin-data] [SUCCESS] ${endpoint}: ${items.length} records returned`);
   return { data: items };
 }

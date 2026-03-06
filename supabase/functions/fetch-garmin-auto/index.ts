@@ -21,10 +21,10 @@ Deno.serve(async (req: Request) => {
 
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL");
-    const anonKey = Deno.env.get("SUPABASE_ANON_KEY");
+    const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 
-    if (!supabaseUrl || !anonKey) {
-      console.error("[fetch-garmin-auto] [ERROR] Missing SUPABASE_URL or SUPABASE_ANON_KEY");
+    if (!supabaseUrl || !serviceKey) {
+      console.error("[fetch-garmin-auto] [ERROR] Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY");
       return new Response(
         JSON.stringify({ error: "Server configuration error", success: false }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
@@ -36,7 +36,7 @@ Deno.serve(async (req: Request) => {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${anonKey}`,
+        "Authorization": `Bearer ${serviceKey}`,
       },
       body: JSON.stringify({}),
     });

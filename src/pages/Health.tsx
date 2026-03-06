@@ -24,6 +24,8 @@ export const Health = () => {
   const [userId, setUserId] = useState<string | null>(null);
   const [availableSources, setAvailableSources] = useState<string[]>([]);
   const [selectedSource, setSelectedSource] = useState<string>("oura");
+  const [hasAnyToken, setHasAnyToken] = useState<boolean | null>(null);
+  const [isSyncing, setIsSyncing] = useState(false);
   const [sleepData, setSleepData] = useState<{
     totalSleep: number | null;
     deepSleep: number | null;
@@ -65,6 +67,18 @@ export const Health = () => {
       setUserId(user?.id || null);
     });
   }, []);
+
+  // Check if any wearable device is connected (token exists)
+  useEffect(() => {
+    if (!userId) return;
+    supabase
+      .from("wearable_tokens")
+      .select("scope")
+      .eq("user_id", userId)
+      .then(({ data }) => {
+        setHasAnyToken(!!data && data.length > 0);
+      });
+  }, [userId]);
 
   // Detect available device sources from wearable_sessions (real devices only)
   const KNOWN_SOURCES = ["oura", "garmin", "polar"];
@@ -132,6 +146,45 @@ export const Health = () => {
     );
   }
 
+  const handleSyncNow = async () => {
+    if (!userId) return;
+    setIsSyncing(true);
+    try {
+      const { data: tokens } = await supabase
+        .from("wearable_tokens")
+        .select("scope")
+        .eq("user_id", userId);
+
+      const scopes = tokens?.map(t => t.scope) ?? [];
+      if (scopes.length === 0) {
+        toast({ title: "No device connected", description: "Connect a wearable device in Settings first." });
+        return;
+      }
+
+      const invocations = scopes.flatMap(scope => {
+        if (scope === "oura") return [supabase.functions.invoke("fetch-oura-data", { body: { user_id: userId } })];
+        if (scope === "garmin") return [supabase.functions.invoke("fetch-garmin-data", { body: { user_id: userId } })];
+        return [];
+      });
+
+      const results = await Promise.allSettled(invocations);
+      const failed = results.filter(r => r.status === "rejected").length;
+
+      if (failed === results.length) {
+        toast({ title: "Sync failed", description: "We couldn't sync your data. Try reconnecting in Settings.", variant: "destructive" });
+      } else if (failed > 0) {
+        toast({ title: "Partially synced", description: "Some data updated. Check Settings if a device is missing." });
+      } else {
+        toast({ title: "Sync complete", description: "Your health data is up to date." });
+      }
+      await refetch();
+    } catch {
+      toast({ title: "Sync failed", description: "We couldn't sync your data. Please try again.", variant: "destructive" });
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
   const handleRefresh = async () => {
     try {
       await refetch();
@@ -168,7 +221,7 @@ export const Health = () => {
               Based on your data from Ōura Ring & Garmin
             </p>
             <div className="flex justify-center">
-              <OuraSyncStatus />
+              <OuraSyncStatus onSync={handleSyncNow} isSyncing={isSyncing} />
             </div>
           </div>
         </LayoutBlock>
@@ -200,19 +253,28 @@ export const Health = () => {
         ) : (
           <>
             {/* No Data Alert */}
-            {!isLoading && !session && (
+            {!isLoading && !session && hasAnyToken === false && (
               <Alert className="mb-6 border-blue-500/50 bg-blue-500/10">
                 <InfoIcon className="h-4 w-4 text-blue-500" />
-                <AlertTitle className="text-blue-500">No Oura Data Yet</AlertTitle>
+                <AlertTitle className="text-blue-500">No Device Connected</AlertTitle>
                 <AlertDescription className="text-sm text-muted-foreground">
-                  <p className="mb-2">Your Oura Ring is connected, but no data has synced yet. Here's what to do:</p>
+                  Connect your Ōura Ring or Garmin device in Settings to start tracking your health data.
+                </AlertDescription>
+              </Alert>
+            )}
+            {!isLoading && !session && hasAnyToken === true && (
+              <Alert className="mb-6 border-blue-500/50 bg-blue-500/10">
+                <InfoIcon className="h-4 w-4 text-blue-500" />
+                <AlertTitle className="text-blue-500">No Data Synced Yet</AlertTitle>
+                <AlertDescription className="text-sm text-muted-foreground">
+                  <p className="mb-2">Your device is connected but no data has synced yet. Here's what to do:</p>
                   <ol className="list-decimal list-inside space-y-1 ml-2">
-                    <li>Wear your Oura Ring tonight</li>
-                    <li>Open the Oura mobile app in the morning to sync</li>
-                    <li>Return here and click "Update Now" after 8 AM local time</li>
+                    <li>Wear your device overnight</li>
+                    <li>Open the device app in the morning to sync</li>
+                    <li>Tap the sync button above after 8 AM</li>
                   </ol>
                   <p className="mt-3 text-xs">
-                    💡 <strong>Tip:</strong> Sleep data processes around 8 AM. Activity data updates throughout the day.
+                    <strong>Tip:</strong> Sleep data processes around 8 AM. Activity data updates throughout the day.
                   </p>
                 </AlertDescription>
               </Alert>
@@ -240,6 +302,7 @@ export const Health = () => {
                   restingHR={session?.resting_hr ?? null}
                   hrv={session?.hrv_avg ?? null}
                   isLoading={isLoading}
+                  lastSyncedAt={session?.fetched_at ?? null}
                 />
                 <OuraSleepCard
                   score={session?.sleep_score ?? null}
@@ -249,6 +312,7 @@ export const Health = () => {
                   lightSleep={sleepData.lightSleep}
                   efficiency={sleepData.efficiency}
                   isLoading={isLoading}
+                  lastSyncedAt={session?.fetched_at ?? null}
                 />
                 <OuraActivityCard
                   score={session?.activity_score ?? null}
@@ -256,6 +320,7 @@ export const Health = () => {
                   activeCalories={session?.active_calories ?? null}
                   totalCalories={session?.total_calories ?? null}
                   isLoading={isLoading}
+                  lastSyncedAt={session?.fetched_at ?? null}
                 />
               </div>
             </LayoutBlock>
@@ -290,6 +355,7 @@ export const Health = () => {
                   restingHR={session?.resting_hr ?? null}
                   spo2={session?.spo2_avg ?? null}
                   isLoading={isLoading}
+                  lastSyncedAt={session?.fetched_at ?? null}
                 />
               </div>
             </LayoutBlock>

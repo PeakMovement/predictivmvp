@@ -108,88 +108,68 @@ export const useWearableSync = (): WearableSyncState => {
 
       console.log('[WearableSync] Starting sync for user:', user.id);
 
-      const { data: edgeResult, error: edgeError } = await supabase.functions.invoke('fetch-oura-auto', {
-        body: { user_id: user.id },
+      // Detect which devices are connected
+      const { data: tokens } = await supabase
+        .from("wearable_tokens")
+        .select("scope")
+        .eq("user_id", user.id);
+
+      const scopes = tokens?.map(t => t.scope) ?? [];
+
+      if (scopes.length === 0) {
+        throw new Error("No wearable devices connected. Please connect one in Settings.");
+      }
+
+      const deviceNames: Record<string, string> = { oura: "Oura Ring", garmin: "Garmin", polar: "Polar" };
+      const invocations: Array<{ scope: string; promise: Promise<any> }> = scopes.flatMap(scope => {
+        if (scope === "oura") return [{ scope, promise: supabase.functions.invoke("fetch-oura-data", { body: { user_id: user.id } }) }];
+        if (scope === "garmin") return [{ scope, promise: supabase.functions.invoke("fetch-garmin-data", { body: { user_id: user.id } }) }];
+        return [];
       });
 
-      if (edgeError) {
-        console.error('[WearableSync] Edge function error:', edgeError);
-        
-        // Parse error message
-        let errorMessage = edgeError.message || "Sync failed";
-        
-        if (edgeError.context?.body) {
-          try {
-            const errorBody = typeof edgeError.context.body === 'string'
-              ? JSON.parse(edgeError.context.body)
-              : edgeError.context.body;
-            if (errorBody.error) {
-              errorMessage = errorBody.error;
-            }
-          } catch (e) {
-            // Ignore parse errors
-          }
-        }
+      const results = await Promise.allSettled(invocations.map(i => i.promise));
+      const succeeded = results.map((r, i) => r.status === "fulfilled" ? invocations[i].scope : null).filter(Boolean);
+      const failed = results.map((r, i) => r.status === "rejected" ? invocations[i].scope : null).filter(Boolean);
 
-        throw new Error(errorMessage);
-      }
+      console.log('[WearableSync] Sync results — succeeded:', succeeded, 'failed:', failed);
 
-      if (!edgeResult?.success) {
-        const errorMsg = edgeResult?.error || "Sync failed with unknown error";
-        throw new Error(errorMsg);
-      }
-
-      const usersProcessed = edgeResult.users_processed || 0;
-      const entriesSynced = edgeResult.total_entries || 0;
-      const fetchedEndpoints = edgeResult.fetched_endpoints || [];
-
-      console.log('[WearableSync] Sync result:', { usersProcessed, entriesSynced, fetchedEndpoints });
-
-      if (usersProcessed === 0) {
-        throw new Error("No Oura Ring connected. Please connect in Settings.");
-      }
-
-      // Update local state
-      const now = new Date();
-      setLastSync(now);
-      localStorage.setItem('wearable_last_sync', now.toISOString());
-      
-      // Dispatch refresh event for other components
-      window.dispatchEvent(new CustomEvent('wearable_trends_refresh'));
-
-      // Show appropriate toast
-      if (entriesSynced === 0 || fetchedEndpoints.length === 0) {
-        toast({
-          title: "No New Data",
-          description: "Your Oura data is already up to date. New data typically appears in the morning.",
-        });
-      } else {
-        toast({
-          title: "Sync Complete",
-          description: `Synced ${entriesSynced} day(s) from ${fetchedEndpoints.length} metric(s)`,
-        });
+      // Update local state on any success
+      if (succeeded.length > 0) {
+        const now = new Date();
+        setLastSync(now);
+        localStorage.setItem('wearable_last_sync', now.toISOString());
+        window.dispatchEvent(new CustomEvent('wearable_trends_refresh'));
       }
 
       // Recheck connection status
       await checkConnection();
+
+      const succeededLabels = succeeded.map(s => deviceNames[s!] ?? s).join(" & ");
+      const failedLabels = failed.map(s => deviceNames[s!] ?? s).join(" & ");
+
+      if (failed.length > 0 && succeeded.length === 0) {
+        throw new Error(`Couldn't reach ${failedLabels}. Check your connection or reconnect in Settings.`);
+      } else if (failed.length > 0) {
+        toast({
+          title: "Partially synced",
+          description: `${succeededLabels} updated. ${failedLabels} failed — try reconnecting in Settings.`,
+        });
+      } else {
+        toast({
+          title: "Sync Complete",
+          description: `${succeededLabels} data is up to date.`,
+        });
+      }
       
     } catch (error: any) {
       console.error("[WearableSync] Sync error:", error);
       
       const errorMessage = error.message || "Failed to sync wearable data";
       setLastError(errorMessage);
-      
-      // Map technical errors to user-friendly messages
-      let userMessage = errorMessage;
-      if (errorMessage.includes("No Oura") || errorMessage.includes("token")) {
-        userMessage = "Please connect your Oura Ring in Settings";
-      } else if (errorMessage.includes("expired") || errorMessage.includes("reconnect")) {
-        userMessage = "Your Oura connection expired. Please reconnect in Settings.";
-      }
 
       toast({
         title: "Sync Failed",
-        description: userMessage,
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {

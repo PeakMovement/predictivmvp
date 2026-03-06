@@ -531,14 +531,14 @@ Deno.serve(async (req: Request) => {
     // Trigger comprehensive trend calculations after sync
     try {
       const supabaseUrl = Deno.env.get("SUPABASE_URL");
-      const anonKey = Deno.env.get("SUPABASE_ANON_KEY");
-      
-      if (supabaseUrl && anonKey) {
+      const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+
+      if (supabaseUrl && serviceKey) {
         const trendResponse = await fetch(`${supabaseUrl}/functions/v1/calculate-oura-trends`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${anonKey}`,
+            "Authorization": `Bearer ${serviceKey}`,
           },
           body: JSON.stringify(targetUserId ? { user_id: targetUserId } : {}),
         });

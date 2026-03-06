@@ -1,12 +1,16 @@
-import { Battery, Heart, Activity, TrendingUp, Info } from "lucide-react";
+import { Battery, Heart, Activity, TrendingUp, Info, AlertTriangle } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { formatDistanceToNowStrict } from "date-fns";
+
+const STALE_HOURS = 24;
 
 interface OuraReadinessCardProps {
   score: number | null;
   restingHR: number | null;
   hrv: number | null;
   isLoading?: boolean;
+  lastSyncedAt?: string | null;
 }
 
 export const OuraReadinessCard = ({
@@ -14,7 +18,11 @@ export const OuraReadinessCard = ({
   restingHR,
   hrv,
   isLoading = false,
+  lastSyncedAt,
 }: OuraReadinessCardProps) => {
+  const lastSyncDate = lastSyncedAt ? new Date(lastSyncedAt) : null;
+  const hoursSinceSync = lastSyncDate ? (Date.now() - lastSyncDate.getTime()) / (1000 * 60 * 60) : null;
+  const isStale = hoursSinceSync !== null && hoursSinceSync > STALE_HOURS;
   if (isLoading) {
     return (
       <div className="bg-glass backdrop-blur-xl border border-glass-border rounded-2xl p-6 shadow-glass">
@@ -206,9 +214,20 @@ export const OuraReadinessCard = ({
       </div>
 
         <div className="mt-6 pt-6 border-t border-glass-border">
-          <p className="text-xs text-muted-foreground text-center">
-            Readiness indicates how prepared your body is for the day
-          </p>
+          {lastSyncDate ? (
+            <div className={`flex items-center justify-center gap-1.5 text-xs ${isStale ? "text-amber-500" : "text-muted-foreground"}`}>
+              {isStale && <AlertTriangle className="h-3 w-3 shrink-0" />}
+              <span>
+                {isStale
+                  ? `Data may be out of date — synced ${formatDistanceToNowStrict(lastSyncDate)} ago`
+                  : `Synced ${formatDistanceToNowStrict(lastSyncDate)} ago`}
+              </span>
+            </div>
+          ) : (
+            <p className="text-xs text-muted-foreground text-center">
+              Readiness indicates how prepared your body is for the day
+            </p>
+          )}
         </div>
       </div>
     </TooltipProvider>

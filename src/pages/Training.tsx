@@ -15,6 +15,7 @@ import {
   CalendarPlus,
   WifiOff,
 } from "lucide-react";
+import OuraSyncStatus from "@/components/OuraSyncStatus";
 import { cn } from "@/lib/utils";
 import { useState, useEffect } from "react";
 import React from "react";
@@ -206,6 +207,7 @@ export const Training = () => {
   const { trends, isLoading: trendsLoading, refresh, userId } = useTrainingTrends({ days: 7 });
   const [availableSources, setAvailableSources] = useState<string[]>([]);
   const [selectedSource, setSelectedSource] = useState<string>("oura");
+  const [isSyncing, setIsSyncing] = useState(false);
   const { data: wearableData, refetch: refetchWearable } = useWearableSessions(userId || undefined, selectedSource);
   const { runningDistance, isEstimated: runningDistanceIsEstimated, isLoading: runningDistanceLoading } = useGarminRunningDistance();
   const [suggestions, setSuggestions] = useState<ReturnType<typeof generateSuggestions>>([]);
@@ -345,6 +347,45 @@ export const Training = () => {
     }
   };
 
+  const handleSyncNow = async () => {
+    if (!userId) return;
+    setIsSyncing(true);
+    try {
+      const { data: tokens } = await supabase
+        .from("wearable_tokens")
+        .select("scope")
+        .eq("user_id", userId);
+
+      const scopes = tokens?.map(t => t.scope) ?? [];
+      if (scopes.length === 0) {
+        toast({ title: "No device connected", description: "Connect a wearable device in Settings first." });
+        return;
+      }
+
+      const invocations = scopes.flatMap((scope: string) => {
+        if (scope === "oura") return [supabase.functions.invoke("fetch-oura-data", { body: { user_id: userId } })];
+        if (scope === "garmin") return [supabase.functions.invoke("fetch-garmin-data", { body: { user_id: userId } })];
+        return [];
+      });
+
+      const results = await Promise.allSettled(invocations);
+      const failed = results.filter(r => r.status === "rejected").length;
+
+      if (failed === results.length) {
+        toast({ title: "Sync failed", description: "We couldn't sync your data. Try reconnecting in Settings.", variant: "destructive" });
+      } else if (failed > 0) {
+        toast({ title: "Partially synced", description: "Some data updated. Check Settings if a device is missing." });
+      } else {
+        toast({ title: "Sync complete", description: "Your training data is up to date." });
+      }
+      await Promise.all([refresh(), refetchWearable()]);
+    } catch {
+      toast({ title: "Sync failed", description: "We couldn't sync your data. Please try again.", variant: "destructive" });
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
   const handleRefresh = async () => {
     try {
       await Promise.all([
@@ -381,9 +422,14 @@ export const Training = () => {
                 <CustomizeLayoutButton onClick={openLayoutEditor} isCustomized={layoutCustomized} />
               </div>
               <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-2">Training Analytics</h1>
-              <p className="text-sm md:text-base text-muted-foreground">
-                {userId ? "Track your workouts and training progression" : "Please connect your Ōura Ring to see your data"}
+              <p className="text-sm md:text-base text-muted-foreground mb-4">
+                {userId ? "Track your workouts and training progression" : "Please connect a device to see your data"}
               </p>
+              {userId && (
+                <div className="flex justify-center">
+                  <OuraSyncStatus onSync={handleSyncNow} isSyncing={isSyncing} />
+                </div>
+              )}
             </div>
           </LayoutBlock>
 

@@ -1,11 +1,15 @@
-import { Activity, Heart, Droplets } from "lucide-react";
+import { Activity, Heart, Droplets, AlertTriangle } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { formatDistanceToNowStrict } from "date-fns";
+
+const STALE_HOURS = 24;
 
 interface OuraHRVCardProps {
   hrv: number | null;
   restingHR: number | null;
   spo2: number | null;
   isLoading?: boolean;
+  lastSyncedAt?: string | null;
 }
 
 export const OuraHRVCard = ({
@@ -13,7 +17,11 @@ export const OuraHRVCard = ({
   restingHR,
   spo2,
   isLoading = false,
+  lastSyncedAt,
 }: OuraHRVCardProps) => {
+  const lastSyncDate = lastSyncedAt ? new Date(lastSyncedAt) : null;
+  const hoursSinceSync = lastSyncDate ? (Date.now() - lastSyncDate.getTime()) / (1000 * 60 * 60) : null;
+  const isStale = hoursSinceSync !== null && hoursSinceSync > STALE_HOURS;
   if (isLoading) {
     return (
       <div className="bg-glass backdrop-blur-xl border border-glass-border rounded-2xl p-6 shadow-glass">
@@ -79,6 +87,16 @@ export const OuraHRVCard = ({
       </div>
 
       <div className="mt-6 pt-6 border-t border-glass-border">
+        {lastSyncDate && (
+          <div className={`flex items-center justify-center gap-1.5 text-xs mb-4 ${isStale ? "text-amber-500" : "text-muted-foreground"}`}>
+            {isStale && <AlertTriangle className="h-3 w-3 shrink-0" />}
+            <span>
+              {isStale
+                ? `Data may be out of date — synced ${formatDistanceToNowStrict(lastSyncDate)} ago`
+                : `Synced ${formatDistanceToNowStrict(lastSyncDate)} ago`}
+            </span>
+          </div>
+        )}
         <div className="grid grid-cols-2 gap-6">
           <div>
             <h4 className="text-xs font-medium text-muted-foreground mb-2">HRV</h4>

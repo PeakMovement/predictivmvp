@@ -1,6 +1,9 @@
-import { Moon, Clock, Zap, Info } from "lucide-react";
+import { Moon, Clock, Zap, Info, AlertTriangle } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { formatDistanceToNowStrict } from "date-fns";
+
+const STALE_HOURS = 24;
 
 interface OuraSleepCardProps {
   score: number | null;
@@ -10,6 +13,7 @@ interface OuraSleepCardProps {
   lightSleep: number | null;
   efficiency: number | null;
   isLoading?: boolean;
+  lastSyncedAt?: string | null;
 }
 
 export const OuraSleepCard = ({
@@ -20,7 +24,11 @@ export const OuraSleepCard = ({
   lightSleep,
   efficiency,
   isLoading = false,
+  lastSyncedAt,
 }: OuraSleepCardProps) => {
+  const lastSyncDate = lastSyncedAt ? new Date(lastSyncedAt) : null;
+  const hoursSinceSync = lastSyncDate ? (Date.now() - lastSyncDate.getTime()) / (1000 * 60 * 60) : null;
+  const isStale = hoursSinceSync !== null && hoursSinceSync > STALE_HOURS;
   if (isLoading) {
     return (
       <div className="bg-glass backdrop-blur-xl border border-glass-border rounded-2xl p-6 shadow-glass">
@@ -243,9 +251,20 @@ export const OuraSleepCard = ({
       )}
 
         <div className="mt-6 pt-6 border-t border-glass-border">
-          <p className="text-xs text-muted-foreground text-center">
-            Sleep score measures the quality and restorative value of your rest
-          </p>
+          {lastSyncDate ? (
+            <div className={`flex items-center justify-center gap-1.5 text-xs ${isStale ? "text-amber-500" : "text-muted-foreground"}`}>
+              {isStale && <AlertTriangle className="h-3 w-3 shrink-0" />}
+              <span>
+                {isStale
+                  ? `Data may be out of date — synced ${formatDistanceToNowStrict(lastSyncDate)} ago`
+                  : `Synced ${formatDistanceToNowStrict(lastSyncDate)} ago`}
+              </span>
+            </div>
+          ) : (
+            <p className="text-xs text-muted-foreground text-center">
+              Sleep score measures the quality and restorative value of your rest
+            </p>
+          )}
         </div>
       </div>
     </TooltipProvider>

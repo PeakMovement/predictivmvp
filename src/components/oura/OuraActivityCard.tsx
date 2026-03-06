@@ -1,6 +1,9 @@
-import { Zap, Footprints, Flame, Info } from "lucide-react";
+import { Zap, Footprints, Flame, Info, AlertTriangle } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { formatDistanceToNowStrict } from "date-fns";
+
+const STALE_HOURS = 24;
 
 interface OuraActivityCardProps {
   score: number | null;
@@ -8,6 +11,7 @@ interface OuraActivityCardProps {
   activeCalories: number | null;
   totalCalories: number | null;
   isLoading?: boolean;
+  lastSyncedAt?: string | null;
 }
 
 export const OuraActivityCard = ({
@@ -16,7 +20,11 @@ export const OuraActivityCard = ({
   activeCalories,
   totalCalories,
   isLoading = false,
+  lastSyncedAt,
 }: OuraActivityCardProps) => {
+  const lastSyncDate = lastSyncedAt ? new Date(lastSyncedAt) : null;
+  const hoursSinceSync = lastSyncDate ? (Date.now() - lastSyncDate.getTime()) / (1000 * 60 * 60) : null;
+  const isStale = hoursSinceSync !== null && hoursSinceSync > STALE_HOURS;
   if (isLoading) {
     return (
       <div className="bg-glass backdrop-blur-xl border border-glass-border rounded-2xl p-6 shadow-glass">
@@ -188,9 +196,20 @@ export const OuraActivityCard = ({
       </div>
 
         <div className="mt-6 pt-6 border-t border-glass-border">
-          <p className="text-xs text-muted-foreground text-center">
-            Activity score measures your daily movement and training load
-          </p>
+          {lastSyncDate ? (
+            <div className={`flex items-center justify-center gap-1.5 text-xs ${isStale ? "text-amber-500" : "text-muted-foreground"}`}>
+              {isStale && <AlertTriangle className="h-3 w-3 shrink-0" />}
+              <span>
+                {isStale
+                  ? `Data may be out of date — synced ${formatDistanceToNowStrict(lastSyncDate)} ago`
+                  : `Synced ${formatDistanceToNowStrict(lastSyncDate)} ago`}
+              </span>
+            </div>
+          ) : (
+            <p className="text-xs text-muted-foreground text-center">
+              Activity score measures your daily movement and training load
+            </p>
+          )}
         </div>
       </div>
     </TooltipProvider>

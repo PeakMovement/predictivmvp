@@ -1,12 +1,17 @@
 import { formatDistanceToNowStrict } from "date-fns";
 import { useOuraTokenStatus } from "@/hooks/useOuraTokenStatus";
-import { CheckCircle2, Circle, AlertTriangle, WifiOff } from "lucide-react";
+import { CheckCircle2, Circle, AlertTriangle, WifiOff, RefreshCw, Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
 const STALE_HOURS = 24;
 
-const OuraSyncStatus = () => {
+interface OuraSyncStatusProps {
+  onSync?: () => void;
+  isSyncing?: boolean;
+}
+
+const OuraSyncStatus = ({ onSync, isSyncing = false }: OuraSyncStatusProps) => {
   const { isConnected: ouraConnected, lastSync: ouraLastSync, errorCode } = useOuraTokenStatus();
   const [garminConnected, setGarminConnected] = useState(false);
   const [garminLastSync, setGarminLastSync] = useState<Date | null>(null);
@@ -87,6 +92,18 @@ const OuraSyncStatus = () => {
       <div className="flex items-center gap-1.5">
         {getStatusIcon()}
         <span className={tokenExpired ? "text-amber-500" : undefined}>{getDeviceText()}</span>
+        {onSync && (
+          <button
+            onClick={onSync}
+            disabled={isSyncing}
+            title="Sync now"
+            className="ml-1 p-1 rounded hover:bg-muted/30 transition-colors disabled:opacity-50"
+          >
+            {isSyncing
+              ? <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />
+              : <RefreshCw className="h-3 w-3 text-muted-foreground" />}
+          </button>
+        )}
       </div>
       {syncText && (
         <span className={syncColor}>{syncText}</span>

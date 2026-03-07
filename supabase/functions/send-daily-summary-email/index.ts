@@ -2,6 +2,9 @@ import { Resend } from "https://esm.sh/resend@2.0.0";
 import { createClient } from "npm:@supabase/supabase-js@2";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
+const FROM_ADDRESS = Deno.env.get("RESEND_FROM") || "Predictiv <onboarding@resend.dev>";
+// When set, all emails are redirected to this address (for testing with unverified domain)
+const TO_OVERRIDE = Deno.env.get("RESEND_TO_OVERRIDE") || null;
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -195,16 +198,17 @@ Deno.serve(async (req) => {
         });
 
         // ── SEND ─────────────────────────────────────────────────────────────
-        console.log(`[send-daily-summary-email] Sending to ${user.email}`);
+        const deliverTo = TO_OVERRIDE || user.email;
+        console.log(`[send-daily-summary-email] Sending to ${deliverTo}${TO_OVERRIDE ? ` (override; actual user: ${user.email})` : ""}`);
 
         const emailRes = await resend.emails.send({
-          from: "Predictiv <onboarding@resend.dev>",
-          to: [user.email],
-          subject,
+          from: FROM_ADDRESS,
+          to: [deliverTo],
+          subject: TO_OVERRIDE ? `[${user.email}] ${subject}` : subject,
           html: emailHtml,
         });
 
-        console.log(`[send-daily-summary-email] Sent to ${user.email}:`, emailRes);
+        console.log(`[send-daily-summary-email] Sent to ${deliverTo}:`, emailRes);
 
         // ── LOG ───────────────────────────────────────────────────────────────
         await supabase.from("notification_log").insert({

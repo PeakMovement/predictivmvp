@@ -1,6 +1,4 @@
-import { useState, useEffect } from "react";
 import { Sparkles } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
 import { useLayoutCustomization } from "@/hooks/useLayoutCustomization";
 import { ProfileSettings } from "@/components/settings/ProfileSettings";
 import { TonePreferenceSettings } from "@/components/settings/TonePreferenceSettings";
@@ -18,8 +16,23 @@ interface SettingsProps {
 }
 
 export const Settings = ({ onNavigate }: SettingsProps) => {
-  const [showLayoutEditor, setShowLayoutEditor] = useState(false);
-  const { isSectionVisible } = useLayoutCustomization("profile");
+  const {
+    isEditing: isLayoutEditing,
+    editingSections,
+    isCustomized: layoutCustomized,
+    previewMode,
+    openEditor: openLayoutEditor,
+    closeEditor: closeLayoutEditor,
+    saveLayout,
+    resetToDefault,
+    toggleSectionVisibility,
+    toggleCollapseByDefault,
+    togglePreviewMode,
+    moveSectionUp,
+    moveSectionDown,
+    reorderSections,
+    isSectionVisible,
+  } = useLayoutCustomization("profile");
 
   return (
     <div className="container mx-auto px-4 py-8 pb-24 max-w-2xl">
@@ -31,7 +44,7 @@ export const Settings = ({ onNavigate }: SettingsProps) => {
             </div>
             <h1 className="text-3xl font-bold text-foreground">Settings</h1>
           </div>
-          <CustomizeLayoutButton pageId="profile" onClick={() => setShowLayoutEditor(true)} />
+          <CustomizeLayoutButton onClick={openLayoutEditor} isCustomized={layoutCustomized} />
         </div>
         <p className="text-muted-foreground">Manage your account and preferences</p>
       </div>
@@ -60,7 +73,23 @@ export const Settings = ({ onNavigate }: SettingsProps) => {
         <AccountSettings isSectionVisible={isSectionVisible} onNavigate={onNavigate} />
       </div>
 
-      <LayoutEditor open={showLayoutEditor} onOpenChange={setShowLayoutEditor} pageId="profile" />
+      {isLayoutEditing && (
+        <div className="mt-8">
+          <LayoutEditor
+            sections={editingSections}
+            previewMode={previewMode}
+            onSave={saveLayout}
+            onCancel={closeLayoutEditor}
+            onReset={resetToDefault}
+            onToggleVisibility={toggleSectionVisibility}
+            onToggleCollapseByDefault={toggleCollapseByDefault}
+            onTogglePreviewMode={togglePreviewMode}
+            onMoveUp={moveSectionUp}
+            onMoveDown={moveSectionDown}
+            onReorder={reorderSections}
+          />
+        </div>
+      )}
     </div>
   );
 };

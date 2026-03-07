@@ -198,7 +198,7 @@ Deno.serve(async (req) => {
         console.log(`[send-daily-summary-email] Sending to ${user.email}`);
 
         const emailRes = await resend.emails.send({
-          from: "Predictiv <yves@predictiv.app>",
+          from: "Predictiv <onboarding@resend.dev>",
           to: [user.email],
           subject,
           html: emailHtml,

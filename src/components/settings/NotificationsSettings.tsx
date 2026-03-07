@@ -168,7 +168,7 @@ export const NotificationsSettings = ({ isSectionVisible, onNavigate }: Notifica
               </div>
               <div className="space-y-4">
                 {[
-                  { key: "dailySummary" as const, label: "Daily Summary Email", desc: "Receive a morning health summary at 7:30am SA time", tip: "Get a comprehensive weekly report with insights on your performance" },
+                  { key: "dailySummary" as const, label: "Daily Briefing Email", desc: "Receive your Yves briefing by email each morning", tip: "Get your personalised daily briefing — readiness score, HRV vs baseline, and your one key action for the day" },
                   { key: "riskAlerts" as const, label: "Risk Alerts", desc: "Get notified when risk scores reach unsafe levels", tip: "Receive alerts when ACWR, strain, or recovery indicators suggest increased injury risk" },
                   { key: "aiCoachRecommendations" as const, label: "AI Coach Recommendations", desc: "Receive daily performance and recovery advice", tip: "Get personalized training and recovery recommendations based on your data" },
                 ].map(({ key, label, desc, tip }) => (

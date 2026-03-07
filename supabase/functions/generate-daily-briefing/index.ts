@@ -1076,6 +1076,15 @@ If any answer is "no" — revise before output.`;
         console.log(`[generate-daily-briefing] Briefing generated for user ${uid}, category: ${category}`);
         results.push({ user_id: uid, success: true });
 
+        // Fire-and-forget daily briefing email for full briefings only
+        if (category === 'full') {
+          supabase.functions
+            .invoke('send-daily-summary-email', { body: { user_id: uid } })
+            .catch((err: unknown) => {
+              console.warn(`[generate-daily-briefing] Email trigger failed for ${uid}:`, err);
+            });
+        }
+
       } catch (userError) {
         console.error(`[generate-daily-briefing] Error for user ${uid}:`, userError);
         results.push({ user_id: uid, success: false, error: userError instanceof Error ? userError.message : "Unknown error" });

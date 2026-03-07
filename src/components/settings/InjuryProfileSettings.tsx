@@ -27,7 +27,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
-import { useInjuryProfile, InjuryProfileInput } from '@/hooks/useInjuryProfile';
+import { useInjuryProfile, InjuryProfileInput, ClearanceMilestone } from '@/hooks/useInjuryProfile';
 
 const injurySchema = z.object({
   injury_type: z.enum(['muscle_strain', 'ligament_tear', 'fracture', 'surgery', 'spinal', 'tendinopathy', 'other']),

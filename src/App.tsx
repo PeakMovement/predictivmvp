@@ -19,7 +19,8 @@ import Login from "@/pages/Login";
 import Register from "@/pages/Register";
 import ForgotPassword from "@/pages/ForgotPassword";
 import ResetPassword from "@/pages/ResetPassword";
-import { Settings as SettingsIcon } from "lucide-react";
+import PractitionerRegister from "@/pages/PractitionerRegister";
+import { Settings as SettingsIcon, Stethoscope } from "lucide-react";
 import { SymptomCheckInSheet } from "@/components/symptoms/SymptomCheckInSheet";
 import { YvesChatSheet } from "@/components/YvesChatSheet";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -47,11 +48,12 @@ const SymptomCheckIn     = lazy(() => import("@/pages/SymptomCheckIn").then(m =>
 const PlanCompliance     = lazy(() => import("@/pages/PlanCompliance"));
 const Planner            = lazy(() => import("@/pages/Planner").then(m => ({ default: m.Planner })));
 const ProfileSetup       = lazy(() => import("@/pages/ProfileSetup").then(m => ({ default: m.ProfileSetup })));
-const AdminDashboard     = lazy(() => import("@/pages/AdminDashboard").then(m => ({ default: m.AdminDashboard })));
-const PersonalCanvas     = lazy(() => import("@/pages/PersonalCanvas"));
-const GoogleCalendarCallback = lazy(() => import("@/pages/GoogleCalendarCallback").then(m => ({ default: m.GoogleCalendarCallback })));
-const AlertHistory       = lazy(() => import("@/pages/AlertHistory"));
-const MetricsDashboard   = lazy(() => import("@/pages/MetricsDashboard"));
+const AdminDashboard          = lazy(() => import("@/pages/AdminDashboard").then(m => ({ default: m.AdminDashboard })));
+const PersonalCanvas          = lazy(() => import("@/pages/PersonalCanvas"));
+const GoogleCalendarCallback  = lazy(() => import("@/pages/GoogleCalendarCallback").then(m => ({ default: m.GoogleCalendarCallback })));
+const AlertHistory            = lazy(() => import("@/pages/AlertHistory"));
+const MetricsDashboard        = lazy(() => import("@/pages/MetricsDashboard"));
+const PractitionerDashboard   = lazy(() => import("@/pages/PractitionerDashboard").then(m => ({ default: m.PractitionerDashboard })));
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { staleTime: 0 } },
@@ -82,6 +84,7 @@ const TAB_PATHS: Record<string, string> = {
   "personal-canvas":    "/personal-canvas",
   "metrics-dashboard":  "/metrics-dashboard",
   "alert-history":      "/alert-history",
+  "practitioner":       "/practitioner",
 };
 
 const PATH_TO_TAB: Record<string, string> = Object.fromEntries(
@@ -92,6 +95,20 @@ const AuthenticatedApp = () => {
   const navigate  = useNavigate();
   const location  = useLocation();
   const activeTab = PATH_TO_TAB[location.pathname] ?? "dashboard";
+  const [isPractitioner, setIsPractitioner] = useState(false);
+
+  useEffect(() => {
+    // Check if this user has any practitioner_access rows as a practitioner
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (!user) return;
+      supabase
+        .from("practitioner_access" as any)
+        .select("id", { count: "exact", head: true })
+        .eq("practitioner_id", user.id)
+        .eq("is_active", true)
+        .then(({ count }) => { if ((count ?? 0) > 0) setIsPractitioner(true); });
+    });
+  }, []);
 
   const sessionTimeout = useSessionTimeout({
     onWarning: () => console.log("[App] Session expiring soon"),
@@ -134,6 +151,27 @@ const AuthenticatedApp = () => {
       />
       <div className="relative min-h-screen">
         <ThemeToggle />
+        {isPractitioner && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                onClick={() => handleNavigate("practitioner")}
+                className={cn(
+                  "fixed top-[calc(4rem+env(safe-area-inset-top))] right-[3.75rem] sm:right-[4.5rem] sm:top-20 z-50",
+                  "w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-glass backdrop-blur-xl border-glass-border touch-manipulation",
+                  "flex items-center justify-center",
+                  "hover:bg-glass-highlight hover:scale-110 active:scale-95",
+                  "transition-all duration-300 ease-out transform-gpu animate-fade-in",
+                )}
+                aria-label="Practitioner Dashboard"
+              >
+                <Stethoscope size={18} className="text-blue-400 drop-shadow-[0_0_8px_rgba(96,165,250,0.6)]" />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent><p>Practitioner Dashboard</p></TooltipContent>
+          </Tooltip>
+        )}
+
         <Tooltip>
           <TooltipTrigger asChild>
             <button
@@ -178,6 +216,7 @@ const AuthenticatedApp = () => {
               <Route path="/personal-canvas"    element={<PersonalCanvas />} />
               <Route path="/metrics-dashboard"  element={<MetricsDashboard />} />
               <Route path="/alert-history"      element={<AlertHistory />} />
+              <Route path="/practitioner"       element={<PractitionerDashboard />} />
               <Route path="*"                   element={<Navigate to="/dashboard" replace />} />
             </Routes>
           </Suspense>
@@ -271,9 +310,10 @@ const AppInner = () => {
     return (
       <Suspense fallback={<PageLoadingFallback />}>
         <Routes>
-          <Route path="/register"        element={<Register />} />
-          <Route path="/forgot-password" element={<ForgotPassword />} />
-          <Route path="*"                element={<Login />} />
+          <Route path="/register"                element={<Register />} />
+          <Route path="/practitioner/register"   element={<PractitionerRegister />} />
+          <Route path="/forgot-password"         element={<ForgotPassword />} />
+          <Route path="*"                        element={<Login />} />
         </Routes>
       </Suspense>
     );

@@ -7,6 +7,7 @@ import { NotificationsSettings } from "@/components/settings/NotificationsSettin
 import { AppearanceSettings } from "@/components/settings/AppearanceSettings";
 import { AccountSettings } from "@/components/settings/AccountSettings";
 import { InjuryProfileSettings } from "@/components/settings/InjuryProfileSettings";
+import { PractitionerAccessSettings } from "@/components/settings/PractitionerAccessSettings";
 import { LayoutBlock } from "@/components/layout/LayoutBlock";
 import { CustomizeLayoutButton } from "@/components/layout/CustomizeLayoutButton";
 import { LayoutEditor } from "@/components/layout/LayoutEditor";
@@ -64,6 +65,10 @@ export const Settings = ({ onNavigate }: SettingsProps) => {
 
         <LayoutBlock blockId="injuryProfile" displayName="Injury Profile" pageId="profile" size="standard" visible={isSectionVisible("injuryProfile")}>
           <InjuryProfileSettings />
+        </LayoutBlock>
+
+        <LayoutBlock blockId="practitionerAccess" displayName="Practitioner Access" pageId="profile" size="standard" visible={isSectionVisible("practitionerAccess")}>
+          <PractitionerAccessSettings />
         </LayoutBlock>
 
         <LayoutBlock blockId="appearance" displayName="Appearance" pageId="profile" size="standard" visible={isSectionVisible("appearance")}>

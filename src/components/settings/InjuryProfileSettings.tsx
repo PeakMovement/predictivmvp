@@ -137,7 +137,7 @@ export const InjuryProfileSettings = () => {
       target_return_date: data.target_return_date || null,
       current_phase: data.current_phase,
       is_active: true,
-      clearance_milestones: data.clearance_milestones,
+      clearance_milestones: data.clearance_milestones as ClearanceMilestone[],
     };
     await saveProfile(input);
   };

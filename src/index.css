@@ -266,15 +266,15 @@ All colors MUST be HSL.
   /* Enable proper scrolling */
   html {
     height: 100%;
-    overflow-x: hidden;
+    overflow-x: clip;
     overflow-y: scroll;
   }
 
   body {
     height: auto;
     overscroll-behavior-y: none;
-    overflow-x: hidden;
-    overflow-y: visible;
+    overflow-x: clip;
+    overflow-y: auto;
   }
 
   /* Allow bounce scroll on scrollable containers */

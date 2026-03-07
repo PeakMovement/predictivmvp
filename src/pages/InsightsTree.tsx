@@ -252,7 +252,7 @@ export const InsightsTree = ({ onNavigate }: { onNavigate: (tab: string) => void
   const hasRealData = insights.length > 0 && !insights[0]?.id?.includes('placeholder');
 
   return (
-    <div className="min-h-screen bg-slate-950 pb-[calc(6rem+env(safe-area-inset-bottom))] md:pb-32 overflow-hidden relative">
+    <div className="min-h-screen bg-slate-950 pb-[calc(6rem+env(safe-area-inset-bottom))] md:pb-32 overflow-x-hidden relative">
       {/* Animated Background */}
       <div className="fixed inset-0 -z-10 overflow-hidden">
         <div className="absolute top-0 left-1/4 w-96 h-96 bg-violet-500/10 rounded-full blur-3xl animate-pulse" />

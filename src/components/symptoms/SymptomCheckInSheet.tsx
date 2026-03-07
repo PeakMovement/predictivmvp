@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Dialog,
   DialogContent,
@@ -13,12 +14,13 @@ import { useHealthInterpretation } from "@/hooks/useHealthInterpretation";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Stethoscope, Brain, AlertTriangle, CheckCircle, Loader2, X } from "lucide-react";
+import { Stethoscope, Brain, AlertTriangle, CheckCircle, Loader2, X, UserRound } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { toast } from "@/hooks/use-toast";
 
 export function SymptomCheckInSheet() {
+  const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [latestCheckinId, setLatestCheckinId] = useState<string | null>(null);
@@ -186,6 +188,26 @@ export function SymptomCheckInSheet() {
                           Sources: {interpretation.data_sources_used.join(", ")}
                         </span>
                       </div>
+
+                      {interpretation.flagged_conditions && interpretation.flagged_conditions.length > 0 && (
+                        <div className="pt-3 border-t border-border/50">
+                          <p className="text-xs text-muted-foreground mb-2">
+                            Yves has flagged some concerns. Speaking with a professional may help.
+                          </p>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="w-full gap-2 border-amber-500/40 text-amber-400 hover:bg-amber-500/10"
+                            onClick={() => {
+                              setOpen(false);
+                              navigate("/help");
+                            }}
+                          >
+                            <UserRound className="h-4 w-4" />
+                            Consider speaking to a professional
+                          </Button>
+                        </div>
+                      )}
                     </div>
                   )}
                 </CardContent>

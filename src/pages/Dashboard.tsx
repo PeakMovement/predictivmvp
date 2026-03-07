@@ -23,6 +23,7 @@ import { LayoutBlock } from "@/components/layout/LayoutBlock";
 import { DashboardSkeleton } from "@/components/LoadingStates";
 import { PullToRefresh } from "@/components/PullToRefresh";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { HealthAnomalyBanner } from "@/components/dashboard/HealthAnomalyBanner";
 
 const WelcomeHeader = ({
   onCustomize,
@@ -295,6 +296,9 @@ export const Dashboard = () => {
                   </div>
                 </LayoutBlock>
               )}
+
+              {/* Health Anomaly Banner — shows when an unacknowledged high/critical anomaly exists */}
+              <HealthAnomalyBanner />
 
               {/* Daily Briefing - Now at the top */}
               <LayoutBlock

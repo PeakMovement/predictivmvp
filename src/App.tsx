@@ -132,7 +132,7 @@ const AuthenticatedApp = () => {
         onLogout={sessionTimeout.logout}
         onDismiss={sessionTimeout.dismissWarning}
       />
-      <div className="relative overflow-x-hidden overflow-y-auto min-h-screen">
+      <div className="relative min-h-screen">
         <ThemeToggle />
         <Tooltip>
           <TooltipTrigger asChild>

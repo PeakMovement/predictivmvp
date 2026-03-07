@@ -4,7 +4,7 @@ import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useWeeklyBriefings, WeeklyTheme, WeekIntent } from "@/hooks/useWeeklyBriefings";
-import { Calendar, CalendarDays, Sparkles, Target, Heart, Zap, Scale, RefreshCw, Shield, AlertCircle, CheckCircle2, Trophy } from "lucide-react";
+import { Calendar, CalendarDays, Sparkles, Target, Heart, Zap, Scale, RefreshCw, Shield, CircleAlert as AlertCircle, CircleCheck as CheckCircle2, Trophy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useLayoutCustomization } from "@/hooks/useLayoutCustomization";

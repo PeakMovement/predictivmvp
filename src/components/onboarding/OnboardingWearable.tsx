@@ -31,7 +31,7 @@ export const OnboardingWearable = ({}: OnboardingWearableProps) => {
 
       const [wearableRes, polarRes] = await Promise.all([
         supabase.from("wearable_tokens").select("scope").eq("user_id", user.id),
-        supabase.from("polar_tokens").select("id").eq("user_id", user.id).maybeSingle(),
+        supabase.from("polar_tokens" as any).select("id").eq("user_id", user.id).maybeSingle(),
       ]);
 
       const scopes = wearableRes.data?.map((r) => r.scope) ?? [];

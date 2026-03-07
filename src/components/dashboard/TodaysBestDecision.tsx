@@ -362,16 +362,6 @@ function TodaysBestDecision({ className }, ref) {
               )} />
             </button>
           </CollapsibleTrigger>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={handleRefresh}
-            disabled={isLoading}
-            className="ml-2 h-8 w-8"
-            title="Refresh guidance"
-          >
-            <RefreshCw className={cn("h-4 w-4", isLoading && "animate-spin")} />
-          </Button>
         </div>
 
         <CollapsibleContent>

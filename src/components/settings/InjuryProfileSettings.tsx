@@ -27,7 +27,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
-import { useInjuryProfile, InjuryProfileInput } from '@/hooks/useInjuryProfile';
+import { useInjuryProfile, InjuryProfileInput, ClearanceMilestone } from '@/hooks/useInjuryProfile';
 
 const injurySchema = z.object({
   injury_type: z.enum(['muscle_strain', 'ligament_tear', 'fracture', 'surgery', 'spinal', 'tendinopathy', 'other']),
@@ -137,7 +137,7 @@ export const InjuryProfileSettings = () => {
       target_return_date: data.target_return_date || null,
       current_phase: data.current_phase,
       is_active: true,
-      clearance_milestones: data.clearance_milestones,
+      clearance_milestones: data.clearance_milestones as ClearanceMilestone[],
     };
     await saveProfile(input);
   };

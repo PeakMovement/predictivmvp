@@ -516,6 +516,15 @@ Deno.serve(async (req) => {
     const coaching_mode: CoachingMode = classifyCoachingMode();
     console.log(`[yves-chat] Coaching mode: ${coaching_mode} for user ${user.id}`);
 
+    // ─── EDGE CASE FLAGS (for Task 7 — test all edge cases) ───────────────────
+    const daysToEvent = wellnessGoals?.target_date
+      ? Math.floor((new Date(wellnessGoals.target_date).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
+      : null;
+    const isPreCompetition = daysToEvent !== null && daysToEvent >= 0 && daysToEvent <= 14;
+    const injuryKeywords = ['pain', 'hurt', 'sore', 'ache', 'injury', 'injur', 'strain', 'sprain', 'twinge', 'discomfort', 'niggling', 'twinge'];
+    const queryLower = query.toLowerCase();
+    const hasInjuryFlagInQuestion = injuryKeywords.some(kw => queryLower.includes(kw));
+
     // ─── BUILD SYMPTOM CHECK-INS CONTEXT (NEW) ───────────────────────────────
     let symptomsContext = "";
     if (symptomCheckIns && symptomCheckIns.length > 0) {
@@ -715,6 +724,36 @@ Guidelines:
 - Do NOT provide medical advice—just show you care and remember
 ` : '';
 
+    // ─── NO DATA PROTOCOL (Task 7) ────────────────────────────────────────────
+    const noDataProtocol = !hasWearableData ? `
+═══ NO WEARABLE DATA PROTOCOL (MANDATORY) ═══
+The user has NO wearable data (Oura, Garmin, etc.) connected or synced.
+
+RULES:
+1. NEVER pretend you have data. Do NOT say "your HRV", "your sleep score", "your readiness" as if you have it.
+2. For questions that REQUIRE data (recovery, overtraining, sleep analysis, HRV, load) — be honest: "I don't have your wearable data yet. Connect your device in Settings and sync — then I can give you a proper answer."
+3. You MAY offer general wellness principles that don't rely on data (e.g. "Generally, 7-9h sleep supports recovery" or "Listen to your body when fatigued").
+4. Gently guide them to connect a device: "Once you connect your Oura Ring or Garmin in Settings, I'll be able to personalise this."
+5. Never give data-specific advice (e.g. "your ACWR suggests...") when no data exists.
+` : '';
+
+    // ─── PRE-COMPETITION PROTOCOL (Task 7) ────────────────────────────────────
+    const preCompetitionProtocol = isPreCompetition && daysToEvent !== null ? `
+═══ PRE-COMPETITION PROTOCOL (MANDATORY) ═══
+The user has an event in ${daysToEvent} days. Race/competition week context applies.
+
+RULES:
+1. Do NOT recommend hard or intense sessions. Prioritise freshness over fitness.
+2. Taper guidance: easy movement, short sharp efforts only if race is >3 days out, full rest day before race.
+3. If they ask "can I do one more hard session?" — advise against. "You've done the work. Now it's about staying fresh."
+4. Emphasise sleep, hydration, and low stress. No new stimuli.
+` : '';
+
+    // ─── INJURY FLAG IN QUESTION — extra emphasis (Task 7) ─────────────────────
+    const injuryFlagEmphasis = hasInjuryFlagInQuestion ? `
+NOTE: The user's question mentions pain, injury, or discomfort. Apply INJURY FLAG IN QUESTION PROTOCOL. Default to caution. Never suggest pushing through.
+` : '';
+
     // ─── SEND TO AI ───────────────────────────────────────────────────────────
     const ai = getAIProvider();
     let aiResponse;
@@ -755,10 +794,11 @@ Every response must connect to at least ONE of:
 - Their stress level or life context (e.g., "with elevated stress this week...")
 - Their hobbies or interests when making an analogy (keep it natural, not forced)
 
-═══ VAGUE QUESTION PROTOCOL ═══
-If the question is too broad to give precise, personalised advice — such as "Am I overtraining?", "What should I do today?", "Is this normal?", "How am I doing?" — ask EXACTLY ONE clarifying question before answering. Pick the single most useful unknown.
-Do NOT give generic advice instead. Ask first.
+═══ VAGUE QUESTION PROTOCOL (MANDATORY) ═══
+If the question is too broad to give precise, personalised advice — such as "Am I overtraining?", "What should I do today?", "Is this normal?", "How am I doing?", "Should I train?" — you MUST ask EXACTLY ONE clarifying question before answering. Pick the single most useful unknown.
+Do NOT give generic advice. Do NOT give a list of options. Ask ONE question first.
 Example: "Before I give you a useful answer — are you feeling physically exhausted, or is it more of a mental and motivational drag?"
+Example: "To give you a real answer — what specifically feels off? Your sleep, energy, or something else?"
 
 ═══ HARD TRUTH PROTOCOL ═══
 When data reveals something the user may not want to hear — they're overreaching, their ACWR is dangerously high, sleep has been chronically poor, injury risk is real — deliver the message fully and clearly, but lead with empathy.
@@ -780,6 +820,9 @@ REASSURING — post-alert, recovery phase, anxiety present: reduce tension, norm
 
 ${toneGuidance[coaching_mode]}
 ${symptomAcknowledgement}${nameInstruction}
+${noDataProtocol}
+${preCompetitionProtocol}
+${injuryFlagEmphasis}
 
 ═══ ADAPTIVE LENGTH ═══
 Simple factual question → 2–4 sentences max.
@@ -799,6 +842,19 @@ Never: "We detected", "The system flagged", "Your data shows", "Our analysis fou
 Always: "It looks like", "You've been trending toward", "What I'm seeing suggests"
 
 Symptoms override metrics. If symptoms are present and conflict with good-looking metrics, always default to safety guidance and explain the trade-off briefly: "Your readiness looks solid, but the [symptom] changes today's priority."
+
+═══ CONFLICTING SIGNALS PROTOCOL ═══
+When data points conflict (e.g. high readiness + high ACWR, good sleep + low HRV, optimal metrics + user says "something feels off"):
+1. Acknowledge BOTH signals explicitly.
+2. Default to the more cautious interpretation when in doubt.
+3. If the user reports subjective feelings that conflict with metrics, BELIEVE THE USER. Never dismiss "I feel exhausted" because numbers look fine.
+4. One clear recommendation: err on the side of recovery/safety.
+
+═══ INJURY FLAG IN QUESTION PROTOCOL ═══
+When the user's question mentions pain, soreness, injury, discomfort, or similar — even if not in their profile:
+1. Default to CAUTION. Never suggest pushing through.
+2. If they ask "should I train with [symptom]?" — recommend they check with their practitioner first, or suggest lower-risk alternatives.
+3. Never say "you should be fine" when pain/symptom is mentioned. Err on the side of rest or modified activity.
 
 INJURY PROFILE RULE (NON-NEGOTIABLE):
 When an active injury profile is present in context with load restrictions, you MUST:

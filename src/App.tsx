@@ -132,15 +132,15 @@ const AuthenticatedApp = () => {
         onLogout={sessionTimeout.logout}
         onDismiss={sessionTimeout.dismissWarning}
       />
-      <div className="relative overflow-hidden min-h-screen">
+      <div className="relative overflow-x-hidden min-h-screen">
         <ThemeToggle />
         <Tooltip>
           <TooltipTrigger asChild>
             <button
               onClick={() => handleNavigate("settings")}
               className={cn(
-                "fixed top-[80px] right-6 z-50",
-                "w-12 h-12 rounded-xl bg-glass backdrop-blur-xl border-glass-border",
+                "fixed top-[calc(4rem+env(safe-area-inset-top))] right-4 sm:right-6 sm:top-20 z-50",
+                "w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-glass backdrop-blur-xl border-glass-border touch-manipulation",
                 "flex items-center justify-center",
                 "hover:bg-glass-highlight hover:scale-110 active:scale-95",
                 "transition-all duration-300 ease-out transform-gpu animate-fade-in",
@@ -172,7 +172,7 @@ const AuthenticatedApp = () => {
               <Route path="/symptom-checkin"    element={<SymptomCheckIn />} />
               <Route path="/settings"           element={<Settings onNavigate={handleNavigate} />} />
               <Route path="/insights-tree"      element={<InsightsTree onNavigate={handleNavigate} />} />
-              <Route path="/yves-insights"      element={<div className="container mx-auto px-4 py-8 pb-24"><YvesChat /></div>} />
+              <Route path="/yves-insights"      element={<div className="container mx-auto px-4 py-4 sm:py-8 pb-nav-safe overflow-x-hidden"><YvesChat /></div>} />
               <Route path="/profile-setup"      element={<ProfileSetup />} />
               <Route path="/admin-dashboard"    element={<AdminDashboard />} />
               <Route path="/personal-canvas"    element={<PersonalCanvas />} />

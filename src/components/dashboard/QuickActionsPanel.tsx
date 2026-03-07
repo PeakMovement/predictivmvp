@@ -148,15 +148,15 @@ export const QuickActionsPanel = () => {
 
   return (
     <>
-      <Card className="p-6 bg-card/50 backdrop-blur-xl border-border/50">
-        <h3 className="text-lg font-semibold text-foreground mb-4">Quick Actions</h3>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+      <Card className="p-4 sm:p-6 bg-card/50 backdrop-blur-xl border-border/50">
+        <h3 className="text-base sm:text-lg font-semibold text-foreground mb-4">Quick Actions</h3>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3">
           {actions.map((action) => {
             const Icon = action.icon;
             const content = (
               <div
                 className={`
-                  flex flex-col items-center justify-center p-4 rounded-lg
+                  flex flex-col items-center justify-center p-3 sm:p-4 rounded-lg min-h-[72px] sm:min-h-0
                   ${action.bgColor} ${action.hoverColor}
                   transition-all duration-200 cursor-pointer
                   hover:scale-105 active:scale-95

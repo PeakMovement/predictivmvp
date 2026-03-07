@@ -266,6 +266,7 @@ All colors MUST be HSL.
   /* Prevent iOS bounce scroll on body */
   html, body {
     overscroll-behavior-y: none;
+    overflow-x: hidden;
   }
 
   /* Allow bounce scroll on scrollable containers */

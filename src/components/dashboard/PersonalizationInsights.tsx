@@ -102,9 +102,9 @@ export function PersonalizationInsights() {
   };
 
   return (
-    <Card>
+    <Card className="overflow-hidden">
       <Collapsible open={isOpen} onOpenChange={setIsOpen}>
-        <CardHeader>
+        <CardHeader className="p-4 sm:p-6">
           <CollapsibleTrigger asChild>
             <button className="w-full text-left group">
               <CardTitle className="flex items-center gap-2">
@@ -123,7 +123,7 @@ export function PersonalizationInsights() {
         </CardHeader>
 
         <CollapsibleContent>
-          <CardContent className="space-y-6">
+          <CardContent className="space-y-6 p-4 pt-0 sm:p-6 sm:pt-0">
             {loading ? (
               <p className="text-sm text-muted-foreground">Loading personalization data...</p>
             ) : !profile ? (

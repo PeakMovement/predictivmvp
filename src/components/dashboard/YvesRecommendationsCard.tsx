@@ -86,8 +86,8 @@ export function YvesRecommendationsCard({ recommendations, isLoading, dataMaturi
 
   return (
     <Card className="bg-glass backdrop-blur-xl border-glass-border shadow-glass">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
+      <CardHeader className="p-4 sm:p-6">
+        <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
           <Lightbulb className="h-5 w-5 text-primary" />
           🎯 Yves Recommendations
         </CardTitle>
@@ -95,7 +95,7 @@ export function YvesRecommendationsCard({ recommendations, isLoading, dataMaturi
           AI-powered actions based on your health data
         </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-3">
+      <CardContent className="space-y-3 p-4 pt-0 sm:p-6 sm:pt-0">
         {recommendations.length === 0 ? (
           <div className="text-center py-6 space-y-2">
             <Lightbulb className="h-10 w-10 text-muted-foreground/40 mx-auto mb-3" />
@@ -245,7 +245,7 @@ function RecommendationItem({ recommendation, categoryLabel, categoryIcon, prior
         feedbackGiven === 'followed' && "border-l-4 border-l-emerald-500 border-emerald-500/30 bg-emerald-500/5"
       )}>
         <CollapsibleTrigger asChild>
-          <button className="w-full p-3 flex items-center justify-between gap-3 text-left hover:bg-muted/30 transition-colors rounded-lg">
+          <button className="w-full p-3 sm:p-4 flex items-center justify-between gap-2 sm:gap-3 text-left hover:bg-muted/30 transition-colors rounded-lg touch-manipulation">
             <div className="flex items-center gap-3 min-w-0 flex-1">
               <span className="text-lg shrink-0">{categoryIcon}</span>
               <div className="min-w-0 flex-1">
@@ -261,7 +261,7 @@ function RecommendationItem({ recommendation, categoryLabel, categoryIcon, prior
                   )}
                 </div>
                 {!isOpen && (
-                  <p className="text-xs text-muted-foreground truncate mt-0.5">
+                  <p className="text-xs text-muted-foreground line-clamp-2 sm:truncate mt-0.5">
                     {preview}
                   </p>
                 )}
@@ -282,7 +282,7 @@ function RecommendationItem({ recommendation, categoryLabel, categoryIcon, prior
 
             {/* Why this matters tooltip + PDF download */}
             {recommendation.reasoning && (
-              <div className="flex items-center gap-4">
+              <div className="flex flex-wrap items-center gap-2 sm:gap-4">
                 <TooltipProvider>
                   <Tooltip>
                     <TooltipTrigger asChild>
@@ -305,7 +305,7 @@ function RecommendationItem({ recommendation, categoryLabel, categoryIcon, prior
 
             {/* Feedback buttons */}
             {!feedbackGiven && (
-              <div className="flex items-center gap-2 pt-2 border-t border-border/50">
+              <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-border/50">
                 <span className="text-xs text-muted-foreground mr-2">Was this helpful?</span>
                 <Button
                   variant="ghost"

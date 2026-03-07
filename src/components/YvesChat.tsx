@@ -19,9 +19,14 @@ import { SuggestedQuestions } from '@/components/yves/SuggestedQuestions';
 import { VoiceInput } from '@/components/yves/VoiceInput';
 import { queryYves, getInsightHistory, getLovableAICredits, clearChatHistory, type InsightHistoryItem, type LovableAICredits } from '@/api/yves';
 import { useToast } from '@/hooks/use-toast';
+import { cn } from '@/lib/utils';
 import { Loader2, Send, Sparkles, Info, Activity, Trash2 } from 'lucide-react';
 
-export function YvesChat() {
+interface YvesChatProps {
+  compact?: boolean;
+}
+
+export function YvesChat({ compact = false }: YvesChatProps) {
   const [query, setQuery] = useState('');
   const [loading, setLoading] = useState(false);
   const [insights, setInsights] = useState<InsightHistoryItem[]>([]);
@@ -247,65 +252,72 @@ export function YvesChat() {
   };
 
   return (
-    <div className="w-full max-w-4xl mx-auto space-y-6">
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
+    <div className={cn("w-full mx-auto space-y-4 sm:space-y-6", !compact && "max-w-4xl")}>
+      <Card className={compact ? "border-0 shadow-none bg-transparent" : ""}>
+        <CardHeader className={compact ? "px-0 pt-0 pb-3" : ""}>
+          <div className={cn(
+            "flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3",
+            compact && "gap-2"
+          )}>
             <div className="flex items-center gap-2">
-              <Sparkles className="h-5 w-5 text-green-600" />
-              <CardTitle>Chat with Yves</CardTitle>
+              <Sparkles className="h-5 w-5 text-green-600 shrink-0" />
+              <CardTitle className={cn(compact && "text-base")}>Chat with Yves</CardTitle>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               {hasWearableData !== null && (
                 <Badge 
                   variant={hasWearableData ? "default" : "secondary"} 
-                  className="gap-1"
+                  className="gap-1 text-xs"
                 >
-                  <Activity className="h-3 w-3" />
-                  <span className="text-xs">
-                    {hasWearableData ? "Using latest health data ✓" : "No wearable data available"}
+                  <Activity className="h-3 w-3 shrink-0" />
+                  <span className={cn(compact && "hidden sm:inline")}>
+                    {hasWearableData ? (compact ? "Live data ✓" : "Using latest health data ✓") : (compact ? "No data" : "No wearable data available")}
                   </span>
                 </Badge>
               )}
               {renderCreditsBadge()}
             </div>
           </div>
-          <CardDescription>
-            Ask me anything about your health, training, nutrition, or recovery. I have access to your complete health profile and recent wearable data.
-          </CardDescription>
+          {!compact && (
+            <CardDescription>
+              Ask me anything about your health, training, nutrition, or recovery. I have access to your complete health profile and recent wearable data.
+            </CardDescription>
+          )}
         </CardHeader>
-        <CardContent>
+        <CardContent className={compact ? "px-0 pb-0" : ""}>
           <div className="flex flex-col gap-3">
             <Textarea
               placeholder="Ask Yves: How should I adjust my training based on my recent metrics?"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               onKeyDown={handleKeyDown}
-              className="min-h-[100px] resize-none"
+              className={cn("resize-none", compact ? "min-h-[88px] text-base" : "min-h-[100px]")}
               disabled={loading}
             />
-            <div className="flex justify-between items-center">
-              <VoiceInput
-                onTranscript={handleVoiceTranscript}
-                disabled={loading}
-              />
-              <Button
-                onClick={handleSubmit}
-                disabled={loading || !query.trim()}
-                className="gap-2"
-              >
-                {loading ? (
-                  <>
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    Thinking...
-                  </>
-                ) : (
-                  <>
-                    <Send className="h-4 w-4" />
-                    Send
-                  </>
-                )}
-              </Button>
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
+              <div className="flex items-center justify-between sm:justify-start gap-2">
+                <VoiceInput
+                  onTranscript={handleVoiceTranscript}
+                  disabled={loading}
+                />
+                <Button
+                  onClick={handleSubmit}
+                  disabled={loading || !query.trim()}
+                  className="gap-2 flex-1 sm:flex-initial"
+                >
+                  {loading ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Thinking...
+                    </>
+                  ) : (
+                    <>
+                      <Send className="h-4 w-4" />
+                      Send
+                    </>
+                  )}
+                </Button>
+              </div>
             </div>
           </div>
         </CardContent>

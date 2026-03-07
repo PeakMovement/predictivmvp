@@ -153,7 +153,7 @@ export function SuggestedQuestions({ onSelectQuestion, disabled }: SuggestedQues
   }
 
   return (
-    <Card className="p-4">
+    <Card className="p-4 overflow-hidden">
       <div className="flex items-center gap-2 mb-3">
         <Lightbulb className="h-4 w-4 text-primary" />
         <h3 className="text-sm font-medium">Suggested Questions</h3>
@@ -163,7 +163,7 @@ export function SuggestedQuestions({ onSelectQuestion, disabled }: SuggestedQues
           <Button
             key={index}
             variant="outline"
-            className="text-left justify-start h-auto py-2 px-3"
+            className="text-left justify-start h-auto py-2.5 px-3 w-full sm:w-auto min-h-[44px] touch-manipulation"
             onClick={() => onSelectQuestion(suggestion)}
             disabled={disabled}
           >

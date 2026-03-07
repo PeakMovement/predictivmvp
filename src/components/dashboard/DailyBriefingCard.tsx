@@ -94,11 +94,11 @@ export function DailyBriefingCard({
 
   return (
     <Card className="animate-fade-in bg-glass backdrop-blur-xl border-glass-border shadow-glass">
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Sparkles className="h-5 w-5 text-primary" />
-            <CardTitle>🧠 Yves Daily Briefing</CardTitle>
+      <CardHeader className="p-4 sm:p-6">
+        <div className="flex items-start sm:items-center justify-between gap-3">
+          <div className="flex items-center gap-2 min-w-0">
+            <Sparkles className="h-5 w-5 text-primary shrink-0" />
+            <CardTitle className="text-base sm:text-lg truncate">🧠 Yves Daily Briefing</CardTitle>
           </div>
           <Button
             variant="ghost"
@@ -106,6 +106,7 @@ export function DailyBriefingCard({
             onClick={() => { onRefresh(); trainingFocusRef.current?.refresh(); }}
             disabled={isGenerating}
             title="Refresh briefing"
+            className="h-9 w-9 shrink-0 touch-manipulation"
           >
             {isGenerating ? (
               <Loader2 className="h-4 w-4 animate-spin" />
@@ -121,7 +122,7 @@ export function DailyBriefingCard({
           </CardDescription>
         )}
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-4 p-4 pt-0 sm:p-6 sm:pt-0">
         {/* Personal Context Section */}
         <PersonalContextChips className="pb-2 border-b border-border/50" />
         
@@ -191,7 +192,7 @@ function CollapsibleSection({ title, icon, preview, children, variant = "default
           : "border-border bg-card/50"
       )}>
         <CollapsibleTrigger asChild>
-          <button className="w-full p-3 flex items-center justify-between gap-3 text-left hover:bg-muted/30 transition-colors rounded-lg">
+          <button className="w-full p-3 sm:p-4 flex items-center justify-between gap-2 sm:gap-3 text-left hover:bg-muted/30 transition-colors rounded-lg touch-manipulation">
             <div className="flex items-center gap-2 min-w-0 flex-1">
               <div className={cn(
                 "shrink-0",
@@ -207,7 +208,7 @@ function CollapsibleSection({ title, icon, preview, children, variant = "default
                   {title}
                 </div>
                 {!isOpen && (
-                  <p className="text-xs text-muted-foreground truncate mt-0.5">
+                  <p className="text-xs text-muted-foreground line-clamp-2 sm:truncate mt-0.5">
                     {preview}
                   </p>
                 )}

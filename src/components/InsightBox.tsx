@@ -15,14 +15,14 @@ export function InsightBox({ query, response, timestamp }: InsightBoxProps) {
   const formattedResponse = formatYvesResponse(response);
 
   return (
-    <Card className="mb-4">
+    <Card className="mb-4 overflow-hidden">
       <CardHeader className="pb-3">
         <div className="flex items-start gap-3">
           <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900">
             <MessageSquare className="h-4 w-4 text-blue-600 dark:text-blue-400" />
           </div>
           <div className="flex-1">
-            <CardTitle className="text-base font-semibold text-gray-900 dark:text-gray-100">
+            <CardTitle className="text-base font-semibold text-gray-900 dark:text-gray-100 break-words">
               {query}
             </CardTitle>
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{timeAgo}</p>
@@ -35,7 +35,7 @@ export function InsightBox({ query, response, timestamp }: InsightBoxProps) {
             <Bot className="h-4 w-4 text-green-600 dark:text-green-400" />
           </div>
           <div className="flex-1">
-            <div className="rounded-lg bg-gray-50 dark:bg-gray-800 p-5">
+            <div className="rounded-lg bg-gray-50 dark:bg-gray-800 p-4 sm:p-5">
               <div className="text-sm text-gray-700 dark:text-gray-300 prose prose-sm dark:prose-invert max-w-none">
                 <ReactMarkdown
                   components={{

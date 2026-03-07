@@ -195,8 +195,8 @@ export const RiskScoreCard = () => {
   }
 
   return (
-    <div className="bg-glass backdrop-blur-xl border border-glass-border rounded-2xl p-6 shadow-glass hover:bg-glass-highlight transition-all duration-300">
-      <div className="flex items-center justify-between mb-4">
+    <div className="bg-glass backdrop-blur-xl border border-glass-border rounded-2xl p-4 sm:p-6 shadow-glass hover:bg-glass-highlight transition-all duration-300">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
         <div className="flex items-center gap-3">
           <div className={cn(
             "w-10 h-10 rounded-lg flex items-center justify-center border",
@@ -244,22 +244,22 @@ export const RiskScoreCard = () => {
       </div>
 
       {/* Contributing Factors */}
-      <div className="mt-4 grid grid-cols-3 gap-2 text-center">
-        <div className="bg-glass/30 rounded-lg p-2">
+      <div className="mt-4 grid grid-cols-3 gap-2 sm:gap-3 text-center">
+        <div className="bg-glass/30 rounded-lg p-2 sm:p-3 min-w-0">
           <p className="text-xs text-muted-foreground">ACWR</p>
           <p className={cn(
             "text-sm font-semibold",
             metrics.acwr > 1.5 ? "text-red-400" : metrics.acwr > 1.3 ? "text-yellow-400" : "text-foreground"
           )}>{metrics.acwr.toFixed(2)}</p>
         </div>
-        <div className="bg-glass/30 rounded-lg p-2">
+        <div className="bg-glass/30 rounded-lg p-2 sm:p-3 min-w-0">
           <p className="text-xs text-muted-foreground">Strain</p>
           <p className={cn(
             "text-sm font-semibold",
             metrics.strain > 150 ? "text-red-400" : metrics.strain > 100 ? "text-yellow-400" : "text-foreground"
           )}>{metrics.strain.toFixed(0)}</p>
         </div>
-        <div className="bg-glass/30 rounded-lg p-2">
+        <div className="bg-glass/30 rounded-lg p-2 sm:p-3 min-w-0">
           <p className="text-xs text-muted-foreground">Fatigue</p>
           <p className={cn(
             "text-sm font-semibold",

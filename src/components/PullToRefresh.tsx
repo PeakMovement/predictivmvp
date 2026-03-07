@@ -27,10 +27,7 @@ export function PullToRefresh({
   const handleTouchStart = (e: TouchEvent) => {
     if (disabled || refreshing) return;
 
-    const container = containerRef.current;
-    if (!container) return;
-
-    if (container.scrollTop === 0) {
+    if (window.scrollY === 0) {
       setPullStartY(e.touches[0].clientY);
     }
   };
@@ -38,8 +35,7 @@ export function PullToRefresh({
   const handleTouchMove = (e: TouchEvent) => {
     if (disabled || refreshing || pullStartY === 0) return;
 
-    const container = containerRef.current;
-    if (!container || container.scrollTop > 0) {
+    if (window.scrollY > 0) {
       setPullStartY(0);
       setPullDown(0);
       return;
@@ -97,7 +93,7 @@ export function PullToRefresh({
   return (
     <div
       ref={containerRef}
-      className="relative h-full overflow-y-auto scrollable-content"
+      className="relative min-h-screen scrollable-content"
       role="region"
       aria-label="Scrollable content with pull-to-refresh"
     >

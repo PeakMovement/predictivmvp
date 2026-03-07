@@ -142,14 +142,24 @@ export const Dashboard = () => {
         if (profile?.full_name) {
           setUserName(profile.full_name.split(' ')[0]);
         } else {
-          // Fallback: user_profile.name written by onboarding
+          // Fallback 1: user_profile.name written by onboarding
           const { data: userProfile } = await supabase
             .from('user_profile')
             .select('name')
             .eq('user_id', user.id)
             .maybeSingle();
+
           if (userProfile?.name) {
             setUserName(userProfile.name.split(' ')[0]);
+          } else {
+            // Fallback 2: auth user metadata (Google OAuth / email sign-up)
+            const metaName: string | undefined =
+              user.user_metadata?.full_name ||
+              user.user_metadata?.name ||
+              user.user_metadata?.display_name;
+            if (metaName) {
+              setUserName(metaName.split(' ')[0]);
+            }
           }
         }
       } catch (error) {

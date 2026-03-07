@@ -759,7 +759,8 @@ NOTE: The user's question mentions pain, injury, or discomfort. Apply INJURY FLA
     let aiResponse;
 
     // ─── BUILD NAME PERSONALIZATION INSTRUCTION ────────────────────────────
-    const userName = userProfile?.name?.split(' ')[0] || null;
+    const memoryPreferredName = memoryBank?.find((m: { memory_key: string; memory_value: string }) => m.memory_key === 'preferred_name')?.memory_value;
+    const userName = userProfile?.name?.split(' ')[0] || memoryPreferredName?.split(' ')[0] || null;
     const nameInstruction = userName ? `
 NAME USAGE: The user's first name is "${userName}". Do NOT use it by default. Only use the name when it adds emotional or contextual value — such as praising consistency ("Your consistency has been impressive this week, ${userName}"), expressing concern, referencing a previously reported issue ("Given what you mentioned about your knee, ${userName}"), or acknowledging multi-day progress. Never start with the name. Never use it more than once per response. Never use it in purely technical statements.
 ` : '';

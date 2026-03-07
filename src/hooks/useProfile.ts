@@ -98,6 +98,17 @@ export const useProfile = () => {
           .eq("user_id", user.id);
 
         if (profileError) throw profileError;
+
+        // Mirror full_name to user_profile.name so AI functions (yves-chat,
+        // generate-daily-briefing) which read user_profile.name stay in sync
+        if (profileUpdates.full_name !== undefined) {
+          await supabase
+            .from("user_profile")
+            .upsert(
+              { user_id: user.id, name: profileUpdates.full_name },
+              { onConflict: "user_id" }
+            );
+        }
       }
 
       if (email && email !== user.email) {

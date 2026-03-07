@@ -810,7 +810,8 @@ This should feel natural and human. Do NOT provide medical advice - just acknowl
 
         if (category === 'full') {
           // Check if user has a name for personalization
-          const userName = userProfile?.name?.split(' ')[0] || null;
+          const memoryPreferredName = memoryBank?.find((m: { memory_key: string; memory_value: string }) => m.memory_key === 'preferred_name')?.memory_value;
+          const userName = userProfile?.name?.split(' ')[0] || memoryPreferredName?.split(' ')[0] || null;
           const nameInstruction = userName ? `
 NAME USAGE: The user's first name is "${userName}". Do NOT use it by default. Only use the name when it adds emotional or contextual value — such as praising consistency, expressing concern, referencing a previously reported issue, or acknowledging multi-day progress. Never start with the name. Never use it more than once per response. Never use it in purely technical statements.
 ` : '';

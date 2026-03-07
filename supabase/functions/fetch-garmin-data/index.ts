@@ -22,8 +22,11 @@ interface GarminDaily {
   minHeartRateInBeatsPerMinute?: number;
   maxHeartRateInBeatsPerMinute?: number;
   averageStressLevel?: number;
+  maxStressLevel?: number;
   stressQualifier?: string;
   distanceInMeters?: number;
+  moderateIntensityDurationInSeconds?: number;
+  vigorousIntensityDurationInSeconds?: number;
 }
 
 interface GarminSleep {
@@ -37,6 +40,11 @@ interface GarminSleep {
   overallSleepScoreValue?: number;
   overallSleepScoreQualifierKey?: string;
   validation?: string;
+  averageRespirationValue?: number;
+  lowestRespirationValue?: number;
+  highestRespirationValue?: number;
+  avgOvernightHrv?: number;
+  spO2AverageSleep?: number;
 }
 
 interface GarminActivity {
@@ -49,7 +57,52 @@ interface GarminActivity {
   averageHeartRateInBeatsPerMinute?: number;
   maxHeartRateInBeatsPerMinute?: number;
   calories?: number;
+  activeKilocalories?: number;
   averageRunningCadenceInStepsPerMinute?: number;
+}
+
+interface GarminBodyBatteryStat {
+  timestampInSeconds: number;
+  bodyBatteryLevel: number;
+}
+
+interface GarminBodyBattery {
+  summaryId: string;
+  calendarDate: string;
+  startTimestampInSeconds?: number;
+  endTimestampInSeconds?: number;
+  bodyBatteryStatsList?: GarminBodyBatteryStat[];
+}
+
+interface GarminPulseOx {
+  summaryId?: string;
+  calendarDate: string;
+  startTimestampInSeconds?: number;
+  endTimestampInSeconds?: number;
+  spO2Value?: number;
+  averageSpo2?: number;
+  lowestSpo2?: number;
+  onDemand?: boolean;
+}
+
+interface GarminRespiration {
+  summaryId?: string;
+  calendarDate: string;
+  startTimestampInSeconds?: number;
+  endTimestampInSeconds?: number;
+  avgWakingRespirationValue?: number;
+  avgSleepRespirationValue?: number;
+  avgTwentyFourHourRespirationValue?: number;
+  lowestRespirationValue?: number;
+  highestRespirationValue?: number;
+}
+
+interface GarminUserMetrics {
+  summaryId?: string;
+  calendarDate: string;
+  currentVo2Max?: number;
+  fitnessAge?: number;
+  trainingStatus?: string;
 }
 
 // ── Helper: fetch from Garmin API with error handling ────────────────
@@ -266,6 +319,10 @@ async function syncUserGarminData(
   let dailies: GarminDaily[] = [];
   let sleeps: GarminSleep[] = [];
   let activities: GarminActivity[] = [];
+  let bodyBatteries: GarminBodyBattery[] = [];
+  let pulseOxReadings: GarminPulseOx[] = [];
+  let respirationReadings: GarminRespiration[] = [];
+  let userMetrics: GarminUserMetrics[] = [];
   const apiErrors: string[] = [];
 
   // Build day boundaries (midnight-to-midnight UTC for each of the last 7 days)
@@ -283,10 +340,17 @@ async function syncUserGarminData(
 
     console.log(`[fetch-garmin-data] User ${userId} | Day ${dayDate}`);
 
-    const [dailiesResult, sleepsResult, activitiesResult] = await Promise.allSettled([
+    const [
+      dailiesResult, sleepsResult, activitiesResult,
+      bodyBatteryResult, pulseOxResult, respirationResult, userMetricsResult,
+    ] = await Promise.allSettled([
       garminFetch<GarminDaily>("/dailies", accessToken, params),
       garminFetch<GarminSleep>("/sleeps", accessToken, params),
       garminFetch<GarminActivity>("/activities", accessToken, params),
+      garminFetch<GarminBodyBattery>("/bodyBattery", accessToken, params),
+      garminFetch<GarminPulseOx>("/pulseOx", accessToken, params),
+      garminFetch<GarminRespiration>("/respiration", accessToken, params),
+      garminFetch<GarminUserMetrics>("/userMetrics", accessToken, params),
     ]);
 
     if (dailiesResult.status === "fulfilled") {
@@ -311,6 +375,20 @@ async function syncUserGarminData(
       } else {
         activities.push(...activitiesResult.value.data);
       }
+    }
+
+    // Non-fatal: body battery, pulse ox, respiration, user metrics may not be available for all devices
+    if (bodyBatteryResult.status === "fulfilled" && !bodyBatteryResult.value.error) {
+      bodyBatteries.push(...bodyBatteryResult.value.data);
+    }
+    if (pulseOxResult.status === "fulfilled" && !pulseOxResult.value.error) {
+      pulseOxReadings.push(...pulseOxResult.value.data);
+    }
+    if (respirationResult.status === "fulfilled" && !respirationResult.value.error) {
+      respirationReadings.push(...respirationResult.value.data);
+    }
+    if (userMetricsResult.status === "fulfilled" && !userMetricsResult.value.error) {
+      userMetrics.push(...userMetricsResult.value.data);
     }
   }
 
@@ -345,6 +423,10 @@ async function syncUserGarminData(
     daily?: GarminDaily;
     sleep?: GarminSleep;
     activities: GarminActivity[];
+    bodyBattery?: GarminBodyBattery;
+    pulseOx?: GarminPulseOx;
+    respiration?: GarminRespiration;
+    userMetrics?: GarminUserMetrics;
   }>();
 
   for (const d of dailies) {
@@ -377,18 +459,100 @@ async function syncUserGarminData(
     dateMap.set(activityDate, existing);
   }
 
+  // Body battery: keep last reading per date
+  for (const bb of bodyBatteries) {
+    if (!bb.calendarDate) continue;
+    const existing = dateMap.get(bb.calendarDate) || { activities: [] };
+    existing.bodyBattery = bb;
+    dateMap.set(bb.calendarDate, existing);
+  }
+
+  // Pulse Ox: keep most recent per date
+  for (const po of pulseOxReadings) {
+    if (!po.calendarDate) continue;
+    const existing = dateMap.get(po.calendarDate) || { activities: [] };
+    existing.pulseOx = po;
+    dateMap.set(po.calendarDate, existing);
+  }
+
+  // Respiration: keep per date
+  for (const r of respirationReadings) {
+    if (!r.calendarDate) continue;
+    const existing = dateMap.get(r.calendarDate) || { activities: [] };
+    existing.respiration = r;
+    dateMap.set(r.calendarDate, existing);
+  }
+
+  // User metrics (VO2max, training status): keep per date
+  for (const um of userMetrics) {
+    if (!um.calendarDate) continue;
+    const existing = dateMap.get(um.calendarDate) || { activities: [] };
+    existing.userMetrics = um;
+    dateMap.set(um.calendarDate, existing);
+  }
+
   // ── Build and upsert wearable_sessions rows ───────────────────────
   let sessionsInserted = 0;
 
   for (const [date, data] of dateMap) {
-    const { daily, sleep } = data;
+    const { daily, sleep, bodyBattery, pulseOx, respiration, userMetrics: um } = data;
 
     // Calculate total distance from activities for the day
     const totalDistanceM = data.activities.reduce((sum, a) => sum + (a.distanceInMeters || 0), 0);
-    // Calculate running distance (activities with "running" in the name/type)
+    // Calculate running distance
     const runningDistanceM = data.activities
       .filter(a => (a.activityName || a.activityType || "").toLowerCase().includes("run"))
       .reduce((sum, a) => sum + (a.distanceInMeters || 0), 0);
+
+    // Dominant activity (highest calories burned)
+    const dominantActivity = data.activities.length > 0
+      ? data.activities.reduce((best, a) =>
+          (a.activeKilocalories || a.calories || 0) > (best.activeKilocalories || best.calories || 0) ? a : best
+        )
+      : null;
+    const sessionType = dominantActivity
+      ? (dominantActivity.activityType || dominantActivity.activityName || null)
+      : null;
+
+    // Aggregate activity metrics for the day
+    const totalDurationS = data.activities.reduce((sum, a) => sum + (a.durationInSeconds || 0), 0);
+    const activitiesWithHR = data.activities.filter(a => a.averageHeartRateInBeatsPerMinute);
+    const avgHR = activitiesWithHR.length > 0
+      ? activitiesWithHR.reduce((sum, a) => sum + (a.averageHeartRateInBeatsPerMinute || 0), 0) / activitiesWithHR.length
+      : null;
+    const maxHR = data.activities.length > 0
+      ? Math.max(...data.activities.map(a => a.maxHeartRateInBeatsPerMinute || 0))
+      : null;
+    const totalActivityCals = data.activities.reduce((sum, a) => sum + (a.activeKilocalories || a.calories || 0), 0);
+
+    // Body battery: compute min/max/start/end from stats list
+    let bbStart: number | null = null;
+    let bbEnd: number | null = null;
+    let bbMin: number | null = null;
+    let bbMax: number | null = null;
+    if (bodyBattery?.bodyBatteryStatsList && bodyBattery.bodyBatteryStatsList.length > 0) {
+      const sorted = [...bodyBattery.bodyBatteryStatsList].sort((a, b) => a.timestampInSeconds - b.timestampInSeconds);
+      bbStart = sorted[0].bodyBatteryLevel;
+      bbEnd = sorted[sorted.length - 1].bodyBatteryLevel;
+      bbMin = Math.min(...sorted.map(s => s.bodyBatteryLevel));
+      bbMax = Math.max(...sorted.map(s => s.bodyBatteryLevel));
+    }
+
+    // SpO2: prefer explicit field, fall back to sleep-derived
+    const spo2 = pulseOx?.spO2Value ?? pulseOx?.averageSpo2 ?? sleep?.spO2AverageSleep ?? null;
+
+    // Respiration rate: prefer waking, fall back to 24h avg
+    const respirationRate = respiration?.avgWakingRespirationValue
+      ?? respiration?.avgTwentyFourHourRespirationValue
+      ?? sleep?.averageRespirationValue
+      ?? null;
+
+    // HRV: use sleep-derived if available
+    const hrv = sleep?.avgOvernightHrv ?? null;
+
+    // Training load: use active calories as proxy (consistent with trend calculation)
+    const activityCalTotal = daily?.activeKilocalories ?? 0;
+    const trainingLoad = activityCalTotal > 0 ? Math.round(activityCalTotal / 100 * 100) / 100 : null;
 
     const sessionRow = {
       user_id: userId,
@@ -397,9 +561,9 @@ async function syncUserGarminData(
       total_steps: daily?.steps ?? null,
       total_calories: daily?.totalKilocalories ?? null,
       active_calories: daily?.activeKilocalories ?? null,
-      activity_score: null as number | null, // Garmin doesn't have an activity score
+      activity_score: null as number | null,
       resting_hr: daily?.restingHeartRateInBeatsPerMinute ?? null,
-      hrv_avg: null as number | null, // Garmin HRV requires separate endpoint
+      hrv_avg: hrv,
       sleep_score: sleep?.overallSleepScoreValue ?? null,
       total_sleep_duration: sleep?.durationInSeconds
         ? Math.round(sleep.durationInSeconds / 60)
@@ -415,9 +579,30 @@ async function syncUserGarminData(
         : null,
       sleep_efficiency: null as number | null,
       readiness_score: null as number | null,
-      spo2_avg: null as number | null,
+      spo2_avg: spo2 ? Math.round(spo2 * 10) / 10 : null,
       total_distance_km: totalDistanceM > 0 ? Math.round(totalDistanceM / 10) / 100 : null,
       running_distance_km: runningDistanceM > 0 ? Math.round(runningDistanceM / 10) / 100 : null,
+      // New Garmin-specific fields
+      stress_avg: daily?.averageStressLevel ? Math.round(daily.averageStressLevel * 10) / 10 : null,
+      stress_max: daily?.maxStressLevel ? Math.round(daily.maxStressLevel * 10) / 10 : null,
+      intensity_minutes_moderate: daily?.moderateIntensityDurationInSeconds
+        ? Math.round(daily.moderateIntensityDurationInSeconds / 60)
+        : null,
+      intensity_minutes_vigorous: daily?.vigorousIntensityDurationInSeconds
+        ? Math.round(daily.vigorousIntensityDurationInSeconds / 60)
+        : null,
+      body_battery_start: bbStart,
+      body_battery_end: bbEnd,
+      body_battery_min: bbMin,
+      body_battery_max: bbMax,
+      respiration_rate_avg: respirationRate ? Math.round(respirationRate * 100) / 100 : null,
+      vo2_max: um?.currentVo2Max ?? null,
+      training_status: um?.trainingStatus ?? null,
+      session_type: sessionType,
+      avg_heart_rate: avgHR ? Math.round(avgHR * 10) / 10 : null,
+      max_heart_rate: maxHR && maxHR > 0 ? maxHR : null,
+      duration_minutes: totalDurationS > 0 ? Math.round(totalDurationS / 60) : null,
+      training_load: trainingLoad,
       fetched_at: new Date().toISOString(),
     };
 

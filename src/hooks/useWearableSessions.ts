@@ -16,6 +16,25 @@ interface WearableSession {
   total_steps: number | null;
   active_calories: number | null;
   total_calories: number | null;
+  total_distance_km: number | null;
+  running_distance_km: number | null;
+  duration_minutes: number | null;
+  avg_heart_rate: number | null;
+  max_heart_rate: number | null;
+  training_load: number | null;
+  session_type: string | null;
+  // Garmin-specific
+  body_battery_start: number | null;
+  body_battery_end: number | null;
+  body_battery_min: number | null;
+  body_battery_max: number | null;
+  stress_avg: number | null;
+  stress_max: number | null;
+  vo2_max: number | null;
+  training_status: string | null;
+  respiration_rate_avg: number | null;
+  intensity_minutes_moderate: number | null;
+  intensity_minutes_vigorous: number | null;
   fetched_at: string | null;
 }
 

@@ -506,59 +506,51 @@ export const Training = () => {
                     onSourceChange={setSelectedSource}
                     className="mb-4"
                   />
-                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 xl:grid-cols-6 gap-4">
-                    <CircularGauge
-                      title="Monotony"
-                      value={latestAvailableTrend?.monotony ? parseFloat(latestAvailableTrend.monotony.toFixed(1)) : 0}
-                      maxValue={5}
-                      unit="ratio"
-                    />
-                    <CircularGauge
-                      title="Strain"
-                      value={latestAvailableTrend?.strain ? Math.round(latestAvailableTrend.strain) : 0}
-                      maxValue={200}
-                      unit="TSS"
-                    />
-                    <CircularGauge
-                      title="Fatigue Index"
-                      value={fatigueIndex}
-                      maxValue={100}
-                      unit="%"
-                    />
-                    <CircularGauge
-                      title="Total Calories"
-                      value={wearableData?.total_calories ? Math.round(wearableData.total_calories) : 0}
-                      maxValue={4000}
-                      unit="kcal"
-                    />
-                    <CircularGauge
-                      title="Readiness"
-                      value={wearableData?.readiness_score ?? 0}
-                      maxValue={100}
-                      unit="%"
-                    />
+                  {/* ── Recovery ── */}
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-2">Recovery</p>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4 mb-6">
+                    <CircularGauge title="Readiness" value={wearableData?.readiness_score ?? 0} maxValue={100} unit="%" />
+                    <CircularGauge title="Body Battery" value={wearableData?.body_battery_end ?? wearableData?.body_battery_max ?? 0} maxValue={100} unit="%" />
+                    <CircularGauge title="Avg Stress" value={wearableData?.stress_avg ? Math.round(wearableData.stress_avg) : 0} maxValue={100} unit="" />
+                    <CircularGauge title="SpO₂" value={wearableData?.spo2_avg ? parseFloat(wearableData.spo2_avg.toFixed(1)) : 0} maxValue={100} unit="%" />
+                    <CircularGauge title="Respiration" value={wearableData?.respiration_rate_avg ? parseFloat(wearableData.respiration_rate_avg.toFixed(1)) : 0} maxValue={30} unit="brpm" />
+                    <CircularGauge title="Total Calories" value={wearableData?.total_calories ? Math.round(wearableData.total_calories) : 0} maxValue={4000} unit="kcal" />
+                  </div>
+
+                  {/* ── Performance ── */}
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-2">Performance</p>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4 mb-6">
+                    <CircularGauge title="VO₂ Max" value={wearableData?.vo2_max ? parseFloat(wearableData.vo2_max.toFixed(1)) : 0} maxValue={70} unit="mL/kg" />
+                    <CircularGauge title="Intensity Mod" value={wearableData?.intensity_minutes_moderate ?? 0} maxValue={150} unit="min" />
+                    <CircularGauge title="Intensity Vig" value={wearableData?.intensity_minutes_vigorous ?? 0} maxValue={75} unit="min" />
                     <div className="flex flex-col items-center gap-1">
                       <CircularGauge
-                        title="Running Distance"
+                        title="Running Dist"
                         value={runningDistanceLoading ? 0 : parseFloat(runningDistance.toFixed(1))}
                         maxValue={50}
                         unit="km"
                       />
                       {runningDistanceIsEstimated && !runningDistanceLoading && (
-                        <TooltipProvider>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <p className="text-[10px] text-muted-foreground text-center cursor-help underline decoration-dotted max-w-[100px] leading-tight">
-                                Estimated from steps
-                              </p>
-                            </TooltipTrigger>
-                            <TooltipContent side="bottom" className="max-w-[200px] text-center text-xs">
-                              GPS distance will show once your wearable syncs
-                            </TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <p className="text-[10px] text-muted-foreground text-center cursor-help underline decoration-dotted max-w-[100px] leading-tight">
+                              Estimated from steps
+                            </p>
+                          </TooltipTrigger>
+                          <TooltipContent side="bottom" className="max-w-[200px] text-center text-xs">
+                            GPS distance will show once your wearable syncs
+                          </TooltipContent>
+                        </Tooltip>
                       )}
                     </div>
+                  </div>
+
+                  {/* ── Load ── */}
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-2">Load</p>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
+                    <CircularGauge title="Monotony" value={latestAvailableTrend?.monotony ? parseFloat(latestAvailableTrend.monotony.toFixed(1)) : 0} maxValue={5} unit="ratio" />
+                    <CircularGauge title="Strain" value={latestAvailableTrend?.strain ? Math.round(latestAvailableTrend.strain) : 0} maxValue={200} unit="TSS" />
+                    <CircularGauge title="Fatigue Index" value={fatigueIndex} maxValue={100} unit="%" />
                   </div>
                 </LayoutBlock>
               </LayoutBlock>

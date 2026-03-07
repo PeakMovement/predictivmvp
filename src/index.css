@@ -268,11 +268,11 @@ All colors MUST be HSL.
     height: 100%;
     overflow-x: clip;
     overflow-y: scroll;
+    overscroll-behavior-y: none;
   }
 
   body {
-    height: auto;
-    overscroll-behavior-y: none;
+    min-height: 100%;
     overflow-x: clip;
     overflow-y: auto;
   }

@@ -53,7 +53,7 @@ interface EmptyStateProps {
  * <EmptyState
  *   icon={<Watch className="h-12 w-12" />}
  *   title="No wearable connected"
- *   description="Connect your Oura Ring or Polar device to start tracking."
+ *   description="Connect your wearable device to start tracking."
  *   action={{ label: "Connect Device", onClick: handleConnect }}
  * />
  * ```
@@ -136,7 +136,7 @@ export const EmptyWearableState = ({
     <EmptyState
       icon={<Watch className="h-12 w-12" />}
       title="No wearable connected"
-      description="Connect your Ōura Ring or Garmin device to start tracking your health metrics."
+      description="Connect your wearable device to start tracking your health metrics."
       action={{
         label: "Connect Device",
         onClick: onConnect,

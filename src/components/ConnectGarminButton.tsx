@@ -19,7 +19,7 @@ export const ConnectGarminButton = ({ isConnected, onConnectionChange }: Connect
       const { data: { user }, error: authError } = await supabase.auth.getUser();
 
       if (authError || !user) {
-        throw new Error("You must be logged in to connect your Garmin device");
+        throw new Error("You must be logged in to connect your wearable");
       }
 
       const { data, error } = await supabase.functions.invoke("garmin-auth-initiate");
@@ -33,7 +33,7 @@ export const ConnectGarminButton = ({ isConnected, onConnectionChange }: Connect
       console.error("[connectGarmin] Error:", err);
       toast({
         title: "Connection Failed",
-        description: err instanceof Error ? err.message : "Failed to start Garmin connection",
+        description: err instanceof Error ? err.message : "Failed to start wearable connection",
         variant: "destructive",
       });
       setIsLoading(false);
@@ -77,7 +77,7 @@ export const ConnectGarminButton = ({ isConnected, onConnectionChange }: Connect
           Connecting...
         </>
       ) : (
-        "Connect Garmin"
+        "Connect Wearable"
       )}
     </Button>
   );

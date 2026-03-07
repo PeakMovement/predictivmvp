@@ -56,7 +56,7 @@ export const OnboardingWearable = ({}: OnboardingWearableProps) => {
       if (error || !data?.auth_url) throw new Error(data?.error || "Failed to build Oura auth URL");
       window.location.href = data.auth_url;
     } catch (err) {
-      toast({ title: "Connection failed", description: err instanceof Error ? err.message : "Failed to start Oura connection", variant: "destructive" });
+      toast({ title: "Connection failed", description: err instanceof Error ? err.message : "Failed to start wearable connection", variant: "destructive" });
       setConnecting(null);
     }
   };
@@ -68,7 +68,7 @@ export const OnboardingWearable = ({}: OnboardingWearableProps) => {
       if (error || !data?.auth_url) throw new Error(data?.error || "Failed to initiate Garmin connection");
       window.location.href = data.auth_url;
     } catch (err) {
-      toast({ title: "Connection failed", description: err instanceof Error ? err.message : "Failed to start Garmin connection", variant: "destructive" });
+      toast({ title: "Connection failed", description: err instanceof Error ? err.message : "Failed to start wearable connection", variant: "destructive" });
       setConnecting(null);
     }
   };
@@ -93,7 +93,7 @@ export const OnboardingWearable = ({}: OnboardingWearableProps) => {
       if (!data?.auth_url) throw new Error("No authorization URL received");
       window.location.href = data.auth_url;
     } catch (err) {
-      toast({ title: "Connection failed", description: err instanceof Error ? err.message : "Failed to start Polar connection", variant: "destructive" });
+      toast({ title: "Connection failed", description: err instanceof Error ? err.message : "Failed to start wearable connection", variant: "destructive" });
       setConnecting(null);
     }
   };

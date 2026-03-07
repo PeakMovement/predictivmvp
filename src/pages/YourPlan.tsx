@@ -1017,7 +1017,7 @@ export const YourPlan = () => {
                             riskScore: 0
                           },
                           insightText: "Connect your wearable device to see personalized insights.",
-                          recommendations: [{ color: "blue", text: "Connect Oura Ring or other wearable to generate personalized recommendations." }]
+                          recommendations: [{ color: "blue", text: "Connect your wearable device to generate personalized recommendations." }]
                         });
                       }}
                       className="flex items-center gap-2 px-6 py-3 bg-primary/20 text-primary rounded-lg border border-primary/30 hover:bg-primary/30 hover:scale-105 active:scale-95 transition-all duration-200 font-medium shadow-glow"

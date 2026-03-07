@@ -53,7 +53,7 @@ export const DevicesSettings = ({ isSectionVisible }: DevicesSettingsProps) => {
   const connectOura = async () => {
     try {
       const { data: { user }, error: authError } = await supabase.auth.getUser();
-      if (authError || !user) throw new Error("You must be logged in to connect your Oura Ring");
+      if (authError || !user) throw new Error("You must be logged in to connect your wearable");
       const { data, error } = await supabase.functions.invoke("oura-auth-initiate", {
         body: { user_id: user.id },
       });
@@ -62,7 +62,7 @@ export const DevicesSettings = ({ isSectionVisible }: DevicesSettingsProps) => {
     } catch (err) {
       toast({
         title: "Connection Failed",
-        description: err instanceof Error ? err.message : "Failed to start Oura connection",
+        description: err instanceof Error ? err.message : "Failed to start wearable connection",
         variant: "destructive",
       });
     }
@@ -91,7 +91,7 @@ export const DevicesSettings = ({ isSectionVisible }: DevicesSettingsProps) => {
               </div>
               <div className="text-left flex-1">
                 <p className="font-medium text-foreground flex items-center gap-2">
-                  Oura Ring
+                  Wearable (Oura)
                   {isConnected && (
                     <span className="text-xs px-2 py-0.5 rounded-full bg-green-500/20 text-green-400 border border-green-500/30">
                       Connected
@@ -111,13 +111,13 @@ export const DevicesSettings = ({ isSectionVisible }: DevicesSettingsProps) => {
                     )}
                   </div>
                 ) : (
-                  <p className="text-xs text-muted-foreground">Connect and sync your Oura Ring data</p>
+                  <p className="text-xs text-muted-foreground">Connect and sync your wearable data</p>
                 )}
               </div>
             </div>
             {!isConnected && (
               <Button onClick={connectOura} size="sm" className="bg-primary/80 hover:bg-primary text-primary-foreground">
-                Connect Oura Ring
+                Connect Wearable
               </Button>
             )}
           </div>
@@ -133,7 +133,7 @@ export const DevicesSettings = ({ isSectionVisible }: DevicesSettingsProps) => {
               </div>
               <div className="text-left flex-1">
                 <p className="font-medium text-foreground flex items-center gap-2">
-                  Garmin
+                  Wearable (Garmin)
                   {isGarminConnected && (
                     <span className="text-xs px-2 py-0.5 rounded-full bg-green-500/20 text-green-400 border border-green-500/30">
                       Connected
@@ -141,7 +141,7 @@ export const DevicesSettings = ({ isSectionVisible }: DevicesSettingsProps) => {
                   )}
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  {isGarminConnected ? "Syncing your Garmin health data" : "Connect and sync your Garmin health data"}
+                  {isGarminConnected ? "Syncing your wearable data" : "Connect and sync your wearable data"}
                 </p>
               </div>
             </div>

@@ -218,7 +218,7 @@ export const Health = () => {
             </div>
             <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-2">Health Metrics</h1>
             <p className="text-sm md:text-base text-muted-foreground mb-4">
-              Based on your data from Ōura Ring & Garmin
+              Based on your wearable data
             </p>
             <div className="flex justify-center">
               <OuraSyncStatus onSync={handleSyncNow} isSyncing={isSyncing} />
@@ -258,7 +258,7 @@ export const Health = () => {
                 <InfoIcon className="h-4 w-4 text-blue-500" />
                 <AlertTitle className="text-blue-500">No Device Connected</AlertTitle>
                 <AlertDescription className="text-sm text-muted-foreground">
-                  Connect your Ōura Ring or Garmin device in Settings to start tracking your health data.
+                  Connect your wearable device in Settings to start tracking your health data.
                 </AlertDescription>
               </Alert>
             )}

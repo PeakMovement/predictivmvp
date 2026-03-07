@@ -173,12 +173,12 @@ export const Dashboard = () => {
     fetchUserProfile();
   }, []);
 
-  // Show confirmation toast ONCE when Oura Ring connection is detected
+  // Show confirmation toast ONCE when wearable connection is detected
   useEffect(() => {
     if (!tokenLoading && isConnected && !hasShownConnectionToast.current) {
       hasShownConnectionToast.current = true;
       toast({
-        title: "Oura Ring Connected",
+        title: "Wearable Connected",
         description: "Your data syncs automatically in the background",
       });
     }
@@ -259,7 +259,7 @@ export const Dashboard = () => {
 
           {!userId ? (
             <div className="text-center py-12 px-4 bg-glass backdrop-blur-xl border border-glass-border rounded-2xl">
-              <p className="text-muted-foreground mb-4">Please log in to view your Ōura Ring data</p>
+              <p className="text-muted-foreground mb-4">Please log in to view your wearable data</p>
               <p className="text-sm text-muted-foreground">Connect your account to see your metrics</p>
             </div>
           ) : (

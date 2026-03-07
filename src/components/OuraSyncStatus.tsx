@@ -50,8 +50,8 @@ const OuraSyncStatus = ({ onSync, isSyncing = false }: OuraSyncStatusProps) => {
   }, []);
 
   const connectedDevices: string[] = [];
-  if (ouraConnected) connectedDevices.push("Oura Ring");
-  if (garminConnected) connectedDevices.push("Garmin");
+  if (ouraConnected) connectedDevices.push("wearable");
+  if (garminConnected && !ouraConnected) connectedDevices.push("wearable");
 
   const latestSync = [ouraLastSync, garminLastSync]
     .filter(Boolean)
@@ -71,9 +71,9 @@ const OuraSyncStatus = ({ onSync, isSyncing = false }: OuraSyncStatusProps) => {
   };
 
   const getDeviceText = () => {
-    if (tokenExpired) return "Oura connection expired — reconnect in Settings";
-    if (connectedDevices.length === 0) return "No devices connected";
-    return connectedDevices.join(" & ");
+    if (tokenExpired) return "Wearable connection expired — reconnect in Settings";
+    if (connectedDevices.length === 0) return "No wearable connected";
+    return "Wearable connected";
   };
 
   const getSyncText = () => {

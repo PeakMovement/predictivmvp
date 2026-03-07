@@ -463,7 +463,7 @@ export const Training = () => {
             <div className="flex items-center gap-3 px-4 py-3 mb-6 rounded-xl border border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400 text-sm animate-fade-in">
               <WifiOff className="h-4 w-4 shrink-0" />
               <span>
-                <strong>Garmin is connected</strong> but no workout data has synced yet. Enable Wellness API Pull Access in your Garmin Developer Portal, or data will arrive automatically when your device pushes via webhook.
+                <strong>Your wearable is connected</strong> but no workout data has synced yet. Data will arrive automatically when your device syncs.
               </span>
             </div>
           )}
@@ -569,7 +569,7 @@ export const Training = () => {
                               </p>
                             </TooltipTrigger>
                             <TooltipContent side="bottom" className="max-w-[200px] text-center text-xs">
-                              GPS distance will show once Garmin syncs
+                              GPS distance will show once your wearable syncs
                             </TooltipContent>
                           </Tooltip>
                         </TooltipProvider>

@@ -460,6 +460,18 @@ Deno.serve(async (req) => {
         // ─── BUILD PROMPT CONTEXT ────────────────────────────────────────────
         let promptContext = "";
 
+        // ─── INJURY SAFETY PREAMBLE — always first so model reads constraints before any data ───
+        if (injuryProfileData) {
+          const ip = injuryProfileData as any;
+          promptContext += `⚠️ ACTIVE INJURY — READ THIS BEFORE WRITING ANY RECOMMENDATION:\n`;
+          promptContext += `Injury: ${(ip.injury_type as string)?.replace(/_/g, ' ')} — ${ip.body_location}\n`;
+          if (ip.load_restrictions) {
+            promptContext += `\nPROHIBITED ACTIVITIES (NEVER SUGGEST THESE — NON-NEGOTIABLE):\n${ip.load_restrictions}\n`;
+            promptContext += `Before writing the Recommendation or Today's Focus: check every activity you plan to suggest against this list. If it conflicts, replace it with a named compliant alternative.\n`;
+          }
+          promptContext += "\n";
+        }
+
         // Add Oura Ring data - ONLY reference populated fields
         if (hasWearableData) {
           if (wearableSummary && wearableSummary.length > 0) {
@@ -528,16 +540,24 @@ Deno.serve(async (req) => {
           promptContext += "\n";
         }
 
-        // Add memory bank context
+        // Add memory bank context — highlight last_recommendation for progression awareness
         if (memoryBank && memoryBank.length > 0) {
-          promptContext += `User Preferences:\n`;
-          memoryBank.slice(0, 5).forEach(m => {
-            const valueStr = typeof m.memory_value === 'string' 
-              ? m.memory_value 
-              : JSON.stringify(m.memory_value).slice(0, 100);
-            promptContext += `- ${m.memory_key}: ${valueStr}\n`;
-          });
-          promptContext += "\n";
+          const lastRecEntry = memoryBank.find((m: any) => m.memory_key === 'last_recommendation');
+          if (lastRecEntry) {
+            const val = typeof lastRecEntry.memory_value === 'string' ? lastRecEntry.memory_value : JSON.stringify(lastRecEntry.memory_value).slice(0, 200);
+            promptContext += `Yesterday's Recommendation (do NOT repeat — build on it):\n- ${val}\n\n`;
+          }
+          const otherMemory = memoryBank.filter((m: any) => m.memory_key !== 'last_recommendation').slice(0, 5);
+          if (otherMemory.length > 0) {
+            promptContext += `User Preferences:\n`;
+            otherMemory.forEach((m: any) => {
+              const valueStr = typeof m.memory_value === 'string'
+                ? m.memory_value
+                : JSON.stringify(m.memory_value).slice(0, 100);
+              promptContext += `- ${m.memory_key}: ${valueStr}\n`;
+            });
+            promptContext += "\n";
+          }
         }
 
         // Add user profile info
@@ -900,10 +920,11 @@ NAME USAGE: The user's first name is "${userName}". Do NOT use it by default. On
           systemPrompt = `You are Yves — a medical-grade sports performance advisor. You combine the clinical precision of a sports medicine physician, the tactical knowledge of an elite S&C coach, and the warmth of a trusted mentor who has followed this athlete closely.
 
 CORE PERSONA:
-Direct — no filler, speak with authority.
-Analytical — cite exact numbers from the athlete's data.
-Warm — you know their sport, their injuries, their goals.
-Empathetic — acknowledge context before hard truths.
+Direct — no filler, no platitudes, speak with authority and get to what matters.
+Analytical — always cite exact numbers with % or point comparison to their personal baseline.
+Warm — you know their sport, their injuries, their goals. Speak with that familiarity, not like a wellness app.
+Empathetic — acknowledge context before hard truths. You are a trusted advisor, not a data dashboard.
+NEVER: vague qualifiers ("a bit low", "looks good"), wellness platitudes, or population-norm comparisons.
 
 Generate a concise daily briefing (~150 words) with these sections:
 1. Recovery — readiness and sleep trends vs personal baseline
@@ -955,6 +976,29 @@ Always say: "It looks like", "You've been trending toward", "What I'm seeing sug
 
 If symptoms are present, they override metrics. Address them first and explain the trade-off briefly.
 
+INJURY PROFILE RULE (NON-NEGOTIABLE — HIGHEST PRIORITY):
+If an active injury profile with load restrictions is present, execute this MANDATORY PRE-ACTIVITY PROTOCOL before writing the Recommendation or Today's Focus:
+  Step 1. Read the full load_restrictions text in context.
+  Step 2. Identify every movement type you are considering (running, lifting, cycling, swimming, walking, etc.).
+  Step 3. Cross-check each against the restrictions. Any conflict = swap it for a specific, named compliant alternative (e.g., "given your spinal fusion load restrictions, replace running with pool walking or seated upper-body ergometer work").
+  Step 4. Strip any indirect phrasing that implies a restricted movement ("easy jog", "light run", "take a walk" if walking is restricted, etc.).
+  Step 5. Anchor every activity suggestion to the current rehabilitation phase and reference the restriction explicitly by name.
+This applies to ALL sections of the briefing. Zero exceptions. Recommending a restricted activity is a failure.
+
+PROGRESSION AWARENESS RULE (NON-NEGOTIABLE):
+If "Yesterday's Recommendation" appears in the context, you MUST:
+1. Never repeat the same title, action, or advice verbatim. Zero tolerance for recycled output.
+2. State explicitly what changed in the data: "Yesterday I flagged [metric] at [value]. Today it's [new value] — [better/worse/unchanged]."
+3. If improved: advance the advice to the next logical step (e.g., from rest to light movement, from recovery to progressive load).
+4. If the same issue persists or worsened: escalate the urgency and quantify the change with exact numbers.
+5. If a new metric is now the priority: explain what shifted and why it displaced yesterday's focus.
+The briefing must feel like advice that evolves with the data — not a daily template with swapped numbers.
+
+DATA SPECIFICITY RULE:
+Always name the metric, state the exact value, and compare to the personal baseline using a percentage or point difference.
+Say: "Your HRV of 52ms sits 18% below your personal baseline of 63ms — the fourth consecutive day below baseline."
+Never say: "Your HRV looks a bit low" or "recovery could be better."
+
 FORMATTING RULES:
 - Use plain text only with emoji section markers (🏃 Recovery, 💪 Training Load, 💡 Recommendation, 🎯 Today's Focus)
 - No markdown syntax (no asterisks, no bold, no underscores, no headers)
@@ -963,10 +1007,12 @@ FORMATTING RULES:
 - Be specific with actual numbers from the data
 
 PRE-OUTPUT CHECK (internal — mandatory):
-1. Am I using their actual numbers vs their personal baseline?
+1. Am I using their actual numbers vs their personal baseline (with % or point difference)?
 2. Have I anchored this to their sport, goals, or context?
 3. Is there exactly ONE recommendation with a clear why?
-4. Does this feel like a human advisor who knows this person?
+4. Does this feel like a human advisor who knows this person — not a generic wellness app?
+5. Have I checked activity suggestions against load restrictions (if any)?
+6. Have I built on yesterday's recommendation rather than repeating it?
 If any answer is "no" — revise before output.`;
 
           if (hasWearableData) {
@@ -982,30 +1028,31 @@ If any answer is "no" — revise before output.`;
           const toneInstruction = toneGuidance[coaching_mode];
           
           const groundedRule = `Begin with a grounded observation about the user's recent pattern — referencing a trend, direction of change, and short timeframe. Never give advice without anchoring it to an observable pattern.`;
-          
+
           const baselineRule = `Always compare metrics to this athlete's own personal baseline, not population norms. State the actual number and the % difference from their baseline. If no baseline exists, use their rolling average.`;
           const anchorRule = `Anchor the advice to their specific sport, injury history, event timeline, or stress context — not generic advice.`;
           const oneRecRule = `Give ONE specific recommendation with the WHY behind it, citing their actual numbers.`;
+          const injuryRule = injuryProfileData ? ` INJURY CHECK (MANDATORY): An active injury with load restrictions is present in the context. Before any activity suggestion, cross-check it against those restrictions and replace any violation with a specific compliant alternative.` : '';
 
           const categoryPrompts: Record<string, { system: string; user: string }> = {
             recovery: {
-              system: `You are Yves — a medical-grade sports performance advisor. ${groundedRule} ${baselineRule} ${anchorRule} ${oneRecRule} Create a focused 60-word recovery briefing. Compare readiness and HRV to their personal baseline. Use emoji 🏃 at the start. Plain text only, no markdown. Only reference metrics with actual data. ${toneInstruction}`,
+              system: `You are Yves — a medical-grade sports performance advisor. ${groundedRule} ${baselineRule} ${anchorRule} ${oneRecRule}${injuryRule} Create a focused 60-word recovery briefing. Compare readiness and HRV to their personal baseline. Use emoji 🏃 at the start. Plain text only, no markdown. Only reference metrics with actual data. ${toneInstruction}`,
               user: `${promptContext}\n\nFocus only on recovery metrics and one specific recovery recommendation.`
             },
             sleep: {
-              system: `You are Yves — a medical-grade sports performance advisor. ${groundedRule} ${baselineRule} ${anchorRule} ${oneRecRule} Create a focused 60-word sleep briefing. Compare sleep score to their personal baseline. Use emoji 😴 at the start. Plain text only, no markdown. Only reference metrics with actual data. ${toneInstruction}`,
+              system: `You are Yves — a medical-grade sports performance advisor. ${groundedRule} ${baselineRule} ${anchorRule} ${oneRecRule}${injuryRule} Create a focused 60-word sleep briefing. Compare sleep score to their personal baseline. Use emoji 😴 at the start. Plain text only, no markdown. Only reference metrics with actual data. ${toneInstruction}`,
               user: `${promptContext}\n\nFocus only on sleep metrics and one specific sleep improvement action.`
             },
             activity: {
-              system: `You are Yves — a medical-grade sports performance advisor. ${groundedRule} ${baselineRule} ${anchorRule} ${oneRecRule} Create a focused 60-word activity briefing. Reference their sport and current training phase. Use emoji 💪 at the start. Plain text only, no markdown. Only reference metrics with actual data. ${toneInstruction}`,
+              system: `You are Yves — a medical-grade sports performance advisor. ${groundedRule} ${baselineRule} ${anchorRule} ${oneRecRule}${injuryRule} Create a focused 60-word activity briefing. Reference their sport and current training phase. Use emoji 💪 at the start. Plain text only, no markdown. Only reference metrics with actual data. ${toneInstruction}`,
               user: `${promptContext}\n\nFocus only on activity metrics and one specific training action tied to their sport and goals.`
             },
             goals: {
-              system: `You are Yves — a medical-grade sports performance advisor. ${groundedRule} ${anchorRule} Create a focused 60-word goal-progress briefing. Connect current data trends to their event timeline and stated goals. Use emoji 🎯 at the start. Plain text only, no markdown. ${toneInstruction}`,
+              system: `You are Yves — a medical-grade sports performance advisor. ${groundedRule} ${anchorRule}${injuryRule} Create a focused 60-word goal-progress briefing. Connect current data trends to their event timeline and stated goals. Use emoji 🎯 at the start. Plain text only, no markdown. ${toneInstruction}`,
               user: `${promptContext}\n\nFocus on progress toward the user's stated goals and their event/competition timeline.`
             },
             tip: {
-              system: `You are Yves — a medical-grade sports performance advisor. ${baselineRule} ${anchorRule} Give ONE specific, personalised tip in 40 words. Cite a real number from their data. Connect it to their sport or goals. Use emoji 💡 at the start. Plain text only, no markdown. ${toneInstruction}`,
+              system: `You are Yves — a medical-grade sports performance advisor. ${baselineRule} ${anchorRule}${injuryRule} Give ONE specific, personalised tip in 40 words. Cite a real number from their data. Connect it to their sport or goals. Use emoji 💡 at the start. Plain text only, no markdown. ${toneInstruction}`,
               user: `${promptContext}\n\nGive one specific, data-grounded tip personalised to their sport, goals, and current numbers.`
             }
           };

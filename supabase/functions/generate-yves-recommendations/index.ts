@@ -282,6 +282,13 @@ Deno.serve(async (req) => {
       context += "\n";
     }
 
+    // Highlight last recommendation prominently for progression awareness
+    const lastRec = memoryBank?.find((m: any) => m.memory_key === 'last_recommendation');
+    if (lastRec) {
+      context += "## YESTERDAY'S RECOMMENDATION (progression awareness — do NOT repeat verbatim)\n";
+      context += `${lastRec.memory_value}\n\n`;
+    }
+
     // Training context from enhanced profile
     if (userContext?.training_profile && typeof userContext.training_profile === 'object') {
       const tp = userContext.training_profile as Record<string, unknown>;
@@ -325,6 +332,12 @@ Deno.serve(async (req) => {
           role: 'system',
           content: `You are Yves — a medical-grade sports performance advisor. You combine the clinical precision of a sports medicine physician, the tactical knowledge of an elite S&C coach, and the warmth of a trusted mentor who knows this athlete personally.
 
+CORE PERSONA:
+Direct — no filler, no wellness platitudes, speak with authority.
+Analytical — always cite exact numbers with % or point comparison to the personal baseline.
+Warm — you know their sport, their injuries, their goals. Not a generic app.
+NEVER: vague qualifiers ("a bit low", "could be better"), generic tips ("get more sleep"), or population-norm comparisons.
+
 PERSONAL BASELINE RULE (NON-NEGOTIABLE):
 Never compare metrics to population averages or generic norms. Always compare to THIS athlete's own established baseline.
 Correct: "Your HRV of 52ms sits 18% below your personal baseline of 63ms."
@@ -359,12 +372,22 @@ Never say "your data shows" or "we detected". Say "it looks like" or "your [metr
 SYMPTOMS OVERRIDE METRICS:
 If symptoms are present, the highest-priority recommendation must address them, even if other metrics look fine.
 
-INJURY PROFILE RULE (NON-NEGOTIABLE):
-If an active injury profile with load restrictions is present in the context, you MUST:
-1. Never recommend any activity that violates the stated load restrictions
-2. Anchor every recommendation to the current rehabilitation phase
-3. Use the category "injury" for at least one recommendation when an active injury profile exists
-4. Reference the specific load restrictions by name when relevant (e.g. "given your no-running restriction...")`
+INJURY PROFILE RULE (NON-NEGOTIABLE — HIGHEST PRIORITY):
+If an active injury profile with load restrictions is present, execute this MANDATORY PRE-ACTIVITY PROTOCOL before writing any recommendation:
+  Step 1. Read the full load_restrictions text in context.
+  Step 2. Identify every movement type you are considering for any of the 3 recommendations (running, lifting, cycling, swimming, walking, etc.).
+  Step 3. Cross-check each against the restrictions. Any conflict = replace it with a specific, named compliant alternative (e.g., "given your spinal fusion load restrictions, replace running with pool walking or seated upper-body ergometer work").
+  Step 4. Strip any indirect phrasing that implies a restricted movement ("go for a jog", "an easy run", "light walk" if walking is restricted, etc.).
+  Step 5. Use the category "injury" for at least one recommendation. Anchor every recommendation to the current rehabilitation phase and reference the specific restriction by name.
+Recommending a restricted activity in any of the 3 recommendations is a failure.
+
+PROGRESSION AWARENESS RULE (NON-NEGOTIABLE):
+If YESTERDAY'S RECOMMENDATION is present in the context, you MUST:
+1. Never repeat the same recommendation title or action verbatim. Zero tolerance for recycled output.
+2. State explicitly what changed in the data: "Yesterday I flagged [metric] at [value]. Today it's [new value] — [better/worse/unchanged]."
+3. If metrics improved: advance the advice to the next logical step (from rest to light movement, from recovery to progressive load).
+4. If the same issue persists or worsened: escalate the urgency with exact numbers and explain what the continued trend means.
+5. Connect at least one recommendation to the trajectory — the user must see that advice evolves with their data, not resets daily.`
         },
         { role: 'user', content: context }
       ],
@@ -398,6 +421,24 @@ If an active injury profile with load restrictions is present in the context, yo
         priority: rec.priority,
         source: "oura_sync",
       });
+    }
+
+    // Write today's key recommendations to memory_bank for tomorrow's progression awareness
+    if (recommendations.length > 0) {
+      const topRecs = recommendations
+        .sort((a: any, b: any) => {
+          const order: Record<string, number> = { high: 0, medium: 1, low: 2 };
+          return (order[a.priority] ?? 1) - (order[b.priority] ?? 1);
+        })
+        .slice(0, 2)
+        .map((r: any) => `[${r.category}] ${r.title}: ${r.actionText}`)
+        .join(' | ');
+      if (topRecs) {
+        await supabase.from("yves_memory_bank").upsert(
+          { user_id: userId, memory_key: 'last_recommendation', memory_value: topRecs },
+          { onConflict: 'user_id,memory_key' }
+        );
+      }
     }
 
     console.log(`[generate-yves-recommendations] [SUCCESS] Generated ${recommendations.length} recommendations for user ${userId}`);

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, ReactNode } from 'react';
-import { Loader2, ArrowDown } from 'lucide-react';
+import { Loader as Loader2, ArrowDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface PullToRefreshProps {

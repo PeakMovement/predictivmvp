@@ -50,6 +50,7 @@ Deno.serve(async (req) => {
       { data: symptomCheckIns },
       { data: memoryBank },
       { data: userContext },
+      { data: injuryProfileData },
     ] = await Promise.all([
       supabase.from("wearable_sessions").select("*").eq("user_id", userId).gte("date", sevenDaysAgoStr).order("date", { ascending: false }).limit(7),
       supabase.from("user_profile").select("*").eq("user_id", userId).maybeSingle(),
@@ -67,6 +68,7 @@ Deno.serve(async (req) => {
       supabase.from("symptom_check_ins").select("*").eq("user_id", userId).order("created_at", { ascending: false }).limit(5),
       supabase.from("yves_memory_bank").select("memory_key, memory_value").eq("user_id", userId),
       supabase.from("user_context_enhanced").select("*").eq("user_id", userId).maybeSingle(),
+      supabase.from("user_injury_profiles").select("*").eq("user_id", userId).eq("is_active", true).order("created_at", { ascending: false }).limit(1).maybeSingle(),
     ]);
 
     // ─── BUILD BASELINE LOOKUP ────────────────────────────────────────────────
@@ -216,6 +218,39 @@ Deno.serve(async (req) => {
       }
     }
 
+    // ── ACTIVE INJURY PROFILE (HIGHEST PRIORITY — READ BEFORE RECOMMENDING) ──
+    if (injuryProfileData) {
+      const ip = injuryProfileData as any;
+      const injuryDate = new Date(ip.injury_date);
+      const daysSince = Math.floor((Date.now() - injuryDate.getTime()) / (1000 * 60 * 60 * 24));
+      const phaseLabels: Record<string, string> = {
+        acute: 'Acute', sub_acute: 'Sub-Acute', rehabilitation: 'Rehabilitation',
+        return_to_sport: 'Return to Sport', full_clearance: 'Full Clearance'
+      };
+      context += "## ACTIVE INJURY PROFILE\n";
+      context += `Injury: ${ip.injury_type?.replace(/_/g, ' ')} — ${ip.body_location}\n`;
+      context += `Current Phase: ${phaseLabels[ip.current_phase] ?? ip.current_phase} (Day ${daysSince} of recovery)\n`;
+      if (ip.treating_practitioner_name) {
+        context += `Treating Practitioner: ${ip.treating_practitioner_name}`;
+        if (ip.treating_practitioner_type) context += ` (${ip.treating_practitioner_type.replace(/_/g, ' ')})`;
+        context += "\n";
+      }
+      if (ip.load_restrictions) {
+        context += `\n!!! LOAD RESTRICTIONS (MANDATORY — NEVER VIOLATE THESE IN ANY RECOMMENDATION) !!!\n`;
+        context += `${ip.load_restrictions}\n`;
+        context += `Every recommendation you generate MUST respect these restrictions. If a restriction says "no running", do not recommend running. If it says "max HR 140", cap all intensity at that threshold.\n`;
+      }
+      if (ip.target_return_date) {
+        const daysToReturn = Math.floor((new Date(ip.target_return_date).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+        context += `Target Return Date: ${ip.target_return_date} (${daysToReturn > 0 ? `${daysToReturn} days away` : 'overdue — check with practitioner'})\n`;
+      }
+      if (Array.isArray(ip.clearance_milestones) && ip.clearance_milestones.length > 0) {
+        const next = ip.clearance_milestones.find((m: any) => !m.achieved);
+        if (next) context += `Next Clearance Milestone: "${next.milestone}" (not yet achieved)\n`;
+      }
+      context += "\n";
+    }
+
     // Recent symptoms
     if (symptomCheckIns && symptomCheckIns.length > 0) {
       context += "## RECENT SYMPTOMS\n";
@@ -322,7 +357,14 @@ ANTI-SURVEILLANCE:
 Never say "your data shows" or "we detected". Say "it looks like" or "your [metric] suggests".
 
 SYMPTOMS OVERRIDE METRICS:
-If symptoms are present, the highest-priority recommendation must address them, even if other metrics look fine.`
+If symptoms are present, the highest-priority recommendation must address them, even if other metrics look fine.
+
+INJURY PROFILE RULE (NON-NEGOTIABLE):
+If an active injury profile with load restrictions is present in the context, you MUST:
+1. Never recommend any activity that violates the stated load restrictions
+2. Anchor every recommendation to the current rehabilitation phase
+3. Use the category "injury" for at least one recommendation when an active injury profile exists
+4. Reference the specific load restrictions by name when relevant (e.g. "given your no-running restriction...")`
         },
         { role: 'user', content: context }
       ],

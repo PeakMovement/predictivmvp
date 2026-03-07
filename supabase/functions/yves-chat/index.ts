@@ -273,6 +273,16 @@ Deno.serve(async (req) => {
       .eq("user_id", user.id)
       .maybeSingle();
 
+    // ─── LOAD ACTIVE INJURY PROFILE ───────────────────────────────────────────
+    const { data: injuryProfile } = await supabase
+      .from("user_injury_profiles")
+      .select("*")
+      .eq("user_id", user.id)
+      .eq("is_active", true)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
     // Build baseline lookup map
     const baselineMap: Record<string, number> = {};
     userBaselines?.forEach((b: any) => { baselineMap[b.metric] = Number(b.rolling_avg); });
@@ -470,13 +480,14 @@ Deno.serve(async (req) => {
         d.risk_zone === 'high-risk' || d.risk_zone === 'moderate-risk'
       );
       const hasActiveInjuries = userProfile?.injuries?.length > 0;
-      
+      const hasActiveInjuryProfile = !!(injuryProfile as any)?.is_active;
+
       // Check for overload from training trends
       const latestTrend = trainingTrends?.[0];
       const isOverloaded = latestTrend?.acwr !== null && latestTrend?.acwr > 1.5;
 
-      if (hasSevereSymptoms || hasPainSymptoms || hasHighRiskAnomalies || 
-          hasHighRiskDeviations || hasActiveInjuries || isOverloaded) {
+      if (hasSevereSymptoms || hasPainSymptoms || hasHighRiskAnomalies ||
+          hasHighRiskDeviations || hasActiveInjuries || hasActiveInjuryProfile || isOverloaded) {
         return 'rehab';
       }
 
@@ -610,6 +621,37 @@ ${anomaliesContext}
 ${deviationsContext}
 ${symptomsContext}
 
+${(() => {
+  if (!injuryProfile) return '';
+  const ip = injuryProfile as any;
+  const injuryDate = new Date(ip.injury_date);
+  const daysSince = Math.floor((Date.now() - injuryDate.getTime()) / (1000 * 60 * 60 * 24));
+  const phaseLabels: Record<string, string> = {
+    acute: 'Acute', sub_acute: 'Sub-Acute', rehabilitation: 'Rehabilitation',
+    return_to_sport: 'Return to Sport', full_clearance: 'Full Clearance'
+  };
+  let block = `\nACTIVE INJURY PROFILE (MANDATORY CONTEXT — READ BEFORE RESPONDING):\n`;
+  block += `Injury: ${ip.injury_type?.replace(/_/g, ' ')} — ${ip.body_location}\n`;
+  block += `Current Phase: ${phaseLabels[ip.current_phase] ?? ip.current_phase} (Day ${daysSince})\n`;
+  if (ip.treating_practitioner_name) {
+    block += `Treating Practitioner: ${ip.treating_practitioner_name}`;
+    if (ip.treating_practitioner_type) block += ` (${ip.treating_practitioner_type.replace(/_/g, ' ')})`;
+    block += `\n`;
+  }
+  if (ip.load_restrictions) {
+    block += `\n!!! LOAD RESTRICTIONS — NEVER VIOLATE IN ANY RESPONSE !!!\n${ip.load_restrictions}\n`;
+    block += `These are non-negotiable. Never suggest an activity that conflicts with these restrictions.\n`;
+  }
+  if (ip.target_return_date) {
+    const daysToReturn = Math.floor((new Date(ip.target_return_date).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+    block += `Target Return: ${ip.target_return_date} (${daysToReturn > 0 ? `${daysToReturn} days away` : 'overdue — advise practitioner check-in'})\n`;
+  }
+  if (Array.isArray(ip.clearance_milestones) && ip.clearance_milestones.length > 0) {
+    const next = (ip.clearance_milestones as any[]).find(m => !m.achieved);
+    if (next) block += `Next Milestone: "${next.milestone}" (not yet achieved)\n`;
+  }
+  return block;
+})()}
 RECENT CONVERSATION HISTORY:
 ${conversationHistory}
 
@@ -757,6 +799,13 @@ Never: "We detected", "The system flagged", "Your data shows", "Our analysis fou
 Always: "It looks like", "You've been trending toward", "What I'm seeing suggests"
 
 Symptoms override metrics. If symptoms are present and conflict with good-looking metrics, always default to safety guidance and explain the trade-off briefly: "Your readiness looks solid, but the [symptom] changes today's priority."
+
+INJURY PROFILE RULE (NON-NEGOTIABLE):
+When an active injury profile is present in context with load restrictions, you MUST:
+1. Never suggest any activity that violates the stated restrictions (e.g. if "no running" — never recommend running)
+2. Frame all advice around the current rehabilitation phase
+3. Reference the restrictions explicitly when relevant ("given your no-running restriction, here's an alternative...")
+4. Prioritise safety and recovery capacity over performance metrics
 
 ═══ MEMORY USE ═══
 Reference past patterns only when directly useful — not as a history lesson.

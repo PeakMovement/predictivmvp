@@ -9,6 +9,10 @@ import { RiskScoreCard } from "@/components/dashboard/RiskScoreCard";
 import { QuickActionsPanel } from "@/components/dashboard/QuickActionsPanel";
 import { useRefreshTrends } from "@/hooks/useTrendData";
 import { supabase } from "@/integrations/supabase/client";
+import { ReturnToSportCard } from "@/components/dashboard/ReturnToSportCard";
+import { BaselineProgressCard } from "@/components/dashboard/BaselineProgressCard";
+import { useInjuryProfile } from "@/hooks/useInjuryProfile";
+import { useDataMaturity } from "@/hooks/useDataMaturity";
 import { useOuraTokenStatus } from "@/hooks/useOuraTokenStatus";
 import { useToast } from "@/hooks/use-toast";
 import { useYvesIntelligence } from "@/hooks/useYvesIntelligence";
@@ -80,6 +84,9 @@ export const Dashboard = () => {
     isSectionVisible,
   } = useLayoutCustomization('dashboard');
   
+  const { profile: injuryProfile } = useInjuryProfile();
+  const dataMaturity = useDataMaturity();
+
   // Unified Yves Intelligence - single source of truth for briefing & recommendations
   const {
     dailyBriefing,
@@ -238,6 +245,39 @@ export const Dashboard = () => {
             </div>
           ) : (
             <>
+              {/* Baseline Progress — visible until user has 28 days of data */}
+              {dataMaturity.tier !== 'ready' && !dataMaturity.isLoading && (
+                <LayoutBlock
+                  blockId="baselineProgress"
+                  displayName="Baseline Progress"
+                  pageId="dashboard"
+                  size="wide"
+                  visible={true}
+                >
+                  <div className="mb-6">
+                    <BaselineProgressCard
+                      maturity={dataMaturity}
+                      onSyncComplete={dataMaturity.refetch}
+                    />
+                  </div>
+                </LayoutBlock>
+              )}
+
+              {/* Return to Sport Card — visible only when an active injury exists */}
+              {injuryProfile && (
+                <LayoutBlock
+                  blockId="returnToSport"
+                  displayName="Return to Sport"
+                  pageId="dashboard"
+                  size="wide"
+                  visible={true}
+                >
+                  <div className="mb-8">
+                    <ReturnToSportCard profile={injuryProfile} />
+                  </div>
+                </LayoutBlock>
+              )}
+
               {/* Daily Briefing - Now at the top */}
               <LayoutBlock
                 blockId="dailyBriefing"
@@ -255,6 +295,8 @@ export const Dashboard = () => {
                     isGenerating={intelligenceGenerating}
                     cached={intelligenceCached}
                     onRefresh={refreshIntelligence}
+                    dataMaturityTier={dataMaturity.tier}
+                    dataMaturityDays={dataMaturity.days_with_data}
                   />
                 </div>
               </LayoutBlock>
@@ -297,6 +339,8 @@ export const Dashboard = () => {
                   <YvesRecommendationsCard
                     recommendations={recommendations}
                     isLoading={intelligenceLoading}
+                    dataMaturityTier={dataMaturity.tier}
+                    dataMaturityDays={dataMaturity.days_with_data}
                   />
                 </LayoutBlock>
 

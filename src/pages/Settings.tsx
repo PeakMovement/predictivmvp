@@ -8,6 +8,7 @@ import { DevicesSettings } from "@/components/settings/DevicesSettings";
 import { NotificationsSettings } from "@/components/settings/NotificationsSettings";
 import { AppearanceSettings } from "@/components/settings/AppearanceSettings";
 import { AccountSettings } from "@/components/settings/AccountSettings";
+import { InjuryProfileSettings } from "@/components/settings/InjuryProfileSettings";
 import { LayoutBlock } from "@/components/layout/LayoutBlock";
 import { CustomizeLayoutButton } from "@/components/layout/CustomizeLayoutButton";
 import { LayoutEditor } from "@/components/layout/LayoutEditor";
@@ -47,6 +48,10 @@ export const Settings = ({ onNavigate }: SettingsProps) => {
         <DevicesSettings isSectionVisible={isSectionVisible} />
 
         <NotificationsSettings isSectionVisible={isSectionVisible} onNavigate={onNavigate} />
+
+        <LayoutBlock blockId="injuryProfile" displayName="Injury Profile" pageId="profile" size="standard" visible={isSectionVisible("injuryProfile")}>
+          <InjuryProfileSettings />
+        </LayoutBlock>
 
         <LayoutBlock blockId="appearance" displayName="Appearance" pageId="profile" size="standard" visible={isSectionVisible("appearance")}>
           <AppearanceSettings />

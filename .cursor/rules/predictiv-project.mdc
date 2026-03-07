@@ -1,0 +1,37 @@
+---
+description: Predictiv Health project context and multi-agent collaboration
+alwaysApply: true
+---
+
+# Predictiv Health (PeakMovement/predictivmvp)
+
+## Collaboration Context
+
+This repo is edited by **Cursor** and **Claude**; Claude pushes to GitHub. Before edits:
+- Run `git pull origin main` to get Claude's latest changes
+- Use Conventional Commits: `feat:`, `fix:`, `refactor:`, etc.
+- See `AGENTS.md` for full AI agent onboarding
+
+## Tech Stack
+
+- React 18 + TypeScript + Vite + Tailwind + shadcn/ui
+- Supabase (PostgreSQL, Edge Functions, Deno)
+- Path alias: `@/` → `src/`
+
+## Key Patterns
+
+- Functional components + custom hooks (`src/hooks/`)
+- React Query for server state
+- Supabase client: `import { supabase } from "@/integrations/supabase/client"`
+- Edge functions: Deno, use `npm:` or `jsr:` imports
+
+## Critical Paths
+
+- Yves AI: `src/api/yves.ts`, `supabase/functions/yves-chat/`, `generate-daily-briefing/`, `generate-yves-recommendations/`
+- Wearables: `supabase/functions/fetch-oura-data/`, `fetch-garmin-data/`, OAuth callbacks in `src/pages/`
+- Dashboard: `src/pages/Dashboard.tsx`, `src/components/dashboard/`
+- Settings: `src/pages/Settings.tsx`, `src/components/settings/`
+
+## Before Push
+
+Run: `npm run test:run && npm run lint && npm run build`

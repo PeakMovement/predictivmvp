@@ -195,6 +195,16 @@ Deno.serve(async (req) => {
           .eq("user_id", uid)
           .maybeSingle();
 
+        // ─── LOAD ACTIVE INJURY PROFILE ───────────────────────────────────────
+        const { data: injuryProfileData } = await supabase
+          .from("user_injury_profiles")
+          .select("*")
+          .eq("user_id", uid)
+          .eq("is_active", true)
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
         // ─── LOAD PERSONAL BASELINE DATA ─────────────────────────────────────
         const { data: userBaselines } = await supabase
           .from("user_baselines")
@@ -271,6 +281,7 @@ Deno.serve(async (req) => {
           mindset_profile: mindsetProfile || null,
           recovery_profile: recoveryProfile || null,
           wellness_goals: wellnessGoals || null,
+          injury_profile: injuryProfileData || null,
           profiles_data: profilesData || null,
           engagement_events: engagementEvents || [],
           recommendation_outcomes: recOutcomes || [],
@@ -288,20 +299,21 @@ Deno.serve(async (req) => {
         const classifyCoachingMode = (): CoachingMode => {
           // Check for rehab indicators from profile and symptoms
           const hasActiveInjuries = userProfile?.injuries?.length > 0;
+          const hasActiveInjuryProfile = !!(injuryProfileData as any)?.is_active;
           const hasConditions = userProfile?.conditions?.length > 0;
-          
+
           // Check for recent symptoms indicating rehab mode
           const hasRecentSymptoms = symptomCheckIns && symptomCheckIns.length > 0;
-          const hasSevereSymptoms = symptomCheckIns?.some(s => 
+          const hasSevereSymptoms = symptomCheckIns?.some(s =>
             s.severity === 'severe' || s.severity === 'moderate'
           );
-          
+
           // Check wearable data for overload signals
           const latestSummary = wearableSummary?.[0];
           const isOverloaded = latestSummary?.acwr !== null && latestSummary?.acwr > 1.5;
           const highStrain = latestSummary?.strain !== null && latestSummary?.strain > 150;
-          
-          if (hasActiveInjuries || isOverloaded || highStrain || hasSevereSymptoms) {
+
+          if (hasActiveInjuries || hasActiveInjuryProfile || isOverloaded || highStrain || hasSevereSymptoms) {
             return 'rehab';
           }
 
@@ -588,6 +600,39 @@ Deno.serve(async (req) => {
           promptContext += "\n";
         }
 
+        // Add active injury profile — most safety-critical context block
+        if (injuryProfileData) {
+          const ip = injuryProfileData as any;
+          const injDate = new Date(ip.injury_date);
+          const daysSince = Math.floor((Date.now() - injDate.getTime()) / (1000 * 60 * 60 * 24));
+          const phaseLabels: Record<string, string> = {
+            acute: 'Acute', sub_acute: 'Sub-Acute', rehabilitation: 'Rehabilitation',
+            return_to_sport: 'Return to Sport', full_clearance: 'Full Clearance'
+          };
+          promptContext += `Active Injury Profile:\n`;
+          promptContext += `- Injury: ${ip.injury_type?.replace(/_/g, ' ')} — ${ip.body_location}\n`;
+          promptContext += `- Phase: ${phaseLabels[ip.current_phase] ?? ip.current_phase} (Day ${daysSince})\n`;
+          if (ip.treating_practitioner_name) {
+            promptContext += `- Treating: ${ip.treating_practitioner_name}`;
+            if (ip.treating_practitioner_type) promptContext += ` (${ip.treating_practitioner_type.replace(/_/g, ' ')})`;
+            promptContext += `\n`;
+          }
+          if (ip.load_restrictions) {
+            promptContext += `\n!!! LOAD RESTRICTIONS — NEVER VIOLATE IN ANY RECOMMENDATION !!!\n`;
+            promptContext += `${ip.load_restrictions}\n`;
+            promptContext += `All activity suggestions MUST respect these restrictions.\n`;
+          }
+          if (ip.target_return_date) {
+            const daysToReturn = Math.floor((new Date(ip.target_return_date).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+            promptContext += `- Target Return: ${ip.target_return_date} (${daysToReturn > 0 ? `${daysToReturn} days` : 'overdue'})\n`;
+          }
+          if (Array.isArray(ip.clearance_milestones) && ip.clearance_milestones.length > 0) {
+            const next = (ip.clearance_milestones as any[]).find(m => !m.achieved);
+            if (next) promptContext += `- Next Milestone: "${next.milestone}"\n`;
+          }
+          promptContext += "\n";
+        }
+
         // Add historical comparisons for progress tracking
         if (Object.keys(historicalContext).length > 0) {
           promptContext += `Historical Context:\n`;
@@ -724,7 +769,7 @@ Deno.serve(async (req) => {
         const toneGuidance: Record<CoachingMode, string> = {
           general_wellness: `Adopt a CALM, REASSURING tone. Be supportive and low-pressure. Use gentle suggestions like "consider", "you might enjoy". Validate small wins. Focus on overall wellbeing.`,
           performance: `Adopt a CONFIDENT, MOTIVATING tone. Be directive and goal-oriented. Give clear instructions. Challenge them appropriately. Reference their goals and metrics to drive action.`,
-          rehab: `Adopt a CAUTIOUS, PROTECTIVE tone. Prioritize safety above all. Be precise about what to do AND what to avoid. Acknowledge any frustration. Never suggest pushing through symptoms.`
+          rehab: `Adopt a CAUTIOUS, PROTECTIVE tone. Prioritize safety above all. Be precise about what to do AND what to avoid. Acknowledge any frustration. Never suggest pushing through symptoms. If load restrictions are present in the context, never recommend activities that violate them — reference them explicitly.`
         };
 
         // Adapt tone based on engagement learning

@@ -36,6 +36,8 @@ import { BriefingFooter } from "./BriefingFooter";
 import { OneThingThatMatters } from "./OneThingThatMatters";
 import { usePersonalizedInsights } from "@/hooks/usePersonalizedInsights";
 import { useRelevantDocuments } from "@/hooks/useRelevantDocuments";
+import { BaselineBanner } from "./BaselineBanner";
+import { DataMaturityTier } from "@/hooks/useDataMaturity";
 
 /**
  * Props for the DailyBriefingCard component
@@ -55,6 +57,10 @@ interface DailyBriefingCardProps {
   cached: boolean;
   /** Callback function to refresh/regenerate the briefing */
   onRefresh: () => void;
+  /** Current data maturity tier — used to show baseline-building banner */
+  dataMaturityTier?: DataMaturityTier;
+  /** Number of days with wearable data */
+  dataMaturityDays?: number;
 }
 
 export function DailyBriefingCard({
@@ -65,6 +71,8 @@ export function DailyBriefingCard({
   isGenerating,
   cached,
   onRefresh,
+  dataMaturityTier,
+  dataMaturityDays = 0,
 }: DailyBriefingCardProps) {
   const trainingFocusRef = useRef<TodaysBestDecisionHandle>(null);
 
@@ -148,6 +156,15 @@ export function DailyBriefingCard({
         
         {/* Subtle footer explaining data sources */}
         <BriefingFooter />
+
+        {/* Baseline-building banner — only for none/early tiers */}
+        {dataMaturityTier && (
+          <BaselineBanner
+            tier={dataMaturityTier}
+            daysWithData={dataMaturityDays}
+            className="mt-1"
+          />
+        )}
       </CardContent>
     </Card>
   );

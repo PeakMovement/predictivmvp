@@ -10,13 +10,17 @@ import { cn } from "@/lib/utils";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 import { useToast } from "@/hooks/use-toast";
+import { BaselineBanner } from "./BaselineBanner";
+import { DataMaturityTier } from "@/hooks/useDataMaturity";
 
 interface YvesRecommendationsCardProps {
   recommendations: YvesRecommendation[];
   isLoading: boolean;
+  dataMaturityTier?: DataMaturityTier;
+  dataMaturityDays?: number;
 }
 
-export function YvesRecommendationsCard({ recommendations, isLoading }: YvesRecommendationsCardProps) {
+export function YvesRecommendationsCard({ recommendations, isLoading, dataMaturityTier, dataMaturityDays = 0 }: YvesRecommendationsCardProps) {
   const getCategoryLabel = (category: string) => {
     const labels: Record<string, string> = {
       training: "Training Tip",
@@ -122,14 +126,23 @@ export function YvesRecommendationsCard({ recommendations, isLoading }: YvesReco
               />
             ))}
 
-            <Button 
-              variant="outline" 
-              className="w-full mt-4" 
+            <Button
+              variant="outline"
+              className="w-full mt-4"
               onClick={() => window.dispatchEvent(new CustomEvent("navigate-tab", { detail: "yves-insights" }))}
             >
               View All & Chat with Yves <ExternalLink className="ml-2 h-4 w-4" />
             </Button>
           </>
+        )}
+
+        {/* Baseline-building banner — only for none/early tiers */}
+        {dataMaturityTier && (
+          <BaselineBanner
+            tier={dataMaturityTier}
+            daysWithData={dataMaturityDays}
+            className="mt-3"
+          />
         )}
       </CardContent>
     </Card>

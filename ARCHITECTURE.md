@@ -1,547 +1,724 @@
-# Predictiv System Architecture
+# Predictiv — Complete System Architecture
 
-> Comprehensive documentation of the Predictiv health and wellness tracking platform's data pipeline, AI intelligence system, and component architecture.
+> Generated: 2026-03-07. Covers every page, edge function, database table, data flow, external integration, known gap, and pillar assessment for the Predictiv platform.
 
 ---
 
 ## Table of Contents
 
-1. [Overview](#overview)
-2. [System Architecture Diagram](#system-architecture-diagram)
-3. [Architecture Layers](#architecture-layers)
-4. [Key Technologies](#key-technologies)
-5. [Data Flow Summary](#data-flow-summary)
-6. [Security & Privacy](#security--privacy)
+1. [Tech Stack](#1-tech-stack)
+2. [Pages](#2-pages)
+3. [Edge Functions](#3-edge-functions)
+4. [Database Tables](#4-database-tables)
+5. [Data Flow](#5-data-flow)
+6. [External Integrations](#6-external-integrations)
+7. [Known Gaps](#7-known-gaps)
+8. [Four Core Pillars — What Exists vs What's Needed](#8-four-core-pillars)
 
 ---
 
-## Overview
+## 1. Tech Stack
 
-Predictiv is a health intelligence platform that integrates wearable device data (Oura Ring, Fitbit) with AI-powered coaching to provide personalized health insights, baseline tracking, and risk analysis.
-
-**Core Capabilities:**
-- Real-time wearable data synchronization
-- Automated baseline calculation and deviation detection
-- AI health coach ("Yves") with contextual awareness
-- Document intelligence for medical records
-- Comprehensive user profiling across 10 health dimensions
-- Risk zone analysis (green/yellow/red)
-
-**Tech Stack:**
-- **Frontend:** React 18 + TypeScript + Vite
-- **UI:** Shadcn/ui + Tailwind CSS (glassmorphism design)
-- **Backend:** Supabase (PostgreSQL + Edge Functions)
-- **AI:** OpenAI GPT-4 (configurable provider)
-- **Auth:** Supabase Auth (email/password)
+| Layer | Technology |
+|---|---|
+| Frontend framework | React 18 + TypeScript + Vite |
+| Routing | React Router v6 (all authenticated pages lazy-loaded) |
+| Server state | TanStack Query (React Query) |
+| UI components | Shadcn/ui + Tailwind CSS (glassmorphism) |
+| Backend platform | Supabase (PostgreSQL + Edge Functions + Auth + Realtime + Storage) |
+| Edge runtime | Deno (all edge functions) |
+| AI provider | Lovable gateway → google/gemini-2.5-flash (fallback chain: Lovable → OpenAI → Anthropic → Google) |
+| SMS | Twilio (South African +27 numbers) |
+| Email | Resend |
+| Charts | Recharts |
+| Data export | html2canvas (PNG) |
+| CSV parsing | PapaParse |
 
 ---
 
-## System Architecture Diagram
+## 2. Pages
 
-```mermaid
-flowchart TD
-    %% INPUT LAYER
-    subgraph Input["🟩 Data Input Layer"]
-        A1[Oura OAuth Flow]
-        A2[oura_tokens table<br/>access_token, refresh_token, expires_at]
-        A3[User Profile Forms<br/>10 sections + documents]
-        A4[Document Upload UI]
-    end
+### 2.1 App Shell — `src/App.tsx`
 
-    %% PROCESSING LAYER
-    subgraph Processing["🟦 Processing & Calculation Layer"]
-        B1[fetch-oura-auto Edge Function<br/>Hourly Cron + Manual Trigger]
-        B2[Oura API v2<br/>readiness, sleep, activity endpoints]
-        B3[wearable_sessions table<br/>readiness_score, sleep_score, activity_score<br/>total_steps, total_calories, HRV, resting_HR]
-        B4[In-Function Calculations:<br/>• Training Load = activity_score × steps/10000<br/>• Strain = 7-day load sum<br/>• Monotony = mean/std of 7-day loads<br/>• ACWR = acute7 / chronic28]
-        B5[wearable_summary table<br/>strain, monotony, acwr, readiness_index, avg_sleep_score]
-        B6[analyze-document Edge Function]
-        B7[document_insights table<br/>nutrition, medical, training insights]
-    end
+Three render states gated in order:
+1. **Unauthenticated** → shows `<Auth />` page
+2. **Authenticated + onboarding incomplete** → shows `<Onboarding />` (checks `user_profiles.onboarding_completed`)
+3. **Authenticated + onboarded** → full authenticated shell
 
-    %% BASELINE & DEVIATION LAYER
-    subgraph Baseline["🟧 Baseline & Risk Analysis Layer"]
-        C1[calculate-baseline Edge Function<br/>30-day rolling average]
-        C2[user_baselines table<br/>metric, rolling_avg, data_window:30]
-        C3[calculate-deviation Edge Function<br/>Current vs Baseline comparison]
-        C4[adaptive_recommendations table<br/>deviation_pct, risk_status, risk_level<br/>green/yellow/red zones]
-        C5[Risk Assessment Logic:<br/>< 10% = low<br/>10-25% = moderate<br/>> 25% = high]
-    end
+Global floating components rendered in the shell (always present):
+- `OfflineBanner` — detects navigator.onLine
+- `SessionTimeoutWarning` — 30-min inactivity timer → Supabase signOut
+- `SymptomCheckInSheet` — global slide-over drawer
+- `YvesChatSheet` — global chat slide-over
+- `RiskAlertPopup` — dismissible alert banner
+- `BottomNavigation` — mobile tab bar
 
-    %% STORAGE LAYER
-    subgraph Storage["🟪 Profile & Context Storage"]
-        D1[user_profile, user_injuries, user_lifestyle<br/>user_nutrition, user_training, etc.<br/>10 profile tables]
-        D2[user_documents table<br/>PDFs, images, medical records]
-        D3[build-health-profile Edge Function<br/>AI synthesis of all data sources]
-        D4[user_health_profiles table<br/>profile_data, ai_synthesis, version]
-        D5[user_context_enhanced table<br/>aggregated user preferences]
-        D6[yves_memory_bank table<br/>long-term memory: memory_key, memory_value]
-    end
+SIGNED_OUT event clears localStorage and sessionStorage (briefing cache, layout, findHelp query, etc.)
 
-    %% AI INTELLIGENCE LAYER
-    subgraph Intelligence["🟨 AI Intelligence Layer - Yves"]
-        E1[yves-chat Edge Function]
-        E2[Context Aggregation:<br/>• user_context_enhanced<br/>• user_health_profiles<br/>• wearable_sessions last 14 days<br/>• adaptive_recommendations<br/>• yves_memory_bank<br/>• insight_history last 5]
-        E3[AI Prompt Engineering:<br/>System: Health coach identity<br/>Context: Baseline + Risk injection<br/>History: Conversation continuity]
-        E4[OpenAI API<br/>gpt-4 or configured provider]
-        E5[Response Processing]
-        E6[insight_history table<br/>query, response, created_at]
-        E7[Dashboard UI<br/>Daily Briefing Card]
-        E8[Yves Chat Interface]
-        E9[Recommendations Card]
-    end
-
-    %% AUTOMATION
-    subgraph Automation["🕒 Automation & Orchestration"]
-        F1[Supabase Cron Job - Hourly]
-        F2[Manual Sync Button<br/>Settings Page]
-        F3[generate-daily-briefing<br/>Morning summary]
-        F4[daily_briefings table]
-    end
-
-    %% CONNECTIONS - Input to Processing
-    A1 --> A2
-    A2 --> B1
-    B1 --> B2
-    B2 --> B3
-    B3 --> B4
-    B4 --> B5
-    A3 --> D1
-    A4 --> B6
-    B6 --> B7
-    D1 --> D6
-
-    %% Processing to Baseline
-    B5 --> C1
-    C1 --> C2
-    C2 --> C3
-    B3 --> C3
-    C3 --> C4
-    C3 --> C5
-    C5 --> C4
-
-    %% Storage to Profile Building
-    B7 --> D3
-    D3 --> D4
-    D4 --> D5
-    D2 --> B6
-
-    %% Profile to Intelligence
-    D5 --> E2
-    D4 --> E2
-    B3 --> E2
-    C4 --> E2
-    D6 --> E2
-    E6 --> E2
-    E2 --> E1
-    E1 --> E3
-    E3 --> E4
-    E4 --> E5
-    E5 --> E6
-    E5 --> E7
-    E5 --> E8
-    E5 --> E9
-
-    %% Automation Triggers
-    F1 --> B1
-    F2 --> B1
-    F1 --> C1
-    F1 --> C3
-    F1 --> F3
-    F3 --> F4
-    F4 --> E7
-
-    %% Styling
-    classDef inputClass fill:#90EE90,stroke:#228B22,stroke-width:2px,color:#000
-    classDef processClass fill:#87CEEB,stroke:#4682B4,stroke-width:2px,color:#000
-    classDef baselineClass fill:#FFB347,stroke:#FF8C00,stroke-width:2px,color:#000
-    classDef storageClass fill:#DDA0DD,stroke:#8B008B,stroke-width:2px,color:#000
-    classDef aiClass fill:#FFE97F,stroke:#DAA520,stroke-width:2px,color:#000
-    classDef autoClass fill:#E0E0E0,stroke:#808080,stroke-width:2px,color:#000
-
-    class A1,A2,A3,A4 inputClass
-    class B1,B2,B3,B4,B5,B6,B7 processClass
-    class C1,C2,C3,C4,C5 baselineClass
-    class D1,D2,D3,D4,D5,D6 storageClass
-    class E1,E2,E3,E4,E5,E6,E7,E8,E9 aiClass
-    class F1,F2,F3,F4 autoClass
-```
+All authenticated page components are React.lazy imports.
 
 ---
 
-## Architecture Layers
+### 2.2 Dashboard — `src/pages/Dashboard.tsx`
 
-### 🟩 Input Layer
+**Purpose:** Primary home screen. Daily briefing, AI recommendations, risk score, quick actions.
 
-**Purpose:** Data entry points into the system
+**Key hooks:**
+- `useYvesIntelligence('balance')` — fetches daily briefing + recommendations
+- `useOuraTokenStatus` — checks wearable connection
+- `useLayoutCustomization('dashboard')` — per-user drag/hide/reorder layout
 
 **Components:**
-1. **Oura OAuth Flow** - User authenticates with Oura Ring account
-2. **oura_tokens Table** - Stores OAuth credentials (access_token, refresh_token, expires_at)
-3. **User Profile Forms** - 10-section comprehensive health profile (personal info, injuries, lifestyle, nutrition, training, medical, wellness goals, recovery, mindset, interests)
-4. **Document Upload UI** - Medical records, training plans, nutrition reports
+- `DailyBriefingCard` — renders today's briefing from `daily_briefings`
+- `YvesRecommendationsCard` — renders 3 recommendations from `yves_recommendations`
+- `RiskScoreCard` — aggregate risk score from `user_deviations`
+- `QuickActionsPanel` — shortcut buttons
+- `PersonalizationInsights` — shows how well Yves knows the user
+- `BriefingDiagnostics` — debug overlay (dev mode only)
 
-**Key Features:**
-- Automatic token refresh handling
-- Multi-device support (Oura + Fitbit)
-- Secure credential storage with RLS
-- Real-time profile synchronization to Yves memory
+**Realtime:** Subscribes to `oura_logs` INSERT events → refreshes trend data 2 s later.
 
----
-
-### 🟦 Processing & Calculation Layer
-
-**Purpose:** Transform raw wearable data into actionable metrics
-
-**Data Pipeline:**
-
-1. **fetch-oura-auto Edge Function**
-   - Triggered: Hourly cron + manual sync
-   - Fetches last 14 days from Oura API v2
-   - Endpoints: `/daily_readiness`, `/daily_sleep`, `/daily_activity`
-
-2. **wearable_sessions Table**
-   - Stores: readiness_score, sleep_score, activity_score, total_steps, total_calories, HRV, resting_HR
-   - Primary key: (user_id, source, date)
-   - Upsert strategy prevents duplicates
-
-3. **In-Function Calculations**
-   - **Training Load:** `activity_score × (steps / 10000)`
-   - **Strain:** Sum of training load over last 7 days
-   - **Monotony:** `mean / std` of last 7 days' loads
-   - **ACWR:** `acute_load (7-day avg) / chronic_load (28-day avg)`
-
-4. **wearable_summary Table**
-   - Stores calculated metrics: strain, monotony, acwr, readiness_index, avg_sleep_score
-   - Updated automatically after each sync
-   - Used for trend analysis and baselines
-
-5. **Document Processing**
-   - **analyze-document** Edge Function extracts structured data
-   - AI-powered parsing of medical records
-   - Stores in `document_insights` (nutrition, medical, training categories)
+**Layout:** Customizable via `LayoutBlock` + `LayoutEditor`. Saved to localStorage key `layout_customization_dashboard`.
 
 ---
 
-### 🟧 Baseline & Risk Analysis Layer
+### 2.3 Training — `src/pages/Training.tsx`
 
-**Purpose:** Establish personal norms and detect concerning deviations
+**Purpose:** Training load, trends, session log, Garmin/Oura activity data.
 
-**Workflow:**
+**Key hooks:**
+- `useTrainingTrends` — 28-day training/recovery trends from `training_trends`
+- `useWearableSessions` — latest session from `wearable_sessions`
+- `useGarminRunningDistance` — running distance from Garmin sessions
 
-1. **calculate-baseline Edge Function**
-   - Runs: Hourly (recommended)
-   - Analyzes: Last 30 days of `fitbit_trends` data
-   - Calculates: Rolling average for 8 metrics (HRV, ACWR, EWMA, Strain, Monotony, Training Load, Acute Load, Chronic Load)
-   - Stores: `user_baselines` table with `data_window: 30`
+**Components:**
+- 6× `CircularGauge` — ACWR, Strain, Monotony, Readiness, Sleep Score, HRV
+- `UnifiedTrendCard` — recharts area chart of any metric over time
+- `TrainingCalendar` — monthly view with session markers
+- `SessionLogList` — list of past sessions
+- `SessionComparison` modal — compare two sessions side-by-side
+- `DeviceSourceSwitcher` — toggle between Oura / Garmin / Polar data
+- `AccountabilityChallenges` — streak/challenge cards
 
-2. **calculate-deviation Edge Function**
-   - Compares: Most recent 7 days vs. baseline
-   - Calculates: `deviation_pct = ((current - baseline) / baseline) × 100`
-   - Integrates: Health profile for context-aware risk assessment
-
-3. **Risk Zone Assignment**
-   - **Green (Low Risk):** < 10% deviation
-   - **Yellow (Moderate Risk):** 10-25% deviation
-   - **Red (High Risk):** > 25% deviation
-
-4. **adaptive_recommendations Table**
-   - Stores: metric, deviation_pct, risk_status, risk_level, adaptive_suggestion
-   - Used by Yves AI for prioritized coaching
-
-**Context-Aware Risk Adjustments:**
-- Training phase (base vs. peak) affects thresholds
-- Medical conditions modify acceptable ranges
-- Recovery periods allow higher deviations
+**Banner:** Shows "Garmin Pending" warning when a Garmin token exists but `wearable_sessions` has no Garmin rows.
 
 ---
 
-### 🟪 Profile & Context Storage Layer
+### 2.4 Health — `src/pages/Health.tsx`
 
-**Purpose:** Centralize user health intelligence for AI context
+**Purpose:** Wearable health metrics — readiness, sleep, activity, HRV.
 
-**Profile Tables (10 sections):**
-1. `user_profile` - Personal info (name, DOB, gender, activity_level)
-2. `user_injuries` - Injury history + details
-3. `user_lifestyle` - Daily routine, work schedule, stress level
-4. `user_interests` - Hobbies, interests
-5. `user_nutrition` - Diet type, allergies, eating patterns
-6. `user_training` - Preferred activities, frequency, intensity
-7. `user_medical` - Conditions, medications, notes
-8. `user_wellness_goals` - Goals, target dates, priorities
-9. `user_recovery` - Sleep hours, quality, recovery methods
-10. `user_mindset` - Motivation factors, mental health focus, stress management
+**Key hooks:**
+- `useWearableSessions(userId, selectedSource)` — latest session
+- `useLayoutCustomization('health')`
 
-**Synthesis Pipeline:**
+**Components:**
+- `OuraReadinessCard` — readiness score, resting HR, HRV
+- `OuraSleepCard` — sleep score, total/deep/REM/light/efficiency
+- `OuraActivityCard` — activity score, steps, active/total calories
+- `OuraHRVCard` — HRV, resting HR, SpO2
+- `HealthTrendsChart` — multi-metric recharts line chart
+- `TodayActivitySection` — intraday activity
+- `DeviceSourceSwitcher`
+- `OuraSyncStatus` — last sync time + manual sync button
 
-1. **build-health-profile Edge Function**
-   - Aggregates: Document insights + profile tables
-   - AI Synthesis: Creates human-readable health summary
-   - Versioning: Incremental versions for history tracking
-   - Output: `user_health_profiles` table
+**Empty states:** Two distinct states — no device connected vs. device connected but no data.
 
-2. **user_context_enhanced Table**
-   - Aggregated preferences and high-level summary
-   - Fast access for Yves AI context
-
-3. **yves_memory_bank Table**
-   - Long-term memory storage
-   - Key-value pairs (e.g., `sleep_goal_hours: 8`, `training_focus: marathon`)
-   - Updated when profile sections are saved
+**Pull-to-refresh:** Wrapped in `PullToRefresh` on mobile.
 
 ---
 
-### 🟨 AI Intelligence Layer - Yves
+### 2.5 Find Help — `src/pages/FindHelp.tsx`
 
-**Purpose:** Provide personalized, context-aware health coaching
+**Purpose:** AI-powered practitioner matching and booking.
 
-**Context Aggregation Sources:**
-1. `user_context_enhanced` - User preferences
-2. `user_health_profiles` - AI-synthesized health intelligence
-3. `wearable_sessions` - Last 14 days of metrics
-4. `adaptive_recommendations` - Current risk zones
-5. `yves_memory_bank` - Long-term memory
-6. `insight_history` - Last 5 conversations for continuity
+**Flow:**
+1. User types a health query
+2. Page calls `match-provider` edge function → returns `ParsedIntent` (sport, symptom, urgency, location, provider_type)
+3. Loads `/practitioners.csv` via PapaParse (public asset — NOT a DB table)
+4. Filters/ranks practitioners against ParsedIntent
+5. Displays results with contact + Calendly booking links
 
-**AI Prompt Structure:**
+**Emergency state:** If urgency = critical, shows SA emergency phone numbers.
+
+**Cross-page trigger:** Other pages can pre-populate the query via `sessionStorage.findHelpQuery`.
+
+---
+
+### 2.6 Planner — `src/pages/Planner.tsx`
+
+**Purpose:** Weekly planning and reflection.
+
+**Key hook:** `useWeeklyBriefings` — aggregates `daily_briefings` rows into a weekly view.
+
+**Components:**
+- `WeekIntentSection` — user sets weekly intention
+- `WeeklyFocusBanner` — AI-generated weekly theme
+- `ThemeCard` + `ChallengeAcceptanceModal`
+- `DailyPlanView` — day-by-day breakdown
+- `WeeklyReflectionModal` — auto-prompts Sunday after 18:00
+
+**Gap:** Google Calendar section is a placeholder — events are never fetched or rendered.
+
+---
+
+### 2.7 Settings — `src/pages/Settings.tsx`
+
+**Sections:**
+- `ProfileSettings` — name, DOB, gender, activity level
+- `TonePreferenceSettings` — Yves communication style
+- `DevicesSettings` — connect/disconnect Oura, Garmin, Polar
+- `NotificationsSettings` — push/SMS/email toggles
+- `AppearanceSettings` — theme, dark mode
+- `AccountSettings` — password change, delete account
+
+---
+
+### 2.8 Symptom Check-In — `src/pages/SymptomCheckIn.tsx`
+
+**Components:**
+- `SymptomCheckInForm` — body location, severity, duration, notes
+- `SymptomHistory` — list of past check-ins from `symptom_check_ins`
+
+Submitting the form calls `interpret-health-event` edge function → stores result in `symptom_check_ins`.
+
+---
+
+### 2.9 Insights Tree — `src/pages/InsightsTree.tsx`
+
+**Purpose:** Visual timeline of past AI insights.
+
+**Gap:** Reads `insightHistory` from localStorage only. The `yves-tree` edge function exists but is never called from this page. Falls back to 15 hardcoded placeholder nodes if localStorage is empty.
+
+---
+
+### 2.10 Your Plan — `src/pages/YourPlan.tsx`
+
+**Gap:** Reads `acceptedAdjustments` and `userBookings` from localStorage only. Nothing is persisted to the database.
+
+---
+
+### 2.11 Plan Compliance — `src/pages/PlanCompliance.tsx`
+
+**Purpose:** Adherence tracking against a training plan.
+
+Reads from `plan_adherence` table. The `calculate-plan-adherence` edge function has no scheduled trigger and is never called from the frontend, so the table is always empty.
+
+---
+
+### 2.12 Metrics Dashboard — `src/pages/MetricsDashboard.tsx`
+
+- 6× `MetricSparklineCard` — sparkline + current value for each metric
+- `InteractiveChart` — full recharts chart with date range picker
+- Export to PNG via html2canvas
+- Uses `useWearableMetrics` + `useWearableSessions`
+
+---
+
+### 2.13 Alert History — `src/pages/AlertHistory.tsx`
+
+Full alert lifecycle management: filter by severity/status, add notes, dismiss/resolve/snooze. Direct read/write to `alert_history`.
+
+---
+
+### 2.14 My Documents — `src/pages/MyDocuments.tsx`
+
+- `DocumentUploadZone` × 3 types (medical, training, nutrition)
+- `DocumentCard` with preview + delete
+- `DocumentPreviewModal`
+- `DocumentVersionHistoryModal`
+- Uses `useDocuments` hook → Supabase Storage + `user_documents` table
+
+---
+
+### 2.15 My Baselines — `src/pages/MyBaselines.tsx`
+
+- `ActivityPanel`
+- `WeeklyTrendChart`
+- `DailyHealthPanel`
+- `RecoveryPanel`
+
+Reads from `user_baselines` (28-day rolling averages).
+
+---
+
+### 2.16 Admin Dashboard — `src/pages/AdminDashboard.tsx`
+
+Gated by `user_roles` check. Components:
+- `UserOverviewTable`
+- `SystemHealthOverview`
+- `SyncLogsTable`
+- `AnomalyAlertsList`
+
+---
+
+### 2.17 Personal Canvas — `src/pages/PersonalCanvas.tsx`
+
+Drag-and-drop layout builder. Maps block IDs to real components (RiskScoreCard, DailyBriefingCard, etc.). Saves layout to localStorage.
+
+---
+
+### 2.18 Auth / Onboarding
+
+- `src/pages/Auth.tsx` — email/password sign in + sign up
+- `src/pages/Onboarding.tsx` — multi-step profile setup; sets `user_profiles.onboarding_completed = true` on completion
+
+---
+
+## 3. Edge Functions
+
+All functions live in `supabase/functions/`. Runtime: Deno.
+
+### 3.1 AI / Yves Intelligence
+
+| Function | Purpose | Reads | Writes |
+|---|---|---|---|
+| `yves-chat` | Streaming chat Q&A | 16 sources (see below) | `insight_history` |
+| `generate-daily-briefing` | Idempotent daily briefing; 6 categories | 16+ sources | `daily_briefings` |
+| `generate-yves-recommendations` | 3 structured recommendations | 16 sources (parallel) | `yves_recommendations` |
+| `yves-tree` | Insight tree data | `insight_history` | — (never called from UI) |
+| `adapt-user-model` | Updates user model based on feedback | — | — (never called) |
+
+**16 data sources fetched before every Yves AI call:**
+user_profile, user_context_enhanced, user_health_profiles, user_documents, insight_history (last 5), yves_memory_bank, wearable_summary, wearable_sessions (last 14 days), training_trends, recovery_trends, health_anomalies (unacknowledged), user_deviations, symptom_check_ins, user_baselines, user_training, user_lifestyle, user_interests, user_wellness_goals
+
+**Coaching mode classification** (rehab / performance / general_wellness):
+- `rehab`: active injuries, severe symptoms, ACWR > 1.5, critical anomalies
+- `performance`: performance goals, high activity, optimal ACWR
+- `general_wellness`: default
+
+---
+
+### 3.2 Wearable Data Sync
+
+| Function | Purpose | Reads | Writes |
+|---|---|---|---|
+| `fetch-oura-data` | Oura v2 sync (sleep, readiness, activity, SpO2) | Oura API v2 | `wearable_sessions`, `oura_logs` |
+| `fetch-garmin-data` | Garmin Wellness API sync (dailies, sleeps, activities) | Garmin API | `wearable_sessions` |
+| `garmin-auth` | Garmin OAuth 2.0 PKCE callback handler | `garmin_oauth_state` | `wearable_tokens`, triggers `fetch-garmin-data` |
+| `garmin-connect` | Initiates Garmin OAuth PKCE flow | — | `garmin_oauth_state` |
+| `oura-auth` | Oura OAuth callback | Oura token endpoint | `wearable_tokens` |
+| `polar-auth` | Polar OAuth callback | Polar token endpoint | `wearable_tokens` |
+
+**Oura token refresh:** `_shared/oura-token-refresh.ts` handles automatic token refresh before each fetch.
+**Caching:** `_shared/cache.ts` provides short-lived response caching.
+
+---
+
+### 3.3 Analytics & Risk
+
+| Function | Purpose | Reads | Writes |
+|---|---|---|---|
+| `detect-health-anomalies` | Detects metric deviations vs physiological thresholds | `wearable_sessions`, `user_baselines` | `health_anomalies` |
+| `trigger-risk-alert` | Fires alerts for hardcoded thresholds | `training_trends`, `wearable_sessions` | `alert_history` |
+| `calculate-training-trends` | Computes ACWR, strain, monotony | `wearable_sessions` | `training_trends`, `recovery_trends` |
+| `calculate-plan-adherence` | Plan adherence scoring | `user_training`, `wearable_sessions` | `plan_adherence` |
+
+**`detect-health-anomalies` thresholds:**
+- HRV: ±30% = medium, ±60% = critical
+- Resting HR: ±20% = medium, ±35% = critical
+- Sleep/Readiness: ±25% = medium, ±40% = critical
+- Activity: ±40% = medium, ±80% = critical
+
+**`trigger-risk-alert` hardcoded thresholds:**
+- ACWR > 1.8
+- Strain > 3500
+- Readiness < 40
+- Sleep score < 45
+
+> Note: `alert_settings` table exists but is NOT read by `trigger-risk-alert` — thresholds are hardcoded.
+
+---
+
+### 3.4 AI Health Analysis
+
+| Function | Purpose | Reads | Writes |
+|---|---|---|---|
+| `interpret-health-event` | AI interpretation of a symptom check-in | `symptom_check_ins`, user profile | `symptom_check_ins` (updates interpretation) |
+| `build-health-profile` | AI synthesis of all profile + document data | All profile tables, `document_insights` | `user_health_profiles` |
+| `analyze-document` | Extract structured data from uploaded documents | Supabase Storage | `document_insights` |
+| `match-provider` | AI structured tool call to parse symptom query and match practitioner type | User query | Returns ParsedIntent (no DB write) |
+
+---
+
+### 3.5 Notifications
+
+| Function | Purpose | Reads | Writes |
+|---|---|---|---|
+| `send-sms-alert` | Twilio SMS (SA +27 only) | `notification_log` | `notification_log` |
+| `send-push-notification` | Web push via VAPID | `push_subscriptions` | `notification_log` |
+| `send-email` | Resend email | — | `notification_log` |
+| `calendly-webhook` | Receives Calendly `invitee.created` event, creates booking, sends confirmation email | Calendly webhook payload | `bookings`, sends Resend email |
+
+---
+
+### 3.6 Google Calendar
+
+| Function | Purpose |
+|---|---|
+| `google-calendar-auth` | OAuth 2.0 callback for Google Calendar |
+| `fetch-google-calendar-events` | Fetches events from Google Calendar API |
+| `create-google-calendar-event` | Creates event in user's Google Calendar |
+
+> Note: These functions exist but the Planner page does not call them — Google Calendar section in Planner is a UI placeholder only.
+
+---
+
+### 3.7 Shared Utilities (`_shared/`)
+
+| File | Purpose |
+|---|---|
+| `ai-provider.ts` | Auto-detects AI provider: Lovable → OpenAI → Anthropic → Google |
+| `rate-limiter.ts` | Sliding window rate limiter backed by `rate_limits` table |
+| `oura-token-refresh.ts` | Refreshes Oura access token before expiry |
+| `cache.ts` | Short-lived in-memory response cache |
+| `cors.ts` | Standard CORS headers for all functions |
+
+---
+
+## 4. Database Tables
+
+### 4.1 Auth & Users
+
+| Table | Purpose | Key Columns |
+|---|---|---|
+| `user_profiles` | Core user profile, onboarding state | `id`, `onboarding_completed`, `name`, `email`, `avatar_url` |
+| `user_roles` | Admin/user role assignments | `user_id`, `role` |
+
+---
+
+### 4.2 Wearable Data
+
+| Table | Purpose | Key Columns |
+|---|---|---|
+| `wearable_tokens` | OAuth tokens for all devices | `user_id`, `scope` (oura/garmin/polar), `access_token`, `refresh_token`, `expires_at`, `provider_user_id` |
+| `wearable_sessions` | **Central wearable data table.** One row per user per date per source. | `user_id`, `date`, `source`, `readiness_score`, `sleep_score`, `activity_score`, `hrv_avg`, `resting_hr`, `spo2_avg`, `total_steps`, `active_calories`, `total_calories`, `total_sleep_duration`, `deep_sleep_duration`, `rem_sleep_duration`, `light_sleep_duration`, `sleep_efficiency`, `fetched_at` |
+| `wearable_summary` | Aggregated metrics per user | `user_id`, `strain`, `monotony`, `acwr`, `readiness_index`, `avg_sleep_score` |
+| `oura_logs` | Sync audit log for Oura fetches | `user_id`, `status`, `entries_synced`, `error`, `created_at` |
+| `garmin_oauth_state` | PKCE state + code_verifier for Garmin OAuth | `state`, `code_verifier`, `user_id`, `expires_at` |
+
+---
+
+### 4.3 User Health Profile (10 tables)
+
+| Table | Purpose |
+|---|---|
+| `user_training` | preferred_activities, training_frequency, intensity_preference, current_phase |
+| `user_lifestyle` | stress_level, work_schedule, daily_routine |
+| `user_interests` | hobbies, interests (arrays) |
+| `user_wellness_goals` | goals, target_date, priority |
+| `user_injuries` | injury history, body location, severity, dates |
+| `user_nutrition` | diet_type, allergies, eating_patterns |
+| `user_medical` | conditions, medications, notes |
+| `user_recovery` | sleep_hours_target, recovery_methods |
+| `user_mindset` | motivation_factors, stress_management |
+| `user_context_enhanced` | Aggregated preference summary for fast AI access |
+
+---
+
+### 4.4 AI Intelligence
+
+| Table | Purpose | Key Columns |
+|---|---|---|
+| `user_baselines` | 28-day rolling averages per metric | `user_id`, `metric`, `rolling_avg` |
+| `user_health_profiles` | AI-synthesized health summary | `user_id`, `profile_data`, `ai_synthesis`, `version` |
+| `yves_memory_bank` | Long-term Yves memory | `user_id`, `memory_key`, `memory_value` |
+| `insight_history` | All Yves chat Q&A | `user_id`, `query`, `response`, `created_at` |
+| `daily_briefings` | Generated daily briefings | `user_id`, `date`, `category`, `content`, `coaching_mode` |
+| `yves_recommendations` | 3 structured recommendations | `user_id`, `title`, `body`, `priority`, `created_at` |
+| `user_context` | Basic user context | `user_id`, `context` |
+
+---
+
+### 4.5 Training & Analytics
+
+| Table | Purpose | Key Columns |
+|---|---|---|
+| `training_trends` | Daily ACWR, strain, monotony, HRV, sleep_score | `user_id`, `date`, `acwr`, `strain`, `monotony`, `hrv`, `sleep_score` |
+| `recovery_trends` | Chronic/acute load, ACWR, recovery score | `user_id`, `date`, `chronic_load`, `acute_load`, `acwr`, `acwr_trend`, `recovery_score` |
+| `plan_adherence` | Adherence scoring (always empty — no trigger) | `user_id`, `date`, `adherence_score` |
+
+---
+
+### 4.6 Risk & Alerts
+
+| Table | Purpose | Key Columns |
+|---|---|---|
+| `health_anomalies` | Detected metric anomalies | `user_id`, `metric_name`, `severity`, `deviation_percent`, `acknowledged` |
+| `user_deviations` | Current metric vs baseline | `user_id`, `metric`, `deviation_percent`, `risk_zone`, `baseline_value`, `current_value` |
+| `alert_history` | Full alert lifecycle | `user_id`, `type`, `severity`, `status`, `notes`, `snoozed_until` |
+| `alert_settings` | User alert preferences (NOT used by trigger-risk-alert) | `user_id`, `metric`, `threshold`, `enabled` |
+
+---
+
+### 4.7 Symptom & Check-In
+
+| Table | Purpose | Key Columns |
+|---|---|---|
+| `symptom_check_ins` | User symptom submissions + AI interpretation | `user_id`, `location`, `severity`, `duration`, `notes`, `interpretation`, `created_at` |
+
+---
+
+### 4.8 Documents
+
+| Table | Purpose | Key Columns |
+|---|---|---|
+| `user_documents` | Document metadata | `user_id`, `type`, `file_path`, `version`, `created_at` |
+| `document_insights` | AI-extracted structured data from documents | `user_id`, `document_id`, `category`, `insights` |
+
+---
+
+### 4.9 Notifications & Bookings
+
+| Table | Purpose | Key Columns |
+|---|---|---|
+| `notification_log` | Audit log for all SMS/email/push notifications | `user_id`, `channel`, `status`, `sent_at` |
+| `push_subscriptions` | Web push VAPID subscriptions | `user_id`, `endpoint`, `keys` |
+| `bookings` | Calendly-sourced practitioner bookings | `user_id`, `practitioner`, `datetime`, `status` |
+
+---
+
+### 4.10 Rate Limiting & Misc
+
+| Table | Purpose |
+|---|---|
+| `rate_limits` | Sliding window rate limit state (used by ai functions: 20 req/hr) |
+| `escalation_rules` | Escalation config (exists, appears empty/unused) |
+
+---
+
+## 5. Data Flow
+
+### 5.1 Wearable → Database
 
 ```
-SYSTEM PROMPT:
-You are Yves, an AI health coach specialized in endurance training, recovery, and injury prevention.
+User connects Oura via OAuth
+  → oura-auth edge function exchanges code for tokens
+  → stores in wearable_tokens (scope = 'oura')
 
-BASELINE & RISK ANALYSIS:
-HRV: Current 45ms vs Baseline 52ms (-13.5% deviation) – Risk Zone: yellow
-ACWR: Current 1.4 vs Baseline 1.1 (+27% deviation) – Risk Zone: red
-...
+Sync triggered (manual or cron):
+  → fetch-oura-data edge function
+  → reads wearable_tokens for user
+  → calls Oura API v2: /daily_readiness, /daily_sleep, /daily_activity, /spo2/multiple_days
+  → upserts rows to wearable_sessions (one row per date per source)
+  → logs result to oura_logs
 
-USER CONTEXT:
-Goals: Marathon in 6 months, improve sleep quality
-Training Phase: Base building
-Recent Injuries: Left knee strain (2023-11)
-...
-
-CONVERSATION HISTORY:
-[Last 5 exchanges for continuity]
-
-USER QUERY:
-{user's question}
+Same flow for Garmin:
+  → garmin-connect initiates PKCE flow, stores state in garmin_oauth_state
+  → user authorizes on Garmin
+  → garmin-auth callback: validates state, exchanges code, stores tokens
+  → immediately triggers fetch-garmin-data (fire-and-forget)
+  → fetch-garmin-data calls /wellness-api/rest/dailies, /sleeps, /activities
+  → upserts to wearable_sessions (source = 'garmin')
 ```
 
-**Response Processing:**
-1. OpenAI generates contextual response
-2. Stored in `insight_history`
-3. Displayed in Dashboard, Chat UI, Recommendations Card
-4. Memory bank updated if preferences mentioned
+### 5.2 Database → AI
 
-**AI-Powered Features:**
-- Daily Briefing (morning summary)
-- Yves Chat (conversational interface)
-- Recommendations Card (proactive suggestions)
-- Insights Tree (visual timeline of advice)
+```
+Any Yves AI function (yves-chat, generate-daily-briefing, generate-yves-recommendations):
 
----
-
-### 🕒 Automation & Orchestration
-
-**Cron Jobs (Supabase):**
-
-```sql
--- Hourly sync recommendation
-CRON: 0 * * * *
-1. fetch-oura-auto → Sync wearable data
-2. calculate-baseline → Update rolling averages
-3. calculate-deviation → Detect new risk zones
-4. generate-daily-briefing → Morning summary (6 AM only)
+1. Parallel fetch of 16 data sources from Supabase
+2. Classify coaching mode: rehab / performance / general_wellness
+3. Build baseline comparison string from user_baselines
+4. Compose system prompt with:
+   - Yves persona rules (baseline comparison, context anchoring, one-recommendation, etc.)
+   - User's full profile context
+   - Current metric values vs personal baselines
+   - Coaching mode-specific instructions
+5. Call ai-provider (Lovable gateway → gemini-2.5-flash)
+6. Write response to insight_history / daily_briefings / yves_recommendations
 ```
 
-**Manual Triggers:**
-- Settings Page → "Sync Now" button
-- Fitbit/Oura Sync Page → Manual refresh
-- Developer Tools → Function testing
+### 5.3 Database → UI
 
-**Automation Benefits:**
-- Always-fresh data for users
-- Proactive risk detection
-- Reduced manual intervention
-- Consistent baseline updates
-
----
-
-## Key Technologies
-
-### Frontend Stack
-- **React 18** - UI framework
-- **TypeScript** - Type safety
-- **Vite** - Build tool
-- **Shadcn/ui** - Component library
-- **Tailwind CSS** - Styling (glassmorphism theme)
-- **React Query** - Server state management
-- **React Router** - Navigation
-
-### Backend Stack
-- **Supabase** - Backend platform
-  - PostgreSQL database
-  - Edge Functions (Deno runtime)
-  - Row Level Security (RLS)
-  - Realtime subscriptions
-  - Cron jobs
-- **OpenAI API** - AI intelligence
-- **Oura API v2** - Wearable data
-
-### Development Tools
-- **ESLint** - Code linting
-- **Prettier** - Code formatting
-- **Lovable** - Development platform
-
----
-
-## Data Flow Summary
-
-### Typical User Journey
-
-1. **Onboarding**
-   - User registers (email/password)
-   - Connects Oura Ring (OAuth)
-   - Completes 10-section profile
-   - Uploads medical documents
-
-2. **Data Sync (Automatic)**
-   - Hourly: `fetch-oura-auto` pulls last 14 days
-   - Calculations: ACWR, Strain, Monotony computed
-   - Storage: `wearable_sessions` + `wearable_summary`
-
-3. **Baseline Establishment**
-   - After 30 days: Personal baselines calculated
-   - Risk zones: Deviation detection activated
-   - AI context: Yves gains full user understanding
-
-4. **Daily Usage**
-   - Morning: Daily Briefing generated
-   - Dashboard: Live metrics display
-   - Chat: Ask Yves questions
-   - Insights: Review recommendations
-
-5. **Continuous Improvement**
-   - Baselines: Updated hourly with new data
-   - Profile: User updates sections as needed
-   - Memory: Yves learns preferences over time
-
-### Critical Data Paths
-
-**Wearable → Dashboard:**
 ```
-Oura API → fetch-oura-auto → wearable_sessions → Dashboard UI (< 5 min)
+Dashboard loads:
+  → useYvesIntelligence('balance') fetches daily_briefings + yves_recommendations
+  → DailyBriefingCard + YvesRecommendationsCard render
+
+Health page loads:
+  → useWearableSessions(userId, source) fetches latest wearable_sessions row
+  → Oura/Garmin cards render with that data
+
+Realtime:
+  → oura_logs INSERT (Supabase Realtime) → Dashboard refreshes trends after 2s delay
+
+Alert changes:
+  → RiskAlertPopup polls health_anomalies on mount
 ```
 
-**Risk Detection:**
+### 5.4 Symptom → AI → Storage
+
 ```
-wearable_summary → calculate-baseline → user_baselines → calculate-deviation → adaptive_recommendations → Yves AI Context
+User submits symptom form (SymptomCheckInForm)
+  → inserts row to symptom_check_ins
+  → calls interpret-health-event edge function
+  → function reads symptom + user profile
+  → AI generates interpretation
+  → updates symptom_check_ins.interpretation
+  → SymptomHistory re-renders
 ```
 
-**AI Coaching:**
+### 5.5 Find Help Flow
+
 ```
-User Query → yves-chat → Context Aggregation (6 sources) → OpenAI → insight_history → UI Display
+User types query in FindHelp page
+  → calls match-provider edge function (rate-limited)
+  → edge function calls AI with structured tool: parse_symptom_query
+  → returns ParsedIntent: { sport, symptom, urgency, location, provider_type }
+  → frontend loads /practitioners.csv via PapaParse
+  → filters + ranks practitioners against ParsedIntent
+  → renders results with booking links
 ```
 
 ---
 
-## Security & Privacy
+## 6. External Integrations
 
-### Authentication
-- Supabase Auth (JWT tokens)
-- Row Level Security (RLS) on all tables
-- Policy: Users can only access their own data
+### 6.1 Oura Ring
+- **Auth:** OAuth 2.0 (authorization_code flow)
+- **API version:** v2 (`https://api.ouraring.com/v2`)
+- **Endpoints used:** `/usercollection/daily_readiness`, `/usercollection/daily_sleep`, `/usercollection/daily_activity`, `/usercollection/spo2/multiple_days`
+- **Token refresh:** Automatic via `_shared/oura-token-refresh.ts`
+- **Data landing:** `wearable_sessions` (source = 'oura')
 
-### Data Protection
-- OAuth tokens encrypted at rest
-- HIPAA-compliant data handling
-- No third-party data sharing
-- Service role key never exposed to client
+### 6.2 Garmin
+- **Auth:** OAuth 2.0 PKCE (`https://diauth.garmin.com/di-oauth2-service/oauth/token`)
+- **API:** Garmin Wellness API (`https://apis.garmin.com/wellness-api/rest`)
+- **Endpoints used:** `/dailies`, `/sleeps`, `/activities`
+- **Provider user ID:** Fetched from `/wellness-api/rest/user/id` after auth and stored in `wearable_tokens.provider_user_id` for webhook matching
+- **Data landing:** `wearable_sessions` (source = 'garmin')
 
-### RLS Policy Example
-```sql
-CREATE POLICY "Users can view own sessions"
-  ON wearable_sessions FOR SELECT
-  TO authenticated
-  USING (auth.uid() = user_id);
-```
+### 6.3 Polar
+- **Auth:** OAuth 2.0 callback (`polar-auth` function exists)
+- **Status:** Auth flow implemented; data fetch function not confirmed active
 
-### Edge Function Security
-- Service role key for admin operations
-- User authentication required for personal data
-- CORS headers properly configured
-- Error messages sanitized (no sensitive data leaks)
+### 6.4 Google Calendar
+- **Auth:** OAuth 2.0 (`google-calendar-auth` function exists)
+- **Functions:** `fetch-google-calendar-events`, `create-google-calendar-event` exist
+- **Status:** Functions built but Planner page does not call them — UI is a placeholder
 
----
+### 6.5 Calendly
+- **Integration:** Webhook receiver (`calendly-webhook` function)
+- **Trigger:** Calendly sends `invitee.created` event
+- **Action:** Creates row in `bookings`, sends confirmation email via Resend
+- **Gap:** No Calendly booking UI within the app — users must book externally and webhook fires after
 
-## Performance Considerations
+### 6.6 Twilio
+- **Purpose:** SMS alerts
+- **Restriction:** South African +27 numbers only (validated in `send-sms-alert`)
+- **Audit:** Logged to `notification_log`
 
-### Database Optimizations
-- Indexes on frequently queried columns (user_id, date)
-- Upsert strategies prevent duplicate data
-- REPLICA IDENTITY FULL on trend tables for realtime
-- Connection pooling via Supabase
+### 6.7 Resend
+- **Purpose:** Transactional email (booking confirmations, alerts)
+- **Used by:** `calendly-webhook`, `send-email` functions
 
-### Frontend Optimizations
-- React Query caching (5-minute stale time)
-- Lazy loading for non-critical components
-- Image optimization (WebP format)
-- Code splitting by route
-
-### Edge Function Best Practices
-- Batch database operations
-- Parallel API calls where possible
-- Timeout handling (2-minute max)
-- Comprehensive error logging
+### 6.8 Lovable AI Gateway
+- **URL:** Lovable's hosted AI proxy
+- **Model:** google/gemini-2.5-flash
+- **Fallback chain:** Lovable → OpenAI → Anthropic → Google (auto-detected from env vars in `_shared/ai-provider.ts`)
 
 ---
 
-## Monitoring & Logging
+## 7. Known Gaps
 
-### Function Execution Logs
-- `function_execution_log` table tracks all Edge Functions
-- Captures: function_name, status, duration_ms, error_message
-- Retention: 30 days
-
-### Wearable Sync Logs
-- `oura_logs` table tracks sync operations
-- Status: success, error
-- Entries synced count
-- Error details for debugging
-
-### AI Conversation History
-- `insight_history` table stores all Yves interactions
-- Enables: Conversation continuity, usage analytics, quality improvement
-
----
-
-## Future Enhancements
-
-### Planned Features
-- Multi-wearable support (Garmin, Whoop, Apple Watch)
-- Team coaching for group training
-- Advanced analytics dashboard
-- Export to PDF/CSV
-- Mobile app (React Native)
-- Real-time alerts via SMS/push notifications
-
-### AI Improvements
-- Fine-tuned model on endurance training data
-- Voice interface for Yves
-- Predictive injury risk modeling
-- Personalized training plan generation
+| # | Gap | Location | Impact |
+|---|---|---|---|
+| 1 | **YourPlan data in localStorage only** | `src/pages/YourPlan.tsx` | Accepted adjustments and bookings lost on browser clear |
+| 2 | **InsightsTree disconnected from real data** | `src/pages/InsightsTree.tsx` | Shows 15 placeholder nodes; `yves-tree` function never called |
+| 3 | **Google Calendar events never rendered** | `src/pages/Planner.tsx` | Google Calendar section is static UI placeholder |
+| 4 | **Calendly booking path missing from app UI** | FindHelp, YourPlan | Users must book externally; no in-app booking UI |
+| 5 | **`calculate-plan-adherence` has no trigger** | `supabase/functions/calculate-plan-adherence` | `plan_adherence` table always empty; PlanCompliance page shows nothing |
+| 6 | **`trigger-risk-alert` ignores `alert_settings`** | `supabase/functions/trigger-risk-alert` | Hardcoded thresholds used; user preferences ignored |
+| 7 | **`adapt-user-model` never runs** | `supabase/functions/adapt-user-model` | User model never auto-updates from feedback |
+| 8 | **`yves-tree` never called from UI** | `supabase/functions/yves-tree` | Built but unused |
+| 9 | **Polar data fetch unconfirmed** | `supabase/functions/polar-auth` | Auth flow exists; no confirmed data sync function |
+| 10 | **Practitioners from CSV, not DB** | `src/pages/FindHelp.tsx` + `/public/practitioners.csv` | Practitioners can't be managed via DB; no CMS |
+| 11 | **Medical session flow has no UI** | — | `interpret-health-event` exists but no dedicated medical consultation UI |
+| 12 | **`escalation_rules` table empty** | DB | No escalation logic implemented |
+| 13 | **Fitbit dead code** | Various | Fitbit references remain (e.g., old table names `fitbit_trends` in comments); Fitbit OAuth not functional |
+| 14 | **`physicians` table superseded** | DB | Old `physicians` table exists; FindHelp now uses CSV |
 
 ---
 
-## Related Documentation
+## 8. Four Core Pillars
 
-- [DATA_FLOW.md](./DATA_FLOW.md) - Detailed metric calculation journeys
-- [EDGE_FUNCTIONS.md](./EDGE_FUNCTIONS.md) - Complete function reference
-- [DATABASE_SCHEMA.md](./DATABASE_SCHEMA.md) - Table schemas and relationships
-- [README.md](./README.md) - Getting started guide
+### Pillar 1: Clean Wearable Data Display (Oura + Garmin)
+
+#### What Exists
+- `wearable_sessions` table stores both Oura and Garmin data (unified by `source` column)
+- `DeviceSourceSwitcher` component lets user toggle between sources on Health and Training pages
+- Oura sync: fetch + token refresh + caching working end-to-end
+- Garmin sync: PKCE auth + data fetch working end-to-end
+- All major metric cards (readiness, sleep, activity, HRV) render correctly from `wearable_sessions`
+- Two distinct empty states (no device / no data) on Health page
+- Stale-data warning shown when last sync > 24h
+
+#### What's Needed
+- Garmin intraday heart rate (not currently fetched)
+- Polar data fetch function (auth exists, no sync)
+- Data freshness indicator per source (currently only one global sync status)
+- Scheduled cron for automatic Garmin sync (currently only on auth + manual trigger)
 
 ---
 
-**Last Updated:** 2025-11-02
-**Version:** 1.0.0
-**Maintainer:** Predictiv Development Team
+### Pillar 2: Hyper-Personalised AI Intelligence (Yves)
+
+#### What Exists
+- Full 16-source context aggregation before every AI call
+- 28-day rolling baselines (`user_baselines`) — every metric compared to personal norm
+- Coaching mode classification (rehab / performance / general_wellness)
+- Streaming chat (`yves-chat`) with rate limiting (20 req/hr)
+- Idempotent daily briefing generation with 6 categories
+- 3 structured recommendations with priority
+- Yves memory bank for long-term preference storage
+- System prompt enforces: baseline comparison, context anchoring, one-recommendation, vague question protocol, hard truth protocol, adaptive length
+
+#### What's Needed
+- Trigger for `generate-daily-briefing` to run automatically (cron not confirmed active)
+- Trigger for `generate-yves-recommendations` (called manually from UI only)
+- InsightsTree to read from `insight_history` instead of localStorage
+- YourPlan accepted adjustments persisted to DB (currently localStorage only)
+
+---
+
+### Pillar 3: Early Injury Detection + Symptom Check-In
+
+#### What Exists
+- `detect-health-anomalies` with 4-level severity (low/medium/high/critical) and physiological thresholds per metric
+- `health_anomalies` table with unacknowledged tracking
+- `user_deviations` with risk_zone (green/yellow/red) and deviation percentages
+- `trigger-risk-alert` fires to `alert_history` when hardcoded thresholds crossed
+- `RiskAlertPopup` surfaces unacknowledged anomalies in the global UI
+- `SymptomCheckInSheet` global drawer for quick check-ins
+- `interpret-health-event` AI interpretation of submitted symptoms
+- `alert_history` with full lifecycle (dismiss/resolve/snooze/notes)
+
+#### What's Needed
+- `trigger-risk-alert` to respect `alert_settings` instead of hardcoded thresholds
+- Cron trigger for `detect-health-anomalies` (must run after each sync)
+- Escalation logic using `escalation_rules` table
+- Dedicated symptom-to-care pathway UI (current check-in has no "next steps" flow)
+
+---
+
+### Pillar 4: Working Help Page with Professional Matching + Booking
+
+#### What Exists
+- Three-step FindHelp flow: query → AI parsing → results
+- `match-provider` edge function with structured AI tool call returning ParsedIntent
+- Practitioner filtering + ranking from `/practitioners.csv`
+- Emergency state with SA phone numbers for critical urgency
+- Cross-page trigger via sessionStorage
+- `calendly-webhook` receives booking confirmation and creates `bookings` row
+
+#### What's Needed
+- In-app Calendly embed (currently users book externally)
+- Practitioner data in DB (currently hardcoded CSV — no way to add/update practitioners without a file deploy)
+- Booking history visible to user (bookings written to DB but no UI shows them)
+- YourPlan page to read bookings from DB instead of localStorage
+- Post-booking follow-up (e.g., reminder SMS/email before appointment)
+
+---
+
+*Last updated: 2026-03-07*

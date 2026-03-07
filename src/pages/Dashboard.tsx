@@ -132,17 +132,25 @@ export const Dashboard = () => {
 
         setUserId(user.id);
 
-        // Fetch user's first name from profiles table
+        // Fetch name from user_profiles (written by ProfileSettings and onboarding)
         const { data: profile } = await supabase
-          .from('profiles')
+          .from('user_profiles')
           .select('full_name')
-          .eq('id', user.id)
+          .eq('user_id', user.id)
           .maybeSingle();
 
         if (profile?.full_name) {
-          // Extract first name
-          const firstName = profile.full_name.split(' ')[0];
-          setUserName(firstName);
+          setUserName(profile.full_name.split(' ')[0]);
+        } else {
+          // Fallback: user_profile.name written by onboarding
+          const { data: userProfile } = await supabase
+            .from('user_profile')
+            .select('name')
+            .eq('user_id', user.id)
+            .maybeSingle();
+          if (userProfile?.name) {
+            setUserName(userProfile.name.split(' ')[0]);
+          }
         }
       } catch (error) {
         console.error('Error fetching user profile:', error);
@@ -210,8 +218,8 @@ export const Dashboard = () => {
     }
   };
 
-  const dashboardContent = (
-    <div className="container mx-auto px-4 md:px-6 pt-6 md:pt-8">
+  const   dashboardContent = (
+    <div className="container mx-auto px-4 md:px-6 pt-4 sm:pt-6 md:pt-8 pb-4 overflow-x-hidden">
           <WelcomeHeader
             onCustomize={openLayoutEditor}
             isCustomized={layoutCustomized}

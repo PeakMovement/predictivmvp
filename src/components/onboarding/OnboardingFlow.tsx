@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
@@ -6,7 +6,7 @@ import { CheckCircle2, ChevronRight, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { OnboardingWelcome } from "./OnboardingWelcome";
-import { OnboardingProfile } from "./OnboardingProfile";
+import { OnboardingProfile, OnboardingProfileHandle } from "./OnboardingProfile";
 import { OnboardingWearable } from "./OnboardingWearable";
 import { OnboardingBriefing } from "./OnboardingBriefing";
 
@@ -27,6 +27,7 @@ export const OnboardingFlow = ({ onComplete, onSkip }: OnboardingFlowProps) => {
   const [completedSteps, setCompletedSteps] = useState<Set<number>>(new Set());
   const [userId, setUserId] = useState<string | null>(null);
   const { toast } = useToast();
+  const profileRef = useRef<OnboardingProfileHandle>(null);
 
   useEffect(() => {
     loadOnboardingProgress();
@@ -77,6 +78,11 @@ export const OnboardingFlow = ({ onComplete, onSkip }: OnboardingFlowProps) => {
   };
 
   const handleNext = async () => {
+    // Flush profile data before unmounting the Profile step
+    if (currentStep === 1 && profileRef.current) {
+      await profileRef.current.save();
+    }
+
     const newCompleted = new Set(completedSteps);
     newCompleted.add(currentStep);
     setCompletedSteps(newCompleted);
@@ -201,7 +207,6 @@ export const OnboardingFlow = ({ onComplete, onSkip }: OnboardingFlowProps) => {
     }
   };
 
-  const CurrentStepComponent = STEPS[currentStep].component;
   const progress = ((currentStep + 1) / STEPS.length) * 100;
 
   return (
@@ -256,7 +261,15 @@ export const OnboardingFlow = ({ onComplete, onSkip }: OnboardingFlowProps) => {
             </div>
 
             <div className="min-h-[400px]">
-              <CurrentStepComponent onNext={handleNext} onBack={handleBack} />
+              {currentStep === 1 ? (
+                <OnboardingProfile ref={profileRef} onNext={handleNext} onBack={handleBack} />
+              ) : currentStep === 0 ? (
+                <OnboardingWelcome onNext={handleNext} onBack={handleBack} />
+              ) : currentStep === 2 ? (
+                <OnboardingWearable onNext={handleNext} onBack={handleBack} />
+              ) : (
+                <OnboardingBriefing onNext={handleNext} onBack={handleBack} />
+              )}
             </div>
 
             <div className="flex items-center justify-between pt-4 border-t">

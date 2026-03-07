@@ -9,16 +9,7 @@
 import { ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import {
-  Activity,
-  Watch,
-  Calendar,
-  TrendingUp,
-  FileText,
-  Clock,
-  RefreshCw,
-  AlertCircle,
-} from "lucide-react";
+import { Activity, Watch, Calendar, TrendingUp, FileText, Clock, RefreshCw, CircleAlert as AlertCircle } from "lucide-react";
 
 interface EmptyStateProps {
   /** Icon to display */

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Watch, CheckCircle2, Loader2 } from "lucide-react";
+import { Watch, CircleCheck as CheckCircle2, Loader as Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 

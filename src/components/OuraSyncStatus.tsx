@@ -1,6 +1,6 @@
 import { formatDistanceToNowStrict } from "date-fns";
 import { useOuraTokenStatus } from "@/hooks/useOuraTokenStatus";
-import { CheckCircle2, Circle, AlertTriangle, WifiOff, RefreshCw, Loader2 } from "lucide-react";
+import { CircleCheck as CheckCircle2, Circle, TriangleAlert as AlertTriangle, WifiOff, RefreshCw, Loader as Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 

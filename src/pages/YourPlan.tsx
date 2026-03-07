@@ -1,4 +1,4 @@
-import { CheckCircle, Calendar, Clock, User, FileText, Play, CalendarPlus, Download, Info, TrendingUp } from "lucide-react";
+import { CircleCheck as CheckCircle, Calendar, Clock, User, FileText, Play, CalendarPlus, Download, Info, TrendingUp } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState, useEffect, useMemo } from "react";
 import { format } from "date-fns";

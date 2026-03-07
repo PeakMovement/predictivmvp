@@ -1,20 +1,4 @@
-import {
-  BarChart3,
-  Activity,
-  Calendar,
-  TrendingUp,
-  Gauge,
-  ChevronLeft,
-  ChevronRight,
-  FileText,
-  Play,
-  CheckCircle,
-  HelpCircle,
-  Check,
-  X,
-  CalendarPlus,
-  WifiOff,
-} from "lucide-react";
+import { ChartBar as BarChart3, Activity, Calendar, TrendingUp, Gauge, ChevronLeft, ChevronRight, FileText, Play, CircleCheck as CheckCircle, CircleHelp as HelpCircle, Check, X, CalendarPlus, WifiOff } from "lucide-react";
 import OuraSyncStatus from "@/components/OuraSyncStatus";
 import { cn } from "@/lib/utils";
 import { useState, useEffect } from "react";

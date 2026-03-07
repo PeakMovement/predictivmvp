@@ -8,7 +8,7 @@ import { OuraHRVCard } from "@/components/oura/OuraHRVCard";
 import { TodayActivitySection } from "@/components/dashboard/TodayActivitySection";
 import OuraSyncStatus from "@/components/OuraSyncStatus";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { InfoIcon } from "lucide-react";
+import { Info as InfoIcon } from "lucide-react";
 import { HealthTrendsChart } from "@/components/health/HealthTrendsChart";
 import { DeviceSourceSwitcher } from "@/components/DeviceSourceSwitcher";
 import { useLayoutCustomization } from "@/hooks/useLayoutCustomization";

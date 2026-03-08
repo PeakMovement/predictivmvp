@@ -151,9 +151,9 @@ export const ProfileSettings = ({ onSaveStart, onSaveComplete }: ProfileSettings
     <>
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-start">
-          <div className="relative shrink-0">
+          <div className="relative shrink-0 w-20 h-20">
             {profile?.avatar_url ? (
-              <div className="relative w-20 h-20 rounded-full overflow-hidden bg-muted">
+              <div className="relative w-full h-full rounded-full overflow-hidden bg-muted">
                 <img
                   src={profile.avatar_url}
                   alt="Profile"
@@ -170,7 +170,7 @@ export const ProfileSettings = ({ onSaveStart, onSaveComplete }: ProfileSettings
                 )}
               </div>
             ) : (
-              <div className="w-20 h-20 bg-muted rounded-full flex items-center justify-center">
+              <div className="w-full h-full bg-muted rounded-full flex items-center justify-center">
                 {isUploading ? (
                   <Loader2 className="h-8 w-8 text-muted-foreground animate-spin" />
                 ) : (
@@ -189,7 +189,7 @@ export const ProfileSettings = ({ onSaveStart, onSaveComplete }: ProfileSettings
               type="button"
               onClick={() => fileInputRef.current?.click()}
               disabled={isUploading}
-              className="absolute bottom-0 right-0 bg-primary text-primary-foreground rounded-full p-1.5 hover:bg-primary/90 transition-colors disabled:opacity-50 shadow-sm"
+              className="absolute -bottom-1 -right-1 bg-primary text-primary-foreground rounded-full p-1.5 hover:bg-primary/90 transition-colors disabled:opacity-50 shadow-md"
             >
               <Upload className="h-3 w-3" />
             </button>

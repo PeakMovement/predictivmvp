@@ -1,6 +1,6 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Lightbulb, AlertCircle } from 'lucide-react';
+import { Lightbulb, CircleAlert as AlertCircle } from 'lucide-react';
 
 interface PrimaryInsightCardProps {
   summary: string | undefined;

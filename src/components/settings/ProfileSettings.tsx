@@ -150,34 +150,29 @@ export const ProfileSettings = ({ onSaveStart, onSaveComplete }: ProfileSettings
   return (
     <>
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-        <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-start">
-          <div className="relative shrink-0 w-20 h-20">
-            {profile?.avatar_url ? (
-              <div className="relative w-full h-full rounded-full overflow-hidden bg-muted">
-                <img
-                  src={profile.avatar_url}
-                  alt="Profile"
-                  className="w-full h-full object-cover"
-                />
-                {!isUploading && (
-                  <button
-                    type="button"
-                    onClick={handleRemoveAvatar}
-                    className="absolute top-0 right-0 bg-destructive text-destructive-foreground rounded-full p-1 hover:bg-destructive/90 transition-colors"
-                  >
-                    <X className="h-3 w-3" />
-                  </button>
-                )}
-              </div>
-            ) : (
-              <div className="w-full h-full bg-muted rounded-full flex items-center justify-center">
-                {isUploading ? (
-                  <Loader2 className="h-8 w-8 text-muted-foreground animate-spin" />
-                ) : (
-                  <User className="h-8 w-8 text-muted-foreground" />
-                )}
-              </div>
-            )}
+        <div className="flex flex-col items-center gap-5 sm:flex-row sm:items-start">
+          <div className="flex flex-col items-center gap-2 shrink-0">
+            <div
+              className="relative w-16 h-16 rounded-full bg-muted flex items-center justify-center overflow-hidden cursor-pointer group"
+              onClick={() => !isUploading && fileInputRef.current?.click()}
+            >
+              {profile?.avatar_url ? (
+                <>
+                  <img
+                    src={profile.avatar_url}
+                    alt="Profile"
+                    className="w-full h-full object-cover"
+                  />
+                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                    <Camera className="h-4 w-4 text-white" />
+                  </div>
+                </>
+              ) : isUploading ? (
+                <Loader2 className="h-6 w-6 text-muted-foreground animate-spin" />
+              ) : (
+                <UserCircle className="h-10 w-10 text-muted-foreground/60" />
+              )}
+            </div>
             <input
               ref={fileInputRef}
               type="file"
@@ -185,14 +180,31 @@ export const ProfileSettings = ({ onSaveStart, onSaveComplete }: ProfileSettings
               onChange={handleAvatarChange}
               className="hidden"
             />
-            <button
-              type="button"
-              onClick={() => fileInputRef.current?.click()}
-              disabled={isUploading}
-              className="absolute -bottom-1 -right-1 bg-primary text-primary-foreground rounded-full p-1.5 hover:bg-primary/90 transition-colors disabled:opacity-50 shadow-md"
-            >
-              <Upload className="h-3 w-3" />
-            </button>
+            <div className="flex items-center gap-1">
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="text-xs h-7 px-2 text-primary"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isUploading}
+              >
+                <Upload className="h-3 w-3 mr-1" />
+                Upload
+              </Button>
+              {profile?.avatar_url && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="text-xs h-7 px-2 text-destructive hover:text-destructive"
+                  onClick={handleRemoveAvatar}
+                >
+                  <X className="h-3 w-3 mr-1" />
+                  Remove
+                </Button>
+              )}
+            </div>
           </div>
 
           <div className="w-full space-y-4">

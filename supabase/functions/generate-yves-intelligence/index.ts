@@ -29,7 +29,6 @@ interface YvesIntelligenceOutput {
     summary: string;
     keyChanges: string[];
     riskHighlights: string[];
-    todaysFocus?: string;
   };
   recommendations: Array<{
     text: string;
@@ -191,7 +190,6 @@ Deno.serve(async (req) => {
           summary: "I'm just getting to know you! Connect your Oura Ring and complete your profile so I can provide personalized insights tailored to your goals.",
           keyChanges: [],
           riskHighlights: [],
-          todaysFocus: "Set up your health profile and connect your wearable to unlock personalized guidance",
         },
         recommendations: [{
           text: "Complete your health profile with your goals, preferences, and any health conditions I should know about",
@@ -360,11 +358,6 @@ Deno.serve(async (req) => {
       // Find yesterday's briefing
       const yesterdayBriefing = pastBriefings.find((b: any) => b.date === yesterdayStr);
       const contextUsed = yesterdayBriefing?.context_used as any;
-
-      // Yesterday's commitment (todaysFocus from yesterday's briefing)
-      const yesterdayCommitment = contextUsed?.dailyBriefing?.todaysFocus
-        ? String(contextUsed.dailyBriefing.todaysFocus).substring(0, 140)
-        : null;
 
       // Yesterday's recommendation categories
       const yesterdayRecCategories: string[] = (contextUsed?.recommendations || [])
@@ -564,9 +557,6 @@ Deno.serve(async (req) => {
             : "Everything looks stable today. I'll speak up when there's something meaningful to share.",
           keyChanges: [],
           riskHighlights: [],
-          todaysFocus: reasoningContext.overall_confidence < 25
-            ? "Continue wearing your Oura Ring to build your personal baseline"
-            : undefined,
         },
         recommendations: []
       };
@@ -1210,9 +1200,7 @@ Generate a JSON object:
   "dailyBriefing": {
     "summary": "2-4 sentences that feel personal and insightful. Reference specific metrics, trends, or patterns from their data. Avoid generic statements like 'everything looks stable' - instead, explain WHAT is stable and WHY that matters for them.",
     "keyChanges": ["1-2 specific observations about trends, patterns, or notable shifts. Include actual numbers or timeframes when relevant."],
-    "riskHighlights": ["Only include if genuinely concerning - this can be empty"],
-    "todaysFocus": "ONE clear, actionable priority with specific timing and reasoning",
-    "commitment": "A short (max 140 chars) commitment string summarizing what the user could aim for today. This is stored and referenced tomorrow."
+    "riskHighlights": ["Only include if genuinely concerning - this can be empty"]
   },
   "recommendations": [
     {
@@ -1428,7 +1416,6 @@ RESPOND WITH ONLY THE JSON OBJECT.`;
           summary: "I'm analyzing your data. Check back soon for personalized insights.",
           keyChanges: [],
           riskHighlights: [],
-          todaysFocus: "Continue your regular routine",
         },
         recommendations: []
       };
@@ -1508,7 +1495,6 @@ RESPOND WITH ONLY THE JSON OBJECT.`;
           memory_value: JSON.stringify({
             date: today,
             focus_mode: focusMode,
-            todaysFocus: intelligenceData.dailyBriefing.todaysFocus || null,
             keyChanges: intelligenceData.dailyBriefing.keyChanges?.slice(0, 3) || [],
             topRecommendation: intelligenceData.recommendations[0]?.text || null,
             topCategory: intelligenceData.recommendations[0]?.category || null,

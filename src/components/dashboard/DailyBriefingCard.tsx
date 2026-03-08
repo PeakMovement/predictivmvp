@@ -34,7 +34,6 @@ import { TodaysBestDecision, TodaysBestDecisionHandle } from "./TodaysBestDecisi
 import { WhyThisMatters } from "./WhyThisMatters";
 import { DocumentReference } from "./DocumentReference";
 import { BriefingFooter } from "./BriefingFooter";
-import { OneThingThatMatters } from "./OneThingThatMatters";
 import { usePersonalizedInsights } from "@/hooks/usePersonalizedInsights";
 import { useRelevantDocuments } from "@/hooks/useRelevantDocuments";
 import { BaselineBanner } from "./BaselineBanner";
@@ -391,8 +390,6 @@ function CollapsibleBriefingSections({ briefing }: { briefing: YvesDailyBriefing
         )}
       </CollapsibleSection>
 
-      {/* One Thing That Matters Today */}
-      <OneThingThatMatters focus={briefing.todaysFocus || null} />
     </div>
   );
 }

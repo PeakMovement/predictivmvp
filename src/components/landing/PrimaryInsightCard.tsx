@@ -3,13 +3,12 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Lightbulb, AlertCircle } from 'lucide-react';
 
 interface PrimaryInsightCardProps {
-  focus: string | undefined;
   summary: string | undefined;
   isLoading?: boolean;
   error?: string | null;
 }
 
-export function PrimaryInsightCard({ focus, summary, isLoading, error }: PrimaryInsightCardProps) {
+export function PrimaryInsightCard({ summary, isLoading, error }: PrimaryInsightCardProps) {
   if (isLoading) {
     return (
       <Card className="border border-border/50 bg-card/50 backdrop-blur-sm">
@@ -38,7 +37,7 @@ export function PrimaryInsightCard({ focus, summary, isLoading, error }: Primary
     );
   }
 
-  if (!focus && !summary) {
+  if (!summary) {
     return (
       <Card className="border border-border/50 bg-muted/30 backdrop-blur-sm">
         <CardContent className="pt-6">
@@ -62,21 +61,13 @@ export function PrimaryInsightCard({ focus, summary, isLoading, error }: Primary
         <div className="flex items-center gap-2">
           <Lightbulb className="h-4 w-4 text-primary" />
           <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-            Today's Focus
+            Today's Insight
           </span>
         </div>
-        
-        {focus && (
-          <p className="text-lg font-medium text-foreground leading-relaxed">
-            {focus}
-          </p>
-        )}
-        
-        {summary && (
-          <p className="text-sm text-muted-foreground leading-relaxed">
-            {summary}
-          </p>
-        )}
+
+        <p className="text-sm text-muted-foreground leading-relaxed">
+          {summary}
+        </p>
       </CardContent>
     </Card>
   );

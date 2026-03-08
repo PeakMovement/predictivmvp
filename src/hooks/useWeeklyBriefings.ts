@@ -8,7 +8,6 @@ export interface DayBriefing {
   summary: string | null;
   keyChanges: string[];
   riskHighlights: string[];
-  todaysFocus: string | null;
   category: 'training' | 'recovery' | 'wellbeing' | 'planning' | 'mixed';
   hasData: boolean;
 }
@@ -134,31 +133,9 @@ function synthesizeThemes(days: DayBriefing[]): WeeklyTheme[] {
 }
 
 function determineOverallFocus(days: DayBriefing[]): { focus: string; tone: 'coach' | 'warm' | 'strategic' } {
-  const daysWithFocus = days.filter(d => d.todaysFocus);
-  
-  if (daysWithFocus.length === 0) {
-    return {
-      focus: 'Your week had a natural rhythm. Continue listening to what your body and goals need.',
-      tone: 'strategic',
-    };
-  }
-
-  // Find the most recent focus with data
-  const recentFocus = daysWithFocus[daysWithFocus.length - 1];
-  const category = recentFocus.category;
-  const tone = getToneForCategory(category);
-
-  const focusMessages: Record<string, string> = {
-    training: 'Your week leaned toward active engagement. Keep building on that momentum.',
-    recovery: 'Rest was a recurring theme. Honor what your body has been asking for.',
-    wellbeing: 'You prioritized how you feel. That self awareness will serve you well.',
-    planning: 'Strategic thinking guided your week. Stay focused on the bigger picture.',
-    mixed: 'Your week balanced multiple priorities. Flexibility is a strength.',
-  };
-
   return {
-    focus: focusMessages[category] || focusMessages.mixed,
-    tone,
+    focus: 'Your week had a natural rhythm. Continue listening to what your body and goals need.',
+    tone: 'strategic',
   };
 }
 
@@ -296,7 +273,6 @@ export function useWeeklyBriefings() {
             summary: null,
             keyChanges: [],
             riskHighlights: [],
-            todaysFocus: null,
             category: 'mixed' as const,
             hasData: false,
           };
@@ -308,7 +284,6 @@ export function useWeeklyBriefings() {
         const summary = dailyBriefing?.summary || briefing.content || null;
         const keyChanges = dailyBriefing?.keyChanges || [];
         const riskHighlights = dailyBriefing?.riskHighlights || [];
-        const todaysFocus = dailyBriefing?.todaysFocus || null;
         const category = categorizeContent(summary || '', keyChanges, riskHighlights);
 
         return {
@@ -317,7 +292,6 @@ export function useWeeklyBriefings() {
           summary,
           keyChanges,
           riskHighlights,
-          todaysFocus,
           category,
           hasData: true,
         };

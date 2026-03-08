@@ -71,7 +71,6 @@ const Index = () => {
 
         {/* Primary Insight Card */}
         <PrimaryInsightCard
-          focus={dailyBriefing?.todaysFocus}
           summary={dailyBriefing?.summary}
           isLoading={isLoadingIntelligence}
           error={getErrorMessage()}

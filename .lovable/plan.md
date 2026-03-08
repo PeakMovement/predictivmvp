@@ -1,174 +1,67 @@
 
 
-## Predictiv — Full Platform Review
+# Proper Backend Challenge System
 
-### What It Is
+## Current State
 
-Predictiv is a **health intelligence platform** that connects to wearable devices (Oura Ring, Garmin, Polar, Fitbit) and uses AI to provide personalized health coaching, risk analysis, and training recommendations. The AI coach is called **Yves**.
+Two overlapping tables exist: `accountability_challenges` (used by Training page) and `user_challenges` (used by Planner). Neither has backend intelligence. We'll consolidate onto `user_challenges` and build a full lifecycle.
 
-### What It Aims To Be
+## What We'll Build
 
-A comprehensive health command center that:
-- Ingests real-time wearable data (sleep, HRV, activity, heart rate)
-- Establishes personal baselines over 30 days and detects deviations
-- Assigns risk zones (green/yellow/red) based on deviation percentages
-- Provides an AI health coach (Yves) with full contextual awareness of the user's health history, training phase, injuries, and goals
-- Supports document intelligence (medical records, training plans)
-- Enables practitioner matching and symptom triage
-- Offers daily briefings, recommendations, and an insights timeline
+### 1. New Edge Function: `generate-weekly-challenges`
+AI-powered challenge generation that runs weekly (Monday morning) or on-demand:
+- Gathers user context: recent wearable sessions (7 days), baselines/deviations, injury profile, wellness goals, recent completed/abandoned challenges
+- Calls Lovable AI Gateway with structured tool calling to produce 2-3 personalised challenges with title, description, type, target_value, and reasoning
+- Inserts into `user_challenges` with `status: 'pending'` and current `week_start_date`
+- Skips generation if user already has pending/active challenges for the week
 
-### What Has Been Built (Version 121)
+### 2. New Edge Function: `manage-challenge-lifecycle`
+Scheduled daily via cron to handle expiry and progress:
+- **Auto-expire**: Any challenge with `status: 'pending'` older than 3 days becomes `'expired'`
+- **Auto-complete**: Any `'active'` challenge where `current_progress >= target_value` becomes `'completed'`
+- **Week-end cleanup**: Active challenges past their `week_start_date + 7 days` get marked `'expired'`
+- **Progress sync**: For active challenges, queries `wearable_sessions` to auto-update `current_progress` based on `challenge_type` (e.g., type `workout_frequency` counts sessions, `distance_goal` sums distances, `sleep_target` averages sleep scores)
 
-**Frontend (React + TypeScript + Tailwind + Shadcn/ui):**
-- Authentication (login/register) with Supabase Auth
-- 10-section onboarding profile (injuries, lifestyle, nutrition, training, medical, wellness goals, recovery, mindset, interests)
-- Dashboard with daily briefing, risk score, AI recommendations, personalization insights
-- Health page with score cards, trends, HRV/HR details
-- Training page with calendars, accountability challenges, session comparison
-- Planner with daily plan view and weekly reflections
-- Yves AI chat interface (conversational + sheet overlay)
-- Insights Tree (visual timeline of AI advice)
-- Symptom check-in system
-- Find Help / practitioner matching
-- Document upload and AI analysis
-- Settings with device connections, theme customization, notifications
-- Admin dashboard
-- Offline support, pull-to-refresh, session timeout, layout customization
-- Bottom navigation with tab-based routing (not React Router for main pages)
+### 3. Schema Migration
+Add columns to `user_challenges`:
+- `ai_reasoning TEXT` — why the AI suggested this challenge
+- `expires_at TIMESTAMPTZ` — explicit expiry timestamp
+- `progress_metric TEXT` — which wearable metric to track against (e.g., `session_count`, `total_distance`, `avg_sleep_score`)
 
-**Backend (Supabase Edge Functions — ~60+ functions):**
-- Wearable data sync: Oura, Garmin, Fitbit, Polar
-- Baseline calculation (30-day rolling averages)
-- Deviation detection and risk zone assignment
-- AI intelligence layer (Yves chat, daily briefing, recommendations, insights tree, memory bank)
-- Document analysis
-- Notification system (SMS via Twilio, email summaries)
-- Health anomaly detection
-- Treatment plan generation
-- Provider matching and triage
-- Google Calendar integration
-- System health monitoring
+### 4. Hook into Existing Sync Pipeline
+After `generate-daily-briefing` runs, call `manage-challenge-lifecycle` to keep progress fresh. After Monday's briefing, call `generate-weekly-challenges`.
 
-**Database (PostgreSQL via Supabase):**
-- ~30+ tables covering wearable sessions, summaries, training trends, user profiles (10 tables), AI memory/history, baselines, recommendations, documents, notifications, and logs
-- Row Level Security on all tables
-- Realtime subscriptions for live updates
+### 5. Frontend Updates
+- `ChallengeAcceptanceModal` — show AI reasoning ("Why this challenge")
+- `ActiveChallengeCard` — display live progress from wearable data instead of manual-only updates
+- `useUserChallenges` hook — add `pendingChallenges` filter, auto-refresh on wearable sync
+- Remove `accountability_challenges` references (consolidate to `user_challenges`)
 
-### What Has Been Struggled With
+### 6. Cron Jobs (SQL)
+- `generate-weekly-challenges`: Monday 6am UTC
+- `manage-challenge-lifecycle`: Daily 7am UTC
 
-**1. Garmin Integration (Current Active Issue)**
-The Garmin webhook (`garmin-webhook` edge function) is failing Garmin's Partner Verification portal with 403 errors and null responses. The root cause has been identified as **Cloudflare bot protection** sitting in front of Supabase's infrastructure, which blocks Garmin's automated verification requests before they reach the edge function. The code itself is correct — `verify_jwt = false` is set, and all code paths return HTTP 200. This is an **infrastructure-level issue** requiring Supabase support to whitelist Garmin's IP ranges.
+## Technical Details
 
-**2. Oura Integration (Previously Resolved)**
-Multiple rounds of debugging OAuth flows, token refresh, data syncing, and UI display. Documented extensively in 7+ troubleshooting files (OURA_AUTH_TROUBLESHOOTING.md, OURA_FIX_GUIDE.md, etc.).
+**Challenge type → metric mapping** (in `manage-challenge-lifecycle`):
+| challenge_type | wearable metric | calculation |
+|---|---|---|
+| workout_frequency | wearable_sessions | COUNT sessions this week |
+| distance_goal | wearable_sessions.distance | SUM distance this week |
+| sleep_target | wearable_sessions.sleep_score | AVG sleep score this week |
+| recovery_focus | wearable_sessions.readiness | AVG readiness this week |
+| hrv_improvement | wearable_sessions.hrv | AVG HRV this week |
 
-**3. Complex State Management**
-The app uses tab-based navigation via `useState` in App.tsx rather than React Router for main pages, with special-cased routes for OAuth callbacks. This creates complexity.
+**AI prompt structure**: Uses tool calling to return structured `challenges[]` array with required fields, avoiding JSON parsing issues.
 
----
-
-## All Garmin-Related Code
-
-Here is every file related to the Garmin API integration:
-
----
-
-### 1. `supabase/config.toml` — Garmin JWT Settings (lines 144-157)
-
-```toml
-[functions.garmin-auth-initiate]
-verify_jwt = false
-
-[functions.garmin-auth]
-verify_jwt = false
-
-[functions.fetch-garmin-data]
-verify_jwt = false
-
-[functions.fetch-garmin-auto]
-verify_jwt = false
-
-[functions.garmin-webhook]
-verify_jwt = false
-```
-
-All five Garmin functions have `verify_jwt = false`.
-
----
-
-### 2. `supabase/functions/garmin-auth-initiate/index.ts` (174 lines)
-
-Initiates the Garmin OAuth 2.0 PKCE flow. Authenticates the Supabase user, generates a code_verifier/code_challenge, stores them in `garmin_oauth_state` table (10-min TTL), and returns the Garmin authorization URL.
-
-**Key env vars:** `GARMIN_CONSUMER_KEY`, `GARMIN_REDIRECT_URI`
-
-**Full file shown above in the tool results.**
-
----
-
-### 3. `supabase/functions/garmin-auth/index.ts` (231 lines)
-
-Handles the OAuth callback from Garmin. Validates state, retrieves PKCE code_verifier, exchanges the authorization code for tokens at `https://diauth.garmin.com/di-oauth2-service/oauth/token`, stores tokens in `wearable_tokens` (keyed on `user_id, scope='garmin'`), and redirects to the frontend.
-
-**Key env vars:** `GARMIN_CONSUMER_KEY`, `GARMIN_CONSUMER_SECRET`, `GARMIN_REDIRECT_URI`, `FRONTEND_URL`
-
-**Full file shown above in the tool results.**
-
----
-
-### 4. `supabase/functions/garmin-webhook/index.ts` (580 lines)
-
-Push notification webhook for Garmin Health API. Processes: dailies, sleeps, activities, activityDetails, hrvSummaries, deregistrations, userPermissionsChange. Every code path returns HTTP 200. Resolves Garmin's `userAccessToken` to internal `user_id` via the `wearable_tokens` table. After processing, triggers `calculate-oura-trends` for affected users.
-
-**THIS IS THE FUNCTION WITH THE 403 ISSUE** — the code is correct, but Cloudflare blocks Garmin's verification requests before they reach it.
-
-**Full file shown above in the tool results (all 580 lines).**
-
----
-
-### 5. `supabase/functions/fetch-garmin-data/index.ts` (615 lines)
-
-Pull-based data sync. Fetches last 7 days from Garmin Wellness API (`/dailies`, `/sleeps`, `/activities`), merges by date, upserts into `wearable_sessions`, calculates training trends (ACWR, strain, monotony), and upserts into `training_trends` and `wearable_summary`. Supports single-user or all-users mode. Includes token refresh logic.
-
-**Key env vars:** `GARMIN_CONSUMER_KEY`, `GARMIN_CONSUMER_SECRET`
-**API base:** `https://apis.garmin.com/wellness-api/rest`
-
-**Full file shown above in the tool results (all 615 lines).**
-
----
-
-### 6. `supabase/functions/fetch-garmin-auto/index.ts` (67 lines)
-
-Scheduled auto-sync wrapper. Simply POSTs to `fetch-garmin-data` with no `user_id` (processes all Garmin users). Designed for cron job invocation.
-
-**Full file shown above in the tool results.**
-
----
-
-### 7. `src/components/ConnectGarminButton.tsx` (84 lines)
-
-Frontend button component. Calls `garmin-auth-initiate` edge function, redirects to the returned `auth_url`. Shows connected/disconnected states.
-
-**Full file shown above in the tool results.**
-
----
-
-### Database Tables Used by Garmin
-
-- **`wearable_tokens`** — Stores OAuth tokens (access_token, refresh_token, expires_at) with composite key `(user_id, scope='garmin')`
-- **`garmin_oauth_state`** — Temporary PKCE state storage (state, code_verifier, expires_at) with 10-minute TTL
-- **`wearable_sessions`** — Raw daily metrics with composite key `(user_id, source='garmin', date)`
-- **`wearable_summary`** — Calculated metrics (strain, monotony, ACWR) with composite key `(user_id, source='garmin', date)`
-- **`training_trends`** — Historical trend data with composite key `(user_id, date)`
-- **`oura_logs`** — Sync operation logging (shared with Oura)
-
----
-
-### The 403 Problem Summary
-
-The `garmin-webhook` function code is correct. The 403 is produced by **Cloudflare's bot protection layer** that sits between Garmin's servers and Supabase's edge functions. Solutions:
-
-1. **Contact Supabase support** to whitelist Garmin's IPs at the Cloudflare level
-2. **Deploy a proxy** (Cloudflare Worker, Vercel, or Railway) that receives Garmin pushes and forwards them to the Supabase endpoint
-3. Garmin does not publish a public IP allowlist — coordinate through Supabase support
+**Files to create/edit**:
+- `supabase/functions/generate-weekly-challenges/index.ts` (new)
+- `supabase/functions/manage-challenge-lifecycle/index.ts` (new)
+- `supabase/config.toml` (add both functions)
+- Migration: add columns to `user_challenges`
+- `src/hooks/useUserChallenges.ts` — add pending filter, progress metric display
+- `src/components/planner/ChallengeAcceptanceModal.tsx` — show reasoning
+- `src/components/training/ActiveChallengeCard.tsx` — live progress
+- `src/components/training/AccountabilityChallenges.tsx` — switch to `user_challenges` table
+- Cron SQL for both scheduled functions
 

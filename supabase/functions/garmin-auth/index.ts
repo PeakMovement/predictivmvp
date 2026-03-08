@@ -273,31 +273,60 @@ Deno.serve(async (req: Request) => {
     ).toISOString();
 
     // ── Store tokens in wearable_tokens ──────────────────────────────
-    const { error: upsertError } = await supabase
-      .from("wearable_tokens")
-      .upsert(
-        {
-          user_id: callbackUserId,
-          access_token: tokenData.access_token,
-          refresh_token: tokenData.refresh_token || null,
-          expires_at: expiresAt,
-          expires_in: expiresInSeconds,
-          scope: "garmin",
-          token_type: tokenData.token_type || "bearer",
-          status: "active",
-        },
-        { onConflict: "user_id,scope" }
-      );
+    // Use explicit UPDATE → INSERT fallback rather than upsert/onConflict
+    // to guarantee the row is written regardless of PK constraint naming.
+    const now = new Date().toISOString();
+    const tokenPayload = {
+      access_token: tokenData.access_token,
+      refresh_token: tokenData.refresh_token || null,
+      expires_at: expiresAt,
+      expires_in: expiresInSeconds,
+      token_type: tokenData.token_type || "bearer",
+      status: "active",
+      updated_at: now,
+    };
 
-    if (upsertError) {
-      console.error("[garmin-auth] [CALLBACK] Failed to store tokens:", upsertError.message);
+    // 1. Try UPDATE existing row
+    const { error: updateError, count: updateCount } = await supabase
+      .from("wearable_tokens")
+      .update(tokenPayload)
+      .eq("user_id", callbackUserId)
+      .eq("scope", "garmin")
+      .select("user_id", { count: "exact", head: true });
+
+    if (updateError) {
+      console.error("[garmin-auth] [CALLBACK] UPDATE failed:", updateError.message);
       return new Response(null, {
         status: 302,
-        headers: { Location: `${FRONTEND_URL}/settings?garmin_error=db_error` },
+        headers: { Location: `${FRONTEND_URL}/settings?garmin_error=db_update_failed` },
       });
     }
 
-    console.log(`[garmin-auth] [CALLBACK] [SUCCESS] Garmin tokens stored for user: ${callbackUserId}`);
+    console.log(`[garmin-auth] [CALLBACK] UPDATE affected ${updateCount ?? "?"} row(s)`);
+
+    // 2. If no row existed, INSERT
+    if (!updateCount || updateCount === 0) {
+      console.log("[garmin-auth] [CALLBACK] No existing row — inserting");
+      const { error: insertError } = await supabase
+        .from("wearable_tokens")
+        .insert({
+          user_id: callbackUserId,
+          scope: "garmin",
+          ...tokenPayload,
+          created_at: now,
+        });
+
+      if (insertError) {
+        console.error("[garmin-auth] [CALLBACK] INSERT failed:", insertError.message);
+        return new Response(null, {
+          status: 302,
+          headers: { Location: `${FRONTEND_URL}/settings?garmin_error=db_insert_failed` },
+        });
+      }
+      console.log("[garmin-auth] [CALLBACK] INSERT successful");
+    }
+
+    console.log(`[garmin-auth] [CALLBACK] [SUCCESS] Garmin token saved for user: ${callbackUserId}`);
 
     // ── Fetch and store Garmin's stable userId for webhook matching ───
     try {

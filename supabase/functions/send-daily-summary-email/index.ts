@@ -410,7 +410,7 @@ function buildEmail(p: EmailParams): string {
                     <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:28px;">
                       <tr>
                         <td align="center">
-                          <a href="https://predictiv.app/dashboard"
+                          <a href="https://predictiv.netlify.app/dashboard"
                              style="display:inline-block;background-color:#6366f1;color:#ffffff;text-decoration:none;padding:14px 36px;border-radius:8px;font-size:14px;font-weight:600;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;">
                             Open Dashboard
                           </a>

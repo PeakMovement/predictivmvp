@@ -13,7 +13,7 @@ const GARMIN_TOKEN_URL =
 
 // Frontend URL to redirect user after OAuth completes
 const FRONTEND_URL =
-  Deno.env.get("FRONTEND_URL") || "https://predictiv.app";
+  Deno.env.get("FRONTEND_URL") || "https://predictiv.netlify.app";
 
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {

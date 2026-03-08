@@ -183,7 +183,7 @@ async function sendBookingConfirmationEmail(
                 You will receive a calendar invite with the meeting link and additional details shortly.
               </p>
               
-              <a href="https://predictiv.app" style="display: inline-block; background: linear-gradient(135deg, #6366f1, #8b5cf6); color: #ffffff; text-decoration: none; padding: 14px 28px; border-radius: 8px; font-weight: 600; font-size: 14px;">
+              <a href="https://predictiv.netlify.app" style="display: inline-block; background: linear-gradient(135deg, #6366f1, #8b5cf6); color: #ffffff; text-decoration: none; padding: 14px 28px; border-radius: 8px; font-weight: 600; font-size: 14px;">
                 View in Predictiv App
               </a>
             </div>

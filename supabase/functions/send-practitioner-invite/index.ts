@@ -98,7 +98,7 @@ Deno.serve(async (req) => {
 
     const patientName = patientProfile?.full_name || user.email || "Your patient";
     const practitionerFirstName = practitioner_name?.split(" ")[0] || "there";
-    const appUrl = Deno.env.get("APP_URL") || "https://predictiv.app";
+    const appUrl = Deno.env.get("APP_URL") || "https://predictiv.netlify.app";
 
     // If practitioner already has an account, send them a notification email
     // If not, send a signup invite via Supabase admin

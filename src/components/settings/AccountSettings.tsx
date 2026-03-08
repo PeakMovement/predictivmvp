@@ -209,6 +209,26 @@ export const AccountSettings = ({ isSectionVisible, onNavigate }: AccountSetting
       </Dialog>
 
       <OnboardingSimulator open={showOnboardingSimulator} onOpenChange={setShowOnboardingSimulator} />
+
+      {/* Legal links */}
+      <div className="pt-2 flex flex-wrap gap-x-4 gap-y-1">
+        <a
+          href="/terms"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-xs text-muted-foreground hover:text-foreground underline transition-colors"
+        >
+          Terms of Service
+        </a>
+        <a
+          href="/privacy"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-xs text-muted-foreground hover:text-foreground underline transition-colors"
+        >
+          Privacy Policy
+        </a>
+      </div>
     </>
   );
 };

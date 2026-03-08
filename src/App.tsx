@@ -19,6 +19,8 @@ import Login from "@/pages/Login";
 import Register from "@/pages/Register";
 import ForgotPassword from "@/pages/ForgotPassword";
 import ResetPassword from "@/pages/ResetPassword";
+import Terms from "@/pages/Terms";
+import Privacy from "@/pages/Privacy";
 import PractitionerRegister from "@/pages/PractitionerRegister";
 import { Settings as SettingsIcon, Stethoscope } from "lucide-react";
 import { SymptomCheckInSheet } from "@/components/symptoms/SymptomCheckInSheet";
@@ -217,6 +219,8 @@ const AuthenticatedApp = () => {
               <Route path="/metrics-dashboard"  element={<MetricsDashboard />} />
               <Route path="/alert-history"      element={<AlertHistory />} />
               <Route path="/practitioner"       element={<PractitionerDashboard />} />
+              <Route path="/terms"              element={<Terms />} />
+              <Route path="/privacy"            element={<Privacy />} />
               <Route path="*"                   element={<Navigate to="/dashboard" replace />} />
             </Routes>
           </Suspense>
@@ -313,6 +317,8 @@ const AppInner = () => {
           <Route path="/register"                element={<Register />} />
           <Route path="/practitioner/register"   element={<PractitionerRegister />} />
           <Route path="/forgot-password"         element={<ForgotPassword />} />
+          <Route path="/terms"                   element={<Terms />} />
+          <Route path="/privacy"                 element={<Privacy />} />
           <Route path="*"                        element={<Login />} />
         </Routes>
       </Suspense>

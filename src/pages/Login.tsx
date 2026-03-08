@@ -117,6 +117,11 @@ export default function Login() {
           </p>
         </div>
 
+        <p className="text-center text-xs text-muted-foreground mt-5 pt-4 border-t border-border">
+          <a href="/terms" className="hover:underline">Terms of Service</a>
+          {" · "}
+          <a href="/privacy" className="hover:underline">Privacy Policy</a>
+        </p>
       </div>
     </div>
   );

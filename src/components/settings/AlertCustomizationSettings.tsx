@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
 import { Switch } from '@/components/ui/switch';
+import { Textarea } from '@/components/ui/textarea';
 import {
   Select,
   SelectContent,
@@ -13,7 +14,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
-import { Loader2, Save, RotateCcw } from 'lucide-react';
+import { Loader2, Save, RotateCcw, Sparkles } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface AlertSettings {
@@ -48,6 +49,7 @@ const DEFAULT_SETTINGS: AlertSettings = {
 
 export function AlertCustomizationSettings() {
   const [settings, setSettings] = useState<AlertSettings>(DEFAULT_SETTINGS);
+  const [trainingContext, setTrainingContext] = useState('');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const { toast } = useToast();
@@ -85,6 +87,7 @@ export function AlertCustomizationSettings() {
           enable_sms_alerts: data.enable_sms_alerts ?? DEFAULT_SETTINGS.enable_sms_alerts,
           max_snooze_count: data.max_snooze_count ?? DEFAULT_SETTINGS.max_snooze_count,
         });
+        setTrainingContext((data as any).training_context ?? '');
       }
     } catch (error) {
       console.error('Error loading alert settings:', error);
@@ -115,8 +118,9 @@ export function AlertCustomizationSettings() {
           .from('alert_settings')
           .update({
             ...settings,
+            training_context: trainingContext,
             updated_at: new Date().toISOString(),
-          })
+          } as any)
           .eq('user_id', user.id);
 
         if (error) throw error;
@@ -126,7 +130,8 @@ export function AlertCustomizationSettings() {
           .insert({
             user_id: user.id,
             ...settings,
-          });
+            training_context: trainingContext,
+          } as any);
 
         if (error) throw error;
       }
@@ -174,6 +179,27 @@ export function AlertCustomizationSettings() {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
+        {/* Training Context Prompt */}
+        <div className="space-y-3 rounded-lg border border-border bg-muted/30 p-4">
+          <div className="flex items-center gap-2">
+            <Sparkles className="h-4 w-4 text-primary" />
+            <h3 className="text-sm font-semibold">Your Training &amp; Health Context</h3>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Describe your current training phase, injury history, fitness level, or health goals. In a future update, Yves will use this to auto-adjust your thresholds intelligently.
+          </p>
+          <Textarea
+            placeholder="e.g. I'm a recreational runner doing 30–40 km/week, currently building back after a knee injury. I prioritise recovery and sleep quality over performance right now."
+            value={trainingContext}
+            onChange={(e) => setTrainingContext(e.target.value)}
+            className="min-h-[100px] resize-y bg-background text-sm"
+            maxLength={1000}
+          />
+          <p className="text-[11px] text-muted-foreground text-right">{trainingContext.length}/1000</p>
+        </div>
+
+        <Separator />
+
         <div className="space-y-4">
           <h3 className="text-sm font-semibold">Health Metric Thresholds</h3>
 

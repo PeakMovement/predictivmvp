@@ -23,9 +23,9 @@ import { useRef, useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { Loader as Loader2, RefreshCw, Sparkles, Calendar, TriangleAlert as AlertTriangle, TrendingUp, ChevronDown, Brain } from "lucide-react";
+import { Loader as Loader2, RefreshCw, Sparkles, Calendar, TriangleAlert as AlertTriangle, TrendingUp, ChevronDown, Brain, Lightbulb } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
-import { YvesDailyBriefing } from "@/hooks/useYvesIntelligence";
+import { YvesDailyBriefing, YvesRecommendation } from "@/hooks/useYvesIntelligence";
 import { cn } from "@/lib/utils";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { PersonalContextChips } from "./PersonalContextChips";
@@ -38,6 +38,12 @@ import { usePersonalizedInsights } from "@/hooks/usePersonalizedInsights";
 import { useRelevantDocuments } from "@/hooks/useRelevantDocuments";
 import { BaselineBanner } from "./BaselineBanner";
 import { DataMaturityTier } from "@/hooks/useDataMaturity";
+import { Badge } from "@/components/ui/badge";
+import { Check, ThumbsUp, ThumbsDown, HelpCircle, Download } from "lucide-react";
+import { useEngagementTracking } from "@/hooks/useEngagementTracking";
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
+import { useToast } from "@/hooks/use-toast";
+import jsPDF from "jspdf";
 
 /**
  * Props for the DailyBriefingCard component
@@ -61,6 +67,8 @@ interface DailyBriefingCardProps {
   dataMaturityTier?: DataMaturityTier;
   /** Number of days with wearable data */
   dataMaturityDays?: number;
+  /** AI-powered recommendations */
+  recommendations?: YvesRecommendation[];
 }
 
 export function DailyBriefingCard({
@@ -73,6 +81,7 @@ export function DailyBriefingCard({
   onRefresh,
   dataMaturityTier,
   dataMaturityDays = 0,
+  recommendations = [],
 }: DailyBriefingCardProps) {
   const trainingFocusRef = useRef<TodaysBestDecisionHandle>(null);
   const [progress, setProgress] = useState(0);
@@ -390,6 +399,271 @@ function CollapsibleBriefingSections({ briefing }: { briefing: YvesDailyBriefing
         )}
       </CollapsibleSection>
 
+      {/* Recommendations Section */}
+      {recommendations && recommendations.length > 0 && (
+        <CollapsibleSection
+          title="Recommendations"
+          icon={<Lightbulb className="h-4 w-4" />}
+          preview={`${recommendations.length} ${recommendations.length === 1 ? 'recommendation' : 'recommendations'} for you`}
+          variant="default"
+        >
+          <div className="space-y-3">
+            {recommendations.map((recommendation, idx) => (
+              <RecommendationItem
+                key={idx}
+                recommendation={recommendation}
+                index={idx}
+              />
+            ))}
+          </div>
+        </CollapsibleSection>
+      )}
+
     </div>
+  );
+}
+
+// Helper functions for recommendations
+function getCategoryLabel(category: string) {
+  const labels: Record<string, string> = {
+    training: "Training Tip",
+    recovery: "Recovery Tip",
+    nutrition: "Nutrition Tip",
+    sleep: "Sleep Tip",
+    mindset: "Mindset Tip",
+    performance: "Performance Tip",
+    medical: "Health Tip",
+    activity: "Activity Tip",
+  };
+  return labels[category] || "Performance Tip";
+}
+
+function getCategoryIcon(category: string) {
+  const icons: Record<string, string> = {
+    training: "💪",
+    recovery: "🧘",
+    nutrition: "🥗",
+    sleep: "😴",
+    mindset: "🧠",
+    performance: "🎯",
+    medical: "🏥",
+    activity: "⚡",
+  };
+  return icons[category] || "🎯";
+}
+
+function getPriorityBadge(priority: string) {
+  switch (priority) {
+    case "high":
+      return <Badge variant="destructive" className="text-xs">High</Badge>;
+    case "medium":
+      return <Badge variant="secondary" className="text-xs">Medium</Badge>;
+    case "low":
+      return <Badge variant="outline" className="text-xs">Low</Badge>;
+    default:
+      return null;
+  }
+}
+
+// RecommendationItem component for individual recommendations
+interface RecommendationItemProps {
+  recommendation: YvesRecommendation;
+  index: number;
+}
+
+function RecommendationItem({ recommendation, index }: RecommendationItemProps) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [feedbackGiven, setFeedbackGiven] = useState<'helpful' | 'not_helpful' | 'followed' | null>(null);
+  const { trackRecommendationViewed, trackRecommendationHelpful, trackRecommendationFollowed } = useEngagementTracking();
+  const { toast } = useToast();
+
+  const recommendationId = `rec-${index}-${recommendation.category}-${recommendation.priority}`;
+
+  useEffect(() => {
+    if (isOpen) {
+      trackRecommendationViewed(recommendationId);
+    }
+  }, [isOpen, recommendationId, trackRecommendationViewed]);
+
+  const preview = recommendation.text.length > 60
+    ? recommendation.text.slice(0, 60).trim() + "..."
+    : recommendation.text.split('.')[0] + (recommendation.text.includes('.') ? '.' : '');
+
+  const handleHelpful = async (helpful: boolean) => {
+    const success = await trackRecommendationHelpful(recommendationId, helpful);
+    if (success) {
+      setFeedbackGiven(helpful ? 'helpful' : 'not_helpful');
+      toast({
+        title: helpful ? "Thanks for the feedback!" : "Got it",
+        description: helpful
+          ? "I'll provide more insights like this"
+          : "I'll adjust my recommendations",
+      });
+    }
+  };
+
+  const handleFollowed = async () => {
+    const success = await trackRecommendationFollowed(recommendationId);
+    if (success) {
+      setFeedbackGiven('followed');
+      toast({
+        title: "Great job! 🎉",
+        description: "Keep up the momentum!",
+      });
+    }
+  };
+
+  const handleDownloadPDF = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const doc = new jsPDF();
+    let y = 20;
+
+    const categoryIcon = getCategoryIcon(recommendation.category);
+    const categoryLabel = getCategoryLabel(recommendation.category);
+
+    doc.setFontSize(16);
+    doc.setFont("helvetica", "bold");
+    doc.text(`${categoryIcon} ${categoryLabel}`, 20, y); y += 10;
+
+    doc.setFontSize(11);
+    doc.setFont("helvetica", "normal");
+    doc.text(`Priority: ${recommendation.priority}`, 20, y); y += 10;
+
+    doc.setFont("helvetica", "bold");
+    doc.text("Recommendation", 20, y); y += 7;
+    doc.setFont("helvetica", "normal");
+    const textLines = doc.splitTextToSize(recommendation.text, 170);
+    doc.text(textLines, 20, y); y += textLines.length * 6 + 6;
+
+    if (recommendation.reasoning) {
+      doc.setFont("helvetica", "bold");
+      doc.text("Why This Matters", 20, y); y += 7;
+      doc.setFont("helvetica", "normal");
+      const reasonLines = doc.splitTextToSize(recommendation.reasoning, 170);
+      doc.text(reasonLines, 20, y); y += reasonLines.length * 6 + 6;
+    }
+
+    doc.setFontSize(9);
+    doc.text(`Generated: ${new Date().toLocaleDateString()}`, 20, y);
+
+    doc.save(`yves-${recommendation.category}-recommendation.pdf`);
+  };
+
+  const categoryLabel = getCategoryLabel(recommendation.category);
+  const categoryIcon = getCategoryIcon(recommendation.category);
+  const priorityBadge = getPriorityBadge(recommendation.priority);
+
+  return (
+    <Collapsible open={isOpen} onOpenChange={setIsOpen}>
+      <div className={cn(
+        "rounded-lg border transition-colors bg-card/50",
+        recommendation.priority === "high"
+          ? "border-l-4 border-l-destructive border-destructive/30"
+          : "border-border",
+        feedbackGiven === 'followed' && "border-l-4 border-l-emerald-500 border-emerald-500/30 bg-emerald-500/5"
+      )}>
+        <CollapsibleTrigger asChild>
+          <button className="w-full p-3 sm:p-4 flex items-center justify-between gap-2 sm:gap-3 text-left hover:bg-muted/30 transition-colors rounded-lg touch-manipulation">
+            <div className="flex items-center gap-3 min-w-0 flex-1">
+              <span className="text-lg shrink-0">{categoryIcon}</span>
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-sm font-medium text-foreground">
+                    {categoryLabel}
+                  </span>
+                  {priorityBadge}
+                  {feedbackGiven === 'followed' && (
+                    <Badge variant="outline" className="text-xs bg-emerald-500/10 text-emerald-600 border-emerald-500/30">
+                      <Check className="h-3 w-3 mr-1" /> Done
+                    </Badge>
+                  )}
+                </div>
+                {!isOpen && (
+                  <p className="text-xs text-muted-foreground mt-1 line-clamp-1">
+                    {preview}
+                  </p>
+                )}
+              </div>
+            </div>
+            <ChevronDown className={cn(
+              "h-4 w-4 text-muted-foreground transition-transform shrink-0",
+              isOpen && "transform rotate-180"
+            )} />
+          </button>
+        </CollapsibleTrigger>
+
+        <CollapsibleContent>
+          <div className="px-3 pb-3 sm:px-4 sm:pb-4 space-y-3">
+            <p className="text-sm text-foreground leading-relaxed">
+              {recommendation.text}
+            </p>
+
+            <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-border/50">
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button variant="ghost" size="sm" className="text-xs h-8">
+                      <HelpCircle className="h-3 w-3 mr-1.5" />
+                      Why this matters?
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent className="max-w-xs">
+                    <p className="text-xs">{recommendation.reasoning}</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+
+              <Button variant="ghost" size="sm" onClick={handleDownloadPDF} className="text-xs h-8">
+                <Download className="h-3 w-3 mr-1.5" />
+                Download as PDF
+              </Button>
+            </div>
+
+            <div className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-border/50">
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-muted-foreground">Was this helpful?</span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => handleHelpful(true)}
+                  disabled={feedbackGiven !== null}
+                  className={cn(
+                    "h-7 px-2",
+                    feedbackGiven === 'helpful' && "text-primary"
+                  )}
+                >
+                  <ThumbsUp className="h-3 w-3 mr-1" />
+                  Yes
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => handleHelpful(false)}
+                  disabled={feedbackGiven !== null}
+                  className={cn(
+                    "h-7 px-2",
+                    feedbackGiven === 'not_helpful' && "text-primary"
+                  )}
+                >
+                  <ThumbsDown className="h-3 w-3 mr-1" />
+                  No
+                </Button>
+              </div>
+
+              <Button
+                variant={feedbackGiven === 'followed' ? "default" : "outline"}
+                size="sm"
+                onClick={handleFollowed}
+                disabled={feedbackGiven === 'followed'}
+                className="h-7"
+              >
+                <Check className="h-3 w-3 mr-1" />
+                I did this
+              </Button>
+            </div>
+          </div>
+        </CollapsibleContent>
+      </div>
+    </Collapsible>
   );
 }

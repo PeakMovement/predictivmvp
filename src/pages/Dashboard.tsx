@@ -1,7 +1,6 @@
 import { useEffect, useState, useRef } from "react";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import OuraSyncStatus from "@/components/OuraSyncStatus";
-import { YvesRecommendationsCard } from "@/components/dashboard/YvesRecommendationsCard";
 import { DailyBriefingCard } from "@/components/dashboard/DailyBriefingCard";
 import { BriefingDiagnostics } from "@/components/dashboard/BriefingDiagnostics";
 import { PersonalizationInsights } from "@/components/dashboard/PersonalizationInsights";
@@ -320,6 +319,7 @@ export const Dashboard = () => {
                     onRefresh={refreshIntelligence}
                     dataMaturityTier={dataMaturity.tier}
                     dataMaturityDays={dataMaturity.days_with_data}
+                    recommendations={recommendations}
                   />
                 </div>
               </LayoutBlock>
@@ -350,22 +350,7 @@ export const Dashboard = () => {
                   <RiskScoreCard />
                 </LayoutBlock>
 
-                {/* Recommendations */}
-                <LayoutBlock
-                  blockId="recommendations"
-                  displayName="Recommendations"
-                  pageId="dashboard"
-                  size="wide"
-                  visible={isSectionVisible('recommendations')}
-                  className="mb-10"
-                >
-                  <YvesRecommendationsCard
-                    recommendations={recommendations}
-                    isLoading={intelligenceLoading}
-                    dataMaturityTier={dataMaturity.tier}
-                    dataMaturityDays={dataMaturity.days_with_data}
-                  />
-                </LayoutBlock>
+                {/* Recommendations - Now integrated into Daily Briefing Card */}
 
                 {/* Diagnostics (for troubleshooting - only visible in debug mode) */}
                 {debugMode && (

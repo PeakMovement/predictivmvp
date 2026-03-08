@@ -339,10 +339,26 @@ export function Planner() {
 
         {/* View Tabs */}
         <Tabs value={viewMode} onValueChange={(value) => setViewMode(value as "week" | "day")} className="mb-8">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="week">Week View</TabsTrigger>
-            <TabsTrigger value="day">Day View</TabsTrigger>
-          </TabsList>
+          <div className="flex gap-2">
+            <Button
+              variant={viewMode === "week" ? "default" : "outline"}
+              size="sm"
+              className="flex-1 gap-2"
+              onClick={() => setViewMode("week")}
+            >
+              <Calendar className="h-4 w-4" />
+              Week View
+            </Button>
+            <Button
+              variant={viewMode === "day" ? "default" : "outline"}
+              size="sm"
+              className="flex-1 gap-2"
+              onClick={() => setViewMode("day")}
+            >
+              <CalendarDays className="h-4 w-4" />
+              Day View
+            </Button>
+          </div>
 
           {/* Week View */}
           <TabsContent value="week" className="space-y-8 mt-8">

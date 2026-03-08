@@ -167,3 +167,9 @@ verify_jwt = false
 
 [functions.sync-calendar-to-planner]
 verify_jwt = true
+
+[functions.generate-weekly-challenges]
+verify_jwt = false
+
+[functions.manage-challenge-lifecycle]
+verify_jwt = false

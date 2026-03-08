@@ -263,7 +263,7 @@ export default function MyBaselines() {
       const [sessRes, baseRes] = await Promise.all([
         supabase
           .from("wearable_sessions")
-          .select("date, resting_hr, hrv_avg, sleep_score, training_load, readiness_score")
+          .select("date, resting_hr, hrv_avg, sleep_score, readiness_score")
           .eq("user_id", user.id)
           .gte("date", since)
           .order("date", { ascending: true }),

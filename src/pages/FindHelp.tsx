@@ -365,32 +365,23 @@ function BookingDialog({
           <p className="text-sm text-muted-foreground">
             Contact {practitioner.name} directly to book your appointment.
           </p>
-          <div className="rounded-lg border border-border/50 bg-muted/20 p-4 space-y-3">
-            <div className="flex items-center gap-3 text-sm">
-              <Phone className="h-4 w-4 text-primary shrink-0" />
-              <a href={`tel:${practitioner.phone}`} className="font-medium hover:underline">
-                {practitioner.phone}
+          <div className="flex items-center gap-2">
+            <Button size="sm" variant="outline" className="flex-1" asChild>
+              <a href={`tel:${practitioner.phone}`}>
+                <Phone className="h-4 w-4 mr-1.5" />
+                Call
               </a>
-            </div>
-            <div className="flex items-center gap-3 text-sm">
-              <BookOpen className="h-4 w-4 text-primary shrink-0" />
-              <a
-                href={`mailto:${practitioner.email}?subject=Appointment%20Request`}
-                className="font-medium hover:underline"
-              >
-                {practitioner.email}
+            </Button>
+            <Button size="sm" variant="outline" className="flex-1" asChild>
+              <a href={`mailto:${practitioner.email}?subject=Appointment%20Request`}>
+                <BookOpen className="h-4 w-4 mr-1.5" />
+                Email
               </a>
-            </div>
+            </Button>
           </div>
           <p className="text-xs text-muted-foreground">
             Mention Predictiv when booking and describe your concern so they can allocate the right appointment time.
           </p>
-          <Button className="w-full" asChild>
-            <a href={`tel:${practitioner.phone}`}>
-              <Phone className="h-4 w-4 mr-2" />
-              Call Now
-            </a>
-          </Button>
         </div>
       </DialogContent>
     </Dialog>

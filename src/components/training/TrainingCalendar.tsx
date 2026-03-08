@@ -117,7 +117,7 @@ export const TrainingCalendar = () => {
         .order("date", { ascending: true });
 
       if (error) throw error;
-      setSessions((data as DaySession[]) || []);
+      setSessions((data as unknown as DaySession[]) || []);
     } catch (err) {
       console.error("TrainingCalendar fetch error:", err);
       toast({ title: "Error", description: "Failed to load sessions", variant: "destructive" });

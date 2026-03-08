@@ -98,7 +98,7 @@ export const useWearableSessions = (userId: string | undefined, source?: string)
         if (fetchError) throw fetchError;
 
         console.log("Wearable session data:", sessionData);
-        setData(sessionData as WearableSession);
+        setData(sessionData as unknown as WearableSession);
       } catch (err) {
         console.error("Error fetching wearable session:", err);
         setError(err instanceof Error ? err : new Error("Failed to fetch wearable session"));

@@ -18,8 +18,8 @@ export function useGarminTokenStatus() {
           return;
         }
 
-        const { data } = await supabase
-          .from("wearable_tokens")
+        const { data } = await (supabase
+          .from("wearable_tokens") as any)
           .select("status")
           .eq("user_id", user.id)
           .eq("scope", "garmin")

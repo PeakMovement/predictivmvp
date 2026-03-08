@@ -159,25 +159,6 @@ const MyDocuments = () => {
             title="Medical Records"
             description="Lab results, prescriptions"
           />
-          <Card className="bg-glass border-glass-border flex flex-col justify-center items-center p-4 cursor-pointer hover:shadow-lg transition-shadow" onClick={() => {
-            // Navigate to profile setup and open injuries section
-            window.dispatchEvent(new CustomEvent('navigate-to-profile-injuries'));
-            navigate('/');
-            setTimeout(() => {
-              window.location.hash = '#profile-setup-injuries';
-            }, 100);
-          }}>
-            <div className="text-center space-y-2">
-              <div className="text-4xl">🏥➡️📋</div>
-              <h3 className="font-semibold">View in Profile</h3>
-              <p className="text-xs text-muted-foreground">
-                See medical docs in Injury History section
-              </p>
-              <Button variant="outline" size="sm" className="gap-2">
-                Go to Profile <ArrowRight className="h-3 w-3" />
-              </Button>
-            </div>
-          </Card>
           <DocumentUploadZone
             documentType="training"
             onUpload={uploadDocument}

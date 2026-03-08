@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { startOfWeek, format } from "date-fns";
+import { format, startOfWeek } from "date-fns";
 
 export interface UserChallenge {
   id: string;
@@ -12,7 +12,10 @@ export interface UserChallenge {
   accepted_at: string;
   completed_at: string | null;
   week_start_date: string;
-  status: "active" | "completed" | "abandoned";
+  status: "pending" | "active" | "completed" | "abandoned" | "expired";
+  ai_reasoning?: string | null;
+  expires_at?: string | null;
+  progress_metric?: string | null;
 }
 
 export const useUserChallenges = (weekStart?: Date) => {
@@ -20,11 +23,7 @@ export const useUserChallenges = (weekStart?: Date) => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    fetchChallenges();
-  }, [weekStart]);
-
-  const fetchChallenges = async () => {
+  const fetchChallenges = useCallback(async () => {
     try {
       setIsLoading(true);
       setError(null);
@@ -39,9 +38,8 @@ export const useUserChallenges = (weekStart?: Date) => {
         .from("user_challenges")
         .select("*")
         .eq("user_id", user.id)
-        .order("accepted_at", { ascending: false });
+        .order("created_at", { ascending: false });
 
-      // If weekStart is provided, filter by that week
       if (weekStart) {
         const weekStartStr = format(weekStart, "yyyy-MM-dd");
         query = query.eq("week_start_date", weekStartStr);
@@ -58,12 +56,62 @@ export const useUserChallenges = (weekStart?: Date) => {
     } finally {
       setIsLoading(false);
     }
+  }, [weekStart]);
+
+  useEffect(() => {
+    fetchChallenges();
+
+    // Subscribe to realtime updates
+    const setupSubscription = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const channel = supabase
+        .channel("user-challenges-realtime")
+        .on(
+          "postgres_changes",
+          {
+            event: "*",
+            schema: "public",
+            table: "user_challenges",
+            filter: `user_id=eq.${user.id}`,
+          },
+          () => {
+            fetchChallenges();
+          }
+        )
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(channel);
+      };
+    };
+
+    const cleanup = setupSubscription();
+    return () => {
+      cleanup.then((fn) => fn?.());
+    };
+  }, [fetchChallenges]);
+
+  const acceptChallenge = async (challengeId: string) => {
+    try {
+      const { error: updateError } = await supabase
+        .from("user_challenges")
+        .update({
+          status: "active",
+          accepted_at: new Date().toISOString(),
+        })
+        .eq("id", challengeId);
+
+      if (updateError) throw updateError;
+      await fetchChallenges();
+    } catch (err) {
+      console.error("Error accepting challenge:", err);
+      throw err;
+    }
   };
 
-  const updateChallengeProgress = async (
-    challengeId: string,
-    progress: number
-  ) => {
+  const updateChallengeProgress = async (challengeId: string, progress: number) => {
     try {
       const { error: updateError } = await supabase
         .from("user_challenges")
@@ -71,8 +119,6 @@ export const useUserChallenges = (weekStart?: Date) => {
         .eq("id", challengeId);
 
       if (updateError) throw updateError;
-
-      // Refresh challenges
       await fetchChallenges();
     } catch (err) {
       console.error("Error updating challenge progress:", err);
@@ -91,8 +137,6 @@ export const useUserChallenges = (weekStart?: Date) => {
         .eq("id", challengeId);
 
       if (updateError) throw updateError;
-
-      // Refresh challenges
       await fetchChallenges();
     } catch (err) {
       console.error("Error completing challenge:", err);
@@ -108,8 +152,6 @@ export const useUserChallenges = (weekStart?: Date) => {
         .eq("id", challengeId);
 
       if (updateError) throw updateError;
-
-      // Refresh challenges
       await fetchChallenges();
     } catch (err) {
       console.error("Error abandoning challenge:", err);
@@ -117,23 +159,40 @@ export const useUserChallenges = (weekStart?: Date) => {
     }
   };
 
-  const getActiveChallenges = () => {
-    return challenges.filter((c) => c.status === "active");
+  const generateChallenges = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
+
+      const { data, error } = await supabase.functions.invoke("generate-weekly-challenges", {
+        body: { user_id: user.id },
+      });
+
+      if (error) throw error;
+      await fetchChallenges();
+      return data;
+    } catch (err) {
+      console.error("Error generating challenges:", err);
+      throw err;
+    }
   };
 
-  const getCompletedChallenges = () => {
-    return challenges.filter((c) => c.status === "completed");
-  };
+  const pendingChallenges = challenges.filter((c) => c.status === "pending");
+  const activeChallenges = challenges.filter((c) => c.status === "active");
+  const completedChallenges = challenges.filter((c) => c.status === "completed");
 
   return {
     challenges,
-    activeChallenges: getActiveChallenges(),
-    completedChallenges: getCompletedChallenges(),
+    pendingChallenges,
+    activeChallenges,
+    completedChallenges,
     isLoading,
     error,
+    acceptChallenge,
     updateChallengeProgress,
     completeChallenge,
     abandonChallenge,
+    generateChallenges,
     refresh: fetchChallenges,
   };
 };

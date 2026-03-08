@@ -8,16 +8,16 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Target, Trophy } from "lucide-react";
-import { startOfWeek, format } from "date-fns";
+import { Loader2, Target, Trophy, Brain } from "lucide-react";
 
 interface Challenge {
+  id?: string;
   title: string;
   description: string;
   type: string;
-  tone: 'coach' | 'warm' | 'strategic';
+  tone: "coach" | "warm" | "strategic";
+  ai_reasoning?: string;
 }
 
 interface ChallengeAcceptanceModalProps {
@@ -25,6 +25,7 @@ interface ChallengeAcceptanceModalProps {
   onOpenChange: (open: boolean) => void;
   challenge: Challenge | null;
   onChallengeAccepted: () => void;
+  onAccept?: (challengeId: string) => Promise<void>;
 }
 
 export const ChallengeAcceptanceModal = ({
@@ -32,6 +33,7 @@ export const ChallengeAcceptanceModal = ({
   onOpenChange,
   challenge,
   onChallengeAccepted,
+  onAccept,
 }: ChallengeAcceptanceModalProps) => {
   const [isAccepting, setIsAccepting] = useState(false);
   const { toast } = useToast();
@@ -41,24 +43,36 @@ export const ChallengeAcceptanceModal = ({
 
     try {
       setIsAccepting(true);
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Not authenticated");
 
-      const weekStart = startOfWeek(new Date(), { weekStartsOn: 1 });
+      if (onAccept && challenge.id) {
+        // Use the hook's accept function for backend-generated challenges
+        await onAccept(challenge.id);
+      } else {
+        // Legacy fallback for manually created challenges
+        const { supabase } = await import("@/integrations/supabase/client");
+        const { startOfWeek, format } = await import("date-fns");
 
-      const { error } = await supabase.from("user_challenges").insert({
-        user_id: user.id,
-        challenge_title: challenge.title,
-        challenge_description: challenge.description,
-        challenge_type: challenge.type,
-        week_start_date: format(weekStart, "yyyy-MM-dd"),
-        status: "active",
-      });
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+        if (!user) throw new Error("Not authenticated");
 
-      if (error) throw error;
+        const weekStart = startOfWeek(new Date(), { weekStartsOn: 1 });
+
+        const { error } = await supabase.from("user_challenges").insert({
+          user_id: user.id,
+          challenge_title: challenge.title,
+          challenge_description: challenge.description,
+          challenge_type: challenge.type,
+          week_start_date: format(weekStart, "yyyy-MM-dd"),
+          status: "active",
+        });
+
+        if (error) throw error;
+      }
 
       toast({
-        title: "Challenge Accepted!",
+        title: "Challenge Accepted! 💪",
         description: "Track your progress in the Training page",
       });
 
@@ -85,9 +99,12 @@ export const ChallengeAcceptanceModal = ({
           <div className="w-12 h-12 rounded-xl bg-primary/10 border border-primary/30 flex items-center justify-center mx-auto mb-4">
             <Trophy className="h-6 w-6 text-primary" />
           </div>
-          <DialogTitle className="text-center">Accept This Challenge?</DialogTitle>
+          <DialogTitle className="text-center">
+            Accept This Challenge?
+          </DialogTitle>
           <DialogDescription className="text-center">
-            Committing to this weekly challenge will help you stay focused and track your progress.
+            Committing to this weekly challenge will help you stay focused and
+            track your progress.
           </DialogDescription>
         </DialogHeader>
 
@@ -96,14 +113,35 @@ export const ChallengeAcceptanceModal = ({
             <div className="flex items-start gap-3">
               <Target className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
               <div>
-                <h3 className="font-semibold text-foreground mb-1">{challenge.title}</h3>
-                <p className="text-sm text-muted-foreground">{challenge.description}</p>
+                <h3 className="font-semibold text-foreground mb-1">
+                  {challenge.title}
+                </h3>
+                <p className="text-sm text-muted-foreground">
+                  {challenge.description}
+                </p>
               </div>
             </div>
           </div>
 
+          {/* AI Reasoning */}
+          {challenge.ai_reasoning && (
+            <div className="flex items-start gap-3 p-4 rounded-lg bg-secondary/50 border border-border/50">
+              <Brain className="h-5 w-5 text-muted-foreground mt-0.5 flex-shrink-0" />
+              <div>
+                <h4 className="text-sm font-medium text-foreground mb-1">
+                  Why this challenge?
+                </h4>
+                <p className="text-sm text-muted-foreground">
+                  {challenge.ai_reasoning}
+                </p>
+              </div>
+            </div>
+          )}
+
           <div className="bg-secondary/30 p-4 rounded-lg">
-            <h4 className="text-sm font-medium text-foreground mb-2">What happens next?</h4>
+            <h4 className="text-sm font-medium text-foreground mb-2">
+              What happens next?
+            </h4>
             <ul className="text-sm text-muted-foreground space-y-2">
               <li className="flex items-start gap-2">
                 <span className="text-primary">•</span>
@@ -111,11 +149,16 @@ export const ChallengeAcceptanceModal = ({
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-primary">•</span>
-                <span>You'll receive progress updates throughout the week</span>
+                <span>
+                  Progress updates automatically from your wearable data
+                </span>
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-primary">•</span>
-                <span>Complete it by end of week for a sense of accomplishment</span>
+                <span>
+                  Complete it by end of week — unaddressed challenges expire
+                  automatically
+                </span>
               </li>
             </ul>
           </div>

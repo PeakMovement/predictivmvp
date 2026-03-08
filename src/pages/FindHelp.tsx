@@ -6,7 +6,7 @@ import {
   AlertTriangle,
   ArrowLeft,
   ArrowRight,
-  BookOpen,
+  Mail,
   CheckCircle2,
   Clock,
   Loader2,
@@ -374,7 +374,7 @@ function BookingDialog({
             </Button>
             <Button size="sm" variant="outline" className="flex-1" asChild>
               <a href={`mailto:${practitioner.email}?subject=Appointment%20Request`}>
-                <BookOpen className="h-4 w-4 mr-1.5" />
+                <Mail className="h-4 w-4 mr-1.5" />
                 Email
               </a>
             </Button>

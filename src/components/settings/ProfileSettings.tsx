@@ -150,8 +150,8 @@ export const ProfileSettings = ({ onSaveStart, onSaveComplete }: ProfileSettings
   return (
     <>
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-        <div className="flex items-start gap-4">
-          <div className="relative">
+        <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-start">
+          <div className="relative shrink-0">
             {profile?.avatar_url ? (
               <div className="relative w-20 h-20 rounded-full overflow-hidden bg-muted">
                 <img
@@ -195,7 +195,7 @@ export const ProfileSettings = ({ onSaveStart, onSaveComplete }: ProfileSettings
             </button>
           </div>
 
-          <div className="flex-1 space-y-4">
+          <div className="w-full space-y-4">
             <div>
               <Label htmlFor="full_name" className="text-sm text-muted-foreground">
                 Full Name

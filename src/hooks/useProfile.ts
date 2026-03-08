@@ -45,8 +45,33 @@ export const useProfile = () => {
       if (error) throw error;
 
       if (data) {
+        let fullName = data.full_name;
+
+        // Fallback: onboarding stores name in user_profile.name (no 's')
+        if (!fullName) {
+          const { data: legacyProfile } = await supabase
+            .from("user_profile")
+            .select("name")
+            .eq("user_id", user.id)
+            .maybeSingle();
+          fullName =
+            legacyProfile?.name ||
+            (user.user_metadata?.full_name as string | undefined) ||
+            (user.user_metadata?.name as string | undefined) ||
+            null;
+
+          // Back-fill user_profiles.full_name so future loads are instant
+          if (fullName) {
+            await supabase
+              .from("user_profiles")
+              .update({ full_name: fullName })
+              .eq("user_id", user.id);
+          }
+        }
+
         setProfile({
           ...data,
+          full_name: fullName,
           email: user.email,
         });
       } else {

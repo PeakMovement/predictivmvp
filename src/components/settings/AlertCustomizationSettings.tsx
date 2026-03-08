@@ -87,6 +87,7 @@ export function AlertCustomizationSettings() {
           enable_sms_alerts: data.enable_sms_alerts ?? DEFAULT_SETTINGS.enable_sms_alerts,
           max_snooze_count: data.max_snooze_count ?? DEFAULT_SETTINGS.max_snooze_count,
         });
+        setTrainingContext((data as any).training_context ?? '');
       }
     } catch (error) {
       console.error('Error loading alert settings:', error);

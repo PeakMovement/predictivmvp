@@ -22,6 +22,8 @@ import { DashboardSkeleton } from "@/components/LoadingStates";
 import { PullToRefresh } from "@/components/PullToRefresh";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { HealthAnomalyBanner } from "@/components/dashboard/HealthAnomalyBanner";
+import { useGarminTokenStatus } from "@/hooks/useGarminTokenStatus";
+import { GarminExpiredBanner } from "@/components/GarminExpiredBanner";
 
 const WelcomeHeader = ({
   onCustomize,
@@ -85,6 +87,7 @@ export const Dashboard = () => {
   
   const { profile: injuryProfile } = useInjuryProfile();
   const dataMaturity = useDataMaturity();
+  const { isExpired: garminTokenExpired } = useGarminTokenStatus();
 
   // Unified Yves Intelligence - single source of truth for briefing & recommendations
   const {
@@ -236,6 +239,14 @@ export const Dashboard = () => {
             userName={userName}
             isLoadingProfile={isLoadingProfile}
           />
+
+          {/* Garmin token expired warning */}
+          {garminTokenExpired && (
+            <GarminExpiredBanner
+              className="mb-6"
+              onReconnect={() => window.dispatchEvent(new CustomEvent("navigate-tab", { detail: "settings" }))}
+            />
+          )}
 
           {/* Layout Editor */}
           {isLayoutEditing && (

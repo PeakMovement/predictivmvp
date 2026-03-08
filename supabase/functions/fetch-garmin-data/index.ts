@@ -397,6 +397,33 @@ async function syncUserGarminData(
     console.error(`[fetch-garmin-data] [WARNING] API errors for user ${userId}: ${apiErrors.slice(0, 5).join(" | ")}`);
   }
 
+  // ── Detect InvalidPullTokenException / 401 token expiry ───────────
+  const isTokenExpired = apiErrors.some(
+    (e) =>
+      e.includes("InvalidPullTokenException") ||
+      e.includes("GARMIN_TOKEN_EXPIRED"),
+  );
+
+  if (isTokenExpired) {
+    console.error(`[fetch-garmin-data] [TOKEN_EXPIRED] Garmin token invalid for user ${userId} — marking as token_expired`);
+    await supabase
+      .from("wearable_tokens")
+      .update({ status: "token_expired" })
+      .eq("user_id", userId)
+      .eq("scope", "garmin");
+
+    try {
+      await supabase.from("oura_logs").insert({
+        user_id: userId,
+        status: "error",
+        entries_synced: 0,
+        error_message: "Garmin token expired (InvalidPullTokenException). User must reconnect.",
+      });
+    } catch { /* ignore */ }
+
+    return { user_id: userId, success: false, sessions: 0, trends: 0, summaries: 0, error: "Garmin token expired — user must reconnect" };
+  }
+
   if (dailies.length === 0 && sleeps.length === 0 && activities.length === 0) {
     const errorSummary = apiErrors.length > 0
       ? `No data returned. API errors: ${apiErrors[0]}`
@@ -726,6 +753,14 @@ async function syncUserGarminData(
   } else {
     console.log(`[fetch-garmin-data] User ${userId}: Only ${historicalSessions?.length || 0} historical sessions, skipping trend calculations (need 7+)`);
   }
+
+  // Restore token status to active (in case it was previously marked expired)
+  await supabase
+    .from("wearable_tokens")
+    .update({ status: "active" })
+    .eq("user_id", userId)
+    .eq("scope", "garmin")
+    .neq("status", "active"); // avoid unnecessary writes
 
   // Log success
   try {

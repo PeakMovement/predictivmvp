@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
-import { Zap, Smartphone } from "lucide-react";
+import { Zap, Smartphone, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { ConnectGarminButton } from "@/components/ConnectGarminButton";
 import { useWearableSync } from "@/hooks/useWearableSync";
 import { useToast } from "@/hooks/use-toast";
 import { LayoutBlock } from "@/components/layout/LayoutBlock";
+import { useGarminTokenStatus } from "@/hooks/useGarminTokenStatus";
 
 interface DevicesSettingsProps {
   isSectionVisible: (id: string) => boolean;
@@ -16,6 +17,7 @@ export const DevicesSettings = ({ isSectionVisible }: DevicesSettingsProps) => {
   const [lastSyncTime, setLastSyncTime] = useState<Date | null>(null);
   const { isConnected } = useWearableSync();
   const { toast } = useToast();
+  const { isExpired: garminTokenExpired } = useGarminTokenStatus();
 
   useEffect(() => {
     checkGarminConnection();
@@ -122,7 +124,11 @@ export const DevicesSettings = ({ isSectionVisible }: DevicesSettingsProps) => {
             )}
           </div>
 
-          <div className="w-full flex items-center justify-between p-4 rounded-xl border bg-glass/30 border-glass-border hover:bg-glass-highlight transition-all duration-200">
+          <div className={`w-full flex items-center justify-between p-4 rounded-xl border transition-all duration-200 ${
+            garminTokenExpired
+              ? "bg-destructive/5 border-destructive/30"
+              : "bg-glass/30 border-glass-border hover:bg-glass-highlight"
+          }`}>
             <div className="flex items-center gap-3 flex-1">
               <div className="w-10 h-10 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-full flex items-center justify-center">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-white">
@@ -132,20 +138,33 @@ export const DevicesSettings = ({ isSectionVisible }: DevicesSettingsProps) => {
                 </svg>
               </div>
               <div className="text-left flex-1">
-                <p className="font-medium text-foreground flex items-center gap-2">
+                <p className="font-medium text-foreground flex items-center gap-2 flex-wrap">
                   Wearable (Garmin)
-                  {isGarminConnected && (
+                  {garminTokenExpired ? (
+                    <span className="text-xs px-2 py-0.5 rounded-full bg-destructive/20 text-destructive border border-destructive/30 flex items-center gap-1">
+                      <AlertTriangle size={10} />
+                      Reconnection needed
+                    </span>
+                  ) : isGarminConnected ? (
                     <span className="text-xs px-2 py-0.5 rounded-full bg-green-500/20 text-green-400 border border-green-500/30">
                       Connected
                     </span>
-                  )}
+                  ) : null}
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  {isGarminConnected ? "Syncing your wearable data" : "Connect and sync your wearable data"}
+                  {garminTokenExpired
+                    ? "Your Garmin token has expired — reconnect to resume syncing"
+                    : isGarminConnected
+                    ? "Syncing your wearable data"
+                    : "Connect and sync your wearable data"}
                 </p>
               </div>
             </div>
-            <ConnectGarminButton isConnected={isGarminConnected} onConnectionChange={checkGarminConnection} />
+            <ConnectGarminButton
+              isConnected={isGarminConnected}
+              onConnectionChange={checkGarminConnection}
+              isExpired={garminTokenExpired}
+            />
           </div>
         </div>
       </div>

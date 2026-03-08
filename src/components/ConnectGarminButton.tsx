@@ -7,9 +7,10 @@ import { useToast } from "@/hooks/use-toast";
 interface ConnectGarminButtonProps {
   isConnected: boolean;
   onConnectionChange?: () => void;
+  isExpired?: boolean;
 }
 
-export const ConnectGarminButton = ({ isConnected, onConnectionChange }: ConnectGarminButtonProps) => {
+export const ConnectGarminButton = ({ isConnected, onConnectionChange, isExpired = false }: ConnectGarminButtonProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
@@ -40,14 +41,18 @@ export const ConnectGarminButton = ({ isConnected, onConnectionChange }: Connect
     }
   };
 
-  if (isConnected) {
+  if (isConnected || isExpired) {
     return (
       <Button
         onClick={connectGarmin}
         disabled={isLoading}
         size="sm"
-        variant="outline"
-        className="bg-glass/30 border-glass-border hover:bg-glass-highlight hover:scale-105 active:scale-95 transition-all duration-200"
+        variant={isExpired ? "destructive" : "outline"}
+        className={
+          isExpired
+            ? "hover:scale-105 active:scale-95 transition-all duration-200"
+            : "bg-glass/30 border-glass-border hover:bg-glass-highlight hover:scale-105 active:scale-95 transition-all duration-200"
+        }
       >
         {isLoading ? (
           <>

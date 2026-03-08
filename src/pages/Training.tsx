@@ -29,6 +29,8 @@ import { SessionComparison } from "@/components/training/SessionComparison";
 import { PullToRefresh } from "@/components/PullToRefresh";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { DeviceSourceSwitcher } from "@/components/DeviceSourceSwitcher";
+import { useGarminTokenStatus } from "@/hooks/useGarminTokenStatus";
+import { GarminExpiredBanner } from "@/components/GarminExpiredBanner";
 
 const generateSuggestions = (csvData: HealthDataRow[]) => {
   if (csvData.length === 0) return [];
@@ -270,6 +272,8 @@ export const Training = () => {
   const garminHasData = !trendsLoading && (trends?.length ?? 0) > 0;
   const showGarminPending = garminConnected && !garminHasData && !trendsLoading;
 
+  const { isExpired: garminTokenExpired } = useGarminTokenStatus();
+
   useEffect(() => {
     const csvData = getHealthData();
     const newSuggestions = generateSuggestions(csvData);
@@ -443,7 +447,14 @@ export const Training = () => {
             </div>
           )}
 
-          {showGarminPending && (
+          {garminTokenExpired && (
+            <GarminExpiredBanner
+              className="mb-6"
+              onReconnect={() => window.dispatchEvent(new CustomEvent("navigate-tab", { detail: "settings" }))}
+            />
+          )}
+
+          {showGarminPending && !garminTokenExpired && (
             <div className="flex items-center gap-3 px-4 py-3 mb-6 rounded-xl border border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400 text-sm animate-fade-in">
               <WifiOff className="h-4 w-4 shrink-0" />
               <span>

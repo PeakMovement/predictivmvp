@@ -346,50 +346,7 @@ export function Planner() {
 
           {/* Week View */}
           <TabsContent value="week" className="space-y-8 mt-8">
-          {/* Week Intent and Guardrails */}
-          <LayoutBlock
-            blockId="weekIntent"
-            displayName="Week Intent"
-            pageId="plan"
-            size="wide"
-            visible={isSectionVisible('weekIntent')}
-          >
-            <WeekIntentSection intent={overview.intent} />
-          </LayoutBlock>
-
-          {/* Overall Focus Banner */}
-          <LayoutBlock
-            blockId="weeklyFocus"
-            displayName="Weekly Focus"
-            pageId="plan"
-            size="wide"
-            visible={isSectionVisible('weeklyFocus')}
-          >
-            <WeeklyFocusBanner focus={overview.overallFocus} tone={overview.overallTone} />
-          </LayoutBlock>
-
-          {/* Weekly Themes */}
-          <LayoutBlock
-            blockId="themes"
-            displayName="Weekly Themes"
-            pageId="plan"
-            size="wide"
-            visible={isSectionVisible('themes') && overview.themes.length > 0}
-          >
-            <section>
-              <h2 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
-                <Sparkles className="h-5 w-5 text-primary" />
-                Themes This Week
-              </h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {overview.themes.map((theme, index) => (
-                  <ThemeCard key={index} theme={theme} onAcceptChallenge={handleAcceptChallenge} />
-                ))}
-              </div>
-            </section>
-          </LayoutBlock>
-
-          {/* Calendar Events */}
+          {/* Google Calendar Integration */}
           <LayoutBlock
             blockId="calendarEvents"
             displayName="Calendar"
@@ -415,6 +372,27 @@ export function Planner() {
                 </p>
               </div>
             </Card>
+          </LayoutBlock>
+
+          {/* Weekly Themes */}
+          <LayoutBlock
+            blockId="themes"
+            displayName="Weekly Themes"
+            pageId="plan"
+            size="wide"
+            visible={isSectionVisible('themes') && overview.themes.length > 0}
+          >
+            <section>
+              <h2 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
+                <Sparkles className="h-5 w-5 text-primary" />
+                Themes This Week
+              </h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {overview.themes.map((theme, index) => (
+                  <ThemeCard key={index} theme={theme} onAcceptChallenge={handleAcceptChallenge} />
+                ))}
+              </div>
+            </section>
           </LayoutBlock>
 
           {/* Gentle guidance footer */}

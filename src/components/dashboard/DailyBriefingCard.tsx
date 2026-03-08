@@ -123,32 +123,57 @@ export function DailyBriefingCard({
             <Sparkles className="h-5 w-5 text-primary shrink-0" />
             <CardTitle className="text-base sm:text-lg truncate">🧠 Yves Daily Briefing</CardTitle>
           </div>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => { onRefresh(); trainingFocusRef.current?.refresh(); }}
-            disabled={isGenerating}
-            title="Refresh briefing"
-            className="h-9 w-9 shrink-0 touch-manipulation"
-          >
-            {isGenerating ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <RefreshCw className="h-4 w-4" />
+          <div className="relative">
+            {isGenerating && (
+              <svg className="absolute inset-0 -m-1 w-11 h-11 pointer-events-none" viewBox="0 0 44 44">
+                <circle
+                  cx="22"
+                  cy="22"
+                  r="20"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  className="text-muted-foreground/20"
+                />
+                <circle
+                  cx="22"
+                  cy="22"
+                  r="20"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  className="text-primary transition-all duration-300"
+                  style={{
+                    strokeDasharray: `${2 * Math.PI * 20}`,
+                    strokeDashoffset: `${2 * Math.PI * 20 * (1 - progress / 100)}`,
+                    transform: 'rotate(-90deg)',
+                    transformOrigin: 'center',
+                  }}
+                />
+              </svg>
             )}
-          </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => { onRefresh(); trainingFocusRef.current?.refresh(); }}
+              disabled={isGenerating}
+              title="Refresh briefing"
+              className="h-9 w-9 shrink-0 touch-manipulation relative z-10"
+            >
+              {isGenerating ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <RefreshCw className="h-4 w-4" />
+              )}
+            </Button>
+          </div>
         </div>
         {createdAt && (
           <CardDescription className="flex items-center gap-2 text-xs">
             <Calendar className="h-3 w-3" />
             {cached ? "Generated" : "Updated"} {formatDistanceToNow(new Date(createdAt), { addSuffix: true })}
           </CardDescription>
-        )}
-        {isGenerating && (
-          <div className="mt-3 space-y-1">
-            <Progress value={progress} className="h-1" />
-            <p className="text-xs text-muted-foreground">Generating your personalized briefing...</p>
-          </div>
         )}
       </CardHeader>
       <CardContent className="space-y-4 p-4 pt-0 sm:p-6 sm:pt-0">

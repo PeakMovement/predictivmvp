@@ -6,7 +6,7 @@ import {
   AlertTriangle,
   ArrowLeft,
   ArrowRight,
-  
+  Mail,
   CheckCircle2,
   Clock,
   Loader2,

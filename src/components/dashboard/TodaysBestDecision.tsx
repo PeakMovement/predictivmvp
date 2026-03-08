@@ -13,7 +13,9 @@ import {
   RefreshCw,
   Info,
   HelpCircle,
-  Download
+  Download,
+  ThumbsUp,
+  ThumbsDown
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTodaysDecision } from "@/hooks/useTodaysDecision";
@@ -122,6 +124,8 @@ function TodaysBestDecision({ className }, ref) {
   const [isSessionExpanded, setIsSessionExpanded] = useState(false);
   const [isDataExpanded, setIsDataExpanded] = useState(false);
   const [completedExercises, setCompletedExercises] = useState<Set<number>>(new Set());
+  const [feedbackGiven, setFeedbackGiven] = useState(false);
+  const [feedbackType, setFeedbackType] = useState<'helpful' | 'not-helpful' | null>(null);
 
   const isLoading = yvesLoading || (!yvesRec && ruleLoading);
 
@@ -169,21 +173,19 @@ function TodaysBestDecision({ className }, ref) {
   const session = riskDrivers?.correctiveAction?.session;
   const whyThisMatters = session?.whyThisMatters;
 
-  const handleAddToPlan = () => {
-    toast.success("Added to your plan", {
-      description: session?.title || "Today's session"
-    });
-  };
-
-  const handleLogCompleted = () => {
-    toast.success("Well done!", {
-      description: "Session logged. Keep up the great work 💪"
+  const handleFeedback = (type: 'helpful' | 'not-helpful') => {
+    setFeedbackGiven(true);
+    setFeedbackType(type);
+    toast.success("Thanks for your feedback!", {
+      description: "This helps us improve your recommendations"
     });
   };
 
   const handleRefresh = () => {
     refreshYves();
     if (!yvesRec) refreshRule();
+    setFeedbackGiven(false);
+    setFeedbackType(null);
     toast.info("Updating your guidance...");
   };
 
@@ -428,14 +430,38 @@ function TodaysBestDecision({ className }, ref) {
                   )}
                 </div>
 
-                {/* D. Action Buttons */}
-                <div className="flex flex-col sm:flex-row gap-3 pt-2">
-                  <Button variant="outline" className="flex-1 h-11" onClick={handleAddToPlan}>
-                    Add this session to my plan
-                  </Button>
-                  <Button className="flex-1 h-11" onClick={handleLogCompleted}>
-                    I've completed today's session
-                  </Button>
+                {/* D. Feedback Section */}
+                <div className="pt-2 border-t border-border/50">
+                  {feedbackGiven ? (
+                    <div className="flex items-center justify-center gap-2 py-3 text-sm text-muted-foreground">
+                      <CheckCircle2 className="h-4 w-4 text-primary" />
+                      <span>Thanks for your feedback!</span>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      <p className="text-sm text-center text-muted-foreground">Was this recommendation helpful?</p>
+                      <div className="flex gap-3 justify-center">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleFeedback('helpful')}
+                          className="gap-2"
+                        >
+                          <ThumbsUp className="h-4 w-4" />
+                          Helpful
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleFeedback('not-helpful')}
+                          className="gap-2"
+                        >
+                          <ThumbsDown className="h-4 w-4" />
+                          Not helpful
+                        </Button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </>
             ) : (
@@ -627,14 +653,38 @@ function TodaysBestDecision({ className }, ref) {
                   </div>
                 )}
 
-                {/* D. Action Buttons */}
-                <div className="flex flex-col sm:flex-row gap-3 pt-2">
-                  <Button variant="outline" className="flex-1 h-11" onClick={handleAddToPlan}>
-                    Add this session to my plan
-                  </Button>
-                  <Button className="flex-1 h-11" onClick={handleLogCompleted}>
-                    I've completed today's session
-                  </Button>
+                {/* D. Feedback Section */}
+                <div className="pt-2 border-t border-border/50">
+                  {feedbackGiven ? (
+                    <div className="flex items-center justify-center gap-2 py-3 text-sm text-muted-foreground">
+                      <CheckCircle2 className="h-4 w-4 text-primary" />
+                      <span>Thanks for your feedback!</span>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      <p className="text-sm text-center text-muted-foreground">Was this recommendation helpful?</p>
+                      <div className="flex gap-3 justify-center">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleFeedback('helpful')}
+                          className="gap-2"
+                        >
+                          <ThumbsUp className="h-4 w-4" />
+                          Helpful
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleFeedback('not-helpful')}
+                          className="gap-2"
+                        >
+                          <ThumbsDown className="h-4 w-4" />
+                          Not helpful
+                        </Button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </>
             )}

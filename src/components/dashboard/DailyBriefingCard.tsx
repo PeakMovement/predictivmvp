@@ -19,9 +19,10 @@
  * />
  * ```
  */
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
 import { Loader2, RefreshCw, Sparkles, Calendar, AlertTriangle, TrendingUp, ChevronDown, Brain } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { YvesDailyBriefing } from "@/hooks/useYvesIntelligence";
@@ -75,6 +76,28 @@ export function DailyBriefingCard({
   dataMaturityDays = 0,
 }: DailyBriefingCardProps) {
   const trainingFocusRef = useRef<TodaysBestDecisionHandle>(null);
+  const [progress, setProgress] = useState(0);
+
+  useEffect(() => {
+    if (isGenerating) {
+      setProgress(0);
+      const interval = setInterval(() => {
+        setProgress((prev) => {
+          if (prev >= 95) {
+            clearInterval(interval);
+            return 95;
+          }
+          const increment = Math.random() * 10 + 5;
+          return Math.min(prev + increment, 95);
+        });
+      }, 300);
+      return () => clearInterval(interval);
+    } else {
+      setProgress(100);
+      const timeout = setTimeout(() => setProgress(0), 500);
+      return () => clearTimeout(timeout);
+    }
+  }, [isGenerating]);
 
   if (isLoading) {
     return (
@@ -120,6 +143,12 @@ export function DailyBriefingCard({
             <Calendar className="h-3 w-3" />
             {cached ? "Generated" : "Updated"} {formatDistanceToNow(new Date(createdAt), { addSuffix: true })}
           </CardDescription>
+        )}
+        {isGenerating && (
+          <div className="mt-3 space-y-1">
+            <Progress value={progress} className="h-1" />
+            <p className="text-xs text-muted-foreground">Generating your personalized briefing...</p>
+          </div>
         )}
       </CardHeader>
       <CardContent className="space-y-4 p-4 pt-0 sm:p-6 sm:pt-0">

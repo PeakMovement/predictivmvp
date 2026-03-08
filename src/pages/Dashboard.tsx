@@ -3,7 +3,6 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import OuraSyncStatus from "@/components/OuraSyncStatus";
 import { DailyBriefingCard } from "@/components/dashboard/DailyBriefingCard";
 import { BriefingDiagnostics } from "@/components/dashboard/BriefingDiagnostics";
-import { PersonalizationInsights } from "@/components/dashboard/PersonalizationInsights";
 import { RiskScoreCard } from "@/components/dashboard/RiskScoreCard";
 import { QuickActionsPanel } from "@/components/dashboard/QuickActionsPanel";
 import { useRefreshTrends } from "@/hooks/useTrendData";
@@ -366,17 +365,6 @@ export const Dashboard = () => {
                   </LayoutBlock>
                 )}
 
-                {/* Personalization Insights */}
-                <LayoutBlock
-                  blockId="personalizationInsights"
-                  displayName="Personalization Insights"
-                  pageId="dashboard"
-                  size="wide"
-                  visible={true}
-                  className="mb-10"
-                >
-                  <PersonalizationInsights />
-                </LayoutBlock>
               </div>
             </>
           )}

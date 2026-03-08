@@ -14,6 +14,7 @@ interface DevicesSettingsProps {
 
 export const DevicesSettings = ({ isSectionVisible }: DevicesSettingsProps) => {
   const [isGarminConnected, setIsGarminConnected] = useState(false);
+  const [userId, setUserId] = useState<string | undefined>(undefined);
   const [lastSyncTime, setLastSyncTime] = useState<Date | null>(null);
   const { isConnected } = useWearableSync();
   const { toast } = useToast();
@@ -40,6 +41,7 @@ export const DevicesSettings = ({ isSectionVisible }: DevicesSettingsProps) => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
+      setUserId(user.id);
       const { data } = await supabase
         .from("wearable_tokens")
         .select("user_id")
@@ -164,6 +166,7 @@ export const DevicesSettings = ({ isSectionVisible }: DevicesSettingsProps) => {
               isConnected={isGarminConnected}
               onConnectionChange={checkGarminConnection}
               isExpired={garminTokenExpired}
+              userId={userId}
             />
           </div>
         </div>

@@ -179,6 +179,27 @@ export function AlertCustomizationSettings() {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
+        {/* Training Context Prompt */}
+        <div className="space-y-3 rounded-lg border border-border bg-muted/30 p-4">
+          <div className="flex items-center gap-2">
+            <Sparkles className="h-4 w-4 text-primary" />
+            <h3 className="text-sm font-semibold">Your Training &amp; Health Context</h3>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Describe your current training phase, injury history, fitness level, or health goals. In a future update, Yves will use this to auto-adjust your thresholds intelligently.
+          </p>
+          <Textarea
+            placeholder="e.g. I'm a recreational runner doing 30–40 km/week, currently building back after a knee injury. I prioritise recovery and sleep quality over performance right now."
+            value={trainingContext}
+            onChange={(e) => setTrainingContext(e.target.value)}
+            className="min-h-[100px] resize-y bg-background text-sm"
+            maxLength={1000}
+          />
+          <p className="text-[11px] text-muted-foreground text-right">{trainingContext.length}/1000</p>
+        </div>
+
+        <Separator />
+
         <div className="space-y-4">
           <h3 className="text-sm font-semibold">Health Metric Thresholds</h3>
 

@@ -39,7 +39,7 @@ import { useRelevantDocuments } from "@/hooks/useRelevantDocuments";
 import { BaselineBanner } from "./BaselineBanner";
 import { DataMaturityTier } from "@/hooks/useDataMaturity";
 import { Badge } from "@/components/ui/badge";
-import { Check, ThumbsUp, ThumbsDown, HelpCircle, Download } from "lucide-react";
+import { Check, ThumbsUp, ThumbsDown, CircleHelp as HelpCircle, Download } from "lucide-react";
 import { useEngagementTracking } from "@/hooks/useEngagementTracking";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 import { useToast } from "@/hooks/use-toast";

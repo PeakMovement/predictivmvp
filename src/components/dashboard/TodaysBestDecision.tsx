@@ -3,20 +3,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
-import {
-  ChevronDown,
-  Compass,
-  Heart,
-  CheckCircle2,
-  Dumbbell,
-  Play,
-  RefreshCw,
-  Info,
-  HelpCircle,
-  Download,
-  ThumbsUp,
-  ThumbsDown
-} from "lucide-react";
+import { ChevronDown, Compass, Heart, CircleCheck as CheckCircle2, Dumbbell, Play, RefreshCw, Info, CircleHelp as HelpCircle, Download, ThumbsUp, ThumbsDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTodaysDecision } from "@/hooks/useTodaysDecision";
 import { useTrainingFocusRecommendation } from "@/hooks/useTrainingFocusRecommendation";

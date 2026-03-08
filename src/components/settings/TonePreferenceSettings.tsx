@@ -62,19 +62,19 @@ export function TonePreferenceSettings() {
       <RadioGroup
         value={preference}
         onValueChange={(value) => updatePreference(value as TonePreference)}
-        className="space-y-2"
+        className="space-y-3"
       >
         {toneOptions.map((option) => (
           <label
             key={option.value}
-            className="flex items-start gap-3 p-3 rounded-lg border border-border bg-card/50 hover:bg-muted/30 cursor-pointer transition-colors has-[[data-state=checked]]:border-primary has-[[data-state=checked]]:bg-primary/5"
+            className="flex items-start gap-3 p-4 rounded-lg border border-border bg-card/50 hover:bg-muted/30 cursor-pointer transition-colors has-[[data-state=checked]]:border-primary has-[[data-state=checked]]:bg-primary/5"
           >
             <RadioGroupItem value={option.value} className="mt-0.5" />
             <div className="flex-1 min-w-0">
               <div className="text-sm font-medium text-foreground">
                 {option.label}
               </div>
-              <p className="text-xs text-muted-foreground mt-0.5">
+              <p className="text-xs text-muted-foreground mt-1">
                 {option.description}
               </p>
             </div>

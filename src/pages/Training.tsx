@@ -192,7 +192,7 @@ const CircularGauge = ({
 export const Training = () => {
   const { trends, isLoading: trendsLoading, refresh, userId } = useTrainingTrends({ days: 7 });
   const [availableSources, setAvailableSources] = useState<string[]>([]);
-  const [selectedSource, setSelectedSource] = useState<string>("oura");
+  const [selectedSource, setSelectedSource] = useState<string>("auto");
   const [isSyncing, setIsSyncing] = useState(false);
   const { data: wearableData, refetch: refetchWearable } = useWearableSessions(userId || undefined, selectedSource);
   const { runningDistance, isEstimated: runningDistanceIsEstimated, isLoading: runningDistanceLoading } = useGarminRunningDistance();

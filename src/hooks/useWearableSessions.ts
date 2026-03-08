@@ -59,9 +59,31 @@ export const useWearableSessions = (userId: string | undefined, source?: string)
         setIsLoading(true);
         setError(null);
 
+        // Explicit column list — keeps query stable as schema evolves and
+        // ensures all Garmin-specific columns added in migration
+        // 20260307000007 are fetched alongside core columns.
+        const COLUMNS = [
+          "id", "user_id", "date", "source", "fetched_at",
+          // Core health metrics
+          "readiness_score", "sleep_score", "activity_score",
+          "hrv_avg", "resting_hr", "spo2_avg",
+          "total_steps", "active_calories", "total_calories",
+          "total_distance_km", "running_distance_km",
+          // Garmin-specific (migration 20260307000007)
+          "body_battery_start", "body_battery_end",
+          "body_battery_min", "body_battery_max",
+          "stress_avg", "stress_max",
+          "vo2_max", "training_status",
+          "respiration_rate_avg",
+          "intensity_minutes_moderate", "intensity_minutes_vigorous",
+          "session_type",
+          "avg_heart_rate", "max_heart_rate",
+          "duration_minutes", "training_load",
+        ].join(",");
+
         let query = supabase
           .from("wearable_sessions")
-          .select("*")
+          .select(COLUMNS)
           .eq("user_id", userId)
           .order("date", { ascending: false })
           .limit(1);

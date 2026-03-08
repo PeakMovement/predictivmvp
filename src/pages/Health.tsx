@@ -78,6 +78,7 @@ interface TrendRow {
   total_sleep_duration: number | null;
   hrv_avg: number | null;
   resting_hr: number | null;
+  [key: string]: number | null | string;
 }
 
 // ── Main Component ─────────────────────────────────────────────────────────

@@ -105,6 +105,19 @@ interface GarminUserMetrics {
   trainingStatus?: string;
 }
 
+// ── Garmin API response wrapper key mapping ──────────────────────────
+// The Wellness API wraps results in a named key that does NOT always match
+// the endpoint segment. This table maps endpoint path → actual wrapper key.
+const GARMIN_ENDPOINT_KEY: Record<string, string> = {
+  "/dailies": "dailies",
+  "/sleeps": "sleeps",
+  "/activities": "activities",
+  "/bodyBattery": "bodyBatteryReadings",   // NOT "bodyBattery"
+  "/pulseOx": "pulseOxReadings",           // NOT "pulseOx"
+  "/respiration": "allDayRespiration",     // NOT "respiration"
+  "/userMetrics": "userMetrics",
+};
+
 // ── Helper: fetch from Garmin API with error handling ────────────────
 
 async function garminFetch<T>(
@@ -136,6 +149,10 @@ async function garminFetch<T>(
     const body = await res.text().catch(() => "");
     // Surface the specific Garmin error (e.g. InvalidPullTokenException)
     console.error(`[fetch-garmin-data] [ERROR] Garmin API 400 on ${endpoint}: ${body.substring(0, 500)}`);
+    // Treat InvalidPullTokenException as an expired token
+    if (body.includes("InvalidPullTokenException")) {
+      return { data: [], error: "GARMIN_TOKEN_EXPIRED" };
+    }
     return { data: [], error: `GARMIN_BAD_REQUEST: ${body.substring(0, 200)}` };
   }
 
@@ -146,19 +163,42 @@ async function garminFetch<T>(
   }
 
   const data = await res.json();
-  // Garmin Wellness API wraps results in a named key matching the endpoint segment
-  // e.g. GET /dailies → { "dailies": [...] }, GET /sleeps → { "sleeps": [...] }
-  const endpointKey = endpoint.replace(/^\//, ""); // strip leading slash
+
   let items: T[];
   if (Array.isArray(data)) {
+    // Response is a bare array
     items = data;
-  } else if (data && Array.isArray((data as Record<string, unknown>)[endpointKey])) {
-    items = (data as Record<string, unknown>)[endpointKey] as T[];
   } else {
-    // Unexpected shape — log the actual response for debugging
-    console.warn(`[fetch-garmin-data] Unexpected response shape for ${endpoint}:`, JSON.stringify(data).substring(0, 200));
-    items = [];
+    // Use explicit key mapping first, then fall back to endpoint name, then first array found
+    const knownKey = GARMIN_ENDPOINT_KEY[endpoint];
+    const fallbackKey = endpoint.replace(/^\//, "");
+    const dataObj = data as Record<string, unknown>;
+
+    if (knownKey && Array.isArray(dataObj[knownKey])) {
+      items = dataObj[knownKey] as T[];
+    } else if (Array.isArray(dataObj[fallbackKey])) {
+      items = dataObj[fallbackKey] as T[];
+    } else {
+      // Try any array-valued key as last resort (logs which key was found)
+      const allKeys = Object.keys(dataObj);
+      const firstArrayKey = allKeys.find((k) => Array.isArray(dataObj[k]));
+      if (firstArrayKey) {
+        console.warn(
+          `[fetch-garmin-data] Used fallback key "${firstArrayKey}" for ${endpoint}` +
+          ` (expected "${knownKey ?? fallbackKey}"). All keys: ${allKeys.join(", ")}`,
+        );
+        items = dataObj[firstArrayKey] as T[];
+      } else {
+        console.warn(
+          `[fetch-garmin-data] Unexpected response shape for ${endpoint}` +
+          ` (expected key "${knownKey ?? fallbackKey}"). Keys: ${allKeys.join(", ")}` +
+          ` Raw: ${JSON.stringify(data).substring(0, 300)}`,
+        );
+        items = [];
+      }
+    }
   }
+
   console.log(`[fetch-garmin-data] [SUCCESS] ${endpoint}: ${items.length} records returned`);
   return { data: items };
 }

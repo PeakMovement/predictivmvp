@@ -49,6 +49,7 @@ const DEFAULT_SETTINGS: AlertSettings = {
 
 export function AlertCustomizationSettings() {
   const [settings, setSettings] = useState<AlertSettings>(DEFAULT_SETTINGS);
+  const [trainingContext, setTrainingContext] = useState('');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const { toast } = useToast();

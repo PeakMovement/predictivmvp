@@ -63,13 +63,25 @@ export default function Register() {
       }
 
       if (data.user) {
+        // If session exists the account was auto-confirmed — seed the profile and go straight to onboarding
+        if (data.session) {
+          try {
+            await supabase
+              .from("user_profiles")
+              .upsert({ user_id: data.user.id, full_name: username }, { onConflict: "user_id" });
+          } catch (_) {
+            // non-fatal — onboarding profile step will fill this in
+          }
+          navigate("/");
+          return;
+        }
+
+        // Email confirmation required — prompt user and redirect to login
         setSuccess("✅ Account created! Check your email to verify.");
         toast({
           title: "Account created!",
           description: "Please check your email to verify your account.",
         });
-        
-        // Redirect to login after 3 seconds
         setTimeout(() => {
           navigate("/login");
         }, 3000);

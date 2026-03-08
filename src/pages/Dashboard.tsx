@@ -157,7 +157,8 @@ export const Dashboard = () => {
             const metaName: string | undefined =
               user.user_metadata?.full_name ||
               user.user_metadata?.name ||
-              user.user_metadata?.display_name;
+              user.user_metadata?.display_name ||
+              user.user_metadata?.username;
             if (metaName) {
               setUserName(metaName.split(' ')[0]);
             }

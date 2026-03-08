@@ -9,9 +9,12 @@ interface OnboardingBriefingProps {
 
 export const OnboardingBriefing = ({}: OnboardingBriefingProps) => {
   const [generating, setGenerating] = useState(true);
+  const [briefingReady, setBriefingReady] = useState(false);
 
   useEffect(() => {
-    generateBriefing("full").finally(() => setGenerating(false));
+    generateBriefing("full").then((result) => {
+      setBriefingReady(result.success);
+    }).finally(() => setGenerating(false));
   }, []);
 
   return (
@@ -80,9 +83,13 @@ export const OnboardingBriefing = ({}: OnboardingBriefingProps) => {
             <Loader2 className="h-4 w-4 animate-spin" />
             Generating your first briefing…
           </div>
-        ) : (
+        ) : briefingReady ? (
           <p className="text-sm text-green-600 dark:text-green-400 font-medium">
-            Your first briefing is ready on the dashboard.
+            ✓ Your first briefing is ready on the dashboard.
+          </p>
+        ) : (
+          <p className="text-sm text-muted-foreground">
+            Your dashboard will generate a briefing once your data syncs.
           </p>
         )}
       </div>

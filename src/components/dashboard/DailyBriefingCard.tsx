@@ -214,7 +214,7 @@ export function DailyBriefingCard({
             </Button>
           </div>
         ) : (
-          <CollapsibleBriefingSections briefing={briefing} />
+          <CollapsibleBriefingSections briefing={briefing} recommendations={recommendations} />
         )}
         
         {/* Subtle footer explaining data sources */}
@@ -292,7 +292,7 @@ function CollapsibleSection({ title, icon, preview, children, variant = "default
   );
 }
 
-function CollapsibleBriefingSections({ briefing }: { briefing: YvesDailyBriefing }) {
+function CollapsibleBriefingSections({ briefing, recommendations = [] }: { briefing: YvesDailyBriefing; recommendations?: YvesRecommendation[] }) {
   const { getExplanation, hasContext } = usePersonalizedInsights();
   const { getRelevantDocument, hasDocuments } = useRelevantDocuments();
   

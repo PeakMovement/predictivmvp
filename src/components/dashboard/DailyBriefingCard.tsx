@@ -23,7 +23,7 @@ import { useRef, useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { Loader2, RefreshCw, Sparkles, Calendar, AlertTriangle, TrendingUp, ChevronDown, Brain } from "lucide-react";
+import { Loader as Loader2, RefreshCw, Sparkles, Calendar, TriangleAlert as AlertTriangle, TrendingUp, ChevronDown, Brain } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { YvesDailyBriefing } from "@/hooks/useYvesIntelligence";
 import { cn } from "@/lib/utils";

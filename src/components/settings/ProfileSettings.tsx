@@ -189,9 +189,9 @@ export const ProfileSettings = ({ onSaveStart, onSaveComplete }: ProfileSettings
               type="button"
               onClick={() => fileInputRef.current?.click()}
               disabled={isUploading}
-              className="absolute -bottom-1 -right-1 bg-primary text-primary-foreground rounded-full p-2 hover:bg-primary/90 transition-colors disabled:opacity-50 shadow-sm"
+              className="absolute bottom-0 right-0 bg-primary text-primary-foreground rounded-full p-1.5 hover:bg-primary/90 transition-colors disabled:opacity-50 shadow-sm"
             >
-              <Upload className="h-3.5 w-3.5" />
+              <Upload className="h-3 w-3" />
             </button>
           </div>
 

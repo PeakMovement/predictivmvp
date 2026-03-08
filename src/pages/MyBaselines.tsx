@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { TrendingUp, Heart, Activity, Moon, Dumbbell, RefreshCw, Info } from "lucide-react";
+import { TrendingUp, Heart, Activity, Moon, RefreshCw, Info } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -23,7 +23,7 @@ interface SessionRow {
   resting_hr: number | null;
   hrv_avg: number | null;
   sleep_score: number | null;
-  training_load: number | null;
+  
   readiness_score: number | null;
 }
 
@@ -79,16 +79,6 @@ const METRICS: MetricDef[] = [
     icon: Moon,
     color: "text-purple-400",
     hexColor: "#a78bfa",
-  },
-  {
-    key: "training_load",
-    dbMetric: "training_load",
-    label: "Training Load",
-    description: "7-day average accumulated training load. Your personal normal range guides overreaching detection.",
-    unit: "AU",
-    icon: Dumbbell,
-    color: "text-emerald-400",
-    hexColor: "#34d399",
   },
   {
     key: "readiness_score",
@@ -273,7 +263,7 @@ export default function MyBaselines() {
       const [sessRes, baseRes] = await Promise.all([
         supabase
           .from("wearable_sessions")
-          .select("date, resting_hr, hrv_avg, sleep_score, training_load, readiness_score")
+          .select("date, resting_hr, hrv_avg, sleep_score, readiness_score")
           .eq("user_id", user.id)
           .gte("date", since)
           .order("date", { ascending: true }),

@@ -36,6 +36,12 @@ interface WearableSession {
   intensity_minutes_moderate: number | null;
   intensity_minutes_vigorous: number | null;
   fetched_at: string | null;
+  // Sleep stage columns (minutes)
+  total_sleep_duration: number | null;
+  deep_sleep_duration: number | null;
+  rem_sleep_duration: number | null;
+  light_sleep_duration: number | null;
+  sleep_efficiency: number | null;
 }
 
 export const useWearableSessions = (userId: string | undefined, source?: string) => {
@@ -79,6 +85,9 @@ export const useWearableSessions = (userId: string | undefined, source?: string)
           "session_type",
           "avg_heart_rate", "max_heart_rate",
           "duration_minutes", "training_load",
+          // Sleep stage columns (migration 20260208114830)
+          "total_sleep_duration", "deep_sleep_duration",
+          "rem_sleep_duration", "light_sleep_duration", "sleep_efficiency",
         ].join(",");
 
         let query = supabase

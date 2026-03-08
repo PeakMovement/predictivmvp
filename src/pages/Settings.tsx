@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { Sparkles } from "lucide-react";
 import { useLayoutCustomization } from "@/hooks/useLayoutCustomization";
 import { ProfileSettings } from "@/components/settings/ProfileSettings";
@@ -12,12 +13,45 @@ import { YvesMemorySettings } from "@/components/settings/YvesMemorySettings";
 import { LayoutBlock } from "@/components/layout/LayoutBlock";
 import { CustomizeLayoutButton } from "@/components/layout/CustomizeLayoutButton";
 import { LayoutEditor } from "@/components/layout/LayoutEditor";
+import { useToast } from "@/hooks/use-toast";
 
 interface SettingsProps {
   onNavigate?: (tab: string) => void;
 }
 
 export const Settings = ({ onNavigate }: SettingsProps) => {
+  const { toast } = useToast();
+
+  // Show feedback toast after Garmin OAuth redirect back to /settings
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const garminConnected = params.get("garmin_connected");
+    const garminError = params.get("garmin_error");
+
+    if (garminConnected === "true") {
+      toast({ title: "Garmin Connected", description: "Your Garmin account is now linked and syncing." });
+      // Clean URL without reload
+      window.history.replaceState({}, "", window.location.pathname);
+    } else if (garminError) {
+      const messages: Record<string, string> = {
+        invalid_state: "OAuth session expired — please try connecting again.",
+        state_expired: "OAuth session expired — please try connecting again.",
+        code_expired: "Authorization code expired — please try connecting again.",
+        invalid_credentials: "Garmin credentials misconfigured. Contact support.",
+        server_config: "Server configuration error. Contact support.",
+        invalid_user: "Invalid user session. Please log out and back in.",
+        token_exchange_failed: "Token exchange failed — please try connecting again.",
+        access_denied: "Garmin access was denied.",
+      };
+      toast({
+        title: "Garmin Connection Failed",
+        description: messages[garminError] ?? `Error: ${garminError}`,
+        variant: "destructive",
+      });
+      window.history.replaceState({}, "", window.location.pathname);
+    }
+  }, [toast]);
+
   const {
     isEditing: isLayoutEditing,
     editingSections,

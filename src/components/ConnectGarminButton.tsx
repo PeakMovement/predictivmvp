@@ -4,6 +4,9 @@ import { Button } from "@/components/ui/button";
 import { RefreshCw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
+const GARMIN_AUTH_URL =
+  "https://ixtwbkikyuexskdgfpfq.supabase.co/functions/v1/garmin-auth";
+
 interface ConnectGarminButtonProps {
   isConnected: boolean;
   onConnectionChange?: () => void;
@@ -23,13 +26,9 @@ export const ConnectGarminButton = ({ isConnected, onConnectionChange, isExpired
         throw new Error("You must be logged in to connect your wearable");
       }
 
-      const { data, error } = await supabase.functions.invoke("garmin-auth-initiate");
-
-      if (error || !data?.auth_url) {
-        throw new Error(data?.error || "Failed to initiate Garmin connection");
-      }
-
-      window.location.href = data.auth_url;
+      // Navigate directly to garmin-auth with userId — the edge function handles
+      // PKCE generation, state storage, and redirect to Garmin OAuth in one step.
+      window.location.href = `${GARMIN_AUTH_URL}?userId=${encodeURIComponent(user.id)}`;
     } catch (err) {
       console.error("[connectGarmin] Error:", err);
       toast({

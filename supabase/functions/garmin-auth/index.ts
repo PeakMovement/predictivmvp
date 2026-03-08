@@ -15,54 +15,47 @@ const GARMIN_TOKEN_URL =
 const FRONTEND_URL =
   Deno.env.get("FRONTEND_URL") || "https://predictiv.netlify.app";
 
+// ── PKCE helpers ─────────────────────────────────────────────────────
+
+function generateCodeVerifier(length = 64): string {
+  const chars =
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~";
+  const randomValues = crypto.getRandomValues(new Uint8Array(length));
+  return Array.from(randomValues)
+    .map((v) => chars[v % chars.length])
+    .join("");
+}
+
+async function generateCodeChallenge(verifier: string): Promise<string> {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(verifier);
+  const hash = await crypto.subtle.digest("SHA-256", data);
+  const base64 = btoa(String.fromCharCode(...new Uint8Array(hash)));
+  return base64.replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+}
+
+function generateState(): string {
+  const bytes = crypto.getRandomValues(new Uint8Array(32));
+  return Array.from(bytes)
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
+}
+
+// ── Main handler ─────────────────────────────────────────────────────
+
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { status: 200, headers: corsHeaders });
   }
 
   try {
-    // ── 1. Parse callback parameters ──────────────────────────────────
-    // Garmin redirects here as GET with ?code=...&state=...
     const url = new URL(req.url);
     const code = url.searchParams.get("code");
     const state = url.searchParams.get("state");
     const error = url.searchParams.get("error");
+    const userId = url.searchParams.get("userId");
 
-    // Handle user denial / Garmin error
-    if (error) {
-      console.error(`[garmin-auth] [ERROR] Garmin returned error: ${error}`);
-      return new Response(null, {
-        status: 302,
-        headers: {
-          Location: `${FRONTEND_URL}?garmin_error=${encodeURIComponent(error)}`,
-        },
-      });
-    }
-
-    if (!code || !state) {
-      console.error("[garmin-auth] [ERROR] Missing code or state in callback");
-      return new Response(null, {
-        status: 302,
-        headers: {
-          Location: `${FRONTEND_URL}?garmin_error=missing_params`,
-        },
-      });
-    }
-
-    // Input validation
-    if (code.length > 512 || state.length > 128) {
-      console.error("[garmin-auth] [ERROR] Code or state exceeds max length");
-      return new Response(null, {
-        status: 302,
-        headers: {
-          Location: `${FRONTEND_URL}?garmin_error=invalid_params`,
-        },
-      });
-    }
-
-    console.log(`[garmin-auth] Received callback with state: ${state.substring(0, 8)}...`);
-
-    // ── 2. Initialize Supabase ────────────────────────────────────────
+    // ── Initialize Supabase (needed for both modes) ───────────────────
     const supabaseUrl = Deno.env.get("SUPABASE_URL");
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 
@@ -70,61 +63,164 @@ Deno.serve(async (req: Request) => {
       console.error("[garmin-auth] [ERROR] Supabase credentials not available");
       return new Response(null, {
         status: 302,
-        headers: { Location: `${FRONTEND_URL}?garmin_error=server_config` },
+        headers: { Location: `${FRONTEND_URL}/settings?garmin_error=server_config` },
       });
     }
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // ── 3. Validate state & retrieve PKCE code_verifier ───────────────
-    const { data: oauthState, error: stateError } = await supabase
+    // ════════════════════════════════════════════════════════════════════
+    // MODE A: INITIATION — called directly by the Reconnect button with
+    //         ?userId=<uid>. Generate PKCE, store state, redirect to Garmin.
+    // ════════════════════════════════════════════════════════════════════
+    if (userId && !code && !state && !error) {
+      console.log(`[garmin-auth] [INITIATE] Starting OAuth for user: ${userId}`);
+
+      // Basic userId validation
+      if (userId.length > 128 || !/^[a-f0-9-]+$/.test(userId)) {
+        console.error("[garmin-auth] [INITIATE] Invalid userId format");
+        return new Response(null, {
+          status: 302,
+          headers: { Location: `${FRONTEND_URL}/settings?garmin_error=invalid_user` },
+        });
+      }
+
+      const clientId = Deno.env.get("GARMIN_CONSUMER_KEY");
+      const redirectUri = Deno.env.get("GARMIN_REDIRECT_URI");
+
+      if (!clientId || !redirectUri) {
+        console.error("[garmin-auth] [INITIATE] Missing Garmin credentials");
+        return new Response(null, {
+          status: 302,
+          headers: { Location: `${FRONTEND_URL}/settings?garmin_error=server_config` },
+        });
+      }
+
+      // Generate PKCE + CSRF state
+      const codeVerifier = generateCodeVerifier();
+      const codeChallenge = await generateCodeChallenge(codeVerifier);
+      const oauthState = generateState();
+
+      // Clean up any stale rows for this user, then store new state
+      await supabase.from("garmin_oauth_state").delete().eq("user_id", userId);
+
+      const { error: insertError } = await supabase
+        .from("garmin_oauth_state")
+        .insert({
+          user_id: userId,
+          state: oauthState,
+          code_verifier: codeVerifier,
+          // expires_at defaults to now() + 10 min via table default
+        });
+
+      if (insertError) {
+        console.error("[garmin-auth] [INITIATE] Failed to store PKCE state:", insertError.message);
+        return new Response(null, {
+          status: 302,
+          headers: { Location: `${FRONTEND_URL}/settings?garmin_error=session_error` },
+        });
+      }
+
+      const authUrl =
+        `https://connect.garmin.com/oauth2Confirm?` +
+        `response_type=code` +
+        `&client_id=${encodeURIComponent(clientId)}` +
+        `&redirect_uri=${encodeURIComponent(redirectUri)}` +
+        `&code_challenge=${encodeURIComponent(codeChallenge)}` +
+        `&code_challenge_method=S256` +
+        `&state=${encodeURIComponent(oauthState)}`;
+
+      console.log(`[garmin-auth] [INITIATE] Redirecting user ${userId} to Garmin OAuth`);
+      console.log(`[garmin-auth] [INITIATE] redirect_uri: ${redirectUri}`);
+
+      return new Response(null, {
+        status: 302,
+        headers: { Location: authUrl },
+      });
+    }
+
+    // ════════════════════════════════════════════════════════════════════
+    // MODE B: CALLBACK — Garmin redirects here with ?code=&state= after
+    //         the user authorises. Exchange code for tokens.
+    // ════════════════════════════════════════════════════════════════════
+
+    // Handle user denial / Garmin error
+    if (error) {
+      console.error(`[garmin-auth] [CALLBACK] Garmin returned error: ${error}`);
+      return new Response(null, {
+        status: 302,
+        headers: {
+          Location: `${FRONTEND_URL}/settings?garmin_error=${encodeURIComponent(error)}`,
+        },
+      });
+    }
+
+    if (!code || !state) {
+      console.error("[garmin-auth] [CALLBACK] Missing code or state; also missing userId — no valid mode");
+      return new Response(null, {
+        status: 302,
+        headers: { Location: `${FRONTEND_URL}/settings?garmin_error=missing_params` },
+      });
+    }
+
+    // Input validation
+    if (code.length > 512 || state.length > 128) {
+      console.error("[garmin-auth] [CALLBACK] Code or state exceeds max length");
+      return new Response(null, {
+        status: 302,
+        headers: { Location: `${FRONTEND_URL}/settings?garmin_error=invalid_params` },
+      });
+    }
+
+    console.log(`[garmin-auth] [CALLBACK] Received callback with state: ${state.substring(0, 8)}...`);
+
+    // ── Validate state & retrieve PKCE code_verifier ──────────────────
+    const { data: oauthStateRow, error: stateError } = await supabase
       .from("garmin_oauth_state")
       .select("*")
       .eq("state", state)
       .maybeSingle();
 
-    if (stateError || !oauthState) {
-      console.error("[garmin-auth] [ERROR] Invalid or expired state:", stateError?.message);
+    if (stateError || !oauthStateRow) {
+      console.error("[garmin-auth] [CALLBACK] Invalid or expired state:", stateError?.message);
       return new Response(null, {
         status: 302,
-        headers: { Location: `${FRONTEND_URL}?garmin_error=invalid_state` },
+        headers: { Location: `${FRONTEND_URL}/settings?garmin_error=invalid_state` },
       });
     }
 
-    // Check expiry
-    if (new Date(oauthState.expires_at) < new Date()) {
-      console.error("[garmin-auth] [ERROR] OAuth state expired");
-      // Clean up expired state
-      await supabase.from("garmin_oauth_state").delete().eq("id", oauthState.id);
+    if (new Date(oauthStateRow.expires_at) < new Date()) {
+      console.error("[garmin-auth] [CALLBACK] OAuth state expired");
+      await supabase.from("garmin_oauth_state").delete().eq("id", oauthStateRow.id);
       return new Response(null, {
         status: 302,
-        headers: { Location: `${FRONTEND_URL}?garmin_error=state_expired` },
+        headers: { Location: `${FRONTEND_URL}/settings?garmin_error=state_expired` },
       });
     }
 
-    const userId = oauthState.user_id;
-    const codeVerifier = oauthState.code_verifier;
+    const callbackUserId = oauthStateRow.user_id;
+    const codeVerifier = oauthStateRow.code_verifier;
 
-    console.log(`[garmin-auth] State validated for user: ${userId}`);
+    console.log(`[garmin-auth] [CALLBACK] State validated for user: ${callbackUserId}`);
 
-    // Delete the used state immediately (one-time use)
-    await supabase.from("garmin_oauth_state").delete().eq("id", oauthState.id);
+    // Delete used state immediately (one-time use)
+    await supabase.from("garmin_oauth_state").delete().eq("id", oauthStateRow.id);
 
-    // ── 4. Read Garmin credentials ────────────────────────────────────
+    // ── Read Garmin credentials ───────────────────────────────────────
     const clientId = Deno.env.get("GARMIN_CONSUMER_KEY");
     const clientSecret = Deno.env.get("GARMIN_CONSUMER_SECRET");
     const redirectUri = Deno.env.get("GARMIN_REDIRECT_URI");
 
     if (!clientId || !clientSecret || !redirectUri) {
-      console.error("[garmin-auth] [ERROR] Missing Garmin credentials");
+      console.error("[garmin-auth] [CALLBACK] Missing Garmin credentials");
       return new Response(null, {
         status: 302,
-        headers: { Location: `${FRONTEND_URL}?garmin_error=server_config` },
+        headers: { Location: `${FRONTEND_URL}/settings?garmin_error=server_config` },
       });
     }
 
-    // ── 5. Exchange authorization code for tokens ─────────────────────
-    console.log("[garmin-auth] Exchanging authorization code for tokens...");
+    // ── Exchange authorization code for tokens ────────────────────────
+    console.log("[garmin-auth] [CALLBACK] Exchanging authorization code for tokens...");
 
     const tokenResponse = await fetch(GARMIN_TOKEN_URL, {
       method: "POST",
@@ -139,12 +235,12 @@ Deno.serve(async (req: Request) => {
       }),
     });
 
-    console.log(`[garmin-auth] Token response status: ${tokenResponse.status}`);
+    console.log(`[garmin-auth] [CALLBACK] Token response status: ${tokenResponse.status}`);
 
     const tokenData = await tokenResponse.json();
 
     if (!tokenResponse.ok) {
-      console.error("[garmin-auth] [ERROR] Token exchange failed:", {
+      console.error("[garmin-auth] [CALLBACK] Token exchange failed:", {
         status: tokenResponse.status,
         error: tokenData.error,
         description: tokenData.error_description,
@@ -156,58 +252,54 @@ Deno.serve(async (req: Request) => {
 
       return new Response(null, {
         status: 302,
-        headers: {
-          Location: `${FRONTEND_URL}?garmin_error=${errorKey}`,
-        },
+        headers: { Location: `${FRONTEND_URL}/settings?garmin_error=${errorKey}` },
       });
     }
 
     if (!tokenData.access_token) {
-      console.error("[garmin-auth] [ERROR] No access_token in response");
+      console.error("[garmin-auth] [CALLBACK] No access_token in response");
       return new Response(null, {
         status: 302,
-        headers: { Location: `${FRONTEND_URL}?garmin_error=no_token` },
+        headers: { Location: `${FRONTEND_URL}/settings?garmin_error=no_token` },
       });
     }
 
-    console.log("[garmin-auth] Token exchange successful");
+    console.log("[garmin-auth] [CALLBACK] Token exchange successful");
 
-    // ── 6. Calculate expiry ──────────────────────────────────────────
-    // Garmin tokens expire in ~86400s (24h). Subtract 600s buffer per Garmin recommendation.
+    // ── Calculate expiry ──────────────────────────────────────────────
     const expiresInSeconds = tokenData.expires_in || 86400;
     const expiresAt = new Date(
       Date.now() + (expiresInSeconds - 600) * 1000
     ).toISOString();
 
-    // ── 7. Store tokens in wearable_tokens ────────────────────────────
+    // ── Store tokens in wearable_tokens ──────────────────────────────
     const { error: upsertError } = await supabase
       .from("wearable_tokens")
       .upsert(
         {
-          user_id: userId,
+          user_id: callbackUserId,
           access_token: tokenData.access_token,
           refresh_token: tokenData.refresh_token || null,
           expires_at: expiresAt,
           expires_in: expiresInSeconds,
           scope: "garmin",
           token_type: tokenData.token_type || "bearer",
+          status: "active",
         },
         { onConflict: "user_id,scope" }
       );
 
     if (upsertError) {
-      console.error("[garmin-auth] [ERROR] Failed to store tokens:", upsertError.message);
+      console.error("[garmin-auth] [CALLBACK] Failed to store tokens:", upsertError.message);
       return new Response(null, {
         status: 302,
-        headers: { Location: `${FRONTEND_URL}?garmin_error=db_error` },
+        headers: { Location: `${FRONTEND_URL}/settings?garmin_error=db_error` },
       });
     }
 
-    console.log(`[garmin-auth] [SUCCESS] Garmin tokens stored for user: ${userId}`);
+    console.log(`[garmin-auth] [CALLBACK] [SUCCESS] Garmin tokens stored for user: ${callbackUserId}`);
 
-    // ── 8. Fetch and store Garmin's stable userId for webhook matching ─
-    // Push notifications include a stable userId that survives token refresh.
-    // Storing it now lets the webhook resolve users even after tokens rotate.
+    // ── Fetch and store Garmin's stable userId for webhook matching ───
     try {
       const garminUserRes = await fetch(
         "https://apis.garmin.com/wellness-api/rest/user/id",
@@ -219,43 +311,42 @@ Deno.serve(async (req: Request) => {
           await supabase
             .from("wearable_tokens")
             .update({ provider_user_id: garminUserData.userId })
-            .eq("user_id", userId)
+            .eq("user_id", callbackUserId)
             .eq("scope", "garmin");
-          console.log(`[garmin-auth] Stored Garmin provider userId for user: ${userId}`);
+          console.log(`[garmin-auth] Stored Garmin provider userId for user: ${callbackUserId}`);
         }
       } else {
-        console.warn(`[garmin-auth] Could not fetch Garmin userId (${garminUserRes.status}) — webhook matching will fall back to access_token`);
+        console.warn(`[garmin-auth] Could not fetch Garmin userId (${garminUserRes.status})`);
       }
     } catch (e) {
       console.warn("[garmin-auth] Garmin userId fetch failed (non-fatal):", e instanceof Error ? e.message : String(e));
     }
 
-    // ── 10. Clean up any remaining expired PKCE states ────────────────
+    // ── Clean up expired PKCE states ──────────────────────────────────
     await supabase
       .from("garmin_oauth_state")
       .delete()
       .lt("expires_at", new Date().toISOString());
 
-    // ── 11. Trigger initial Garmin data backfill (fire-and-forget) ────
+    // ── Trigger initial Garmin data backfill (fire-and-forget) ────────
     try {
-      const supabaseFunctionUrl = `${supabaseUrl}/functions/v1/fetch-garmin-data`;
-      fetch(supabaseFunctionUrl, {
+      fetch(`${supabaseUrl}/functions/v1/fetch-garmin-data`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${supabaseServiceKey}`,
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ user_id: userId }),
+        body: JSON.stringify({ user_id: callbackUserId }),
       }).catch((e) => console.warn("[garmin-auth] Data backfill fetch failed:", e));
     } catch (e) {
       console.warn("[garmin-auth] Could not trigger data backfill:", e);
     }
 
-    // ── 12. Redirect user back to app ─────────────────────────────────
+    // ── Redirect back to Settings ─────────────────────────────────────
     return new Response(null, {
       status: 302,
       headers: {
-        Location: `${FRONTEND_URL}/`,
+        Location: `${FRONTEND_URL}/settings?garmin_connected=true`,
       },
     });
   } catch (err) {
@@ -263,7 +354,7 @@ Deno.serve(async (req: Request) => {
     return new Response(null, {
       status: 302,
       headers: {
-        Location: `${FRONTEND_URL}?garmin_error=unexpected`,
+        Location: `${FRONTEND_URL}/settings?garmin_error=unexpected`,
       },
     });
   }

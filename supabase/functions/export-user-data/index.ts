@@ -1,29 +1,14 @@
-import { createClient } from "npm:@supabase/supabase-js@2.58.0";
+import { createClient } from "npm:@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
   "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Client-Info, Apikey",
 };
 
-interface ExportData {
-  profile: any;
-  wearable_sessions: any[];
-  wearable_summary: any[];
-  symptom_logs: any[];
-  user_documents: any[];
-  daily_briefings: any[];
-  yves_history: any[];
-  user_context: any;
-  health_profile: any;
-}
-
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
-    return new Response(null, {
-      status: 200,
-      headers: corsHeaders,
-    });
+    return new Response(null, { status: 200, headers: corsHeaders });
   }
 
   try {
@@ -33,149 +18,72 @@ Deno.serve(async (req: Request) => {
 
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
-      throw new Error("No authorization header");
+      return new Response(JSON.stringify({ error: "No authorization header" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     const token = authHeader.replace("Bearer ", "");
     const { data: { user }, error: userError } = await supabase.auth.getUser(token);
-
     if (userError || !user) {
-      throw new Error("Unauthorized");
-    }
-
-    const exportData: ExportData = {
-      profile: null,
-      wearable_sessions: [],
-      wearable_summary: [],
-      symptom_logs: [],
-      user_documents: [],
-      daily_briefings: [],
-      yves_history: [],
-      user_context: null,
-      health_profile: null,
-    };
-
-    const { data: profile } = await supabase
-      .from("user_profiles")
-      .select("*")
-      .eq("user_id", user.id)
-      .maybeSingle();
-    exportData.profile = profile;
-
-    const { data: wearableSessions } = await supabase
-      .from("wearable_sessions")
-      .select("*")
-      .eq("user_id", user.id)
-      .order("session_date", { ascending: false })
-      .limit(1000);
-    exportData.wearable_sessions = wearableSessions || [];
-
-    const { data: wearableSummary } = await supabase
-      .from("wearable_summary")
-      .select("*")
-      .eq("user_id", user.id)
-      .order("summary_date", { ascending: false })
-      .limit(365);
-    exportData.wearable_summary = wearableSummary || [];
-
-    const { data: symptomLogs } = await supabase
-      .from("symptom_logs")
-      .select("*")
-      .eq("user_id", user.id)
-      .order("logged_at", { ascending: false })
-      .limit(1000);
-    exportData.symptom_logs = symptomLogs || [];
-
-    const { data: documents } = await supabase
-      .from("user_documents")
-      .select("id, user_id, filename, uploaded_at, file_type, file_size, analysis_status")
-      .eq("user_id", user.id)
-      .order("uploaded_at", { ascending: false });
-    exportData.user_documents = documents || [];
-
-    const { data: briefings } = await supabase
-      .from("daily_briefing")
-      .select("*")
-      .eq("user_id", user.id)
-      .order("briefing_date", { ascending: false })
-      .limit(90);
-    exportData.daily_briefings = briefings || [];
-
-    const { data: yvesHistory } = await supabase
-      .from("yves_chat_history")
-      .select("message, response, created_at")
-      .eq("user_id", user.id)
-      .order("created_at", { ascending: false })
-      .limit(500);
-    exportData.yves_history = yvesHistory || [];
-
-    const { data: userContext } = await supabase
-      .from("user_context_enhanced")
-      .select("*")
-      .eq("user_id", user.id)
-      .maybeSingle();
-    exportData.user_context = userContext;
-
-    const { data: healthProfile } = await supabase
-      .from("user_health_profiles")
-      .select("*")
-      .eq("user_id", user.id)
-      .maybeSingle();
-    exportData.health_profile = healthProfile;
-
-    const url = new URL(req.url);
-    const format = url.searchParams.get("format") || "json";
-
-    if (format === "csv") {
-      let csvContent = "Data Export\n\n";
-
-      csvContent += "Profile Information\n";
-      if (exportData.profile) {
-        csvContent += Object.entries(exportData.profile)
-          .map(([key, value]) => `${key},${value}`)
-          .join("\n");
-        csvContent += "\n\n";
-      }
-
-      csvContent += "Wearable Sessions\n";
-      if (exportData.wearable_sessions.length > 0) {
-        const headers = Object.keys(exportData.wearable_sessions[0]).join(",");
-        csvContent += headers + "\n";
-        csvContent += exportData.wearable_sessions
-          .map(session => Object.values(session).join(","))
-          .join("\n");
-      }
-
-      return new Response(csvContent, {
-        headers: {
-          ...corsHeaders,
-          "Content-Type": "text/csv",
-          "Content-Disposition": `attachment; filename="predictiv-data-export-${new Date().toISOString().split('T')[0]}.csv"`,
-        },
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
+    const uid = user.id;
+    const ninetyDaysAgo = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000)
+      .toISOString()
+      .split("T")[0];
+
+    // Fetch all data in parallel
+    const [
+      profileRes,
+      sessionsRes,
+      memoryRes,
+      briefingsRes,
+      recommendationsRes,
+      injuryRes,
+      practitionerRes,
+    ] = await Promise.all([
+      supabase.from("user_profiles").select("*").eq("user_id", uid).maybeSingle(),
+      supabase.from("wearable_sessions").select("*").eq("user_id", uid).gte("date", ninetyDaysAgo).order("date", { ascending: false }),
+      supabase.from("yves_memory_bank").select("*").eq("user_id", uid).order("last_updated", { ascending: false }),
+      supabase.from("daily_briefings").select("*").eq("user_id", uid).order("date", { ascending: false }),
+      supabase.from("yves_recommendations").select("*").eq("user_id", uid).order("created_at", { ascending: false }),
+      supabase.from("user_injury_profiles").select("*").eq("user_id", uid).order("created_at", { ascending: false }),
+      supabase.from("practitioner_access").select("*").eq("patient_id", uid),
+    ]);
+
+    const exportData = {
+      exported_at: new Date().toISOString(),
+      user_id: uid,
+      email: user.email,
+      profile: profileRes.data ?? null,
+      wearable_sessions: sessionsRes.data ?? [],
+      yves_memory_bank: memoryRes.data ?? [],
+      daily_briefings: briefingsRes.data ?? [],
+      yves_recommendations: recommendationsRes.data ?? [],
+      injury_profiles: injuryRes.data ?? [],
+      practitioner_access: practitionerRes.data ?? [],
+    };
+
+    const filename = `predictiv-data-export-${new Date().toISOString().split("T")[0]}.json`;
 
     return new Response(JSON.stringify(exportData, null, 2), {
       headers: {
         ...corsHeaders,
         "Content-Type": "application/json",
-        "Content-Disposition": `attachment; filename="predictiv-data-export-${new Date().toISOString().split('T')[0]}.json"`,
+        "Content-Disposition": `attachment; filename="${filename}"`,
       },
     });
-
-  } catch (error) {
-    console.error("Error exporting data:", error);
+  } catch (err) {
+    console.error("export-user-data error:", err);
     return new Response(
-      JSON.stringify({
-        error: error instanceof Error ? error.message : "Failed to export data",
-      }),
-      {
-        status: 500,
-        headers: {
-          ...corsHeaders,
-          "Content-Type": "application/json",
-        },
-      }
+      JSON.stringify({ error: err instanceof Error ? err.message : "Export failed" }),
+      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
 });

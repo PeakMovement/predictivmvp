@@ -1,8 +1,20 @@
-import { Info, User, Database, Shield, ChevronRight, RefreshCw, Stethoscope, Sparkles } from "lucide-react";
+import { Info, User, Database, Shield, ChevronRight, RefreshCw, Stethoscope, Sparkles, Download, Trash2, AlertTriangle } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { DataPrivacySettings } from "@/components/settings/DataPrivacySettings";
@@ -20,12 +32,68 @@ export const AccountSettings = ({ isSectionVisible, onNavigate }: AccountSetting
   const [isCalculatingTrends, setIsCalculatingTrends] = useState(false);
   const [showSymptomChecker, setShowSymptomChecker] = useState(false);
   const [showOnboardingSimulator, setShowOnboardingSimulator] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState("");
   const { toast } = useToast();
 
   const handleDebugModeToggle = (enabled: boolean) => {
     setDebugMode(enabled);
     localStorage.setItem("debugMode", enabled.toString());
     window.dispatchEvent(new CustomEvent("debug-mode-changed", { detail: enabled }));
+  };
+
+  const handleExportData = async () => {
+    setIsExporting(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error("Not authenticated");
+
+      const response = await supabase.functions.invoke("export-user-data", {
+        headers: { Authorization: `Bearer ${session.access_token}` },
+      });
+
+      if (response.error) throw response.error;
+
+      const blob = new Blob([JSON.stringify(response.data, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `predictiv-data-export-${new Date().toISOString().split("T")[0]}.json`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+
+      toast({ title: "Data exported", description: "Your data has been downloaded as JSON." });
+    } catch {
+      toast({ title: "Export failed", description: "Please try again.", variant: "destructive" });
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    if (deleteConfirmText !== "DELETE") return;
+    setIsDeleting(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error("Not authenticated");
+
+      const { error } = await supabase.functions.invoke("delete-user-account", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${session.access_token}` },
+      });
+
+      if (error) throw error;
+
+      toast({ title: "Account deleted", description: "All your data has been permanently removed." });
+      await supabase.auth.signOut();
+      window.location.href = "/register";
+    } catch {
+      toast({ title: "Delete failed", description: "Please contact support if this persists.", variant: "destructive" });
+      setIsDeleting(false);
+    }
   };
 
   const handleCalculateTrends = async () => {
@@ -78,16 +146,90 @@ export const AccountSettings = ({ isSectionVisible, onNavigate }: AccountSetting
           </div>
           <h3 className="text-lg font-semibold text-foreground">Account</h3>
         </div>
-        <Button
-          onClick={async () => {
-            await supabase.auth.signOut();
-            toast({ title: "Signed out", description: "You have been successfully signed out." });
-          }}
-          className="w-full flex items-center justify-center p-4 rounded-xl border bg-destructive/10 border-destructive/20 hover:bg-destructive/20 transition-all duration-200"
-          variant="ghost"
-        >
-          <span className="font-medium text-destructive">Sign Out</span>
-        </Button>
+        <div className="space-y-3">
+          {/* Export data */}
+          <Button
+            onClick={handleExportData}
+            disabled={isExporting}
+            className="w-full flex items-center justify-between p-4 rounded-xl border bg-glass/30 border-glass-border hover:bg-glass-highlight transition-all duration-200 h-auto"
+            variant="ghost"
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 bg-blue-500/20 rounded-lg flex items-center justify-center">
+                {isExporting ? <RefreshCw size={16} className="text-blue-400 animate-spin" /> : <Download size={16} className="text-blue-400" />}
+              </div>
+              <div className="text-left">
+                <p className="font-medium text-foreground">Export My Data</p>
+                <p className="text-xs text-muted-foreground">Download all your data as JSON</p>
+              </div>
+            </div>
+            <ChevronRight size={16} className="text-muted-foreground" />
+          </Button>
+
+          {/* Delete account */}
+          <AlertDialog onOpenChange={(open) => { if (!open) setDeleteConfirmText(""); }}>
+            <AlertDialogTrigger asChild>
+              <button className="w-full flex items-center justify-between p-4 rounded-xl border bg-destructive/5 border-destructive/20 hover:bg-destructive/10 transition-all duration-200">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 bg-destructive/20 rounded-lg flex items-center justify-center">
+                    <Trash2 size={16} className="text-destructive" />
+                  </div>
+                  <div className="text-left">
+                    <p className="font-medium text-destructive">Delete My Account</p>
+                    <p className="text-xs text-muted-foreground">Permanently erase all data — cannot be undone</p>
+                  </div>
+                </div>
+                <ChevronRight size={16} className="text-muted-foreground" />
+              </button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle className="flex items-center gap-2">
+                  <AlertTriangle className="h-5 w-5 text-destructive" />
+                  Delete your account?
+                </AlertDialogTitle>
+                <AlertDialogDescription className="space-y-3">
+                  <span className="block">
+                    This will permanently delete your account and all associated data — wearable sessions, health profiles,
+                    Yves memory, recommendations, documents, and more. This cannot be undone.
+                  </span>
+                  <span className="block font-medium text-foreground">
+                    Type <span className="font-mono text-destructive">DELETE</span> to confirm:
+                  </span>
+                  <Input
+                    value={deleteConfirmText}
+                    onChange={(e) => setDeleteConfirmText(e.target.value)}
+                    placeholder="Type DELETE"
+                    className="font-mono"
+                    autoComplete="off"
+                  />
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={handleDeleteAccount}
+                  disabled={deleteConfirmText !== "DELETE" || isDeleting}
+                  className="bg-destructive hover:bg-destructive/90 disabled:opacity-40"
+                >
+                  {isDeleting ? "Deleting…" : "Delete account"}
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+
+          {/* Sign out */}
+          <Button
+            onClick={async () => {
+              await supabase.auth.signOut();
+              toast({ title: "Signed out", description: "You have been successfully signed out." });
+            }}
+            className="w-full flex items-center justify-center p-4 rounded-xl border bg-destructive/10 border-destructive/20 hover:bg-destructive/20 transition-all duration-200"
+            variant="ghost"
+          >
+            <span className="font-medium text-destructive">Sign Out</span>
+          </Button>
+        </div>
       </div>
 
       <LayoutBlock blockId="dataPrivacy" displayName="Data & Privacy" pageId="profile" size="standard" visible={isSectionVisible("dataPrivacy")}>

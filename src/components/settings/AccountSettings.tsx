@@ -56,18 +56,18 @@ export const AccountSettings = ({ isSectionVisible, onNavigate }: AccountSetting
             <span>Version</span>
             <span className="text-foreground font-medium">1.0.0</span>
           </div>
-          <div className="flex justify-between items-center py-2">
+          <a href="/terms" target="_blank" rel="noopener noreferrer" className="flex justify-between items-center py-2 hover:text-foreground transition-colors">
             <span>Terms of Service</span>
             <ChevronRight size={16} />
-          </div>
-          <div className="flex justify-between items-center py-2">
+          </a>
+          <a href="/privacy" target="_blank" rel="noopener noreferrer" className="flex justify-between items-center py-2 hover:text-foreground transition-colors">
             <span>Privacy Policy</span>
             <ChevronRight size={16} />
-          </div>
-          <div className="flex justify-between items-center py-2">
+          </a>
+          <a href="mailto:justin15muller@gmail.com?subject=Support%20Request" className="flex justify-between items-center py-2 hover:text-foreground transition-colors">
             <span>Contact Support</span>
             <ChevronRight size={16} />
-          </div>
+          </a>
         </div>
       </div>
 

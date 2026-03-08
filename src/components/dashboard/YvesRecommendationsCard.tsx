@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import jsPDF from "jspdf";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ExternalLink, Lightbulb, ChevronDown, ThumbsUp, ThumbsDown, Check, HelpCircle, Download } from "lucide-react";
+import { ExternalLink, Lightbulb, ChevronDown, ThumbsUp, ThumbsDown, Check, CircleHelp as HelpCircle, Download } from "lucide-react";
 import { YvesRecommendation } from "@/hooks/useYvesIntelligence";
 import { useEngagementTracking } from "@/hooks/useEngagementTracking";
 import { cn } from "@/lib/utils";
@@ -14,13 +14,13 @@ import { BaselineBanner } from "./BaselineBanner";
 import { DataMaturityTier } from "@/hooks/useDataMaturity";
 
 interface YvesRecommendationsCardProps {
-  recommendations: YvesRecommendation[];
-  isLoading: boolean;
+  recommendations?: YvesRecommendation[];
+  isLoading?: boolean;
   dataMaturityTier?: DataMaturityTier;
   dataMaturityDays?: number;
 }
 
-export function YvesRecommendationsCard({ recommendations, isLoading, dataMaturityTier, dataMaturityDays = 0 }: YvesRecommendationsCardProps) {
+export function YvesRecommendationsCard({ recommendations = [], isLoading = false, dataMaturityTier, dataMaturityDays = 0 }: YvesRecommendationsCardProps) {
   const getCategoryLabel = (category: string) => {
     const labels: Record<string, string> = {
       training: "Training Tip",

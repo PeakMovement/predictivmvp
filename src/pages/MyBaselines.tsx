@@ -23,7 +23,7 @@ interface SessionRow {
   resting_hr: number | null;
   hrv_avg: number | null;
   sleep_score: number | null;
-  training_load: number | null;
+  
   readiness_score: number | null;
 }
 

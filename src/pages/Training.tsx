@@ -134,13 +134,16 @@ const CircularGauge = ({
   value,
   maxValue,
   unit,
+  note,
 }: {
   title: string;
   value: number;
   maxValue: number;
   unit: string;
+  note?: string;
 }) => {
-  const percentage = (value / maxValue) * 100;
+  const safeValue = isNaN(value) || !isFinite(value) ? 0 : value;
+  const percentage = Math.max(0, Math.min(100, (safeValue / maxValue) * 100));
   const circumference = 2 * Math.PI * 45;
   const strokeDasharray = circumference;
   const strokeDashoffset = circumference - (percentage / 100) * circumference;
@@ -153,7 +156,7 @@ const CircularGauge = ({
         </div>
         <h3 className="text-lg font-semibold text-foreground">{title}</h3>
       </div>
-      <div className="flex items-center justify-center">
+      <div className="flex flex-col items-center justify-center gap-2">
         <div className="relative w-32 h-32">
           <svg className="w-32 h-32 transform -rotate-90" viewBox="0 0 100 100">
             <circle
@@ -179,10 +182,13 @@ const CircularGauge = ({
             />
           </svg>
           <div className="absolute inset-0 flex flex-col items-center justify-center">
-            <span className="text-2xl font-bold text-foreground">{value}</span>
+            <span className="text-2xl font-bold text-foreground">{safeValue}</span>
             <span className="text-xs text-muted-foreground">{unit}</span>
           </div>
         </div>
+        {note && (
+          <p className="text-[10px] text-muted-foreground text-center leading-tight">{note}</p>
+        )}
       </div>
     </div>
   );
@@ -534,26 +540,13 @@ export const Training = () => {
                     <CircularGauge title="VO₂ Max" value={wearableData?.vo2_max ? parseFloat(wearableData.vo2_max.toFixed(1)) : 0} maxValue={70} unit="mL/kg" />
                     <CircularGauge title="Intensity Mod" value={wearableData?.intensity_minutes_moderate ?? 0} maxValue={150} unit="min" />
                     <CircularGauge title="Intensity Vig" value={wearableData?.intensity_minutes_vigorous ?? 0} maxValue={75} unit="min" />
-                    <div className="flex flex-col items-center gap-1">
-                      <CircularGauge
-                        title="Running Dist"
-                        value={runningDistanceLoading ? 0 : parseFloat(runningDistance.toFixed(1))}
-                        maxValue={50}
-                        unit="km"
-                      />
-                      {runningDistanceIsEstimated && !runningDistanceLoading && (
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <p className="text-[10px] text-muted-foreground text-center cursor-help underline decoration-dotted max-w-[100px] leading-tight">
-                              Estimated from steps
-                            </p>
-                          </TooltipTrigger>
-                          <TooltipContent side="bottom" className="max-w-[200px] text-center text-xs">
-                            GPS distance will show once your wearable syncs
-                          </TooltipContent>
-                        </Tooltip>
-                      )}
-                    </div>
+                    <CircularGauge
+                      title="Running Dist"
+                      value={runningDistanceLoading ? 0 : parseFloat(runningDistance.toFixed(1))}
+                      maxValue={50}
+                      unit="km"
+                      note={runningDistanceIsEstimated && !runningDistanceLoading ? "Estimated from steps" : undefined}
+                    />
                   </div>
 
                   {/* ── Load ── */}

@@ -256,9 +256,9 @@ export const Health = () => {
             {!isLoading && !session && hasAnyToken === false && (
               <Alert className="mb-6 border-blue-500/50 bg-blue-500/10">
                 <InfoIcon className="h-4 w-4 text-blue-500" />
-                <AlertTitle className="text-blue-500">No Device Connected</AlertTitle>
+                <AlertTitle className="text-blue-500">No health data yet</AlertTitle>
                 <AlertDescription className="text-sm text-muted-foreground">
-                  Connect your wearable device in Settings to start tracking your health data.
+                  Connect a wearable in Settings to start tracking your health data.
                 </AlertDescription>
               </Alert>
             )}

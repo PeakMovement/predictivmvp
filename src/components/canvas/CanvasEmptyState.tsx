@@ -30,7 +30,7 @@ export function CanvasEmptyState({ onOpenLibrary }: CanvasEmptyStateProps) {
 
       <div className="flex items-center gap-2 text-sm text-muted-foreground mb-6">
         <Sparkles className="h-4 w-4 text-primary" />
-        <span>Start by adding your first section</span>
+        <span>Start by adding your first section, or ask Yves anything from the Dashboard</span>
       </div>
 
       <Button size="lg" onClick={onOpenLibrary} className="gap-2">

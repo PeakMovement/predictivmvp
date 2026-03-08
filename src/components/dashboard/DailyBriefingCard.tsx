@@ -85,6 +85,12 @@ export function DailyBriefingCard({
 }: DailyBriefingCardProps) {
   const trainingFocusRef = useRef<TodaysBestDecisionHandle>(null);
   const [progress, setProgress] = useState(0);
+  // Tick every 60 s so the relative timestamp ("X minutes ago") stays live
+  const [, setTick] = useState(0);
+  useEffect(() => {
+    const id = setInterval(() => setTick((n) => n + 1), 60_000);
+    return () => clearInterval(id);
+  }, []);
 
   useEffect(() => {
     if (isGenerating) {

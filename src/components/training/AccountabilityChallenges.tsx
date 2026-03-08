@@ -1,149 +1,104 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Trophy, Target, Calendar, TrendingUp, Check, X, Plus } from "lucide-react";
+import { useUserChallenges } from "@/hooks/useUserChallenges";
+import { Trophy, Target, Calendar, TrendingUp, Check, X, Sparkles, Loader2, Brain, Activity } from "lucide-react";
 import { format } from "date-fns";
 
-interface Challenge {
-  id: string;
-  title: string;
-  description: string;
-  challenge_type: string;
-  target_value: number;
-  current_value: number;
-  unit: string;
-  start_date: string;
-  end_date: string;
-  status: string;
-  created_at: string;
-}
+const METRIC_LABELS: Record<string, string> = {
+  session_count: "sessions",
+  total_distance: "km",
+  avg_sleep_score: "avg score",
+  avg_readiness: "avg score",
+  avg_hrv: "avg ms",
+};
 
 export const AccountabilityChallenges = () => {
-  const [challenges, setChallenges] = useState<Challenge[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const {
+    pendingChallenges,
+    activeChallenges,
+    completedChallenges,
+    isLoading,
+    acceptChallenge,
+    completeChallenge,
+    abandonChallenge,
+    generateChallenges,
+  } = useUserChallenges();
+  const [isGenerating, setIsGenerating] = useState(false);
   const { toast } = useToast();
 
-  useEffect(() => {
-    fetchChallenges();
-  }, []);
-
-  const fetchChallenges = async () => {
+  const handleGenerate = async () => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      const { data, error } = await supabase
-        .from("accountability_challenges")
-        .select("*")
-        .eq("user_id", user.id)
-        .order("created_at", { ascending: false });
-
-      if (error) throw error;
-
-      setChallenges(data || []);
-    } catch (error) {
-      console.error("Error fetching challenges:", error);
+      setIsGenerating(true);
+      await generateChallenges();
+      toast({
+        title: "Challenges Generated! ✨",
+        description: "Yves has created personalised challenges based on your data",
+      });
+    } catch {
       toast({
         title: "Error",
-        description: "Failed to load challenges",
+        description: "Failed to generate challenges. Try again later.",
         variant: "destructive",
       });
     } finally {
-      setIsLoading(false);
+      setIsGenerating(false);
     }
   };
 
-  const handleAcceptChallenge = async (challengeId: string) => {
+  const handleAccept = async (id: string) => {
     try {
-      const { error } = await supabase
-        .from("accountability_challenges")
-        .update({ status: "active" })
-        .eq("id", challengeId);
-
-      if (error) throw error;
-
+      await acceptChallenge(id);
       toast({
-        title: "Challenge Accepted!",
-        description: "You've accepted the challenge. Time to get to work!",
+        title: "Challenge Accepted! 💪",
+        description: "Progress will be tracked automatically from your wearable data",
       });
-
-      fetchChallenges();
-    } catch (error) {
-      console.error("Error accepting challenge:", error);
-      toast({
-        title: "Error",
-        description: "Failed to accept challenge",
-        variant: "destructive",
-      });
+    } catch {
+      toast({ title: "Error", description: "Failed to accept challenge", variant: "destructive" });
     }
   };
 
-  const handleDeclineChallenge = async (challengeId: string) => {
+  const handleComplete = async (id: string) => {
     try {
-      const { error } = await supabase
-        .from("accountability_challenges")
-        .update({ status: "declined" })
-        .eq("id", challengeId);
+      await completeChallenge(id);
+      toast({ title: "Challenge Completed! 🎉" });
+    } catch {
+      toast({ title: "Error", description: "Failed to complete challenge", variant: "destructive" });
+    }
+  };
 
-      if (error) throw error;
-
-      toast({
-        title: "Challenge Declined",
-        description: "Challenge has been declined",
-      });
-
-      fetchChallenges();
-    } catch (error) {
-      console.error("Error declining challenge:", error);
-      toast({
-        title: "Error",
-        description: "Failed to decline challenge",
-        variant: "destructive",
-      });
+  const handleAbandon = async (id: string) => {
+    try {
+      await abandonChallenge(id);
+      toast({ title: "Challenge Abandoned" });
+    } catch {
+      toast({ title: "Error", description: "Failed to abandon challenge", variant: "destructive" });
     }
   };
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case "active":
-        return "bg-blue-500/20 text-blue-400 border-blue-500/30";
-      case "completed":
-        return "bg-green-500/20 text-green-400 border-green-500/30";
-      case "failed":
-        return "bg-red-500/20 text-red-400 border-red-500/30";
-      case "pending":
-        return "bg-amber-500/20 text-amber-400 border-amber-500/30";
-      case "declined":
-        return "bg-gray-500/20 text-gray-400 border-gray-500/30";
-      default:
-        return "bg-gray-500/20 text-gray-400 border-gray-500/30";
+      case "active": return "border-primary/30 text-primary bg-primary/10";
+      case "completed": return "border-green-500/30 text-green-600 bg-green-500/10";
+      case "pending": return "border-amber-500/30 text-amber-600 bg-amber-500/10";
+      case "expired": return "border-muted-foreground/30 text-muted-foreground bg-muted/50";
+      default: return "border-border text-muted-foreground bg-muted/50";
     }
   };
 
   const getChallengeIcon = (type: string) => {
     switch (type) {
-      case "workout_streak":
-        return <Trophy className="h-4 w-4" />;
-      case "distance_goal":
-        return <Target className="h-4 w-4" />;
-      case "frequency_goal":
-        return <Calendar className="h-4 w-4" />;
-      default:
-        return <TrendingUp className="h-4 w-4" />;
+      case "workout_frequency": return <Trophy className="h-4 w-4" />;
+      case "distance_goal": return <Target className="h-4 w-4" />;
+      case "sleep_target": return <Calendar className="h-4 w-4" />;
+      default: return <TrendingUp className="h-4 w-4" />;
     }
   };
 
-  const calculateProgress = (current: number, target: number) => {
-    if (target === 0) return 0;
-    return Math.min(Math.round((current / target) * 100), 100);
-  };
-
-  const activeChallenges = challenges.filter((c) => c.status === "active" || c.status === "pending");
-  const completedChallenges = challenges.filter((c) => c.status === "completed");
+  const allActive = [...pendingChallenges, ...activeChallenges];
 
   if (isLoading) {
     return (
@@ -151,7 +106,7 @@ export const AccountabilityChallenges = () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Trophy className="h-5 w-5 text-primary" />
-            Accountability Challenges
+            Weekly Challenges
           </CardTitle>
           <CardDescription>Loading challenges...</CardDescription>
         </CardHeader>
@@ -162,34 +117,54 @@ export const AccountabilityChallenges = () => {
   return (
     <Card className="bg-card/50 backdrop-blur-xl border-border/50">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Trophy className="h-5 w-5 text-primary" />
-          Accountability Challenges
-        </CardTitle>
-        <CardDescription>
-          {activeChallenges.length > 0
-            ? `${activeChallenges.length} active challenge${activeChallenges.length !== 1 ? "s" : ""}`
-            : "No active challenges"}
-        </CardDescription>
+        <div className="flex items-center justify-between">
+          <div>
+            <CardTitle className="flex items-center gap-2">
+              <Trophy className="h-5 w-5 text-primary" />
+              Weekly Challenges
+            </CardTitle>
+            <CardDescription>
+              {allActive.length > 0
+                ? `${activeChallenges.length} active, ${pendingChallenges.length} pending`
+                : "AI-powered challenges based on your health data"}
+            </CardDescription>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleGenerate}
+            disabled={isGenerating}
+            className="gap-2"
+          >
+            {isGenerating ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Sparkles className="h-4 w-4" />
+            )}
+            {isGenerating ? "Generating..." : "New Challenges"}
+          </Button>
+        </div>
       </CardHeader>
       <CardContent className="space-y-4">
-        {challenges.length === 0 ? (
+        {allActive.length === 0 && completedChallenges.length === 0 ? (
           <div className="text-center py-8">
             <Trophy className="h-12 w-12 text-muted-foreground mx-auto mb-3 opacity-50" />
             <p className="text-muted-foreground mb-4">No challenges yet</p>
-            <Button variant="outline" size="sm">
-              <Plus className="h-4 w-4 mr-2" />
-              Create Challenge
+            <Button variant="outline" size="sm" onClick={handleGenerate} disabled={isGenerating}>
+              <Sparkles className="h-4 w-4 mr-2" />
+              Generate AI Challenges
             </Button>
           </div>
         ) : (
           <>
-            {/* Active & Pending Challenges */}
-            {activeChallenges.map((challenge) => {
-              const progress = calculateProgress(challenge.current_value, challenge.target_value);
-              const daysLeft = Math.ceil(
-                (new Date(challenge.end_date).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)
-              );
+            {allActive.map((challenge) => {
+              const progress = challenge.target_value
+                ? Math.min(Math.round((challenge.current_progress / challenge.target_value) * 100), 100)
+                : 0;
+              const metricLabel = challenge.progress_metric
+                ? METRIC_LABELS[challenge.progress_metric] || ""
+                : "";
+              const isAutoTracked = !!challenge.progress_metric;
 
               return (
                 <div
@@ -202,59 +177,82 @@ export const AccountabilityChallenges = () => {
                         {getChallengeIcon(challenge.challenge_type)}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1">
-                          <h4 className="font-semibold text-foreground">{challenge.title}</h4>
+                        <div className="flex items-center gap-2 mb-1 flex-wrap">
+                          <h4 className="font-semibold text-foreground">{challenge.challenge_title}</h4>
                           <Badge variant="outline" className={getStatusColor(challenge.status)}>
                             {challenge.status}
                           </Badge>
+                          {isAutoTracked && (
+                            <Badge variant="outline" className="text-xs border-primary/30 text-primary">
+                              <Activity className="h-3 w-3 mr-1" />
+                              Auto-tracked
+                            </Badge>
+                          )}
                         </div>
-                        {challenge.description && (
-                          <p className="text-sm text-muted-foreground mb-2">{challenge.description}</p>
+                        {challenge.challenge_description && (
+                          <p className="text-sm text-muted-foreground mb-2">{challenge.challenge_description}</p>
                         )}
+
+                        {/* AI Reasoning */}
+                        {challenge.ai_reasoning && (
+                          <div className="flex items-start gap-2 p-2 rounded bg-secondary/50 border border-border/30 mb-2">
+                            <Brain className="h-3.5 w-3.5 text-muted-foreground mt-0.5 flex-shrink-0" />
+                            <p className="text-xs text-muted-foreground">{challenge.ai_reasoning}</p>
+                          </div>
+                        )}
+
                         <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                          <span className="flex items-center gap-1">
-                            <Calendar className="h-3 w-3" />
-                            {daysLeft > 0 ? `${daysLeft} days left` : "Expired"}
-                          </span>
-                          <span>
-                            {format(new Date(challenge.start_date), "MMM d")} -{" "}
-                            {format(new Date(challenge.end_date), "MMM d")}
-                          </span>
+                          {challenge.expires_at && (
+                            <span className="flex items-center gap-1">
+                              <Calendar className="h-3 w-3" />
+                              Expires {format(new Date(challenge.expires_at), "MMM d")}
+                            </span>
+                          )}
                         </div>
                       </div>
                     </div>
                   </div>
 
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-muted-foreground">Progress</span>
-                      <span className="font-medium text-foreground">
-                        {challenge.current_value} / {challenge.target_value} {challenge.unit}
-                      </span>
+                  {/* Progress bar for active challenges */}
+                  {challenge.status === "active" && challenge.target_value && (
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-muted-foreground">Progress</span>
+                        <span className="font-medium text-foreground">
+                          {challenge.current_progress} / {challenge.target_value} {metricLabel}
+                        </span>
+                      </div>
+                      <Progress value={progress} className="h-2" />
+                      {progress >= 100 && (
+                        <p className="text-xs text-primary font-medium">🎯 Target reached!</p>
+                      )}
                     </div>
-                    <Progress value={progress} className="h-2" />
-                    <p className="text-xs text-right text-muted-foreground">{progress}% complete</p>
-                  </div>
+                  )}
 
+                  {/* Accept/Decline for pending */}
                   {challenge.status === "pending" && (
                     <div className="flex gap-2 pt-2">
-                      <Button
-                        size="sm"
-                        variant="default"
-                        onClick={() => handleAcceptChallenge(challenge.id)}
-                        className="flex-1"
-                      >
+                      <Button size="sm" variant="default" onClick={() => handleAccept(challenge.id)} className="flex-1">
                         <Check className="h-4 w-4 mr-2" />
                         Accept
                       </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handleDeclineChallenge(challenge.id)}
-                        className="flex-1"
-                      >
+                      <Button size="sm" variant="outline" onClick={() => handleAbandon(challenge.id)} className="flex-1">
                         <X className="h-4 w-4 mr-2" />
                         Decline
+                      </Button>
+                    </div>
+                  )}
+
+                  {/* Complete/Abandon for active */}
+                  {challenge.status === "active" && (
+                    <div className="flex gap-2 pt-2">
+                      <Button size="sm" variant="default" onClick={() => handleComplete(challenge.id)} className="flex-1">
+                        <Check className="h-4 w-4 mr-2" />
+                        Complete
+                      </Button>
+                      <Button size="sm" variant="outline" onClick={() => handleAbandon(challenge.id)}>
+                        <X className="h-4 w-4 mr-2" />
+                        Abandon
                       </Button>
                     </div>
                   )}
@@ -262,10 +260,9 @@ export const AccountabilityChallenges = () => {
               );
             })}
 
-            {/* Completed Challenges Summary */}
             {completedChallenges.length > 0 && (
               <div className="pt-4 border-t border-border/50">
-                <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <Check className="h-4 w-4 text-green-500" />
                   <span>
                     {completedChallenges.length} challenge{completedChallenges.length !== 1 ? "s" : ""} completed

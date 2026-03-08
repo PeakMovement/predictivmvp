@@ -118,8 +118,9 @@ export function AlertCustomizationSettings() {
           .from('alert_settings')
           .update({
             ...settings,
+            training_context: trainingContext,
             updated_at: new Date().toISOString(),
-          })
+          } as any)
           .eq('user_id', user.id);
 
         if (error) throw error;
@@ -129,7 +130,8 @@ export function AlertCustomizationSettings() {
           .insert({
             user_id: user.id,
             ...settings,
-          });
+            training_context: trainingContext,
+          } as any);
 
         if (error) throw error;
       }

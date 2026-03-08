@@ -81,16 +81,6 @@ const METRICS: MetricDef[] = [
     hexColor: "#a78bfa",
   },
   {
-    key: "training_load",
-    dbMetric: "training_load",
-    label: "Training Load",
-    description: "7-day average accumulated training load. Your personal normal range guides overreaching detection.",
-    unit: "AU",
-    icon: Dumbbell,
-    color: "text-emerald-400",
-    hexColor: "#34d399",
-  },
-  {
     key: "readiness_score",
     dbMetric: "readiness_score",
     label: "Recovery Score",

@@ -1,4 +1,4 @@
-import { RefreshCw, Shield, Activity, Users, ShieldAlert } from "lucide-react";
+import { RefreshCw, Shield, Activity, Users, ShieldAlert, Stethoscope } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SystemHealthOverview } from "@/components/admin/SystemHealthOverview";
 import { SyncLogsTable } from "@/components/admin/SyncLogsTable";
@@ -8,6 +8,7 @@ import { useSystemHealth } from "@/hooks/useSystemHealth";
 import { useAdminUserOverview } from "@/hooks/useAdminUserOverview";
 import { useAdminAccess } from "@/hooks/useAdminAccess";
 import { LoadingFallback } from "@/components/LoadingFallback";
+import { PractitionerApprovals } from "@/components/admin/PractitionerApprovals";
 import { format } from "date-fns";
 
 export function AdminDashboard() {
@@ -117,6 +118,11 @@ export function AdminDashboard() {
             isLoading={isLoading}
             onAcknowledge={acknowledgeAnomaly}
           />
+        </div>
+
+        {/* Practitioner Approvals */}
+        <div className="mt-8 mb-8">
+          <PractitionerApprovals />
         </div>
       </div>
     </div>

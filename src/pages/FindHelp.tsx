@@ -1,5 +1,7 @@
+// @ts-nocheck — practitioners / practitioner_bookings not yet in generated types
 import { useState, useEffect, useRef } from "react";
 import Papa from "papaparse";
+import { supabase } from "@/integrations/supabase/client";
 import {
   AlertTriangle,
   ArrowLeft,
@@ -45,6 +47,8 @@ interface Practitioner {
   years_experience: number;
   bio: string;
   qualifications: string;
+  /** Set for practitioners registered via Predictiv (practitioner_bookings logging) */
+  dbId?: string;
 }
 
 // ─── Constants ───────────────────────────────────────────────────────────────
@@ -115,6 +119,54 @@ async function loadPractitioners(): Promise<Practitioner[]> {
   });
 }
 
+// ─── DB practitioners loader ──────────────────────────────────────────────────
+
+async function loadDbPractitioners(): Promise<Practitioner[]> {
+  try {
+    const { data, error } = await supabase
+      .from("practitioners")
+      .select("*")
+      .eq("profile_status", "approved");
+
+    if (error || !data) return [];
+
+    return data.map((p: any) => ({
+      id:                   `db-${p.id}`,
+      dbId:                 p.id,
+      name:                 p.name,
+      type:                 p.type as ProfessionalType,
+      specialty:            (p.specialisations as string[])?.join(", ") || "",
+      city:                 [p.location_suburb, p.location_city].filter(Boolean).join(", ") || "",
+      province:             "",
+      phone:                p.phone || "",
+      email:                p.contact_email || "",
+      rating:               0,
+      consultation_fee_zar: p.fee_per_session || 0,
+      accepts_medical_aid:  p.accepts_medical_aid ?? false,
+      telehealth_available: p.telehealth_available ?? false,
+      years_experience:     0,
+      bio:                  p.bio || "",
+      qualifications:       "",
+    }));
+  } catch {
+    return [];
+  }
+}
+
+async function logBooking(practitionerDbId: string): Promise<void> {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    await supabase.from("practitioner_bookings").insert({
+      practitioner_id:  practitionerDbId,
+      patient_user_id:  user?.id ?? null,
+      source:           "find_help",
+      status:           "pending",
+    });
+  } catch {
+    // non-fatal
+  }
+}
+
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
 function StarRating({ rating }: { rating: number }) {
@@ -141,9 +193,16 @@ function PractitionerCard({
       <div className="flex items-start justify-between gap-2">
         <div>
           <h3 className="font-semibold text-foreground text-base leading-tight">{practitioner.name}</h3>
-          <p className="text-xs text-primary font-medium mt-0.5">
-            {PROFESSIONAL_TYPE_LABELS[practitioner.type]}
-          </p>
+          <div className="flex items-center gap-1.5 flex-wrap mt-0.5">
+            <p className="text-xs text-primary font-medium">
+              {PROFESSIONAL_TYPE_LABELS[practitioner.type] ?? practitioner.type}
+            </p>
+            {practitioner.dbId && (
+              <span className="px-1.5 py-0.5 bg-blue-500/10 text-blue-600 border border-blue-500/20 rounded-full text-[10px] font-semibold uppercase tracking-wide">
+                Listed
+              </span>
+            )}
+          </div>
           <p className="text-xs text-muted-foreground mt-0.5">{practitioner.specialty}</p>
         </div>
         <StarRating rating={practitioner.rating} />
@@ -383,11 +442,18 @@ export const FindHelp = () => {
   const { matchProvider, isLoading, error } = useMatchProvider();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  // Load CSV on mount
+  // Load CSV + DB practitioners on mount and merge
   useEffect(() => {
-    loadPractitioners()
-      .then(setAllPractitioners)
-      .catch((e) => console.error("[FindHelp] Failed to load practitioners CSV:", e));
+    Promise.all([
+      loadPractitioners().catch(() => [] as Practitioner[]),
+      loadDbPractitioners(),
+    ]).then(([csv, db]) => {
+      // DB entries take precedence — dedupe by email to avoid double-listing
+      const dbEmails = new Set(db.map((p) => p.email.toLowerCase()).filter(Boolean));
+      const csvFiltered = csv.filter((p) => !dbEmails.has(p.email.toLowerCase()));
+      // DB practitioners appear first
+      setAllPractitioners([...db, ...csvFiltered]);
+    }).catch((e) => console.error("[FindHelp] Failed to load practitioners:", e));
   }, []);
 
   // Check for stored query from other parts of the app
@@ -720,6 +786,7 @@ export const FindHelp = () => {
                 onBook={() => {
                   setBookPractitioner(p);
                   setBookOpen(true);
+                  if (p.dbId) logBooking(p.dbId);
                 }}
                 onViewProfile={() => {
                   setProfilePractitioner(p);
@@ -749,6 +816,7 @@ export const FindHelp = () => {
           setProfileOpen(false);
           setBookPractitioner(profilePractitioner);
           setBookOpen(true);
+          if (profilePractitioner?.dbId) logBooking(profilePractitioner.dbId);
         }}
       />
 

@@ -365,17 +365,17 @@ function BookingDialog({
           <p className="text-sm text-muted-foreground">
             Contact {practitioner.name} directly to book your appointment.
           </p>
-          <div className="flex items-center gap-2">
-            <Button size="sm" variant="outline" className="flex-1" asChild>
+          <div className="grid grid-cols-2 gap-3">
+            <Button variant="outline" className="h-10 gap-2" asChild>
               <a href={`tel:${practitioner.phone}`}>
-                <Phone className="h-4 w-4 mr-1.5" />
-                Call
+                <Phone className="h-4 w-4" />
+                <span>Call</span>
               </a>
             </Button>
-            <Button size="sm" variant="outline" className="flex-1" asChild>
+            <Button variant="outline" className="h-10 gap-2" asChild>
               <a href={`mailto:${practitioner.email}?subject=Appointment%20Request`}>
-                <Mail className="h-4 w-4 mr-1.5" />
-                Email
+                <Mail className="h-4 w-4" />
+                <span>Email</span>
               </a>
             </Button>
           </div>

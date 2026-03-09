@@ -42,9 +42,9 @@ export const NotificationsSettings = ({ isSectionVisible, onNavigate }: Notifica
   // ── Load ──────────────────────────────────────────────────────────────────
 
   useEffect(() => {
-    const alertSettings = getAlertSettings();
-    setSmsEnabled(alertSettings.enableSMS || false);
-    setPhoneNumber(alertSettings.phoneNumber || "");
+    const legacy = getAlertSettings();
+    setSmsEnabled(legacy.enableSMS || false);
+    setPhoneNumber(legacy.phoneNumber || "");
     loadPrefs();
   }, []);
 
@@ -54,7 +54,7 @@ export const NotificationsSettings = ({ isSectionVisible, onNavigate }: Notifica
       if (!user) return;
 
       const { data } = await supabase
-        .from("user_profiles")
+        .from("alert_settings")
         .select("briefing_enabled, briefing_time, alert_notifications_enabled, weekly_summary_enabled")
         .eq("user_id", user.id)
         .maybeSingle();
@@ -72,7 +72,7 @@ export const NotificationsSettings = ({ isSectionVisible, onNavigate }: Notifica
     }
   };
 
-  // ── Save helpers ──────────────────────────────────────────────────────────
+  // ── Save ──────────────────────────────────────────────────────────────────
 
   const savePrefs = useCallback(async (next: Partial<NotifPrefs>) => {
     setSaving(true);
@@ -83,7 +83,26 @@ export const NotificationsSettings = ({ isSectionVisible, onNavigate }: Notifica
       const merged = { ...prefs, ...next };
       setPrefs(merged);
 
+      // Primary: upsert to alert_settings (notification prefs live here)
       const { error } = await supabase
+        .from("alert_settings")
+        .upsert(
+          {
+            user_id: user.id,
+            briefing_enabled: merged.briefingEnabled,
+            briefing_time: merged.briefingTime,
+            alert_notifications_enabled: merged.alertNotificationsEnabled,
+            weekly_summary_enabled: merged.weeklySummaryEnabled,
+            updated_at: new Date().toISOString(),
+          },
+          { onConflict: "user_id" },
+        );
+
+      if (error) throw error;
+
+      // Mirror briefing_enabled + briefing_time to user_profiles so the
+      // send-daily-summary-email edge function can still read them.
+      await supabase
         .from("user_profiles")
         .update({
           briefing_enabled: merged.briefingEnabled,
@@ -93,9 +112,13 @@ export const NotificationsSettings = ({ isSectionVisible, onNavigate }: Notifica
         })
         .eq("user_id", user.id);
 
-      if (error) throw error;
-    } catch {
-      toast({ title: "Failed to save preferences", variant: "destructive" });
+      toast({ title: "Preferences saved" });
+    } catch (err) {
+      toast({
+        title: "Failed to save preferences",
+        description: err instanceof Error ? err.message : "Please try again.",
+        variant: "destructive",
+      });
     } finally {
       setSaving(false);
     }

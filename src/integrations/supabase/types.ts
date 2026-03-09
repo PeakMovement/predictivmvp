@@ -239,6 +239,9 @@ export type Database = {
       alert_settings: {
         Row: {
           acwr_critical_threshold: number | null
+          alert_notifications_enabled: boolean
+          briefing_enabled: boolean
+          briefing_time: string
           created_at: string | null
           enable_email_alerts: boolean | null
           enable_popup_alerts: boolean | null
@@ -252,11 +255,16 @@ export type Database = {
           severity_filter: string | null
           sleep_score_threshold: number | null
           strain_critical_threshold: number | null
+          training_context: string | null
           updated_at: string | null
           user_id: string
+          weekly_summary_enabled: boolean
         }
         Insert: {
           acwr_critical_threshold?: number | null
+          alert_notifications_enabled?: boolean
+          briefing_enabled?: boolean
+          briefing_time?: string
           created_at?: string | null
           enable_email_alerts?: boolean | null
           enable_popup_alerts?: boolean | null
@@ -270,11 +278,16 @@ export type Database = {
           severity_filter?: string | null
           sleep_score_threshold?: number | null
           strain_critical_threshold?: number | null
+          training_context?: string | null
           updated_at?: string | null
           user_id: string
+          weekly_summary_enabled?: boolean
         }
         Update: {
           acwr_critical_threshold?: number | null
+          alert_notifications_enabled?: boolean
+          briefing_enabled?: boolean
+          briefing_time?: string
           created_at?: string | null
           enable_email_alerts?: boolean | null
           enable_popup_alerts?: boolean | null
@@ -288,8 +301,10 @@ export type Database = {
           severity_filter?: string | null
           sleep_score_threshold?: number | null
           strain_critical_threshold?: number | null
+          training_context?: string | null
           updated_at?: string | null
           user_id?: string
+          weekly_summary_enabled?: boolean
         }
         Relationships: []
       }
@@ -2998,15 +3013,21 @@ export type Database = {
           briefing_enabled: boolean
           briefing_time: string
           created_at: string | null
+          date_of_birth: string | null
+          experience_level: string | null
           full_name: string | null
           id: string
           onboarding_completed: boolean | null
           onboarding_skipped: boolean | null
           onboarding_step: number | null
           phone_number: string | null
+          position: string | null
+          primary_goal: string | null
+          sport: string | null
           updated_at: string | null
           user_id: string
           weekly_summary_enabled: boolean
+          weekly_training_hours: number | null
         }
         Insert: {
           alert_notifications_enabled?: boolean
@@ -3015,15 +3036,21 @@ export type Database = {
           briefing_enabled?: boolean
           briefing_time?: string
           created_at?: string | null
+          date_of_birth?: string | null
+          experience_level?: string | null
           full_name?: string | null
           id?: string
           onboarding_completed?: boolean | null
           onboarding_skipped?: boolean | null
           onboarding_step?: number | null
           phone_number?: string | null
+          position?: string | null
+          primary_goal?: string | null
+          sport?: string | null
           updated_at?: string | null
           user_id: string
           weekly_summary_enabled?: boolean
+          weekly_training_hours?: number | null
         }
         Update: {
           alert_notifications_enabled?: boolean
@@ -3032,15 +3059,21 @@ export type Database = {
           briefing_enabled?: boolean
           briefing_time?: string
           created_at?: string | null
+          date_of_birth?: string | null
+          experience_level?: string | null
           full_name?: string | null
           id?: string
           onboarding_completed?: boolean | null
           onboarding_skipped?: boolean | null
           onboarding_step?: number | null
           phone_number?: string | null
+          position?: string | null
+          primary_goal?: string | null
+          sport?: string | null
           updated_at?: string | null
           user_id?: string
           weekly_summary_enabled?: boolean
+          weekly_training_hours?: number | null
         }
         Relationships: []
       }

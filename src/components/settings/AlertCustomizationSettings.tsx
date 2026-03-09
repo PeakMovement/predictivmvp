@@ -107,34 +107,19 @@ export function AlertCustomizationSettings() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
-      const { data: existing } = await supabase
+      const { error } = await supabase
         .from('alert_settings')
-        .select('id')
-        .eq('user_id', user.id)
-        .maybeSingle();
-
-      if (existing) {
-        const { error } = await supabase
-          .from('alert_settings')
-          .update({
-            ...settings,
-            training_context: trainingContext,
-            updated_at: new Date().toISOString(),
-          } as any)
-          .eq('user_id', user.id);
-
-        if (error) throw error;
-      } else {
-        const { error } = await supabase
-          .from('alert_settings')
-          .insert({
+        .upsert(
+          {
             user_id: user.id,
             ...settings,
             training_context: trainingContext,
-          } as any);
+            updated_at: new Date().toISOString(),
+          },
+          { onConflict: 'user_id' },
+        );
 
-        if (error) throw error;
-      }
+      if (error) throw error;
 
       toast({
         title: 'Settings saved',
@@ -144,7 +129,7 @@ export function AlertCustomizationSettings() {
       console.error('Error saving alert settings:', error);
       toast({
         title: 'Error',
-        description: 'Failed to save alert settings',
+        description: error instanceof Error ? error.message : 'Failed to save alert settings',
         variant: 'destructive',
       });
     } finally {

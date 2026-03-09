@@ -48,7 +48,7 @@ export function GettingStartedChecklist({ onNavigate }: GettingStartedChecklistP
           label: "Complete your profile",
           description: `${profileCompletion}% done — add sport, goals and experience level`,
           icon: User,
-          done: profileCompletion >= 80,
+          done: profileCompletion >= 60,
           navigateTo: "profile-setup",
         },
         {

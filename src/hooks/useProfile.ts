@@ -23,15 +23,14 @@ export interface UserProfile {
   updated_at?: string;
 }
 
-// Fields counted toward profile completion (8 total)
+// Fields counted toward profile completion — only those the ProfileSettings
+// form can fill, so the completion % accurately reflects what users can do.
 const COMPLETION_FIELDS: (keyof UserProfile)[] = [
   "full_name",
-  "avatar_url",
   "sport",
   "position",
   "date_of_birth",
   "experience_level",
-  "weekly_training_hours",
   "primary_goal",
 ];
 
@@ -143,13 +142,17 @@ export const useProfile = () => {
       const { email, ...profileUpdates } = updates;
 
       if (Object.keys(profileUpdates).length > 0) {
+        // Use upsert so a row is created if one doesn't exist yet
         const { error: profileError } = await supabase
           .from("user_profiles")
-          .update({
-            ...profileUpdates,
-            updated_at: new Date().toISOString(),
-          })
-          .eq("user_id", user.id);
+          .upsert(
+            {
+              user_id: user.id,
+              ...profileUpdates,
+              updated_at: new Date().toISOString(),
+            },
+            { onConflict: "user_id" },
+          );
 
         if (profileError) throw profileError;
 

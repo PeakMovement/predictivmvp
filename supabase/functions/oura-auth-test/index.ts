@@ -15,6 +15,15 @@ Deno.serve(async (req: Request) => {
     });
   }
 
+  // Require service role key — this is a debug-only endpoint
+  const authHeader = req.headers.get("Authorization") ?? "";
+  if (authHeader.replace("Bearer ", "") !== Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")) {
+    return new Response(JSON.stringify({ error: "Unauthorized" }), {
+      status: 401,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+
   try {
     const diagnostics: Record<string, unknown> = {};
 

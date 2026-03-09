@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback } from "react";
-import { RefreshCw, Loader2, Sparkles } from "lucide-react";
+import { useState, useEffect } from "react";
+import { RefreshCw, Sparkles } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -26,9 +26,9 @@ interface DayPlan {
 
 const SESSION_META: Record<SessionType, {
   emoji: string;
-  pill: string;    // pill classes
-  card: string;    // card bg + border
-  ring: string;    // today ring
+  pill: string;
+  card: string;
+  ring: string;
   label: string;
 }> = {
   Rest: {
@@ -61,15 +61,134 @@ const SESSION_META: Record<SessionType, {
   },
 };
 
+// ── Static fallback advice ─────────────────────────────────────────────────
+
+const FALLBACK_ADVICE: Record<SessionType, string> = {
+  Rest: "Full rest day — prioritise sleep, hydration, and nutrition. Let your body absorb the training.",
+  Easy: "Zone 2 effort only. Keep it conversational — you should be able to speak in full sentences throughout.",
+  Moderate: "Structured moderate effort at 70–80% max HR. Focus on quality over quantity.",
+  Hard: "High-intensity session — intervals or strength work. Warm up thoroughly and give it a real effort.",
+};
+
+// ── Classification ─────────────────────────────────────────────────────────
+
+const DEFAULT_PLAN: SessionType[] = ["Hard", "Moderate", "Moderate", "Easy", "Hard", "Moderate", "Rest"];
+
+function classifyDay(
+  prevDayLoad: number | null,
+  sevenDayAvg: number | null,
+  lowStreakDays: number,
+): SessionType {
+  if (prevDayLoad !== null && prevDayLoad > 400) return "Rest";
+  if (sevenDayAvg !== null && sevenDayAvg > 300) return "Easy";
+  if (lowStreakDays >= 2) return "Hard";
+  return "Moderate";
+}
+
+// ── Build week dates (Mon–Sun) ─────────────────────────────────────────────
+
+function getWeekDates(): Date[] {
+  const today = new Date();
+  const todayDay = today.getDay();
+  const daysFromMonday = todayDay === 0 ? 6 : todayDay - 1;
+  const monday = new Date(today);
+  monday.setDate(today.getDate() - daysFromMonday);
+  monday.setHours(0, 0, 0, 0);
+  return Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(monday);
+    d.setDate(monday.getDate() + i);
+    return d;
+  });
+}
+
+const DAY_LABELS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+
+// ── Compute plan client-side ───────────────────────────────────────────────
+
+async function computePlan(): Promise<DayPlan[]> {
+  const weekDates = getWeekDates();
+
+  // Fetch last 14 days of wearable data
+  const since = new Date();
+  since.setDate(since.getDate() - 14);
+  const sinceStr = since.toISOString().split("T")[0];
+
+  const { data: sessions } = await supabase
+    .from("wearable_sessions")
+    .select("date, training_load")
+    .gte("date", sinceStr)
+    .order("date", { ascending: true });
+
+  const loadByDate: Record<string, number | null> = {};
+  (sessions ?? []).forEach((s: any) => {
+    loadByDate[s.date] = s.training_load;
+  });
+
+  const hasAnyData = (sessions ?? []).length > 0;
+
+  // 7-day average
+  const recentLoads = Object.values(loadByDate).filter((v): v is number => v !== null);
+  const sevenDayAvg = recentLoads.length
+    ? recentLoads.reduce((a, b) => a + b, 0) / recentLoads.length
+    : null;
+
+  let lowStreakDays = 0;
+  const LOW_LOAD_THRESHOLD = 150;
+
+  const dayPlans: DayPlan[] = weekDates.map((date, i) => {
+    const dateStr = date.toISOString().split("T")[0];
+    const load = loadByDate[dateStr] ?? null;
+
+    const prevDate = new Date(date);
+    prevDate.setDate(date.getDate() - 1);
+    const prevLoad = loadByDate[prevDate.toISOString().split("T")[0]] ?? null;
+
+    if (load !== null && load < LOW_LOAD_THRESHOLD) {
+      lowStreakDays++;
+    } else {
+      lowStreakDays = 0;
+    }
+
+    const session: SessionType = !hasAnyData
+      ? DEFAULT_PLAN[i]
+      : classifyDay(prevLoad, sevenDayAvg, lowStreakDays);
+
+    return {
+      date: dateStr,
+      dayLabel: DAY_LABELS[i],
+      session,
+      trainingLoad: load,
+      advice: FALLBACK_ADVICE[session],
+    };
+  });
+
+  return dayPlans;
+}
+
+// ── Enhance with AI advice via edge function ───────────────────────────────
+
+async function enhanceWithAI(basePlan: DayPlan[]): Promise<DayPlan[]> {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) return basePlan;
+
+  const { data, error } = await supabase.functions.invoke("generate-weekly-plan", {
+    headers: { Authorization: `Bearer ${session.access_token}` },
+  });
+
+  if (error || !data?.plan || !Array.isArray(data.plan) || data.plan.length !== 7) {
+    return basePlan;
+  }
+
+  // Merge AI advice onto base plan (keep client-side session classification)
+  return basePlan.map((day, i) => ({
+    ...day,
+    advice: data.plan[i]?.advice ?? day.advice,
+  }));
+}
+
 // ── Day Card ───────────────────────────────────────────────────────────────
 
-function DayCard({
-  day,
-  onClick,
-}: {
-  day: DayPlan;
-  onClick: () => void;
-}) {
+function DayCard({ day, onClick }: { day: DayPlan; onClick: () => void }) {
   const meta = SESSION_META[day.session];
   const todayFlag = isToday(parseISO(day.date));
 
@@ -82,7 +201,6 @@ function DayCard({
         todayFlag && `ring-2 ${meta.ring} shadow-md`,
       )}
     >
-      {/* Day + date */}
       <div className="text-center">
         <p className={cn(
           "text-xs font-bold uppercase tracking-wide",
@@ -98,10 +216,8 @@ function DayCard({
         </p>
       </div>
 
-      {/* Emoji */}
       <span className="text-xl leading-none">{meta.emoji}</span>
 
-      {/* Session pill */}
       <span className={cn(
         "text-[9px] font-bold tracking-wider px-2 py-0.5 rounded-full border",
         meta.pill,
@@ -165,40 +281,49 @@ export default function WeeklyPlan() {
   const [regenerating, setRegenerating] = useState(false);
   const [selected, setSelected] = useState<DayPlan | null>(null);
 
-  const generate = useCallback(async (showToast = false) => {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) return;
-
+  const loadPlan = async (showToast = false) => {
     try {
-      const { data, error } = await supabase.functions.invoke("generate-weekly-plan", {
-        headers: { Authorization: `Bearer ${session.access_token}` },
-      });
+      // Always compute client-side first so grid renders immediately
+      const base = await computePlan();
+      setPlan(base);
 
-      if (error) throw error;
+      // Then try to enhance advice with AI (non-blocking upgrade)
+      enhanceWithAI(base).then((enhanced) => {
+        setPlan(enhanced);
+      }).catch(() => {/* silently keep base */});
 
-      if (data?.plan) {
-        setPlan(data.plan);
-        if (showToast) toast({ title: "Plan regenerated" });
-      }
+      if (showToast) toast({ title: "Plan regenerated" });
     } catch (err) {
-      console.error("[WeeklyPlan] generate error:", err);
-      toast({
-        title: "Failed to generate plan",
-        description: err instanceof Error ? err.message : "Try again",
+      console.error("[WeeklyPlan] load error:", err);
+      // Last resort: show default plan with static advice
+      const weekDates = getWeekDates();
+      const fallback: DayPlan[] = weekDates.map((date, i) => {
+        const session = DEFAULT_PLAN[i];
+        return {
+          date: date.toISOString().split("T")[0],
+          dayLabel: DAY_LABELS[i],
+          session,
+          trainingLoad: null,
+          advice: FALLBACK_ADVICE[session],
+        };
+      });
+      setPlan(fallback);
+      if (showToast) toast({
+        title: "Couldn't refresh plan",
+        description: "Showing default schedule",
         variant: "destructive",
       });
     }
-  }, [toast]);
+  };
 
-  // Initial load
   useEffect(() => {
     setLoading(true);
-    generate(false).finally(() => setLoading(false));
-  }, [generate]);
+    loadPlan(false).finally(() => setLoading(false));
+  }, []);
 
   const handleRegenerate = async () => {
     setRegenerating(true);
-    await generate(true);
+    await loadPlan(true);
     setRegenerating(false);
   };
 
@@ -287,7 +412,6 @@ export default function WeeklyPlan() {
                 </SheetHeader>
 
                 <div className="space-y-3 pb-2">
-                  {/* Yves advice */}
                   <div className="rounded-xl bg-muted/30 border border-border/30 p-4">
                     <div className="flex items-center gap-1.5 mb-2 text-xs text-muted-foreground font-medium">
                       <Sparkles className="w-3.5 h-3.5 text-primary" />
@@ -298,7 +422,6 @@ export default function WeeklyPlan() {
                     </p>
                   </div>
 
-                  {/* Load reference */}
                   {selected.trainingLoad !== null && (
                     <p className="text-xs text-muted-foreground px-1">
                       Training load on this date: {Math.round(selected.trainingLoad)}

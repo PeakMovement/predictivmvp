@@ -365,20 +365,22 @@ export default function WeeklyPlan() {
         <span>Yves-generated based on your last 7 days of training load. Tap a day for advice.</span>
       </div>
 
-      {/* 7-day grid */}
-      {loading ? (
-        <div className="grid grid-cols-7 gap-1.5">
-          {Array.from({ length: 7 }).map((_, i) => (
-            <Skeleton key={i} className="h-28 rounded-2xl" />
-          ))}
-        </div>
-      ) : (
-        <div className="grid grid-cols-7 gap-1.5">
-          {plan.map((day) => (
-            <DayCard key={day.date} day={day} onClick={() => setSelected(day)} />
-          ))}
-        </div>
-      )}
+      {/* 7-day grid — horizontally scrollable on mobile so cards stay readable */}
+      <div className="overflow-x-auto -mx-4 px-4 pb-1">
+        {loading ? (
+          <div className="grid grid-cols-7 gap-1.5 min-w-[476px]">
+            {Array.from({ length: 7 }).map((_, i) => (
+              <Skeleton key={i} className="h-28 rounded-2xl" />
+            ))}
+          </div>
+        ) : (
+          <div className="grid grid-cols-7 gap-1.5 min-w-[476px]">
+            {plan.map((day) => (
+              <DayCard key={day.date} day={day} onClick={() => setSelected(day)} />
+            ))}
+          </div>
+        )}
+      </div>
 
       {/* Weekly summary */}
       {!loading && plan.length > 0 && <WeeklySummary plan={plan} />}

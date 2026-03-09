@@ -221,7 +221,7 @@ export const Health = () => {
   // ── Page content ─────────────────────────────────────────────────────────
 
   const healthContent = (
-    <div className="container mx-auto px-4 md:px-6 pt-6 md:pt-8 max-w-4xl">
+    <div className="container mx-auto px-4 md:px-6 pt-6 md:pt-8 max-w-4xl overflow-x-hidden">
       {/* Header */}
       <LayoutBlock blockId="header" displayName="Header" pageId="health" size="wide" visible={isSectionVisible("header")}>
         <div className="flex items-center justify-between mb-6">
@@ -348,7 +348,7 @@ export const Health = () => {
               {hasStages && (
                 <div className="mb-6 pt-4 border-t border-glass-border">
                   <p className="text-xs font-medium text-muted-foreground uppercase tracking-widest mb-3">Sleep Stages</p>
-                  <div className="grid grid-cols-3 gap-3 mb-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-3">
                     {[
                       { label: "Deep", value: deepMin, color: "text-indigo-400" },
                       { label: "REM",  value: remMin,  color: "text-purple-400" },

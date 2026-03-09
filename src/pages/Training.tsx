@@ -149,16 +149,16 @@ const CircularGauge = ({
   const strokeDashoffset = circumference - (percentage / 100) * circumference;
 
   return (
-    <div className="bg-glass backdrop-blur-xl border border-glass-border rounded-2xl p-6 shadow-glass hover:bg-glass-highlight hover:scale-105 hover:-translate-y-1 transition-all duration-300 ease-out animate-fade-in transform-gpu">
-      <div className="flex items-center gap-3 mb-4">
-        <div className="w-8 h-8 bg-primary/20 rounded-lg flex items-center justify-center">
-          <Gauge size={16} className="text-primary" />
+    <div className="bg-glass backdrop-blur-xl border border-glass-border rounded-2xl p-3 sm:p-6 shadow-glass hover:bg-glass-highlight hover:scale-105 hover:-translate-y-1 transition-all duration-300 ease-out animate-fade-in transform-gpu">
+      <div className="flex items-center gap-2 mb-3">
+        <div className="w-7 h-7 sm:w-8 sm:h-8 bg-primary/20 rounded-lg flex items-center justify-center shrink-0">
+          <Gauge size={14} className="text-primary" />
         </div>
-        <h3 className="text-lg font-semibold text-foreground">{title}</h3>
+        <h3 className="text-sm sm:text-lg font-semibold text-foreground truncate">{title}</h3>
       </div>
       <div className="flex flex-col items-center justify-center gap-2">
-        <div className="relative w-32 h-32">
-          <svg className="w-32 h-32 transform -rotate-90" viewBox="0 0 100 100">
+        <div className="relative w-24 h-24 sm:w-32 sm:h-32">
+          <svg className="w-24 h-24 sm:w-32 sm:h-32 transform -rotate-90" viewBox="0 0 100 100">
             <circle
               cx="50"
               cy="50"
@@ -182,7 +182,7 @@ const CircularGauge = ({
             />
           </svg>
           <div className="absolute inset-0 flex flex-col items-center justify-center">
-            <span className="text-2xl font-bold text-foreground">{safeValue}</span>
+            <span className="text-xl sm:text-2xl font-bold text-foreground">{safeValue}</span>
             <span className="text-xs text-muted-foreground">{unit}</span>
           </div>
         </div>
@@ -401,7 +401,7 @@ export const Training = () => {
 
   const trainingContent = (
     <TooltipProvider>
-      <div className="container mx-auto px-4 md:px-6 pt-6 md:pt-8 max-w-7xl">
+      <div className="container mx-auto px-4 md:px-6 pt-6 md:pt-8 max-w-7xl overflow-x-hidden">
           {/* Header */}
           <LayoutBlock
             blockId="header"

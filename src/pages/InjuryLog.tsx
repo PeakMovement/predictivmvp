@@ -179,7 +179,7 @@ function LogInjurySheet({
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) { setSaving(false); return; }
 
-    const { error } = await supabase.from("user_injury_profiles").insert({
+    const { error } = await (supabase.from as any)("user_injury_profiles").insert({
       user_id: user.id,
       body_location: form.body_part,
       injury_type: "other",                          // enum requirement
@@ -329,8 +329,8 @@ export default function InjuryLog() {
   const fetchInjuries = useCallback(async () => {
     if (!userId) return;
     setLoading(true);
-    const { data, error } = await supabase
-      .from("user_injury_profiles")
+    const { data, error } = await (supabase.from as any)("user_injury_profiles")
+      .select("id,body_location,load_restrictions,notes,severity,injury_date,is_active,created_at")
       .select("id,body_location,load_restrictions,notes,severity,injury_date,is_active,created_at")
       .eq("user_id", userId)
       .order("injury_date", { ascending: false });
@@ -341,8 +341,8 @@ export default function InjuryLog() {
   useEffect(() => { fetchInjuries(); }, [fetchInjuries]);
 
   const handleMarkResolved = async (id: string) => {
-    const { error } = await supabase
-      .from("user_injury_profiles")
+    const { error } = await (supabase.from as any)("user_injury_profiles")
+      .update({ is_active: false, current_phase: "full_clearance" })
       .update({ is_active: false, current_phase: "full_clearance" })
       .eq("id", id);
     if (error) {

@@ -36,6 +36,7 @@ interface ScoreResult {
   score: number;
   level: "low" | "moderate" | "high" | "unknown";
   explanation: string;
+  componentScores: { acwr: number; fatigue: number; hrv: number; sleep: number };
   factors: {
     acwr: number;
     fatigueIndex: number;
@@ -48,9 +49,10 @@ interface ScoreResult {
 function calcScore(
   trends: RecoveryTrend[],
   sessions: WearableSession[],
+  hrvBaseline: number | null,
 ): ScoreResult {
   if (trends.length === 0 && sessions.length === 0) {
-    return { score: 0, level: "unknown", explanation: "", factors: { acwr: 0, fatigueIndex: 0, hrvDropPct: null, sleepScore: null, baselineHrv: null } };
+    return { score: 0, level: "unknown", explanation: "", componentScores: { acwr: 0, fatigue: 0, hrv: 0, sleep: 0 }, factors: { acwr: 0, fatigueIndex: 0, hrvDropPct: null, sleepScore: null, baselineHrv: null } };
   }
 
   // ── ACWR factor (0–30) ──────────────────────────────────────────────────
@@ -74,26 +76,24 @@ function calcScore(
     ? Math.min(validMonotony.reduce((s, t) => s + (t.monotony ?? 0), 0) / validMonotony.length, 2.5)
     : 0;
 
-  const fatigueIndex = Math.min(100, Math.round((avgStrain / 300) * 50 + (avgMonotony / 2.5) * 50));
+  // FIX 1: Use divisor 2000 (strain/2000)*50 — matches backend identify-risk-drivers formula
+  const fatigueIndex = Math.min(100, Math.round((Math.min(avgStrain, 2000) / 2000) * 50 + (avgMonotony / 2.5) * 50));
   let fatiguePts = 0;
   if (fatigueIndex > 70) fatiguePts = 20;
   else if (fatigueIndex > 50) fatiguePts = 10;
 
   // ── HRV drop factor (0–25) ─────────────────────────────────────────────
+  // FIX 4: Use pre-fetched user_baselines 30-day rolling avg rather than computing locally
   let hrvPts = 0;
   let hrvDropPct: number | null = null;
-  let baselineHrv: number | null = null;
+  const baselineHrv: number | null = hrvBaseline;
+  const todayHrv = sessions[0]?.hrv_avg ?? null;
 
-  if (sessions.length >= 3) {
-    const todayHrv = sessions[0].hrv_avg;
-    const pastHrvValues = sessions.slice(1).filter(s => s.hrv_avg != null).map(s => s.hrv_avg as number);
-    if (todayHrv && pastHrvValues.length >= 2) {
-      baselineHrv = pastHrvValues.reduce((a, b) => a + b, 0) / pastHrvValues.length;
-      hrvDropPct = ((baselineHrv - todayHrv) / baselineHrv) * 100;
-      if (hrvDropPct >= 25) hrvPts = 25;
-      else if (hrvDropPct >= 15) hrvPts = 15;
-      else if (hrvDropPct >= 10) hrvPts = 8;
-    }
+  if (todayHrv && baselineHrv && baselineHrv > 0) {
+    hrvDropPct = ((baselineHrv - todayHrv) / baselineHrv) * 100;
+    if (hrvDropPct >= 25) hrvPts = 25;
+    else if (hrvDropPct >= 15) hrvPts = 15;
+    else if (hrvDropPct >= 10) hrvPts = 8;
   }
 
   // ── Sleep factor (0–25) ────────────────────────────────────────────────
@@ -114,7 +114,7 @@ function calcScore(
   // ── Contextual 1-line explanation (biggest driver wins) ────────────────
   const drivers: Array<{ pts: number; msg: string }> = [
     { pts: acwrPts, msg: `ACWR ${avgACWR.toFixed(2)} — reduce training load to avoid overtraining` },
-    { pts: fatiguePts, msg: avgMonotony > avgStrain / 300 * 2.5 ? "High training monotony — vary your training intensity" : "High accumulated strain — prioritise recovery" },
+    { pts: fatiguePts, msg: avgMonotony > (Math.min(avgStrain, 2000) / 2000) * 2.5 ? "High training monotony — vary your training intensity" : "High accumulated strain — prioritise recovery" },
     { pts: hrvPts, msg: `HRV down ${hrvDropPct !== null ? Math.round(hrvDropPct) : "—"}% from baseline — your body needs extra recovery` },
     { pts: sleepPts, msg: `Sleep score ${sleepScore ?? "—"} — poor sleep is impacting your recovery` },
   ];
@@ -129,7 +129,13 @@ function calcScore(
     explanation = topDriver.msg;
   }
 
-  return { score, level, explanation, factors: { acwr: avgACWR, fatigueIndex, hrvDropPct, sleepScore, baselineHrv } };
+  return {
+    score,
+    level,
+    explanation,
+    componentScores: { acwr: acwrPts, fatigue: fatiguePts, hrv: hrvPts, sleep: sleepPts },
+    factors: { acwr: avgACWR, fatigueIndex, hrvDropPct, sleepScore, baselineHrv },
+  };
 }
 
 // ── Component ──────────────────────────────────────────────────────────────
@@ -137,6 +143,8 @@ function calcScore(
 export const RiskScoreCard = () => {
   const [trends, setTrends] = useState<RecoveryTrend[]>([]);
   const [sessions, setSessions] = useState<WearableSession[]>([]);
+  const [hrvBaseline, setHrvBaseline] = useState<number | null>(null);
+  const [userId, setUserId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -145,11 +153,12 @@ export const RiskScoreCard = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) { setIsLoading(false); return; }
 
+      setUserId(user.id);
       const cutoff = new Date();
       cutoff.setDate(cutoff.getDate() - 7);
       const cutoffStr = cutoff.toISOString().split("T")[0];
 
-      const [{ data: trendData }, { data: sessionData }] = await Promise.all([
+      const [{ data: trendData }, { data: sessionData }, { data: baselineData }] = await Promise.all([
         supabase
           .from("recovery_trends")
           .select("acwr, strain, monotony, period_date")
@@ -161,21 +170,44 @@ export const RiskScoreCard = () => {
           .select("hrv_avg, sleep_score, date")
           .eq("user_id", user.id)
           .order("date", { ascending: false })
-          .limit(14),
+          .limit(3),
+        // FIX 4: HRV baseline from user_baselines (30-day rolling avg)
+        supabase
+          .from("user_baselines")
+          .select("rolling_avg")
+          .eq("user_id", user.id)
+          .eq("metric", "hrv")
+          .maybeSingle(),
       ]);
 
       setTrends(trendData || []);
       setSessions(sessionData || []);
+      setHrvBaseline(baselineData?.rolling_avg ?? null);
       setIsLoading(false);
     };
 
     load();
   }, []);
 
-  const { score, level, explanation, factors } = useMemo(
-    () => calcScore(trends, sessions),
-    [trends, sessions],
+  const { score, level, explanation, componentScores, factors } = useMemo(
+    () => calcScore(trends, sessions, hrvBaseline),
+    [trends, sessions, hrvBaseline],
   );
+
+  // FIX 5: Persist risk score to risk_score_history (once per day, upsert on unique user_id+calculated_at)
+  useEffect(() => {
+    if (!userId || level === "unknown" || isLoading) return;
+    const today = new Date().toISOString().split("T")[0];
+    supabase
+      .from("risk_score_history")
+      .upsert(
+        { user_id: userId, calculated_at: today, score, component_scores: componentScores },
+        { onConflict: "user_id,calculated_at" },
+      )
+      .then(({ error }) => {
+        if (error) console.error("[RiskScoreCard] Failed to persist risk score:", error);
+      });
+  }, [userId, score, level, componentScores, isLoading]);
 
   // ── Colors ─────────────────────────────────────────────────────────────
 

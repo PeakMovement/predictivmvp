@@ -125,15 +125,15 @@ function evaluateRiskFactor(
   return { severity, threshold, isElevated };
 }
 
-function identifyRiskDrivers(metrics: RiskMetrics): RiskDriverResult {
+function identifyRiskDrivers(metrics: RiskMetrics, thresholds: typeof THRESHOLDS = THRESHOLDS): RiskDriverResult {
   const allDrivers: RiskDriver[] = [];
-  
+
   const fatigueIndex = metrics.fatigueIndex ?? calculateFatigueIndex(metrics.strain, metrics.monotony);
   const hrvDeviation = calculateHrvDeviation(metrics.hrvCurrent, metrics.hrvBaseline);
 
   // Evaluate ACWR
   if (metrics.acwr !== null) {
-    const { severity, threshold, isElevated } = evaluateRiskFactor(metrics.acwr, THRESHOLDS.acwr);
+    const { severity, threshold, isElevated } = evaluateRiskFactor(metrics.acwr, thresholds.acwr);
     if (isElevated) {
       allDrivers.push({
         id: 'acwr',
@@ -149,7 +149,7 @@ function identifyRiskDrivers(metrics: RiskMetrics): RiskDriverResult {
 
   // Evaluate Monotony
   if (metrics.monotony !== null) {
-    const { severity, threshold, isElevated } = evaluateRiskFactor(metrics.monotony, THRESHOLDS.monotony);
+    const { severity, threshold, isElevated } = evaluateRiskFactor(metrics.monotony, thresholds.monotony);
     if (isElevated) {
       allDrivers.push({
         id: 'monotony',
@@ -165,7 +165,7 @@ function identifyRiskDrivers(metrics: RiskMetrics): RiskDriverResult {
 
   // Evaluate Strain
   if (metrics.strain !== null) {
-    const { severity, threshold, isElevated } = evaluateRiskFactor(metrics.strain, THRESHOLDS.strain);
+    const { severity, threshold, isElevated } = evaluateRiskFactor(metrics.strain, thresholds.strain);
     if (isElevated) {
       allDrivers.push({
         id: 'strain',
@@ -181,7 +181,7 @@ function identifyRiskDrivers(metrics: RiskMetrics): RiskDriverResult {
 
   // Evaluate Fatigue Index
   if (fatigueIndex !== null) {
-    const { severity, threshold, isElevated } = evaluateRiskFactor(fatigueIndex, THRESHOLDS.fatigueIndex);
+    const { severity, threshold, isElevated } = evaluateRiskFactor(fatigueIndex, thresholds.fatigueIndex);
     if (isElevated) {
       allDrivers.push({
         id: 'fatigue',
@@ -197,7 +197,7 @@ function identifyRiskDrivers(metrics: RiskMetrics): RiskDriverResult {
 
   // Evaluate HRV Deviation
   if (hrvDeviation !== null) {
-    const { severity, threshold, isElevated } = evaluateRiskFactor(hrvDeviation, THRESHOLDS.hrvDeviation);
+    const { severity, threshold, isElevated } = evaluateRiskFactor(hrvDeviation, thresholds.hrvDeviation);
     if (isElevated) {
       allDrivers.push({
         id: 'hrv',
@@ -213,7 +213,7 @@ function identifyRiskDrivers(metrics: RiskMetrics): RiskDriverResult {
 
   // Evaluate Sleep Score
   if (metrics.sleepScore !== null) {
-    const { severity, threshold, isElevated } = evaluateRiskFactor(metrics.sleepScore, THRESHOLDS.sleepScore, true);
+    const { severity, threshold, isElevated } = evaluateRiskFactor(metrics.sleepScore, thresholds.sleepScore, true);
     if (isElevated) {
       allDrivers.push({
         id: 'sleep',
@@ -622,7 +622,8 @@ Deno.serve(async (req) => {
       symptomCheckInsResult,
       userTrainingResult,
       userInterestsResult,
-      userInjuriesResult
+      userInjuriesResult,
+      alertSettingsResult
     ] = await Promise.all([
       supabase.from("training_trends").select("*").eq("user_id", userId).gte("date", sevenDaysAgoStr).order("date", { ascending: false }).limit(7),
       supabase.from("recovery_trends").select("*").eq("user_id", userId).gte("period_date", sevenDaysAgoStr).order("period_date", { ascending: false }).limit(7),
@@ -631,7 +632,8 @@ Deno.serve(async (req) => {
       supabase.from("symptom_check_ins").select("*").eq("user_id", userId).order("created_at", { ascending: false }).limit(10),
       supabase.from("user_training").select("preferred_activities, training_frequency, intensity_preference").eq("user_id", userId).maybeSingle(),
       supabase.from("user_interests").select("interests, hobbies").eq("user_id", userId).maybeSingle(),
-      supabase.from("user_injuries").select("injuries, injury_details").eq("user_id", userId).maybeSingle()
+      supabase.from("user_injuries").select("injuries, injury_details").eq("user_id", userId).maybeSingle(),
+      supabase.from("alert_settings").select("*").eq("user_id", userId).maybeSingle()
     ]);
 
     const trainingTrends = trainingTrendsResult.data || [];
@@ -642,6 +644,38 @@ Deno.serve(async (req) => {
     const userTraining = userTrainingResult.data;
     const userInterests = userInterestsResult.data;
     const userInjuries = userInjuriesResult.data;
+    const alertSettings = alertSettingsResult.data;
+
+    // FIX 3: Build effective thresholds — start from hardcoded defaults, override with user's alert_settings
+    const effectiveThresholds: typeof THRESHOLDS = {
+      acwr: {
+        critical: alertSettings?.acwr_critical_threshold ?? THRESHOLDS.acwr.critical,
+        elevated: THRESHOLDS.acwr.elevated,
+        optimal_low: THRESHOLDS.acwr.optimal_low,
+        optimal_high: THRESHOLDS.acwr.optimal_high,
+      },
+      monotony: {
+        critical: alertSettings?.monotony_critical_threshold ?? THRESHOLDS.monotony.critical,
+        elevated: THRESHOLDS.monotony.elevated,
+        moderate: THRESHOLDS.monotony.moderate,
+      },
+      strain: {
+        critical: alertSettings?.strain_critical_threshold ?? THRESHOLDS.strain.critical,
+        elevated: THRESHOLDS.strain.elevated,
+        moderate: THRESHOLDS.strain.moderate,
+      },
+      fatigueIndex: THRESHOLDS.fatigueIndex,
+      hrvDeviation: {
+        critical: alertSettings?.hrv_drop_threshold ?? THRESHOLDS.hrvDeviation.critical,
+        elevated: THRESHOLDS.hrvDeviation.elevated,
+        moderate: THRESHOLDS.hrvDeviation.moderate,
+      },
+      sleepScore: {
+        critical: alertSettings?.sleep_score_threshold ?? THRESHOLDS.sleepScore.critical,
+        elevated: THRESHOLDS.sleepScore.elevated,
+        moderate: THRESHOLDS.sleepScore.moderate,
+      },
+    };
 
     // Build user profile for personalization
     const userProfile: UserProfile = {
@@ -678,7 +712,7 @@ Deno.serve(async (req) => {
       }))
     };
 
-    const result = identifyRiskDrivers(riskMetrics);
+    const result = identifyRiskDrivers(riskMetrics, effectiveThresholds);
     
     // Apply personalization to corrective action
     if (userProfile.preferredActivities?.length || userProfile.interests?.length || userProfile.injuries?.length) {

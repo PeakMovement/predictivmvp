@@ -167,6 +167,22 @@ export function useRiskAlertTrigger(): UseRiskAlertTriggerResult {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
+      // FIX 3: Load user alert_settings — fall back to RISK_THRESHOLDS if no row exists
+      const { data: alertSettings } = await supabase
+        .from("alert_settings")
+        .select("acwr_critical_threshold, strain_critical_threshold, monotony_critical_threshold, hrv_drop_threshold, readiness_score_threshold, sleep_score_threshold")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      const thresholds = {
+        acwr: { high: RISK_THRESHOLDS.acwr.high, critical: alertSettings?.acwr_critical_threshold ?? RISK_THRESHOLDS.acwr.critical },
+        strain: { high: RISK_THRESHOLDS.strain.high, critical: alertSettings?.strain_critical_threshold ?? RISK_THRESHOLDS.strain.critical },
+        monotony: { high: RISK_THRESHOLDS.monotony.high, critical: alertSettings?.monotony_critical_threshold ?? RISK_THRESHOLDS.monotony.critical },
+        hrv_drop: alertSettings?.hrv_drop_threshold ?? RISK_THRESHOLDS.hrv_drop,
+        readiness_low: alertSettings?.readiness_score_threshold ?? RISK_THRESHOLDS.readiness_low,
+        sleep_low: alertSettings?.sleep_score_threshold ?? RISK_THRESHOLDS.sleep_low,
+      };
+
       // Session-based cooldown
       const shownAlerts = sessionStorage.getItem(ALERT_COOLDOWN_KEY);
       const shownSet = shownAlerts ? new Set(JSON.parse(shownAlerts)) : new Set();
@@ -194,90 +210,91 @@ export function useRiskAlertTrigger(): UseRiskAlertTriggerResult {
       let emailAlertType: "injury_risk" | "health_anomaly" | "red_flag_symptom" | "risk_threshold" = "risk_threshold";
 
       if (recoveryTrends) {
-        if (recoveryTrends.acwr && recoveryTrends.acwr > RISK_THRESHOLDS.acwr.critical) {
+        if (recoveryTrends.acwr && recoveryTrends.acwr > thresholds.acwr.critical) {
           alertToSet = {
             type: "high_risk",
             metric: "ACWR",
             value: recoveryTrends.acwr,
-            threshold: RISK_THRESHOLDS.acwr.critical,
-            percentAboveThreshold: Math.round((recoveryTrends.acwr / RISK_THRESHOLDS.acwr.critical - 1) * 100),
+            threshold: thresholds.acwr.critical,
+            percentAboveThreshold: Math.round((recoveryTrends.acwr / thresholds.acwr.critical - 1) * 100),
             message: `Overtraining risk detected — your acute:chronic ratio is ${recoveryTrends.acwr.toFixed(2)}, reduce intensity now.`,
           };
           emailAlertType = "injury_risk";
-        } else if (recoveryTrends.strain && recoveryTrends.strain > RISK_THRESHOLDS.strain.critical) {
+        } else if (recoveryTrends.strain && recoveryTrends.strain > thresholds.strain.critical) {
           alertToSet = {
             type: "high_risk",
             metric: "Strain",
             value: recoveryTrends.strain,
-            threshold: RISK_THRESHOLDS.strain.critical,
-            percentAboveThreshold: Math.round((recoveryTrends.strain / RISK_THRESHOLDS.strain.critical - 1) * 100),
+            threshold: thresholds.strain.critical,
+            percentAboveThreshold: Math.round((recoveryTrends.strain / thresholds.strain.critical - 1) * 100),
             message: "Overtraining risk detected — accumulated strain is critically high. Take a recovery day.",
           };
           emailAlertType = "injury_risk";
-        } else if (recoveryTrends.monotony && recoveryTrends.monotony > RISK_THRESHOLDS.monotony.critical) {
+        } else if (recoveryTrends.monotony && recoveryTrends.monotony > thresholds.monotony.critical) {
           alertToSet = {
             type: "high_risk",
             metric: "Monotony",
             value: recoveryTrends.monotony,
-            threshold: RISK_THRESHOLDS.monotony.critical,
-            percentAboveThreshold: Math.round((recoveryTrends.monotony / RISK_THRESHOLDS.monotony.critical - 1) * 100),
+            threshold: thresholds.monotony.critical,
+            percentAboveThreshold: Math.round((recoveryTrends.monotony / thresholds.monotony.critical - 1) * 100),
             message: "High training monotony — vary your training intensity to reduce injury risk.",
           };
           emailAlertType = "risk_threshold";
         }
       }
 
-      // ── Check wearable sessions (readiness, sleep, HRV) ──────────────────
+      // ── Check wearable sessions (readiness, sleep) + FIX 4: HRV from user_baselines ──
       if (!alertToSet) {
-        const { data: sessions } = await supabase
-          .from("wearable_sessions")
-          .select("readiness_score, sleep_score, hrv_avg, date")
-          .eq("user_id", user.id)
-          .order("date", { ascending: false })
-          .limit(14);
+        // FIX 4: Fetch HRV baseline from user_baselines (30-day rolling) rather than computing locally
+        const [sessionsResult, hrvBaselineResult] = await Promise.all([
+          supabase
+            .from("wearable_sessions")
+            .select("readiness_score, sleep_score, hrv_avg, date")
+            .eq("user_id", user.id)
+            .order("date", { ascending: false })
+            .limit(3),
+          supabase
+            .from("user_baselines")
+            .select("rolling_avg")
+            .eq("user_id", user.id)
+            .eq("metric", "hrv")
+            .maybeSingle(),
+        ]);
 
+        const sessions = sessionsResult.data;
+        const baselineHrv = hrvBaselineResult.data?.rolling_avg ?? null;
         const todaySession = sessions?.[0];
 
         if (todaySession) {
-          if (todaySession.readiness_score && todaySession.readiness_score < RISK_THRESHOLDS.readiness_low) {
+          if (todaySession.readiness_score && todaySession.readiness_score < thresholds.readiness_low) {
             alertToSet = {
               type: "anomaly",
               metric: "Readiness",
               value: todaySession.readiness_score,
-              threshold: RISK_THRESHOLDS.readiness_low,
+              threshold: thresholds.readiness_low,
               message: `Your readiness score is ${todaySession.readiness_score} — unusually low. How are you feeling?`,
             };
             emailAlertType = "health_anomaly";
-          } else if (todaySession.sleep_score && todaySession.sleep_score < RISK_THRESHOLDS.sleep_low) {
+          } else if (todaySession.sleep_score && todaySession.sleep_score < thresholds.sleep_low) {
             alertToSet = {
               type: "anomaly",
               metric: "Sleep",
               value: todaySession.sleep_score,
-              threshold: RISK_THRESHOLDS.sleep_low,
+              threshold: thresholds.sleep_low,
               message: `Poor sleep affecting recovery — sleep score ${todaySession.sleep_score} is below your threshold.`,
             };
             emailAlertType = "health_anomaly";
-          } else if (sessions && sessions.length >= 3) {
-            const todayHrv = todaySession.hrv_avg;
-            const baselineValues = sessions
-              .slice(1)
-              .filter(s => s.hrv_avg != null)
-              .map(s => s.hrv_avg as number);
-
-            if (todayHrv && baselineValues.length >= 2) {
-              const baselineHrv = baselineValues.reduce((a, b) => a + b, 0) / baselineValues.length;
-              const dropPct = ((baselineHrv - todayHrv) / baselineHrv) * 100;
-
-              if (dropPct >= RISK_THRESHOLDS.hrv_drop) {
-                alertToSet = {
-                  type: "anomaly",
-                  metric: "HRV",
-                  value: todayHrv,
-                  threshold: Math.round(baselineHrv * 0.8),
-                  message: `HRV significantly below baseline — down ${Math.round(dropPct)}% from your usual. Prioritise recovery today.`,
-                };
-                emailAlertType = "health_anomaly";
-              }
+          } else if (todaySession.hrv_avg && baselineHrv) {
+            const dropPct = ((baselineHrv - todaySession.hrv_avg) / baselineHrv) * 100;
+            if (dropPct >= thresholds.hrv_drop) {
+              alertToSet = {
+                type: "anomaly",
+                metric: "HRV",
+                value: todaySession.hrv_avg,
+                threshold: Math.round(baselineHrv * (1 - thresholds.hrv_drop / 100)),
+                message: `HRV significantly below baseline — down ${Math.round(dropPct)}% from your usual. Prioritise recovery today.`,
+              };
+              emailAlertType = "health_anomaly";
             }
           }
         }

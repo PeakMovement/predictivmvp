@@ -1752,6 +1752,7 @@ export type Database = {
           acwr_trend: string | null
           chronic_load: number | null
           created_at: string | null
+          data_gap: boolean
           id: string
           monotony: number | null
           period_date: string
@@ -1766,6 +1767,7 @@ export type Database = {
           acwr_trend?: string | null
           chronic_load?: number | null
           created_at?: string | null
+          data_gap?: boolean
           id?: string
           monotony?: number | null
           period_date: string
@@ -1780,6 +1782,7 @@ export type Database = {
           acwr_trend?: string | null
           chronic_load?: number | null
           created_at?: string | null
+          data_gap?: boolean
           id?: string
           monotony?: number | null
           period_date?: string
@@ -2114,12 +2117,40 @@ export type Database = {
           },
         ]
       }
+      risk_score_history: {
+        Row: {
+          calculated_at: string
+          component_scores: Json
+          created_at: string
+          id: string
+          score: number
+          user_id: string
+        }
+        Insert: {
+          calculated_at?: string
+          component_scores?: Json
+          created_at?: string
+          id?: string
+          score: number
+          user_id: string
+        }
+        Update: {
+          calculated_at?: string
+          component_scores?: Json
+          created_at?: string
+          id?: string
+          score?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
       training_trends: {
         Row: {
           acute_load: number | null
           acwr: number | null
           chronic_load: number | null
           created_at: string | null
+          data_gap: boolean
           date: string
           ewma: number | null
           hrv: number | null
@@ -2135,6 +2166,7 @@ export type Database = {
           acwr?: number | null
           chronic_load?: number | null
           created_at?: string | null
+          data_gap?: boolean
           date: string
           ewma?: number | null
           hrv?: number | null
@@ -2150,6 +2182,7 @@ export type Database = {
           acwr?: number | null
           chronic_load?: number | null
           created_at?: string | null
+          data_gap?: boolean
           date?: string
           ewma?: number | null
           hrv?: number | null

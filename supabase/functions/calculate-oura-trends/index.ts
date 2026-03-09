@@ -241,18 +241,24 @@ serve(async (req) => {
 
         // === RECOVERY & LOAD TRENDS ===
         const last28Days = typedSessions.slice(-28);
-        const acuteData = last7Days.map((s) => s.activity_score || 0);
-        const chronicData = last28Days.map((s) => s.activity_score || 0);
+        // FIX 2: Treat missing activity data as null (not 0) so gaps are excluded from window averages
+        const acuteData = last7Days.map((s) => s.activity_score ?? null);
+        const chronicData = last28Days.map((s) => s.activity_score ?? null);
 
-        // Calculate daily averages for ACWR
+        // Count days with actual data to flag data gaps
+        const activeDays = acuteData.filter((v) => v !== null).length;
+        const dataGap = activeDays < 5; // fewer than 5 of last 7 days have data
+
+        // Calculate daily averages for ACWR (calculateAverage already excludes nulls)
         const acuteLoadAvg = calculateAverage(acuteData);
         const chronicLoadAvg = calculateAverage(chronicData);
-        const acwr = chronicLoadAvg && chronicLoadAvg !== 0 ? (acuteLoadAvg || 0) / chronicLoadAvg : null;
+        const acwr = chronicLoadAvg && chronicLoadAvg !== 0 && acuteLoadAvg !== null ? acuteLoadAvg / chronicLoadAvg : null;
 
-        // Calculate weekly load (sum of 7 days) for monotony & strain
-        const weeklyLoad = acuteData.reduce((sum, v) => sum + v, 0);
-        const meanDailyLoad = weeklyLoad / (acuteData.length || 1);
-        
+        // Calculate weekly load (sum of non-null days only) for monotony & strain
+        const validAcuteLoads = acuteData.filter((v): v is number => v !== null);
+        const weeklyLoad = validAcuteLoads.reduce((sum, v) => sum + v, 0);
+        const meanDailyLoad = validAcuteLoads.length > 0 ? weeklyLoad / validAcuteLoads.length : 0;
+
         // Monotony = Mean Daily Load ÷ Standard Deviation of Daily Load
         const monotonyStdDev = calculateStdDev(acuteData);
         const monotony = monotonyStdDev && monotonyStdDev > 0 ? meanDailyLoad / monotonyStdDev : null;
@@ -263,11 +269,28 @@ serve(async (req) => {
         const cappedMonotony = monotony !== null ? Math.min(monotony, 3) : null;
         const strain = cappedMonotony && weeklyLoad ? (weeklyLoad * cappedMonotony) / 7 : null;
 
-        // Determine ACWR trend
-        const prev7DaysAcute = calculateAverage(prev7Days.map((s) => s.activity_score || 0));
+        // FIX 6: True EWMA with λ=0.28 (~7-day half-life), seeded from yesterday's stored value
+        const LAMBDA = 0.28;
+        const yesterday = new Date();
+        yesterday.setDate(yesterday.getDate() - 1);
+        const yesterdayStr = yesterday.toISOString().split("T")[0];
+        const { data: prevTrend } = await supabase
+          .from("training_trends")
+          .select("ewma")
+          .eq("user_id", userId)
+          .eq("date", yesterdayStr)
+          .maybeSingle();
+        // Seed with acuteLoadAvg (7-day mean) when no prior EWMA exists
+        const prevEwma = prevTrend?.ewma ?? acuteLoadAvg;
+        const ewma = acuteLoadAvg !== null
+          ? LAMBDA * acuteLoadAvg + (1 - LAMBDA) * (prevEwma ?? acuteLoadAvg)
+          : null;
+
+        // Determine ACWR trend (also null-safe)
+        const prev7DaysAcute = calculateAverage(prev7Days.map((s) => s.activity_score ?? null));
         const prev28Days = typedSessions.slice(-35, -7);
-        const prevChronicLoad = calculateAverage(prev28Days.map((s) => s.activity_score || 0));
-        const prevAcwr = prevChronicLoad && prevChronicLoad !== 0 ? (prev7DaysAcute || 0) / prevChronicLoad : null;
+        const prevChronicLoad = calculateAverage(prev28Days.map((s) => s.activity_score ?? null));
+        const prevAcwr = prevChronicLoad && prevChronicLoad !== 0 && prev7DaysAcute !== null ? prev7DaysAcute / prevChronicLoad : null;
         const acwrTrend = determineTrendDirection(acwr, prevAcwr);
 
         const { error: recoveryError } = await supabase
@@ -282,6 +305,7 @@ serve(async (req) => {
             monotony: safeNumber(monotony !== null ? Math.min(monotony, 2.5) : null),
             strain: safeNumber(strain),
             recovery_score: safeNumber(readinessCurrent),
+            data_gap: dataGap,
           }, { onConflict: "user_id,period_date" });
 
         if (recoveryError) {
@@ -300,7 +324,7 @@ serve(async (req) => {
             user_id: userId,
             date: today,
             acwr: safeNumber(trainingAcwr),
-            ewma: safeNumber(acuteLoadAvg), // EWMA approximated by acute load average
+            ewma: safeNumber(ewma), // True EWMA: λ=0.28 * today_load + (1-λ) * prev_ewma
             strain: safeNumber(strain),
             monotony: safeNumber(monotony !== null ? Math.min(monotony, 2.5) : null),
             hrv: safeNumber(hrvCurrent),
@@ -308,6 +332,7 @@ serve(async (req) => {
             training_load: safeNumber(weeklyLoad),
             acute_load: safeNumber(acuteLoadAvg),
             chronic_load: safeNumber(chronicLoadAvg),
+            data_gap: dataGap,
           }, { onConflict: "user_id,date" });
 
         if (trainingError) {

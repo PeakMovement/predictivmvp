@@ -90,10 +90,10 @@ async function loadPatientsForPractitioner(practitionerId: string): Promise<Pati
         { data: anomalies },
         { data: recommendations },
       ] = await Promise.all([
-        supabase.from("user_profiles").select("full_name, email").eq("user_id", patientId).maybeSingle(),
+        supabase.from("user_profiles" as any).select("full_name, email").eq("user_id", patientId).maybeSingle(),
         supabase.from("wearable_sessions").select("date, readiness_score, hrv_avg").eq("user_id", patientId).order("date", { ascending: false }).limit(7),
         supabase.from("training_trends").select("date, hrv").eq("user_id", patientId).gte("date", sevenDaysAgoStr).order("date", { ascending: true }).limit(7),
-        supabase.from("user_injury_profiles").select("injury_type, body_location, current_phase, load_restrictions").eq("user_id", patientId).eq("is_active", true).order("created_at", { ascending: false }).limit(1).maybeSingle(),
+        (supabase.from as any)("user_injury_profiles").select("injury_type, body_location, current_phase, load_restrictions").eq("user_id", patientId).eq("is_active", true).order("created_at", { ascending: false }).limit(1).maybeSingle(),
         supabase.from("health_anomalies").select("id, metric_name, severity, deviation_percent").eq("user_id", patientId).is("acknowledged_at", null).order("detected_at", { ascending: false }).limit(5),
         supabase.from("yves_recommendations").select("recommendation_text, category, priority, created_at").eq("user_id", patientId).order("created_at", { ascending: false }).limit(1).maybeSingle(),
       ]);

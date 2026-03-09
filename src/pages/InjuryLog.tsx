@@ -341,8 +341,8 @@ export default function InjuryLog() {
   useEffect(() => { fetchInjuries(); }, [fetchInjuries]);
 
   const handleMarkResolved = async (id: string) => {
-    const { error } = await supabase
-      .from("user_injury_profiles")
+    const { error } = await (supabase.from as any)("user_injury_profiles")
+      .update({ is_active: false, current_phase: "full_clearance" })
       .update({ is_active: false, current_phase: "full_clearance" })
       .eq("id", id);
     if (error) {

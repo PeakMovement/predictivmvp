@@ -182,7 +182,7 @@ const AuthenticatedApp = () => {
             <button
               onClick={() => handleNavigate("settings")}
               className={cn(
-                "fixed top-[calc(4rem+env(safe-area-inset-top))] right-4 sm:right-6 sm:top-20 z-50",
+                "fixed top-[calc(3.5rem+env(safe-area-inset-top))] right-4 sm:top-[4.5rem] sm:right-6 z-50",
                 "w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-glass backdrop-blur-xl border-glass-border touch-manipulation",
                 "flex items-center justify-center",
                 "hover:bg-glass-highlight hover:scale-110 active:scale-95",

@@ -27,7 +27,7 @@ export function YvesChatSheet() {
                 "fixed z-50",
                 isMobile
                   ? "bottom-24 right-4"
-                  : "top-[200px] right-6",
+                  : "top-[11.5rem] right-4 sm:right-6",
                 "w-12 h-12 rounded-xl bg-glass backdrop-blur-xl border-glass-border",
                 "flex items-center justify-center",
                 "hover:bg-glass-highlight hover:scale-110 active:scale-95",

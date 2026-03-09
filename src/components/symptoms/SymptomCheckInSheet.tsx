@@ -76,7 +76,7 @@ export function SymptomCheckInSheet() {
           <DialogTrigger asChild>
             <button
               className={cn(
-                "fixed top-[140px] right-6 z-50",
+                "fixed top-[8rem] right-4 sm:right-6 z-50",
                 "w-12 h-12 rounded-xl bg-glass backdrop-blur-xl border-glass-border",
                 "flex items-center justify-center",
                 "hover:bg-glass-highlight hover:scale-110 active:scale-95",

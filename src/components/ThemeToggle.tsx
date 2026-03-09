@@ -13,7 +13,7 @@ export const ThemeToggle = () => {
     <button
       onClick={toggleTheme}
       className={cn(
-        "fixed top-6 right-6 z-50",
+        "fixed top-4 right-4 sm:top-6 sm:right-6 z-50",
         "w-12 h-12 rounded-xl",
         "bg-glass backdrop-blur-xl border border-glass-border shadow-glass",
         "flex items-center justify-center",

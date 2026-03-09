@@ -24,6 +24,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { HealthAnomalyBanner } from "@/components/dashboard/HealthAnomalyBanner";
 import { useGarminTokenStatus } from "@/hooks/useGarminTokenStatus";
 import { GarminExpiredBanner } from "@/components/GarminExpiredBanner";
+import { GettingStartedChecklist } from "@/components/dashboard/GettingStartedChecklist";
 
 const WelcomeHeader = ({
   onCustomize,
@@ -247,6 +248,13 @@ export const Dashboard = () => {
               onReconnect={() => window.dispatchEvent(new CustomEvent("navigate-tab", { detail: "settings" }))}
             />
           )}
+
+          {/* Getting Started Checklist — hidden once all steps complete */}
+          <GettingStartedChecklist
+            onNavigate={(tab) =>
+              window.dispatchEvent(new CustomEvent("navigate-tab", { detail: tab }))
+            }
+          />
 
           {/* Layout Editor */}
           {isLayoutEditing && (

@@ -9,11 +9,40 @@ export interface UserProfile {
   avatar_url: string | null;
   phone_number: string | null;
   bio: string | null;
+  // Extended profile fields
+  sport: string | null;
+  position: string | null;
+  date_of_birth: string | null;
+  experience_level: string | null;
+  weekly_training_hours: number | null;
+  primary_goal: string | null;
   email?: string;
   onboarding_completed?: boolean;
   onboarding_skipped?: boolean;
   created_at?: string;
   updated_at?: string;
+}
+
+// Fields counted toward profile completion (8 total)
+const COMPLETION_FIELDS: (keyof UserProfile)[] = [
+  "full_name",
+  "avatar_url",
+  "sport",
+  "position",
+  "date_of_birth",
+  "experience_level",
+  "weekly_training_hours",
+  "primary_goal",
+];
+
+/** Returns 0–100 completion percentage */
+export function getProfileCompletion(profile: UserProfile | null): number {
+  if (!profile) return 0;
+  const filled = COMPLETION_FIELDS.filter((f) => {
+    const v = profile[f];
+    return v !== null && v !== undefined && v !== "";
+  }).length;
+  return Math.round((filled / COMPLETION_FIELDS.length) * 100);
 }
 
 export const useProfile = () => {

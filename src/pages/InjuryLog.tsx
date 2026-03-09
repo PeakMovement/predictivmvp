@@ -329,8 +329,8 @@ export default function InjuryLog() {
   const fetchInjuries = useCallback(async () => {
     if (!userId) return;
     setLoading(true);
-    const { data, error } = await supabase
-      .from("user_injury_profiles")
+    const { data, error } = await (supabase.from as any)("user_injury_profiles")
+      .select("id,body_location,load_restrictions,notes,severity,injury_date,is_active,created_at")
       .select("id,body_location,load_restrictions,notes,severity,injury_date,is_active,created_at")
       .eq("user_id", userId)
       .order("injury_date", { ascending: false });

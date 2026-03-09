@@ -1,165 +1,213 @@
-/**
- * RiskScoreCard Component
- *
- * Calculates and displays the user's injury risk score based on training load metrics.
- * Uses 7-day averages of ACWR (Acute:Chronic Workload Ratio), strain, and monotony
- * to determine risk level (low, moderate, high).
- *
- * @component
- * @example
- * ```tsx
- * <RiskScoreCard />
- * ```
- *
- * Risk Calculation:
- * - ACWR > 1.5: +40 points (high acute load spike)
- * - ACWR > 1.3: +25 points (moderate spike)
- * - ACWR > 1.0: +10 points (slight increase)
- * - Strain > 150: +30 points (high training stress)
- * - Strain > 100: +15 points (moderate stress)
- * - Fatigue Index > 70: +30 points (high fatigue)
- * - Fatigue Index > 50: +15 points (moderate fatigue)
- *
- * Risk Levels:
- * - High: Score > 60
- * - Moderate: Score 30-60
- * - Low: Score < 30
- */
-import { AlertTriangle, Shield, ShieldCheck, ShieldAlert } from "lucide-react";
+import { ShieldAlert, Shield, ShieldCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useMemo, useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
-/**
- * Recovery trend data structure from the database
- */
+// ── Types ──────────────────────────────────────────────────────────────────
+
 interface RecoveryTrend {
-  /** Acute:Chronic Workload Ratio - training load balance indicator */
   acwr: number | null;
-  /** Training strain score (0-300 typical range) */
   strain: number | null;
-  /** Training monotony score (capped at 2.5) */
   monotony: number | null;
-  /** Overall recovery score (0-100) */
-  recovery_score: number | null;
-  /** Date of the trend data point */
   period_date: string;
 }
 
-/**
- * RiskScoreCard Component - Displays injury risk assessment
- */
+interface WearableSession {
+  hrv_avg: number | null;
+  sleep_score: number | null;
+  date: string;
+}
+
+// ── Score calculation ──────────────────────────────────────────────────────
+//
+// Four factors, each contributes a capped number of points:
+//   ACWR         — up to 30 pts
+//   Fatigue      — up to 20 pts  (strain + monotony combined)
+//   HRV drop     — up to 25 pts
+//   Sleep drop   — up to 25 pts
+// Total max = 100
+//
+// Color bands (match user spec):
+//   0–33   green  → Low
+//   34–66  yellow → Moderate
+//   67–100 red    → High
+
+interface ScoreResult {
+  score: number;
+  level: "low" | "moderate" | "high" | "unknown";
+  explanation: string;
+  factors: {
+    acwr: number;
+    fatigueIndex: number;
+    hrvDropPct: number | null;
+    sleepScore: number | null;
+    baselineHrv: number | null;
+  };
+}
+
+function calcScore(
+  trends: RecoveryTrend[],
+  sessions: WearableSession[],
+): ScoreResult {
+  if (trends.length === 0 && sessions.length === 0) {
+    return { score: 0, level: "unknown", explanation: "", factors: { acwr: 0, fatigueIndex: 0, hrvDropPct: null, sleepScore: null, baselineHrv: null } };
+  }
+
+  // ── ACWR factor (0–30) ──────────────────────────────────────────────────
+  const validAcwr = trends.filter(t => t.acwr !== null);
+  const avgACWR = validAcwr.length
+    ? validAcwr.reduce((s, t) => s + (t.acwr ?? 0), 0) / validAcwr.length
+    : 0;
+
+  let acwrPts = 0;
+  if (avgACWR > 1.5) acwrPts = 30;
+  else if (avgACWR > 1.3) acwrPts = 20;
+  else if (avgACWR > 1.1) acwrPts = 10;
+
+  // ── Fatigue factor (0–20, from strain + monotony) ──────────────────────
+  const validStrain = trends.filter(t => t.strain !== null);
+  const validMonotony = trends.filter(t => t.monotony !== null);
+  const avgStrain = validStrain.length
+    ? validStrain.reduce((s, t) => s + (t.strain ?? 0), 0) / validStrain.length
+    : 0;
+  const avgMonotony = validMonotony.length
+    ? Math.min(validMonotony.reduce((s, t) => s + (t.monotony ?? 0), 0) / validMonotony.length, 2.5)
+    : 0;
+
+  const fatigueIndex = Math.min(100, Math.round((avgStrain / 300) * 50 + (avgMonotony / 2.5) * 50));
+  let fatiguePts = 0;
+  if (fatigueIndex > 70) fatiguePts = 20;
+  else if (fatigueIndex > 50) fatiguePts = 10;
+
+  // ── HRV drop factor (0–25) ─────────────────────────────────────────────
+  let hrvPts = 0;
+  let hrvDropPct: number | null = null;
+  let baselineHrv: number | null = null;
+
+  if (sessions.length >= 3) {
+    const todayHrv = sessions[0].hrv_avg;
+    const pastHrvValues = sessions.slice(1).filter(s => s.hrv_avg != null).map(s => s.hrv_avg as number);
+    if (todayHrv && pastHrvValues.length >= 2) {
+      baselineHrv = pastHrvValues.reduce((a, b) => a + b, 0) / pastHrvValues.length;
+      hrvDropPct = ((baselineHrv - todayHrv) / baselineHrv) * 100;
+      if (hrvDropPct >= 25) hrvPts = 25;
+      else if (hrvDropPct >= 15) hrvPts = 15;
+      else if (hrvDropPct >= 10) hrvPts = 8;
+    }
+  }
+
+  // ── Sleep factor (0–25) ────────────────────────────────────────────────
+  let sleepPts = 0;
+  const sleepScore = sessions[0]?.sleep_score ?? null;
+  if (sleepScore !== null) {
+    if (sleepScore < 55) sleepPts = 25;
+    else if (sleepScore < 65) sleepPts = 15;
+    else if (sleepScore < 75) sleepPts = 8;
+  }
+
+  const score = Math.min(100, acwrPts + fatiguePts + hrvPts + sleepPts);
+
+  let level: ScoreResult["level"] = "low";
+  if (score >= 67) level = "high";
+  else if (score >= 34) level = "moderate";
+
+  // ── Contextual 1-line explanation (biggest driver wins) ────────────────
+  const drivers: Array<{ pts: number; msg: string }> = [
+    { pts: acwrPts, msg: `ACWR ${avgACWR.toFixed(2)} — reduce training load to avoid overtraining` },
+    { pts: fatiguePts, msg: avgMonotony > avgStrain / 300 * 2.5 ? "High training monotony — vary your training intensity" : "High accumulated strain — prioritise recovery" },
+    { pts: hrvPts, msg: `HRV down ${hrvDropPct !== null ? Math.round(hrvDropPct) : "—"}% from baseline — your body needs extra recovery` },
+    { pts: sleepPts, msg: `Sleep score ${sleepScore ?? "—"} — poor sleep is impacting your recovery` },
+  ];
+
+  const topDriver = drivers.sort((a, b) => b.pts - a.pts)[0];
+  let explanation: string;
+  if (score === 0) {
+    explanation = "Training load is well balanced — keep it up.";
+  } else if (level === "low") {
+    explanation = "Training load is manageable — monitor and stay consistent.";
+  } else {
+    explanation = topDriver.msg;
+  }
+
+  return { score, level, explanation, factors: { acwr: avgACWR, fatigueIndex, hrvDropPct, sleepScore, baselineHrv } };
+}
+
+// ── Component ──────────────────────────────────────────────────────────────
+
 export const RiskScoreCard = () => {
   const [trends, setTrends] = useState<RecoveryTrend[]>([]);
+  const [sessions, setSessions] = useState<WearableSession[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const fetchRecoveryTrends = async () => {
+    const load = async () => {
       setIsLoading(true);
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        setIsLoading(false);
-        return;
-      }
-      
-      const cutoffDate = new Date();
-      cutoffDate.setDate(cutoffDate.getDate() - 7);
-      
-      const { data } = await supabase
-        .from("recovery_trends")
-        .select("acwr, strain, monotony, recovery_score, period_date")
-        .eq("user_id", user.id)
-        .gte("period_date", cutoffDate.toISOString().split("T")[0])
-        .order("period_date", { ascending: false });
-      
-      setTrends(data || []);
+      if (!user) { setIsLoading(false); return; }
+
+      const cutoff = new Date();
+      cutoff.setDate(cutoff.getDate() - 7);
+      const cutoffStr = cutoff.toISOString().split("T")[0];
+
+      const [{ data: trendData }, { data: sessionData }] = await Promise.all([
+        supabase
+          .from("recovery_trends")
+          .select("acwr, strain, monotony, period_date")
+          .eq("user_id", user.id)
+          .gte("period_date", cutoffStr)
+          .order("period_date", { ascending: false }),
+        supabase
+          .from("wearable_sessions")
+          .select("hrv_avg, sleep_score, date")
+          .eq("user_id", user.id)
+          .order("date", { ascending: false })
+          .limit(14),
+      ]);
+
+      setTrends(trendData || []);
+      setSessions(sessionData || []);
       setIsLoading(false);
     };
-    
-    fetchRecoveryTrends();
+
+    load();
   }, []);
-  
-  // Calculate Risk Score from 7-day averages using recovery_trends (correct ACWR data)
-  const { riskScore, riskLevel, metrics } = useMemo(() => {
-    if (trends.length === 0) {
-      return { riskScore: 0, riskLevel: "unknown", metrics: { acwr: 0, strain: 0, fatigueIndex: 0 } };
-    }
-    
-    const validAcwr = trends.filter(t => t.acwr !== null);
-    const validStrain = trends.filter(t => t.strain !== null);
-    const validMonotony = trends.filter(t => t.monotony !== null);
-    
-    const avgACWR = validAcwr.length > 0 ? validAcwr.reduce((sum, t) => sum + (t.acwr || 0), 0) / validAcwr.length : 0;
-    const avgStrain = validStrain.length > 0 ? validStrain.reduce((sum, t) => sum + (t.strain || 0), 0) / validStrain.length : 0;
-    const avgMonotony = validMonotony.length > 0 ? validMonotony.reduce((sum, t) => sum + (t.monotony || 0), 0) / validMonotony.length : 0;
-    
-    // Cap monotony defensively (backend should already cap at 2.5, but protect against legacy data)
-    const cappedMonotony = Math.min(avgMonotony, 2.5);
-    
-    // Fatigue Index: (Strain / 300) × 50 + (Monotony / 2.5) × 50
-    // Strain denominator 300 matches actual daily strain range (~200-294)
-    const fatigueIndex = Math.min(100, Math.round((avgStrain / 300) * 50 + (cappedMonotony / 2.5) * 50));
-    
-    // Risk Score calculation
-    let score = 0;
-    if (avgACWR > 1.5) score += 40;
-    else if (avgACWR > 1.3) score += 25;
-    else if (avgACWR > 1.0) score += 10;
-    
-    if (avgStrain > 150) score += 30;
-    else if (avgStrain > 100) score += 15;
-    
-    if (fatigueIndex > 70) score += 30;
-    else if (fatigueIndex > 50) score += 15;
-    
-    const finalScore = Math.min(100, score);
-    
-    let level: "low" | "moderate" | "high" | "unknown" = "low";
-    if (finalScore > 60) level = "high";
-    else if (finalScore > 30) level = "moderate";
-    
-    return { 
-      riskScore: finalScore, 
-      riskLevel: level,
-      metrics: { acwr: avgACWR, strain: avgStrain, fatigueIndex }
-    };
-  }, [trends]);
-  
-  const getIcon = () => {
-    switch (riskLevel) {
-      case "high": return <ShieldAlert size={24} className="text-red-400" />;
-      case "moderate": return <Shield size={24} className="text-yellow-400" />;
-      case "low": return <ShieldCheck size={24} className="text-green-400" />;
-      default: return <Shield size={24} className="text-muted-foreground" />;
-    }
-  };
-  
-  const getStatusColor = () => {
-    switch (riskLevel) {
-      case "high": return "text-red-400 bg-red-500/20 border-red-500/30";
-      case "moderate": return "text-yellow-400 bg-yellow-500/20 border-yellow-500/30";
-      case "low": return "text-green-400 bg-green-500/20 border-green-500/30";
-      default: return "text-muted-foreground bg-muted/20 border-muted/30";
-    }
-  };
-  
-  const getProgressColor = () => {
-    switch (riskLevel) {
-      case "high": return "bg-red-500";
-      case "moderate": return "bg-yellow-500";
-      case "low": return "bg-green-500";
-      default: return "bg-muted";
-    }
-  };
-  
-  const getMessage = () => {
-    switch (riskLevel) {
-      case "high": return "High injury risk detected. Consider reducing training intensity.";
-      case "moderate": return "Moderate risk. Monitor recovery and adjust if needed.";
-      case "low": return "Low risk. Training load is well balanced.";
-      default: return "Connect your device to calculate risk score.";
-    }
-  };
+
+  const { score, level, explanation, factors } = useMemo(
+    () => calcScore(trends, sessions),
+    [trends, sessions],
+  );
+
+  // ── Colors ─────────────────────────────────────────────────────────────
+
+  const colors = {
+    low: {
+      icon: "text-green-400 bg-green-500/20 border-green-500/30",
+      bar: "bg-green-500",
+      pill: "text-green-400 bg-green-500/20 border-green-500/30",
+      msg: "text-green-400 bg-green-500/10 border-green-500/20",
+    },
+    moderate: {
+      icon: "text-yellow-400 bg-yellow-500/20 border-yellow-500/30",
+      bar: "bg-yellow-500",
+      pill: "text-yellow-400 bg-yellow-500/20 border-yellow-500/30",
+      msg: "text-yellow-400 bg-yellow-500/10 border-yellow-500/20",
+    },
+    high: {
+      icon: "text-red-400 bg-red-500/20 border-red-500/30",
+      bar: "bg-red-500",
+      pill: "text-red-400 bg-red-500/20 border-red-500/30",
+      msg: "text-red-400 bg-red-500/10 border-red-500/20",
+    },
+    unknown: {
+      icon: "text-muted-foreground bg-muted/20 border-muted/30",
+      bar: "bg-muted",
+      pill: "text-muted-foreground bg-muted/20 border-muted/30",
+      msg: "text-muted-foreground bg-muted/10 border-muted/20",
+    },
+  }[level];
+
+  const Icon = level === "high" ? ShieldAlert : level === "moderate" ? Shield : ShieldCheck;
+  const levelLabel = level === "unknown" ? "—" : level.charAt(0).toUpperCase() + level.slice(1);
 
   if (isLoading) {
     return (
@@ -170,25 +218,21 @@ export const RiskScoreCard = () => {
     );
   }
 
-  if (riskLevel === "unknown") {
+  if (level === "unknown") {
     return (
       <div className="bg-glass backdrop-blur-xl border border-glass-border rounded-2xl p-6 shadow-glass">
         <div className="flex items-center gap-3 mb-4">
           <div className="w-10 h-10 rounded-lg flex items-center justify-center border text-muted-foreground bg-muted/20 border-muted/30">
-            <Shield size={24} />
+            <Shield size={22} />
           </div>
           <div>
             <h3 className="text-lg font-semibold text-foreground">Risk Score</h3>
             <p className="text-xs text-muted-foreground">7-day injury risk assessment</p>
           </div>
         </div>
-        <div className="rounded-lg border border-muted/30 bg-muted/10 p-4 text-center space-y-2">
-          <p className="text-sm text-muted-foreground">
-            No training data yet. Connect a wearable and sync to see your injury risk score.
-          </p>
-          <p className="text-xs text-muted-foreground">
-            Risk is calculated from 7 days of heart rate, load, and sleep data.
-          </p>
+        <div className="rounded-lg border border-muted/30 bg-muted/10 p-4 text-center space-y-1">
+          <p className="text-sm text-muted-foreground">No training data yet.</p>
+          <p className="text-xs text-muted-foreground">Connect a wearable and sync to see your risk score.</p>
         </div>
       </div>
     );
@@ -196,75 +240,73 @@ export const RiskScoreCard = () => {
 
   return (
     <div className="bg-glass backdrop-blur-xl border border-glass-border rounded-2xl p-4 sm:p-6 shadow-glass hover:bg-glass-highlight transition-all duration-300">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-3">
-          <div className={cn(
-            "w-10 h-10 rounded-lg flex items-center justify-center border",
-            getStatusColor()
-          )}>
-            {getIcon()}
+          <div className={cn("w-10 h-10 rounded-lg flex items-center justify-center border", colors.icon)}>
+            <Icon size={22} />
           </div>
           <div>
             <h3 className="text-lg font-semibold text-foreground">Risk Score</h3>
             <p className="text-xs text-muted-foreground">7-day injury risk assessment</p>
           </div>
         </div>
-        <div className={cn(
-          "px-3 py-1.5 rounded-full text-sm font-semibold border",
-          getStatusColor()
-        )}>
-          {riskScore}
+        <div className={cn("px-3 py-1 rounded-full text-sm font-bold border", colors.pill)}>
+          {score} · {levelLabel}
         </div>
       </div>
 
-      {/* Progress Bar */}
-      <div className="mb-4">
-        <div className="h-3 bg-muted/30 rounded-full overflow-hidden">
+      {/* Progress bar — divided into 3 zones */}
+      <div className="mb-1">
+        <div className="h-3 rounded-full overflow-hidden flex">
+          <div className="bg-green-500/40 flex-[33]" />
+          <div className="bg-yellow-500/40 flex-[33] mx-0.5" />
+          <div className="bg-red-500/40 flex-[34]" />
+        </div>
+        {/* Indicator */}
+        <div className="relative h-1.5 mt-0.5">
           <div
-            className={cn("h-full rounded-full transition-all duration-500", getProgressColor())}
-            style={{ width: `${riskScore}%` }}
+            className={cn("absolute top-0 w-2 h-2 rounded-full -translate-x-1/2 -translate-y-1/2", colors.bar)}
+            style={{ left: `${score}%` }}
           />
         </div>
-        <div className="flex justify-between text-xs text-muted-foreground mt-1">
-          <span>Low</span>
-          <span>Moderate</span>
-          <span>High</span>
-        </div>
+      </div>
+      <div className="flex justify-between text-[10px] text-muted-foreground mb-4 mt-2">
+        <span>Low (0–33)</span>
+        <span>Moderate (34–66)</span>
+        <span>High (67–100)</span>
       </div>
 
-      {/* Status Message */}
-      <div className={cn(
-        "p-3 rounded-lg border text-sm",
-        getStatusColor()
-      )}>
-        <div className="flex items-start gap-2">
-          <AlertTriangle size={16} className="mt-0.5 flex-shrink-0" />
-          <span>{getMessage()}</span>
-        </div>
+      {/* Contextual explanation */}
+      <div className={cn("p-3 rounded-xl border text-sm mb-4", colors.msg)}>
+        {explanation}
       </div>
 
-      {/* Contributing Factors */}
-      <div className="mt-4 grid grid-cols-3 gap-2 sm:gap-3 text-center">
-        <div className="bg-glass/30 rounded-lg p-2 sm:p-3 min-w-0">
-          <p className="text-xs text-muted-foreground">ACWR</p>
-          <p className={cn(
-            "text-sm font-semibold",
-            metrics.acwr > 1.5 ? "text-red-400" : metrics.acwr > 1.3 ? "text-yellow-400" : "text-foreground"
-          )}>{metrics.acwr.toFixed(2)}</p>
+      {/* Contributing factors */}
+      <div className="grid grid-cols-4 gap-2 text-center">
+        <div className="bg-glass/30 rounded-lg p-2">
+          <p className="text-[10px] text-muted-foreground mb-0.5">ACWR</p>
+          <p className={cn("text-sm font-semibold", factors.acwr > 1.5 ? "text-red-400" : factors.acwr > 1.3 ? "text-yellow-400" : "text-foreground")}>
+            {factors.acwr.toFixed(2)}
+          </p>
         </div>
-        <div className="bg-glass/30 rounded-lg p-2 sm:p-3 min-w-0">
-          <p className="text-xs text-muted-foreground">Strain</p>
-          <p className={cn(
-            "text-sm font-semibold",
-            metrics.strain > 150 ? "text-red-400" : metrics.strain > 100 ? "text-yellow-400" : "text-foreground"
-          )}>{metrics.strain.toFixed(0)}</p>
+        <div className="bg-glass/30 rounded-lg p-2">
+          <p className="text-[10px] text-muted-foreground mb-0.5">Fatigue</p>
+          <p className={cn("text-sm font-semibold", factors.fatigueIndex > 70 ? "text-red-400" : factors.fatigueIndex > 50 ? "text-yellow-400" : "text-foreground")}>
+            {factors.fatigueIndex}%
+          </p>
         </div>
-        <div className="bg-glass/30 rounded-lg p-2 sm:p-3 min-w-0">
-          <p className="text-xs text-muted-foreground">Fatigue</p>
-          <p className={cn(
-            "text-sm font-semibold",
-            metrics.fatigueIndex > 70 ? "text-red-400" : metrics.fatigueIndex > 50 ? "text-yellow-400" : "text-foreground"
-          )}>{metrics.fatigueIndex}%</p>
+        <div className="bg-glass/30 rounded-lg p-2">
+          <p className="text-[10px] text-muted-foreground mb-0.5">HRV Δ</p>
+          <p className={cn("text-sm font-semibold", factors.hrvDropPct !== null && factors.hrvDropPct >= 20 ? "text-red-400" : factors.hrvDropPct !== null && factors.hrvDropPct >= 10 ? "text-yellow-400" : "text-foreground")}>
+            {factors.hrvDropPct !== null ? `${Math.round(factors.hrvDropPct) > 0 ? "-" : "+"}${Math.abs(Math.round(factors.hrvDropPct))}%` : "—"}
+          </p>
+        </div>
+        <div className="bg-glass/30 rounded-lg p-2">
+          <p className="text-[10px] text-muted-foreground mb-0.5">Sleep</p>
+          <p className={cn("text-sm font-semibold", factors.sleepScore !== null && factors.sleepScore < 60 ? "text-red-400" : factors.sleepScore !== null && factors.sleepScore < 70 ? "text-yellow-400" : "text-foreground")}>
+            {factors.sleepScore !== null ? factors.sleepScore : "—"}
+          </p>
         </div>
       </div>
     </div>

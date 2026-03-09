@@ -8,7 +8,7 @@ interface RiskAlert {
   value: number;
   threshold: number;
   message: string;
-  percentAboveThreshold?: number; // Added for better messaging
+  percentAboveThreshold?: number;
 }
 
 interface UseRiskAlertTriggerResult {
@@ -22,10 +22,10 @@ interface UseRiskAlertTriggerResult {
 const RISK_THRESHOLDS = {
   acwr: { high: 1.5, critical: 1.8 },
   strain: { high: 1200, critical: 1500 },
-  monotony: { high: 1.8, critical: 2.2 }, // Lowered from 2.5 (cap value) to avoid 0% alerts
+  monotony: { high: 1.8, critical: 2.2 },
   hrv_drop: 20, // % drop from baseline
   readiness_low: 50,
-  sleep_low: 60
+  sleep_low: 60,
 };
 
 // Snooze durations in hours
@@ -44,34 +44,24 @@ export async function sendRiskAlertSMS(phoneNumber: string, alertMessage: string
     const { data, error } = await supabase.functions.invoke("send-sms-alert", {
       body: {
         to: phoneNumber,
-        message: `Predictiv Alert: ${alertMessage} - Check app for details.`
-      }
+        message: `Predictiv Alert: ${alertMessage} - Check app for details.`,
+      },
     });
-
-    if (error) {
-      console.error("[sendRiskAlertSMS] Error:", error);
-      return { success: false, error: error.message };
-    }
-
-    console.log("[sendRiskAlertSMS] SMS sent successfully");
+    if (error) return { success: false, error: error.message };
     return { success: data?.success || false, error: data?.error };
   } catch (error) {
-    console.error("[sendRiskAlertSMS] Exception:", error);
-    return { 
-      success: false, 
-      error: error instanceof Error ? error.message : "Failed to send SMS" 
-    };
+    return { success: false, error: error instanceof Error ? error.message : "Failed to send SMS" };
   }
 }
 
 // Function to send email alert via edge function
 export async function sendRiskAlertEmail(
-  userId: string, 
+  userId: string,
   alertType: "injury_risk" | "health_anomaly" | "red_flag_symptom" | "risk_threshold",
   alertMessage: string,
   metric?: string,
   value?: number,
-  threshold?: number
+  threshold?: number,
 ): Promise<{ success: boolean; error?: string }> {
   try {
     const { data, error } = await supabase.functions.invoke("send-risk-email", {
@@ -82,28 +72,14 @@ export async function sendRiskAlertEmail(
         metric,
         value,
         threshold,
-        triggered_at: new Date().toISOString()
-      }
+        triggered_at: new Date().toISOString(),
+      },
     });
-
-    if (error) {
-      console.error("[sendRiskAlertEmail] Error:", error);
-      return { success: false, error: error.message };
-    }
-
-    if (data?.skipped) {
-      console.log("[sendRiskAlertEmail] Skipped (spam prevention):", data.reason);
-      return { success: true }; // Not an error, just skipped
-    }
-
-    console.log("[sendRiskAlertEmail] Email sent successfully");
+    if (error) return { success: false, error: error.message };
+    if (data?.skipped) return { success: true };
     return { success: data?.success || false, error: data?.error };
   } catch (error) {
-    console.error("[sendRiskAlertEmail] Exception:", error);
-    return { 
-      success: false, 
-      error: error instanceof Error ? error.message : "Failed to send email" 
-    };
+    return { success: false, error: error instanceof Error ? error.message : "Failed to send email" };
   }
 }
 
@@ -131,8 +107,7 @@ function setDailyCooldown(alertKey: string): void {
 function setSnoozeCooldown(alertKey: string, duration: SnoozeDuration): void {
   const cooldowns = getDailyCooldowns();
   const hoursToSnooze = SNOOZE_DURATIONS[duration];
-  // Store expiry time instead of start time for snoozes
-  cooldowns[alertKey] = Date.now() + (hoursToSnooze * 60 * 60 * 1000);
+  cooldowns[alertKey] = Date.now() + hoursToSnooze * 60 * 60 * 1000;
   localStorage.setItem(ALERT_DAILY_COOLDOWN_KEY, JSON.stringify(cooldowns));
 }
 
@@ -140,16 +115,46 @@ function isOnDailyCooldown(alertKey: string): boolean {
   const cooldowns = getDailyCooldowns();
   const cooldownValue = cooldowns[alertKey];
   if (!cooldownValue) return false;
-
-  // Check if this is an expiry time (snooze) or start time (regular cooldown)
-  // If value is in the future, it's an expiry time
-  if (cooldownValue > Date.now()) {
-    return true; // Still on snooze
-  }
-
-  // Regular 7-day cooldown check
+  if (cooldownValue > Date.now()) return true; // snooze expiry
   const hoursSince = (Date.now() - cooldownValue) / (1000 * 60 * 60);
   return hoursSince < COOLDOWN_HOURS;
+}
+
+// Severity derived from alert type
+function alertSeverity(type: RiskAlert["type"]): "low" | "medium" | "high" | "critical" {
+  if (type === "red_flag") return "critical";
+  if (type === "high_risk") return "high";
+  return "medium";
+}
+
+// Insert alert into alert_history if there's no active one for this metric in the last 7 days
+async function persistAlert(userId: string, alert: RiskAlert): Promise<void> {
+  try {
+    const since = new Date(Date.now() - COOLDOWN_HOURS * 60 * 60 * 1000).toISOString();
+    const { data: existing } = await supabase
+      .from("alert_history")
+      .select("id")
+      .eq("user_id", userId)
+      .eq("metric_name", alert.metric)
+      .eq("status", "active")
+      .gte("created_at", since)
+      .maybeSingle();
+
+    if (!existing) {
+      await supabase.from("alert_history").insert({
+        user_id: userId,
+        alert_type: alert.type,
+        metric_name: alert.metric,
+        metric_value: alert.value,
+        threshold_value: alert.threshold,
+        message: alert.message,
+        severity: alertSeverity(alert.type),
+        status: "active",
+      });
+    }
+  } catch (err) {
+    console.error("[useRiskAlertTrigger] Failed to persist alert:", err);
+  }
 }
 
 export function useRiskAlertTrigger(): UseRiskAlertTriggerResult {
@@ -162,21 +167,21 @@ export function useRiskAlertTrigger(): UseRiskAlertTriggerResult {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      // Session-based cooldown: check if alert was already shown this session
+      // Session-based cooldown
       const shownAlerts = sessionStorage.getItem(ALERT_COOLDOWN_KEY);
       const shownSet = shownAlerts ? new Set(JSON.parse(shownAlerts)) : new Set();
 
-      // Fetch all DB dismissals for this user
+      // DB-backed dismissals
       const { data: dbDismissals } = await supabase
         .from("risk_alert_dismissals")
         .select("alert_key, dismissed_at, snooze_until")
         .eq("user_id", user.id);
 
       const dismissalMap = new Map(
-        (dbDismissals || []).map(d => [d.alert_key, d])
+        (dbDismissals || []).map(d => [d.alert_key, d]),
       );
 
-      // Check recovery trends for ACWR, strain, monotony
+      // ── Check recovery trends (ACWR, strain, monotony) ────────────────────
       const { data: recoveryTrends } = await supabase
         .from("recovery_trends")
         .select("acwr, strain, monotony, period_date")
@@ -189,56 +194,41 @@ export function useRiskAlertTrigger(): UseRiskAlertTriggerResult {
       let emailAlertType: "injury_risk" | "health_anomaly" | "red_flag_symptom" | "risk_threshold" = "risk_threshold";
 
       if (recoveryTrends) {
-        // Check ACWR
         if (recoveryTrends.acwr && recoveryTrends.acwr > RISK_THRESHOLDS.acwr.critical) {
-          const percentAbove = Math.round((recoveryTrends.acwr / RISK_THRESHOLDS.acwr.critical - 1) * 100);
-          if (percentAbove > 0) {
-            alertToSet = {
-              type: "high_risk",
-              metric: "ACWR",
-              value: recoveryTrends.acwr,
-              threshold: RISK_THRESHOLDS.acwr.critical,
-              percentAboveThreshold: percentAbove,
-              message: "Your training load ratio is critically high. Consider reducing intensity to prevent injury."
-            };
-            emailAlertType = "injury_risk";
-          }
-        }
-        // Check strain
-        else if (recoveryTrends.strain && recoveryTrends.strain > RISK_THRESHOLDS.strain.critical) {
-          const percentAbove = Math.round((recoveryTrends.strain / RISK_THRESHOLDS.strain.critical - 1) * 100);
-          if (percentAbove > 0) {
-            alertToSet = {
-              type: "high_risk",
-              metric: "Strain",
-              value: recoveryTrends.strain,
-              threshold: RISK_THRESHOLDS.strain.critical,
-              percentAboveThreshold: percentAbove,
-              message: "Your accumulated training strain is very high. Recovery is recommended."
-            };
-            emailAlertType = "injury_risk";
-          }
-        }
-        // Check monotony
-        else if (recoveryTrends.monotony && recoveryTrends.monotony > RISK_THRESHOLDS.monotony.critical) {
-          const percentAbove = Math.round((recoveryTrends.monotony / RISK_THRESHOLDS.monotony.critical - 1) * 100);
-          if (percentAbove > 0) {
-            alertToSet = {
-              type: "high_risk",
-              metric: "Monotony",
-              value: recoveryTrends.monotony,
-              threshold: RISK_THRESHOLDS.monotony.critical,
-              percentAboveThreshold: percentAbove,
-              message: "Your training variation is very low. Consider diversifying your workouts."
-            };
-            emailAlertType = "risk_threshold";
-          }
+          alertToSet = {
+            type: "high_risk",
+            metric: "ACWR",
+            value: recoveryTrends.acwr,
+            threshold: RISK_THRESHOLDS.acwr.critical,
+            percentAboveThreshold: Math.round((recoveryTrends.acwr / RISK_THRESHOLDS.acwr.critical - 1) * 100),
+            message: `Overtraining risk detected — your acute:chronic ratio is ${recoveryTrends.acwr.toFixed(2)}, reduce intensity now.`,
+          };
+          emailAlertType = "injury_risk";
+        } else if (recoveryTrends.strain && recoveryTrends.strain > RISK_THRESHOLDS.strain.critical) {
+          alertToSet = {
+            type: "high_risk",
+            metric: "Strain",
+            value: recoveryTrends.strain,
+            threshold: RISK_THRESHOLDS.strain.critical,
+            percentAboveThreshold: Math.round((recoveryTrends.strain / RISK_THRESHOLDS.strain.critical - 1) * 100),
+            message: "Overtraining risk detected — accumulated strain is critically high. Take a recovery day.",
+          };
+          emailAlertType = "injury_risk";
+        } else if (recoveryTrends.monotony && recoveryTrends.monotony > RISK_THRESHOLDS.monotony.critical) {
+          alertToSet = {
+            type: "high_risk",
+            metric: "Monotony",
+            value: recoveryTrends.monotony,
+            threshold: RISK_THRESHOLDS.monotony.critical,
+            percentAboveThreshold: Math.round((recoveryTrends.monotony / RISK_THRESHOLDS.monotony.critical - 1) * 100),
+            message: "High training monotony — vary your training intensity to reduce injury risk.",
+          };
+          emailAlertType = "risk_threshold";
         }
       }
 
-      // Check wearable session for low readiness/sleep and HRV drop
+      // ── Check wearable sessions (readiness, sleep, HRV) ──────────────────
       if (!alertToSet) {
-        // Fetch last 14 days of wearable data for HRV baseline calculation
         const { data: sessions } = await supabase
           .from("wearable_sessions")
           .select("readiness_score, sleep_score, hrv_avg, date")
@@ -249,47 +239,42 @@ export function useRiskAlertTrigger(): UseRiskAlertTriggerResult {
         const todaySession = sessions?.[0];
 
         if (todaySession) {
-          // Check readiness first
           if (todaySession.readiness_score && todaySession.readiness_score < RISK_THRESHOLDS.readiness_low) {
             alertToSet = {
               type: "anomaly",
               metric: "Readiness",
               value: todaySession.readiness_score,
               threshold: RISK_THRESHOLDS.readiness_low,
-              message: "Your readiness score is unusually low. How are you feeling?"
+              message: `Your readiness score is ${todaySession.readiness_score} — unusually low. How are you feeling?`,
             };
             emailAlertType = "health_anomaly";
-          } 
-          // Check sleep
-          else if (todaySession.sleep_score && todaySession.sleep_score < RISK_THRESHOLDS.sleep_low) {
+          } else if (todaySession.sleep_score && todaySession.sleep_score < RISK_THRESHOLDS.sleep_low) {
             alertToSet = {
               type: "anomaly",
               metric: "Sleep",
               value: todaySession.sleep_score,
               threshold: RISK_THRESHOLDS.sleep_low,
-              message: "Your sleep quality was poor. Consider logging any symptoms."
+              message: `Poor sleep affecting recovery — sleep score ${todaySession.sleep_score} is below your threshold.`,
             };
             emailAlertType = "health_anomaly";
-          }
-          // Check HRV drop from baseline (requires at least 3 days of data)
-          else if (sessions && sessions.length >= 3) {
+          } else if (sessions && sessions.length >= 3) {
             const todayHrv = todaySession.hrv_avg;
-            const baselineHrvValues = sessions
-              .slice(1) // Exclude today
+            const baselineValues = sessions
+              .slice(1)
               .filter(s => s.hrv_avg != null)
               .map(s => s.hrv_avg as number);
 
-            if (todayHrv && baselineHrvValues.length >= 2) {
-              const baselineHrv = baselineHrvValues.reduce((a, b) => a + b, 0) / baselineHrvValues.length;
-              const dropPercentage = ((baselineHrv - todayHrv) / baselineHrv) * 100;
+            if (todayHrv && baselineValues.length >= 2) {
+              const baselineHrv = baselineValues.reduce((a, b) => a + b, 0) / baselineValues.length;
+              const dropPct = ((baselineHrv - todayHrv) / baselineHrv) * 100;
 
-              if (dropPercentage >= RISK_THRESHOLDS.hrv_drop) {
+              if (dropPct >= RISK_THRESHOLDS.hrv_drop) {
                 alertToSet = {
                   type: "anomaly",
                   metric: "HRV",
                   value: todayHrv,
-                  threshold: Math.round(baselineHrv * 0.8), // 80% of baseline
-                  message: `Your HRV is down ${Math.round(dropPercentage)}% from your usual. Your body may need extra recovery today.`
+                  threshold: Math.round(baselineHrv * 0.8),
+                  message: `HRV significantly below baseline — down ${Math.round(dropPct)}% from your usual. Prioritise recovery today.`,
                 };
                 emailAlertType = "health_anomaly";
               }
@@ -298,96 +283,76 @@ export function useRiskAlertTrigger(): UseRiskAlertTriggerResult {
         }
       }
 
-      // Check health anomalies
+      // ── Check health anomalies ────────────────────────────────────────────
       if (!alertToSet) {
-        const { data: anomalies } = await supabase
+        const { data: anomaly } = await supabase
           .from("health_anomalies")
           .select("*")
           .eq("user_id", user.id)
           .is("acknowledged_at", null)
+          .eq("severity", "high")
           .order("detected_at", { ascending: false })
           .limit(1)
           .maybeSingle();
 
-        if (anomalies && anomalies.severity === "high") {
+        if (anomaly) {
           alertToSet = {
             type: "red_flag",
-            metric: anomalies.metric_name,
-            value: anomalies.current_value || 0,
-            threshold: anomalies.baseline_value || 0,
-            message: anomalies.notes || `Unusual ${anomalies.metric_name} detected. Please check in.`
+            metric: anomaly.metric_name,
+            value: anomaly.current_value || 0,
+            threshold: anomaly.baseline_value || 0,
+            message: anomaly.notes || `Unusual ${anomaly.metric_name} detected. Please check in.`,
           };
           emailAlertType = "health_anomaly";
         }
       }
 
-      // Set the alert and send notifications if needed
-      if (alertToSet) {
-        const alertKey = `${alertToSet.metric}_${alertToSet.type}`;
-        
-        // Skip if this alert type was already shown this session (cooldown)
-        if (shownSet.has(alertKey)) {
-          return;
-        }
+      if (!alertToSet) return;
 
-        // Skip if on DB-backed cooldown
-        const dbDismissal = dismissalMap.get(alertKey);
-        if (dbDismissal) {
-          const now = new Date();
-          // Check snooze
-          if (dbDismissal.snooze_until && new Date(dbDismissal.snooze_until) > now) {
-            console.log(`[useRiskAlertTrigger] Alert ${alertKey} snoozed until ${dbDismissal.snooze_until}, skipping`);
-            return;
-          }
-          // Check 7-day dismiss cooldown
-          if (dbDismissal.dismissed_at) {
-            const dismissedAt = new Date(dbDismissal.dismissed_at);
-            const hoursSince = (now.getTime() - dismissedAt.getTime()) / (1000 * 60 * 60);
-            if (hoursSince < COOLDOWN_HOURS) {
-              console.log(`[useRiskAlertTrigger] Alert ${alertKey} dismissed ${Math.round(hoursSince)}h ago, skipping`);
-              return;
-            }
-          }
-        }
+      const alertKey = `${alertToSet.metric}_${alertToSet.type}`;
 
-        // Also check localStorage as fast fallback
-        if (isOnDailyCooldown(alertKey)) {
-          console.log(`[useRiskAlertTrigger] Alert ${alertKey} on local cooldown, skipping`);
-          return;
-        }
+      // Skip if already shown this session
+      if (shownSet.has(alertKey)) return;
 
-        // Mark this alert as shown in session storage AND local cooldown
-        shownSet.add(alertKey);
-        sessionStorage.setItem(ALERT_COOLDOWN_KEY, JSON.stringify([...shownSet]));
-        setDailyCooldown(alertKey);
-        
-        setCurrentAlert(alertToSet);
-        
-        // Send SMS if enabled and not already sent for this alert
-        if (smsSentRef.current !== alertKey) {
-          const settings = getAlertSettings();
-          if (settings.enableSMS && settings.phoneNumber) {
-            smsSentRef.current = alertKey;
-            await sendRiskAlertSMS(settings.phoneNumber, alertToSet.message);
-          }
-        }
-
-        // Send Email notification (always, with built-in spam prevention)
-        if (emailSentRef.current !== alertKey) {
-          emailSentRef.current = alertKey;
-          await sendRiskAlertEmail(
-            user.id,
-            emailAlertType,
-            alertToSet.message,
-            alertToSet.metric,
-            alertToSet.value,
-            alertToSet.threshold
-          );
+      // Skip if on DB-backed cooldown / snooze
+      const dbDismissal = dismissalMap.get(alertKey);
+      if (dbDismissal) {
+        const now = new Date();
+        if (dbDismissal.snooze_until && new Date(dbDismissal.snooze_until) > now) return;
+        if (dbDismissal.dismissed_at) {
+          const hoursSince = (now.getTime() - new Date(dbDismissal.dismissed_at).getTime()) / (1000 * 60 * 60);
+          if (hoursSince < COOLDOWN_HOURS) return;
         }
       }
 
+      // Skip if on local cooldown
+      if (isOnDailyCooldown(alertKey)) return;
+
+      // Mark shown
+      shownSet.add(alertKey);
+      sessionStorage.setItem(ALERT_COOLDOWN_KEY, JSON.stringify([...shownSet]));
+      setDailyCooldown(alertKey);
+
+      setCurrentAlert(alertToSet);
+
+      // Persist to alert_history
+      await persistAlert(user.id, alertToSet);
+
+      // Notifications
+      if (smsSentRef.current !== alertKey) {
+        const settings = getAlertSettings();
+        if (settings.enableSMS && settings.phoneNumber) {
+          smsSentRef.current = alertKey;
+          await sendRiskAlertSMS(settings.phoneNumber, alertToSet.message);
+        }
+      }
+
+      if (emailSentRef.current !== alertKey) {
+        emailSentRef.current = alertKey;
+        await sendRiskAlertEmail(user.id, emailAlertType, alertToSet.message, alertToSet.metric, alertToSet.value, alertToSet.threshold);
+      }
     } catch (error) {
-      console.error("Error checking for risk alerts:", error);
+      console.error("[useRiskAlertTrigger] Error checking for alerts:", error);
     }
   }, []);
 
@@ -395,21 +360,22 @@ export function useRiskAlertTrigger(): UseRiskAlertTriggerResult {
     if (currentAlert) {
       const alertKey = `${currentAlert.metric}_${currentAlert.type}`;
       const snoozeUntil = new Date(Date.now() + COOLDOWN_HOURS * 60 * 60 * 1000).toISOString();
-      
-      // Persist to DB
+
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
         await supabase
           .from("risk_alert_dismissals")
-          .upsert({
-            user_id: user.id,
-            alert_key: alertKey,
-            dismissed_at: new Date().toISOString(),
-            snooze_until: snoozeUntil,
-          }, { onConflict: "user_id,alert_key" });
+          .upsert({ user_id: user.id, alert_key: alertKey, dismissed_at: new Date().toISOString(), snooze_until: snoozeUntil }, { onConflict: "user_id,alert_key" });
+
+        // Also dismiss matching active record in alert_history
+        await supabase
+          .from("alert_history")
+          .update({ status: "dismissed", dismissed_at: new Date().toISOString() })
+          .eq("user_id", user.id)
+          .eq("metric_name", currentAlert.metric)
+          .eq("status", "active");
       }
-      
-      // Also set local cooldown
+
       setDailyCooldown(alertKey);
     }
     setCurrentAlert(null);
@@ -420,36 +386,22 @@ export function useRiskAlertTrigger(): UseRiskAlertTriggerResult {
       const alertKey = `${currentAlert.metric}_${currentAlert.type}`;
       const hoursToSnooze = SNOOZE_DURATIONS[duration];
       const snoozeUntil = new Date(Date.now() + hoursToSnooze * 60 * 60 * 1000).toISOString();
-      
-      // Persist to DB
+
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
         await supabase
           .from("risk_alert_dismissals")
-          .upsert({
-            user_id: user.id,
-            alert_key: alertKey,
-            dismissed_at: new Date().toISOString(),
-            snooze_until: snoozeUntil,
-          }, { onConflict: "user_id,alert_key" });
+          .upsert({ user_id: user.id, alert_key: alertKey, dismissed_at: new Date().toISOString(), snooze_until: snoozeUntil }, { onConflict: "user_id,alert_key" });
       }
-      
-      // Also set local cooldown
+
       setSnoozeCooldown(alertKey, duration);
-      console.log(`[useRiskAlertTrigger] Snoozed ${alertKey} for ${duration.replace('_', ' ')}`);
       setCurrentAlert(null);
     }
   }, [currentAlert]);
 
-  // Check on mount
   useEffect(() => {
     checkForAlerts();
   }, [checkForAlerts]);
 
-  return {
-    currentAlert,
-    dismissAlert,
-    checkForAlerts,
-    snoozeAlert
-  };
+  return { currentAlert, dismissAlert, checkForAlerts, snoozeAlert };
 }

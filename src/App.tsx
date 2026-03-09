@@ -56,6 +56,8 @@ const GoogleCalendarCallback  = lazy(() => import("@/pages/GoogleCalendarCallbac
 const AlertHistory            = lazy(() => import("@/pages/AlertHistory"));
 const MetricsDashboard        = lazy(() => import("@/pages/MetricsDashboard"));
 const PractitionerDashboard   = lazy(() => import("@/pages/PractitionerDashboard").then(m => ({ default: m.PractitionerDashboard })));
+const InjuryLog               = lazy(() => import("@/pages/InjuryLog"));
+const WeeklyPlan              = lazy(() => import("@/pages/WeeklyPlan"));
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { staleTime: 0 } },
@@ -87,6 +89,8 @@ const TAB_PATHS: Record<string, string> = {
   "metrics-dashboard":  "/metrics-dashboard",
   "alert-history":      "/alert-history",
   "practitioner":       "/practitioner",
+  "injury-log":         "/injury-log",
+  "weekly-plan":        "/plan",
 };
 
 const PATH_TO_TAB: Record<string, string> = Object.fromEntries(
@@ -219,6 +223,8 @@ const AuthenticatedApp = () => {
               <Route path="/metrics-dashboard"  element={<MetricsDashboard />} />
               <Route path="/alert-history"      element={<AlertHistory />} />
               <Route path="/practitioner"       element={<PractitionerDashboard />} />
+              <Route path="/injury-log"         element={<InjuryLog />} />
+              <Route path="/plan"               element={<WeeklyPlan />} />
               <Route path="/terms"              element={<Terms />} />
               <Route path="/privacy"            element={<Privacy />} />
               <Route path="*"                   element={<Navigate to="/dashboard" replace />} />

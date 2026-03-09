@@ -283,6 +283,15 @@ Deno.serve(async (req) => {
       .limit(1)
       .maybeSingle();
 
+    // ─── LOAD LATEST DAILY BRIEFING ───────────────────────────────────────────
+    const { data: latestBriefing } = await supabase
+      .from("daily_briefings")
+      .select("date, content")
+      .eq("user_id", user.id)
+      .order("date", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
     // Build baseline lookup map
     const baselineMap: Record<string, number> = {};
     userBaselines?.forEach((b: any) => { baselineMap[b.metric] = Number(b.rolling_avg); });
@@ -679,6 +688,9 @@ ${(() => {
   }
   return block;
 })()}
+LATEST DAILY BRIEFING (${latestBriefing?.date ?? "n/a"}):
+${latestBriefing?.content ? latestBriefing.content.slice(0, 800) + (latestBriefing.content.length > 800 ? "…" : "") : "No daily briefing available yet."}
+
 RECENT CONVERSATION HISTORY:
 ${conversationHistory}
 
@@ -982,11 +994,11 @@ After giving substantive advice, capture it for tomorrow using memory_key: last_
         if (match) {
           const [, memory_key, memory_value] = match;
           await supabase.functions.invoke("yves-memory-update", {
-            body: { 
-              user_id: user.id, 
-              memory_key: memory_key.trim(), 
+            body: {
+              user_id: user.id,
+              memory_key: memory_key.trim(),
               memory_value: memory_value.trim(),
-              source_timestamp: new Date().toISOString() // For memory_cleared_at safeguard
+              source_timestamp: new Date().toISOString()
             },
           });
           console.log(`[yves-chat] Memory updated: ${memory_key.trim()}`);
@@ -994,6 +1006,25 @@ After giving substantive advice, capture it for tomorrow using memory_key: last_
       } catch (err) {
         console.warn("[yves-chat] Memory update skipped:", err);
       }
+    }
+
+    // ─── CONVERSATION INSIGHT MEMORY ─────────────────────────────────────────
+    // Always persist a summary of this exchange so Yves builds longitudinal context.
+    try {
+      const insightKey = `conversation_insight_${new Date().toISOString().replace(/[:.]/g, "-")}`;
+      const insightValue = JSON.stringify({
+        category: "conversation_insight",
+        date: new Date().toISOString().split("T")[0],
+        query: query.slice(0, 200),
+        summary: response.slice(0, 300),
+      });
+      await supabase.from("yves_memory_bank").upsert(
+        { user_id: user.id, memory_key: insightKey, memory_value: insightValue, last_updated: new Date().toISOString() },
+        { onConflict: "user_id,memory_key" }
+      );
+      console.log(`[yves-chat] Conversation insight saved: ${insightKey}`);
+    } catch (err) {
+      console.warn("[yves-chat] Conversation insight save skipped:", err);
     }
 
     return new Response(JSON.stringify({ 

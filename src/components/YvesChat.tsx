@@ -67,8 +67,8 @@ export function YvesChat({ compact = false }: YvesChatProps) {
     }
   };
 
-  const handleSubmit = async () => {
-    if (!query.trim()) {
+  const submitQuery = async (text: string) => {
+    if (!text.trim()) {
       toast({
         title: 'Empty query',
         description: 'Please enter a question for Yves',
@@ -80,22 +80,21 @@ export function YvesChat({ compact = false }: YvesChatProps) {
     setLoading(true);
 
     try {
-      const result = await queryYves(query);
+      const result = await queryYves(text);
 
       if (result.success && result.response) {
-        // Update wearable data status
         setHasWearableData(result.has_wearable_data || false);
 
         toast({
           title: 'Response received',
-          description: result.has_wearable_data 
+          description: result.has_wearable_data
             ? 'Yves analyzed your question with latest health data'
             : 'Yves has analyzed your question'
         });
 
         setQuery('');
         await loadHistory();
-        await loadCredits(); // Refresh credits after query
+        await loadCredits();
       } else {
         toast({
           title: 'Error',
@@ -114,6 +113,8 @@ export function YvesChat({ compact = false }: YvesChatProps) {
       setLoading(false);
     }
   };
+
+  const handleSubmit = () => submitQuery(query);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -326,6 +327,7 @@ export function YvesChat({ compact = false }: YvesChatProps) {
       {insights.length === 0 && !fetchingHistory && (
         <SuggestedQuestions
           onSelectQuestion={handleSuggestedQuestion}
+          onSend={(q) => submitQuery(q)}
           disabled={loading}
         />
       )}

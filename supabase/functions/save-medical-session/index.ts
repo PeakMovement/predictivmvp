@@ -35,7 +35,6 @@ Deno.serve(async (req) => {
     }
 
     const { currentStep, data } = await req.json();
-    console.log(`Saving session for user ${user.id}, step: ${currentStep}`);
 
     if (!currentStep) {
       return new Response(
@@ -68,7 +67,6 @@ Deno.serve(async (req) => {
 
     if (existingSession) {
       // Update existing active session
-      console.log(`Updating existing session ${existingSession.id}`);
       const { data: updated, error: updateError } = await serviceClient
         .from('medical_finder_sessions')
         .update({
@@ -88,7 +86,6 @@ Deno.serve(async (req) => {
       sessionId = existingSession.id;
     } else {
       // Create new session
-      console.log('Creating new session');
       const { data: created, error: insertError } = await serviceClient
         .from('medical_finder_sessions')
         .insert({
@@ -108,7 +105,6 @@ Deno.serve(async (req) => {
       sessionId = created.id;
     }
 
-    console.log(`Session saved successfully: ${sessionId}`);
     return new Response(
       JSON.stringify({ 
         success: true, 

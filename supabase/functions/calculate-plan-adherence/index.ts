@@ -26,7 +26,6 @@ serve(async (req) => {
     const { userId, date } = await req.json();
     const checkDate = date || new Date().toISOString().split('T')[0];
 
-    console.log(`Calculating plan adherence for user ${userId} on ${checkDate}`);
 
     // Get user's health profile
     const { data: profile } = await supabase
@@ -142,7 +141,6 @@ serve(async (req) => {
       });
     }
 
-    console.log(`Adherence calculated: Training ${trainingAdherence.toFixed(2)}, Nutrition ${nutritionAdherence.toFixed(2)}`);
 
     return new Response(
       JSON.stringify({ 

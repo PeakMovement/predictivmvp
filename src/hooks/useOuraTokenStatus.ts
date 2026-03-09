@@ -53,7 +53,6 @@ export const useOuraTokenStatus = (): OuraTokenStatus => {
       }
 
       if (!tokenData || !tokenData.access_token) {
-        console.log("[useOuraTokenStatus] No Oura token found for user");
         setIsConnected(false);
         setError("Oura Ring not connected");
         setErrorCode("NO_TOKEN");
@@ -66,7 +65,6 @@ export const useOuraTokenStatus = (): OuraTokenStatus => {
         const expiresAt = new Date(tokenData.expires_at);
         const now = new Date();
         if (expiresAt <= now) {
-          console.log("[useOuraTokenStatus] Oura token expired");
           setIsConnected(false);
           setError("Oura authorization expired");
           setErrorCode("TOKEN_EXPIRED");
@@ -116,7 +114,6 @@ export const useOuraTokenStatus = (): OuraTokenStatus => {
           table: "oura_logs",
         },
         () => {
-          console.log("[useOuraTokenStatus] Oura log inserted, re-checking...");
           checkConnection();
         }
       )

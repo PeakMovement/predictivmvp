@@ -32,7 +32,6 @@ Deno.serve(async (req) => {
       // No body - process all users
     }
 
-    console.log(`[adapt-user-model] Starting adaptation${userId ? ` for user ${userId}` : ' for all users'}`);
 
     // Get users to process
     let userIds: string[] = [];
@@ -176,7 +175,6 @@ Deno.serve(async (req) => {
       }, { onConflict: 'user_id' });
 
       results[uid] = profile;
-      console.log(`[adapt-user-model] User ${uid}: tone=${effectiveTone}, follow_through=${followThroughRate}%`);
     }
 
     return new Response(

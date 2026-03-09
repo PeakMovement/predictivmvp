@@ -82,7 +82,6 @@ serve(async (req) => {
       recovery_score: latestRecord.recovery_score,
     } : null;
 
-    console.log(`[get-recovery-trends] [SUCCESS] Returned ${data?.length || 0} records for user ${user.id}`);
 
     return new Response(
       JSON.stringify({

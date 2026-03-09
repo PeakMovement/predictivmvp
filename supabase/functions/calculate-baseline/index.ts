@@ -18,7 +18,6 @@ Deno.serve(async (req) => {
   const logId = crypto.randomUUID();
 
   try {
-    console.log('Starting baseline calculation...');
 
     // Log function start
     await supabase.from('function_execution_log').insert({
@@ -41,7 +40,6 @@ Deno.serve(async (req) => {
 
     if (fetchError) throw fetchError;
 
-    console.log(`Fetched ${fitbitData?.length || 0} records for baseline calculation`);
 
     // Group by user_id and calculate averages
     const userBaselines = new Map();
@@ -112,7 +110,6 @@ Deno.serve(async (req) => {
       })
       .eq('id', logId);
 
-    console.log(`Baseline calculation completed in ${duration}ms`);
 
     return new Response(
       JSON.stringify({ 

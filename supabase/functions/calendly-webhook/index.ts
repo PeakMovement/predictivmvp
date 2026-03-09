@@ -206,7 +206,6 @@ async function sendBookingConfirmationEmail(
       html: emailHtml,
     });
 
-    console.log('[calendly-webhook] Confirmation email sent:', response);
     return { success: true, emailId: response.data?.id };
   } catch (err) {
     console.error('[calendly-webhook] Failed to send confirmation email:', err);
@@ -246,15 +245,12 @@ serve(async (req) => {
       );
     }
 
-    console.log('[calendly-webhook] Signature verification:', reason);
 
     // Parse the webhook payload
     const body: CalendlyWebhookPayload = JSON.parse(rawBody);
-    console.log('[calendly-webhook] Event type:', body.event);
 
     // Only process invitee.created events
     if (body.event !== 'invitee.created') {
-      console.log(`[calendly-webhook] Ignoring event type: ${body.event}`);
       return new Response(
         JSON.stringify({ success: true, message: `Event ${body.event} ignored` }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -279,7 +275,6 @@ serve(async (req) => {
     const patientName = inviteeData.name;
     const patientEmail = inviteeData.email;
 
-    console.log('[calendly-webhook] Processing booking:', {
       calendlyEventId,
       appointmentStart,
       appointmentEnd,
@@ -295,7 +290,6 @@ serve(async (req) => {
       .maybeSingle();
 
     if (existingBooking) {
-      console.log('[calendly-webhook] Booking already exists for event:', calendlyEventId);
       return new Response(
         JSON.stringify({ 
           success: true, 
@@ -340,7 +334,6 @@ serve(async (req) => {
       );
     }
 
-    console.log('[calendly-webhook] Booking created successfully:', booking.id);
 
     // INTERNAL NOTIFICATION: Log to notification_log table (idempotent via booking check above)
     await supabase.from('notification_log').insert({
@@ -348,7 +341,6 @@ serve(async (req) => {
       message: `[booking_confirmed] Calendly appointment scheduled for ${new Date(appointmentStart).toLocaleDateString()}`,
       status: 'logged',
     });
-    console.log('[calendly-webhook] Internal notification logged');
 
     // EMAIL NOTIFICATION: Send confirmation email (only if Resend is configured)
     let emailSent = false;

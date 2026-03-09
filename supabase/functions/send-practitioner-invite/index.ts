@@ -106,7 +106,6 @@ Deno.serve(async (req) => {
       // Practitioner already has an account — send notification
       // In production use a transactional email provider (Resend, SendGrid, etc.)
       // For now, log and respond with success
-      console.log(`[send-practitioner-invite] Notifying existing practitioner ${email} of new access from ${patientName}`);
     } else {
       // Invite new practitioner to sign up
       try {
@@ -119,14 +118,12 @@ Deno.serve(async (req) => {
             practitioner_type: practitioner_type || "other",
           },
         });
-        console.log(`[send-practitioner-invite] Sent signup invite to ${email}`);
       } catch (inviteErr) {
         // Non-fatal — record is already created
         console.warn(`[send-practitioner-invite] Could not send invite email: ${inviteErr}`);
       }
     }
 
-    console.log(`[send-practitioner-invite] Access granted: patient=${user.id}, practitioner=${email}, id=${accessRecord.id}`);
 
     return new Response(
       JSON.stringify({

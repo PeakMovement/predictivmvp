@@ -106,7 +106,6 @@ export const useWearableSessions = (userId: string | undefined, source?: string)
 
         if (fetchError) throw fetchError;
 
-        console.log("Wearable session data:", sessionData);
         setData(sessionData as unknown as WearableSession);
       } catch (err) {
         console.error("Error fetching wearable session:", err);
@@ -131,7 +130,6 @@ export const useWearableSessions = (userId: string | undefined, source?: string)
           filter: `user_id=eq.${userId}`,
         },
         () => {
-          console.log("🔴 Live update detected - refetching wearable session");
           fetchWearableSession();
         }
       )

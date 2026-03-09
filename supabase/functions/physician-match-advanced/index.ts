@@ -52,7 +52,6 @@ serve(async (req) => {
 
     const { suggestedSpecialties, urgency, preferences, limit = 5 } = await req.json() as MatchRequest;
 
-    console.log(`Finding physicians for specialties: ${suggestedSpecialties.join(', ')}, urgency: ${urgency}`);
 
     // Map urgency to availability requirements
     const availabilityMap: Record<string, string[]> = {
@@ -99,7 +98,6 @@ serve(async (req) => {
     }
 
     if (!physicians || physicians.length === 0) {
-      console.log('No physicians found matching criteria, returning all accepting patients');
       // Fallback: get any available physicians
       const { data: fallbackPhysicians } = await supabase
         .from('physicians')
@@ -135,7 +133,6 @@ serve(async (req) => {
 
     const topMatches = scoredPhysicians.slice(0, limit);
 
-    console.log(`Returning ${topMatches.length} physician matches`);
 
     return new Response(JSON.stringify({ matches: topMatches }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

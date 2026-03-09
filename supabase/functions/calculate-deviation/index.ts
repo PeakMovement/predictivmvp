@@ -18,7 +18,6 @@ Deno.serve(async (req) => {
   const logId = crypto.randomUUID();
 
   try {
-    console.log('Starting deviation calculation...');
 
     // Log function start
     await supabase.from('function_execution_log').insert({
@@ -40,7 +39,6 @@ Deno.serve(async (req) => {
 
     if (recentError) throw recentError;
 
-    console.log(`Fetched ${recentData?.length || 0} recent records`);
 
     // Get baselines
     const { data: baselines, error: baselineError } = await supabase
@@ -215,7 +213,6 @@ Deno.serve(async (req) => {
       })
       .eq('id', logId);
 
-    console.log(`Deviation calculation completed in ${duration}ms`);
 
     return new Response(
       JSON.stringify({ 

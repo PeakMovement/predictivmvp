@@ -90,7 +90,6 @@ serve(async (req: Request) => {
     const expiresAt = new Date(tokenData.expires_at);
 
     if (expiresAt <= new Date()) {
-      console.log("Token expired, refreshing...");
       if (!tokenData.refresh_token) {
         throw new Error("No refresh token available");
       }
@@ -204,7 +203,6 @@ serve(async (req: Request) => {
       .order("created_at", { ascending: false })
       .limit(1);
 
-    console.log(`Successfully synced ${syncedCount} events for user:`, user.id);
 
     return new Response(
       JSON.stringify({

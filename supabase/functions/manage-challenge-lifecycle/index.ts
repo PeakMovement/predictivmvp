@@ -134,7 +134,6 @@ Deno.serve(async (req) => {
       }
     }
 
-    console.log("[manage-challenge-lifecycle] SUCCESS:", JSON.stringify(results));
 
     return new Response(JSON.stringify({ success: true, ...results }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },

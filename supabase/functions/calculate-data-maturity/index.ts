@@ -55,7 +55,6 @@ Deno.serve(async (req) => {
       );
     }
 
-    console.log(`[calculate-data-maturity] Calculating for user ${userId}`);
 
     // Fetch all data sources in parallel
     const thirtyDaysAgo = new Date();
@@ -193,7 +192,6 @@ Deno.serve(async (req) => {
       last_calculated: new Date().toISOString(),
     }, { onConflict: 'user_id' });
 
-    console.log(`[calculate-data-maturity] User ${userId}: ${maturityLevel} (score: ${maturityScore}, days: ${dataDays})`);
 
     return new Response(
       JSON.stringify({ success: true, data: result }),

@@ -1,4 +1,3 @@
-// @ts-nocheck — practitioner_access and related tables not yet in generated types
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";

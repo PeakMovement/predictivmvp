@@ -36,7 +36,6 @@ Deno.serve(async (req: Request) => {
     const body = await req.json().catch(() => ({}));
     const hoursWindow = body.hours || 24;
 
-    console.log(`[system-health] Checking system health for last ${hoursWindow} hours`);
 
     const windowStart = new Date(Date.now() - hoursWindow * 60 * 60 * 1000).toISOString();
 
@@ -135,7 +134,6 @@ Deno.serve(async (req: Request) => {
       issues.push(`Data staleness: ${dataFreshnessHours} hours since last sync`);
     }
 
-    console.log(`[system-health] Status: ${healthStatus}, Issues: ${issues.length}`);
 
     return new Response(
       JSON.stringify({

@@ -16,7 +16,6 @@ Deno.serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
-  console.log("[send-daily-summary-email] Starting");
 
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
@@ -39,7 +38,6 @@ Deno.serve(async (req) => {
     const saTime = new Date(now.getTime() + 2 * 60 * 60 * 1000);
     const todayDate = saTime.toISOString().split("T")[0];
 
-    console.log(`[send-daily-summary-email] Date: ${todayDate}, targetUser: ${targetUserId || "all"}`);
 
     // Build user list — single user or all auth users
     type UserEntry = { id: string; email: string };
@@ -57,7 +55,6 @@ Deno.serve(async (req) => {
         .map((u) => ({ id: u.id, email: u.email! }));
     }
 
-    console.log(`[send-daily-summary-email] Processing ${usersToProcess.length} user(s)`);
 
     const results = { sent: 0, skipped: 0, failed: 0, details: [] as string[] };
 
@@ -74,7 +71,6 @@ Deno.serve(async (req) => {
         const emailEnabled = prefs?.dailySummary ?? prefs?.weeklySummary ?? true;
 
         if (!emailEnabled) {
-          console.log(`[send-daily-summary-email] User ${user.id} opted out, skipping`);
           results.skipped++;
           continue;
         }
@@ -90,7 +86,6 @@ Deno.serve(async (req) => {
             .limit(1);
 
           if (alreadySent && alreadySent.length > 0) {
-            console.log(`[send-daily-summary-email] Already sent to ${user.id} today, skipping`);
             results.skipped++;
             continue;
           }
@@ -141,7 +136,6 @@ Deno.serve(async (req) => {
 
         // Guard: must have at least one day of wearable data to send
         if (!wearable && !testMode) {
-          console.log(`[send-daily-summary-email] No wearable data for ${user.id}, skipping`);
           results.skipped++;
           continue;
         }
@@ -199,7 +193,6 @@ Deno.serve(async (req) => {
 
         // ── SEND ─────────────────────────────────────────────────────────────
         const deliverTo = TO_OVERRIDE || user.email;
-        console.log(`[send-daily-summary-email] Sending to ${deliverTo}${TO_OVERRIDE ? ` (override; actual user: ${user.email})` : ""}`);
 
         const emailRes = await resend.emails.send({
           from: FROM_ADDRESS,
@@ -208,7 +201,6 @@ Deno.serve(async (req) => {
           html: emailHtml,
         });
 
-        console.log(`[send-daily-summary-email] Sent to ${deliverTo}:`, emailRes);
 
         // ── LOG ───────────────────────────────────────────────────────────────
         await supabase.from("notification_log").insert({
@@ -226,7 +218,6 @@ Deno.serve(async (req) => {
       }
     }
 
-    console.log("[send-daily-summary-email] Done:", results);
 
     return new Response(
       JSON.stringify({ success: true, ...results, timestamp: new Date().toISOString() }),

@@ -57,7 +57,6 @@ serve(async (req) => {
       throw new Error('Symptoms description is required');
     }
 
-    console.log(`Analyzing symptoms: ${symptoms.substring(0, 100)}...`);
 
     // Build context string
     let contextString = '';
@@ -144,7 +143,6 @@ Provide your analysis as JSON.`;
 
     const analysis: SymptomAnalysisResponse = JSON.parse(content);
 
-    console.log(`Analysis complete - Severity: ${analysis.severity.level}, Emergency: ${analysis.isEmergency}`);
 
     return new Response(JSON.stringify(analysis), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

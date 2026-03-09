@@ -47,7 +47,6 @@ serve(async (req) => {
       );
     }
 
-    console.log(`Processing booking request for user: ${user.id}`);
 
     // Parse request body
     const body: BookingRequest = await req.json();
@@ -191,7 +190,6 @@ serve(async (req) => {
       );
     }
 
-    console.log(`Booking created successfully: ${booking.id}`);
 
     // Send confirmation email asynchronously
     try {
@@ -201,7 +199,6 @@ serve(async (req) => {
           user_email: user.email
         }
       });
-      console.log('Confirmation email sent');
     } catch (emailError) {
       console.error('Failed to send confirmation email:', emailError);
     }

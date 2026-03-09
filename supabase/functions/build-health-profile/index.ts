@@ -20,7 +20,6 @@ Deno.serve(async (req) => {
 
     const { userId } = await req.json();
 
-    console.log(`Building health profile for user ${userId}`);
 
     const { data: insights, error: insightsError } = await supabase
       .from('document_insights')
@@ -33,7 +32,6 @@ Deno.serve(async (req) => {
     }
 
     if (!insights || insights.length === 0) {
-      console.log('No insights found for user');
       return new Response(
         JSON.stringify({ success: true, message: 'No insights to process' }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
@@ -137,7 +135,6 @@ Synthesize this information into a comprehensive health intelligence profile. Pr
       throw profileError;
     }
 
-    console.log(`Health profile v${newVersion} created for user ${userId}`);
 
     return new Response(
       JSON.stringify({ success: true, profile, version: newVersion }),

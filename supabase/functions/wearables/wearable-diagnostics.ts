@@ -28,7 +28,6 @@ Deno.serve(async (req) => {
       );
     }
 
-    console.log(`[wearable-diagnostics] Running diagnostics for user: ${user_id}, provider: ${provider}`);
 
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",

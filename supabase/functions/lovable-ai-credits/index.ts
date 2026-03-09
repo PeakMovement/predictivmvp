@@ -69,7 +69,6 @@ Deno.serve(async (req) => {
         );
       } else {
         // API exists but returned error - might be 404 if endpoint doesn't exist
-        console.log('[lovable-ai-credits] Credits endpoint not available or returned error:', creditsResponse.status);
         return new Response(
           JSON.stringify({
             available: false,
@@ -79,7 +78,6 @@ Deno.serve(async (req) => {
         );
       }
     } catch (fetchError) {
-      console.log('[lovable-ai-credits] Error fetching credits:', fetchError);
       return new Response(
         JSON.stringify({
           available: false,

@@ -114,7 +114,6 @@ export const useWearableMetrics = () => {
       const { data: { user } } = await supabase.auth.getUser();
 
       if (!user?.id) {
-        console.log("No user logged in");
         setIsLoading(false);
         return;
       }
@@ -135,12 +134,10 @@ export const useWearableMetrics = () => {
       }
 
       if (data) {
-        console.log(`✅ Wearable data loaded from wearable_sessions (${data.source}):`, data);
         const parsed = parseOuraMetrics(data as WearableSessionRow);
         setMetrics(parsed);
         setLastSync(data.fetched_at);
       } else {
-        console.log("No wearable data found in wearable_sessions");
         setMetrics(null);
       }
     } catch (error) {
@@ -158,7 +155,6 @@ export const useWearableMetrics = () => {
         throw new Error("Not authenticated");
       }
 
-      console.log("🔄 Triggering wearable sync...");
 
       // Check which wearable sources are connected
       const { data: tokens } = await supabase
@@ -171,7 +167,6 @@ export const useWearableMetrics = () => {
 
       // Sync Oura if connected
       if (connectedSources.includes("oura")) {
-        console.log("🔄 Syncing Oura data...");
         syncPromises.push(
           supabase.functions.invoke('fetch-oura-data', {
             body: { user_id: user.id }
@@ -181,7 +176,6 @@ export const useWearableMetrics = () => {
 
       // Sync Garmin if connected
       if (connectedSources.includes("garmin")) {
-        console.log("🔄 Syncing Garmin data...");
         syncPromises.push(
           supabase.functions.invoke('fetch-garmin-data', {
             body: { user_id: user.id }
@@ -260,7 +254,6 @@ export const useWearableMetrics = () => {
               filter: `user_id=eq.${user.id}`, // CRITICAL: Filter by user_id to prevent cross-user data leakage
             },
             (payload) => {
-              console.log("🔔 Wearable session updated for current user:", payload);
               fetchMetrics();
             }
           )

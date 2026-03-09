@@ -31,7 +31,6 @@ export function useEngagementTracking() {
         return false;
       }
 
-      console.log(`[useEngagementTracking] Tracked: ${event_type}`, target_id ? `(${target_id})` : "");
       return true;
     } catch (err) {
       console.error("[useEngagementTracking] Exception:", err);

@@ -74,7 +74,6 @@ Deno.serve(async (req: Request) => {
     //         ?userId=<uid>. Generate PKCE, store state, redirect to Garmin.
     // ════════════════════════════════════════════════════════════════════
     if (userId && !code && !state && !error) {
-      console.log(`[garmin-auth] [INITIATE] Starting OAuth for user: ${userId}`);
 
       // Basic userId validation
       if (userId.length > 128 || !/^[a-f0-9-]+$/.test(userId)) {
@@ -130,8 +129,6 @@ Deno.serve(async (req: Request) => {
         `&code_challenge_method=S256` +
         `&state=${encodeURIComponent(oauthState)}`;
 
-      console.log(`[garmin-auth] [INITIATE] Redirecting user ${userId} to Garmin OAuth`);
-      console.log(`[garmin-auth] [INITIATE] redirect_uri: ${redirectUri}`);
 
       return new Response(null, {
         status: 302,
@@ -172,7 +169,6 @@ Deno.serve(async (req: Request) => {
       });
     }
 
-    console.log(`[garmin-auth] [CALLBACK] Received callback with state: ${state.substring(0, 8)}...`);
 
     // ── Validate state & retrieve PKCE code_verifier ──────────────────
     const { data: oauthStateRow, error: stateError } = await supabase
@@ -201,7 +197,6 @@ Deno.serve(async (req: Request) => {
     const callbackUserId = oauthStateRow.user_id;
     const codeVerifier = oauthStateRow.code_verifier;
 
-    console.log(`[garmin-auth] [CALLBACK] State validated for user: ${callbackUserId}`);
 
     // Delete used state immediately (one-time use)
     await supabase.from("garmin_oauth_state").delete().eq("id", oauthStateRow.id);
@@ -220,7 +215,6 @@ Deno.serve(async (req: Request) => {
     }
 
     // ── Exchange authorization code for tokens ────────────────────────
-    console.log("[garmin-auth] [CALLBACK] Exchanging authorization code for tokens...");
 
     const tokenResponse = await fetch(GARMIN_TOKEN_URL, {
       method: "POST",
@@ -235,7 +229,6 @@ Deno.serve(async (req: Request) => {
       }),
     });
 
-    console.log(`[garmin-auth] [CALLBACK] Token response status: ${tokenResponse.status}`);
 
     const tokenData = await tokenResponse.json();
 
@@ -264,7 +257,6 @@ Deno.serve(async (req: Request) => {
       });
     }
 
-    console.log("[garmin-auth] [CALLBACK] Token exchange successful");
 
     // ── Calculate expiry ──────────────────────────────────────────────
     const expiresInSeconds = tokenData.expires_in || 86400;
@@ -302,11 +294,9 @@ Deno.serve(async (req: Request) => {
       });
     }
 
-    console.log(`[garmin-auth] [CALLBACK] UPDATE affected ${updateCount ?? "?"} row(s)`);
 
     // 2. If no row existed, INSERT
     if (!updateCount || updateCount === 0) {
-      console.log("[garmin-auth] [CALLBACK] No existing row — inserting");
       const { error: insertError } = await supabase
         .from("wearable_tokens")
         .insert({
@@ -323,10 +313,8 @@ Deno.serve(async (req: Request) => {
           headers: { Location: `${FRONTEND_URL}/settings?garmin_error=db_insert_failed` },
         });
       }
-      console.log("[garmin-auth] [CALLBACK] INSERT successful");
     }
 
-    console.log(`[garmin-auth] [CALLBACK] [SUCCESS] Garmin token saved for user: ${callbackUserId}`);
 
     // ── Fetch and store Garmin's stable userId for webhook matching ───
     try {
@@ -342,7 +330,6 @@ Deno.serve(async (req: Request) => {
             .update({ provider_user_id: garminUserData.userId })
             .eq("user_id", callbackUserId)
             .eq("scope", "garmin");
-          console.log(`[garmin-auth] Stored Garmin provider userId for user: ${callbackUserId}`);
         }
       } else {
         console.warn(`[garmin-auth] Could not fetch Garmin userId (${garminUserRes.status})`);

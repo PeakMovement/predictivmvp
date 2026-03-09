@@ -54,7 +54,6 @@ Deno.serve(async (req: Request) => {
 
     // SECURITY: Use authenticated user.id instead of request body
     const user_id = user.id;
-    console.log(`[oura-auth-initiate] Authenticated user: ${user_id}`);
 
     const clientId = Deno.env.get("OURA_CLIENT_ID");
 
@@ -69,7 +68,6 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    console.log(`[oura-auth-initiate] Initiating Ōura OAuth for user: ${user_id}`);
 
     // Ōura OAuth URL with comprehensive scopes for full data access
     // Valid scopes per official docs: email, personal, daily, heartrate, workout, tag, session, spo2
@@ -96,7 +94,6 @@ Deno.serve(async (req: Request) => {
       `scope=${encodeURIComponent(scope)}&` +
       `state=${user_id}`;
 
-    console.log(`[oura-auth-initiate] [SUCCESS] Generated auth URL for user: ${user_id}`);
 
     return new Response(
       JSON.stringify({ 

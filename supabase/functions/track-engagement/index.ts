@@ -97,7 +97,6 @@ Deno.serve(async (req) => {
       } else {
         // Store non-UUID target_id in metadata for reference
         metadata.original_target_id = body.target_id;
-        console.log(`[track-engagement] Non-UUID target_id "${body.target_id}" stored in metadata`);
       }
     }
 
@@ -143,7 +142,6 @@ Deno.serve(async (req) => {
       }
     }
 
-    console.log(`[track-engagement] User ${user.id}: ${body.event_type}${body.target_id ? ` (target: ${body.target_id})` : ''}`);
 
     return new Response(
       JSON.stringify({ success: true, event_id: data.id }),

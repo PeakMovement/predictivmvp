@@ -23,7 +23,6 @@ Deno.serve(async (req) => {
       });
     }
 
-    console.log(`[backfill-memory-bank] Backfilling memory for user ${user_id}`);
 
     // Fetch symptom check-ins
     const { data: symptoms } = await supabase
@@ -111,7 +110,6 @@ Deno.serve(async (req) => {
       }
     }
 
-    console.log(`[backfill-memory-bank] Wrote ${written}/${entries.length} entries for user ${user_id}`);
 
     return new Response(
       JSON.stringify({ success: true, entries_written: written, total: entries.length }),

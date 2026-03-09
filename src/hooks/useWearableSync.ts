@@ -106,7 +106,6 @@ export const useWearableSync = (): WearableSyncState => {
         throw new Error("Please log in to sync your data");
       }
 
-      console.log('[WearableSync] Starting sync for user:', user.id);
 
       // Detect which devices are connected
       const { data: tokens } = await supabase
@@ -131,7 +130,6 @@ export const useWearableSync = (): WearableSyncState => {
       const succeeded = results.map((r, i) => r.status === "fulfilled" ? invocations[i].scope : null).filter(Boolean);
       const failed = results.map((r, i) => r.status === "rejected" ? invocations[i].scope : null).filter(Boolean);
 
-      console.log('[WearableSync] Sync results — succeeded:', succeeded, 'failed:', failed);
 
       // Update local state on any success
       if (succeeded.length > 0) {

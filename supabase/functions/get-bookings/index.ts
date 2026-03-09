@@ -38,7 +38,6 @@ serve(async (req) => {
       );
     }
 
-    console.log(`Fetching bookings for user: ${user.id}`);
 
     // Parse query params
     const url = new URL(req.url);
@@ -95,7 +94,6 @@ serve(async (req) => {
       physician: booking.clinician_id ? physicians[booking.clinician_id] || null : null
     }));
 
-    console.log(`Found ${enrichedBookings.length} bookings`);
 
     return new Response(
       JSON.stringify({

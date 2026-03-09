@@ -138,7 +138,6 @@ Deno.serve(async (req) => {
     const documentType = rawBody.documentType;
     const fileContent = rawBody.fileContent;
 
-    console.log(`[analyze-document] Analyzing document ${documentId} for user ${userId}, type: ${documentType}, content length: ${fileContent?.length}`);
 
     // Create processing log entry
     const { data: logEntry } = await supabase
@@ -161,7 +160,6 @@ Deno.serve(async (req) => {
     try {
       const parsed = JSON.parse(fileContent);
       if (parsed.type === 'binary' && parsed.encoding === 'base64') {
-        console.log('[analyze-document] Detected binary content, skipping full decode');
         processedContent = `[Binary file: ${parsed.metadata.name}, ${parsed.metadata.size} bytes, type: ${parsed.metadata.type}]`;
       }
     } catch {
@@ -265,7 +263,6 @@ Deno.serve(async (req) => {
       toolChoice: { type: "function", function: { name: `extract_${documentType}_data` } }
     });
 
-    console.log('[analyze-document] AI analysis complete');
 
     let insightData;
     let aiSummary;
@@ -273,7 +270,6 @@ Deno.serve(async (req) => {
     if (aiResponse.toolCalls && aiResponse.toolCalls.length > 0) {
       insightData = JSON.parse(aiResponse.toolCalls[0].arguments);
       aiSummary = `Structured ${documentType} data extracted successfully`;
-      console.log('[analyze-document] Extracted structured data:', JSON.stringify(insightData).substring(0, 200));
     } else {
       aiSummary = aiResponse.content;
       try {
@@ -311,7 +307,6 @@ Deno.serve(async (req) => {
       p_data: insightData
     });
 
-    console.log(`[analyze-document] Document analysis completed for ${documentId}`);
 
     // Update processing log with analysis step
     if (logEntry) {
@@ -335,7 +330,6 @@ Deno.serve(async (req) => {
         },
         body: JSON.stringify({ userId })
       });
-      console.log('[analyze-document] Health profile rebuild triggered');
 
       // Update processing log with profile rebuild step
       if (logEntry) {
@@ -401,7 +395,6 @@ Deno.serve(async (req) => {
               source: 'document_analysis'
             });
         }
-        console.log(`[analyze-document] Generated ${recommendations.length} recommendations`);
       }
     } catch (recError) {
       console.error('[analyze-document] Failed to generate recommendations:', recError);
@@ -454,7 +447,6 @@ Deno.serve(async (req) => {
         .eq('document_id', documentId)
         .eq('user_id', userId);
 
-      console.log('[analyze-document] Marked document as failed');
     } catch (e) {
       console.error('[analyze-document] Failed to update document status:', e);
     }

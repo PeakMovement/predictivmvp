@@ -43,7 +43,6 @@ Deno.serve(async (req) => {
       );
     }
 
-    console.log(`🔍 [wearable-diagnostics] Starting health check for user: ${user_id}`);
 
     const result: DiagnosticResult = {
       status: 'pass',
@@ -56,7 +55,6 @@ Deno.serve(async (req) => {
     };
 
     // ✅ CHECK 1: Wearable Token Validity
-    console.log('🔑 Checking wearable_tokens...');
     const { data: tokenData, error: tokenError } = await supabase
       .from('wearable_tokens')
       .select('access_token, expires_in, updated_at')
@@ -81,7 +79,6 @@ Deno.serve(async (req) => {
     }
 
     // ✅ CHECK 2: Today's Wearable Data
-    console.log('📊 Checking wearable_auto_data for today...');
     const today = new Date().toISOString().split('T')[0];
     
     const { data: autoData, error: dataError } = await supabase
@@ -114,7 +111,6 @@ Deno.serve(async (req) => {
     }
 
     // ✅ CHECK 3: Recent Trends Update
-    console.log('📈 Checking training_trends for recent updates...');
     const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
     
     const { data: trendsData, error: trendsError } = await supabase
@@ -139,7 +135,6 @@ Deno.serve(async (req) => {
     }
 
     // ✅ CHECK 4: Cron Job Execution
-    console.log('⏰ Checking cron job execution...');
     const ninetyMinutesAgo = new Date(Date.now() - 90 * 60 * 1000).toISOString();
     
     const { data: cronData, error: cronError } = await supabase
@@ -187,7 +182,6 @@ Deno.serve(async (req) => {
       },
     });
 
-    console.log(`✅ [wearable-diagnostics] Completed in ${executionTime}ms - Status: ${result.status}`);
 
     return new Response(JSON.stringify(result, null, 2), {
       status: 200,

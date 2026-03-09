@@ -95,7 +95,6 @@ Deno.serve(async (req) => {
       });
     }
 
-    console.log(`[predict-provider] Processing triage for user ${user.id}: ${issue_type} (${severity || 'unspecified'})`);
 
     // ─── GATHER ALL CONTEXT DATA ─────────────────────────────────────────────
     const dataSources: string[] = [];
@@ -388,7 +387,6 @@ CONFIDENCE SCORING GUIDELINES:
       console.error("[predict-provider] Failed to save triage result:", saveError);
     }
 
-    console.log(`[predict-provider] SUCCESS: ${providerKey} (${adjustedConfidence}% confidence)`);
 
     // ─── RETURN RESPONSE ─────────────────────────────────────────────────────
     return new Response(JSON.stringify({

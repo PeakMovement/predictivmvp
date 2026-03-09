@@ -124,7 +124,6 @@ function getLocalLayouts(): Record<PageId, PageLayout> | null {
     // Check version compatibility
     const version = storedVersion ? parseInt(storedVersion, 10) : 1;
     if (version < CURRENT_LAYOUT_VERSION) {
-      console.log(`Migrating layout from version ${version} to ${CURRENT_LAYOUT_VERSION}`);
       const migrated = migrateLayout(parsed, version);
       saveLocalLayouts(migrated);
       return migrated;
@@ -183,7 +182,6 @@ function migrateLayout(
 
   // Migration from v1 to v2: Add version and lastUpdated fields
   if (fromVersion < 2) {
-    console.log('Migrating from v1 to v2: Adding metadata');
     migrated = Object.entries(migrated).reduce<Record<PageId, PageLayout>>((acc, [key, layout]) => {
       acc[key as PageId] = {
         ...layout,

@@ -47,7 +47,6 @@ Deno.serve(async (req) => {
       userIds = uniqueIds as string[];
     }
 
-    console.log(`[generate-weekly-challenges] Processing ${userIds.length} users`);
 
     const results: any[] = [];
 
@@ -94,7 +93,6 @@ async function generateChallengesForUser(
     .in("status", ["pending", "active"]);
 
   if (existing && existing.length >= 2) {
-    console.log(`[generate-weekly-challenges] User ${userId} already has ${existing.length} challenges this week, skipping`);
     return { success: true, skipped: true, reason: "already_has_challenges" };
   }
 
@@ -266,6 +264,5 @@ Valid progress_metric values: session_count, total_distance, avg_sleep_score, av
     throw insertError;
   }
 
-  console.log(`[generate-weekly-challenges] SUCCESS: Created ${rows.length} challenges for user ${userId}`);
   return { success: true, created: rows.length };
 }

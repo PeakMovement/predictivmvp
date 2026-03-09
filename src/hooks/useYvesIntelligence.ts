@@ -103,7 +103,6 @@ export function useYvesIntelligence(focusMode?: FocusMode) {
       }
 
       // Call edge function to generate fresh intelligence
-      console.log(`[useYvesIntelligence] Invoking generate-yves-intelligence for user ${user.id}, focus_mode: ${activeFocusMode}, force_refresh: ${forceRefresh}${refreshNonce ? `, nonce: ${refreshNonce}` : ''}`);
 
       const { data, error } = await supabase.functions.invoke("generate-yves-intelligence", {
         body: {
@@ -112,15 +111,6 @@ export function useYvesIntelligence(focusMode?: FocusMode) {
           force_refresh: forceRefresh,
           refresh_nonce: refreshNonce,
         },
-      });
-
-      console.log(`[useYvesIntelligence] Edge function response:`, {
-        success: data?.success,
-        cached: data?.cached,
-        hasData: !!data?.data,
-        error: error || data?.error,
-        reasoning: data?.reasoning,
-        generation_id: data?.generation_id,
       });
 
       if (error) throw error;
@@ -179,14 +169,12 @@ export function useYvesIntelligence(focusMode?: FocusMode) {
   useEffect(() => {
     // Skip automatic fetch if a manual refresh is in progress
     if (isManualRefreshRef.current) {
-      console.log(`[useYvesIntelligence] Skipping auto-fetch — manual refresh in progress`);
       return;
     }
 
     const shouldForceRefresh = state.previousFocusMode && state.previousFocusMode !== focusMode;
 
     if (shouldForceRefresh) {
-      console.log(`[useYvesIntelligence] Focus mode changed from ${state.previousFocusMode} to ${focusMode}, forcing refresh`);
     }
 
     fetchIntelligence(shouldForceRefresh || false, focusMode);

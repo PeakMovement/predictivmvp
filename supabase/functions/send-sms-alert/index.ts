@@ -52,7 +52,6 @@ Deno.serve(async (req) => {
       );
     }
 
-    console.log(`Sending SMS to ${to}`);
 
     // Prepare Twilio API request
     const twilioUrl = `https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Messages.json`;
@@ -87,7 +86,6 @@ Deno.serve(async (req) => {
       );
     }
 
-    console.log(`SMS sent successfully. SID: ${twilioData.sid}`);
 
     // Log successful delivery
     await logNotification(to, message, 'delivered');
@@ -134,7 +132,6 @@ async function logNotification(recipient: string, message: string, status: 'deli
     if (error) {
       console.error('Error logging notification:', error);
     } else {
-      console.log(`Notification logged: ${recipient} - ${status}`);
     }
   } catch (error) {
     console.error('Failed to log notification:', error);

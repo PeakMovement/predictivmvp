@@ -690,7 +690,6 @@ Deno.serve(async (req) => {
       result.correctiveAction = personalizedAction;
     }
 
-    console.log(`[identify-risk-drivers] User ${userId}: Primary=${result.primary?.id || 'none'}, Secondary=${result.secondary?.id || 'none'}, Level=${result.riskLevel}, RecommendedActivity=${result.correctiveAction.recommendedActivity || 'none'}`);
 
     return new Response(
       JSON.stringify({

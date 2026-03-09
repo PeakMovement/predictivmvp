@@ -277,7 +277,6 @@ export function getAIProvider(): AIProviderService {
   const anthropicKey = Deno.env.get('ANTHROPIC_API_KEY');
   const googleKey = Deno.env.get('GOOGLE_AI_API_KEY');
 
-  console.log('[AI Provider] Available keys:', {
     lovable: !!lovableKey,
     openai: !!openaiKey,
     anthropic: !!anthropicKey,
@@ -286,7 +285,6 @@ export function getAIProvider(): AIProviderService {
 
   // Prioritize Lovable AI (pre-configured, no billing issues)
   if (lovableKey) {
-    console.log('[AI Provider] Using Lovable AI (google/gemini-2.5-flash)');
     return new AIProviderService('lovable', lovableKey);
   }
 
@@ -294,33 +292,27 @@ export function getAIProvider(): AIProviderService {
   const explicitProvider = Deno.env.get('AI_PROVIDER') as AIProvider;
   
   if (explicitProvider === 'openai' && openaiKey) {
-    console.log('[AI Provider] Using OpenAI');
     return new AIProviderService('openai', openaiKey);
   }
   
   if (explicitProvider === 'anthropic' && anthropicKey) {
-    console.log('[AI Provider] Using Anthropic');
     return new AIProviderService('anthropic', anthropicKey);
   }
   
   if (explicitProvider === 'google' && googleKey) {
-    console.log('[AI Provider] Using Google');
     return new AIProviderService('google', googleKey);
   }
 
   // Auto-detect available provider
   if (openaiKey) {
-    console.log('[AI Provider] Auto-detected OpenAI');
     return new AIProviderService('openai', openaiKey);
   }
   
   if (anthropicKey) {
-    console.log('[AI Provider] Auto-detected Anthropic');
     return new AIProviderService('anthropic', anthropicKey);
   }
   
   if (googleKey) {
-    console.log('[AI Provider] Auto-detected Google');
     return new AIProviderService('google', googleKey);
   }
 

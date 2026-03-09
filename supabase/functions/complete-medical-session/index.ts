@@ -43,7 +43,6 @@ Deno.serve(async (req) => {
       // No body provided, that's okay
     }
 
-    console.log(`Completing session for user ${user.id}, bookingId: ${bookingId}`);
 
     // Use service role for update
     const serviceClient = createClient(
@@ -65,7 +64,6 @@ Deno.serve(async (req) => {
     }
 
     if (!session) {
-      console.log('No active session to complete');
       return new Response(
         JSON.stringify({ success: true, message: 'No active session to complete' }),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -93,7 +91,6 @@ Deno.serve(async (req) => {
       throw updateError;
     }
 
-    console.log(`Session ${session.id} completed successfully`);
     return new Response(
       JSON.stringify({ 
         success: true, 

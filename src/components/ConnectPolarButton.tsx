@@ -43,7 +43,6 @@ export const ConnectPolarButton = ({ isConnected, onConnectionChange }: ConnectP
         throw new Error("No authorization URL received");
       }
 
-      console.log("[DEV] Polar OAuth URL:", data.auth_url);
 
       window.location.href = data.auth_url;
     } catch (err) {

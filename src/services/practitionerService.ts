@@ -190,7 +190,6 @@ export async function seedMockPractitioners() {
     .select('id', { count: 'exact', head: true });
 
   if (existingCount && existingCount > 0) {
-    console.log('Practitioners already seeded');
     return;
   }
 
@@ -241,5 +240,4 @@ export async function seedMockPractitioners() {
     }
   }
 
-  console.log('Mock practitioners seeded successfully');
 }

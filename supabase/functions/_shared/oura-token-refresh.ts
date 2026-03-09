@@ -217,7 +217,6 @@ export async function refreshOuraToken(
   const startTime = Date.now();
   
   try {
-    console.log(`[oura-token-refresh] Refreshing token for user ${token.user_id}`);
 
     // Check rate limit first
     const rateCheck = await checkRateLimit(supabase, token.user_id);
@@ -258,7 +257,6 @@ export async function refreshOuraToken(
     let lastError: string = "";
     for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
       try {
-        console.log(`[oura-token-refresh] Attempt ${attempt + 1}/${MAX_RETRIES}...`);
 
         const refreshRes = await fetch("https://api.ouraring.com/oauth/token", {
           method: "POST",
@@ -327,7 +325,6 @@ export async function refreshOuraToken(
           // Retry with backoff
           if (attempt < MAX_RETRIES - 1) {
             const delay = BASE_RETRY_DELAY_MS * Math.pow(2, attempt);
-            console.log(`[oura-token-refresh] Retrying in ${delay}ms...`);
             await logSyncHealth(supabase, token.user_id, "retry", Date.now() - startTime, 0, errorCode, errorMessage, attempt + 1);
             await new Promise(r => setTimeout(r, delay));
             continue;
@@ -350,7 +347,6 @@ export async function refreshOuraToken(
         }
 
         const expiresAt = new Date(Date.now() + refreshed.expires_in * 1000).toISOString();
-        console.log(`[oura-token-refresh] Token refreshed, new expiry: ${expiresAt}`);
 
         // Encrypt tokens for storage (application-level encryption)
         const encryptionKey = Deno.env.get("OURA_CLIENT_SECRET") || "default-key";
@@ -381,7 +377,6 @@ export async function refreshOuraToken(
           };
         }
 
-        console.log(`[oura-token-refresh] Token refreshed successfully for user ${token.user_id}`);
         await logSyncHealth(supabase, token.user_id, "success", Date.now() - startTime, 1);
 
         return {
@@ -429,7 +424,6 @@ export async function getValidOuraToken(
   supabase: SupabaseClient,
   userId: string
 ): Promise<RefreshResult> {
-  console.log(`[oura-token-refresh] Getting valid token for user ${userId}`);
 
   const { data: token, error: tokenError } = await supabase
     .from("wearable_tokens")
@@ -448,7 +442,6 @@ export async function getValidOuraToken(
   }
 
   if (!token) {
-    console.log(`[oura-token-refresh] No Oura token found for user ${userId}`);
     return {
       success: false,
       error: "No Oura Ring connected. Please connect your Oura Ring in Settings.",
@@ -457,7 +450,6 @@ export async function getValidOuraToken(
   }
 
   if (!token.access_token) {
-    console.log(`[oura-token-refresh] Token exists but access_token is null for user ${userId}`);
     return {
       success: false,
       error: "Oura connection incomplete. Please reconnect your Oura Ring.",
@@ -471,14 +463,11 @@ export async function getValidOuraToken(
 
   if (timeUntilExpiry <= REFRESH_BUFFER_MS) {
     if (timeUntilExpiry <= 0) {
-      console.log(`[oura-token-refresh] Token expired ${Math.abs(timeUntilExpiry / 1000)}s ago, refreshing...`);
     } else {
-      console.log(`[oura-token-refresh] Token expires in ${timeUntilExpiry / 1000}s (< 5min buffer), proactively refreshing...`);
     }
     return await refreshOuraToken(supabase, token as OuraToken);
   }
 
-  console.log(`[oura-token-refresh] Token valid for ${Math.round(timeUntilExpiry / 1000 / 60)} minutes`);
   
   return {
     success: true,

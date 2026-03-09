@@ -82,7 +82,6 @@ serve(async (req) => {
       activity_score: latestRecord.activity_score_avg,
     } : null;
 
-    console.log(`[get-activity-trends] [SUCCESS] Returned ${data?.length || 0} records for user ${user.id}`);
 
     return new Response(
       JSON.stringify({

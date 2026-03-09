@@ -67,7 +67,6 @@ Deno.serve(async (req) => {
       );
     }
 
-    console.log(`[evaluate-escalation-rules] Evaluating for user ${userId}`);
 
     // Fetch enabled escalation rules
     const { data: rules, error: rulesError } = await supabase
@@ -145,7 +144,6 @@ Deno.serve(async (req) => {
       hrv_deviation_pct: hrvDeviationPct,
     };
 
-    console.log(`[evaluate-escalation-rules] Metrics:`, JSON.stringify(metrics));
 
     // Evaluate each rule
     const triggeredRules: TriggeredRule[] = [];
@@ -158,7 +156,6 @@ Deno.serve(async (req) => {
         const triggerTime = new Date(recentTrigger.created_at);
         const hoursSinceTrigger = (now.getTime() - triggerTime.getTime()) / (1000 * 60 * 60);
         if (hoursSinceTrigger < rule.cooldown_hours) {
-          console.log(`[evaluate-escalation-rules] Rule "${rule.rule_name}" in cooldown (${hoursSinceTrigger.toFixed(1)}h < ${rule.cooldown_hours}h)`);
           continue;
         }
       }
@@ -209,7 +206,6 @@ Deno.serve(async (req) => {
           matched_conditions: matchedConditions,
         });
 
-        console.log(`[evaluate-escalation-rules] Rule TRIGGERED: "${rule.rule_name}" (${rule.severity})`);
       }
     }
 

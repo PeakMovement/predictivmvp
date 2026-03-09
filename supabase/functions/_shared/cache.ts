@@ -75,11 +75,9 @@ export async function getCachedOrFetch<T>(
 ): Promise<T> {
   const cached = cache.get<T>(key);
   if (cached !== null) {
-    console.log(`[Cache] Hit for key: ${key}`);
     return cached;
   }
 
-  console.log(`[Cache] Miss for key: ${key}, fetching...`);
   const data = await fetchFn();
   cache.set(key, data, ttlSeconds);
   return data;
@@ -100,6 +98,5 @@ export function invalidateCacheByPattern(pattern: RegExp): number {
       count++;
     }
   }
-  console.log(`[Cache] Invalidated ${count} entries matching pattern: ${pattern}`);
   return count;
 }

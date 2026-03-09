@@ -69,7 +69,6 @@ serve(async (req) => {
       );
     }
 
-    console.log(`[get-daily-health-trends] [SUCCESS] Returned ${data?.length || 0} records for user ${user.id}`);
 
     return new Response(
       JSON.stringify({

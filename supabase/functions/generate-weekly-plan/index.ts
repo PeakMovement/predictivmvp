@@ -226,7 +226,6 @@ Output format (exactly 7 lines, no bullet points, no day labels, just the advice
       advice: adviceLines[i] ?? "Follow the plan and listen to your body.",
     }));
 
-    console.log(`[generate-weekly-plan] Plan generated for user ${user.id}`);
 
     return new Response(
       JSON.stringify({ plan, sevenDayAvg, hasData: hasAnyData }),

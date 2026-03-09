@@ -58,7 +58,6 @@ Deno.serve(async (req: Request) => {
 
     // SECURITY: Use authenticated user.id instead of request body
     const user_id = user.id;
-    console.log(`[oura-auth] [START] Authenticated user: ${user_id}`);
 
     const { code } = await req.json();
 
@@ -73,8 +72,6 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    console.log(`[oura-auth] Exchanging code for user: ${user_id}`);
-    console.log(`[oura-auth] Code length: ${code.length}`);
 
     // Get Oura credentials from environment
     const ouraClientId = Deno.env.get("OURA_CLIENT_ID");
@@ -89,7 +86,6 @@ Deno.serve(async (req: Request) => {
       throw new Error(`Oura credentials not configured. Missing: ${missingCreds.join(", ")}`);
     }
 
-    console.log(`[oura-auth] Using Client ID: ${ouraClientId.substring(0, 8)}...`);
 
     // Exchange authorization code for tokens
     const redirectUri = Deno.env.get("OURA_REDIRECT_URI");
@@ -107,7 +103,6 @@ Deno.serve(async (req: Request) => {
       client_secret: ouraClientSecret,
     };
 
-    console.log(`[oura-auth] Token exchange request:`, {
       grant_type: tokenRequestBody.grant_type,
       redirect_uri: tokenRequestBody.redirect_uri,
       client_id: `${ouraClientId.substring(0, 8)}...`,
@@ -120,7 +115,6 @@ Deno.serve(async (req: Request) => {
       body: new URLSearchParams(tokenRequestBody),
     });
 
-    console.log(`[oura-auth] Token response status: ${tokenResponse.status}`);
 
     const tokenData = await tokenResponse.json();
 
@@ -146,12 +140,10 @@ Deno.serve(async (req: Request) => {
       throw new Error(errorMessage);
     }
 
-    console.log("[oura-auth] Successfully received tokens from Oura");
 
     // Calculate expiration timestamp as ISO string (timestamptz format)
     const expiresAtTimestamp = new Date(Date.now() + tokenData.expires_in * 1000).toISOString();
 
-    console.log("[oura-auth] Saving tokens to database...");
 
     // Verify we have all required token data
     if (!tokenData.access_token || !tokenData.refresh_token) {
@@ -165,7 +157,6 @@ Deno.serve(async (req: Request) => {
     // 2. The token_type is implicit and doesn't need to be persisted
     // 3. Adding it would require a schema migration with no functional benefit
     if (tokenData.token_type) {
-      console.log(`[oura-auth] token_type received: "${tokenData.token_type}" (not stored - always Bearer)`);
     }
 
     // Upsert tokens to database with proper scope
@@ -187,7 +178,6 @@ Deno.serve(async (req: Request) => {
       throw new Error(`Failed to save tokens: ${error.message}`);
     }
 
-    console.log("[oura-auth] [SUCCESS] Tokens saved to database");
 
     return new Response(
       JSON.stringify({ success: true }),

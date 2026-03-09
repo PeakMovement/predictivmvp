@@ -11,7 +11,6 @@ export const useGarminRunningDistance = () => {
       const { data: { user } } = await supabase.auth.getUser();
 
       if (!user?.id) {
-        console.log("No user logged in");
         setIsLoading(false);
         return;
       }
@@ -47,7 +46,6 @@ export const useGarminRunningDistance = () => {
             0
           );
           setIsEstimated(false);
-          console.log(`✅ Garmin 7-day GPS distance: ${totalDistance.toFixed(2)} km`);
         } else {
           // Fallback: estimate from steps (avg stride ~0.762m)
           totalDistance = data.reduce(
@@ -55,11 +53,9 @@ export const useGarminRunningDistance = () => {
             0
           );
           setIsEstimated(true);
-          console.log(`✅ Garmin 7-day step-estimated distance: ${totalDistance.toFixed(2)} km`);
         }
         setRunningDistance(totalDistance);
       } else {
-        console.log("No Garmin running data found in last 7 days");
         setRunningDistance(0);
       }
     } catch (error) {
@@ -88,7 +84,6 @@ export const useGarminRunningDistance = () => {
               filter: `user_id=eq.${user.id}`,
             },
             (payload) => {
-              console.log("🔔 Garmin wearable session updated:", payload);
               fetchRunningDistance();
             }
           )

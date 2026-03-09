@@ -95,7 +95,6 @@ Deno.serve(async (req) => {
       });
     }
 
-    console.log(`[yves-chat] Processing query for user ${user.id}`);
 
     // ─── LOAD USER CONTEXT ───────────────────────────────────────────────────
     const { data: userContext } = await supabase
@@ -523,7 +522,6 @@ Deno.serve(async (req) => {
     };
 
     const coaching_mode: CoachingMode = classifyCoachingMode();
-    console.log(`[yves-chat] Coaching mode: ${coaching_mode} for user ${user.id}`);
 
     // ─── EDGE CASE FLAGS (for Task 7 — test all edge cases) ───────────────────
     const daysToEvent = wellnessGoals?.target_date
@@ -985,7 +983,6 @@ After giving substantive advice, capture it for tomorrow using memory_key: last_
       provider: "lovable-ai",
     });
 
-    console.log(`[yves-chat] Response generated and saved for user ${user.id}`);
 
     // ─── MEMORY AUTO-CAPTURE ─────────────────────────────────────────────────
     if (response.includes("memory_key:") && response.includes("memory_value:")) {
@@ -1001,7 +998,6 @@ After giving substantive advice, capture it for tomorrow using memory_key: last_
               source_timestamp: new Date().toISOString()
             },
           });
-          console.log(`[yves-chat] Memory updated: ${memory_key.trim()}`);
         }
       } catch (err) {
         console.warn("[yves-chat] Memory update skipped:", err);
@@ -1022,7 +1018,6 @@ After giving substantive advice, capture it for tomorrow using memory_key: last_
         { user_id: user.id, memory_key: insightKey, memory_value: insightValue, last_updated: new Date().toISOString() },
         { onConflict: "user_id,memory_key" }
       );
-      console.log(`[yves-chat] Conversation insight saved: ${insightKey}`);
     } catch (err) {
       console.warn("[yves-chat] Conversation insight save skipped:", err);
     }

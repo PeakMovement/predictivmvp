@@ -175,7 +175,6 @@ Deno.serve(async (req) => {
       });
     }
 
-    console.log(`[match-provider] Parsing query for user ${user.id}: "${query.slice(0, 100)}..."`);
 
     // ─── AI PARSING ──────────────────────────────────────────────────────────
     const ai = getAIProvider();
@@ -230,7 +229,6 @@ Deno.serve(async (req) => {
       parsed.professionalTypes = ["general_practitioner"];
     }
 
-    console.log(`[match-provider] Parsed: severity=${parsed.severity}, urgency=${parsed.urgency}, types=${parsed.professionalTypes.join(",")}`);
 
     return new Response(
       JSON.stringify({ success: true, parsed }),

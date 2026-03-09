@@ -88,7 +88,6 @@ Deno.serve(async (req) => {
     }
 
     const today = new Date().toISOString().split("T")[0];
-    console.log(`[generate-yves-intelligence] Starting intelligence generation for user ${userId}, date: ${today}, force_refresh: ${forceRefresh}`);
 
     // Load user's focus mode preference if not provided
     if (!focusMode) {
@@ -127,18 +126,14 @@ Deno.serve(async (req) => {
         if (cacheAge < sixHoursInMs) {
           // Tentatively use cache — will be invalidated later if data_signature changed
           cacheStillValid = true;
-          console.log(`[generate-yves-intelligence] Cache within TTL for user ${userId} (age: ${Math.round(cacheAge / 1000 / 60)} minutes) — will verify signature after data load`);
         } else {
-          console.log(`[generate-yves-intelligence] Cache expired for user ${userId} (age: ${Math.round(cacheAge / 1000 / 60)} minutes), regenerating`);
         }
       }
     } else {
-      console.log(`[generate-yves-intelligence] Force refresh requested for user ${userId}, fully bypassing all caches`);
     }
 
     // ─── ALWAYS RECALCULATE MATURITY FRESH ────────────────────────────────
     // Never rely on cached/stale maturity values — recalculate on every request
-    console.log(`[generate-yves-intelligence] Force-recalculating data maturity for user ${userId}...`);
     let dataMaturity: any = null;
     try {
       const maturityCalcResponse = await supabase.functions.invoke("calculate-data-maturity", {
@@ -147,7 +142,6 @@ Deno.serve(async (req) => {
 
       if (maturityCalcResponse.data?.success) {
         dataMaturity = maturityCalcResponse.data.data;
-        console.log(`[generate-yves-intelligence] Fresh maturity calculated:`, dataMaturity);
       } else {
         console.warn(`[generate-yves-intelligence] Maturity calc returned non-success, falling back to DB`);
         const { data: fallback } = await supabase
@@ -167,7 +161,6 @@ Deno.serve(async (req) => {
       dataMaturity = fallback;
     }
 
-    console.log(`[generate-yves-intelligence] Data maturity for user ${userId}:`, {
       maturity_level: dataMaturity?.maturity_level || 'not_found',
       maturity_score: dataMaturity?.maturity_score,
       data_days: dataMaturity?.data_days,
@@ -183,7 +176,6 @@ Deno.serve(async (req) => {
       || (dataMaturity?.documents_count ?? 0) > 0;
 
     if (dataMaturity?.maturity_level === 'insufficient' && !hasAnyUsableData) {
-      console.log(`[generate-yves-intelligence] User ${userId} has insufficient data maturity - returning onboarding guidance`);
       
       const onboardingIntelligence: YvesIntelligenceOutput = {
         dailyBriefing: {
@@ -227,7 +219,6 @@ Deno.serve(async (req) => {
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
     const sevenDaysAgoStr = sevenDaysAgo.toISOString().split("T")[0];
 
-    console.log(`[generate-yves-intelligence] Loading user data for past 7 days (since ${sevenDaysAgoStr})...`);
 
     // Batch 1: Core wearable & dynamic data
     const [
@@ -250,7 +241,6 @@ Deno.serve(async (req) => {
       supabase.from("symptom_check_ins").select("*").eq("user_id", userId).order("created_at", { ascending: false }).limit(5),
     ]);
 
-    console.log(`[generate-yves-intelligence] Data loaded:`, {
       wearable_sessions: wearableSessionsResult.data?.length || 0,
       wearable_summary: wearableSummaryResult.data?.length || 0,
       training_trends: trainingTrendsResult.data?.length || 0,
@@ -410,7 +400,6 @@ Deno.serve(async (req) => {
     };
 
     const continuityMemory = buildContinuityMemory();
-    console.log(`[generate-yves-intelligence] Continuity memory:`, continuityMemory);
 
     // ═══════════════════════════════════════════════════════════════════════
     // COMPUTE METRIC DELTAS (today vs yesterday, today vs 7-day avg)
@@ -467,7 +456,6 @@ Deno.serve(async (req) => {
     };
 
     const metricDeltas = computeDeltas();
-    console.log(`[generate-yves-intelligence] Computed metric deltas for user ${userId}:`, JSON.stringify(metricDeltas));
 
     // ═══════════════════════════════════════════════════════════════════════
     // DATA SIGNATURE (deterministic hash of all inputs that affect output)
@@ -491,13 +479,11 @@ Deno.serve(async (req) => {
     ].join('||');
 
     const dataSignature = await sha256Hex(signatureInput);
-    console.log(`[generate-yves-intelligence] Data signature: ${dataSignature.substring(0, 12)}... (input: ${signatureInput.substring(0, 80)}...)`);
 
     // ─── SIGNATURE-BASED CACHE DECISION ─────────────────────────────────────
     if (cacheStillValid && cachedBriefing && !forceRefresh) {
       const cachedSignature = (cachedBriefing.context_used as any)?.data_signature;
       if (cachedSignature === dataSignature) {
-        console.log(`[generate-yves-intelligence] Data signature MATCHES cached — returning cached intelligence`);
         return new Response(
           JSON.stringify({
             success: true,
@@ -513,7 +499,6 @@ Deno.serve(async (req) => {
           { headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       } else {
-        console.log(`[generate-yves-intelligence] Data signature CHANGED (cached: ${cachedSignature?.substring(0, 12)}... → new: ${dataSignature.substring(0, 12)}...) — regenerating despite valid TTL`);
       }
     }
 
@@ -536,7 +521,6 @@ Deno.serve(async (req) => {
       userTraining
     );
 
-    console.log(`[generate-yves-intelligence] Reasoning result for user ${userId}:`, {
       should_speak: reasoningContext.should_speak,
       overall_confidence: reasoningContext.overall_confidence,
       silence_reason: reasoningContext.silence_reason,
@@ -549,7 +533,6 @@ Deno.serve(async (req) => {
 
     // ─── SILENCE IS A VALID OUTCOME ───────────────────────────────────────────
     if (!reasoningContext.should_speak) {
-      console.log(`[generate-yves-intelligence] Reasoning engine says SILENCE for user ${userId}. Reason: ${reasoningContext.silence_reason}`);
       const silentResponse: YvesIntelligenceOutput = {
         dailyBriefing: {
           summary: reasoningContext.overall_confidence < 25
@@ -644,11 +627,9 @@ Deno.serve(async (req) => {
     };
 
     const coaching_mode: CoachingMode = classifyCoachingMode();
-    console.log(`[generate-yves-intelligence] Coaching mode: ${coaching_mode} for user ${userId}`);
 
     // ─── GET FOCUS MODE CONTEXT ──────────────────────────────────────────────
     const focusModeContext = getFocusModePromptContext(focusMode!);
-    console.log(`[generate-yves-intelligence] Using focus mode: ${focusMode} for user ${userId}`);
 
     // ─── BUILD COMPREHENSIVE CONTEXT ─────────────────────────────────────────
     let promptContext = "";
@@ -1000,7 +981,6 @@ Acknowledge frustration but enforce clear boundaries on activity.`
     };
 
     const profileCard = buildPersonalProfileCard();
-    console.log(`[generate-yves-intelligence] Profile card:`, profileCard);
 
     // ═══════════════════════════════════════════════════════════════════════
     // CREATIVE FRAMING PACK (changes every refresh via nonce-based rotation)
@@ -1272,7 +1252,6 @@ RESPOND WITH ONLY THE JSON OBJECT.`;
     // Compute prompt and system prompt hashes for auditability
     const promptContextHash = await sha256Hex(userPrompt);
     const systemPromptHash = await sha256Hex(systemPrompt);
-    console.log(`[generate-yves-intelligence] Calling AI for user ${userId} with ${promptContext.length} chars of context, data_sig: ${dataSignature.substring(0, 12)}, prompt_hash: ${promptContextHash.substring(0, 12)}, sys_hash: ${systemPromptHash.substring(0, 12)}`);
 
     // Helper: call a single AI endpoint
     const callAI = async (url: string, authHeader: string, model: string) => {
@@ -1341,7 +1320,6 @@ RESPOND WITH ONLY THE JSON OBJECT.`;
         }
         aiResponse = resp;
         usedProvider = provider.name;
-        console.log(`[generate-yves-intelligence] Using provider: ${provider.name}`);
         break;
       } catch (providerErr) {
         console.error(`[generate-yves-intelligence] Provider ${provider.name} threw:`, providerErr);
@@ -1361,7 +1339,6 @@ RESPOND WITH ONLY THE JSON OBJECT.`;
     const aiData = await aiResponse.json();
     let content = aiData.choices[0]?.message?.content;
 
-    console.log(`[generate-yves-intelligence] AI response received for user ${userId}, content length: ${content?.length || 0}`);
 
     if (!content) {
       console.error(`[generate-yves-intelligence] AI returned no content for user ${userId}`);
@@ -1378,7 +1355,6 @@ RESPOND WITH ONLY THE JSON OBJECT.`;
       // Fix common AI JSON issues: unescaped newlines in string values
       content = content.replace(/(?<=":[ ]*"[^"]*)\n(?=[^"]*")/g, ' ');
       intelligenceData = JSON.parse(content);
-      console.log(`[generate-yves-intelligence] Successfully parsed AI response for user ${userId}`);
       
       // Extract todaysFocus from summary if not provided
       if (!intelligenceData.dailyBriefing.todaysFocus) {
@@ -1432,7 +1408,6 @@ RESPOND WITH ONLY THE JSON OBJECT.`;
 
     // ─── SAVE TO DATABASE WITH REASONING CONTEXT ────────────────────────────
     const generationId = crypto.randomUUID();
-    console.log(`[generate-yves-intelligence] Saving briefing to database for user ${userId}, date: ${today}, category: unified, focus_mode: ${focusMode}, generation_id: ${generationId}`);
 
     const briefingRow = {
       user_id: userId,
@@ -1472,7 +1447,6 @@ RESPOND WITH ONLY THE JSON OBJECT.`;
     if (saveError) {
       console.error(`[generate-yves-intelligence] Database save error for user ${userId}:`, saveError);
     } else {
-      console.log(`[generate-yves-intelligence] Successfully saved briefing for user ${userId}`, savedBriefing);
     }
 
     // Save recommendations
@@ -1516,12 +1490,10 @@ RESPOND WITH ONLY THE JSON OBJECT.`;
       for (const entry of briefingMemoryEntries) {
         await supabase.from("yves_memory_bank").upsert(entry, { onConflict: "user_id,memory_key" });
       }
-      console.log(`[generate-yves-intelligence] Auto-captured briefing outcome to memory bank for user ${userId}`);
     } catch (memError) {
       console.warn(`[generate-yves-intelligence] Failed to auto-capture briefing memory:`, memError);
     }
 
-    console.log(`[generate-yves-intelligence] Intelligence generated for user ${userId} (confidence: ${reasoningContext.overall_confidence}%)`);
 
     return new Response(
       JSON.stringify({

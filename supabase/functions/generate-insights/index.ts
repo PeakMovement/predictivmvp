@@ -19,7 +19,6 @@ Deno.serve(async (req) => {
     const body = await req.json().catch(() => ({}));
     const targetUserId: string | null = body.user_id || null;
 
-    console.log(`[generate-insights] Starting${targetUserId ? ` for user ${targetUserId}` : " for all users"}`);
 
     // Fetch users with deviation data
     let query = supabase
@@ -113,7 +112,6 @@ Return only a JSON array, no markdown, no explanation.`;
 
         if (!upsertError) {
           totalInsights++;
-          console.log(`[generate-insights] Upserted insight for user ${userId}, metric: ${ins.metric}`);
         } else {
           console.error(`[generate-insights] Upsert error for ${ins.metric}:`, upsertError.message);
         }

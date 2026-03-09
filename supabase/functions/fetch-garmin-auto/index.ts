@@ -17,7 +17,6 @@ Deno.serve(async (req: Request) => {
   }
 
   const startTime = Date.now();
-  console.log("[fetch-garmin-auto] [START] Triggering Garmin data sync");
 
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL");
@@ -43,7 +42,6 @@ Deno.serve(async (req: Request) => {
 
     const result = await response.json();
 
-    console.log(
       `[fetch-garmin-auto] [COMPLETE] Status=${response.status} in ${Date.now() - startTime}ms: ${JSON.stringify(result).substring(0, 500)}`,
     );
 

@@ -72,7 +72,6 @@ serve(async (req) => {
       }
     }
 
-    console.log(`[trigger-risk-alert] Checking risk for user ${user_id}, type: ${check_type || 'all'}`);
 
     // Get user profile for phone number
     const { data: userProfile } = await supabase
@@ -148,14 +147,12 @@ serve(async (req) => {
     }
 
     if (!alertMessage) {
-      console.log(`[trigger-risk-alert] No critical alerts for user ${user_id}`);
       return new Response(
         JSON.stringify({ triggered: false, message: 'No critical alerts' }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    console.log(`[trigger-risk-alert] Alert triggered: ${alertType} - ${alertMessage}`);
 
     // Log the alert
     await supabase.from('notification_log').insert({

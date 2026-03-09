@@ -105,7 +105,6 @@ const sendSMSWithRetry = async (
       
       // Retry once after 5 seconds if first attempt fails
       if (retryCount === 0) {
-        console.log('Retrying SMS send after 5 seconds...');
         await new Promise(resolve => setTimeout(resolve, 5000));
         return sendSMSWithRetry(to, message, retryCount + 1);
       }
@@ -119,7 +118,6 @@ const sendSMSWithRetry = async (
     
     // Retry once if first attempt throws exception
     if (retryCount === 0) {
-      console.log('Retrying SMS send after 5 seconds due to exception...');
       await new Promise(resolve => setTimeout(resolve, 5000));
       return sendSMSWithRetry(to, message, retryCount + 1);
     }
@@ -164,7 +162,6 @@ export const checkAlertConditions = async (dayData: HealthDataRow): Promise<void
 
   // Check if SMS is enabled and phone number is configured
   if (!settings.enableSMS || !settings.phoneNumber) {
-    console.log('SMS alerts disabled or phone number not configured');
     return;
   }
 
@@ -183,16 +180,13 @@ export const checkAlertConditions = async (dayData: HealthDataRow): Promise<void
     const canSendThisAlert = await canSendAlert(alert.type);
     
     if (canSendThisAlert) {
-      console.log(`Sending ${alert.type} alert to ${settings.phoneNumber}`);
       const success = await sendSMSWithRetry(settings.phoneNumber, alert.message);
       
       if (success) {
-        console.log(`✓ Alert sent successfully: ${alert.type}`);
       } else {
         console.error(`✗ Failed to send alert: ${alert.type}`);
       }
     } else {
-      console.log(`Skipping ${alert.type} alert (sent recently)`);
     }
   }
 };
@@ -212,7 +206,6 @@ export const sendWeeklyReportAlert = async (): Promise<void> => {
 
   const canSendReport = await canSendAlert('weekly_report');
   if (!canSendReport) {
-    console.log('Skipping weekly report alert (sent recently)');
     return;
   }
 
@@ -220,7 +213,6 @@ export const sendWeeklyReportAlert = async (): Promise<void> => {
   const success = await sendSMSWithRetry(settings.phoneNumber, message);
   
   if (success) {
-    console.log('✓ Weekly report alert sent successfully');
   } else {
     console.error('✗ Failed to send weekly report alert');
   }

@@ -93,7 +93,6 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    console.log(`[fetch-oura-data] [START] Fetching data for user: ${user_id}`);
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL");
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
@@ -138,7 +137,6 @@ Deno.serve(async (req: Request) => {
     }
 
     if (tokenResult.refreshed) {
-      console.log(`[fetch-oura-data] Token was refreshed for user ${user_id}`);
     }
 
     const accessToken = tokenResult.access_token;
@@ -146,7 +144,6 @@ Deno.serve(async (req: Request) => {
     const endDate = end_date || new Date().toISOString().split('T')[0];
     const startDate = start_date || new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
 
-    console.log(`[fetch-oura-data] Fetching data from ${startDate} to ${endDate}`);
 
     // Check cache first (5 minute TTL)
     const cacheKey = buildCacheKey('oura-data', user_id, startDate, endDate);
@@ -200,7 +197,6 @@ Deno.serve(async (req: Request) => {
 
             const jsonData = await res.json();
             data[endpoint.name] = jsonData.data || [];
-            console.log(`[fetch-oura-data] [SUCCESS] Fetched ${data[endpoint.name].length} entries from ${endpoint.name}`);
           } catch (fetchErr) {
             if ((fetchErr as Error).message === 'TOKEN_EXPIRED') {
               throw fetchErr;
@@ -346,7 +342,6 @@ Deno.serve(async (req: Request) => {
         spo2_avg: dayData.spo2?.spo2_percentage?.average || null,
       };
 
-      console.log(`[fetch-oura-data] Date ${date}: resting_hr=${restingHr}, hrv_avg=${hrvAvg}`);
 
       const { error: sessionError } = await supabase
         .from("wearable_sessions")
@@ -392,7 +387,6 @@ Deno.serve(async (req: Request) => {
       entries_synced: entriesInserted,
     });
 
-    console.log(`[fetch-oura-data] [SUCCESS] Processed ${entriesInserted} entries for user ${user_id}, HR/HRV populated: ${hrHrvPopulated}`);
 
     return new Response(
       JSON.stringify({

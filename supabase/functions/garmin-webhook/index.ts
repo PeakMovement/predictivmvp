@@ -103,7 +103,6 @@ async function handleRequest(req: Request): Promise<Response> {
 
   // Garmin sends GET for endpoint validation
   if (req.method === "GET") {
-    console.log("[garmin-webhook] GET validation request received");
     return ok200();
   }
 
@@ -128,7 +127,6 @@ async function handleRequest(req: Request): Promise<Response> {
       return ok200();
     }
 
-    console.log(`[garmin-webhook] [RECEIVED] Keys: ${Object.keys(payload).join(", ")}`);
 
     // Process each data type Garmin may push
     const results: string[] = [];
@@ -175,7 +173,6 @@ async function handleRequest(req: Request): Promise<Response> {
     }
 
     const duration = Date.now() - startTime;
-    console.log(`[garmin-webhook] [COMPLETE] Processed ${results.join(", ")} in ${duration}ms`);
 
     // Fire trend recalculation for all affected users asynchronously.
     // This is deliberately fire-and-forget so we respond to Garmin within 30s.
@@ -191,7 +188,6 @@ async function handleRequest(req: Request): Promise<Response> {
           },
           body: JSON.stringify({ user_id: uid }),
         }).then(() => {
-          console.log(`[garmin-webhook] [TRENDS] Triggered recalculation for user ${uid}`);
         }).catch((e) => {
           console.error(`[garmin-webhook] [TRENDS] Failed to trigger recalculation for ${uid}: ${e}`);
         });
@@ -257,7 +253,7 @@ async function resolveUserId(
       .update({ provider_user_id: garminUserId })
       .eq("user_id", data.user_id)
       .eq("scope", "garmin")
-      .then(() => console.log(`[garmin-webhook] Saved provider_user_id for user ${data.user_id}`))
+      .then(() => {})
       .catch(() => {});
   }
 
@@ -300,7 +296,6 @@ async function processDailies(
     } else {
       count++;
       userIds.push(userId);
-      console.log(`[garmin-webhook] [OK] Daily saved: user=${userId} date=${date} steps=${d.steps}`);
     }
 
     await upsertSummary(supabase, userId, date);
@@ -347,7 +342,6 @@ async function processSleeps(
     } else {
       count++;
       userIds.push(userId);
-      console.log(`[garmin-webhook] [OK] Sleep saved: user=${userId} date=${date} score=${s.overallSleepScoreValue}`);
     }
 
     await upsertSummary(supabase, userId, date);
@@ -424,7 +418,6 @@ async function processActivities(
     } else {
       count++;
       userIds.push(data.userId);
-      console.log(`[garmin-webhook] [OK] Activity saved: user=${data.userId} date=${data.date} dist=${data.totalDistanceM}m`);
     }
 
     await upsertSummary(supabase, data.userId, data.date);
@@ -466,7 +459,6 @@ async function processHRVSummaries(
     } else {
       count++;
       userIds.push(userId);
-      console.log(`[garmin-webhook] [OK] HRV saved: user=${userId} date=${date} avg=${h.lastNightAvg}`);
     }
 
     // Also update training_trends with HRV
@@ -501,7 +493,6 @@ async function processDeregistrations(
     if (error) {
       console.error(`[garmin-webhook] [ERROR] Deregistration delete token for ${userId}: ${error.message}`);
     } else {
-      console.log(`[garmin-webhook] [OK] User ${userId} deregistered — Garmin token removed`);
     }
 
     // Log the event
@@ -521,7 +512,6 @@ async function processPermissionChanges(
 ): Promise<void> {
   for (const c of changes) {
     const userId = await resolveUserId(supabase, c.userAccessToken, c.userId);
-    console.log(`[garmin-webhook] [INFO] Permission change for user ${userId || "unknown"}`);
 
     if (userId) {
       await supabase.from("oura_logs").insert({
@@ -602,7 +592,6 @@ async function upsertSummary(
       sleep_score: todaySession ? ((todaySession.sleep_score as number) || null) : null,
     }, { onConflict: "user_id,date" });
 
-    console.log(`[garmin-webhook] [SUMMARY] user=${userId} date=${date} acwr=${acwr} strain=${strain} sessions=${sessions.length}`);
   } catch (err) {
     console.error(`[garmin-webhook] [ERROR] Summary calc for ${userId}/${date}: ${err instanceof Error ? err.message : String(err)}`);
   }

@@ -80,7 +80,6 @@ serve(async (req) => {
 
     const weeklyData = Object.values(groupedByWeek);
 
-    console.log(`[get-weekly-health-trends] [SUCCESS] Returned ${weeklyData.length} weeks for user ${user.id}`);
 
     return new Response(
       JSON.stringify({

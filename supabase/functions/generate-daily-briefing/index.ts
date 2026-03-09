@@ -50,7 +50,6 @@ Deno.serve(async (req) => {
       }
     }
 
-    console.log(`[generate-daily-briefing] Processing ${userIds.length} users for category: ${category}`);
 
     const results = [];
     const today = new Date().toISOString().split("T")[0];
@@ -67,7 +66,6 @@ Deno.serve(async (req) => {
           .maybeSingle();
 
         if (existingBriefing) {
-          console.log(`[generate-daily-briefing] Briefing already exists for user ${uid}, category ${category}`);
           continue;
         }
 
@@ -339,7 +337,6 @@ Deno.serve(async (req) => {
         };
 
         const coaching_mode: CoachingMode = classifyCoachingMode();
-        console.log(`[generate-daily-briefing] Coaching mode: ${coaching_mode} for user ${uid}`);
 
         // ─── CALCULATE RELATIONSHIP METRICS ───────────────────────────────────
         type RelationshipStage = 'new' | 'regular' | 'established';
@@ -367,7 +364,6 @@ Deno.serve(async (req) => {
         };
 
         const relationshipMetrics = calculateRelationshipStage();
-        console.log(`[generate-daily-briefing] Relationship: ${relationshipMetrics.stage} (${relationshipMetrics.daysActive} days), engagement: ${relationshipMetrics.engagementLevel}`);
 
         // ─── CALCULATE HISTORICAL COMPARISONS ─────────────────────────────────
         const calculateHistoricalContext = (): Record<string, unknown> => {
@@ -455,7 +451,6 @@ Deno.serve(async (req) => {
         };
 
         const persona = classifyPersona();
-        console.log(`[generate-daily-briefing] Persona: ${persona}`);
 
         // ─── BUILD PROMPT CONTEXT ────────────────────────────────────────────
         let promptContext = "";
@@ -1121,7 +1116,6 @@ If any answer is "no" — revise before output.`;
           continue;
         }
 
-        console.log(`[generate-daily-briefing] Briefing generated for user ${uid}, category: ${category}`);
         results.push({ user_id: uid, success: true });
 
         // Fire-and-forget daily briefing email for full briefings only

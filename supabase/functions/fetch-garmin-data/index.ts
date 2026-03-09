@@ -130,7 +130,6 @@ async function garminFetch<T>(
     url.searchParams.set(k, v);
   }
 
-  console.log(`[fetch-garmin-data] Calling Garmin API: ${endpoint} params=${JSON.stringify(params)}`);
 
   const res = await fetch(url.toString(), {
     headers: { Authorization: `Bearer ${accessToken}` },
@@ -199,7 +198,6 @@ async function garminFetch<T>(
     }
   }
 
-  console.log(`[fetch-garmin-data] [SUCCESS] ${endpoint}: ${items.length} records returned`);
   return { data: items };
 }
 
@@ -258,14 +256,12 @@ Deno.serve(async (req: Request) => {
     }
 
     if (targetUserIds.length === 0) {
-      console.log("[fetch-garmin-data] No Garmin-connected users found");
       return new Response(
         JSON.stringify({ success: true, message: "No Garmin users", synced: 0 }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
 
-    console.log(`[fetch-garmin-data] [START] Processing ${targetUserIds.length} user(s)`);
 
     // ── 3. Process each user ────────────────────────────────────────
     const results: Array<{ user_id: string; success: boolean; sessions: number; trends: number; summaries: number; error?: string }> = [];
@@ -294,7 +290,6 @@ Deno.serve(async (req: Request) => {
     const totalTrends = results.reduce((sum, r) => sum + r.trends, 0);
     const successCount = results.filter((r) => r.success).length;
 
-    console.log(
       `[fetch-garmin-data] [COMPLETE] ${totalSessions} sessions, ${totalTrends} trends for ${successCount}/${targetUserIds.length} users in ${Date.now() - startTime}ms`,
     );
 
@@ -325,7 +320,6 @@ async function syncUserGarminData(
   supabase: SupabaseClient,
   userId: string,
 ): Promise<{ user_id: string; success: boolean; sessions: number; trends: number; summaries: number; error?: string }> {
-  console.log(`[fetch-garmin-data] Syncing Garmin data for user: ${userId}`);
 
   // ── Get Garmin token ──────────────────────────────────────────────
   const { data: tokenRow, error: tokenErr } = await supabase
@@ -343,7 +337,6 @@ async function syncUserGarminData(
 
   // Check if token expired — refresh if needed
   if (tokenRow.expires_at && new Date(tokenRow.expires_at) < new Date()) {
-    console.log(`[fetch-garmin-data] Token expired for user ${userId}, attempting refresh`);
     const refreshed = await refreshGarminToken(supabase, userId, tokenRow.refresh_token);
     if (!refreshed.success) {
       return { user_id: userId, success: false, sessions: 0, trends: 0, summaries: 0, error: "Token expired, refresh failed" };
@@ -378,7 +371,6 @@ async function syncUserGarminData(
       uploadEndTimeInSeconds: dayEnd.toString(),
     };
 
-    console.log(`[fetch-garmin-data] User ${userId} | Day ${dayDate}`);
 
     const [
       dailiesResult, sleepsResult, activitiesResult,
@@ -468,7 +460,6 @@ async function syncUserGarminData(
     const errorSummary = apiErrors.length > 0
       ? `No data returned. API errors: ${apiErrors[0]}`
       : "No data returned from Garmin (possibly no recent data)";
-    console.log(`[fetch-garmin-data] User ${userId}: ${errorSummary}`);
 
     // Log the result so it shows up in monitoring
     try {
@@ -483,7 +474,6 @@ async function syncUserGarminData(
     return { user_id: userId, success: apiErrors.length === 0, sessions: 0, trends: 0, summaries: 0, error: apiErrors.length > 0 ? errorSummary : undefined };
   }
 
-  console.log(`[fetch-garmin-data] User ${userId}: ${dailies.length} dailies, ${sleeps.length} sleeps, ${activities.length} activities`);
 
   // ── Merge data by date ────────────────────────────────────────────
   const dateMap = new Map<string, {
@@ -684,7 +674,6 @@ async function syncUserGarminData(
     }
   }
 
-  console.log(`[fetch-garmin-data] [SUCCESS] User ${userId}: ${sessionsInserted} sessions upserted`);
 
   // ── Calculate training_trends and wearable_summary ────────────────
   // Fetch historical sessions for trend calculations (need 7+ days)
@@ -791,7 +780,6 @@ async function syncUserGarminData(
       }
     }
   } else {
-    console.log(`[fetch-garmin-data] User ${userId}: Only ${historicalSessions?.length || 0} historical sessions, skipping trend calculations (need 7+)`);
   }
 
   // Restore token status to active (in case it was previously marked expired)
@@ -811,7 +799,6 @@ async function syncUserGarminData(
     });
   } catch { /* ignore logging errors */ }
 
-  console.log(`[fetch-garmin-data] [SUCCESS] User ${userId}: ${sessionsInserted} sessions, ${trendsInserted} trends, ${summariesInserted} summaries`);
   return { user_id: userId, success: true, sessions: sessionsInserted, trends: trendsInserted, summaries: summariesInserted };
 }
 
@@ -877,7 +864,6 @@ async function refreshGarminToken(
       .eq("user_id", userId)
       .eq("scope", "garmin");
 
-    console.log(`[fetch-garmin-data] [SUCCESS] Token refreshed for user ${userId}`);
     return { success: true, access_token: tokenData.access_token };
   } catch (err) {
     console.error(`[fetch-garmin-data] [ERROR] Token refresh exception: ${err instanceof Error ? err.message : String(err)}`);

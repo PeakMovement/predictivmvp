@@ -408,7 +408,7 @@ const AcceptedChallengesSection = () => {
                         <TooltipTrigger asChild>
                           <button 
                             className="p-2 rounded-md hover:bg-primary/10 hover:shadow-glow transition-all duration-200 hover:scale-110 active:scale-95"
-                            onClick={() => console.log('Download PDF for challenge:', challenge.id)}
+                            onClick={() => {}}
                           >
                             <FileText size={16} className="text-muted-foreground hover:text-primary transition-colors duration-200" />
                           </button>
@@ -425,7 +425,7 @@ const AcceptedChallengesSection = () => {
                         <TooltipTrigger asChild>
                           <button 
                             className="p-2 rounded-md hover:bg-primary/10 hover:shadow-glow transition-all duration-200 hover:scale-110 active:scale-95"
-                            onClick={() => console.log('Watch Video for challenge:', challenge.id)}
+                            onClick={() => {}}
                           >
                             <Play size={16} className="text-muted-foreground hover:text-primary transition-colors duration-200" />
                           </button>

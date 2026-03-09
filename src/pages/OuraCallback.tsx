@@ -20,9 +20,6 @@ export const OuraCallback = () => {
         const error = params.get("error");
         const errorDescription = params.get("error_description");
 
-        console.log("[OuraCallback] Full URL:", window.location.href);
-        console.log("[OuraCallback] Parsed params:", { code, state, error, errorDescription });
-        console.log("[OuraCallback] All URL params:", Object.fromEntries(params.entries()));
 
         if (error) {
           throw new Error(
@@ -57,15 +54,12 @@ Expected redirect URI: https://predictiv.netlify.app/oauth/callback/oura`;
         }
 
         const user_id = user.id;
-        console.log("[OuraCallback] Authenticated user ID:", user_id);
-        console.log("[OuraCallback] Exchanging authorization code for access tokens...");
 
         // Call the oura-auth edge function using Supabase client (adds required auth headers)
         const { data: exchangeData, error: exchangeError } = await supabase.functions.invoke("oura-auth", {
           body: { code, user_id },
         });
 
-        console.log("[OuraCallback] Edge function response:", { exchangeData, exchangeError });
 
         if (exchangeError) {
           console.error("[OuraCallback] Edge function error:", {
@@ -119,22 +113,15 @@ Expected redirect URI: https://predictiv.netlify.app/oauth/callback/oura`;
           throw new Error("Token exchange completed but did not return success status");
         }
 
-        console.log("[OuraCallback] Token exchange successful:", exchangeData);
 
         await new Promise(resolve => setTimeout(resolve, 1500));
 
-        console.log("[OuraCallback] Verifying token storage...");
 
         const { data: verifyData, error: verifyError } = await supabase
           .from("oura_tokens")
           .select("user_id, access_token, expires_at")
           .eq("user_id", user_id)
           .maybeSingle();
-
-        console.log("[OuraCallback] Verification result:", {
-          hasData: !!verifyData,
-          hasError: !!verifyError
-        });
 
         if (verifyError) {
           console.error("[OuraCallback] Verification error:", verifyError);
@@ -147,10 +134,8 @@ Expected redirect URI: https://predictiv.netlify.app/oauth/callback/oura`;
           );
         }
 
-        console.log("[OuraCallback] Oura Ring connected successfully!");
 
         // Trigger initial data fetch
-        console.log("[OuraCallback] Triggering initial Oura data fetch...");
         try {
           const { data: fetchData, error: fetchError } = await supabase.functions.invoke("fetch-oura-data", {
             body: { user_id, start_date: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] },
@@ -159,7 +144,6 @@ Expected redirect URI: https://predictiv.netlify.app/oauth/callback/oura`;
           if (fetchError) {
             console.error("[OuraCallback] Initial data fetch failed:", fetchError);
           } else {
-            console.log("[OuraCallback] Initial data fetch triggered successfully:", fetchData);
           }
         } catch (fetchErr) {
           console.error("[OuraCallback] Error triggering initial data fetch:", fetchErr);

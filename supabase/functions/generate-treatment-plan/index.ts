@@ -46,7 +46,6 @@ serve(async (req) => {
 
     const { symptoms, severity, selectedPhysician, extractedSymptoms } = await req.json() as TreatmentPlanRequest;
 
-    console.log(`Generating treatment plan for ${severity.level} symptoms`);
 
     const symptomsDetail = extractedSymptoms?.map(s => 
       `${s.symptom}${s.bodyArea ? ` (${s.bodyArea})` : ''}`
@@ -119,7 +118,6 @@ Please provide helpful, empathetic guidance to help them prepare for their appoi
 
     const treatmentPlan: TreatmentPlanResponse = JSON.parse(content);
 
-    console.log('Treatment plan generated successfully');
 
     return new Response(JSON.stringify(treatmentPlan), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

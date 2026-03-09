@@ -35,7 +35,6 @@ Deno.serve(async (req: Request) => {
       throw new Error("user_id is required");
     }
 
-    console.log(`Analyzing engagement for user: ${user_id}`);
 
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
@@ -81,7 +80,6 @@ Deno.serve(async (req: Request) => {
 
     if (updateError) throw updateError;
 
-    console.log(`Engagement analysis completed for user: ${user_id}`);
 
     return new Response(
       JSON.stringify({

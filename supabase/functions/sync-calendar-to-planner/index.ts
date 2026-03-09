@@ -94,7 +94,6 @@ serve(async (req: Request) => {
       }
     }
 
-    console.log(`Synced ${syncedEventIds.length} events to planner for user:`, user.id);
 
     const plannerEvents = events
       .filter(e => syncedEventIds.includes(e.id))

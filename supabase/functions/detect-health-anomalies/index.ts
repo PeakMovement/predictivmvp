@@ -61,7 +61,6 @@ Deno.serve(async (req: Request) => {
     const body = await req.json().catch(() => ({}));
     const targetUserId = body.user_id;
 
-    console.log(`[detect-anomalies] [START] ${targetUserId ? `User: ${targetUserId}` : "All users"}`);
 
     // Get users with recent wearable data
     let userQuery = supabase.from("wearable_tokens").select("user_id").ilike("scope", "%extapi%");
@@ -73,7 +72,6 @@ Deno.serve(async (req: Request) => {
     if (userError) throw new Error(`Failed to fetch users: ${userError.message}`);
 
     if (!users || users.length === 0) {
-      console.log("[detect-anomalies] No users with Oura tokens found");
       return new Response(
         JSON.stringify({ success: true, anomalies_detected: 0, message: "No users to process" }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -84,7 +82,6 @@ Deno.serve(async (req: Request) => {
     const anomalyResults: any[] = [];
 
     for (const user of users) {
-      console.log(`[detect-anomalies] Processing user ${user.user_id}`);
 
       // Get last 14 days of data for baseline calculation
       const { data: sessions, error: sessionError } = await supabase
@@ -96,7 +93,6 @@ Deno.serve(async (req: Request) => {
         .order("date", { ascending: true });
 
       if (sessionError || !sessions || sessions.length < 3) {
-        console.log(`[detect-anomalies] Insufficient data for user ${user.user_id}`);
         continue;
       }
 
@@ -167,7 +163,6 @@ Deno.serve(async (req: Request) => {
                 deviation: `${deviationPercent > 0 ? '+' : ''}${deviationPercent.toFixed(1)}%`,
               });
               
-              console.log(`[detect-anomalies] Detected ${severity} ${anomalyType} in ${threshold.metric} for user ${user.user_id}: ${deviationPercent.toFixed(1)}%`);
             }
           }
         }
@@ -201,7 +196,6 @@ Deno.serve(async (req: Request) => {
       }
     }
 
-    console.log(`[detect-anomalies] [COMPLETE] Detected ${totalAnomalies} anomalies across ${users.length} users`);
 
     return new Response(
       JSON.stringify({

@@ -64,7 +64,6 @@ serve(async (req) => {
       .limit(1);
 
     if (recentAlerts && recentAlerts.length > 0) {
-      console.log(`[send-risk-email] Skipping - ${body.alert_type} alert sent recently`);
       return new Response(
         JSON.stringify({ 
           success: false, 
@@ -181,7 +180,6 @@ serve(async (req) => {
       </html>
     `;
 
-    console.log(`[send-risk-email] Sending ${body.alert_type} email to ${userEmail}`);
 
     // Send email via Resend
     const emailResponse = await resend.emails.send({
@@ -191,7 +189,6 @@ serve(async (req) => {
       html: emailHtml,
     });
 
-    console.log("[send-risk-email] Email sent successfully:", emailResponse);
 
     // Log the notification
     await supabase.from("notification_log").insert({

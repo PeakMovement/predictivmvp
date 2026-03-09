@@ -62,7 +62,6 @@ export async function getInsightHistory(): Promise<InsightHistoryItem[]> {
     const { data: { user } } = await supabase.auth.getUser();
     
     if (!user) {
-      console.log('[getInsightHistory] No authenticated user');
       return [];
     }
 
@@ -234,7 +233,6 @@ export async function clearChatHistory(): Promise<{ success: boolean; error?: st
     }
 
     const clearTimestamp = new Date().toISOString();
-    console.log('[clearChatHistory] Clearing chat for user:', user.id, 'at:', clearTimestamp);
 
     // Delete insight history
     const { error: historyError } = await supabase
@@ -272,7 +270,6 @@ export async function clearChatHistory(): Promise<{ success: boolean; error?: st
       // Non-critical, don't fail the operation
     }
 
-    console.log('[clearChatHistory] Chat cleared successfully');
     return { success: true };
   } catch (error) {
     console.error('[clearChatHistory] Error:', error);

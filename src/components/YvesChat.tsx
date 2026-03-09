@@ -133,7 +133,6 @@ export function YvesChat({ compact = false }: YvesChatProps) {
         localStorage.removeItem('chatInsights');
         sessionStorage.removeItem('chatInsights');
 
-        console.log('[Yves AI] Clear Chat executed, state reset.');
 
         toast({
           title: 'Chat cleared',

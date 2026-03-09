@@ -150,7 +150,6 @@ serve(async (req) => {
       })) || [],
     };
 
-    console.log("[interpret-health-event] Context gathered, data sources:", dataSources);
 
     // 4. Call Lovable AI with tool calling for structured output
     const systemPrompt = `You are a medical interpretation assistant for Predictiv, a health analytics platform. 
@@ -269,7 +268,6 @@ Provide a comprehensive interpretation using the interpret_symptom function.`;
     }
 
     const aiData = await aiResponse.json();
-    console.log("[interpret-health-event] AI response received");
 
     // Extract tool call result
     const toolCall = aiData.choices?.[0]?.message?.tool_calls?.[0];
@@ -294,7 +292,6 @@ Provide a comprehensive interpretation using the interpret_symptom function.`;
       timestamp: new Date().toISOString(),
     };
 
-    console.log("[interpret-health-event] SUCCESS - Interpretation generated with confidence:", result.confidence_score);
 
     return new Response(JSON.stringify(result), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },

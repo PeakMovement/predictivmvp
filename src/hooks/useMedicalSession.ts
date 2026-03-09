@@ -60,7 +60,6 @@ export function useMedicalSession() {
         throw new Error(response?.error || 'Failed to save session');
       }
 
-      console.log('[Session] Saved:', currentStep);
       return { success: true, sessionId: response.sessionId };
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to save session';
@@ -83,7 +82,6 @@ export function useMedicalSession() {
 
       if (fnError) throw fnError;
 
-      console.log('[Session] Fetched:', response?.exists ? response.session?.currentStep : 'none');
       return {
         exists: response?.exists ?? false,
         session: response?.session ?? null
@@ -112,7 +110,6 @@ export function useMedicalSession() {
 
       if (fnError) throw fnError;
 
-      console.log('[Session] Completed');
       return { success: response?.success ?? true };
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to complete session';
@@ -146,7 +143,6 @@ export function useMedicalSession() {
 
       if (fnError) throw fnError;
 
-      console.log('[Session] Abandoned');
       return { success: true };
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to abandon session';

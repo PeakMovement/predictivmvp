@@ -9,7 +9,6 @@ export const useUnifiedMetrics = () => {
   // Listen for wearable data refresh events
   useEffect(() => {
     const handleDataRefreshed = () => {
-      console.log("[useUnifiedMetrics] Wearable data refreshed, reloading...");
       refresh();
       setRefreshKey(prev => prev + 1);
     };

@@ -85,7 +85,6 @@ Deno.serve(async (req: Request) => {
     const body = await req.json().catch(() => ({}));
     const targetUserId = body.user_id;
 
-    console.log(`[fetch-oura-auto] [START] Starting sync${targetUserId ? ` for user ${targetUserId}` : " for all users"}`);
 
     // Query wearable_tokens directly, filter by Oura scope (extapi)
     let query = supabase.from("wearable_tokens").select("*").ilike("scope", "%extapi%");
@@ -105,14 +104,12 @@ Deno.serve(async (req: Request) => {
     }
 
     if (!tokens || tokens.length === 0) {
-      console.log("[fetch-oura-auto] No Oura tokens found");
       return new Response(
         JSON.stringify({ success: true, users_processed: 0, total_entries: 0, message: "No users with Oura tokens" }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    console.log(`[fetch-oura-auto] Found ${tokens.length} user(s) with Oura tokens`);
 
     let totalUsersProcessed = 0;
     let totalEntriesInserted = 0;
@@ -123,7 +120,6 @@ Deno.serve(async (req: Request) => {
 
     for (const token of tokens) {
       try {
-        console.log(`[fetch-oura-auto] Processing user ${token.user_id}`);
 
         // Use shared token refresh utility with enhanced error handling
         const tokenResult = await getValidOuraToken(supabase, token.user_id);
@@ -144,7 +140,6 @@ Deno.serve(async (req: Request) => {
         }
 
         if (tokenResult.refreshed) {
-          console.log(`[fetch-oura-auto] Token was proactively refreshed for user ${token.user_id}`);
         }
 
         const accessToken = tokenResult.access_token;
@@ -161,7 +156,6 @@ Deno.serve(async (req: Request) => {
         const startDatetime = `${startDateStr}T00:00:00+00:00`;
         const endDatetime = `${endDateStr}T23:59:59+00:00`;
 
-        console.log(`[fetch-oura-auto] Fetching data from ${startDateStr} to ${endDateStr}`);
 
         // PHASE 3 UPGRADE: Now includes detailed sleep and heartrate endpoints for HR/HRV data
         const endpoints = [
@@ -207,7 +201,6 @@ Deno.serve(async (req: Request) => {
               const url = new URL(currentUrl);
               url.searchParams.set("next_token", data.next_token);
               currentUrl = url.toString();
-              console.log(`[fetch-oura-auto] Fetching next page for ${endpoint.name}...`);
             } else {
               hasMore = false;
             }
@@ -217,7 +210,6 @@ Deno.serve(async (req: Request) => {
 
           // Track successfully fetched endpoints
           if (allData.length > 0) {
-            console.log(`[fetch-oura-auto] [SUCCESS] Fetched ${allData.length} entries from ${endpoint.name}`);
             if (!fetchedEndpoints.includes(endpoint.name)) {
               fetchedEndpoints.push(endpoint.name);
             }
@@ -400,7 +392,6 @@ Deno.serve(async (req: Request) => {
             const rawMonotony = std > 0 ? mean / std : 0;
             const monotony = Math.min(rawMonotony, 2.5);
             
-            console.log(`[fetch-oura-auto] [DEBUG] Strain calc for ${date}: rawStrain=${rawStrain.toFixed(2)}, capped=${strain.toFixed(2)}, monotony=${monotony.toFixed(2)}`);
 
             // HRV and sleep score from current day's detailed sleep
             const hrv = dayData.sleepDetails?.average_hrv || null;
@@ -513,7 +504,6 @@ Deno.serve(async (req: Request) => {
           entries_synced: entriesInserted,
         });
 
-        console.log(`[fetch-oura-auto] [SUCCESS] Completed user ${token.user_id}: ${entriesInserted} sessions, ${trendsInserted} trends, ${hrHrvPopulated} HR/HRV populated`);
 
       } catch (userError) {
         console.error(`[fetch-oura-auto] [ERROR] Failed to process user ${token.user_id}:`, userError instanceof Error ? userError.message : String(userError));
@@ -526,7 +516,6 @@ Deno.serve(async (req: Request) => {
       }
     }
 
-    console.log(`[fetch-oura-auto] [COMPLETE] Sync finished: ${totalUsersProcessed} users, ${totalEntriesInserted} sessions, ${totalTrendsInserted} trends, ${totalHrHrvPopulated} HR/HRV populated`);
 
     // Trigger comprehensive trend calculations after sync
     try {
@@ -544,7 +533,6 @@ Deno.serve(async (req: Request) => {
         });
 
         if (trendResponse.ok) {
-          console.log("[fetch-oura-auto] [SUCCESS] Triggered calculate-oura-trends");
         } else {
           console.error("[fetch-oura-auto] [WARNING] Failed to trigger calculate-oura-trends:", trendResponse.status);
         }

@@ -62,7 +62,6 @@ serve(async (req: Request) => {
     authUrl.searchParams.set("prompt", "consent");
     authUrl.searchParams.set("state", user.id);
 
-    console.log("Generated OAuth URL for user:", user.id);
 
     return new Response(
       JSON.stringify({

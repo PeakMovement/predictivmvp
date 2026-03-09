@@ -30,7 +30,6 @@ Deno.serve(async (req) => {
       );
     }
 
-    console.log(`[wearable-token-refresh] Refreshing ${provider} token for user: ${user_id}`);
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL");
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
@@ -49,7 +48,6 @@ Deno.serve(async (req) => {
     switch (provider) {
       case "fitbit":
         // TODO: Implement Fitbit token refresh using shared utility pattern
-        console.log("[wearable-token-refresh] Fitbit token refresh not yet implemented");
         return new Response(
           JSON.stringify({
             success: false,
@@ -64,7 +62,6 @@ Deno.serve(async (req) => {
         const result = await getValidOuraToken(supabase, user_id);
         
         if (result.success) {
-          console.log(`[wearable-token-refresh] [SUCCESS] Oura token validated/refreshed for user ${user_id}`);
           return new Response(
             JSON.stringify({
               success: true,

@@ -17,7 +17,6 @@ Deno.serve(async (req: Request) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    console.log("[analyze-all-user-engagement] Starting analysis for all active users");
 
     const sevenDaysAgo = new Date();
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
@@ -31,7 +30,6 @@ Deno.serve(async (req: Request) => {
     if (usersError) throw usersError;
 
     const uniqueUserIds = [...new Set(activeUsers?.map(u => u.user_id) || [])];
-    console.log(`[analyze-all-user-engagement] Found ${uniqueUserIds.length} active users`);
 
     const results = [];
     let successCount = 0;
@@ -65,7 +63,6 @@ Deno.serve(async (req: Request) => {
       }
     }
 
-    console.log(`[analyze-all-user-engagement] Completed: ${successCount} success, ${errorCount} errors`);
 
     return new Response(
       JSON.stringify({

@@ -87,7 +87,6 @@ serve(async (req: Request) => {
       throw new Error("Failed to save tokens");
     }
 
-    console.log("Successfully saved Google Calendar tokens for user:", userId);
 
     const { error: syncLogError } = await supabase
       .from("google_calendar_sync_logs")

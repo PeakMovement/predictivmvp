@@ -235,7 +235,6 @@ Deno.serve(async (req: Request) => {
       </html>
     `;
 
-    console.log(`[send-booking-confirmation] Sending confirmation email to ${userEmail}`);
 
     const emailResponse = await resend.emails.send({
       from: "Predictiv <bookings@resend.dev>",
@@ -244,7 +243,6 @@ Deno.serve(async (req: Request) => {
       html: emailHtml,
     });
 
-    console.log("[send-booking-confirmation] Email sent successfully:", emailResponse);
 
     return new Response(
       JSON.stringify({

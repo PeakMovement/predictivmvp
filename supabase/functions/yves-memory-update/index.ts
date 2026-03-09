@@ -78,7 +78,6 @@ Deno.serve(async (req) => {
       const sourceTime = new Date(source_timestamp).getTime();
       
       if (sourceTime < clearedAt) {
-        console.log(`[yves-memory-update] Ignoring memory from before clear: source=${source_timestamp}, cleared=${profile.memory_cleared_at}`);
         return new Response(
           JSON.stringify({ 
             success: true, 
@@ -93,7 +92,6 @@ Deno.serve(async (req) => {
       }
     }
 
-    console.log(`[yves-memory-update] Upserting memory for user ${user_id}: ${memory_key}`);
 
     // ─── UPSERT MEMORY ───────────────────────────────────────────────────────
     const { error: upsertError } = await supabase
@@ -121,7 +119,6 @@ Deno.serve(async (req) => {
       );
     }
 
-    console.log(`[yves-memory-update] Memory updated successfully for user ${user_id}`);
 
     return new Response(
       JSON.stringify({ success: true, message: "Memory updated" }),

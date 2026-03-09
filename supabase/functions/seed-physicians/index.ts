@@ -210,7 +210,6 @@ serve(async (req) => {
   }
 
   try {
-    console.log("Starting physician data seed...");
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
@@ -221,7 +220,6 @@ serve(async (req) => {
       .from('physicians')
       .select('id');
 
-    console.log(`Found ${existingPhysicians?.length || 0} existing physicians`);
 
     // Upsert physicians based on name + specialty to avoid duplicates
     const results = [];
@@ -238,7 +236,6 @@ serve(async (req) => {
         console.error(`Error upserting ${physician.name}:`, error);
         results.push({ name: physician.name, status: 'error', error: error.message });
       } else {
-        console.log(`Successfully upserted ${physician.name}`);
         results.push({ name: physician.name, status: 'success', data });
       }
     }
@@ -248,7 +245,6 @@ serve(async (req) => {
       .from('physicians')
       .select('*', { count: 'exact', head: true });
 
-    console.log(`Seed complete. Total physicians: ${count}`);
 
     return new Response(
       JSON.stringify({

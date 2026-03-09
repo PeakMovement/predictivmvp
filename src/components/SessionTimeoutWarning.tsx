@@ -47,7 +47,6 @@ export function SessionTimeoutWarning({
     if (open) {
       const audio = new Audio('/notification.mp3');
       audio.play().catch(() => {
-        console.log('Could not play notification sound');
       });
     }
   }, [open]);

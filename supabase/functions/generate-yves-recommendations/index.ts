@@ -26,7 +26,6 @@ Deno.serve(async (req) => {
       );
     }
 
-    console.log(`[generate-yves-recommendations] Fetching data for user ${userId}`);
 
     const sevenDaysAgo = new Date();
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
@@ -298,7 +297,6 @@ Deno.serve(async (req) => {
       }
     }
 
-    console.log(`[generate-yves-recommendations] Built context with ${sessions?.length || 0} sessions, ${documents?.length || 0} docs, ${Object.keys(baselineMap).length} baselines`);
 
     const recommendationSchema = {
       type: "object",
@@ -441,7 +439,6 @@ If YESTERDAY'S RECOMMENDATION is present in the context, you MUST:
       }
     }
 
-    console.log(`[generate-yves-recommendations] [SUCCESS] Generated ${recommendations.length} recommendations for user ${userId}`);
 
     return new Response(
       JSON.stringify({ success: true, recommendations }),

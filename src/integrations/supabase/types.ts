@@ -1455,6 +1455,45 @@ export type Database = {
         }
         Relationships: []
       }
+      practitioner_access: {
+        Row: {
+          access_granted_at: string
+          created_at: string
+          id: string
+          is_active: boolean
+          patient_id: string
+          practitioner_email: string
+          practitioner_id: string | null
+          practitioner_name: string | null
+          practitioner_type: "physio" | "coach" | "doctor" | "trainer" | "other" | null
+          updated_at: string
+        }
+        Insert: {
+          access_granted_at?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          patient_id: string
+          practitioner_email: string
+          practitioner_id?: string | null
+          practitioner_name?: string | null
+          practitioner_type?: "physio" | "coach" | "doctor" | "trainer" | "other" | null
+          updated_at?: string
+        }
+        Update: {
+          access_granted_at?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          patient_id?: string
+          practitioner_email?: string
+          practitioner_id?: string | null
+          practitioner_name?: string | null
+          practitioner_type?: "physio" | "coach" | "doctor" | "trainer" | "other" | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       practitioner_specialties: {
         Row: {
           created_at: string | null

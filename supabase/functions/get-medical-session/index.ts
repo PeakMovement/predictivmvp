@@ -27,14 +27,12 @@ Deno.serve(async (req) => {
 
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) {
-      console.log('No authenticated user, returning no session');
       return new Response(
         JSON.stringify({ exists: false, session: null }),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    console.log(`Fetching active session for user ${user.id}`);
 
     // Fetch active session for user
     const { data: session, error: fetchError } = await supabase
@@ -50,7 +48,6 @@ Deno.serve(async (req) => {
     }
 
     if (!session) {
-      console.log('No active session found');
       return new Response(
         JSON.stringify({ exists: false, session: null }),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -68,7 +65,6 @@ Deno.serve(async (req) => {
       lastUpdatedAt: session.last_updated_at
     };
 
-    console.log(`Found active session: ${session.id}, step: ${session.current_step}`);
     return new Response(
       JSON.stringify({ 
         exists: true, 

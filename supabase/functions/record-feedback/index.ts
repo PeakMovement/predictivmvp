@@ -25,7 +25,6 @@ Deno.serve(async (req) => {
       );
     }
 
-    console.log(`[record-feedback] Recording feedback for user ${user_id}, metric: ${metric}`);
 
     // Record in engagement_events (consumed by adapt-user-model)
     const { error: engagementError } = await supabase.from("engagement_events").insert({

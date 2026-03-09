@@ -253,7 +253,6 @@ export function shouldTriggerRedFlagFunnel(symptomType: string, severity: number
     const reason = isRedFlagSymptom 
       ? `Red-flag symptom detected: ${symptomType}` 
       : `High severity threshold exceeded: ${severity}/10`;
-    console.log(`[RedFlagFunnel] [TRIGGER] ${reason} | timestamp: ${new Date().toISOString()}`);
   }
   
   return shouldTrigger;

@@ -289,7 +289,6 @@ export const Training = () => {
   // Listen for Ōura data refresh
   useEffect(() => {
     const handleDataRefreshed = () => {
-      console.log("[Training] Ōura Ring data refreshed, reloading trends...");
       refresh();
     };
 

@@ -112,7 +112,6 @@ serve(async (req) => {
       };
     });
 
-    console.log(`[admin-user-overview] Returned ${result.length} users`);
 
     return new Response(JSON.stringify({ success: true, data: result, count: result.length }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },

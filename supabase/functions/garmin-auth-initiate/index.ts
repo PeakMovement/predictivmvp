@@ -84,7 +84,6 @@ Deno.serve(async (req: Request) => {
     }
 
     const userId = claimsData.user.id;
-    console.log(`[garmin-auth-initiate] Authenticated user: ${userId}`);
 
     // ── 2. Read Garmin credentials from env ───────────────────────────
     const clientId = Deno.env.get("GARMIN_CONSUMER_KEY");
@@ -111,7 +110,6 @@ Deno.serve(async (req: Request) => {
     const codeChallenge = await generateCodeChallenge(codeVerifier);
     const state = generateState();
 
-    console.log(`[garmin-auth-initiate] Generated PKCE challenge for user: ${userId}`);
 
     // ── 4. Persist code_verifier + state server-side ─────────────────
     //    Clean up any stale rows for this user first
@@ -150,11 +148,6 @@ Deno.serve(async (req: Request) => {
       `&state=${encodeURIComponent(state)}`;
 
     // Diagnostic log — redacts secrets, shows structure for debugging
-    console.log(`[garmin-auth-initiate] [DIAG] client_id: ${clientId.substring(0, 8)}...`);
-    console.log(`[garmin-auth-initiate] [DIAG] redirect_uri: ${redirectUri}`);
-    console.log(`[garmin-auth-initiate] [DIAG] code_challenge_method: S256`);
-    console.log(`[garmin-auth-initiate] [DIAG] full auth URL (no secret): ${authUrl}`);
-    console.log(`[garmin-auth-initiate] [SUCCESS] Authorization URL generated for user: ${userId}`);
 
     return new Response(
       JSON.stringify({

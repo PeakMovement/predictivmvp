@@ -25,6 +25,7 @@ import PractitionerRegister from "@/pages/PractitionerRegister";
 import { Settings as SettingsIcon, Stethoscope } from "lucide-react";
 import { SymptomCheckInSheet } from "@/components/symptoms/SymptomCheckInSheet";
 import { YvesChatSheet } from "@/components/YvesChatSheet";
+import { YvesChat } from "@/components/YvesChat";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
@@ -41,7 +42,6 @@ const YourPlan           = lazy(() => import("@/pages/YourPlan").then(m => ({ de
 const Settings           = lazy(() => import("@/pages/Settings").then(m => ({ default: m.Settings })));
 const FindHelp           = lazy(() => import("@/pages/FindHelp").then(m => ({ default: m.FindHelp })));
 const InsightsTree       = lazy(() => import("@/pages/InsightsTree").then(m => ({ default: m.InsightsTree })));
-const YvesChat           = lazy(() => import("@/components/YvesChat").then(m => ({ default: m.YvesChat })));
 const OuraCallback       = lazy(() => import("@/pages/OuraCallback").then(m => ({ default: m.OuraCallback })));
 const PolarCallback      = lazy(() => import("@/pages/auth/polar"));
 const MyBaselines        = lazy(() => import("@/pages/MyBaselines"));
@@ -108,7 +108,7 @@ const AuthenticatedApp = () => {
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (!user) return;
       supabase
-        .from("practitioner_access" as any)
+        .from("practitioner_access")
         .select("id", { count: "exact", head: true })
         .eq("practitioner_id", user.id)
         .eq("is_active", true)
@@ -117,9 +117,8 @@ const AuthenticatedApp = () => {
   }, []);
 
   const sessionTimeout = useSessionTimeout({
-    onWarning: () => console.log("[App] Session expiring soon"),
+    onWarning: () => {},
     onTimeout: () => {
-      console.log("[App] Session expired - logging out");
       navigate("/");
     },
   });

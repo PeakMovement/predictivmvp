@@ -31,13 +31,11 @@ Deno.serve(async (req: Request) => {
       const verification_token = url.searchParams.get("verification_token");
       const challenge = url.searchParams.get("challenge");
 
-      console.log("[oura-webhook] Verification request:", { verification_token, challenge });
 
       // Verify the token matches what we expect (from Oura Developer Portal)
       const expectedToken = Deno.env.get("OURA_WEBHOOK_VERIFICATION_TOKEN");
 
       if (verification_token === expectedToken && challenge) {
-        console.log("[oura-webhook] Verification successful");
         return new Response(
           JSON.stringify({ challenge }),
           {
@@ -64,7 +62,6 @@ Deno.serve(async (req: Request) => {
       const bodyText = await req.text();
       const body: WebhookEvent = JSON.parse(bodyText);
 
-      console.log("[oura-webhook] Received event:", {
         event_type: body.event_type,
         data_type: body.data_type,
         user_id: body.user_id,
@@ -104,7 +101,6 @@ Deno.serve(async (req: Request) => {
             }
           );
         }
-        console.log("[oura-webhook] Signature verified");
       }
 
       // Get Supabase client
@@ -168,7 +164,6 @@ Deno.serve(async (req: Request) => {
  * Fetches the updated data from Oura API and stores it
  */
 async function processWebhookEvent(event: WebhookEvent, supabase: any) {
-  console.log(`[oura-webhook] Processing ${event.event_type} for ${event.data_type}`);
 
   try {
     // Use shared token refresh utility
@@ -190,7 +185,6 @@ async function processWebhookEvent(event: WebhookEvent, supabase: any) {
     const dataTypeEndpoint = event.data_type.replace("_", "-");
     const apiUrl = `https://api.ouraring.com/v2/usercollection/${dataTypeEndpoint}/${event.object_id}`;
 
-    console.log(`[oura-webhook] Fetching updated data from: ${apiUrl}`);
 
     const dataRes = await fetch(apiUrl, {
       headers: { Authorization: `Bearer ${accessToken}` },
@@ -207,7 +201,6 @@ async function processWebhookEvent(event: WebhookEvent, supabase: any) {
     }
 
     const data = await dataRes.json();
-    console.log(`[oura-webhook] [SUCCESS] Successfully fetched updated ${event.data_type} data`);
 
     // Store the data in appropriate table
     await supabase.from("oura_logs").insert({

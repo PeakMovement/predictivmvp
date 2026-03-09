@@ -34,7 +34,6 @@ Deno.serve(async (req) => {
       );
     }
 
-    console.log(`[yves-tree] Fetching tree data for user ${user.id}`);
 
     const { data: trendData, error: trendError } = await supabase
       .from('training_trends')
@@ -87,7 +86,6 @@ Deno.serve(async (req) => {
       };
     });
 
-    console.log(`[yves-tree] Returning ${chartData.length} data points`);
 
     return new Response(
       JSON.stringify({

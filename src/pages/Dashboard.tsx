@@ -200,7 +200,6 @@ export const Dashboard = () => {
         },
         (payload) => {
           if (payload.new && (payload.new as any).status === "success") {
-            console.log("Oura sync completed, refreshing trends...");
             setTimeout(() => refreshAll(), 2000);
           }
         }

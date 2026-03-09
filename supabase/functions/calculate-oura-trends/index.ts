@@ -69,7 +69,6 @@ serve(async (req) => {
       userIds = tokens?.map((t) => t.user_id).filter(Boolean) || [];
     }
 
-    console.log(`[calculate-oura-trends] [INFO] Processing ${userIds.length} users`);
 
     const results: { userId: string; status: string; error?: string }[] = [];
 
@@ -93,7 +92,6 @@ serve(async (req) => {
         }
 
         if (!sessions || sessions.length < 4) {
-          console.log(`[calculate-oura-trends] [INFO] Not enough data for ${userId} (${sessions?.length || 0} days, need at least 4)`);
           results.push({ userId, status: "skipped", error: "Need at least 4 days of data" });
           continue;
         }
@@ -101,7 +99,6 @@ serve(async (req) => {
         // Warn if limited data (less than 14 days for full baseline comparison)
         const hasLimitedData = sessions.length < 14;
         if (hasLimitedData) {
-          console.log(`[calculate-oura-trends] [INFO] Limited data for ${userId} (${sessions.length} days), using available baseline`);
         }
 
         const typedSessions = sessions as WearableSession[];
@@ -296,7 +293,6 @@ serve(async (req) => {
         // Use the properly calculated ACWR from recovery trends
         const trainingAcwr = acwr !== null ? acwr : (chronicLoadAvg && chronicLoadAvg > 0 && acuteLoadAvg !== null ? acuteLoadAvg / chronicLoadAvg : null);
         
-        console.log(`[calculate-oura-trends] [DEBUG] Training trends for ${userId}: acwr=${trainingAcwr}, acute=${acuteLoadAvg}, chronic=${chronicLoadAvg}, strain=${strain}, monotony=${monotony}`);
         
         const { error: trainingError } = await supabase
           .from("training_trends")
@@ -344,7 +340,6 @@ serve(async (req) => {
           console.error(`[calculate-oura-trends] [ERROR] Failed to upsert activity trend:`, activityError);
         }
 
-        console.log(`[calculate-oura-trends] [SUCCESS] Trends calculated for user ${userId}`);
         
         // Trigger recommendation regeneration with fresh data
         try {
@@ -354,7 +349,6 @@ serve(async (req) => {
           if (recsError) {
             console.error(`[calculate-oura-trends] [WARN] Failed to regenerate recommendations:`, recsError);
           } else {
-            console.log(`[calculate-oura-trends] [SUCCESS] Recommendations regenerated for user ${userId}`);
           }
         } catch (recsErr) {
           console.error(`[calculate-oura-trends] [WARN] Recommendations trigger failed:`, recsErr);
@@ -368,7 +362,6 @@ serve(async (req) => {
       }
     }
 
-    console.log(`[calculate-oura-trends] [SUCCESS] Completed trend calculation for ${results.filter(r => r.status === "success").length}/${userIds.length} users`);
 
     return new Response(
       JSON.stringify({

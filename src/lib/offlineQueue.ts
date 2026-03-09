@@ -82,10 +82,8 @@ export const offlineQueue = {
 
 export const setupOfflineSync = () => {
   window.addEventListener("online", async () => {
-    console.log("Back online! Processing queued actions...");
 
     await offlineQueue.process(async (action) => {
-      console.log("Processing action:", action.type, action.data);
       return true;
     });
   });

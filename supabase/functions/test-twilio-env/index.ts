@@ -19,7 +19,6 @@ Deno.serve(async (req) => {
   }
 
   try {
-    console.log('Testing Twilio environment variables...');
 
     const twilioAccountSid = Deno.env.get('TWILIO_ACCOUNT_SID');
     const twilioAuthToken = Deno.env.get('TWILIO_AUTH_TOKEN');
@@ -33,7 +32,6 @@ Deno.serve(async (req) => {
       PhoneNumber: twilioPhoneNumber ? 'present' : 'missing',
     };
 
-    console.log('Environment check result:', result);
 
     return new Response(JSON.stringify(result), {
       status: 200,

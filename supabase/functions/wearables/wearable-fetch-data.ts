@@ -29,7 +29,6 @@ Deno.serve(async (req) => {
       );
     }
 
-    console.log(`[wearable-fetch-data] Fetching ${provider} data for user: ${user_id}`);
 
     // Route to appropriate provider handler
     switch (provider) {

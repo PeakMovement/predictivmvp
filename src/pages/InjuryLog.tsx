@@ -179,7 +179,7 @@ function LogInjurySheet({
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) { setSaving(false); return; }
 
-    const { error } = await supabase.from("user_injury_profiles").insert({
+    const { error } = await (supabase.from as any)("user_injury_profiles").insert({
       user_id: user.id,
       body_location: form.body_part,
       injury_type: "other",                          // enum requirement

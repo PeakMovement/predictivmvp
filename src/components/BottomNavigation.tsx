@@ -1,7 +1,8 @@
-import { useState } from "react";
-import { Home, Dumbbell, Heart, FileText, User, ClipboardList, TrendingUp, Users, Menu, X, Calendar, LayoutGrid } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Home, Dumbbell, Heart, FileText, User, ClipboardList, TrendingUp, Users, Menu, X, Calendar, LayoutGrid, Bell } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { supabase } from "@/integrations/supabase/client";
 
 const navItems = [
   { name: "dashboard", icon: Home, label: "Dashboard" },
@@ -9,6 +10,7 @@ const navItems = [
   { name: "planner", icon: Calendar, label: "Planner" },
   { name: "training", icon: Dumbbell, label: "Training" },
   { name: "health", icon: Heart, label: "Health" },
+  { name: "alert-history", icon: Bell, label: "Alerts" },
   { name: "my-documents", icon: FileText, label: "Docs" },
   { name: "profile-setup", icon: User, label: "Profile" },
   { name: "your-plan", icon: ClipboardList, label: "Plan" },
@@ -23,7 +25,24 @@ interface BottomNavigationProps {
 
 export const BottomNavigation = ({ activeTab, onNavigate }: BottomNavigationProps) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [activeAlertCount, setActiveAlertCount] = useState(0);
   const isMobile = useIsMobile();
+
+  useEffect(() => {
+    let cancelled = false;
+    const load = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user || cancelled) return;
+      const { count } = await supabase
+        .from("alert_history")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", user.id)
+        .eq("status", "active");
+      if (!cancelled) setActiveAlertCount(count ?? 0);
+    };
+    load();
+    return () => { cancelled = true; };
+  }, []);
 
   const handleNavigate = (tab: string) => {
     onNavigate(tab);
@@ -56,6 +75,7 @@ export const BottomNavigation = ({ activeTab, onNavigate }: BottomNavigationProp
             <div className="grid grid-cols-3 gap-3">
               {navItems.map(({ name, icon: Icon, label }) => {
                 const isActive = activeTab === name;
+                const showBadge = name === "alert-history" && activeAlertCount > 0;
                 return (
                   <button
                     key={name}
@@ -71,12 +91,17 @@ export const BottomNavigation = ({ activeTab, onNavigate }: BottomNavigationProp
                         : "bg-muted/30 text-muted-foreground border border-transparent"
                     )}
                   >
-                    <Icon
-                      className={cn(
-                        "h-6 w-6 mb-1.5 transition-colors",
-                        isActive ? "text-primary" : "text-muted-foreground"
+                    <div className="relative mb-1.5">
+                      <Icon
+                        className={cn(
+                          "h-6 w-6 transition-colors",
+                          isActive ? "text-primary" : "text-muted-foreground"
+                        )}
+                      />
+                      {showBadge && (
+                        <span className="absolute -top-1 -right-1 h-2.5 w-2.5 rounded-full bg-red-500 ring-2 ring-background" />
                       )}
-                    />
+                    </div>
                     <span className={cn(
                       "text-xs font-medium text-center leading-tight",
                       isActive ? "text-primary" : "text-muted-foreground"
@@ -157,6 +182,7 @@ export const BottomNavigation = ({ activeTab, onNavigate }: BottomNavigationProp
     >
       {navItems.map(({ name, icon: Icon, label }) => {
         const isActive = activeTab === name;
+        const showBadge = name === "alert-history" && activeAlertCount > 0;
         return (
           <button
             key={name}
@@ -170,12 +196,17 @@ export const BottomNavigation = ({ activeTab, onNavigate }: BottomNavigationProp
               isActive && "text-primary scale-105"
             )}
           >
-            <Icon
-              className={cn(
-                "h-5 w-5 mb-1 transition-all",
-                isActive ? "text-primary" : "text-muted-foreground"
+            <div className="relative mb-1">
+              <Icon
+                className={cn(
+                  "h-5 w-5 transition-all",
+                  isActive ? "text-primary" : "text-muted-foreground"
+                )}
+              />
+              {showBadge && (
+                <span className="absolute -top-1 -right-1 h-2 w-2 rounded-full bg-red-500 ring-1 ring-background" />
               )}
-            />
+            </div>
             {label}
           </button>
         );

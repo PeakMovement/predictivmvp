@@ -61,16 +61,17 @@ Deno.serve(async (req) => {
     for (const user of usersToProcess) {
       try {
         // ── PREF CHECK ──────────────────────────────────────────────────────
-        const { data: userRecord } = await supabase
-          .from("users")
-          .select("email_preferences")
-          .eq("id", user.id)
+        // Primary source: user_profiles notification columns (added 2026-03-09)
+        // Fallback: users.email_preferences for backwards compat
+        const { data: notifPrefs } = await supabase
+          .from("user_profiles")
+          .select("briefing_enabled, briefing_time, alert_notifications_enabled, weekly_summary_enabled")
+          .eq("user_id", user.id)
           .maybeSingle();
 
-        const prefs = userRecord?.email_preferences as any;
-        const emailEnabled = prefs?.dailySummary ?? prefs?.weeklySummary ?? true;
+        const briefingEnabled = notifPrefs?.briefing_enabled ?? true;
 
-        if (!emailEnabled) {
+        if (!briefingEnabled && !testMode) {
           results.skipped++;
           continue;
         }
@@ -156,7 +157,8 @@ Deno.serve(async (req) => {
         const injury = injuryRes.data ?? null;
 
         // ── PERSONALISED SUBJECT ─────────────────────────────────────────────
-        let subject = `Your daily briefing is ready, ${firstName}`;
+        const dayName = saTime.toLocaleDateString("en-ZA", { weekday: "long" });
+        let subject = `${firstName}, your Predictiv briefing for ${dayName}`;
 
         if (readiness !== null) {
           const readinessLabel =

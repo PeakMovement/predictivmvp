@@ -2992,8 +2992,11 @@ export type Database = {
       }
       user_profiles: {
         Row: {
+          alert_notifications_enabled: boolean
           avatar_url: string | null
           bio: string | null
+          briefing_enabled: boolean
+          briefing_time: string
           created_at: string | null
           full_name: string | null
           id: string
@@ -3003,10 +3006,14 @@ export type Database = {
           phone_number: string | null
           updated_at: string | null
           user_id: string
+          weekly_summary_enabled: boolean
         }
         Insert: {
+          alert_notifications_enabled?: boolean
           avatar_url?: string | null
           bio?: string | null
+          briefing_enabled?: boolean
+          briefing_time?: string
           created_at?: string | null
           full_name?: string | null
           id?: string
@@ -3016,10 +3023,14 @@ export type Database = {
           phone_number?: string | null
           updated_at?: string | null
           user_id: string
+          weekly_summary_enabled?: boolean
         }
         Update: {
+          alert_notifications_enabled?: boolean
           avatar_url?: string | null
           bio?: string | null
+          briefing_enabled?: boolean
+          briefing_time?: string
           created_at?: string | null
           full_name?: string | null
           id?: string
@@ -3029,6 +3040,7 @@ export type Database = {
           phone_number?: string | null
           updated_at?: string | null
           user_id?: string
+          weekly_summary_enabled?: boolean
         }
         Relationships: []
       }

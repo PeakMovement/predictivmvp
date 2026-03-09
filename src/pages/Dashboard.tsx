@@ -22,6 +22,7 @@ import { DashboardSkeleton } from "@/components/LoadingStates";
 import { PullToRefresh } from "@/components/PullToRefresh";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { HealthAnomalyBanner } from "@/components/dashboard/HealthAnomalyBanner";
+import { RiskAlertBanner } from "@/components/dashboard/RiskAlertBanner";
 import { useGarminTokenStatus } from "@/hooks/useGarminTokenStatus";
 import { GarminExpiredBanner } from "@/components/GarminExpiredBanner";
 import { GettingStartedChecklist } from "@/components/dashboard/GettingStartedChecklist";
@@ -316,6 +317,9 @@ export const Dashboard = () => {
 
               {/* Health Anomaly Banner — shows when an unacknowledged high/critical anomaly exists */}
               <HealthAnomalyBanner />
+
+              {/* Risk Alert Banner — shows when risk score ≥ 34, dismissable per session */}
+              <RiskAlertBanner />
 
               {/* Daily Briefing - Now at the top */}
               <LayoutBlock

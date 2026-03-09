@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import {
   Dialog, DialogContent, DialogDescription, DialogFooter,
@@ -8,9 +9,9 @@ import {
 } from "@/components/ui/dialog";
 import {
   AlertTriangle, CheckCircle2, Clock, X, FileText,
-  Loader2, ShieldCheck,
+  Loader2, ShieldCheck, TrendingUp, Info,
 } from "lucide-react";
-import { format } from "date-fns";
+import { format, parseISO } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 
@@ -31,6 +32,12 @@ interface AlertHistoryItem {
   snooze_count: number;
   user_notes: string | null;
   created_at: string;
+}
+
+interface RiskHistoryRow {
+  calculated_at: string;
+  score: number;
+  component_scores: { acwr: number; fatigue: number; hrv: number; sleep: number } | null;
 }
 
 type FilterTab = "all" | "active" | "dismissed";
@@ -57,6 +64,165 @@ const TYPE_LABEL: Record<string, string> = {
   red_flag: "Red Flag",
 };
 
+function scoreBadge(score: number) {
+  if (score >= 67) return { label: "High", cls: "bg-red-500/15 text-red-400 border-red-500/30" };
+  if (score >= 34) return { label: "Moderate", cls: "bg-yellow-500/15 text-yellow-400 border-yellow-500/30" };
+  return { label: "Low", cls: "bg-emerald-500/15 text-emerald-400 border-emerald-500/30" };
+}
+
+const COMPONENT_LABELS: Record<string, string> = {
+  acwr: "ACWR",
+  fatigue: "Fatigue",
+  hrv: "HRV",
+  sleep: "Sleep",
+};
+
+const COMPONENT_MAX: Record<string, number> = {
+  acwr: 30,
+  fatigue: 20,
+  hrv: 25,
+  sleep: 25,
+};
+
+function topTwoComponents(
+  scores: { acwr: number; fatigue: number; hrv: number; sleep: number },
+): Array<{ key: string; pts: number; pct: number }> {
+  return (Object.entries(scores) as [string, number][])
+    .map(([key, pts]) => ({ key, pts, pct: Math.round((pts / (COMPONENT_MAX[key] ?? 25)) * 100) }))
+    .sort((a, b) => b.pts - a.pts)
+    .filter((c) => c.pts > 0)
+    .slice(0, 2);
+}
+
+// ── Risk Score Timeline ────────────────────────────────────────────────────
+
+function RiskScoreTimeline({ rows, loading }: { rows: RiskHistoryRow[]; loading: boolean }) {
+  if (loading) {
+    return (
+      <div className="space-y-2">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <Skeleton key={i} className="h-16 rounded-xl" />
+        ))}
+      </div>
+    );
+  }
+
+  if (rows.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center py-8 text-center">
+        <ShieldCheck className="w-10 h-10 text-muted-foreground/40 mb-2" />
+        <p className="text-sm text-muted-foreground">No risk score history yet — check back tomorrow.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-2">
+      {rows.map((row) => {
+        const badge = scoreBadge(row.score);
+        const top2 = row.component_scores ? topTwoComponents(row.component_scores) : [];
+        return (
+          <div
+            key={row.calculated_at}
+            className="rounded-xl border border-border/40 bg-card/50 px-4 py-3 flex items-start gap-3"
+          >
+            {/* Date */}
+            <div className="shrink-0 text-center min-w-[44px]">
+              <p className="text-xs font-bold text-foreground">
+                {format(parseISO(row.calculated_at), "d MMM")}
+              </p>
+              <p className="text-[10px] text-muted-foreground">
+                {format(parseISO(row.calculated_at), "EEE")}
+              </p>
+            </div>
+
+            {/* Score + badge */}
+            <div className="shrink-0 flex flex-col items-center gap-1">
+              <span className="text-lg font-bold text-foreground leading-none">{row.score}</span>
+              <span className={cn(
+                "text-[9px] font-bold px-2 py-0.5 rounded-full border",
+                badge.cls,
+              )}>
+                {badge.label}
+              </span>
+            </div>
+
+            {/* Component breakdown */}
+            {top2.length > 0 && (
+              <div className="flex-1 min-w-0">
+                <p className="text-[10px] text-muted-foreground mb-1">Top drivers</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {top2.map((c) => (
+                    <span
+                      key={c.key}
+                      className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-muted/40 border border-border/30 text-muted-foreground"
+                    >
+                      {COMPONENT_LABELS[c.key] ?? c.key}: {c.pts}pt
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+// ── What does this mean? ───────────────────────────────────────────────────
+
+function RiskExplainer() {
+  return (
+    <div className="rounded-2xl border border-border/40 bg-card/40 p-5 space-y-4">
+      <div className="flex items-center gap-2">
+        <Info className="h-4 w-4 text-primary shrink-0" />
+        <h3 className="text-sm font-semibold text-foreground">What does this mean?</h3>
+      </div>
+
+      <p className="text-xs text-muted-foreground leading-relaxed">
+        Your risk score (0–100) combines four factors to flag potential overtraining or injury risk <em>before</em> symptoms appear.
+      </p>
+
+      <div className="space-y-3">
+        <div>
+          <p className="text-xs font-semibold text-foreground mb-0.5">ACWR — Acute:Chronic Workload Ratio (up to 30 pts)</p>
+          <p className="text-xs text-muted-foreground">
+            Compares your last 7 days of training load to your 28-day average. A ratio above 1.3 signals you're doing significantly more than your body is used to — the "injury danger zone".
+          </p>
+        </div>
+
+        <div>
+          <p className="text-xs font-semibold text-foreground mb-0.5">Fatigue Index (up to 20 pts)</p>
+          <p className="text-xs text-muted-foreground">
+            Combines training strain (how hard you've been working) and monotony (how repetitive your training is). High monotony means your body never fully adapts; high strain means it's accumulating too much.
+          </p>
+        </div>
+
+        <div>
+          <p className="text-xs font-semibold text-foreground mb-0.5">HRV Drop (up to 25 pts)</p>
+          <p className="text-xs text-muted-foreground">
+            Compares today's heart rate variability to <em>your personal</em> 28-day baseline. A 15%+ drop is a reliable early warning that your nervous system is under stress and recovery is lagging.
+          </p>
+        </div>
+
+        <div>
+          <p className="text-xs font-semibold text-foreground mb-0.5">Sleep Score (up to 25 pts)</p>
+          <p className="text-xs text-muted-foreground">
+            Poor sleep directly impairs muscle repair, reaction time, and immune function. Scores below 75 add risk points; below 55 adds the maximum.
+          </p>
+        </div>
+      </div>
+
+      <div className="flex items-center gap-3 pt-1 border-t border-border/30">
+        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">0–33 Low</span>
+        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-yellow-500/15 text-yellow-400 border border-yellow-500/30">34–66 Moderate</span>
+        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-red-500/15 text-red-400 border border-red-500/30">67+ High</span>
+      </div>
+    </div>
+  );
+}
+
 // ── Main page ──────────────────────────────────────────────────────────────
 
 export default function AlertHistory() {
@@ -67,6 +233,10 @@ export default function AlertHistory() {
   const [notes, setNotes] = useState("");
   const [savingNotes, setSavingNotes] = useState(false);
   const [showNotesDialog, setShowNotesDialog] = useState(false);
+
+  const [riskHistory, setRiskHistory] = useState<RiskHistoryRow[]>([]);
+  const [riskLoading, setRiskLoading] = useState(true);
+
   const { toast } = useToast();
 
   const loadAlerts = async () => {
@@ -90,7 +260,29 @@ export default function AlertHistory() {
     }
   };
 
-  useEffect(() => { loadAlerts(); }, []);
+  const loadRiskHistory = async () => {
+    try {
+      setRiskLoading(true);
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data } = await supabase
+        .from("risk_score_history")
+        .select("calculated_at, score, component_scores")
+        .eq("user_id", user.id)
+        .order("calculated_at", { ascending: false })
+        .limit(7);
+
+      setRiskHistory((data as RiskHistoryRow[]) || []);
+    } finally {
+      setRiskLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadAlerts();
+    loadRiskHistory();
+  }, []);
 
   const dismiss = async (id: string) => {
     const { error } = await supabase
@@ -126,7 +318,7 @@ export default function AlertHistory() {
     setShowNotesDialog(false);
   };
 
-  // ── Filter ────────────────────────────────────────────────────────────
+  // ── Filter ──────────────────────────────────────────────────────────────
 
   const filtered = alerts.filter(a => {
     if (filter === "active") return a.status === "active" || a.status === "snoozed";
@@ -136,18 +328,10 @@ export default function AlertHistory() {
 
   const countActive = alerts.filter(a => a.status === "active" || a.status === "snoozed").length;
 
-  // ── Render ────────────────────────────────────────────────────────────
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center py-24">
-        <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
-      </div>
-    );
-  }
+  // ── Render ──────────────────────────────────────────────────────────────
 
   return (
-    <div className="container mx-auto px-4 py-6 pb-nav-safe max-w-lg space-y-5">
+    <div className="container mx-auto px-4 py-6 pb-nav-safe max-w-lg space-y-6">
       {/* Header */}
       <div>
         <h1 className="text-2xl font-bold text-foreground">Alerts</h1>
@@ -156,54 +340,76 @@ export default function AlertHistory() {
         </p>
       </div>
 
-      {/* Filter tabs */}
-      <div className="flex gap-1.5 p-1 bg-muted/30 rounded-xl">
-        {(["all", "active", "dismissed"] as FilterTab[]).map((tab) => (
-          <button
-            key={tab}
-            onClick={() => setFilter(tab)}
-            className={cn(
-              "flex-1 text-xs font-semibold py-1.5 rounded-lg capitalize transition-all",
-              filter === tab
-                ? "bg-card text-foreground shadow-sm"
-                : "text-muted-foreground hover:text-foreground",
-            )}
-          >
-            {tab}
-            {tab === "active" && countActive > 0 && (
-              <span className="ml-1 text-[10px] bg-red-500 text-white rounded-full px-1.5 py-0.5">
-                {countActive}
-              </span>
-            )}
-          </button>
-        ))}
+      {/* ── Risk Score History ─────────────────────────────────────────── */}
+      <div className="space-y-3">
+        <div className="flex items-center gap-2">
+          <TrendingUp className="h-4 w-4 text-primary" />
+          <h2 className="text-sm font-semibold text-foreground">7-Day Risk Score History</h2>
+        </div>
+        <RiskScoreTimeline rows={riskHistory} loading={riskLoading} />
       </div>
 
-      {/* Alert list */}
-      {filtered.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-16 text-center">
-          <ShieldCheck className="w-12 h-12 text-green-400 mb-3" />
-          <p className="text-sm text-muted-foreground">
-            {filter === "active" ? "No active alerts — you're doing great!" : "No alerts here."}
-          </p>
-        </div>
-      ) : (
-        <div className="space-y-3">
-          {filtered.map((alert) => (
-            <AlertCard
-              key={alert.id}
-              alert={alert}
-              onDismiss={() => dismiss(alert.id)}
-              onResolve={() => resolve(alert.id)}
-              onNotes={() => {
-                setSelectedAlert(alert);
-                setNotes(alert.user_notes || "");
-                setShowNotesDialog(true);
-              }}
-            />
+      {/* ── Alert History ─────────────────────────────────────────────── */}
+      <div className="space-y-3">
+        <h2 className="text-sm font-semibold text-foreground">Metric Alerts</h2>
+
+        {/* Filter tabs */}
+        <div className="flex gap-1.5 p-1 bg-muted/30 rounded-xl">
+          {(["all", "active", "dismissed"] as FilterTab[]).map((tab) => (
+            <button
+              key={tab}
+              onClick={() => setFilter(tab)}
+              className={cn(
+                "flex-1 text-xs font-semibold py-1.5 rounded-lg capitalize transition-all",
+                filter === tab
+                  ? "bg-card text-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground",
+              )}
+            >
+              {tab}
+              {tab === "active" && countActive > 0 && (
+                <span className="ml-1 text-[10px] bg-red-500 text-white rounded-full px-1.5 py-0.5">
+                  {countActive}
+                </span>
+              )}
+            </button>
           ))}
         </div>
-      )}
+
+        {loading ? (
+          <div className="space-y-2">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <Skeleton key={i} className="h-24 rounded-2xl" />
+            ))}
+          </div>
+        ) : filtered.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-12 text-center">
+            <ShieldCheck className="w-12 h-12 text-green-400 mb-3" />
+            <p className="text-sm text-muted-foreground">
+              {filter === "active" ? "No active alerts — you're doing great!" : "No alerts here."}
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {filtered.map((alert) => (
+              <AlertCard
+                key={alert.id}
+                alert={alert}
+                onDismiss={() => dismiss(alert.id)}
+                onResolve={() => resolve(alert.id)}
+                onNotes={() => {
+                  setSelectedAlert(alert);
+                  setNotes(alert.user_notes || "");
+                  setShowNotesDialog(true);
+                }}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* ── Explainer ─────────────────────────────────────────────────── */}
+      <RiskExplainer />
 
       {/* Notes dialog */}
       <Dialog open={showNotesDialog} onOpenChange={setShowNotesDialog}>
@@ -272,7 +478,6 @@ function AlertCard({
               <span className="text-sm font-semibold text-foreground">
                 {alert.metric_name} · {TYPE_LABEL[alert.alert_type] ?? alert.alert_type}
               </span>
-              {/* Status badge */}
               {isActive && (
                 <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-red-500/15 text-red-400 border border-red-500/25">
                   Active
@@ -295,7 +500,6 @@ function AlertCard({
                   Dismissed
                 </span>
               )}
-              {/* Severity pill */}
               <span className={cn("text-[10px] font-bold px-2 py-0.5 rounded-full border capitalize", SEVERITY_TEXT[alert.severity] || "")}>
                 {alert.severity}
               </span>

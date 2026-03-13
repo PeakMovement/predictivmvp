@@ -193,7 +193,7 @@ const AuthenticatedApp = () => {
                 )}
                 aria-label="Practitioner Dashboard"
               >
-                <Stethoscope size={18} className="text-blue-400 drop-shadow-[0_0_8px_rgba(96,165,250,0.6)]" />
+                <Stethoscope size={18} className="text-primary drop-shadow-[0_0_8px_hsl(var(--primary)/0.6)]" />
               </button>
             </TooltipTrigger>
             <TooltipContent><p>Practitioner Dashboard</p></TooltipContent>

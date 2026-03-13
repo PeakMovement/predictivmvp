@@ -238,84 +238,54 @@ export const PractitionerRegister = () => {
     setSubmitError(null);
 
     try {
-      // eslint-disable-next-line no-console
-      console.log("[Register] handleSubmit called");
-
-      const authResult = await supabase.auth.getUser();
-      const user = authResult?.data?.user;
-      // eslint-disable-next-line no-console
-      console.log("[Register] Auth user:", user?.id);
-
+      const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
-        setSubmitError("Please log in again");
+        setSubmitError("Not authenticated");
         setSubmitting(false);
         return;
       }
 
-      const displaySpecialtyValue =
+      const specialty =
         form.specialty === "Other" && form.specialty_other
           ? form.specialty_other
           : form.specialty;
 
-      const row = {
+      const { error } = await supabase.from("profiles").upsert({
         id: user.id,
-        full_name: user.user_metadata?.full_name ?? user.email ?? "Practitioner",
-        specialty: displaySpecialtyValue || null,
+        specialty,
         years_experience: Number(form.years_experience) || 0,
-        qualifications: form.qualifications.length > 0 ? form.qualifications : null,
-        registration_body: form.registration_body || null,
-        registration_number: form.registration_number || null,
-        practice_name: form.practice_name || null,
-        address: form.address || null,
-        suburb: form.suburb || null,
-        city: form.city || null,
-        province: form.province || null,
+        qualifications: form.qualifications ?? [],
+        registration_body: form.registration_body ?? "",
+        registration_number: form.registration_number ?? "",
+        practice_name: form.practice_name ?? "",
+        address: form.address ?? "",
+        suburb: form.suburb ?? "",
+        city: form.city ?? "Cape Town",
+        province: form.province ?? "Western Cape",
         telehealth: form.telehealth ?? false,
         in_person: form.in_person ?? false,
         accepts_medical_aid: form.accepts_medical_aid ?? false,
         session_fee_min: Number(form.session_fee_min) || 0,
         session_fee_max: Number(form.session_fee_max) || 0,
         requires_deposit: form.deposit_required ?? false,
-        bio: form.bio || null,
-        niche_tags: form.niche_tags.length > 0 ? form.niche_tags : null,
-        pricing_tier: form.pricing_tier || "basic",
+        deposit_percent: Number(form.deposit_amount) || 0,
+        bio: form.bio ?? "",
+        niche_tags: form.niche_tags ?? [],
+        pricing_tier: form.pricing_tier ?? "basic",
         listing_active: true,
         role: "practitioner",
-      };
+      }, { onConflict: "id" });
 
-      // eslint-disable-next-line no-console
-      console.log("[Register] Upserting to profiles:", JSON.stringify(row, null, 2));
-
-      const { data, error } = await supabase
-        .from("profiles")
-        .upsert(row, { onConflict: "id" })
-        .select();
-
-      // eslint-disable-next-line no-console
-      console.log("[Register] Upsert result — data:", data, "error:", error);
-
-      if (error) {
-        // eslint-disable-next-line no-console
-        console.error("[Register] Upsert error:", error);
-        setSubmitError(error.message || "Database error");
-        setSubmitting(false);
-        return;
-      }
-
-      // eslint-disable-next-line no-console
-      console.log("[Register] Practitioner profile saved for", user.id);
+      if (error) throw error;
 
       setSubmitting(false);
       setSubmitted(true);
       setTimeout(() => navigate("/practitioner/dashboard"), 2000);
-    } catch (err) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (err: any) {
       // eslint-disable-next-line no-console
-      console.error("[Register] Submit crash:", err);
-      const message =
-        err instanceof Error
-          ? err.message
-          : String(err ?? "Something went wrong");
-      setSubmitError(message);
+      console.error("Submit error:", err);
+      setSubmitError(err?.message ?? "Something went wrong");
       setSubmitting(false);
     }
   };

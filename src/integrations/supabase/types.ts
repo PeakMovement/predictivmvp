@@ -1555,6 +1555,7 @@ export type Database = {
           avatar_url: string | null
           bio: string | null
           city: string | null
+          deposit_percent: number | null
           full_name: string | null
           id: string
           in_person: boolean | null
@@ -1587,6 +1588,7 @@ export type Database = {
           avatar_url?: string | null
           bio?: string | null
           city?: string | null
+          deposit_percent?: number | null
           full_name?: string | null
           id: string
           in_person?: boolean | null
@@ -1619,6 +1621,7 @@ export type Database = {
           avatar_url?: string | null
           bio?: string | null
           city?: string | null
+          deposit_percent?: number | null
           full_name?: string | null
           id?: string
           in_person?: boolean | null

@@ -22,6 +22,9 @@ import ResetPassword from "@/pages/ResetPassword";
 import Terms from "@/pages/Terms";
 import Privacy from "@/pages/Privacy";
 import PractitionerRegister from "@/pages/PractitionerRegister";
+import { PractitionerLanding } from "@/pages/practitioner/Landing";
+import { PractitionerRegister as PractitionerRegisterWireframe } from "@/pages/practitioner/Register";
+import { PractitionerDashboard as PractitionerDashboardWireframe } from "@/pages/practitioner/Dashboard";
 import { Settings as SettingsIcon, Stethoscope } from "lucide-react";
 import { SymptomCheckInSheet } from "@/components/symptoms/SymptomCheckInSheet";
 import { YvesChatSheet } from "@/components/YvesChatSheet";
@@ -221,11 +224,16 @@ const AuthenticatedApp = () => {
               <Route path="/personal-canvas"    element={<PersonalCanvas />} />
               <Route path="/metrics-dashboard"  element={<MetricsDashboard />} />
               <Route path="/alert-history"      element={<AlertHistory />} />
-              <Route path="/practitioner"       element={<PractitionerDashboard />} />
-              <Route path="/injury-log"         element={<InjuryLog />} />
+              <Route path="/practitioner"            element={<PractitionerDashboard />} />
+              <Route path="/practitioner/register"  element={<PractitionerRegisterWireframe />} />
+              <Route path="/practitioner/dashboard" element={<PractitionerDashboardWireframe />} />
+              <Route path="/injury-log"             element={<InjuryLog />} />
               <Route path="/plan"               element={<WeeklyPlan />} />
               <Route path="/terms"              element={<Terms />} />
               <Route path="/privacy"            element={<Privacy />} />
+              <Route path="/join"               element={<PractitionerLanding />} />
+              <Route path="/join/register"      element={<PractitionerRegisterWireframe />} />
+              <Route path="/join/dashboard"     element={<PractitionerDashboardWireframe />} />
               <Route path="*"                   element={<Navigate to="/dashboard" replace />} />
             </Routes>
           </Suspense>
@@ -321,6 +329,9 @@ const AppInner = () => {
         <Routes>
           <Route path="/register"                element={<Register />} />
           <Route path="/practitioner/register"   element={<PractitionerRegister />} />
+          <Route path="/join"                    element={<PractitionerLanding />} />
+          <Route path="/join/register"           element={<PractitionerRegisterWireframe />} />
+          <Route path="/join/dashboard"          element={<PractitionerDashboardWireframe />} />
           <Route path="/forgot-password"         element={<ForgotPassword />} />
           <Route path="/terms"                   element={<Terms />} />
           <Route path="/privacy"                 element={<Privacy />} />

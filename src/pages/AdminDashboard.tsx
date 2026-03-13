@@ -9,6 +9,7 @@ import { useAdminUserOverview } from "@/hooks/useAdminUserOverview";
 import { useAdminAccess } from "@/hooks/useAdminAccess";
 import { LoadingFallback } from "@/components/LoadingFallback";
 import { PractitionerApprovals } from "@/components/admin/PractitionerApprovals";
+import { PractitionerListings } from "@/components/admin/PractitionerListings";
 import { format } from "date-fns";
 
 export function AdminDashboard() {
@@ -123,6 +124,11 @@ export function AdminDashboard() {
         {/* Practitioner Approvals */}
         <div className="mt-8 mb-8">
           <PractitionerApprovals />
+        </div>
+
+        {/* Practitioner Listings (self-service registrations) — collapsed by default */}
+        <div className="mt-8 mb-8">
+          <PractitionerListings />
         </div>
       </div>
     </div>

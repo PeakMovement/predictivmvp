@@ -1,18 +1,32 @@
-// WIREFRAME — Practitioner Registration
+// WIREFRAME — Practitioner Registration (5-step form)
 // Backend integration points:
 // On submit → upsert to user_profiles table
 // Required new columns:
 //   specialty TEXT, specialty_other TEXT, years_experience INT,
 //   qualifications TEXT[], registration_body TEXT, registration_number TEXT,
-//   practice_name TEXT, address TEXT, suburb TEXT, city TEXT,
+//   practice_name TEXT, address TEXT, suburb TEXT, city TEXT, province TEXT,
 //   telehealth BOOLEAN, in_person BOOLEAN, session_duration_minutes INT,
-//   bio TEXT, niche_tags TEXT[], session_fee_min INT, session_fee_max INT,
+//   accepts_medical_aid BOOLEAN, bio TEXT, profile_photo_url TEXT,
+//   niche_tags TEXT[], session_fee_min INT, session_fee_max INT,
+//   deposit_required BOOLEAN, deposit_amount INT,
 //   pricing_tier TEXT ('basic' | 'verified'), listing_active BOOLEAN
 // After save → set role = 'practitioner_listed' to distinguish from clinical role
 
 import { useState, type KeyboardEvent } from "react";
-import { useNavigate } from "react-router-dom";
-import { ArrowLeft, ArrowRight, Check, Plus, X } from "lucide-react";
+import { useNavigate, Link } from "react-router-dom";
+import {
+  ArrowLeft,
+  ArrowRight,
+  Camera,
+  Check,
+  CheckCircle2,
+  Clock,
+  Lock,
+  MapPin,
+  Plus,
+  Video,
+  X,
+} from "lucide-react";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -27,13 +41,17 @@ interface FormData {
   address: string;
   suburb: string;
   city: string;
+  province: string;
   in_person: boolean;
   telehealth: boolean;
   session_duration_minutes: number | null;
+  accepts_medical_aid: boolean;
   bio: string;
   niche_tags: string[];
   session_fee_min: string;
   session_fee_max: string;
+  deposit_required: boolean;
+  deposit_amount: string;
   pricing_tier: "basic" | "verified";
 }
 
@@ -56,22 +74,66 @@ const SPECIALTIES: { value: string; emoji: string }[] = [
   { value: "Sports GP", emoji: "\u2695\uFE0F" },
   { value: "Sports Psychologist", emoji: "\uD83E\uDDE0" },
   { value: "Massage Therapist", emoji: "\uD83D\uDD90\uFE0F" },
+  { value: "Podiatrist", emoji: "\uD83E\uDDB6" },
+  { value: "Occupational Therapist", emoji: "\uD83E\uDDD1\u200D\u2695\uFE0F" },
   { value: "Other", emoji: "\u2022\u2022\u2022" },
 ];
 
 const DURATIONS = [30, 45, 60, 90];
 
-const NICHES = [
-  "Runners", "Cyclists", "Triathletes", "Trail runners", "Swimmers",
-  "Return-to-sport", "Post-surgical", "Lower back", "Knee injuries",
-  "Shoulder rehab", "Youth athletes", "Masters athletes",
-  "Load management", "Marathon prep", "Ironman prep",
+const PROVINCES = [
+  "Western Cape",
+  "Gauteng",
+  "KwaZulu-Natal",
+  "Eastern Cape",
+  "Free State",
+  "Limpopo",
+  "Mpumalanga",
+  "North West",
+  "Northern Cape",
 ];
 
-const BASIC_FEATURES = [
+const NICHES = [
+  "Runners",
+  "Cyclists",
+  "Triathletes",
+  "Trail runners",
+  "Swimmers",
+  "CrossFit",
+  "Rugby",
+  "Cricket",
+  "Soccer",
+  "Tennis",
+  "Return-to-sport",
+  "Post-surgical",
+  "Lower back",
+  "Knee injuries",
+  "Shoulder rehab",
+  "Hip & pelvis",
+  "Ankle & foot",
+  "Youth athletes",
+  "Masters athletes",
+  "Load management",
+  "Marathon prep",
+  "Ironman prep",
+  "Chronic pain",
+  "Concussion management",
+];
+
+const BASIC_FEATURES_YES = [
   "Listed in Find Help marketplace",
   "Yves-powered patient referrals",
   "Direct booking via Predictiv",
+  "10% commission on attended sessions only",
+  "No monthly fee, no setup cost",
+];
+
+const BASIC_FEATURES_NO = [
+  "Priority placement in search",
+  "Yves anomaly alert notifications",
+  "Patient health dashboard access",
+  "Verified Partner badge",
+  "Dedicated account support",
 ];
 
 const VERIFIED_FEATURES = [
@@ -80,6 +142,7 @@ const VERIFIED_FEATURES = [
   "Yves anomaly alert notifications",
   "Patient health dashboard access",
   "Verified Partner badge",
+  "Dedicated account support",
 ];
 
 const INITIAL: FormData = {
@@ -93,13 +156,17 @@ const INITIAL: FormData = {
   address: "",
   suburb: "",
   city: "Cape Town",
+  province: "Western Cape",
   in_person: false,
   telehealth: false,
   session_duration_minutes: null,
+  accepts_medical_aid: false,
   bio: "",
   niche_tags: [],
   session_fee_min: "",
   session_fee_max: "",
+  deposit_required: false,
+  deposit_amount: "",
   pricing_tier: "basic",
 };
 
@@ -111,6 +178,7 @@ export const PractitionerRegister = () => {
   const [form, setForm] = useState<FormData>(INITIAL);
   const [qualInput, setQualInput] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
 
   const set = <K extends keyof FormData>(key: K, value: FormData[K]) =>
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -120,13 +188,20 @@ export const PractitionerRegister = () => {
   const stepValid = (): boolean => {
     switch (step) {
       case 1:
-        return !!form.specialty && (form.specialty !== "Other" || !!form.specialty_other.trim());
+        return (
+          !!form.specialty &&
+          (form.specialty !== "Other" || !!form.specialty_other.trim())
+        );
       case 2:
         return form.qualifications.length > 0;
       case 3:
-        return !!form.suburb.trim() && !!form.city.trim() && (form.in_person || form.telehealth);
+        return (
+          !!form.suburb.trim() &&
+          !!form.city.trim() &&
+          (form.in_person || form.telehealth)
+        );
       case 4:
-        return form.bio.trim().length >= 50;
+        return form.bio.trim().length >= 100;
       case 5:
         return true;
       default:
@@ -134,7 +209,9 @@ export const PractitionerRegister = () => {
     }
   };
 
-  const next = () => { if (stepValid()) setStep((s) => Math.min(s + 1, 5)); };
+  const next = () => {
+    if (stepValid()) setStep((s) => Math.min(s + 1, 5));
+  };
   const back = () => setStep((s) => Math.max(s - 1, 1));
 
   const addQualification = () => {
@@ -146,23 +223,38 @@ export const PractitionerRegister = () => {
   };
 
   const removeQualification = (q: string) =>
-    set("qualifications", form.qualifications.filter((x) => x !== q));
-
-  const toggleNiche = (n: string) =>
     set(
-      "niche_tags",
-      form.niche_tags.includes(n)
-        ? form.niche_tags.filter((x) => x !== n)
-        : [...form.niche_tags, n],
+      "qualifications",
+      form.qualifications.filter((x) => x !== q),
     );
+
+  const toggleNiche = (n: string) => {
+    if (form.niche_tags.includes(n)) {
+      set(
+        "niche_tags",
+        form.niche_tags.filter((x) => x !== n),
+      );
+    } else if (form.niche_tags.length < 8) {
+      set("niche_tags", [...form.niche_tags, n]);
+    }
+  };
 
   const handleSubmit = () => {
     setSubmitting(true);
     const payload = {
       ...form,
-      years_experience: form.years_experience ? Number(form.years_experience) : null,
-      session_fee_min: form.session_fee_min ? Number(form.session_fee_min) : null,
-      session_fee_max: form.session_fee_max ? Number(form.session_fee_max) : null,
+      years_experience: form.years_experience
+        ? Number(form.years_experience)
+        : null,
+      session_fee_min: form.session_fee_min
+        ? Number(form.session_fee_min)
+        : null,
+      session_fee_max: form.session_fee_max
+        ? Number(form.session_fee_max)
+        : null,
+      deposit_amount: form.deposit_required && form.deposit_amount
+        ? Number(form.deposit_amount)
+        : null,
       listing_active: true,
       profile_status: "pending_review",
       created_at: new Date().toISOString(),
@@ -176,7 +268,8 @@ export const PractitionerRegister = () => {
 
     setTimeout(() => {
       setSubmitting(false);
-      navigate("/practitioner/dashboard");
+      setSubmitted(true);
+      setTimeout(() => navigate("/practitioner/dashboard"), 2000);
     }, 1500);
   };
 
@@ -186,12 +279,38 @@ export const PractitionerRegister = () => {
     "w-full rounded-xl border border-black/10 bg-white px-4 py-3 text-sm text-[#1a1a1a] placeholder:text-[#aaa] outline-none focus:border-[#6B5ED9] focus:ring-2 focus:ring-[#6B5ED9]/20 transition-all";
   const labelCls = "block text-sm font-medium text-[#333] mb-1.5";
   const hintCls = "text-xs text-[#999] mt-1";
+  const cardCls = "rounded-xl bg-white p-6 shadow-sm sm:p-8";
+
+  // ── Success state ─────────────────────────────────────────────────────
+
+  if (submitted) {
+    return (
+      <div
+        className="flex min-h-screen items-center justify-center"
+        style={{ background: "#f0ede8" }}
+      >
+        <div className="text-center">
+          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100">
+            <CheckCircle2 size={32} className="text-emerald-600" />
+          </div>
+          <h2 className="text-xl font-bold text-[#1a1a1a]">
+            Your listing is live!
+          </h2>
+          <p className="mt-2 text-sm text-[#888]">
+            Redirecting to your dashboard…
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   // ── Step 1 — Specialty ──────────────────────────────────────────────────
 
   const renderStep1 = () => (
-    <div>
-      <h2 className="mb-6 text-xl font-bold text-[#1a1a1a]">What's your specialty?</h2>
+    <div className={cardCls}>
+      <h2 className="mb-6 text-xl font-bold text-[#1a1a1a]">
+        What's your specialty?
+      </h2>
       <div className="grid grid-cols-3 gap-3">
         {SPECIALTIES.map(({ value, emoji }) => {
           const active = form.specialty === value;
@@ -243,19 +362,24 @@ export const PractitionerRegister = () => {
   // ── Step 2 — Qualifications ─────────────────────────────────────────────
 
   const renderStep2 = () => (
-    <div>
-      <h2 className="mb-6 text-xl font-bold text-[#1a1a1a]">Your qualifications</h2>
+    <div className={cardCls}>
+      <h2 className="mb-6 text-xl font-bold text-[#1a1a1a]">
+        Your qualifications
+      </h2>
 
       {/* Tag input */}
       <div className="mb-2">
         <div className="flex gap-2">
           <input
             className={inputCls}
-            placeholder="e.g. BSc Physiotherapy (UCT), Dry Needling Certified, HPCSA Registered"
+            placeholder="e.g. BSc Physiotherapy (UCT), Dry Needling Certified"
             value={qualInput}
             onChange={(e) => setQualInput(e.target.value)}
             onKeyDown={(e: KeyboardEvent<HTMLInputElement>) => {
-              if (e.key === "Enter") { e.preventDefault(); addQualification(); }
+              if (e.key === "Enter") {
+                e.preventDefault();
+                addQualification();
+              }
             }}
           />
           <button
@@ -267,6 +391,12 @@ export const PractitionerRegister = () => {
             Add
           </button>
         </div>
+        <p className={hintCls}>
+          <span className="text-[#bbb]">
+            Examples: BSc Physiotherapy (UCT) · Dry Needling Certified · CSCS ·
+            PG Dip Sports Medicine
+          </span>
+        </p>
       </div>
 
       {form.qualifications.length > 0 && (
@@ -277,7 +407,11 @@ export const PractitionerRegister = () => {
               className="inline-flex items-center gap-1.5 rounded-full bg-[#6B5ED9] px-3 py-1.5 text-xs font-medium text-white"
             >
               {q}
-              <button type="button" onClick={() => removeQualification(q)} className="hover:opacity-70">
+              <button
+                type="button"
+                onClick={() => removeQualification(q)}
+                className="hover:opacity-70"
+              >
                 <X size={12} />
               </button>
             </span>
@@ -296,14 +430,19 @@ export const PractitionerRegister = () => {
           />
         </div>
         <div>
-          <label className={labelCls}>Registration number</label>
+          <label className={labelCls}>Registration / HPCSA number</label>
           <input
             className={inputCls}
             placeholder="e.g. PT0012345"
             value={form.registration_number}
             onChange={(e) => set("registration_number", e.target.value)}
           />
-          <p className={hintCls}>Used for verification only. Not shown on your public listing.</p>
+          <div className="mt-1.5 flex items-center gap-1.5">
+            <Lock size={12} className="text-amber-500" />
+            <p className="text-xs text-amber-600">
+              Used for verification only. Never shown on your public listing.
+            </p>
+          </div>
         </div>
       </div>
     </div>
@@ -312,95 +451,153 @@ export const PractitionerRegister = () => {
   // ── Step 3 — Location & Availability ────────────────────────────────────
 
   const renderStep3 = () => (
-    <div>
-      <h2 className="mb-6 text-xl font-bold text-[#1a1a1a]">Where and how do you practice?</h2>
+    <div className="space-y-6">
+      {/* Card 1: Practice address */}
+      <div className={cardCls}>
+        <h2 className="mb-6 text-xl font-bold text-[#1a1a1a]">
+          Practice location
+        </h2>
 
-      <div className="space-y-4">
-        <div>
-          <label className={labelCls}>Practice / clinic name</label>
-          <input
-            className={inputCls}
-            placeholder="e.g. PhysioFit Claremont"
-            value={form.practice_name}
-            onChange={(e) => set("practice_name", e.target.value)}
-          />
-        </div>
-        <div>
-          <label className={labelCls}>Street address</label>
-          <input
-            className={inputCls}
-            placeholder="e.g. 12 Main Road"
-            value={form.address}
-            onChange={(e) => set("address", e.target.value)}
-          />
-        </div>
-        <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-4">
           <div>
-            <label className={labelCls}>Suburb *</label>
+            <label className={labelCls}>Practice / clinic name</label>
             <input
               className={inputCls}
-              placeholder="e.g. Claremont"
-              value={form.suburb}
-              onChange={(e) => set("suburb", e.target.value)}
+              placeholder="e.g. PhysioFit Claremont"
+              value={form.practice_name}
+              onChange={(e) => set("practice_name", e.target.value)}
             />
           </div>
           <div>
-            <label className={labelCls}>City *</label>
+            <label className={labelCls}>Street address</label>
             <input
               className={inputCls}
-              value={form.city}
-              onChange={(e) => set("city", e.target.value)}
+              placeholder="e.g. 12 Main Road"
+              value={form.address}
+              onChange={(e) => set("address", e.target.value)}
             />
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className={labelCls}>Suburb *</label>
+              <input
+                className={inputCls}
+                placeholder="e.g. Claremont"
+                value={form.suburb}
+                onChange={(e) => set("suburb", e.target.value)}
+              />
+            </div>
+            <div>
+              <label className={labelCls}>City *</label>
+              <input
+                className={inputCls}
+                value={form.city}
+                onChange={(e) => set("city", e.target.value)}
+              />
+            </div>
+          </div>
+          <div>
+            <label className={labelCls}>Province</label>
+            <select
+              className={inputCls}
+              value={form.province}
+              onChange={(e) => set("province", e.target.value)}
+            >
+              {PROVINCES.map((p) => (
+                <option key={p} value={p}>
+                  {p}
+                </option>
+              ))}
+            </select>
           </div>
         </div>
       </div>
 
-      {/* Session mode */}
-      <div className="mt-8">
-        <label className={labelCls}>How do you see patients? *</label>
-        <div className="mt-2 flex gap-3">
-          {(["In-person", "Telehealth"] as const).map((mode) => {
-            const key = mode === "In-person" ? "in_person" : "telehealth";
-            const active = form[key];
-            return (
-              <button
-                key={mode}
-                type="button"
-                onClick={() => set(key, !active)}
-                className={`rounded-full px-5 py-2.5 text-sm font-medium transition-all ${
-                  active
-                    ? "bg-[#6B5ED9] text-white"
-                    : "border border-black/10 bg-white text-[#555] hover:border-black/20"
-                }`}
-              >
-                {mode}
-              </button>
-            );
-          })}
-        </div>
-      </div>
+      {/* Card 2: Availability */}
+      <div className={cardCls}>
+        <h2 className="mb-6 text-xl font-bold text-[#1a1a1a]">
+          Session availability
+        </h2>
 
-      {/* Session duration */}
-      <div className="mt-8">
-        <label className={labelCls}>Typical session length</label>
-        <div className="mt-2 flex gap-3">
-          {DURATIONS.map((d) => {
-            const active = form.session_duration_minutes === d;
-            return (
-              <button
-                key={d}
-                type="button"
-                onClick={() => set("session_duration_minutes", active ? null : d)}
-                className={`rounded-full px-4 py-2.5 text-sm font-medium transition-all ${
-                  active
-                    ? "bg-[#6B5ED9] text-white"
-                    : "border border-black/10 bg-white text-[#555] hover:border-black/20"
-                }`}
-              >
-                {d} min
-              </button>
-            );
-          })}
+        {/* Session mode */}
+        <div>
+          <label className={labelCls}>How do you see patients? *</label>
+          <div className="mt-2 flex gap-3">
+            {(["In-person", "Telehealth"] as const).map((mode) => {
+              const key = mode === "In-person" ? "in_person" : "telehealth";
+              const active = form[key];
+              return (
+                <button
+                  key={mode}
+                  type="button"
+                  onClick={() => set(key, !active)}
+                  className={`rounded-full px-5 py-2.5 text-sm font-medium transition-all ${
+                    active
+                      ? "bg-[#6B5ED9] text-white"
+                      : "border border-black/10 bg-white text-[#555] hover:border-black/20"
+                  }`}
+                >
+                  {mode}
+                </button>
+              );
+            })}
+          </div>
+          <p className={hintCls}>Select one or both</p>
+        </div>
+
+        {/* Session duration */}
+        <div className="mt-6">
+          <label className={labelCls}>Typical session length</label>
+          <div className="mt-2 flex gap-3">
+            {DURATIONS.map((d) => {
+              const active = form.session_duration_minutes === d;
+              return (
+                <button
+                  key={d}
+                  type="button"
+                  onClick={() =>
+                    set("session_duration_minutes", active ? null : d)
+                  }
+                  className={`rounded-full px-4 py-2.5 text-sm font-medium transition-all ${
+                    active
+                      ? "bg-[#6B5ED9] text-white"
+                      : "border border-black/10 bg-white text-[#555] hover:border-black/20"
+                  }`}
+                >
+                  {d} min
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Medical aid */}
+        <div className="mt-6">
+          <label className={labelCls}>Do you accept medical aid?</label>
+          <div className="mt-2 flex gap-3">
+            {(["Yes", "No"] as const).map((opt) => {
+              const active =
+                opt === "Yes"
+                  ? form.accepts_medical_aid
+                  : !form.accepts_medical_aid;
+              return (
+                <button
+                  key={opt}
+                  type="button"
+                  onClick={() =>
+                    set("accepts_medical_aid", opt === "Yes")
+                  }
+                  className={`rounded-full px-5 py-2.5 text-sm font-medium transition-all ${
+                    active
+                      ? "bg-[#6B5ED9] text-white"
+                      : "border border-black/10 bg-white text-[#555] hover:border-black/20"
+                  }`}
+                >
+                  {opt}
+                </button>
+              );
+            })}
+          </div>
         </div>
       </div>
     </div>
@@ -409,31 +606,71 @@ export const PractitionerRegister = () => {
   // ── Step 4 — Bio & Niche ────────────────────────────────────────────────
 
   const renderStep4 = () => (
-    <div>
-      <h2 className="mb-6 text-xl font-bold text-[#1a1a1a]">Tell patients about yourself</h2>
+    <div className="space-y-6">
+      {/* Card 1: Bio + photo */}
+      <div className={cardCls}>
+        <h2 className="mb-6 text-xl font-bold text-[#1a1a1a]">
+          Tell patients about yourself
+        </h2>
 
-      <textarea
-        className={`${inputCls} min-h-[160px] resize-none`}
-        placeholder="Write in first person. Describe your approach, who you work with best, and what makes you different. Yves reads this to match you with the right patients."
-        value={form.bio}
-        onChange={(e) => set("bio", e.target.value)}
-        maxLength={600}
-      />
-      <div className="mt-1 flex items-center justify-between">
-        <p className={hintCls}>
-          Tip: mention the sports, injuries, or conditions you specialise in.
-        </p>
-        <p className={`text-xs ${form.bio.length >= 50 ? "text-[#6B5ED9]" : "text-[#aaa]"}`}>
-          {form.bio.length} / 600
-        </p>
+        <textarea
+          className={`${inputCls} min-h-[160px] resize-none`}
+          placeholder="Write in first person. Describe your approach, who you work with best, and what makes you different. Yves reads this to match you with the right patients."
+          value={form.bio}
+          onChange={(e) => set("bio", e.target.value)}
+          maxLength={600}
+        />
+        <div className="mt-1 flex items-center justify-between">
+          <p className={hintCls}>
+            Tip: mention the sports, injuries, or conditions you specialise in.
+          </p>
+          <p
+            className={`text-xs ${form.bio.length >= 100 ? "text-[#6B5ED9]" : "text-[#aaa]"}`}
+          >
+            {form.bio.length} / 600
+          </p>
+        </div>
+        {form.bio.length > 0 && form.bio.length < 100 && (
+          <p className="mt-1 text-xs text-amber-600">
+            Minimum 100 characters ({100 - form.bio.length} more needed)
+          </p>
+        )}
+
+        {/* Profile photo placeholder */}
+        <div className="mt-6">
+          <label className={labelCls}>Profile photo</label>
+          <div className="flex items-center gap-4">
+            <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-full bg-black/5">
+              <Camera size={24} className="text-[#bbb]" />
+            </div>
+            <div>
+              <button
+                type="button"
+                className="rounded-lg border border-black/10 bg-white px-4 py-2 text-sm font-medium text-[#555] transition-colors hover:bg-black/5"
+              >
+                Upload photo
+              </button>
+              <p className={hintCls}>
+                Coming soon — photo upload will be available in the next update.
+              </p>
+            </div>
+          </div>
+        </div>
       </div>
 
-      {/* Niche selector */}
-      <div className="mt-8">
-        <label className={labelCls}>Who do you work with?</label>
+      {/* Card 2: Niche selector */}
+      <div className={cardCls}>
+        <div className="mb-4 flex items-center justify-between">
+          <label className={`${labelCls} mb-0`}>Who do you work with?</label>
+          <span
+            className={`text-xs font-medium ${form.niche_tags.length >= 8 ? "text-amber-600" : "text-[#999]"}`}
+          >
+            {form.niche_tags.length} / 8 selected
+          </span>
+        </div>
 
         {form.niche_tags.length > 0 && (
-          <div className="mb-3">
+          <div className="mb-4">
             <p className="mb-1.5 text-xs text-[#999]">Selected niches</p>
             <div className="flex flex-wrap gap-2">
               {form.niche_tags.map((n) => (
@@ -442,7 +679,11 @@ export const PractitionerRegister = () => {
                   className="inline-flex items-center gap-1.5 rounded-full bg-[#6B5ED9] px-3 py-1.5 text-xs font-medium text-white"
                 >
                   {n}
-                  <button type="button" onClick={() => toggleNiche(n)} className="hover:opacity-70">
+                  <button
+                    type="button"
+                    onClick={() => toggleNiche(n)}
+                    className="hover:opacity-70"
+                  >
                     <X size={12} />
                   </button>
                 </span>
@@ -457,7 +698,12 @@ export const PractitionerRegister = () => {
               key={n}
               type="button"
               onClick={() => toggleNiche(n)}
-              className="rounded-full border border-black/10 bg-white px-3.5 py-1.5 text-xs font-medium text-[#555] transition-all hover:border-black/20"
+              disabled={form.niche_tags.length >= 8}
+              className={`rounded-full border border-black/10 bg-white px-3.5 py-1.5 text-xs font-medium text-[#555] transition-all ${
+                form.niche_tags.length >= 8
+                  ? "cursor-not-allowed opacity-40"
+                  : "hover:border-black/20"
+              }`}
             >
               {n}
             </button>
@@ -467,103 +713,298 @@ export const PractitionerRegister = () => {
     </div>
   );
 
-  // ── Step 5 — Pricing & Tier ─────────────────────────────────────────────
+  // ── Step 5 — Pricing & Go Live ──────────────────────────────────────────
+
+  const displaySpecialty =
+    form.specialty === "Other" && form.specialty_other
+      ? form.specialty_other
+      : form.specialty || "Physiotherapist";
+  const displayNiches =
+    form.niche_tags.length > 0
+      ? form.niche_tags.slice(0, 3).join(" · ")
+      : "Runners · Cyclists";
+  const displaySuburb = form.suburb || "Claremont";
+  const displayCity = form.city || "Cape Town";
+  const displayYears = form.years_experience || "8";
+  const displayFeeMin = form.session_fee_min || "600";
+  const displayFeeMax = form.session_fee_max || "900";
+  const displayBio =
+    form.bio ||
+    "I'm a physiotherapist with 8 years of experience working with endurance athletes. I specialise in running injuries and post-surgical rehabilitation. My approach combines manual therapy with...";
 
   const renderStep5 = () => (
-    <div>
-      <h2 className="mb-6 text-xl font-bold text-[#1a1a1a]">Set your pricing and listing tier</h2>
+    <div className="space-y-6">
+      {/* Card 1: Pricing */}
+      <div className={cardCls}>
+        <h2 className="mb-6 text-xl font-bold text-[#1a1a1a]">
+          Set your pricing
+        </h2>
 
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <label className={labelCls}>Min session fee</label>
-          <div className="relative">
-            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm text-[#999]">R</span>
-            <input
-              className={`${inputCls} pl-8`}
-              type="number"
-              min="0"
-              placeholder="600"
-              value={form.session_fee_min}
-              onChange={(e) => set("session_fee_min", e.target.value)}
-            />
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className={labelCls}>Min session fee</label>
+            <div className="relative">
+              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm text-[#999]">
+                R
+              </span>
+              <input
+                className={`${inputCls} pl-8`}
+                type="number"
+                min="0"
+                placeholder="600"
+                value={form.session_fee_min}
+                onChange={(e) => set("session_fee_min", e.target.value)}
+              />
+            </div>
+          </div>
+          <div>
+            <label className={labelCls}>Max session fee</label>
+            <div className="relative">
+              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm text-[#999]">
+                R
+              </span>
+              <input
+                className={`${inputCls} pl-8`}
+                type="number"
+                min="0"
+                placeholder="900"
+                value={form.session_fee_max}
+                onChange={(e) => set("session_fee_max", e.target.value)}
+              />
+            </div>
           </div>
         </div>
-        <div>
-          <label className={labelCls}>Max session fee</label>
-          <div className="relative">
-            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm text-[#999]">R</span>
-            <input
-              className={`${inputCls} pl-8`}
-              type="number"
-              min="0"
-              placeholder="900"
-              value={form.session_fee_max}
-              onChange={(e) => set("session_fee_max", e.target.value)}
-            />
+        <p className={hintCls}>
+          Shown on your public listing as "R{displayFeeMin}–R{displayFeeMax} /
+          visit"
+        </p>
+
+        {/* Deposit option */}
+        <div className="mt-6">
+          <label className={labelCls}>Require a booking deposit?</label>
+          <div className="mt-2 flex gap-3">
+            {(["Yes", "No"] as const).map((opt) => {
+              const active =
+                opt === "Yes"
+                  ? form.deposit_required
+                  : !form.deposit_required;
+              return (
+                <button
+                  key={opt}
+                  type="button"
+                  onClick={() => set("deposit_required", opt === "Yes")}
+                  className={`rounded-full px-5 py-2.5 text-sm font-medium transition-all ${
+                    active
+                      ? "bg-[#6B5ED9] text-white"
+                      : "border border-black/10 bg-white text-[#555] hover:border-black/20"
+                  }`}
+                >
+                  {opt}
+                </button>
+              );
+            })}
           </div>
+          {form.deposit_required && (
+            <div className="mt-3">
+              <label className={labelCls}>Deposit amount</label>
+              <div className="relative max-w-[200px]">
+                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm text-[#999]">
+                  R
+                </span>
+                <input
+                  className={`${inputCls} pl-8`}
+                  type="number"
+                  min="0"
+                  placeholder="200"
+                  value={form.deposit_amount}
+                  onChange={(e) => set("deposit_amount", e.target.value)}
+                />
+              </div>
+            </div>
+          )}
         </div>
       </div>
-      <p className={hintCls}>
-        Shown on your public listing as "R{form.session_fee_min || "600"}–R{form.session_fee_max || "900"} / visit"
-      </p>
 
-      {/* Tier cards */}
-      <div className="mt-8 grid gap-4 sm:grid-cols-2">
-        {/* Basic */}
-        <button
-          type="button"
-          onClick={() => set("pricing_tier", "basic")}
-          className={`rounded-xl border p-5 text-left transition-all ${
-            form.pricing_tier === "basic"
-              ? "border-[#6B5ED9] bg-[#f0ebff]/50"
-              : "border-black/10 bg-white hover:border-black/20"
-          }`}
-        >
-          <p className="text-lg font-bold text-[#1a1a1a]">Basic</p>
-          <p className="text-sm font-medium text-[#6B5ED9]">Free</p>
-          <p className="mt-0.5 text-xs text-[#888]">10% commission per attended session</p>
-          <ul className="mt-4 space-y-2">
-            {BASIC_FEATURES.map((f) => (
-              <li key={f} className="flex items-start gap-2 text-xs text-[#555]">
-                <Check size={14} className="mt-0.5 shrink-0 text-[#6B5ED9]" />
-                {f}
-              </li>
-            ))}
-          </ul>
-        </button>
+      {/* Card 2: Tier selection */}
+      <div className={cardCls}>
+        <h2 className="mb-6 text-xl font-bold text-[#1a1a1a]">
+          Choose your listing tier
+        </h2>
 
-        {/* Verified Partner */}
-        <button
-          type="button"
-          onClick={() => set("pricing_tier", "verified")}
-          className={`relative rounded-xl border p-5 text-left transition-all ${
-            form.pricing_tier === "verified"
-              ? "border-[#6B5ED9] bg-[#f0ebff]/50"
-              : "border-black/10 bg-white hover:border-black/20"
-          }`}
-        >
-          <span className="absolute -top-2.5 right-4 rounded-full bg-[#6B5ED9] px-2.5 py-0.5 text-[10px] font-semibold text-white">
-            Most popular
-          </span>
-          <p className="text-lg font-bold text-[#1a1a1a]">Verified Partner</p>
-          <p className="text-sm font-medium text-[#6B5ED9]">R1,499 / month</p>
-          <ul className="mt-4 space-y-2">
-            {VERIFIED_FEATURES.map((f) => (
-              <li key={f} className="flex items-start gap-2 text-xs text-[#555]">
-                <Check size={14} className="mt-0.5 shrink-0 text-[#6B5ED9]" />
-                {f}
-              </li>
-            ))}
-          </ul>
-        </button>
+        <div className="grid gap-4 sm:grid-cols-2">
+          {/* Basic */}
+          <button
+            type="button"
+            onClick={() => set("pricing_tier", "basic")}
+            className={`rounded-xl border p-5 text-left transition-all ${
+              form.pricing_tier === "basic"
+                ? "border-[#6B5ED9] bg-[#f0ebff]/50"
+                : "border-black/10 bg-white hover:border-black/20"
+            }`}
+          >
+            <div className="flex items-center gap-2">
+              <p className="text-lg font-bold text-[#1a1a1a]">Basic</p>
+              <span className="rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-semibold text-emerald-700">
+                Free
+              </span>
+            </div>
+            <p className="mt-0.5 text-xs text-[#888]">
+              10% commission per attended session
+            </p>
+            <hr className="my-4 border-black/5" />
+            <ul className="space-y-2">
+              {BASIC_FEATURES_YES.map((f) => (
+                <li
+                  key={f}
+                  className="flex items-start gap-2 text-xs text-[#555]"
+                >
+                  <Check
+                    size={14}
+                    className="mt-0.5 shrink-0 text-[#6B5ED9]"
+                  />
+                  {f}
+                </li>
+              ))}
+              {BASIC_FEATURES_NO.map((f) => (
+                <li
+                  key={f}
+                  className="flex items-start gap-2 text-xs text-[#bbb]"
+                >
+                  <X size={14} className="mt-0.5 shrink-0 text-[#ccc]" />
+                  {f}
+                </li>
+              ))}
+            </ul>
+          </button>
+
+          {/* Verified Partner */}
+          <button
+            type="button"
+            onClick={() => set("pricing_tier", "verified")}
+            className={`relative rounded-xl border p-5 text-left transition-all ${
+              form.pricing_tier === "verified"
+                ? "border-[#6B5ED9] bg-[#f0ebff]/50"
+                : "border-black/10 bg-white hover:border-black/20"
+            }`}
+          >
+            <span className="absolute -top-2.5 right-4 rounded-full bg-[#6B5ED9] px-2.5 py-0.5 text-[10px] font-semibold text-white">
+              Recommended
+            </span>
+            <p className="text-lg font-bold text-[#1a1a1a]">
+              Verified Partner
+            </p>
+            <p className="text-sm font-medium text-[#6B5ED9]">
+              R1,499 / month
+            </p>
+            <hr className="my-4 border-black/5" />
+            <ul className="space-y-2">
+              {VERIFIED_FEATURES.map((f) => (
+                <li
+                  key={f}
+                  className="flex items-start gap-2 text-xs text-[#555]"
+                >
+                  <Check
+                    size={14}
+                    className="mt-0.5 shrink-0 text-[#6B5ED9]"
+                  />
+                  {f}
+                </li>
+              ))}
+            </ul>
+          </button>
+        </div>
       </div>
 
-      {/* Submit */}
+      {/* Card 3: Listing preview */}
+      <div className={cardCls}>
+        <h2 className="mb-4 text-xl font-bold text-[#1a1a1a]">
+          Listing preview
+        </h2>
+        <p className="mb-5 text-xs text-[#999]">
+          This is how your listing will appear in Find Help
+        </p>
+
+        <div className="rounded-xl border border-black/10 bg-white p-5">
+          {/* Header */}
+          <div className="flex items-start justify-between gap-2">
+            <div>
+              <h3 className="text-base font-semibold text-[#1a1a1a]">
+                Your Name
+              </h3>
+              <p className="mt-0.5 text-xs font-medium text-[#6B5ED9]">
+                {displaySpecialty}
+              </p>
+              <p className="mt-0.5 text-xs text-[#888]">{displayNiches}</p>
+            </div>
+            <div className="flex items-center gap-1 text-sm">
+              <span className="text-amber-400">&#9733;</span>
+              <span className="font-medium text-[#333]">&mdash;</span>
+            </div>
+          </div>
+
+          {/* Details */}
+          <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1.5 text-xs text-[#888]">
+            <span className="flex items-center gap-1">
+              <MapPin size={12} />
+              {displaySuburb}, {displayCity}
+            </span>
+            <span className="flex items-center gap-1">
+              <Clock size={12} />
+              {displayYears} yrs exp
+            </span>
+          </div>
+
+          {/* Badges */}
+          <div className="mt-3 flex flex-wrap gap-1.5">
+            <span className="rounded-full border border-black/10 px-2.5 py-0.5 text-xs font-medium text-[#555]">
+              R{displayFeeMin}–R{displayFeeMax} / visit
+            </span>
+            {form.accepts_medical_aid && (
+              <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-0.5 text-xs font-medium text-emerald-700">
+                <CheckCircle2
+                  size={10}
+                  className="mr-1 inline-block align-text-top"
+                />
+                Medical Aid
+              </span>
+            )}
+            {form.telehealth && (
+              <span className="rounded-full border border-blue-200 bg-blue-50 px-2.5 py-0.5 text-xs font-medium text-blue-600">
+                <Video
+                  size={10}
+                  className="mr-1 inline-block align-text-top"
+                />
+                Telehealth
+              </span>
+            )}
+          </div>
+
+          {/* Bio */}
+          <p className="mt-3 line-clamp-2 text-xs leading-relaxed text-[#888]">
+            {displayBio}
+          </p>
+
+          {/* Disabled buttons */}
+          <div className="mt-4 flex gap-2">
+            <span className="flex-1 rounded-lg bg-black/5 py-2 text-center text-sm font-medium text-[#bbb]">
+              Book
+            </span>
+            <span className="rounded-lg border border-black/5 px-4 py-2 text-center text-sm font-medium text-[#bbb]">
+              Profile
+            </span>
+          </div>
+          <p className="mt-2 text-center text-[10px] text-[#ccc]">
+            Preview only
+          </p>
+        </div>
+      </div>
+
+      {/* Submit button */}
       <button
         type="button"
         onClick={handleSubmit}
         disabled={submitting}
-        className="mt-8 flex w-full items-center justify-center gap-2 rounded-xl bg-[#6B5ED9] px-6 py-4 text-base font-semibold text-white shadow-sm transition-all hover:bg-[#5a4ec5] active:scale-[0.98] disabled:opacity-60"
+        className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#6B5ED9] px-6 py-4 text-base font-semibold text-white shadow-sm transition-all hover:bg-[#5a4ec5] active:scale-[0.98] disabled:opacity-60"
       >
         {submitting ? (
           <span className="flex items-center gap-2">
@@ -577,16 +1018,16 @@ export const PractitionerRegister = () => {
           </>
         )}
       </button>
-
-      {submitting && (
-        <p className="mt-4 text-center text-sm text-[#6B5ED9]">
-          {"\uD83C\uDF89"} Your listing is live! Redirecting to your dashboard…
-        </p>
-      )}
     </div>
   );
 
-  const stepRenderers = [renderStep1, renderStep2, renderStep3, renderStep4, renderStep5];
+  const stepRenderers = [
+    renderStep1,
+    renderStep2,
+    renderStep3,
+    renderStep4,
+    renderStep5,
+  ];
 
   // ── Layout ──────────────────────────────────────────────────────────────
 
@@ -594,9 +1035,21 @@ export const PractitionerRegister = () => {
 
   return (
     <div className="min-h-screen" style={{ background: "#f0ede8" }}>
-      {/* Sticky step indicator */}
-      <div className="sticky top-0 z-50 border-b border-black/5 backdrop-blur-md" style={{ background: "rgba(240,237,232,0.9)" }}>
+      {/* Sticky header with step indicator */}
+      <div
+        className="sticky top-0 z-50 border-b border-black/5 backdrop-blur-md"
+        style={{ background: "rgba(240,237,232,0.9)" }}
+      >
         <div className="mx-auto max-w-2xl px-5 pb-3 pt-4">
+          {/* Title */}
+          <h1 className="text-center text-lg font-bold text-[#1a1a1a]">
+            Set up your practitioner listing
+          </h1>
+          <p className="mb-4 text-center text-xs text-[#999]">
+            Complete all 5 steps to go live in Find Help
+          </p>
+
+          {/* Step circles */}
           <div className="flex items-center justify-center gap-2">
             {STEPS.map(({ id, label }) => {
               const done = id < step;
@@ -621,12 +1074,18 @@ export const PractitionerRegister = () => {
                   </span>
                   <span
                     className={`hidden text-xs font-medium sm:inline ${
-                      current ? "text-[#1a1a1a] font-bold" : done ? "text-[#6B5ED9]" : "text-[#bbb]"
+                      current
+                        ? "font-bold text-[#1a1a1a]"
+                        : done
+                          ? "text-[#6B5ED9]"
+                          : "text-[#bbb]"
                     }`}
                   >
                     {label}
                   </span>
-                  {id < 5 && <span className="mx-1 text-[#ddd]">&middot;</span>}
+                  {id < 5 && (
+                    <span className="mx-1 text-[#ddd]">&middot;</span>
+                  )}
                 </button>
               );
             })}
@@ -643,10 +1102,19 @@ export const PractitionerRegister = () => {
       </div>
 
       {/* Form body */}
-      <div className="mx-auto max-w-xl px-5 py-10">
-        <div className="rounded-xl bg-white p-6 shadow-sm sm:p-8">
-          {stepRenderers[step - 1]()}
-        </div>
+      <div className="mx-auto max-w-2xl px-5 py-10">
+        {/* Back to listing overview — only on Step 1 */}
+        {step === 1 && (
+          <Link
+            to="/join"
+            className="mb-6 inline-flex items-center gap-1.5 text-sm font-medium text-[#6B5ED9] hover:underline"
+          >
+            <ArrowLeft size={14} />
+            Back to listing overview
+          </Link>
+        )}
+
+        {stepRenderers[step - 1]()}
 
         {/* Navigation */}
         {step < 5 && (
@@ -674,7 +1142,7 @@ export const PractitionerRegister = () => {
           </div>
         )}
 
-        {step === 5 && step > 1 && (
+        {step === 5 && (
           <div className="mt-6">
             <button
               onClick={back}

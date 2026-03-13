@@ -238,10 +238,19 @@ export const PractitionerRegister = () => {
     setSubmitError(null);
 
     try {
-      const { data: { user }, error: authError } = await supabase.auth.getUser();
       // eslint-disable-next-line no-console
-      console.log("[Register] Auth user:", user?.id, "authError:", authError);
-      if (authError || !user) throw new Error("Not authenticated");
+      console.log("[Register] handleSubmit called");
+
+      const authResult = await supabase.auth.getUser();
+      const user = authResult?.data?.user;
+      // eslint-disable-next-line no-console
+      console.log("[Register] Auth user:", user?.id);
+
+      if (!user) {
+        setSubmitError("Please log in again");
+        setSubmitting(false);
+        return;
+      }
 
       const displaySpecialtyValue =
         form.specialty === "Other" && form.specialty_other
@@ -251,8 +260,8 @@ export const PractitionerRegister = () => {
       const row = {
         id: user.id,
         full_name: user.user_metadata?.full_name ?? user.email ?? "Practitioner",
-        specialty: displaySpecialtyValue,
-        years_experience: form.years_experience ? Number(form.years_experience) : null,
+        specialty: displaySpecialtyValue || null,
+        years_experience: Number(form.years_experience) || 0,
         qualifications: form.qualifications.length > 0 ? form.qualifications : null,
         registration_body: form.registration_body || null,
         registration_number: form.registration_number || null,
@@ -261,17 +270,17 @@ export const PractitionerRegister = () => {
         suburb: form.suburb || null,
         city: form.city || null,
         province: form.province || null,
-        telehealth: form.telehealth,
-        in_person: form.in_person,
-        accepts_medical_aid: form.accepts_medical_aid,
-        session_fee_min: form.session_fee_min ? Number(form.session_fee_min) : null,
-        session_fee_max: form.session_fee_max ? Number(form.session_fee_max) : null,
-        requires_deposit: form.deposit_required,
+        telehealth: form.telehealth ?? false,
+        in_person: form.in_person ?? false,
+        accepts_medical_aid: form.accepts_medical_aid ?? false,
+        session_fee_min: Number(form.session_fee_min) || 0,
+        session_fee_max: Number(form.session_fee_max) || 0,
+        requires_deposit: form.deposit_required ?? false,
         bio: form.bio || null,
         niche_tags: form.niche_tags.length > 0 ? form.niche_tags : null,
-        pricing_tier: form.pricing_tier,
+        pricing_tier: form.pricing_tier || "basic",
         listing_active: true,
-        role: "practitioner" as const,
+        role: "practitioner",
       };
 
       // eslint-disable-next-line no-console
@@ -287,16 +296,10 @@ export const PractitionerRegister = () => {
 
       if (error) {
         // eslint-disable-next-line no-console
-        console.error("[Register] Upsert error details:", {
-          message: error.message,
-          details: error.details,
-          hint: error.hint,
-          code: error.code,
-        });
-        throw new Error(
-          [error.message, error.details, error.hint].filter(Boolean).join(" — ") ||
-            "Database error",
-        );
+        console.error("[Register] Upsert error:", error);
+        setSubmitError(error.message || "Database error");
+        setSubmitting(false);
+        return;
       }
 
       // eslint-disable-next-line no-console
@@ -305,15 +308,13 @@ export const PractitionerRegister = () => {
       setSubmitting(false);
       setSubmitted(true);
       setTimeout(() => navigate("/practitioner/dashboard"), 2000);
-    } catch (err: unknown) {
+    } catch (err) {
+      // eslint-disable-next-line no-console
+      console.error("[Register] Submit crash:", err);
       const message =
         err instanceof Error
           ? err.message
-          : typeof err === "object" && err !== null && "message" in err
-            ? String((err as { message: unknown }).message)
-            : "Something went wrong";
-      // eslint-disable-next-line no-console
-      console.error("[Register] Submit failed:", err);
+          : String(err ?? "Something went wrong");
       setSubmitError(message);
       setSubmitting(false);
     }

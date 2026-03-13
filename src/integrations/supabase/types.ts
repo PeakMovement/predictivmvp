@@ -1550,37 +1550,100 @@ export type Database = {
       }
       profiles: {
         Row: {
+          accepts_medical_aid: boolean | null
+          address: string | null
           avatar_url: string | null
+          bio: string | null
+          city: string | null
           full_name: string | null
           id: string
+          in_person: boolean | null
           layout_preferences: Json | null
+          listing_active: boolean | null
           memory_cleared_at: string | null
+          niche_tags: string[] | null
+          practice_name: string | null
+          pricing_tier: string | null
+          province: string | null
+          qualifications: string[] | null
+          registration_body: string | null
+          registration_number: string | null
+          requires_deposit: boolean | null
+          role: string | null
+          session_fee_max: number | null
+          session_fee_min: number | null
+          specialty: string | null
+          suburb: string | null
+          telehealth: boolean | null
           timezone: string | null
           tone_preference: string | null
           updated_at: string | null
           username: string | null
+          years_experience: number | null
         }
         Insert: {
+          accepts_medical_aid?: boolean | null
+          address?: string | null
           avatar_url?: string | null
+          bio?: string | null
+          city?: string | null
           full_name?: string | null
           id: string
+          in_person?: boolean | null
           layout_preferences?: Json | null
+          listing_active?: boolean | null
           memory_cleared_at?: string | null
+          niche_tags?: string[] | null
+          practice_name?: string | null
+          pricing_tier?: string | null
+          province?: string | null
+          qualifications?: string[] | null
+          registration_body?: string | null
+          registration_number?: string | null
+          requires_deposit?: boolean | null
+          role?: string | null
+          session_fee_max?: number | null
+          session_fee_min?: number | null
+          specialty?: string | null
+          suburb?: string | null
+          telehealth?: boolean | null
           timezone?: string | null
           tone_preference?: string | null
           updated_at?: string | null
           username?: string | null
+          years_experience?: number | null
         }
         Update: {
+          accepts_medical_aid?: boolean | null
+          address?: string | null
           avatar_url?: string | null
+          bio?: string | null
+          city?: string | null
           full_name?: string | null
           id?: string
+          in_person?: boolean | null
           layout_preferences?: Json | null
+          listing_active?: boolean | null
           memory_cleared_at?: string | null
+          niche_tags?: string[] | null
+          practice_name?: string | null
+          pricing_tier?: string | null
+          province?: string | null
+          qualifications?: string[] | null
+          registration_body?: string | null
+          registration_number?: string | null
+          requires_deposit?: boolean | null
+          role?: string | null
+          session_fee_max?: number | null
+          session_fee_min?: number | null
+          specialty?: string | null
+          suburb?: string | null
+          telehealth?: boolean | null
           timezone?: string | null
           tone_preference?: string | null
           updated_at?: string | null
           username?: string | null
+          years_experience?: number | null
         }
         Relationships: []
       }

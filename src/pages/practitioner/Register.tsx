@@ -1,10 +1,7 @@
 // Practitioner Registration (5-step form)
-// Upserts to healthcare_practitioners table using auth.uid() as id.
-// Columns that don't exist on the table yet are packed into available_times JSON:
-//   specialty_other, registration_body, registration_number, practice_name,
-//   address, suburb, in_person, session_duration_minutes, niche_tags,
-//   session_fee_min, session_fee_max, deposit_required, deposit_amount,
-//   pricing_tier, listing_active, role
+// Upserts to profiles table using auth.uid() as id.
+// Practitioner-specific columns (specialty, bio, niche_tags, etc.) are added
+// to profiles via ALTER TABLE migration.
 
 import { useState, type KeyboardEvent } from "react";
 import { useNavigate, Link } from "react-router-dom";
@@ -244,59 +241,44 @@ export const PractitionerRegister = () => {
       const { data: { user }, error: authError } = await supabase.auth.getUser();
       // eslint-disable-next-line no-console
       console.log("[Register] Auth user:", user?.id, "authError:", authError);
-      if (!user) throw new Error("Not authenticated");
+      if (authError || !user) throw new Error("Not authenticated");
 
       const displaySpecialtyValue =
         form.specialty === "Other" && form.specialty_other
           ? form.specialty_other
           : form.specialty;
 
-      const locationStr = [form.suburb, form.city].filter(Boolean).join(", ");
-
-      // Fields that map directly to healthcare_practitioners columns
       const row = {
         id: user.id,
         full_name: user.user_metadata?.full_name ?? user.email ?? "Practitioner",
-        title: displaySpecialtyValue,
         specialty: displaySpecialtyValue,
-        location: locationStr || "Cape Town",
+        years_experience: form.years_experience ? Number(form.years_experience) : null,
+        qualifications: form.qualifications.length > 0 ? form.qualifications : null,
+        registration_body: form.registration_body || null,
+        registration_number: form.registration_number || null,
+        practice_name: form.practice_name || null,
+        address: form.address || null,
+        suburb: form.suburb || null,
         city: form.city || null,
         province: form.province || null,
-        bio: form.bio || null,
-        qualifications: form.qualifications.length > 0 ? form.qualifications : null,
-        years_experience: form.years_experience ? Number(form.years_experience) : null,
+        telehealth: form.telehealth,
+        in_person: form.in_person,
         accepts_medical_aid: form.accepts_medical_aid,
-        online_available: form.telehealth,
-        consultation_fee: form.session_fee_min ? Number(form.session_fee_min) : null,
-        contact_email: user.email ?? null,
-        profile_image_url: null as string | null,
-        // Pack extra fields into available_times JSON
-        available_times: {
-          specialty_other: form.specialty_other || null,
-          registration_body: form.registration_body || null,
-          registration_number: form.registration_number || null,
-          practice_name: form.practice_name || null,
-          address: form.address || null,
-          suburb: form.suburb || null,
-          in_person: form.in_person,
-          telehealth: form.telehealth,
-          session_duration_minutes: form.session_duration_minutes,
-          niche_tags: form.niche_tags,
-          session_fee_min: form.session_fee_min ? Number(form.session_fee_min) : null,
-          session_fee_max: form.session_fee_max ? Number(form.session_fee_max) : null,
-          deposit_required: form.deposit_required,
-          deposit_amount: form.deposit_required && form.deposit_amount ? Number(form.deposit_amount) : null,
-          pricing_tier: form.pricing_tier,
-          listing_active: true,
-          role: "practitioner",
-        },
+        session_fee_min: form.session_fee_min ? Number(form.session_fee_min) : null,
+        session_fee_max: form.session_fee_max ? Number(form.session_fee_max) : null,
+        requires_deposit: form.deposit_required,
+        bio: form.bio || null,
+        niche_tags: form.niche_tags.length > 0 ? form.niche_tags : null,
+        pricing_tier: form.pricing_tier,
+        listing_active: true,
+        role: "practitioner" as const,
       };
 
       // eslint-disable-next-line no-console
-      console.log("[Register] Upserting row:", JSON.stringify(row, null, 2));
+      console.log("[Register] Upserting to profiles:", JSON.stringify(row, null, 2));
 
       const { data, error } = await supabase
-        .from("healthcare_practitioners")
+        .from("profiles")
         .upsert(row, { onConflict: "id" })
         .select();
 
@@ -318,7 +300,7 @@ export const PractitionerRegister = () => {
       }
 
       // eslint-disable-next-line no-console
-      console.log("[Register] Practitioner listing saved successfully for", user.id);
+      console.log("[Register] Practitioner profile saved for", user.id);
 
       setSubmitting(false);
       setSubmitted(true);

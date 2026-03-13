@@ -241,7 +241,9 @@ export const PractitionerRegister = () => {
     setSubmitError(null);
 
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      // eslint-disable-next-line no-console
+      console.log("[Register] Auth user:", user?.id, "authError:", authError);
       if (!user) throw new Error("Not authenticated");
 
       const displaySpecialtyValue =
@@ -290,18 +292,33 @@ export const PractitionerRegister = () => {
         },
       };
 
-      const { error } = await supabase
+      // eslint-disable-next-line no-console
+      console.log("[Register] Upserting row:", JSON.stringify(row, null, 2));
+
+      const { data, error } = await supabase
         .from("healthcare_practitioners")
-        .upsert(row, { onConflict: "id" });
+        .upsert(row, { onConflict: "id" })
+        .select();
+
+      // eslint-disable-next-line no-console
+      console.log("[Register] Upsert result — data:", data, "error:", error);
 
       if (error) {
         // eslint-disable-next-line no-console
-        console.error("Upsert error:", error);
-        throw new Error(error.message || "Database error");
+        console.error("[Register] Upsert error details:", {
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+          code: error.code,
+        });
+        throw new Error(
+          [error.message, error.details, error.hint].filter(Boolean).join(" — ") ||
+            "Database error",
+        );
       }
 
       // eslint-disable-next-line no-console
-      console.log("Practitioner listing saved successfully for", user.id);
+      console.log("[Register] Practitioner listing saved successfully for", user.id);
 
       setSubmitting(false);
       setSubmitted(true);
@@ -314,7 +331,7 @@ export const PractitionerRegister = () => {
             ? String((err as { message: unknown }).message)
             : "Something went wrong";
       // eslint-disable-next-line no-console
-      console.error("Registration submit failed:", err);
+      console.error("[Register] Submit failed:", err);
       setSubmitError(message);
       setSubmitting(false);
     }

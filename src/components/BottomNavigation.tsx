@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Home, Dumbbell, Heart, FileText, User, ClipboardList, TrendingUp, Users, Menu, X, Calendar, LayoutGrid, Bell } from "lucide-react";
+import { Home, Dumbbell, Heart, FileText, User, ClipboardList, TrendingUp, Stethoscope, Menu, X, Calendar, LayoutGrid, Bell } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { supabase } from "@/integrations/supabase/client";
@@ -10,12 +10,12 @@ const navItems = [
   { name: "planner", icon: Calendar, label: "Planner" },
   { name: "training", icon: Dumbbell, label: "Training" },
   { name: "health", icon: Heart, label: "Health" },
+  { name: "find-help", icon: Stethoscope, label: "Find Help" },
   { name: "alert-history", icon: Bell, label: "Alerts" },
   { name: "my-documents", icon: FileText, label: "Docs" },
   { name: "profile-setup", icon: User, label: "Profile" },
   { name: "your-plan", icon: ClipboardList, label: "Plan" },
   { name: "mybaselines", icon: TrendingUp, label: "Baselines" },
-  { name: "find-help", icon: Users, label: "Help" },
 ];
 
 interface BottomNavigationProps {

@@ -1,19 +1,14 @@
-// WIREFRAME — Practitioner Registration (5-step form)
-// Backend integration points:
-// On submit → upsert to user_profiles table
-// Required new columns:
-//   specialty TEXT, specialty_other TEXT, years_experience INT,
-//   qualifications TEXT[], registration_body TEXT, registration_number TEXT,
-//   practice_name TEXT, address TEXT, suburb TEXT, city TEXT, province TEXT,
-//   telehealth BOOLEAN, in_person BOOLEAN, session_duration_minutes INT,
-//   accepts_medical_aid BOOLEAN, bio TEXT, profile_photo_url TEXT,
-//   niche_tags TEXT[], session_fee_min INT, session_fee_max INT,
-//   deposit_required BOOLEAN, deposit_amount INT,
-//   pricing_tier TEXT ('basic' | 'verified'), listing_active BOOLEAN
-// After save → set role = 'practitioner_listed' to distinguish from clinical role
+// Practitioner Registration (5-step form)
+// Upserts to healthcare_practitioners table using auth.uid() as id.
+// Columns that don't exist on the table yet are packed into available_times JSON:
+//   specialty_other, registration_body, registration_number, practice_name,
+//   address, suburb, in_person, session_duration_minutes, niche_tags,
+//   session_fee_min, session_fee_max, deposit_required, deposit_amount,
+//   pricing_tier, listing_active, role
 
 import { useState, type KeyboardEvent } from "react";
 import { useNavigate, Link } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 import {
   ArrowLeft,
   ArrowRight,
@@ -239,38 +234,76 @@ export const PractitionerRegister = () => {
     }
   };
 
-  const handleSubmit = () => {
-    setSubmitting(true);
-    const payload = {
-      ...form,
-      years_experience: form.years_experience
-        ? Number(form.years_experience)
-        : null,
-      session_fee_min: form.session_fee_min
-        ? Number(form.session_fee_min)
-        : null,
-      session_fee_max: form.session_fee_max
-        ? Number(form.session_fee_max)
-        : null,
-      deposit_amount: form.deposit_required && form.deposit_amount
-        ? Number(form.deposit_amount)
-        : null,
-      listing_active: true,
-      profile_status: "pending_review",
-      created_at: new Date().toISOString(),
-    };
-    // eslint-disable-next-line no-console
-    console.log("──── PRACTITIONER REGISTRATION PAYLOAD ────");
-    // eslint-disable-next-line no-console
-    console.log(JSON.stringify(payload, null, 2));
-    // eslint-disable-next-line no-console
-    console.log("───────────────────────────────────────────");
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
-    setTimeout(() => {
+  const handleSubmit = async () => {
+    setSubmitting(true);
+    setSubmitError(null);
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
+
+      const displaySpecialtyValue =
+        form.specialty === "Other" && form.specialty_other
+          ? form.specialty_other
+          : form.specialty;
+
+      const locationStr = [form.suburb, form.city].filter(Boolean).join(", ");
+
+      // Fields that map directly to healthcare_practitioners columns
+      const row = {
+        id: user.id,
+        full_name: user.user_metadata?.full_name ?? user.email ?? "Practitioner",
+        title: displaySpecialtyValue,
+        specialty: displaySpecialtyValue,
+        location: locationStr || "Cape Town",
+        city: form.city || null,
+        province: form.province || null,
+        bio: form.bio || null,
+        qualifications: form.qualifications.length > 0 ? form.qualifications : null,
+        years_experience: form.years_experience ? Number(form.years_experience) : null,
+        accepts_medical_aid: form.accepts_medical_aid,
+        online_available: form.telehealth,
+        consultation_fee: form.session_fee_min ? Number(form.session_fee_min) : null,
+        contact_email: user.email ?? null,
+        profile_image_url: null as string | null,
+        // Pack extra fields into available_times JSON
+        available_times: {
+          specialty_other: form.specialty_other || null,
+          registration_body: form.registration_body || null,
+          registration_number: form.registration_number || null,
+          practice_name: form.practice_name || null,
+          address: form.address || null,
+          suburb: form.suburb || null,
+          in_person: form.in_person,
+          telehealth: form.telehealth,
+          session_duration_minutes: form.session_duration_minutes,
+          niche_tags: form.niche_tags,
+          session_fee_min: form.session_fee_min ? Number(form.session_fee_min) : null,
+          session_fee_max: form.session_fee_max ? Number(form.session_fee_max) : null,
+          deposit_required: form.deposit_required,
+          deposit_amount: form.deposit_required && form.deposit_amount ? Number(form.deposit_amount) : null,
+          pricing_tier: form.pricing_tier,
+          listing_active: true,
+          role: "practitioner",
+        },
+      };
+
+      const { error } = await supabase
+        .from("healthcare_practitioners")
+        .upsert(row, { onConflict: "id" });
+
+      if (error) throw error;
+
       setSubmitting(false);
       setSubmitted(true);
       setTimeout(() => navigate("/practitioner/dashboard"), 2000);
-    }, 1500);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Something went wrong";
+      setSubmitError(message);
+      setSubmitting(false);
+    }
   };
 
   // ── Shared styles ───────────────────────────────────────────────────────
@@ -1018,6 +1051,12 @@ export const PractitionerRegister = () => {
           </>
         )}
       </button>
+
+      {submitError && (
+        <div className="mt-4 rounded-xl border border-red-200 bg-red-50 p-4 text-center text-sm text-red-700">
+          {submitError}
+        </div>
+      )}
     </div>
   );
 

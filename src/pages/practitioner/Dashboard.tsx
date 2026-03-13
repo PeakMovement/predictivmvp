@@ -1,16 +1,10 @@
-// WIREFRAME — Practitioner Self-Service Dashboard
-// Backend TODO:
-// Tab 1 stats — query:
-//   Profile views: SELECT COUNT(*) FROM listing_views WHERE practitioner_id = auth.uid() AND viewed_at > now() - interval '30 days'
-//   Referrals: SELECT COUNT(*) FROM practitioner_referrals WHERE practitioner_id = auth.uid()
-//   Bookings: SELECT COUNT(*) FROM bookings WHERE practitioner_id = auth.uid() AND status = 'attended'
-//   Commission: SELECT SUM(commission_zar) FROM bookings WHERE practitioner_id = auth.uid() AND status = 'attended'
-// Tab 3 referrals — new table needed:
-//   practitioner_referrals (id, practitioner_id, patient_id_anon, issue_summary, referred_at, booked BOOLEAN, attended BOOLEAN, commission_zar INT)
-// Pause listing: UPDATE user_profiles SET listing_active = false WHERE id = auth.uid()
-// Photo: Supabase Storage bucket 'practitioner-photos', path: {user_id}/profile.jpg
+// Practitioner Self-Service Dashboard
+// Reads from healthcare_practitioners where id = auth.uid()
+// Extra fields (niche_tags, pricing_tier, etc.) stored in available_times JSON
+// Tab 1 stats — queries not yet wired (placeholders)
+// Tab 3 referrals — practitioner_referrals table not yet created
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import {
   ArrowRight,
@@ -25,53 +19,54 @@ import {
   Users,
   Video,
 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
-// ─── Mock Data ────────────────────────────────────────────────────────────────
+// ─── Types ────────────────────────────────────────────────────────────────────
 
-const MOCK_PRACTITIONER = {
-  name: "Justin Muller",
-  email: "justin15muller@gmail.com",
-  specialty: "Biokineticist",
-  niche_tags: ["Runners", "Cyclists", "Return-to-sport", "Load management"],
-  city: "Cape Town",
-  suburb: "Green Point",
-  years_experience: 8,
-  session_fee_min: 650,
-  session_fee_max: 900,
-  telehealth: true,
-  in_person: true,
-  bio: "I work with recreational and competitive athletes focused on injury prevention, rehabilitation, and return-to-sport programmes. Based in Cape Town with a focus on running biomechanics and cycling performance.",
-  qualifications: [
-    "BSc Biokinetics (UWC)",
-    "ESSA Registered",
-    "DNS Practitioner",
-  ],
-  registration_body: "ESSA",
-  registration_number: "BK 00234",
-  pricing_tier: "basic" as const,
-  listing_active: true,
-  profile_photo_url: null as string | null,
-  joined: "March 5, 2026",
-};
+interface PractitionerData {
+  name: string;
+  email: string;
+  specialty: string;
+  niche_tags: string[];
+  city: string;
+  suburb: string;
+  years_experience: number | null;
+  session_fee_min: number | null;
+  session_fee_max: number | null;
+  telehealth: boolean;
+  in_person: boolean;
+  bio: string;
+  qualifications: string[];
+  registration_body: string;
+  registration_number: string;
+  pricing_tier: string;
+  listing_active: boolean;
+  profile_photo_url: string | null;
+  joined: string;
+}
 
-const CHECKLIST = [
-  { label: "Specialty selected", done: true },
-  { label: "Qualifications added", done: true },
-  { label: "Location set", done: true },
-  { label: "Bio written", done: true },
-  {
-    label: "Profile photo uploaded",
-    done: false,
-    action: "Add photo",
-    href: "/practitioner/register",
-  },
-  {
-    label: "Upgraded to Verified Partner",
-    done: false,
-    action: "Upgrade",
-    href: "/practitioner/register",
-  },
-];
+// ─── Checklist helper ─────────────────────────────────────────────────────────
+
+function buildChecklist(p: PractitionerData) {
+  return [
+    { label: "Specialty selected", done: !!p.specialty },
+    { label: "Qualifications added", done: p.qualifications.length > 0 },
+    { label: "Location set", done: !!p.city || !!p.suburb },
+    { label: "Bio written", done: p.bio.length >= 100 },
+    {
+      label: "Profile photo uploaded",
+      done: !!p.profile_photo_url,
+      action: "Add photo",
+      href: "/practitioner/register",
+    },
+    {
+      label: "Upgraded to Verified Partner",
+      done: p.pricing_tier === "verified",
+      action: "Upgrade",
+      href: "/practitioner/register",
+    },
+  ];
+}
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
@@ -79,13 +74,142 @@ export const PractitionerDashboard = () => {
   const [tab, setTab] = useState<"overview" | "listing" | "referrals">(
     "overview",
   );
-  const p = MOCK_PRACTITIONER;
+  const [p, setP] = useState<PractitionerData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+        if (!user) throw new Error("Not authenticated");
+
+        const { data, error: fetchErr } = await supabase
+          .from("healthcare_practitioners")
+          .select("*")
+          .eq("id", user.id)
+          .maybeSingle();
+
+        if (fetchErr) throw fetchErr;
+
+        if (!data) {
+          setError("No practitioner listing found. Create one first.");
+          setLoading(false);
+          return;
+        }
+
+        // Extract extra fields from available_times JSON
+        const extra =
+          data.available_times && typeof data.available_times === "object"
+            ? (data.available_times as Record<string, unknown>)
+            : {};
+
+        setP({
+          name: data.full_name ?? "Practitioner",
+          email: user.email ?? "",
+          specialty: data.specialty ?? "",
+          niche_tags: Array.isArray(extra.niche_tags)
+            ? (extra.niche_tags as string[])
+            : [],
+          city: data.city ?? "",
+          suburb: (extra.suburb as string) ?? "",
+          years_experience: data.years_experience ?? null,
+          session_fee_min: (extra.session_fee_min as number) ?? data.consultation_fee ?? null,
+          session_fee_max: (extra.session_fee_max as number) ?? null,
+          telehealth: data.online_available ?? false,
+          in_person: (extra.in_person as boolean) ?? false,
+          bio: data.bio ?? "",
+          qualifications: Array.isArray(data.qualifications)
+            ? data.qualifications
+            : [],
+          registration_body: (extra.registration_body as string) ?? "",
+          registration_number: (extra.registration_number as string) ?? "",
+          pricing_tier: (extra.pricing_tier as string) ?? "basic",
+          listing_active: (extra.listing_active as boolean) ?? true,
+          profile_photo_url: data.profile_image_url ?? null,
+          joined: data.created_at
+            ? new Date(data.created_at).toLocaleDateString("en-ZA", {
+                year: "numeric",
+                month: "long",
+                day: "numeric",
+              })
+            : "Recently",
+        });
+      } catch (err: unknown) {
+        setError(
+          err instanceof Error ? err.message : "Failed to load profile",
+        );
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, []);
 
   const TABS = [
     { id: "overview" as const, label: "Overview" },
     { id: "listing" as const, label: "My Listing" },
     { id: "referrals" as const, label: "Referrals" },
   ];
+
+  // ── Loading skeleton ────────────────────────────────────────────────────
+
+  if (loading) {
+    return (
+      <div className="min-h-screen" style={{ background: "#f0ede8" }}>
+        <div className="border-b border-black/5" style={{ background: "rgba(240,237,232,0.95)" }}>
+          <div className="mx-auto max-w-4xl px-5 py-4">
+            <div className="flex items-center gap-2.5">
+              <Stethoscope size={20} className="text-[#6B5ED9]" />
+              <div className="h-5 w-40 animate-pulse rounded bg-black/10" />
+            </div>
+          </div>
+          <div className="mx-auto max-w-4xl px-5 pb-3">
+            <div className="flex gap-6">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="h-4 w-16 animate-pulse rounded bg-black/10" />
+              ))}
+            </div>
+          </div>
+        </div>
+        <div className="mx-auto max-w-4xl px-5 py-8 space-y-6">
+          <div className="h-32 animate-pulse rounded-xl bg-white/60" />
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="h-28 animate-pulse rounded-xl bg-white/60" />
+            ))}
+          </div>
+          <div className="h-48 animate-pulse rounded-xl bg-white/60" />
+        </div>
+      </div>
+    );
+  }
+
+  // ── Error / no listing state ────────────────────────────────────────────
+
+  if (error || !p) {
+    return (
+      <div
+        className="flex min-h-screen items-center justify-center"
+        style={{ background: "#f0ede8" }}
+      >
+        <div className="text-center">
+          <Stethoscope size={32} className="mx-auto mb-3 text-[#6B5ED9]" />
+          <h2 className="text-lg font-bold text-[#1a1a1a]">
+            {error ?? "No listing found"}
+          </h2>
+          <Link
+            to="/practitioner/register"
+            className="mt-4 inline-flex items-center gap-2 rounded-xl bg-[#6B5ED9] px-6 py-3 text-sm font-semibold text-white shadow-sm transition-all hover:bg-[#5a4ec5]"
+          >
+            Create your listing
+            <ArrowRight size={16} />
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen" style={{ background: "#f0ede8" }}>
@@ -149,11 +273,7 @@ export const PractitionerDashboard = () => {
 
 // ─── Tab 1: Overview ──────────────────────────────────────────────────────────
 
-function OverviewTab({
-  p,
-}: {
-  p: typeof MOCK_PRACTITIONER;
-}) {
+function OverviewTab({ p }: { p: PractitionerData }) {
   return (
     <div className="space-y-6">
       {/* Welcome card */}
@@ -162,13 +282,20 @@ function OverviewTab({
           Welcome back, {p.name.split(" ")[0]}.
         </h2>
         <div className="mt-3 flex flex-wrap items-center gap-2 text-xs">
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1 font-medium text-emerald-700">
-            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-            Listing active
-          </span>
+          {p.listing_active ? (
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1 font-medium text-emerald-700">
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+              Listing active
+            </span>
+          ) : (
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-3 py-1 font-medium text-amber-700">
+              <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
+              Listing paused
+            </span>
+          )}
           <span className="text-[#ccc]">&middot;</span>
           <span className="rounded-full bg-black/5 px-3 py-1 font-medium text-[#555]">
-            Basic tier
+            {p.pricing_tier === "verified" ? "Verified Partner" : "Basic tier"}
           </span>
           <span className="text-[#ccc]">&middot;</span>
           <span className="text-[#999]">Member since {p.joined}</span>
@@ -196,7 +323,6 @@ function OverviewTab({
           How Yves refers patients to you
         </h3>
 
-        {/* Desktop: horizontal timeline / Mobile: vertical list */}
         <div className="grid gap-6 sm:grid-cols-4">
           {[
             {
@@ -263,13 +389,15 @@ function OverviewTab({
 
 // ─── Tab 2: My Listing ────────────────────────────────────────────────────────
 
-function ListingTab({
-  p,
-}: {
-  p: typeof MOCK_PRACTITIONER;
-}) {
+function ListingTab({ p }: { p: PractitionerData }) {
   const bioSnippet =
     p.bio.length > 120 ? p.bio.slice(0, 120) + "\u2026" : p.bio;
+  const nicheLabel =
+    p.niche_tags.length > 0
+      ? p.niche_tags.slice(0, 2).join(" & ")
+      : "General practice";
+  const checklist = buildChecklist(p);
+  const doneCount = checklist.filter((c) => c.done).length;
 
   return (
     <div className="space-y-6">
@@ -293,9 +421,7 @@ function ListingTab({
             <p className="mt-0.5 text-xs font-medium text-[#6B5ED9]">
               {p.specialty}
             </p>
-            <p className="mt-0.5 text-xs text-[#888]">
-              Load management &amp; Performance
-            </p>
+            <p className="mt-0.5 text-xs text-[#888]">{nicheLabel}</p>
           </div>
           <div className="flex items-center gap-1 text-sm">
             <span className="text-amber-400">&#9733;</span>
@@ -307,19 +433,24 @@ function ListingTab({
         <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1.5 text-xs text-[#888]">
           <span className="flex items-center gap-1">
             <MapPin size={12} />
-            {p.suburb}, {p.city}
+            {[p.suburb, p.city].filter(Boolean).join(", ") || "Cape Town"}
           </span>
-          <span className="flex items-center gap-1">
-            <Clock size={12} />
-            {p.years_experience} yrs exp
-          </span>
+          {p.years_experience && (
+            <span className="flex items-center gap-1">
+              <Clock size={12} />
+              {p.years_experience} yrs exp
+            </span>
+          )}
         </div>
 
         {/* Badges */}
         <div className="mt-3 flex flex-wrap gap-1.5">
-          <span className="rounded-full border border-black/10 px-2.5 py-0.5 text-xs font-medium text-[#555]">
-            R{p.session_fee_min}&ndash;R{p.session_fee_max} / visit
-          </span>
+          {(p.session_fee_min || p.session_fee_max) && (
+            <span className="rounded-full border border-black/10 px-2.5 py-0.5 text-xs font-medium text-[#555]">
+              R{p.session_fee_min ?? "?"}&ndash;R{p.session_fee_max ?? "?"} /
+              visit
+            </span>
+          )}
           {p.telehealth && (
             <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-0.5 text-xs font-medium text-emerald-700">
               <CheckCircle2
@@ -342,20 +473,22 @@ function ListingTab({
 
         {/* Bio */}
         <p className="mt-3 text-xs leading-relaxed text-[#888]">
-          {bioSnippet}
+          {bioSnippet || "No bio yet."}
         </p>
 
         {/* Niche tags */}
-        <div className="mt-3 flex flex-wrap gap-1.5">
-          {p.niche_tags.map((tag) => (
-            <span
-              key={tag}
-              className="rounded-full border border-black/10 bg-black/[0.02] px-2.5 py-0.5 text-[11px] font-medium text-[#777]"
-            >
-              {tag}
-            </span>
-          ))}
-        </div>
+        {p.niche_tags.length > 0 && (
+          <div className="mt-3 flex flex-wrap gap-1.5">
+            {p.niche_tags.map((tag) => (
+              <span
+                key={tag}
+                className="rounded-full border border-black/10 bg-black/[0.02] px-2.5 py-0.5 text-[11px] font-medium text-[#777]"
+              >
+                {tag}
+              </span>
+            ))}
+          </div>
+        )}
 
         {/* Disabled buttons */}
         <div className="mt-4 flex gap-2">
@@ -367,7 +500,7 @@ function ListingTab({
           </span>
         </div>
         <p className="mt-2 text-center text-[10px] text-[#ccc]">
-          Preview only &mdash; this is how patients see your card
+          Preview only — this is how patients see your card
         </p>
       </div>
 
@@ -402,7 +535,7 @@ function ListingTab({
         </p>
 
         <div className="mt-5 space-y-3">
-          {CHECKLIST.map((item) => (
+          {checklist.map((item) => (
             <div key={item.label} className="flex items-center gap-3">
               {item.done ? (
                 <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-100">
@@ -432,15 +565,14 @@ function ListingTab({
         <div className="mt-5">
           <div className="flex items-center justify-between text-xs">
             <span className="font-medium text-[#333]">
-              {CHECKLIST.filter((c) => c.done).length} / {CHECKLIST.length}{" "}
-              complete
+              {doneCount} / {checklist.length} complete
             </span>
           </div>
           <div className="mt-1.5 h-1.5 w-full rounded-full bg-black/5">
             <div
               className="h-full rounded-full bg-[#6B5ED9] transition-all"
               style={{
-                width: `${(CHECKLIST.filter((c) => c.done).length / CHECKLIST.length) * 100}%`,
+                width: `${(doneCount / checklist.length) * 100}%`,
               }}
             />
           </div>
@@ -471,7 +603,6 @@ function ReferralsTab() {
       {/* Greyed-out preview table */}
       <div className="relative rounded-xl bg-white p-6 shadow-sm">
         <div className="opacity-30">
-          {/* Table header */}
           <div className="grid grid-cols-5 gap-4 border-b border-black/5 pb-3 text-xs font-semibold text-[#555]">
             <span>Patient</span>
             <span>Issue</span>
@@ -480,7 +611,6 @@ function ReferralsTab() {
             <span>Commission</span>
           </div>
 
-          {/* Placeholder rows */}
           {[1, 2, 3].map((row) => (
             <div
               key={row}
@@ -495,7 +625,6 @@ function ReferralsTab() {
           ))}
         </div>
 
-        {/* Overlay text */}
         <div className="absolute inset-0 flex items-center justify-center">
           <span className="rounded-full bg-[#6B5ED9]/10 px-4 py-1.5 text-xs font-medium text-[#6B5ED9]">
             Available once your first referral is received

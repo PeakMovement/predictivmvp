@@ -294,13 +294,27 @@ export const PractitionerRegister = () => {
         .from("healthcare_practitioners")
         .upsert(row, { onConflict: "id" });
 
-      if (error) throw error;
+      if (error) {
+        // eslint-disable-next-line no-console
+        console.error("Upsert error:", error);
+        throw new Error(error.message || "Database error");
+      }
+
+      // eslint-disable-next-line no-console
+      console.log("Practitioner listing saved successfully for", user.id);
 
       setSubmitting(false);
       setSubmitted(true);
       setTimeout(() => navigate("/practitioner/dashboard"), 2000);
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : "Something went wrong";
+      const message =
+        err instanceof Error
+          ? err.message
+          : typeof err === "object" && err !== null && "message" in err
+            ? String((err as { message: unknown }).message)
+            : "Something went wrong";
+      // eslint-disable-next-line no-console
+      console.error("Registration submit failed:", err);
       setSubmitError(message);
       setSubmitting(false);
     }

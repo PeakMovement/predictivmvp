@@ -184,18 +184,10 @@ function OverviewTab({
 
       {/* Stat cards */}
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-        <StatCard icon={Eye} label="Profile views this month" value="\u2014" />
-        <StatCard icon={Users} label="Referrals from Yves" value="\u2014" />
-        <StatCard
-          icon={BookOpen}
-          label="Bookings confirmed"
-          value="\u2014"
-        />
-        <StatCard
-          icon={TrendingUp}
-          label="Commission earned"
-          value="\u2014"
-        />
+        <StatCard icon={Eye} label="Profile views this month" value="—" />
+        <StatCard icon={Users} label="Referrals from Yves" value="—" />
+        <StatCard icon={BookOpen} label="Bookings confirmed" value="—" />
+        <StatCard icon={TrendingUp} label="Commission earned" value="—" />
       </div>
 
       {/* How Yves works */}

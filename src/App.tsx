@@ -100,11 +100,16 @@ const PATH_TO_TAB: Record<string, string> = Object.fromEntries(
   Object.entries(TAB_PATHS).map(([tab, path]) => [path, tab])
 );
 
+// Standalone practitioner routes — no bottom nav, no floating buttons, no app chrome
+const STANDALONE_PATHS = ["/join", "/join/register", "/join/dashboard", "/practitioner/register", "/practitioner/dashboard"];
+
 const AuthenticatedApp = () => {
   const navigate  = useNavigate();
   const location  = useLocation();
   const activeTab = PATH_TO_TAB[location.pathname] ?? "dashboard";
   const [isPractitioner, setIsPractitioner] = useState(false);
+
+  const isStandalone = STANDALONE_PATHS.includes(location.pathname);
 
   useEffect(() => {
     // Check if this user has any practitioner_access rows as a practitioner
@@ -146,6 +151,21 @@ const AuthenticatedApp = () => {
       window.removeEventListener("navigate-tab",           onTab      as EventListener);
     };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Standalone pages render without app chrome (no bottom nav, no floating buttons)
+  if (isStandalone) {
+    return (
+      <Suspense fallback={<PageLoadingFallback />}>
+        <Routes>
+          <Route path="/join"                    element={<PractitionerLanding />} />
+          <Route path="/join/register"           element={<PractitionerRegisterWireframe />} />
+          <Route path="/join/dashboard"          element={<PractitionerDashboardWireframe />} />
+          <Route path="/practitioner/register"   element={<PractitionerRegisterWireframe />} />
+          <Route path="/practitioner/dashboard"  element={<PractitionerDashboardWireframe />} />
+        </Routes>
+      </Suspense>
+    );
+  }
 
   return (
     <AccessibilityWrapper>
@@ -225,15 +245,10 @@ const AuthenticatedApp = () => {
               <Route path="/metrics-dashboard"  element={<MetricsDashboard />} />
               <Route path="/alert-history"      element={<AlertHistory />} />
               <Route path="/practitioner"            element={<PractitionerDashboard />} />
-              <Route path="/practitioner/register"  element={<PractitionerRegisterWireframe />} />
-              <Route path="/practitioner/dashboard" element={<PractitionerDashboardWireframe />} />
               <Route path="/injury-log"             element={<InjuryLog />} />
               <Route path="/plan"               element={<WeeklyPlan />} />
               <Route path="/terms"              element={<Terms />} />
               <Route path="/privacy"            element={<Privacy />} />
-              <Route path="/join"               element={<PractitionerLanding />} />
-              <Route path="/join/register"      element={<PractitionerRegisterWireframe />} />
-              <Route path="/join/dashboard"     element={<PractitionerDashboardWireframe />} />
               <Route path="*"                   element={<Navigate to="/dashboard" replace />} />
             </Routes>
           </Suspense>

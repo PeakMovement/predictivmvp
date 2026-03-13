@@ -1,8 +1,7 @@
 // Practitioner Self-Service Dashboard
-// Reads from healthcare_practitioners where id = auth.uid()
-// Extra fields (niche_tags, pricing_tier, etc.) stored in available_times JSON
-// Tab 1 stats — queries not yet wired (placeholders)
-// Tab 3 referrals — practitioner_referrals table not yet created
+// Reads from profiles where id = auth.uid()
+// Tab 1 stats — placeholders (phase 2)
+// Tab 3 referrals — phase 2 empty state
 
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
@@ -81,61 +80,50 @@ export const PractitionerDashboard = () => {
   useEffect(() => {
     (async () => {
       try {
-        const {
-          data: { user },
-        } = await supabase.auth.getUser();
+        const { data: { user } } = await supabase.auth.getUser();
         if (!user) throw new Error("Not authenticated");
 
-        const { data, error: fetchErr } = await supabase
-          .from("healthcare_practitioners")
+        const { data: profile, error: fetchErr } = await supabase
+          .from("profiles")
           .select("*")
           .eq("id", user.id)
-          .maybeSingle();
+          .single();
 
         if (fetchErr) throw fetchErr;
 
-        if (!data) {
+        if (!profile || !profile.listing_active) {
           setError("No practitioner listing found. Create one first.");
           setLoading(false);
           return;
         }
 
-        // Extract extra fields from available_times JSON
-        const extra =
-          data.available_times && typeof data.available_times === "object"
-            ? (data.available_times as Record<string, unknown>)
-            : {};
+        const joined = profile.updated_at
+          ? new Date(profile.updated_at).toLocaleDateString("en-ZA", {
+              year: "numeric",
+              month: "long",
+            })
+          : "Recently";
 
         setP({
-          name: data.full_name ?? "Practitioner",
+          name: profile.full_name ?? user.email ?? "Practitioner",
           email: user.email ?? "",
-          specialty: data.specialty ?? "",
-          niche_tags: Array.isArray(extra.niche_tags)
-            ? (extra.niche_tags as string[])
-            : [],
-          city: data.city ?? "",
-          suburb: (extra.suburb as string) ?? "",
-          years_experience: data.years_experience ?? null,
-          session_fee_min: (extra.session_fee_min as number) ?? data.consultation_fee ?? null,
-          session_fee_max: (extra.session_fee_max as number) ?? null,
-          telehealth: data.online_available ?? false,
-          in_person: (extra.in_person as boolean) ?? false,
-          bio: data.bio ?? "",
-          qualifications: Array.isArray(data.qualifications)
-            ? data.qualifications
-            : [],
-          registration_body: (extra.registration_body as string) ?? "",
-          registration_number: (extra.registration_number as string) ?? "",
-          pricing_tier: (extra.pricing_tier as string) ?? "basic",
-          listing_active: (extra.listing_active as boolean) ?? true,
-          profile_photo_url: data.profile_image_url ?? null,
-          joined: data.created_at
-            ? new Date(data.created_at).toLocaleDateString("en-ZA", {
-                year: "numeric",
-                month: "long",
-                day: "numeric",
-              })
-            : "Recently",
+          specialty: profile.specialty ?? "",
+          niche_tags: Array.isArray(profile.niche_tags) ? profile.niche_tags : [],
+          city: profile.city ?? "",
+          suburb: profile.suburb ?? "",
+          years_experience: profile.years_experience ?? null,
+          session_fee_min: profile.session_fee_min ?? null,
+          session_fee_max: profile.session_fee_max ?? null,
+          telehealth: profile.telehealth ?? false,
+          in_person: profile.in_person ?? false,
+          bio: profile.bio ?? "",
+          qualifications: Array.isArray(profile.qualifications) ? profile.qualifications : [],
+          registration_body: profile.registration_body ?? "",
+          registration_number: profile.registration_number ?? "",
+          pricing_tier: profile.pricing_tier ?? "basic",
+          listing_active: profile.listing_active ?? false,
+          profile_photo_url: profile.avatar_url ?? null,
+          joined,
         });
       } catch (err: unknown) {
         setError(
@@ -199,6 +187,9 @@ export const PractitionerDashboard = () => {
           <h2 className="text-lg font-bold text-[#1a1a1a]">
             {error ?? "No listing found"}
           </h2>
+          <p className="mt-2 text-sm text-[#888]">
+            No practitioner listing found. Create one first.
+          </p>
           <Link
             to="/practitioner/register"
             className="mt-4 inline-flex items-center gap-2 rounded-xl bg-[#6B5ED9] px-6 py-3 text-sm font-semibold text-white shadow-sm transition-all hover:bg-[#5a4ec5]"
@@ -425,7 +416,7 @@ function ListingTab({ p }: { p: PractitionerData }) {
           </div>
           <div className="flex items-center gap-1 text-sm">
             <span className="text-amber-400">&#9733;</span>
-            <span className="font-medium text-[#333]">4.9</span>
+            <span className="font-medium text-[#333]">—</span>
           </div>
         </div>
 
@@ -433,9 +424,9 @@ function ListingTab({ p }: { p: PractitionerData }) {
         <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1.5 text-xs text-[#888]">
           <span className="flex items-center gap-1">
             <MapPin size={12} />
-            {[p.suburb, p.city].filter(Boolean).join(", ") || "Cape Town"}
+            {[p.suburb, p.city].filter(Boolean).join(", ") || "South Africa"}
           </span>
-          {p.years_experience && (
+          {p.years_experience != null && p.years_experience > 0 && (
             <span className="flex items-center gap-1">
               <Clock size={12} />
               {p.years_experience} yrs exp
@@ -445,7 +436,7 @@ function ListingTab({ p }: { p: PractitionerData }) {
 
         {/* Badges */}
         <div className="mt-3 flex flex-wrap gap-1.5">
-          {(p.session_fee_min || p.session_fee_max) && (
+          {(p.session_fee_min != null || p.session_fee_max != null) && (
             <span className="rounded-full border border-black/10 px-2.5 py-0.5 text-xs font-medium text-[#555]">
               R{p.session_fee_min ?? "?"}&ndash;R{p.session_fee_max ?? "?"} /
               visit

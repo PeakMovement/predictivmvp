@@ -1,4 +1,4 @@
-// Unified wearable data fetching for Fitbit, Ōura, and future devices
+// Unified wearable data fetching for Ōura and future devices
 // This function abstracts device-specific logic behind a provider variable
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
@@ -10,7 +10,7 @@ const corsHeaders = {
 
 interface WearableFetchRequest {
   user_id: string;
-  provider: "fitbit" | "oura"; // Device type
+  provider: "oura"; // Device type
   date?: string;
 }
 
@@ -20,7 +20,7 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { user_id, provider = "fitbit", date } = await req.json() as WearableFetchRequest;
+    const { user_id, provider = "oura", date } = await req.json() as WearableFetchRequest;
 
     if (!user_id) {
       return new Response(
@@ -32,18 +32,6 @@ Deno.serve(async (req) => {
 
     // Route to appropriate provider handler
     switch (provider) {
-      case "fitbit":
-        // TODO: Implement Fitbit data fetching logic
-        // Currently handled by existing wearable-fetch-data edge function
-        return new Response(
-          JSON.stringify({
-            success: false,
-            message: "Fitbit data fetching via this endpoint not yet implemented. Use existing wearable-fetch-data function.",
-            provider
-          }),
-          { status: 501, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-
       case "oura":
         // TODO: Add Oura integration here later
         // Should fetch from Oura API and insert into wearable_sessions

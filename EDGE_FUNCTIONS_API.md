@@ -791,11 +791,9 @@ Get diagnostic information about wearable integrations.
       "connected": false,
       "status": "not_connected"
     },
-    "fitbit": {
-      "connected": true,
-      "last_sync": "2026-02-08T05:00:00Z",
-      "token_expires": "2026-08-08T00:00:00Z",
-      "status": "healthy"
+    "garmin": {
+      "connected": false,
+      "status": "not_connected"
     }
   },
   "recent_syncs": [

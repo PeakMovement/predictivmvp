@@ -106,7 +106,7 @@ CREATE POLICY "Users view own data"
 | id | UUID | PRIMARY KEY | Auto-generated |
 | user_id | UUID | NOT NULL | References auth.users |
 | date | DATE | NOT NULL | Metric date |
-| source | TEXT | NOT NULL | Device type (oura, fitbit) |
+| source | TEXT | NOT NULL | Device type (oura, garmin, polar) |
 | readiness_score | NUMERIC | NULL | Overall readiness (0-100) |
 | sleep_score | NUMERIC | NULL | Sleep quality (0-100) |
 | activity_score | NUMERIC | NULL | Activity level (0-100) |
@@ -223,7 +223,7 @@ LIMIT 10;
 
 ---
 
-### training_trends (formerly fitbit_trends)
+### training_trends
 **Purpose:** Historical wearable data for baseline calculations
 
 | Column | Type | Description |

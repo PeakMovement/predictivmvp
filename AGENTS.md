@@ -31,12 +31,12 @@ Before making changes:
 - **Backend:** Supabase (PostgreSQL, Edge Functions)
 - **AI:** OpenAI GPT-4 via Edge Functions
 - **Deploy:** Netlify (predictiv.netlify.app)
-- **Integrations:** Oura Ring, Polar, Fitbit, Garmin, Google Calendar
+- **Integrations:** Oura Ring, Polar, Garmin, Google Calendar
 
 ### Core Features
 
 - **Yves** – AI health assistant (daily briefings, chat, recommendations)
-- **Wearable sync** – Oura, Polar, Fitbit, Garmin OAuth + data sync
+- **Wearable sync** – Oura, Polar, Garmin OAuth + data sync
 - **Risk assessment** – Injury risk from training load & recovery
 - **Treatment plans** – AI-generated plans, provider matching
 - **Medical docs** – Upload and AI analysis

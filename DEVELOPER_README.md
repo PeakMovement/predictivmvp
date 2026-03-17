@@ -19,12 +19,12 @@ Welcome to the Predictiv Health Platform! This document provides comprehensive i
 
 ## Project Overview
 
-Predictiv Health is an AI-powered health optimization platform that integrates wearable data (Oura Ring, Polar, Fitbit) to provide personalized health insights, risk assessment, and actionable recommendations.
+Predictiv Health is an AI-powered health optimization platform that integrates wearable data (Oura Ring, Garmin, Polar) to provide personalized health insights, risk assessment, and actionable recommendations.
 
 ### Key Features
 
 - **AI Health Assistant (Yves)**: Personalized daily briefings and intelligent health coaching
-- **Wearable Integration**: Connect Oura Ring, Polar, and Fitbit devices
+- **Wearable Integration**: Connect Oura Ring, Garmin, and Polar devices
 - **Risk Assessment**: Calculate injury risk based on training load and recovery metrics
 - **Medical Records**: Upload and AI-analyze medical documents
 - **Provider Matching**: Find healthcare providers based on symptoms and needs
@@ -50,7 +50,7 @@ Predictiv Health is an AI-powered health optimization platform that integrates w
 │                      Frontend (React)                        │
 │  ┌────────────┐  ┌────────────┐  ┌────────────────────┐   │
 │  │ Dashboard  │  │   Health   │  │  Wearable Sync    │   │
-│  │  (Yves)    │  │  Tracking  │  │  (Oura/Polar)     │   │
+│  │  (Yves)    │  │  Tracking  │  │ (Oura/Garmin/Polar)│   │
 │  └────────────┘  └────────────┘  └────────────────────┘   │
 └─────────────────────────────────────────────────────────────┘
                            │
@@ -154,8 +154,6 @@ VITE_OURA_REDIRECT_URI=http://localhost:5173/oauth/callback/oura
 VITE_POLAR_CLIENT_ID=your-polar-client-id
 VITE_POLAR_REDIRECT_URI=http://localhost:5173/oauth/callback/polar
 
-VITE_FITBIT_CLIENT_ID=your-fitbit-client-id
-VITE_FITBIT_REDIRECT_URI=http://localhost:5173/oauth/callback/fitbit
 ```
 
 ### Server-Side Variables (Supabase Secrets)
@@ -169,8 +167,6 @@ OPENAI_API_KEY=sk-...
 # Wearable API Secrets
 OURA_CLIENT_SECRET=your-oura-secret
 POLAR_CLIENT_SECRET=your-polar-secret
-FITBIT_CLIENT_SECRET=your-fitbit-secret
-
 # Email Configuration (optional)
 RESEND_API_KEY=re_...
 
@@ -192,12 +188,6 @@ TWILIO_PHONE_NUMBER=+1...
 1. Visit [https://admin.polaraccesslink.com](https://admin.polaraccesslink.com)
 2. Create an account
 3. Create a new client
-4. Copy Client ID and Client Secret
-
-#### Fitbit API
-1. Visit [dev.fitbit.com](https://dev.fitbit.com)
-2. Register an application
-3. Set OAuth 2.0 Application Type to "Personal"
 4. Copy Client ID and Client Secret
 
 #### OpenAI API
@@ -694,7 +684,6 @@ npm test src/__tests__/lib/utils.test.ts
 
 - [Oura API](https://cloud.ouraring.com/docs/)
 - [Polar API](https://www.polar.com/accesslink-api/)
-- [Fitbit API](https://dev.fitbit.com/build/reference/web-api/)
 - [OpenAI API](https://platform.openai.com/docs/api-reference)
 
 ---

@@ -53,9 +53,9 @@ serve(async (req) => {
     // Get expected workout for today
     const expectedWorkout = trainingPlan?.find((w: any) => w.day === dayOfWeek);
 
-    // Get actual Fitbit data
+    // Get actual training trend data
     const { data: actualTrend } = await supabase
-      .from('fitbit_trends')
+      .from('training_trends')
       .select('training_load, strain, date')
       .eq('date', checkDate)
       .maybeSingle();
@@ -101,20 +101,20 @@ serve(async (req) => {
     }
 
     // Calculate nutrition adherence (if we have calorie data)
-    const { data: fitbitDaily } = await supabase
-      .from('fitbit_auto_data')
-      .select('activity')
+    const { data: wearableDaily } = await supabase
+      .from('wearable_sessions')
+      .select('total_calories, active_calories')
       .eq('user_id', userId)
-      .order('fetched_at', { ascending: false })
+      .order('date', { ascending: false })
       .limit(1)
       .maybeSingle();
 
     let nutritionAdherence = 1.0;
     const nutritionDeviations: string[] = [];
 
-    if (nutritionPlan?.daily_calories && fitbitDaily?.activity) {
+    if (nutritionPlan?.daily_calories && wearableDaily) {
       const expectedCalories = nutritionPlan.daily_calories;
-      const actualCalories = fitbitDaily.activity.summary?.caloriesOut;
+      const actualCalories = wearableDaily.total_calories || wearableDaily.active_calories;
 
       if (actualCalories && expectedCalories) {
         const calorieDiff = Math.abs(actualCalories - expectedCalories) / expectedCalories;
@@ -133,7 +133,7 @@ serve(async (req) => {
         date: checkDate,
         plan_type: 'nutrition',
         expected_data: { calories: nutritionPlan.daily_calories, macros: nutritionPlan.macros },
-        actual_data: { calories: fitbitDaily?.activity?.summary?.caloriesOut },
+        actual_data: { calories: wearableDaily?.total_calories },
         adherence_score: Math.max(0, nutritionAdherence),
         deviation_reasons: nutritionDeviations
       }, {

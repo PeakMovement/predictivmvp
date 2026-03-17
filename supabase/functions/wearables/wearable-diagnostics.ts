@@ -1,4 +1,4 @@
-// Unified wearable diagnostics for Fitbit, Ōura, and future devices
+// Unified wearable diagnostics for Ōura and future devices
 // Checks token validity, sync status, and data freshness across all providers
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
@@ -10,7 +10,7 @@ const corsHeaders = {
 
 interface DiagnosticRequest {
   user_id: string;
-  provider?: "fitbit" | "oura" | "all";
+  provider?: "oura" | "all";
 }
 
 Deno.serve(async (req) => {
@@ -40,12 +40,6 @@ Deno.serve(async (req) => {
       providers: {},
     };
 
-    // Check Fitbit
-    if (provider === "all" || provider === "fitbit") {
-      diagnostics.providers.fitbit = await checkFitbitStatus(supabase, user_id);
-    }
-
-    // TODO: Add Oura diagnostics here later
     if (provider === "all" || provider === "oura") {
       diagnostics.providers.oura = await checkOuraStatus(supabase, user_id);
     }
@@ -62,15 +56,6 @@ Deno.serve(async (req) => {
     );
   }
 });
-
-async function checkFitbitStatus(supabase: any, userId: string) {
-  // TODO: Implement Fitbit diagnostics
-  // Check wearable_tokens, wearable_auto_data, wearable_sessions
-  return {
-    status: "not_implemented",
-    message: "Fitbit diagnostics pending implementation"
-  };
-}
 
 async function checkOuraStatus(supabase: any, userId: string) {
   // TODO: Implement Oura diagnostics

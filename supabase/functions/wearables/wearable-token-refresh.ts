@@ -1,4 +1,4 @@
-// Unified token refresh for Fitbit, Ōura, and future wearable devices
+// Unified token refresh for Ōura and future wearable devices
 // Routes to provider-specific implementations for token refresh
 
 import { createClient } from "npm:@supabase/supabase-js@2";
@@ -11,7 +11,7 @@ const corsHeaders = {
 
 interface TokenRefreshRequest {
   user_id: string;
-  provider: "fitbit" | "oura";
+  provider: "oura";
 }
 
 Deno.serve(async (req) => {
@@ -46,21 +46,10 @@ Deno.serve(async (req) => {
 
     // Route to appropriate provider refresh logic
     switch (provider) {
-      case "fitbit":
-        // TODO: Implement Fitbit token refresh using shared utility pattern
-        return new Response(
-          JSON.stringify({
-            success: false,
-            message: "Fitbit token refresh not yet implemented",
-            provider
-          }),
-          { status: 501, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-
       case "oura":
         // Use shared Oura token refresh utility
         const result = await getValidOuraToken(supabase, user_id);
-        
+
         if (result.success) {
           return new Response(
             JSON.stringify({

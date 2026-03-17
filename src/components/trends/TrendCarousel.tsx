@@ -188,7 +188,7 @@ export const TrendCarousel = () => {
           <div className="text-4xl mb-2">📊</div>
           <h3 className="text-xl font-semibold text-foreground">No Trend Data Available</h3>
           <p className="text-sm text-muted-foreground mb-4">
-            Training trends need to be calculated from your Fitbit data.
+            Training trends need to be calculated from your wearable data.
           </p>
           <p className="text-xs text-muted-foreground">
             Go to <strong>Settings → Data Management</strong> and click <strong>"Calculate Trends"</strong> to populate this data.

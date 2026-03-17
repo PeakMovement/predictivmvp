@@ -27,12 +27,12 @@ Deno.serve(async (req) => {
       started_at: new Date().toISOString(),
     });
 
-    // Get latest Fitbit data (last 7 days) - user_id is now UUID
+    // Get latest training trends data (last 7 days)
     const sevenDaysAgo = new Date();
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
     const { data: recentData, error: recentError } = await supabase
-      .from('fitbit_trends')
+      .from('training_trends')
       .select('user_id, hrv, acwr, ewma, strain, monotony, training_load, acute_load, chronic_load, date')
       .gte('date', sevenDaysAgo.toISOString().split('T')[0])
       .order('date', { ascending: false });

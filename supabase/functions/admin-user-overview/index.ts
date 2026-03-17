@@ -77,7 +77,7 @@ serve(async (req) => {
     const { data: wearableTokenUsers } = await admin
       .from("wearable_tokens")
       .select("user_id");
-    const fitbitUsers = new Set(
+    const wearableUsers = new Set(
       (wearableTokenUsers || []).map((t: { user_id: string }) => t.user_id)
     );
 
@@ -96,7 +96,7 @@ serve(async (req) => {
       // Determine device: prefer token tables, fallback to session source
       let device: string | null = null;
       if (ouraUsers.has(u.id)) device = "oura";
-      else if (fitbitUsers.has(u.id)) device = "fitbit";
+      else if (wearableUsers.has(u.id)) device = session?.source || "unknown";
       else if (session?.source) device = session.source;
 
       return {

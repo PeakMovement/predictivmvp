@@ -169,8 +169,8 @@ ON CONFLICT (user_id, source, date) DO UPDATE SET acwr = 1.04;
 
 ```typescript
 // Fetch last 30 days of ACWR values
-const { data: fitbitData } = await supabase
-  .from('fitbit_trends')
+const { data: trendData } = await supabase
+  .from('training_trends')
   .select('acwr')
   .gte('date', thirtyDaysAgo)
   .eq('user_id', userId);

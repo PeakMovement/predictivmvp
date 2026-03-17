@@ -3341,8 +3341,6 @@ export type Database = {
           created_at: string | null
           email: string | null
           email_preferences: Json | null
-          fitbit_connected: boolean | null
-          fitbit_user_id: string | null
           id: string
           refresh_token: string | null
         }
@@ -3351,8 +3349,6 @@ export type Database = {
           created_at?: string | null
           email?: string | null
           email_preferences?: Json | null
-          fitbit_connected?: boolean | null
-          fitbit_user_id?: string | null
           id?: string
           refresh_token?: string | null
         }
@@ -3361,8 +3357,6 @@ export type Database = {
           created_at?: string | null
           email?: string | null
           email_preferences?: Json | null
-          fitbit_connected?: boolean | null
-          fitbit_user_id?: string | null
           id?: string
           refresh_token?: string | null
         }
@@ -3549,7 +3543,6 @@ export type Database = {
           encryption_version: number | null
           expires_at: string | null
           expires_in: number | null
-          fitbit_user_id: string | null
           refresh_token: string | null
           refresh_token_encrypted: string | null
           scope: string
@@ -3564,7 +3557,6 @@ export type Database = {
           encryption_version?: number | null
           expires_at?: string | null
           expires_in?: number | null
-          fitbit_user_id?: string | null
           refresh_token?: string | null
           refresh_token_encrypted?: string | null
           scope?: string
@@ -3579,7 +3571,6 @@ export type Database = {
           encryption_version?: number | null
           expires_at?: string | null
           expires_in?: number | null
-          fitbit_user_id?: string | null
           refresh_token?: string | null
           refresh_token_encrypted?: string | null
           scope?: string

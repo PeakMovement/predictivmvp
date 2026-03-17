@@ -636,8 +636,7 @@ User types query in FindHelp page
 | 10 | **Practitioners from CSV, not DB** | `src/pages/FindHelp.tsx` + `/public/practitioners.csv` | Practitioners can't be managed via DB; no CMS |
 | 11 | **Medical session flow has no UI** | — | `interpret-health-event` exists but no dedicated medical consultation UI |
 | 12 | **`escalation_rules` table empty** | DB | No escalation logic implemented |
-| 13 | **Fitbit dead code** | Various | Fitbit references remain (e.g., old table names `fitbit_trends` in comments); Fitbit OAuth not functional |
-| 14 | **`physicians` table superseded** | DB | Old `physicians` table exists; FindHelp now uses CSV |
+| 13 | **`physicians` table superseded** | DB | Old `physicians` table exists; FindHelp now uses CSV |
 
 ---
 

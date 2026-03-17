@@ -173,7 +173,7 @@ export const TrendCard = ({ metric, onRefresh }: TrendCardProps) => {
           <div className="text-center space-y-2">
             <p className="text-sm text-muted-foreground">No data available</p>
             <p className="text-xs text-muted-foreground">
-              Sync your Fitbit to see trends
+              Sync your wearable to see trends
             </p>
           </div>
         </div>
@@ -182,7 +182,7 @@ export const TrendCard = ({ metric, onRefresh }: TrendCardProps) => {
       {/* Footer */}
       <div className="mt-4 pt-4 border-t border-glass-border">
         <p className="text-xs text-muted-foreground text-center">
-          Auto-updated from Fitbit sync
+          Auto-updated from wearable sync
         </p>
       </div>
     </Card>

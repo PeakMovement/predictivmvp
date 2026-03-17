@@ -43,7 +43,7 @@ const average = (arr: (number | null | undefined)[]): number | null => {
 };
 
 /**
- * Calculate sleep score from Fitbit sleep data
+ * Calculate sleep score from wearable sleep data
  * Formula: efficiency (0-100) * 0.7 + capped duration score * 30
  */
 export const calculateSleepScore = (efficiency: number, durationMinutes: number): number => {
@@ -53,7 +53,7 @@ export const calculateSleepScore = (efficiency: number, durationMinutes: number)
 };
 
 /**
- * Calculate metrics from Fitbit trends data
+ * Calculate metrics from training trends data
  * Returns both latest values and 7-day averages
  */
 export const calculateMetrics = (trends: TrendData[]): MetricCalculation => {

@@ -4,7 +4,7 @@
 
 ### What It Is
 
-Predictiv is a **health intelligence platform** that connects to wearable devices (Oura Ring, Garmin, Polar, Fitbit) and uses AI to provide personalized health coaching, risk analysis, and training recommendations. The AI coach is called **Yves**.
+Predictiv is a **health intelligence platform** that connects to wearable devices (Oura Ring, Garmin, Polar) and uses AI to provide personalized health coaching, risk analysis, and training recommendations. The AI coach is called **Yves**.
 
 ### What It Aims To Be
 
@@ -37,7 +37,7 @@ A comprehensive health command center that:
 - Bottom navigation with tab-based routing (not React Router for main pages)
 
 **Backend (Supabase Edge Functions — ~60+ functions):**
-- Wearable data sync: Oura, Garmin, Fitbit, Polar
+- Wearable data sync: Oura, Garmin, Polar
 - Baseline calculation (30-day rolling averages)
 - Deviation detection and risk zone assignment
 - AI intelligence layer (Yves chat, daily briefing, recommendations, insights tree, memory bank)

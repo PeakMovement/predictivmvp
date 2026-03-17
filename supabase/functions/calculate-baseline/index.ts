@@ -27,13 +27,12 @@ Deno.serve(async (req) => {
       started_at: new Date().toISOString(),
     });
 
-    // Get last 30 days of Fitbit data with user UUID mapping
+    // Get last 30 days of training trends data with user UUID mapping
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-    // Fetch fitbit_trends data (user_id is now UUID)
-    const { data: fitbitData, error: fetchError } = await supabase
-      .from('fitbit_trends')
+    const { data: trendsData, error: fetchError } = await supabase
+      .from('training_trends')
       .select('user_id, hrv, acwr, ewma, strain, monotony, training_load, acute_load, chronic_load, date')
       .gte('date', thirtyDaysAgo.toISOString().split('T')[0])
       .order('date', { ascending: false });
@@ -44,7 +43,7 @@ Deno.serve(async (req) => {
     // Group by user_id and calculate averages
     const userBaselines = new Map();
     
-    fitbitData?.forEach((record: any) => {
+    trendsData?.forEach((record: any) => {
       const userId = record.user_id;
 
       if (!userBaselines.has(userId)) {
@@ -106,7 +105,7 @@ Deno.serve(async (req) => {
         status: 'success',
         completed_at: new Date().toISOString(),
         duration_ms: duration,
-        metadata: { records_processed: fitbitData?.length || 0, baselines_created: baselineRecords.length },
+        metadata: { records_processed: trendsData?.length || 0, baselines_created: baselineRecords.length },
       })
       .eq('id', logId);
 
@@ -114,7 +113,7 @@ Deno.serve(async (req) => {
     return new Response(
       JSON.stringify({ 
         success: true, 
-        records_processed: fitbitData?.length || 0,
+        records_processed: trendsData?.length || 0,
         baselines_created: baselineRecords.length,
         duration_ms: duration 
       }),

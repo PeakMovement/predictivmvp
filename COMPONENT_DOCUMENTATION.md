@@ -232,7 +232,7 @@ export const DailyBriefingCard = (props: DailyBriefingCardProps) => {
 /**
  * useWearableSync Hook
  *
- * Manages synchronization of wearable device data (Oura, Polar, Fitbit).
+ * Manages synchronization of wearable device data (Oura, Garmin, Polar).
  * Handles OAuth tokens, data fetching, and sync status.
  *
  * @hook
@@ -249,7 +249,7 @@ export const DailyBriefingCard = (props: DailyBriefingCardProps) => {
  * await syncNow();
  * ```
  *
- * @param source - Wearable device source ('oura' | 'polar' | 'fitbit')
+ * @param source - Wearable device source ('oura' | 'garmin' | 'polar')
  * @returns Sync state and control functions
  *
  * @remarks

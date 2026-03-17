@@ -2,9 +2,9 @@
 
 ## ✅ Problem Solved
 
-**Issue:** UI was displaying "Fitbit Inspire HR Metrics" and querying the wrong database table (`wearable_auto_data` instead of `wearable_sessions`), causing no data to appear even though Oura sync was working correctly.
+**Issue:** UI was displaying old wearable branding and querying the wrong database table (`wearable_auto_data` instead of `wearable_sessions`), causing no data to appear even though Oura sync was working correctly.
 
-**Root Cause:** The backend was correctly storing Oura data in `wearable_sessions`, but the frontend was still looking for Fitbit data in `wearable_auto_data`.
+**Root Cause:** The backend was correctly storing Oura data in `wearable_sessions`, but the frontend was still looking for data in the legacy `wearable_auto_data` table.
 
 ---
 
@@ -21,7 +21,7 @@
 
 **Key Changes:**
 ```typescript
-// OLD: Query Fitbit table
+// OLD: Query legacy table
 .from("wearable_auto_data")
 
 // NEW: Query Oura wearable sessions
@@ -35,19 +35,19 @@
 ### 2. UI Label Updates ✅
 
 **Files Updated:**
-- ✅ `src/pages/Health.tsx` - "Fitbit Inspire HR Metrics" → "Ōura Ring Metrics"
-- ✅ `src/pages/Dashboard.tsx` - All Fitbit references → Ōura Ring
-- ✅ `src/pages/Training.tsx` - Fitbit → Ōura Ring
-- ✅ `src/pages/YourPlan.tsx` - Fitbit → Ōura Ring
+- ✅ `src/pages/Health.tsx` - Updated to "Ōura Ring Metrics"
+- ✅ `src/pages/Dashboard.tsx` - Updated all labels to Ōura Ring
+- ✅ `src/pages/Training.tsx` - Updated labels to Ōura Ring
+- ✅ `src/pages/YourPlan.tsx` - Updated labels to Ōura Ring
 - ✅ `src/pages/Index.tsx` - System status updated to show Ōura integration
-- ✅ `src/components/fitbit/SleepMetricsCard.tsx` - Empty state message updated
+- ✅ `src/components/oura/SleepMetricsCard.tsx` - Empty state message updated
 
 ---
 
 ### 3. New Components Created ✅
 
 **File:** `src/components/OuraSyncStatus.tsx`
-- Replaced `FitbitSyncStatus` component
+- Replaced legacy sync status component
 - Queries `wearable_sessions` for last sync time
 - Calls `fetch-oura-data` edge function for manual sync
 - Shows proper Ōura Ring branding
@@ -101,7 +101,7 @@ Components display metrics!
 
 ## 🧮 Smart Data Transformations
 
-Since Oura doesn't provide some Fitbit-specific metrics, we implemented smart estimations:
+Since Oura provides different metrics than other wearables, we implemented smart estimations:
 
 ### Heart Rate Zones
 - Calculated from `resting_hr` using standard HR zone formulas
@@ -127,7 +127,7 @@ Since Oura doesn't provide some Fitbit-specific metrics, we implemented smart es
 
 After deployment, verify:
 
-- [ ] Dashboard shows "Ōura Ring" instead of "Fitbit"
+- [ ] Dashboard shows "Ōura Ring" branding
 - [ ] Health page shows "Ōura Ring Metrics" header
 - [ ] "Update Now" button triggers Oura sync
 - [ ] After sync, metrics appear in all cards
@@ -203,7 +203,7 @@ LIMIT 10;
    - Cardiovascular age
 
 4. **Polish Visualizations:**
-   - Oura-specific color schemes (currently using Fitbit colors)
+   - Oura-specific color schemes
    - Activity score visualization
    - Readiness contributors breakdown
 
@@ -218,7 +218,7 @@ LIMIT 10;
 4. `src/pages/Training.tsx` - Label updates
 5. `src/pages/YourPlan.tsx` - Component and label updates
 6. `src/pages/Index.tsx` - Status message update
-7. `src/components/fitbit/SleepMetricsCard.tsx` - Empty state message
+7. `src/components/oura/SleepMetricsCard.tsx` - Empty state message
 8. `src/pages/Settings.tsx` - Already had Oura guidance (kept)
 
 ### Created:
@@ -235,7 +235,7 @@ LIMIT 10;
 ## ✨ Result
 
 **Before:**
-- ❌ UI said "Fitbit Inspire HR Metrics"
+- ❌ UI showed legacy wearable branding
 - ❌ No data showing
 - ❌ Components querying wrong table
 - ✅ Backend working (just not connected to UI)
@@ -248,4 +248,4 @@ LIMIT 10;
 
 ---
 
-**Status:** All Fitbit references updated to Ōura Ring. UI now correctly displays data from `wearable_sessions` table. Ready for production! 🎉
+**Status:** All legacy references updated to Ōura Ring. UI now correctly displays data from `wearable_sessions` table. Ready for production! 🎉

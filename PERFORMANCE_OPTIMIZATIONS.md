@@ -12,7 +12,7 @@ All major routes are now lazy-loaded using React.lazy() and Suspense boundaries.
 - Converted all page imports to use `React.lazy()`
 - Added Suspense boundaries with custom loading fallbacks
 - Applied to all main routes: Dashboard, Training, Health, Settings, etc.
-- Applied to callback routes: Fitbit, Oura, Polar, Google Calendar
+- Applied to callback routes: Oura, Polar, Google Calendar
 - Applied to utility pages: Admin Dashboard, Documents, Baselines, etc.
 
 **Components:**

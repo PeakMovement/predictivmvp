@@ -37,7 +37,6 @@ interface DateRange {
 
 /**
  * Fetch wearable summary data for a user within an optional date range
- * Falls back to training_trends for legacy Fitbit data
  */
 export async function getWearableSummary(
   userId: string,
@@ -60,12 +59,7 @@ export async function getWearableSummary(
 
     if (error) throw error;
 
-    // If no data in new table, fallback to training_trends (legacy)
-    if (!data || data.length === 0) {
-      return getLegacyTrainingTrends(userId, dateRange);
-    }
-
-    return data as WearableSummary[];
+    return (data || []) as WearableSummary[];
   } catch (error) {
     console.error("[getWearableSummary] Error:", error);
     return [];
@@ -103,49 +97,6 @@ export async function getWearableSessions(
     return (data || []) as WearableSession[];
   } catch (error) {
     console.error("[getWearableSessions] Error:", error);
-    return [];
-  }
-}
-
-/**
- * Legacy fallback: fetch data from training_trends table
- * Maps old structure to new WearableSummary format
- */
-async function getLegacyTrainingTrends(
-  userId: string,
-  dateRange?: DateRange
-): Promise<WearableSummary[]> {
-  try {
-    let query = supabase
-      .from("training_trends")
-      .select("*")
-      .eq("user_id", userId)
-      .order("date", { ascending: false });
-
-    if (dateRange) {
-      query = query
-        .gte("date", dateRange.startDate)
-        .lte("date", dateRange.endDate);
-    }
-
-    const { data, error } = await query;
-
-    if (error) throw error;
-
-    // Map legacy structure to new format
-    return (data || []).map((trend) => ({
-      id: trend.id as string,
-      user_id: trend.user_id as string,
-      date: trend.date as string,
-      strain: trend.strain as number | null,
-      monotony: trend.monotony as number | null,
-      acwr: trend.acwr as number | null,
-      readiness_index: null, // Not in legacy data
-      source: "legacy",
-      updated_at: (trend.created_at as string) || new Date().toISOString(),
-    }));
-  } catch (error) {
-    console.error("[getLegacyTrainingTrends] Error:", error);
     return [];
   }
 }

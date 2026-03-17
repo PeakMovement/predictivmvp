@@ -26,7 +26,7 @@ tags:
   - name: AI & Intelligence
     description: AI-powered health analysis and recommendations
   - name: Wearable Integration
-    description: Integration with wearable devices (Oura, Polar, Fitbit)
+    description: Integration with wearable devices (Oura, Polar, Garmin)
   - name: Health Analysis
     description: Health metrics analysis and insights
   - name: User Management

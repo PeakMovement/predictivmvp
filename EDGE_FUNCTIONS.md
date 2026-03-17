@@ -199,7 +199,7 @@ Similar to `fetch-oura-auto` but for specific date range
 **Input:** None (processes all users)
 
 **Process:**
-1. Fetch last 30 days from `fitbit_trends` (legacy name, actually training_trends)
+1. Fetch last 30 days from `training_trends`
 2. Group by user_id
 3. Calculate rolling average for 8 metrics:
    - HRV
@@ -231,7 +231,7 @@ baseline = sum(values) / count(values)
 - `user_baselines` (upsert by user_id, metric, data_window)
 
 **Tables Queried:**
-- `fitbit_trends` (or `training_trends`)
+- `training_trends`
 
 **Logging:**
 - `function_execution_log` (status, duration, metadata)
@@ -253,7 +253,7 @@ baseline = sum(values) / count(values)
 **Input:** None (processes all users)
 
 **Process:**
-1. Fetch last 7 days from `fitbit_trends`
+1. Fetch last 7 days from `training_trends`
 2. Fetch baselines from `user_baselines`
 3. Fetch health profiles for context-aware risk assessment
 4. For each user's most recent data:
@@ -294,7 +294,7 @@ if (medicalConditions.includes('asthma') && metric === 'hrv') {
 - `adaptive_recommendations` (upsert by user_id, metric)
 
 **Tables Queried:**
-- `fitbit_trends`
+- `training_trends`
 - `user_baselines`
 - `user_health_profiles`
 

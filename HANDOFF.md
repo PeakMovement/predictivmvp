@@ -258,9 +258,6 @@ All tables are in the `public` schema unless noted. 118 migration files total.
 | `polar_tokens` | Polar Flow OAuth tokens |
 | `polar_webhooks` | Polar webhook registrations |
 | `polar_logs` | Polar API sync logs |
-| `fitbit_tokens` | Fitbit OAuth tokens (integration present but not actively marketed) |
-| `fitbit_auto_data` | Fitbit auto-sync data |
-| `fitbit_trends` | Fitbit trend data |
 | `garmin_oauth_state` | Garmin OAuth PKCE state |
 
 ### Analytics / Trend Tables
@@ -367,7 +364,6 @@ All tables are in the `public` schema unless noted. 118 migration files total.
 
 ### Functional Notes
 - `practitioner_access` table is referenced in `App.tsx` with `as any` cast, indicating it may not be in the TypeScript database types yet.
-- Fitbit integration tables exist in migrations but there is no frontend Fitbit connection flow or edge function for fetch — appears to be stubbed/abandoned.
 
 ---
 
@@ -375,23 +371,21 @@ All tables are in the `public` schema unless noted. 118 migration files total.
 
 Based on code inspection:
 
-1. **Fitbit integration** — Tables (`fitbit_tokens`, `fitbit_auto_data`, `fitbit_trends`) exist but no frontend connection flow or active fetch functions. Likely deprioritised.
+1. **`practitioner_access` table** — Used in `App.tsx` to gate the practitioner dashboard button, but queried with `as any` TypeScript cast, meaning it's not in the generated Supabase types. May be missing from migrations or added directly to the DB.
 
-2. **`practitioner_access` table** — Used in `App.tsx` to gate the practitioner dashboard button, but queried with `as any` TypeScript cast, meaning it's not in the generated Supabase types. May be missing from migrations or added directly to the DB.
+2. **`user_baselines` and `training_trends` tables** — Referenced extensively in all three Yves AI edge functions but no `CREATE TABLE` statement was found in named migration files. These may have been created via anonymous UUID migrations or directly in the DB.
 
-3. **`user_baselines` and `training_trends` tables** — Referenced extensively in all three Yves AI edge functions but no `CREATE TABLE` statement was found in named migration files. These may have been created via anonymous UUID migrations or directly in the DB.
+3. **`oura-auth-test` function** — Debug/diagnostic endpoint, not for production use. Should be removed or protected before public launch.
 
-4. **`oura-auth-test` function** — Debug/diagnostic endpoint, not for production use. Should be removed or protected before public launch.
+4. **`test-twilio-env` function** — Another debug-only endpoint. Should be removed or protected.
 
-5. **`test-twilio-env` function** — Another debug-only endpoint. Should be removed or protected.
+5. **`seed-physicians` function** — One-time seed script. Should not be callable in production.
 
-6. **`seed-physicians` function** — One-time seed script. Should not be callable in production.
+6. **Weekly Challenges** (`generate-weekly-challenges`, `manage-challenge-lifecycle`) — Challenge tables exist, edge functions exist, but no dedicated frontend page for challenges was found in the routes.
 
-7. **Weekly Challenges** (`generate-weekly-challenges`, `manage-challenge-lifecycle`) — Challenge tables exist, edge functions exist, but no dedicated frontend page for challenges was found in the routes.
+7. **`PersonalCanvas` page** — Exists as a route (`/personal-canvas`) but is not in the bottom navigation — only reachable via settings or direct URL.
 
-8. **`PersonalCanvas` page** — Exists as a route (`/personal-canvas`) but is not in the bottom navigation — only reachable via settings or direct URL.
-
-9. **`DeveloperBaselinesEngine.tsx`** and `AuthTest.tsx`, `OuraConnectionTest.tsx`, `OuraDataTest.tsx`, `OuraDiagnostics.tsx`, `TestSupabase.tsx` — Developer/debug pages exist in `src/pages/` but have no routes in `App.tsx`. They are effectively dead code in production.
+8. **`DeveloperBaselinesEngine.tsx`** and `AuthTest.tsx`, `OuraConnectionTest.tsx`, `OuraDataTest.tsx`, `OuraDiagnostics.tsx`, `TestSupabase.tsx` — Developer/debug pages exist in `src/pages/` but have no routes in `App.tsx`. They are effectively dead code in production.
 
 ---
 

@@ -19,7 +19,7 @@ export const useUnifiedMetrics = () => {
     };
   }, [refresh]);
   
-  // Calculate sleep score from Fitbit data
+  // Calculate sleep score from wearable data
   const calculateSleepScore = (efficiency: number, duration: number): number => {
     // Formula: efficiency (0-100) * 0.7 + capped duration score * 30
     const durationHours = duration / 60; // Convert minutes to hours

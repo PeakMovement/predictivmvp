@@ -59,7 +59,6 @@ To verify the fix works:
 The `wearable_sessions` table already supports multiple sources via the `source` column which can be:
 - `oura`
 - `garmin`
-- `fitbit`
 - `polar`
 
 The query filters correctly to get the latest session from any source, so data from all devices will display properly.

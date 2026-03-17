@@ -25,7 +25,7 @@ export const CaloriesBurnedCard = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      // Use wearable_sessions instead of non-existent fitbit_auto_data
+      // Fetch calorie data from wearable_sessions
       const { data, error } = await supabase
         .from("wearable_sessions")
         .select("user_id, active_calories, total_calories, fetched_at")

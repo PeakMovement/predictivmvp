@@ -290,6 +290,7 @@ Deno.serve(async (req: Request) => {
     const totalTrends = results.reduce((sum, r) => sum + r.trends, 0);
     const successCount = results.filter((r) => r.success).length;
 
+    console.log(
       `[fetch-garmin-data] [COMPLETE] ${totalSessions} sessions, ${totalTrends} trends for ${successCount}/${targetUserIds.length} users in ${Date.now() - startTime}ms`,
     );
 
@@ -339,6 +340,22 @@ async function syncUserGarminData(
   if (tokenRow.expires_at && new Date(tokenRow.expires_at) < new Date()) {
     const refreshed = await refreshGarminToken(supabase, userId, tokenRow.refresh_token);
     if (!refreshed.success) {
+      // Mark token as expired so the frontend shows the reconnect banner
+      await supabase
+        .from("wearable_tokens")
+        .update({ status: "token_expired" })
+        .eq("user_id", userId)
+        .eq("scope", "garmin");
+
+      try {
+        await supabase.from("oura_logs").insert({
+          user_id: userId,
+          status: "error",
+          entries_synced: 0,
+          error_message: "Garmin token refresh failed. User must reconnect.",
+        });
+      } catch { /* ignore logging errors */ }
+
       return { user_id: userId, success: false, sessions: 0, trends: 0, summaries: 0, error: "Token expired, refresh failed" };
     }
     accessToken = refreshed.access_token!;
@@ -729,7 +746,9 @@ async function syncUserGarminData(
       const std = Math.sqrt(variance);
       const monotony = Math.min(std > 0 ? mean / std : 0, 2.5);
 
-      const sleepScore = dateMap.get(date)?.sleep?.overallSleepScoreValue || null;
+      const dateData = dateMap.get(date);
+      const sleepScore = dateData?.sleep?.overallSleepScoreValue || null;
+      const trendHrv = dateData?.sleep?.avgOvernightHrv ?? null;
 
       // ── training_trends ────────────────────────────────────────────
       const trendData = {
@@ -741,7 +760,7 @@ async function syncUserGarminData(
         acwr: acwr ? Math.round(acwr * 100) / 100 : null,
         strain: Math.round(strain * 100) / 100,
         monotony: Math.round(monotony * 100) / 100,
-        hrv: null as number | null,
+        hrv: trendHrv,
         sleep_score: sleepScore,
       };
 

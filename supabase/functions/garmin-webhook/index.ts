@@ -40,6 +40,9 @@ interface GarminPushSleep {
   overallSleepScoreValue?: number;
   overallSleepScoreQualifierKey?: string;
   validation?: string;
+  avgOvernightHrv?: number;
+  spO2AverageSleep?: number;
+  averageRespirationValue?: number;
 }
 
 interface GarminPushActivity {
@@ -203,6 +206,11 @@ async function handleRequest(req: Request): Promise<Response> {
   }
 }
 
+// ── User resolution cache (per-request) ──────────────────────────────
+// Avoids redundant DB queries when the same Garmin user appears multiple
+// times in a single webhook push (e.g. 7 dailies from the same user).
+const userIdCache = new Map<string, string | null>();
+
 // ── Resolve Garmin push identifiers → internal user_id ───────────────
 // Strategy:
 //   1. Try stable provider_user_id (Garmin's UUID for the user) — survives token refresh
@@ -214,6 +222,12 @@ async function resolveUserId(
   garminUserAccessToken: string | undefined,
   garminUserId: string | undefined,
 ): Promise<string | null> {
+  // Check cache first
+  const cacheKey = garminUserId || garminUserAccessToken || "";
+  if (cacheKey && userIdCache.has(cacheKey)) {
+    return userIdCache.get(cacheKey)!;
+  }
+
   // ── Attempt 1: stable Garmin userId (provider_user_id) ───────────────
   if (garminUserId) {
     const { data } = await supabase
@@ -224,6 +238,7 @@ async function resolveUserId(
       .maybeSingle();
 
     if (data?.user_id) {
+      if (cacheKey) userIdCache.set(cacheKey, data.user_id);
       return data.user_id;
     }
   }
@@ -231,6 +246,7 @@ async function resolveUserId(
   // ── Attempt 2: access_token (works before first refresh) ─────────────
   if (!garminUserAccessToken) {
     console.warn(`[garmin-webhook] No identifiers in payload, cannot resolve user`);
+    if (cacheKey) userIdCache.set(cacheKey, null);
     return null;
   }
 
@@ -243,6 +259,7 @@ async function resolveUserId(
 
   if (error || !data) {
     console.warn(`[garmin-webhook] Could not resolve user for token: ${garminUserAccessToken.substring(0, 10)}...`);
+    if (cacheKey) userIdCache.set(cacheKey, null);
     return null;
   }
 
@@ -257,6 +274,7 @@ async function resolveUserId(
       .catch(() => {});
   }
 
+  if (cacheKey) userIdCache.set(cacheKey, data.user_id);
   return data.user_id;
 }
 
@@ -333,6 +351,17 @@ async function processSleeps(
       fetched_at: new Date().toISOString(),
     };
 
+    // Include HRV, SpO2, and respiration if Garmin sends them with sleep data
+    if (s.avgOvernightHrv != null) {
+      updateData.hrv_avg = s.avgOvernightHrv;
+    }
+    if (s.spO2AverageSleep != null) {
+      updateData.spo2_avg = Math.round(s.spO2AverageSleep * 10) / 10;
+    }
+    if (s.averageRespirationValue != null) {
+      updateData.respiration_rate_avg = Math.round(s.averageRespirationValue * 100) / 100;
+    }
+
     const { error } = await supabase
       .from("wearable_sessions")
       .upsert(updateData, { onConflict: "user_id,source,date" });
@@ -395,6 +424,26 @@ async function processActivities(
   }
 
   for (const [, data] of grouped) {
+    // Read existing distances so we accumulate across separate webhook pushes
+    let existingTotalKm = 0;
+    let existingRunningKm = 0;
+    try {
+      const { data: existing } = await supabase
+        .from("wearable_sessions")
+        .select("total_distance_km, running_distance_km")
+        .eq("user_id", data.userId)
+        .eq("source", "garmin")
+        .eq("date", data.date)
+        .maybeSingle();
+      if (existing) {
+        existingTotalKm = existing.total_distance_km ?? 0;
+        existingRunningKm = existing.running_distance_km ?? 0;
+      }
+    } catch { /* proceed with zero */ }
+
+    const newTotalKm = data.totalDistanceM > 0 ? Math.round(data.totalDistanceM / 10) / 100 : 0;
+    const newRunningKm = data.runningDistanceM > 0 ? Math.round(data.runningDistanceM / 10) / 100 : 0;
+
     const updateData: Record<string, unknown> = {
       user_id: data.userId,
       source: "garmin",
@@ -402,11 +451,13 @@ async function processActivities(
       fetched_at: new Date().toISOString(),
     };
 
-    if (data.totalDistanceM > 0) {
-      updateData.total_distance_km = Math.round(data.totalDistanceM / 10) / 100;
+    const accumulatedTotal = existingTotalKm + newTotalKm;
+    const accumulatedRunning = existingRunningKm + newRunningKm;
+    if (accumulatedTotal > 0) {
+      updateData.total_distance_km = Math.round(accumulatedTotal * 100) / 100;
     }
-    if (data.runningDistanceM > 0) {
-      updateData.running_distance_km = Math.round(data.runningDistanceM / 10) / 100;
+    if (accumulatedRunning > 0) {
+      updateData.running_distance_km = Math.round(accumulatedRunning * 100) / 100;
     }
 
     const { error } = await supabase

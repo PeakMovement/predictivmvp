@@ -325,7 +325,7 @@ async function syncUserGarminData(
   // ── Get Garmin token ──────────────────────────────────────────────
   const { data: tokenRow, error: tokenErr } = await supabase
     .from("wearable_tokens")
-    .select("access_token, refresh_token, expires_at")
+    .select("access_token, refresh_token, expires_at, updated_at")
     .eq("user_id", userId)
     .eq("scope", "garmin")
     .maybeSingle();
@@ -336,25 +336,39 @@ async function syncUserGarminData(
 
   let accessToken = tokenRow.access_token;
 
+  // Grace period: don't mark a freshly-stored token as expired.
+  // After OAuth reconnect, garmin-auth triggers fetch-garmin-data immediately.
+  // Garmin's API may briefly reject the new token, causing a false "expired" flag
+  // that reverts the just-completed reconnection.
+  const TOKEN_GRACE_PERIOD_MS = 120_000; // 2 minutes
+  const tokenAge = tokenRow.updated_at
+    ? Date.now() - new Date(tokenRow.updated_at).getTime()
+    : Infinity;
+  const isRecentlyReconnected = tokenAge < TOKEN_GRACE_PERIOD_MS;
+
   // Check if token expired — refresh if needed
   if (tokenRow.expires_at && new Date(tokenRow.expires_at) < new Date()) {
     const refreshed = await refreshGarminToken(supabase, userId, tokenRow.refresh_token);
     if (!refreshed.success) {
-      // Mark token as expired so the frontend shows the reconnect banner
-      await supabase
-        .from("wearable_tokens")
-        .update({ status: "token_expired" })
-        .eq("user_id", userId)
-        .eq("scope", "garmin");
+      if (!isRecentlyReconnected) {
+        // Mark token as expired so the frontend shows the reconnect banner
+        await supabase
+          .from("wearable_tokens")
+          .update({ status: "token_expired" })
+          .eq("user_id", userId)
+          .eq("scope", "garmin");
 
-      try {
-        await supabase.from("oura_logs").insert({
-          user_id: userId,
-          status: "error",
-          entries_synced: 0,
-          error_message: "Garmin token refresh failed. User must reconnect.",
-        });
-      } catch { /* ignore logging errors */ }
+        try {
+          await supabase.from("oura_logs").insert({
+            user_id: userId,
+            status: "error",
+            entries_synced: 0,
+            error_message: "Garmin token refresh failed. User must reconnect.",
+          });
+        } catch { /* ignore logging errors */ }
+      } else {
+        console.warn(`[fetch-garmin-data] Token refresh failed for ${userId} but within grace period — skipping expiry mark`);
+      }
 
       return { user_id: userId, success: false, sessions: 0, trends: 0, summaries: 0, error: "Token expired, refresh failed" };
     }
@@ -454,21 +468,25 @@ async function syncUserGarminData(
   );
 
   if (isTokenExpired) {
-    console.error(`[fetch-garmin-data] [TOKEN_EXPIRED] Garmin token invalid for user ${userId} — marking as token_expired`);
-    await supabase
-      .from("wearable_tokens")
-      .update({ status: "token_expired" })
-      .eq("user_id", userId)
-      .eq("scope", "garmin");
+    if (!isRecentlyReconnected) {
+      console.error(`[fetch-garmin-data] [TOKEN_EXPIRED] Garmin token invalid for user ${userId} — marking as token_expired`);
+      await supabase
+        .from("wearable_tokens")
+        .update({ status: "token_expired" })
+        .eq("user_id", userId)
+        .eq("scope", "garmin");
 
-    try {
-      await supabase.from("oura_logs").insert({
-        user_id: userId,
-        status: "error",
-        entries_synced: 0,
-        error_message: "Garmin token expired (InvalidPullTokenException). User must reconnect.",
-      });
-    } catch { /* ignore */ }
+      try {
+        await supabase.from("oura_logs").insert({
+          user_id: userId,
+          status: "error",
+          entries_synced: 0,
+          error_message: "Garmin token expired (InvalidPullTokenException). User must reconnect.",
+        });
+      } catch { /* ignore */ }
+    } else {
+      console.warn(`[fetch-garmin-data] [TOKEN_EXPIRED] Garmin API rejected token for ${userId} but within grace period — skipping expiry mark`);
+    }
 
     return { user_id: userId, success: false, sessions: 0, trends: 0, summaries: 0, error: "Garmin token expired — user must reconnect" };
   }

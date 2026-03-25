@@ -335,10 +335,18 @@ async function syncUserGarminData(
 
   let accessToken = tokenRow.access_token;
 
-  // Check if token expired — refresh if needed
-  if (tokenRow.expires_at && new Date(tokenRow.expires_at) < new Date()) {
+  // Check if token expired or expiring soon (within 30 min) — refresh proactively
+  const thirtyMinFromNow = new Date(Date.now() + 30 * 60 * 1000);
+  if (tokenRow.expires_at && new Date(tokenRow.expires_at) < thirtyMinFromNow) {
     const refreshed = await refreshGarminToken(supabase, userId, tokenRow.refresh_token);
     if (!refreshed.success) {
+      // Mark token as expired so the frontend shows "Reconnection needed" immediately
+      await supabase
+        .from("wearable_tokens")
+        .update({ status: "token_expired" })
+        .eq("user_id", userId)
+        .eq("scope", "garmin");
+      console.error(`[fetch-garmin-data] [TOKEN_EXPIRED] Refresh failed for user ${userId} — marked as token_expired`);
       return { user_id: userId, success: false, sessions: 0, trends: 0, summaries: 0, error: "Token expired, refresh failed" };
     }
     accessToken = refreshed.access_token!;
@@ -860,10 +868,12 @@ async function refreshGarminToken(
         access_token: tokenData.access_token,
         refresh_token: tokenData.refresh_token || refreshToken,
         expires_at: expiresAt,
+        status: "active",
       })
       .eq("user_id", userId)
       .eq("scope", "garmin");
 
+    console.log(`[fetch-garmin-data] [TOKEN_REFRESHED] Successfully refreshed Garmin token for user ${userId}`);
     return { success: true, access_token: tokenData.access_token };
   } catch (err) {
     console.error(`[fetch-garmin-data] [ERROR] Token refresh exception: ${err instanceof Error ? err.message : String(err)}`);

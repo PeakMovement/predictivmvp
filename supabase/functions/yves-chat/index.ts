@@ -117,6 +117,14 @@ Deno.serve(async (req) => {
       .eq("user_id", user.id)
       .maybeSingle();
 
+    // ─── LOAD TONE PREFERENCE ──────────────────────────────────────────────────
+    const { data: profileRow } = await supabase
+      .from("profiles")
+      .select("tone_preference")
+      .eq("id", user.id)
+      .maybeSingle();
+    const tonePreference: string = profileRow?.tone_preference || "balanced";
+
     // ─── LOAD USER UPLOADED DOCUMENTS ────────────────────────────────────────
     const { data: userDocuments } = await supabase
       .from("user_documents")
@@ -849,6 +857,15 @@ CAUTIOUS — risk rising, early warning signs: measured and clear, never alarmis
 REASSURING — post-alert, recovery phase, anxiety present: reduce tension, normalise.
 
 ${toneGuidance[coaching_mode]}
+
+═══ USER'S CHOSEN COMMUNICATION STYLE: ${tonePreference.toUpperCase()} ═══
+${tonePreference === "coach" ? "The user prefers a direct, motivating voice. Be concise. Push them forward. Use action-oriented language." :
+  tonePreference === "warm" ? "The user prefers a gentle, caring voice. Lead with empathy. Validate feelings before giving advice. Use soft language." :
+  tonePreference === "supportive" ? "The user prefers an encouraging, reassuring voice. Celebrate small wins. Normalise setbacks. Be their cheerleader." :
+  tonePreference === "strategic" ? "The user prefers an objective, analytical voice. Lead with data and reasoning. Be measured and thoughtful. Focus on long-term outcomes." :
+  "The user prefers a balanced voice. Blend warmth with directness naturally. Adapt fluidly to the topic."}
+This preference MUST influence your word choice, sentence structure, and overall voice in every response.
+
 ${symptomAcknowledgement}${nameInstruction}
 ${noDataProtocol}
 ${preCompetitionProtocol}

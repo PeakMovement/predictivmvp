@@ -953,6 +953,14 @@ State it clearly, then explain WHY using their specific numbers and context.
 TONE MODE — select exactly ONE:
 ${toneGuidance[coaching_mode]}
 
+USER'S CHOSEN COMMUNICATION STYLE: ${(profilesData?.tone_preference || "balanced").toUpperCase()}
+${(profilesData?.tone_preference || "balanced") === "coach" ? "The user prefers a direct, motivating voice. Be concise. Push them forward. Use action-oriented language." :
+  (profilesData?.tone_preference || "balanced") === "warm" ? "The user prefers a gentle, caring voice. Lead with empathy. Validate feelings before giving advice. Use soft language." :
+  (profilesData?.tone_preference || "balanced") === "supportive" ? "The user prefers an encouraging, reassuring voice. Celebrate small wins. Normalise setbacks. Be their cheerleader." :
+  (profilesData?.tone_preference || "balanced") === "strategic" ? "The user prefers an objective, analytical voice. Lead with data and reasoning. Be measured and thoughtful. Focus on long-term outcomes." :
+  "The user prefers a balanced voice. Blend warmth with directness naturally. Adapt fluidly to the topic."}
+This preference MUST influence your word choice, sentence structure, and overall voice.
+
 ${symptomAcknowledgement}${nameInstruction}${metricEmphasis}
 ${personaGuidelines[persona]}
 ${relationshipGuidance[relationshipMetrics.stage]}

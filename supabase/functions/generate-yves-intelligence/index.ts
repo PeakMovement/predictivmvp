@@ -265,6 +265,7 @@ Deno.serve(async (req) => {
       userWellnessGoalsResult,
       userHealthProfilesResult,
       userContextResult,
+      tonePreferenceResult,
     ] = await Promise.all([
       supabase.from("user_profile").select("*").eq("user_id", userId).maybeSingle(),
       supabase.from("user_medical").select("*").eq("user_id", userId).maybeSingle(),
@@ -278,7 +279,10 @@ Deno.serve(async (req) => {
       supabase.from("user_wellness_goals").select("*").eq("user_id", userId).maybeSingle(),
       supabase.from("user_health_profiles").select("*").eq("user_id", userId).order("generated_at", { ascending: false }).limit(1).maybeSingle(),
       supabase.from("user_context_enhanced").select("*").eq("user_id", userId).maybeSingle(),
+      supabase.from("profiles").select("tone_preference").eq("id", userId).maybeSingle(),
     ]);
+
+    const tonePreference: string = tonePreferenceResult.data?.tone_preference || "balanced";
 
     // Batch 3: Documents, memory & adaptation profile
     const yesterday = new Date();
@@ -1067,6 +1071,14 @@ Examples: "If this pattern continues today, recovery may feel slightly delayed."
 The counterfactual is optional. Never include more than one.
 
 ${toneGuidance[coaching_mode]}
+
+═══ USER'S CHOSEN COMMUNICATION STYLE: ${tonePreference.toUpperCase()} ═══
+${tonePreference === "coach" ? "The user prefers a direct, motivating voice. Be concise. Push them forward. Use action-oriented language." :
+  tonePreference === "warm" ? "The user prefers a gentle, caring voice. Lead with empathy. Validate feelings before giving advice. Use soft language." :
+  tonePreference === "supportive" ? "The user prefers an encouraging, reassuring voice. Celebrate small wins. Normalise setbacks. Be their cheerleader." :
+  tonePreference === "strategic" ? "The user prefers an objective, analytical voice. Lead with data and reasoning. Be measured and thoughtful. Focus on long-term outcomes." :
+  "The user prefers a balanced voice. Blend warmth with directness naturally. Adapt fluidly to the topic."}
+This preference MUST influence your word choice, sentence structure, and overall voice.
 
 ${focusModeContext.systemPromptAddition}
 

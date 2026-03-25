@@ -622,8 +622,7 @@ Deno.serve(async (req) => {
       symptomCheckInsResult,
       userTrainingResult,
       userInterestsResult,
-      userInjuriesResult,
-      alertSettingsResult
+      userInjuriesResult
     ] = await Promise.all([
       supabase.from("training_trends").select("*").eq("user_id", userId).gte("date", sevenDaysAgoStr).order("date", { ascending: false }).limit(7),
       supabase.from("recovery_trends").select("*").eq("user_id", userId).gte("period_date", sevenDaysAgoStr).order("period_date", { ascending: false }).limit(7),
@@ -632,8 +631,7 @@ Deno.serve(async (req) => {
       supabase.from("symptom_check_ins").select("*").eq("user_id", userId).order("created_at", { ascending: false }).limit(10),
       supabase.from("user_training").select("preferred_activities, training_frequency, intensity_preference").eq("user_id", userId).maybeSingle(),
       supabase.from("user_interests").select("interests, hobbies").eq("user_id", userId).maybeSingle(),
-      supabase.from("user_injuries").select("injuries, injury_details").eq("user_id", userId).maybeSingle(),
-      supabase.from("alert_settings").select("*").eq("user_id", userId).maybeSingle()
+      supabase.from("user_injuries").select("injuries, injury_details").eq("user_id", userId).maybeSingle()
     ]);
 
     const trainingTrends = trainingTrendsResult.data || [];
@@ -644,38 +642,9 @@ Deno.serve(async (req) => {
     const userTraining = userTrainingResult.data;
     const userInterests = userInterestsResult.data;
     const userInjuries = userInjuriesResult.data;
-    const alertSettings = alertSettingsResult.data;
 
-    // FIX 3: Build effective thresholds — start from hardcoded defaults, override with user's alert_settings
-    const effectiveThresholds: typeof THRESHOLDS = {
-      acwr: {
-        critical: alertSettings?.acwr_critical_threshold ?? THRESHOLDS.acwr.critical,
-        elevated: THRESHOLDS.acwr.elevated,
-        optimal_low: THRESHOLDS.acwr.optimal_low,
-        optimal_high: THRESHOLDS.acwr.optimal_high,
-      },
-      monotony: {
-        critical: alertSettings?.monotony_critical_threshold ?? THRESHOLDS.monotony.critical,
-        elevated: THRESHOLDS.monotony.elevated,
-        moderate: THRESHOLDS.monotony.moderate,
-      },
-      strain: {
-        critical: alertSettings?.strain_critical_threshold ?? THRESHOLDS.strain.critical,
-        elevated: THRESHOLDS.strain.elevated,
-        moderate: THRESHOLDS.strain.moderate,
-      },
-      fatigueIndex: THRESHOLDS.fatigueIndex,
-      hrvDeviation: {
-        critical: alertSettings?.hrv_drop_threshold ?? THRESHOLDS.hrvDeviation.critical,
-        elevated: THRESHOLDS.hrvDeviation.elevated,
-        moderate: THRESHOLDS.hrvDeviation.moderate,
-      },
-      sleepScore: {
-        critical: alertSettings?.sleep_score_threshold ?? THRESHOLDS.sleepScore.critical,
-        elevated: THRESHOLDS.sleepScore.elevated,
-        moderate: THRESHOLDS.sleepScore.moderate,
-      },
-    };
+    // Use hardcoded default thresholds
+    const effectiveThresholds: typeof THRESHOLDS = { ...THRESHOLDS };
 
     // Build user profile for personalization
     const userProfile: UserProfile = {

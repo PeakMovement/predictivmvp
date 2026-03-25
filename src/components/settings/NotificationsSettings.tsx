@@ -8,7 +8,6 @@ import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { getAlertSettings, saveAlertSettings } from "@/lib/alertConditions";
-import { AlertCustomizationSettings } from "@/components/settings/AlertCustomizationSettings";
 import { LayoutBlock } from "@/components/layout/LayoutBlock";
 
 interface NotificationsSettingsProps {
@@ -283,18 +282,6 @@ export const NotificationsSettings = ({ isSectionVisible, onNavigate }: Notifica
         </div>
       </LayoutBlock>
 
-      {/* ── Alert Customisation ──────────────────────────────────────────────── */}
-      <LayoutBlock blockId="alertCustomization" displayName="Alert Settings" pageId="profile" size="standard" visible={isSectionVisible("alertCustomization")}>
-        <div className="space-y-4">
-          <div className="flex justify-end">
-            <Button variant="outline" size="sm" onClick={() => onNavigate?.("alert-history")} className="gap-2">
-              <Bell size={16} />
-              View Alert History
-            </Button>
-          </div>
-          <AlertCustomizationSettings />
-        </div>
-      </LayoutBlock>
     </>
   );
 };

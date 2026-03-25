@@ -9,7 +9,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { getAlertSettings, saveAlertSettings } from "@/lib/alertConditions";
 import { AlertCustomizationSettings } from "@/components/settings/AlertCustomizationSettings";
-import { GoogleCalendarConnection } from "@/components/GoogleCalendarConnection";
 import { LayoutBlock } from "@/components/layout/LayoutBlock";
 
 interface NotificationsSettingsProps {
@@ -295,11 +294,6 @@ export const NotificationsSettings = ({ isSectionVisible, onNavigate }: Notifica
           </div>
           <AlertCustomizationSettings />
         </div>
-      </LayoutBlock>
-
-      {/* ── Google Calendar ───────────────────────────────────────────────────── */}
-      <LayoutBlock blockId="googleCalendar" displayName="Google Calendar" pageId="profile" size="standard" visible={isSectionVisible("googleCalendar")}>
-        <GoogleCalendarConnection />
       </LayoutBlock>
     </>
   );

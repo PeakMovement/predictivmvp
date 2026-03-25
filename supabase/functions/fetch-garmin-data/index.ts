@@ -290,6 +290,7 @@ Deno.serve(async (req: Request) => {
     const totalTrends = results.reduce((sum, r) => sum + r.trends, 0);
     const successCount = results.filter((r) => r.success).length;
 
+    console.log(
       `[fetch-garmin-data] [COMPLETE] ${totalSessions} sessions, ${totalTrends} trends for ${successCount}/${targetUserIds.length} users in ${Date.now() - startTime}ms`,
     );
 

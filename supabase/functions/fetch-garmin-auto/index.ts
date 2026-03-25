@@ -42,6 +42,7 @@ Deno.serve(async (req: Request) => {
 
     const result = await response.json();
 
+    console.log(
       `[fetch-garmin-auto] [COMPLETE] Status=${response.status} in ${Date.now() - startTime}ms: ${JSON.stringify(result).substring(0, 500)}`,
     );
 

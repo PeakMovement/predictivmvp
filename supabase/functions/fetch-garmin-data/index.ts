@@ -325,7 +325,7 @@ async function syncUserGarminData(
   // ── Get Garmin token ──────────────────────────────────────────────
   const { data: tokenRow, error: tokenErr } = await supabase
     .from("wearable_tokens")
-    .select("access_token, refresh_token, expires_at")
+    .select("access_token, refresh_token, expires_at, updated_at")
     .eq("user_id", userId)
     .eq("scope", "garmin")
     .maybeSingle();
@@ -446,6 +446,18 @@ async function syncUserGarminData(
   );
 
   if (isTokenExpired) {
+    // Grace period: if token was just issued (within 5 min), Garmin's API may not
+    // have propagated yet. Don't mark as expired — let the next sync retry.
+    const tokenAge = tokenRow.updated_at
+      ? Date.now() - new Date(tokenRow.updated_at).getTime()
+      : Infinity;
+    const GRACE_PERIOD_MS = 5 * 60 * 1000; // 5 minutes
+
+    if (tokenAge < GRACE_PERIOD_MS) {
+      console.warn(`[fetch-garmin-data] [GRACE_PERIOD] Token for user ${userId} is only ${Math.round(tokenAge / 1000)}s old — skipping expiry mark, will retry next cycle`);
+      return { user_id: userId, success: false, sessions: 0, trends: 0, summaries: 0, error: "Garmin API not ready yet (token too new)" };
+    }
+
     console.error(`[fetch-garmin-data] [TOKEN_EXPIRED] Garmin token invalid for user ${userId} — marking as token_expired`);
     await supabase
       .from("wearable_tokens")

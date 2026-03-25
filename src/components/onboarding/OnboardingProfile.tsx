@@ -17,6 +17,16 @@ export interface OnboardingProfileHandle {
   validate: () => boolean;
 }
 
+// Goal values aligned with Settings (ProfileSettings.tsx) so they stay in sync.
+// These are the canonical values stored in user_profiles.primary_goal.
+const GOAL_OPTIONS = [
+  { value: "performance", label: "Improve Athletic Performance" },
+  { value: "health_fitness", label: "General Health & Fitness" },
+  { value: "injury_recovery", label: "Injury Recovery" },
+  { value: "weight_management", label: "Weight Management" },
+  { value: "general_wellness", label: "General Wellness & Sleep" },
+] as const;
+
 export const OnboardingProfile = forwardRef<OnboardingProfileHandle, OnboardingProfileProps>(
   function OnboardingProfile({ onNext: _onNext }, ref) {
     const [name, setName] = useState("");
@@ -35,31 +45,44 @@ export const OnboardingProfile = forwardRef<OnboardingProfileHandle, OnboardingP
         if (!user) return;
         setUserId(user.id);
 
-        // Load existing data from user_profile
-        const { data: profile } = await supabase
-          .from("user_profile")
-          .select("name, dob, goals")
-          .eq("user_id", user.id)
-          .maybeSingle();
+        // Load from both tables — prefer user_profiles (Settings canonical source),
+        // fall back to user_profile (AI table) for older data
+        const [{ data: settingsProfile }, { data: aiProfile }, { data: medical }] = await Promise.all([
+          supabase
+            .from("user_profiles")
+            .select("full_name, date_of_birth, primary_goal")
+            .eq("user_id", user.id)
+            .maybeSingle(),
+          supabase
+            .from("user_profile")
+            .select("name, dob, goals")
+            .eq("user_id", user.id)
+            .maybeSingle(),
+          supabase
+            .from("user_medical")
+            .select("medical_notes")
+            .eq("user_id", user.id)
+            .maybeSingle(),
+        ]);
 
-        if (profile) {
-          if (profile.name) setName(profile.name);
-          if (profile.dob) {
-            const birthYear = new Date(profile.dob).getFullYear();
-            const currentYear = new Date().getFullYear();
-            const calculatedAge = currentYear - birthYear;
-            if (calculatedAge > 0 && calculatedAge < 150) setAge(String(calculatedAge));
-          }
-          if (profile.goals?.length) setGoal(profile.goals[0]);
+        // Name: prefer user_profiles (Settings), fallback to user_profile (AI)
+        const loadedName = settingsProfile?.full_name || aiProfile?.name || "";
+        if (loadedName) setName(loadedName);
+
+        // DOB/Age: prefer user_profiles.date_of_birth, fallback to user_profile.dob
+        const dob = settingsProfile?.date_of_birth || aiProfile?.dob;
+        if (dob) {
+          const birthYear = new Date(dob).getFullYear();
+          const currentYear = new Date().getFullYear();
+          const calculatedAge = currentYear - birthYear;
+          if (calculatedAge > 0 && calculatedAge < 150) setAge(String(calculatedAge));
         }
 
-        // Load medical notes
-        const { data: medical } = await supabase
-          .from("user_medical")
-          .select("medical_notes")
-          .eq("user_id", user.id)
-          .maybeSingle();
+        // Goal: prefer user_profiles.primary_goal, fallback to user_profile.goals[0]
+        const loadedGoal = settingsProfile?.primary_goal || aiProfile?.goals?.[0] || "";
+        if (loadedGoal) setGoal(loadedGoal);
 
+        // Medical notes
         if (medical?.medical_notes) setNotes(medical.medical_notes);
       }
 
@@ -69,7 +92,6 @@ export const OnboardingProfile = forwardRef<OnboardingProfileHandle, OnboardingP
     const validate = (): boolean => {
       let valid = true;
 
-      // Goal is required
       if (!goal) {
         setGoalError(true);
         valid = false;
@@ -77,7 +99,6 @@ export const OnboardingProfile = forwardRef<OnboardingProfileHandle, OnboardingP
         setGoalError(false);
       }
 
-      // Age validation (if provided)
       if (age) {
         const ageNum = parseInt(age);
         if (isNaN(ageNum) || ageNum < 13 || ageNum > 120) {
@@ -99,41 +120,58 @@ export const OnboardingProfile = forwardRef<OnboardingProfileHandle, OnboardingP
       try {
         const now = new Date().toISOString();
 
-        // ── user_profile (always create/update — AI reads from here) ─────
-        const profileUpdate: Record<string, any> = { updated_at: now };
-        if (name) profileUpdate.name = name;
+        // Calculate DOB from age
+        let dobString: string | null = null;
         if (age) {
           const ageNum = parseInt(age);
           if (!isNaN(ageNum) && ageNum >= 13 && ageNum <= 120) {
             const dob = new Date();
             dob.setFullYear(dob.getFullYear() - ageNum);
-            profileUpdate.dob = dob.toISOString().split("T")[0];
+            dobString = dob.toISOString().split("T")[0];
           }
         }
-        if (goal) profileUpdate.goals = [goal];
 
-        const { data: existing } = await supabase
+        // ── 1. user_profile (AI edge functions read from here) ───────────
+        const aiProfileUpdate: Record<string, any> = { updated_at: now };
+        if (name) aiProfileUpdate.name = name;
+        if (dobString) aiProfileUpdate.dob = dobString;
+        if (goal) aiProfileUpdate.goals = [goal];
+
+        const { data: existingAI } = await supabase
           .from("user_profile")
           .select("user_id")
           .eq("user_id", userId)
           .maybeSingle();
 
-        if (existing) {
-          const { error } = await supabase.from("user_profile").update(profileUpdate).eq("user_id", userId);
+        if (existingAI) {
+          const { error } = await supabase.from("user_profile").update(aiProfileUpdate).eq("user_id", userId);
           if (error) throw error;
         } else {
-          const { error } = await supabase.from("user_profile").insert({ user_id: userId, ...profileUpdate } as any);
+          const { error } = await supabase.from("user_profile").insert({ user_id: userId, ...aiProfileUpdate } as any);
           if (error) throw error;
         }
 
-        // ── user_profiles.full_name (Dashboard greeting reads from here) ─
+        // ── 2. user_profiles (Settings/Dashboard read from here) ─────────
+        // This is the canonical profile table — sync ALL fields so Settings
+        // shows what the user entered during onboarding.
+        const settingsUpdate: Record<string, any> = { updated_at: now };
+        if (name) settingsUpdate.full_name = name;
+        if (dobString) settingsUpdate.date_of_birth = dobString;
+        if (goal) settingsUpdate.primary_goal = goal;
+
+        const { error: settingsErr } = await supabase
+          .from("user_profiles")
+          .upsert({ user_id: userId, ...settingsUpdate }, { onConflict: "user_id" });
+        if (settingsErr) throw settingsErr;
+
+        // ── 3. profiles (Supabase auth table — mirror name) ──────────────
         if (name) {
           await supabase
-            .from("user_profiles")
-            .upsert({ user_id: userId, full_name: name }, { onConflict: "user_id" });
+            .from("profiles")
+            .upsert({ id: userId, full_name: name, updated_at: now }, { onConflict: "id" });
         }
 
-        // ── user_medical (optional notes, max 1000 chars) ────────────────
+        // ── 4. user_medical (optional notes, max 1000 chars) ─────────────
         if (notes) {
           const trimmedNotes = notes.slice(0, 1000);
           const { data: existingMed } = await supabase
@@ -154,7 +192,7 @@ export const OnboardingProfile = forwardRef<OnboardingProfileHandle, OnboardingP
           }
         }
 
-        // ── yves_memory_bank ─────────────────────────────────────────────
+        // ── 5. yves_memory_bank (AI long-term memory) ────────────────────
         const memoryEntries: Array<{
           user_id: string;
           memory_key: string;
@@ -250,12 +288,9 @@ export const OnboardingProfile = forwardRef<OnboardingProfileHandle, OnboardingP
                 <SelectValue placeholder="Select your primary goal" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="performance">Improve Athletic Performance</SelectItem>
-                <SelectItem value="recovery">Optimize Recovery</SelectItem>
-                <SelectItem value="health">General Health &amp; Wellness</SelectItem>
-                <SelectItem value="weight">Weight Management</SelectItem>
-                <SelectItem value="sleep">Better Sleep Quality</SelectItem>
-                <SelectItem value="stress">Reduce Stress</SelectItem>
+                {GOAL_OPTIONS.map((opt) => (
+                  <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                ))}
               </SelectContent>
             </Select>
             {goalError && (

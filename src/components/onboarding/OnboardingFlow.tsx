@@ -63,7 +63,7 @@ export const OnboardingFlow = ({ onComplete, onSkip }: OnboardingFlowProps) => {
     if (!userId) return;
 
     try {
-      await supabase
+      const { error } = await supabase
         .from("user_profiles")
         .upsert({
           user_id: userId,
@@ -72,14 +72,31 @@ export const OnboardingFlow = ({ onComplete, onSkip }: OnboardingFlowProps) => {
         }, {
           onConflict: "user_id",
         });
+
+      if (error) {
+        console.error("Error saving progress:", error);
+        toast({
+          title: "Failed to save progress",
+          description: "Please try again.",
+          variant: "destructive",
+        });
+      }
     } catch (error) {
       console.error("Error saving progress:", error);
     }
   };
 
   const handleNext = async () => {
-    // Flush profile data before unmounting the Profile step
+    // Validate and save profile data before advancing from Step 1
     if (currentStep === 1 && profileRef.current) {
+      if (!profileRef.current.validate()) {
+        toast({
+          title: "Required fields missing",
+          description: "Please select a primary goal before continuing.",
+          variant: "destructive",
+        });
+        return;
+      }
       await profileRef.current.save();
     }
 
@@ -100,6 +117,9 @@ export const OnboardingFlow = ({ onComplete, onSkip }: OnboardingFlowProps) => {
     if (!userId) return;
 
     try {
+      // Ensure user_profile row exists even on skip
+      await ensureUserProfileExists(userId);
+
       await supabase
         .from("user_profiles")
         .upsert({
@@ -131,6 +151,9 @@ export const OnboardingFlow = ({ onComplete, onSkip }: OnboardingFlowProps) => {
     if (!userId) return;
 
     try {
+      // Ensure user_profile row exists even if profile step was sparse
+      await ensureUserProfileExists(userId);
+
       await supabase
         .from("user_profiles")
         .upsert({
@@ -301,3 +324,21 @@ export const OnboardingFlow = ({ onComplete, onSkip }: OnboardingFlowProps) => {
     </div>
   );
 };
+
+/**
+ * Ensures the user_profile row exists so the rest of the app
+ * (AI prompts, dashboard, settings) always has a row to read from.
+ */
+async function ensureUserProfileExists(userId: string) {
+  const { data } = await supabase
+    .from("user_profile")
+    .select("user_id")
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  if (!data) {
+    await supabase
+      .from("user_profile")
+      .insert({ user_id: userId, updated_at: new Date().toISOString() } as any);
+  }
+}

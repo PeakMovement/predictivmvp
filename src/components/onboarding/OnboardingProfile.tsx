@@ -5,6 +5,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { User } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 interface OnboardingProfileProps {
   onNext: () => void;
@@ -13,6 +14,7 @@ interface OnboardingProfileProps {
 
 export interface OnboardingProfileHandle {
   save: () => Promise<void>;
+  validate: () => boolean;
 }
 
 export const OnboardingProfile = forwardRef<OnboardingProfileHandle, OnboardingProfileProps>(
@@ -22,12 +24,74 @@ export const OnboardingProfile = forwardRef<OnboardingProfileHandle, OnboardingP
     const [goal, setGoal] = useState("");
     const [notes, setNotes] = useState("");
     const [userId, setUserId] = useState<string | null>(null);
+    const [goalError, setGoalError] = useState(false);
+    const [ageError, setAgeError] = useState("");
+    const { toast } = useToast();
 
+    // Load existing profile data on mount (supports resume after browser close)
     useEffect(() => {
-      supabase.auth.getUser().then(({ data: { user } }) => {
-        if (user) setUserId(user.id);
-      });
+      async function loadProfile() {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+        setUserId(user.id);
+
+        // Load existing data from user_profile
+        const { data: profile } = await supabase
+          .from("user_profile")
+          .select("name, dob, goals")
+          .eq("user_id", user.id)
+          .maybeSingle();
+
+        if (profile) {
+          if (profile.name) setName(profile.name);
+          if (profile.dob) {
+            const birthYear = new Date(profile.dob).getFullYear();
+            const currentYear = new Date().getFullYear();
+            const calculatedAge = currentYear - birthYear;
+            if (calculatedAge > 0 && calculatedAge < 150) setAge(String(calculatedAge));
+          }
+          if (profile.goals?.length) setGoal(profile.goals[0]);
+        }
+
+        // Load medical notes
+        const { data: medical } = await supabase
+          .from("user_medical")
+          .select("medical_notes")
+          .eq("user_id", user.id)
+          .maybeSingle();
+
+        if (medical?.medical_notes) setNotes(medical.medical_notes);
+      }
+
+      loadProfile();
     }, []);
+
+    const validate = (): boolean => {
+      let valid = true;
+
+      // Goal is required
+      if (!goal) {
+        setGoalError(true);
+        valid = false;
+      } else {
+        setGoalError(false);
+      }
+
+      // Age validation (if provided)
+      if (age) {
+        const ageNum = parseInt(age);
+        if (isNaN(ageNum) || ageNum < 13 || ageNum > 120) {
+          setAgeError("Age must be between 13 and 120");
+          valid = false;
+        } else {
+          setAgeError("");
+        }
+      } else {
+        setAgeError("");
+      }
+
+      return valid;
+    };
 
     const save = async () => {
       if (!userId) return;
@@ -35,13 +99,16 @@ export const OnboardingProfile = forwardRef<OnboardingProfileHandle, OnboardingP
       try {
         const now = new Date().toISOString();
 
-        // ── user_profile (AI reads name from here) ──────────────────────
+        // ── user_profile (always create/update — AI reads from here) ─────
         const profileUpdate: Record<string, any> = { updated_at: now };
         if (name) profileUpdate.name = name;
         if (age) {
-          const dob = new Date();
-          dob.setFullYear(dob.getFullYear() - parseInt(age));
-          profileUpdate.dob = dob.toISOString().split("T")[0];
+          const ageNum = parseInt(age);
+          if (!isNaN(ageNum) && ageNum >= 13 && ageNum <= 120) {
+            const dob = new Date();
+            dob.setFullYear(dob.getFullYear() - ageNum);
+            profileUpdate.dob = dob.toISOString().split("T")[0];
+          }
         }
         if (goal) profileUpdate.goals = [goal];
 
@@ -52,9 +119,11 @@ export const OnboardingProfile = forwardRef<OnboardingProfileHandle, OnboardingP
           .maybeSingle();
 
         if (existing) {
-          await supabase.from("user_profile").update(profileUpdate).eq("user_id", userId);
+          const { error } = await supabase.from("user_profile").update(profileUpdate).eq("user_id", userId);
+          if (error) throw error;
         } else {
-          await supabase.from("user_profile").insert({ user_id: userId, ...profileUpdate } as any);
+          const { error } = await supabase.from("user_profile").insert({ user_id: userId, ...profileUpdate } as any);
+          if (error) throw error;
         }
 
         // ── user_profiles.full_name (Dashboard greeting reads from here) ─
@@ -64,8 +133,9 @@ export const OnboardingProfile = forwardRef<OnboardingProfileHandle, OnboardingP
             .upsert({ user_id: userId, full_name: name }, { onConflict: "user_id" });
         }
 
-        // ── user_medical (optional notes) ───────────────────────────────
+        // ── user_medical (optional notes, max 1000 chars) ────────────────
         if (notes) {
+          const trimmedNotes = notes.slice(0, 1000);
           const { data: existingMed } = await supabase
             .from("user_medical")
             .select("user_id")
@@ -75,16 +145,16 @@ export const OnboardingProfile = forwardRef<OnboardingProfileHandle, OnboardingP
           if (existingMed) {
             await supabase
               .from("user_medical")
-              .update({ medical_notes: notes, updated_at: now })
+              .update({ medical_notes: trimmedNotes, updated_at: now })
               .eq("user_id", userId);
           } else {
             await supabase
               .from("user_medical")
-              .insert({ user_id: userId, medical_notes: notes, updated_at: now } as any);
+              .insert({ user_id: userId, medical_notes: trimmedNotes, updated_at: now } as any);
           }
         }
 
-        // ── yves_memory_bank ────────────────────────────────────────────
+        // ── yves_memory_bank ─────────────────────────────────────────────
         const memoryEntries: Array<{
           user_id: string;
           memory_key: string;
@@ -112,7 +182,7 @@ export const OnboardingProfile = forwardRef<OnboardingProfileHandle, OnboardingP
           memoryEntries.push({
             user_id: userId,
             memory_key: "medical_context",
-            memory_value: JSON.stringify({ medical_notes: notes }),
+            memory_value: JSON.stringify({ medical_notes: notes.slice(0, 1000) }),
             last_updated: now,
           });
         }
@@ -124,10 +194,15 @@ export const OnboardingProfile = forwardRef<OnboardingProfileHandle, OnboardingP
         }
       } catch (error) {
         console.error("Error saving onboarding profile:", error);
+        toast({
+          title: "Failed to save profile",
+          description: "Please try again. Your data may not have been saved.",
+          variant: "destructive",
+        });
       }
     };
 
-    useImperativeHandle(ref, () => ({ save }));
+    useImperativeHandle(ref, () => ({ save, validate }));
 
     return (
       <div className="space-y-6">
@@ -155,16 +230,23 @@ export const OnboardingProfile = forwardRef<OnboardingProfileHandle, OnboardingP
             <Input
               id="age"
               type="number"
+              min={13}
+              max={120}
               placeholder="Your age"
               value={age}
-              onChange={(e) => setAge(e.target.value)}
+              onChange={(e) => { setAge(e.target.value); setAgeError(""); }}
             />
+            {ageError && (
+              <p className="text-xs text-destructive">{ageError}</p>
+            )}
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="goal">Primary Goal</Label>
-            <Select value={goal} onValueChange={setGoal}>
-              <SelectTrigger id="goal">
+            <Label htmlFor="goal">
+              Primary Goal <span className="text-destructive">*</span>
+            </Label>
+            <Select value={goal} onValueChange={(v) => { setGoal(v); setGoalError(false); }}>
+              <SelectTrigger id="goal" className={goalError ? "border-destructive" : ""}>
                 <SelectValue placeholder="Select your primary goal" />
               </SelectTrigger>
               <SelectContent>
@@ -176,6 +258,9 @@ export const OnboardingProfile = forwardRef<OnboardingProfileHandle, OnboardingP
                 <SelectItem value="stress">Reduce Stress</SelectItem>
               </SelectContent>
             </Select>
+            {goalError && (
+              <p className="text-xs text-destructive">Please select a primary goal</p>
+            )}
           </div>
 
           <div className="space-y-2">
@@ -184,9 +269,11 @@ export const OnboardingProfile = forwardRef<OnboardingProfileHandle, OnboardingP
               id="notes"
               placeholder="Any specific health concerns, training goals, or other information..."
               value={notes}
-              onChange={(e) => setNotes(e.target.value)}
+              onChange={(e) => setNotes(e.target.value.slice(0, 1000))}
               rows={4}
+              maxLength={1000}
             />
+            <p className="text-[11px] text-muted-foreground text-right">{notes.length}/1000</p>
           </div>
         </div>
 

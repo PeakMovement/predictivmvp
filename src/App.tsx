@@ -344,7 +344,7 @@ const AppInner = () => {
       <Suspense fallback={<PageLoadingFallback />}>
         <Routes>
           <Route path="/genesis"                 element={<Genesis />} />
-          <Route path="/register"                element={<Register />} />
+          <Route path="/register"                element={<Navigate to="/genesis" replace />} />
           <Route path="/practitioner/register"   element={<PractitionerRegister />} />
           <Route path="/join"                    element={<PractitionerLanding />} />
           <Route path="/join/register"           element={<PractitionerRegisterWireframe />} />

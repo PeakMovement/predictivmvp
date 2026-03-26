@@ -89,7 +89,7 @@ export const AccountSettings = ({ isSectionVisible, onNavigate }: AccountSetting
 
       toast({ title: "Account deleted", description: "All your data has been permanently removed." });
       await supabase.auth.signOut();
-      window.location.href = "/register";
+      window.location.href = "/genesis";
     } catch {
       toast({ title: "Delete failed", description: "Please contact support if this persists.", variant: "destructive" });
       setIsDeleting(false);

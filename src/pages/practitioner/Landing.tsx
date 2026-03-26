@@ -90,7 +90,7 @@ export const PractitionerLanding = () => {
               Log in
             </Link>
             <Link
-              to="/register"
+              to="/genesis"
               className="inline-flex items-center gap-1 rounded-lg border border-black/10 px-4 py-2 text-sm font-medium text-[#1a1a1a] transition-colors hover:bg-black/5"
             >
               I'm a patient
@@ -297,7 +297,7 @@ export const PractitionerLanding = () => {
           Privacy
         </Link>{" "}
         &middot;{" "}
-        <Link to="/register" className="hover:text-[#555]">
+        <Link to="/genesis" className="hover:text-[#555]">
           For patients
         </Link>
       </footer>

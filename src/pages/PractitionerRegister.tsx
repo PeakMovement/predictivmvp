@@ -266,7 +266,7 @@ export const PractitionerRegister = () => {
                 className="flex items-center gap-2 text-sm text-slate-500 hover:text-slate-700 transition-colors">
                 <ArrowLeft className="h-4 w-4" />Sign in to existing account
               </button>
-              <button onClick={() => navigate("/register")}
+              <button onClick={() => navigate("/genesis")}
                 className="text-xs text-blue-500 hover:underline">
                 Are you a patient? Create a patient account
               </button>

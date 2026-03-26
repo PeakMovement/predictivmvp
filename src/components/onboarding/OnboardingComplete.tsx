@@ -4,10 +4,11 @@ import { generateBriefing } from "@/api/dailyBriefing";
 
 interface OnboardingData {
   firstName: string;
-  wearable: string;
-  trainingType: string;
+  wearables: string[];
+  sports: string[];
   healthGoals: string[];
   injuryHistory: string;
+  injuryDescription: string;
   stressLevel: number;
   sleepQuality: string;
   compliance: string;
@@ -18,23 +19,16 @@ interface Props {
 }
 
 const LABELS: Record<string, string> = {
-  // wearable
-  oura: "Oura Ring", garmin: "Garmin Watch", polar: "Polar Watch", none: "No wearable",
-  // training
-  endurance: "Endurance", strength: "Strength", team: "Team Sport", mindbody: "Mind & Body", rehab: "Rehab / Physio",
-  // goals
+  oura: "Oura Ring", garmin: "Garmin", polar: "Polar", none: "No wearable",
   injury_prevention: "Injury Prevention", performance: "Performance", recovery: "Recovery",
-  stress: "Stress Management", longevity: "Longevity", "rehab": "Rehab / Healing",
-  // injury
+  stress: "Stress Management", longevity: "Longevity", rehab: "Rehab / Healing",
+  solid: "Solid sleep", variable: "Variable", short: "Chronically short", disrupted: "Disrupted",
+  high: "High engagement", medium: "Balanced", low: "Passive",
   "none": "No injuries", overuse: "Overuse history", acute: "Acute history",
   current: "Current injury", multiple: "Multiple / recurring",
-  // sleep
-  solid: "Solid sleep", variable: "Variable", short: "Chronically short", disrupted: "Disrupted",
-  // compliance
-  high: "High engagement", medium: "Balanced", low: "Passive",
 };
 
-const label = (v: string) => LABELS[v] || v;
+const label = (v: string) => LABELS[v] || v.charAt(0).toUpperCase() + v.slice(1);
 
 export function OnboardingComplete({ data }: Props) {
   const [generating, setGenerating] = useState(true);
@@ -58,10 +52,9 @@ export function OnboardingComplete({ data }: Props) {
         <p className="text-sm text-muted-foreground">Here's your profile at a glance</p>
       </div>
 
-      {/* Summary card */}
       <div className="bg-card/50 border border-border/50 rounded-xl p-4 space-y-3">
-        <SummaryRow label="Wearable" value={label(data.wearable)} />
-        <SummaryRow label="Training" value={label(data.trainingType)} />
+        <SummaryRow label="Wearables" value={data.wearables.map(label).join(", ") || "—"} />
+        <SummaryRow label="Sports" value={data.sports.map(label).join(", ") || "—"} />
         <SummaryRow label="Goals" value={data.healthGoals.map(label).join(", ") || "—"} />
         <SummaryRow label="Injury" value={label(data.injuryHistory)} />
         <SummaryRow label="Stress" value={`${data.stressLevel}/10`} />
@@ -69,7 +62,6 @@ export function OnboardingComplete({ data }: Props) {
         <SummaryRow label="Engagement" value={label(data.compliance)} />
       </div>
 
-      {/* Briefing status */}
       <div className="text-center">
         {generating ? (
           <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
@@ -103,7 +95,7 @@ function SummaryRow({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex justify-between items-center text-sm">
       <span className="text-muted-foreground">{label}</span>
-      <span className="text-foreground font-medium">{value}</span>
+      <span className="text-foreground font-medium text-right max-w-[60%]">{value}</span>
     </div>
   );
 }

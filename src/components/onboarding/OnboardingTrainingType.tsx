@@ -2,36 +2,31 @@ import { Dumbbell } from "lucide-react";
 import { OnboardingChips } from "./OnboardingChips";
 
 interface Props {
-  data: { trainingType: string };
+  data: { sports: string[] };
   onUpdate: (patch: Partial<Props["data"]>) => void;
 }
 
-const TRAINING_OPTIONS = [
-  {
-    value: "endurance",
-    label: "Endurance",
-    description: "Running, cycling, swimming, triathlon, rowing, walking",
-  },
-  {
-    value: "strength",
-    label: "Strength",
-    description: "Gym, CrossFit, powerlifting, boxing, calisthenics",
-  },
-  {
-    value: "team",
-    label: "Team Sport",
-    description: "Football, rugby, basketball, tennis, hockey, cricket",
-  },
-  {
-    value: "mindbody",
-    label: "Mind & Body",
-    description: "Yoga, Pilates, walking, golf, surfing, dance",
-  },
-  {
-    value: "rehab",
-    label: "Rehab / Physio",
-    description: "Physiotherapy-led recovery. Peak Movement primary.",
-  },
+const SPORT_OPTIONS = [
+  { value: "running", label: "Running" },
+  { value: "cycling", label: "Cycling" },
+  { value: "swimming", label: "Swimming" },
+  { value: "triathlon", label: "Triathlon" },
+  { value: "gym", label: "Gym / Weights" },
+  { value: "crossfit", label: "CrossFit" },
+  { value: "football", label: "Football" },
+  { value: "rugby", label: "Rugby" },
+  { value: "basketball", label: "Basketball" },
+  { value: "tennis", label: "Tennis" },
+  { value: "hockey", label: "Hockey" },
+  { value: "cricket", label: "Cricket" },
+  { value: "boxing", label: "Boxing" },
+  { value: "yoga", label: "Yoga / Pilates" },
+  { value: "walking", label: "Walking" },
+  { value: "golf", label: "Golf" },
+  { value: "surfing", label: "Surfing" },
+  { value: "dance", label: "Dance" },
+  { value: "physiotherapy", label: "Physiotherapy / Rehab" },
+  { value: "other", label: "Other" },
 ];
 
 export function OnboardingTrainingType({ data, onUpdate }: Props) {
@@ -41,16 +36,18 @@ export function OnboardingTrainingType({ data, onUpdate }: Props) {
         <div className="w-14 h-14 bg-primary/10 rounded-full flex items-center justify-center mx-auto">
           <Dumbbell className="h-7 w-7 text-primary" />
         </div>
-        <h2 className="text-2xl font-bold text-foreground">How Do You Train?</h2>
-        <p className="text-sm text-muted-foreground">Pick the category that best describes your main activity</p>
+        <h2 className="text-2xl font-bold text-foreground">What Sports Do You Do?</h2>
+        <p className="text-sm text-muted-foreground">Select all that apply (up to 5)</p>
       </div>
 
       <OnboardingChips
-        options={TRAINING_OPTIONS}
-        value={data.trainingType}
-        onChange={(v) => onUpdate({ trainingType: v as string })}
-        columns={1}
-        size="md"
+        options={SPORT_OPTIONS}
+        value={data.sports}
+        onChange={(v) => onUpdate({ sports: v as string[] })}
+        multi
+        maxSelections={5}
+        columns={3}
+        size="sm"
       />
     </div>
   );

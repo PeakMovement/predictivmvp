@@ -20,14 +20,15 @@ export interface OnboardingData {
   firstName: string;
   dateOfBirth: string;
   gender: string;
-  // Screen 3 — Wearable (Q1)
-  wearable: string;
-  // Screen 4 — Training (Q2)
-  trainingType: string;
+  // Screen 3 — Wearable (Q1) — multi-select
+  wearables: string[];
+  // Screen 4 — Sports (Q2) — multi-select individual sports
+  sports: string[];
   // Screen 5 — Goals (Q6)
   healthGoals: string[];
   // Screen 6 — Injury (Q7)
   injuryHistory: string;
+  injuryDescription: string;
   // Screen 7 — Lifestyle (Q3+Q4+Q5)
   stressLevel: number;
   sleepQuality: string;
@@ -38,10 +39,11 @@ const INITIAL_DATA: OnboardingData = {
   firstName: "",
   dateOfBirth: "",
   gender: "",
-  wearable: "",
-  trainingType: "",
+  wearables: [],
+  sports: [],
   healthGoals: [],
   injuryHistory: "",
+  injuryDescription: "",
   stressLevel: 5,
   sleepQuality: "",
   compliance: "medium",
@@ -216,10 +218,11 @@ export const OnboardingFlow = ({ onComplete, onSkip }: OnboardingFlowProps) => {
       user_id: userId,
       memory_key: "onboarding_signals",
       memory_value: JSON.stringify({
-        wearable: data.wearable,
-        trainingType: data.trainingType,
+        wearables: data.wearables,
+        sports: data.sports,
         healthGoals: data.healthGoals,
         injuryHistory: data.injuryHistory,
+        injuryDescription: data.injuryDescription,
         stressLevel: data.stressLevel,
         sleepQuality: data.sleepQuality,
         compliance: data.compliance,
@@ -228,10 +231,14 @@ export const OnboardingFlow = ({ onComplete, onSkip }: OnboardingFlowProps) => {
     }, { onConflict: "user_id,memory_key" });
 
     // Store in structured onboarding_signals table (for Life Formula engine)
+    // Use first wearable for the single-value column; store all in health_goals overload
+    const primaryWearable = data.wearables.includes("none") ? "none" : data.wearables[0] || null;
+    // Derive training_type from sport selections
+    const trainingType = deriveSportCategory(data.sports);
     await supabase.from("onboarding_signals" as any).upsert({
       user_id: userId,
-      wearable: data.wearable || null,
-      training_type: data.trainingType || null,
+      wearable: primaryWearable,
+      training_type: trainingType,
       stress_level: data.stressLevel,
       sleep_quality: data.sleepQuality || null,
       compliance: data.compliance || null,
@@ -374,28 +381,19 @@ async function saveAboutYou(userId: string, data: OnboardingData, now: string) {
 }
 
 async function saveWearable(userId: string, data: OnboardingData, now: string) {
-  // Store wearable choice in memory bank for formula engine
   await supabase.from("yves_memory_bank").upsert({
     user_id: userId,
     memory_key: "wearable_device",
-    memory_value: data.wearable,
+    memory_value: JSON.stringify(data.wearables),
     last_updated: now,
   }, { onConflict: "user_id,memory_key" });
 }
 
 async function saveTraining(userId: string, data: OnboardingData, now: string) {
-  const { trainingType } = data;
+  const { sports } = data;
 
-  // Map training type to activities and sport
-  const activityMap: Record<string, string[]> = {
-    endurance: ["Running", "Cycling", "Swimming"],
-    strength: ["Gym", "Weights"],
-    team: ["Team Sport"],
-    mindbody: ["Yoga", "Pilates"],
-    rehab: ["Physiotherapy"],
-  };
-
-  const activities = activityMap[trainingType] || [];
+  // Capitalize sport names for display
+  const activities = sports.map((s) => s.charAt(0).toUpperCase() + s.slice(1));
 
   // user_training
   const { data: existing } = await supabase.from("user_training").select("user_id").eq("user_id", userId).maybeSingle();
@@ -405,18 +403,38 @@ async function saveTraining(userId: string, data: OnboardingData, now: string) {
     await supabase.from("user_training").insert({ user_id: userId, preferred_activities: activities, updated_at: now } as any);
   }
 
-  // user_profiles.sport
+  // user_profiles.sport (first sport)
   await supabase.from("user_profiles").upsert({
-    user_id: userId, sport: activities[0] || trainingType, updated_at: now,
+    user_id: userId, sport: activities[0] || "", updated_at: now,
   }, { onConflict: "user_id" });
 
   // memory bank
   await supabase.from("yves_memory_bank").upsert({
     user_id: userId,
     memory_key: "preferred_training",
-    memory_value: JSON.stringify({ type: trainingType, activities }),
+    memory_value: JSON.stringify({ sports, activities }),
     last_updated: now,
   }, { onConflict: "user_id,memory_key" });
+}
+
+/** Derive the primary training category from individual sport selections */
+function deriveSportCategory(sports: string[]): string | null {
+  if (!sports.length) return null;
+  const endurance = ["running", "cycling", "swimming", "triathlon", "walking"];
+  const strength = ["gym", "crossfit", "boxing"];
+  const team = ["football", "rugby", "basketball", "tennis", "hockey", "cricket"];
+  const mindbody = ["yoga", "golf", "surfing", "dance"];
+  const rehab = ["physiotherapy"];
+
+  const counts: Record<string, number> = { endurance: 0, strength: 0, team: 0, mindbody: 0, rehab: 0 };
+  for (const s of sports) {
+    if (endurance.includes(s)) counts.endurance++;
+    else if (strength.includes(s)) counts.strength++;
+    else if (team.includes(s)) counts.team++;
+    else if (mindbody.includes(s)) counts.mindbody++;
+    else if (rehab.includes(s)) counts.rehab++;
+  }
+  return Object.entries(counts).sort((a, b) => b[1] - a[1])[0][0];
 }
 
 async function saveGoals(userId: string, data: OnboardingData, now: string) {
@@ -460,7 +478,7 @@ async function saveGoals(userId: string, data: OnboardingData, now: string) {
 }
 
 async function saveInjury(userId: string, data: OnboardingData, now: string) {
-  const { injuryHistory } = data;
+  const { injuryHistory, injuryDescription } = data;
   if (!injuryHistory || injuryHistory === "none") return;
 
   const injuryLabels: Record<string, string> = {
@@ -470,24 +488,27 @@ async function saveInjury(userId: string, data: OnboardingData, now: string) {
     multiple: "Multiple / recurring injuries",
   };
 
-  const description = injuryLabels[injuryHistory] || injuryHistory;
+  const label = injuryLabels[injuryHistory] || injuryHistory;
+  const fullDescription = injuryDescription
+    ? `${label}: ${injuryDescription}`
+    : label;
 
   // user_injuries
   const { data: existing } = await supabase.from("user_injuries").select("user_id").eq("user_id", userId).maybeSingle();
   if (existing) {
-    await supabase.from("user_injuries").update({ injuries: [description], injury_details: { type: injuryHistory }, updated_at: now }).eq("user_id", userId);
+    await supabase.from("user_injuries").update({ injuries: [fullDescription], injury_details: { type: injuryHistory, description: injuryDescription }, updated_at: now }).eq("user_id", userId);
   } else {
-    await supabase.from("user_injuries").insert({ user_id: userId, injuries: [description], injury_details: { type: injuryHistory }, updated_at: now } as any);
+    await supabase.from("user_injuries").insert({ user_id: userId, injuries: [fullDescription], injury_details: { type: injuryHistory, description: injuryDescription }, updated_at: now } as any);
   }
 
   // user_profile.injuries
-  await upsertUserProfile(userId, { injuries: [description], updated_at: now });
+  await upsertUserProfile(userId, { injuries: [fullDescription], updated_at: now });
 
   // memory bank
   await supabase.from("yves_memory_bank").upsert({
     user_id: userId,
     memory_key: "injury_context",
-    memory_value: JSON.stringify({ type: injuryHistory, description }),
+    memory_value: JSON.stringify({ type: injuryHistory, label, description: injuryDescription }),
     last_updated: now,
   }, { onConflict: "user_id,memory_key" });
 }

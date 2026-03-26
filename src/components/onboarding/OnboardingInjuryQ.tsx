@@ -1,8 +1,11 @@
+import { useState, useEffect } from "react";
 import { ShieldAlert } from "lucide-react";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { OnboardingChips } from "./OnboardingChips";
 
 interface Props {
-  data: { injuryHistory: string };
+  data: { injuryHistory: string; injuryDescription: string };
   onUpdate: (patch: Partial<Props["data"]>) => void;
 }
 
@@ -35,6 +38,8 @@ const INJURY_OPTIONS = [
 ];
 
 export function OnboardingInjuryQ({ data, onUpdate }: Props) {
+  const showDescription = data.injuryHistory && data.injuryHistory !== "none";
+
   return (
     <div className="space-y-6">
       <div className="text-center space-y-2">
@@ -48,10 +53,35 @@ export function OnboardingInjuryQ({ data, onUpdate }: Props) {
       <OnboardingChips
         options={INJURY_OPTIONS}
         value={data.injuryHistory}
-        onChange={(v) => onUpdate({ injuryHistory: v as string })}
+        onChange={(v) => {
+          const val = v as string;
+          onUpdate({
+            injuryHistory: val,
+            // Clear description if switching to "none"
+            ...(val === "none" ? { injuryDescription: "" } : {}),
+          });
+        }}
         columns={1}
         size="md"
       />
+
+      {showDescription && (
+        <div className="space-y-2 animate-fade-in">
+          <Label htmlFor="injuryDesc" className="text-sm font-medium text-foreground">
+            Brief description of your injury
+          </Label>
+          <Textarea
+            id="injuryDesc"
+            placeholder="e.g. Left ACL reconstruction 6 months ago, currently in return-to-sport phase..."
+            value={data.injuryDescription}
+            onChange={(e) => onUpdate({ injuryDescription: e.target.value.slice(0, 500) })}
+            rows={3}
+            maxLength={500}
+            className="bg-card border-border"
+          />
+          <p className="text-[10px] text-muted-foreground/60 text-right">{data.injuryDescription.length}/500</p>
+        </div>
+      )}
 
       <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-3">
         <p className="text-xs text-blue-600 dark:text-blue-400">

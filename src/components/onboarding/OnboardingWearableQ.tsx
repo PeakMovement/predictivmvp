@@ -2,7 +2,7 @@ import { Watch } from "lucide-react";
 import { OnboardingChips } from "./OnboardingChips";
 
 interface Props {
-  data: { wearable: string };
+  data: { wearables: string[] };
   onUpdate: (patch: Partial<Props["data"]>) => void;
 }
 
@@ -37,19 +37,21 @@ export function OnboardingWearableQ({ data, onUpdate }: Props) {
           <Watch className="h-7 w-7 text-primary" />
         </div>
         <h2 className="text-2xl font-bold text-foreground">Your Wearable</h2>
-        <p className="text-sm text-muted-foreground">Which device do you use? This determines which health formulas we can run.</p>
+        <p className="text-sm text-muted-foreground">Select all devices you use. This determines which health formulas we can run.</p>
       </div>
 
       <OnboardingChips
         options={WEARABLE_OPTIONS}
-        value={data.wearable}
-        onChange={(v) => onUpdate({ wearable: v as string })}
+        value={data.wearables}
+        onChange={(v) => onUpdate({ wearables: v as string[] })}
+        multi
+        exclusiveValue="none"
         columns={1}
         size="lg"
       />
 
       <p className="text-[11px] text-muted-foreground/70 text-center">
-        You'll connect your device in the next step after onboarding.
+        You'll connect your devices after onboarding in Settings.
       </p>
     </div>
   );

@@ -17,6 +17,7 @@ import { RiskAlertPopup } from "@/components/alerts/RiskAlertPopup";
 import { PageLoadingFallback } from "@/components/LoadingFallback";
 import Login from "@/pages/Login";
 import Register from "@/pages/Register";
+import Genesis from "@/pages/Genesis";
 import ForgotPassword from "@/pages/ForgotPassword";
 import ResetPassword from "@/pages/ResetPassword";
 import Terms from "@/pages/Terms";
@@ -342,6 +343,7 @@ const AppInner = () => {
     return (
       <Suspense fallback={<PageLoadingFallback />}>
         <Routes>
+          <Route path="/genesis"                 element={<Genesis />} />
           <Route path="/register"                element={<Register />} />
           <Route path="/practitioner/register"   element={<PractitionerRegister />} />
           <Route path="/join"                    element={<PractitionerLanding />} />

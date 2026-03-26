@@ -211,7 +211,7 @@ export const OnboardingFlow = ({ onComplete, onSkip }: OnboardingFlowProps) => {
 
     await ensureUserProfileExists(userId);
 
-    // Store the raw questionnaire signals for the Life Formula engine
+    // Store raw questionnaire signals in memory bank (for AI prompts)
     await supabase.from("yves_memory_bank").upsert({
       user_id: userId,
       memory_key: "onboarding_signals",
@@ -226,6 +226,19 @@ export const OnboardingFlow = ({ onComplete, onSkip }: OnboardingFlowProps) => {
       }),
       last_updated: now,
     }, { onConflict: "user_id,memory_key" });
+
+    // Store in structured onboarding_signals table (for Life Formula engine)
+    await supabase.from("onboarding_signals" as any).upsert({
+      user_id: userId,
+      wearable: data.wearable || null,
+      training_type: data.trainingType || null,
+      stress_level: data.stressLevel,
+      sleep_quality: data.sleepQuality || null,
+      compliance: data.compliance || null,
+      health_goals: data.healthGoals,
+      injury_history: data.injuryHistory || null,
+      updated_at: now,
+    }, { onConflict: "user_id" });
 
     // Set coaching intensity defaults based on compliance answer
     const complianceDefaults = {

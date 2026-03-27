@@ -7,6 +7,7 @@ import { useWearableSync } from "@/hooks/useWearableSync";
 import { useToast } from "@/hooks/use-toast";
 import { LayoutBlock } from "@/components/layout/LayoutBlock";
 import { useGarminTokenStatus } from "@/hooks/useGarminTokenStatus";
+import { GarminAttribution } from "@/components/GarminAttribution";
 
 interface DevicesSettingsProps {
   isSectionVisible: (id: string) => boolean;
@@ -169,6 +170,7 @@ export const DevicesSettings = ({ isSectionVisible }: DevicesSettingsProps) => {
               userId={userId}
             />
           </div>
+          <GarminAttribution variant="inline" className="px-4 pb-3 pt-1" />
         </div>
       </div>
     </LayoutBlock>

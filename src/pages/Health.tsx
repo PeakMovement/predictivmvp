@@ -15,6 +15,7 @@ import { LayoutBlock } from "@/components/layout/LayoutBlock";
 import { PullToRefresh } from "@/components/PullToRefresh";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useToast } from "@/hooks/use-toast";
+import { GarminAttribution } from "@/components/GarminAttribution";
 import {
   Moon, Clock, Zap, Heart, Activity, Droplets,
   Settings, Info as InfoIcon, TrendingUp,
@@ -475,6 +476,9 @@ export const Health = () => {
                 )}
               </div>
             </div>
+            {selectedSource === "garmin" && (
+              <GarminAttribution className="mx-6 mb-4" />
+            )}
           </LayoutBlock>
         </>
       )}

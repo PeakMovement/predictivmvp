@@ -31,6 +31,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { DeviceSourceSwitcher } from "@/components/DeviceSourceSwitcher";
 import { useGarminTokenStatus } from "@/hooks/useGarminTokenStatus";
 import { GarminExpiredBanner } from "@/components/GarminExpiredBanner";
+import { GarminAttribution } from "@/components/GarminAttribution";
 
 const generateSuggestions = (csvData: HealthDataRow[]) => {
   if (csvData.length === 0) return [];
@@ -555,6 +556,10 @@ export const Training = () => {
                     <CircularGauge title="Strain" value={latestAvailableTrend?.strain ? Math.round(latestAvailableTrend.strain) : 0} maxValue={200} unit="TSS" />
                     <CircularGauge title="Fatigue Index" value={fatigueIndex} maxValue={100} unit="%" />
                   </div>
+
+                  {selectedSource === "garmin" && (
+                    <GarminAttribution className="mt-6" />
+                  )}
                 </LayoutBlock>
               </LayoutBlock>
 

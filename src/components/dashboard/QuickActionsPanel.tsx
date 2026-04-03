@@ -127,7 +127,7 @@ export const QuickActionsPanel = () => {
     {
       id: "chat-yves",
       icon: MessageSquare,
-      label: "Chat with Yves",
+      label: "Initialise Yves",
       description: "Ask anything",
       onClick: () => setIsChatOpen(true),
       color: "text-purple-500",

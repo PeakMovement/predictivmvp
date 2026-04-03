@@ -34,7 +34,7 @@ export function YvesChatSheet() {
                 "transition-all duration-300 ease-out transform-gpu animate-fade-in",
                 "touch-manipulation",
               )}
-              aria-label="Chat with Yves AI"
+              aria-label="Initialise Yves AI"
             >
               <Sparkles size={20} className="text-primary " />
             </button>

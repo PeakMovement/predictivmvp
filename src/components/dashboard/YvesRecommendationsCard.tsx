@@ -110,7 +110,7 @@ export function YvesRecommendationsCard({ recommendations = [], isLoading = fals
               className="mt-4"
               onClick={() => window.dispatchEvent(new CustomEvent("navigate-tab", { detail: "yves-insights" }))}
             >
-              Chat with Yves <ExternalLink className="ml-2 h-4 w-4" />
+              Initialise Yves <ExternalLink className="ml-2 h-4 w-4" />
             </Button>
           </div>
         ) : (
@@ -131,7 +131,7 @@ export function YvesRecommendationsCard({ recommendations = [], isLoading = fals
               className="w-full mt-4"
               onClick={() => window.dispatchEvent(new CustomEvent("navigate-tab", { detail: "yves-insights" }))}
             >
-              View All & Chat with Yves <ExternalLink className="ml-2 h-4 w-4" />
+              View All & Initialise Yves <ExternalLink className="ml-2 h-4 w-4" />
             </Button>
           </>
         )}

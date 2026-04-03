@@ -261,7 +261,7 @@ export function YvesChat({ compact = false }: YvesChatProps) {
           )}>
             <div className="flex items-center gap-2">
               <Sparkles className="h-5 w-5 text-bioGreen shrink-0" />
-              <CardTitle className={cn(compact && "text-base")}>Chat with Yves</CardTitle>
+              <CardTitle className={cn(compact && "text-base")}>Initialise Yves</CardTitle>
             </div>
             <div className="flex flex-wrap items-center gap-2">
               {hasWearableData !== null && (

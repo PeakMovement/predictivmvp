@@ -32,7 +32,7 @@ export const ActiveChallengeCard = ({
     try {
       await onComplete(challenge.id);
       toast({
-        title: "Challenge Completed! ",
+        title: "Challenge completed. ",
         description: `You completed "${challenge.challenge_title}"`,
       });
     } catch {

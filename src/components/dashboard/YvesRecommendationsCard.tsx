@@ -40,19 +40,19 @@ export function YvesRecommendationsCard({ recommendations = [], isLoading = fals
 
   const getCategoryIcon = (category: string) => {
     const icons: Record<string, string> = {
-      training: "💪",
-      recovery: "🧘",
+      training: "",
+      recovery: "",
       nutrition: "🥗",
-      sleep: "😴",
-      mindset: "🧠",
-      performance: "🎯",
+      sleep: "",
+      mindset: "",
+      performance: "",
       // Legacy
       medical: "🏥",
-      activity: "⚡",
+      activity: "",
       mobility: "🤸",
       injury: "🩹",
     };
-    return icons[category] || "🎯";
+    return icons[category] || "";
   };
 
   const getPriorityBadge = (priority: string) => {
@@ -70,7 +70,7 @@ export function YvesRecommendationsCard({ recommendations = [], isLoading = fals
 
   if (isLoading) {
     return (
-      <Card className="bg-glass backdrop-blur-xl border-glass-border shadow-glass">
+      <Card className="bg-glass  border-glass-border ">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Lightbulb className="h-5 w-5 text-primary" />
@@ -85,11 +85,11 @@ export function YvesRecommendationsCard({ recommendations = [], isLoading = fals
   }
 
   return (
-    <Card className="bg-glass backdrop-blur-xl border-glass-border shadow-glass">
+    <Card className="bg-glass  border-glass-border ">
       <CardHeader className="p-4 sm:p-6">
         <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
           <Lightbulb className="h-5 w-5 text-primary" />
-          🎯 Yves Recommendations
+           Yves Recommendations
         </CardTitle>
         <CardDescription>
           AI-powered actions based on your health data
@@ -196,7 +196,7 @@ function RecommendationItem({ recommendation, categoryLabel, categoryIcon, prior
     if (success) {
       setFeedbackGiven('followed');
       toast({
-        title: "Great job! 🎉",
+        title: "Feedback noted",
         description: "Keep up the momentum!",
       });
     }
@@ -238,14 +238,14 @@ function RecommendationItem({ recommendation, categoryLabel, categoryIcon, prior
   return (
     <Collapsible open={isOpen} onOpenChange={setIsOpen}>
       <div className={cn(
-        "rounded-lg border transition-colors bg-card/50",
+        " border transition-colors bg-card/50",
         recommendation.priority === "high" 
           ? "border-l-4 border-l-destructive border-destructive/30" 
           : "border-border",
         feedbackGiven === 'followed' && "border-l-4 border-l-emerald-500 border-emerald-500/30 bg-emerald-500/5"
       )}>
         <CollapsibleTrigger asChild>
-          <button className="w-full p-3 sm:p-4 flex items-center justify-between gap-2 sm:gap-3 text-left hover:bg-muted/30 transition-colors rounded-lg touch-manipulation">
+          <button className="w-full p-3 sm:p-4 flex items-center justify-between gap-2 sm:gap-3 text-left hover:bg-muted/30 transition-colors  touch-manipulation">
             <div className="flex items-center gap-3 min-w-0 flex-1">
               <span className="text-lg shrink-0">{categoryIcon}</span>
               <div className="min-w-0 flex-1">
@@ -339,7 +339,7 @@ function RecommendationItem({ recommendation, categoryLabel, categoryIcon, prior
               <div className="flex items-center gap-2 pt-2 border-t border-border/50 text-xs text-muted-foreground">
                 {feedbackGiven === 'helpful' && <><ThumbsUp className="h-3 w-3 text-emerald-500" /> Thanks for the feedback!</>}
                 {feedbackGiven === 'not_helpful' && <><ThumbsDown className="h-3 w-3 text-destructive" /> Noted. I'll improve!</>}
-                {feedbackGiven === 'followed' && <><Check className="h-3 w-3 text-emerald-500" /> Awesome! Keep it up!</>}
+                {feedbackGiven === 'followed' && <><Check className="h-3 w-3 text-emerald-500" /> Noted.</>}
               </div>
             )}
           </div>

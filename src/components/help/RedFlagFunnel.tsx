@@ -149,7 +149,7 @@ export function RedFlagFunnel({
   // Step 2: Budget & Location
   if (step === "budget") {
     return (
-      <Card className="bg-card/50 backdrop-blur-xl border-border/50">
+      <Card className="bg-card/50  border-border/50">
         <CardHeader>
           <CardTitle className="text-foreground">Quick Questions</CardTitle>
         </CardHeader>

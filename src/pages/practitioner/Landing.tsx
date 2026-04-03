@@ -85,13 +85,13 @@ export const PractitionerLanding = () => {
           <div className="flex items-center gap-3">
             <Link
               to="/"
-              className="rounded-lg border border-black/10 px-4 py-2 text-sm font-medium text-[#1a1a1a] transition-colors hover:bg-black/5"
+              className=" border border-black/10 px-4 py-2 text-sm font-medium text-[#1a1a1a] transition-colors hover:bg-black/5"
             >
               Log in
             </Link>
             <Link
               to="/genesis"
-              className="inline-flex items-center gap-1 rounded-lg border border-black/10 px-4 py-2 text-sm font-medium text-[#1a1a1a] transition-colors hover:bg-black/5"
+              className="inline-flex items-center gap-1  border border-black/10 px-4 py-2 text-sm font-medium text-[#1a1a1a] transition-colors hover:bg-black/5"
             >
               I'm a patient
               <ArrowRight size={14} />
@@ -116,7 +116,7 @@ export const PractitionerLanding = () => {
         <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
           <Link
             to="/practitioner/register"
-            className="inline-flex items-center gap-2 rounded-xl bg-[#6B5ED9] px-8 py-3.5 text-base font-semibold text-white shadow-sm transition-all hover:bg-[#5a4ec5] active:scale-[0.98]"
+            className="inline-flex items-center gap-2  bg-[#6B5ED9] px-8 py-3.5 text-base font-semibold text-white  transition-all hover:bg-[#5a4ec5] active:scale-[0.98]"
           >
             Create your practitioner account
             <ArrowRight size={18} />
@@ -127,7 +127,7 @@ export const PractitionerLanding = () => {
                 .getElementById("how-it-works")
                 ?.scrollIntoView({ behavior: "smooth" })
             }
-            className="inline-flex items-center gap-1.5 rounded-xl border border-black/10 bg-white px-6 py-3.5 text-sm font-medium text-[#555] transition-colors hover:bg-black/5"
+            className="inline-flex items-center gap-1.5  border border-black/10 bg-white px-6 py-3.5 text-sm font-medium text-[#555] transition-colors hover:bg-black/5"
           >
             See how it works
             <span className="text-xs">&#8595;</span>
@@ -157,7 +157,7 @@ export const PractitionerLanding = () => {
         </h2>
         <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
           {STEPS.map(({ num, emoji, title, body }) => (
-            <div key={num} className="rounded-xl bg-white p-6 shadow-sm">
+            <div key={num} className=" bg-white p-6 ">
               <p className="text-3xl font-bold text-[#6B5ED9]/20">{num}</p>
               <span className="mt-2 inline-block text-2xl">{emoji}</span>
               <h3 className="mt-3 text-base font-semibold text-[#1a1a1a]">
@@ -182,7 +182,7 @@ export const PractitionerLanding = () => {
           </h2>
           <div className="mx-auto grid max-w-3xl gap-6 sm:grid-cols-2">
             {/* Basic */}
-            <div className="rounded-xl border border-black/10 bg-white p-7 shadow-sm">
+            <div className=" border border-black/10 bg-white p-7 ">
               <div className="flex items-center gap-3">
                 <h3 className="text-lg font-bold text-[#1a1a1a]">Basic</h3>
                 <span className="rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-semibold text-emerald-700">
@@ -203,7 +203,7 @@ export const PractitionerLanding = () => {
               </ul>
               <Link
                 to="/practitioner/register"
-                className="mt-8 flex items-center justify-center gap-2 rounded-xl bg-[#6B5ED9] px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#5a4ec5]"
+                className="mt-8 flex items-center justify-center gap-2  bg-[#6B5ED9] px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#5a4ec5]"
               >
                 Get listed free
                 <ArrowRight size={16} />
@@ -211,7 +211,7 @@ export const PractitionerLanding = () => {
             </div>
 
             {/* Verified Partner */}
-            <div className="relative rounded-xl border-2 border-[#6B5ED9] bg-white p-7 shadow-sm">
+            <div className="relative  border-2 border-[#6B5ED9] bg-white p-7 ">
               <span className="absolute -top-3 right-5 rounded-full bg-[#6B5ED9] px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-white">
                 Recommended
               </span>
@@ -237,7 +237,7 @@ export const PractitionerLanding = () => {
               </ul>
               <Link
                 to="/practitioner/register"
-                className="mt-8 flex items-center justify-center gap-2 rounded-xl bg-[#6B5ED9] px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#5a4ec5]"
+                className="mt-8 flex items-center justify-center gap-2  bg-[#6B5ED9] px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#5a4ec5]"
               >
                 Apply for Verified
                 <ArrowRight size={16} />
@@ -266,7 +266,7 @@ export const PractitionerLanding = () => {
 
       {/* ── Final CTA banner ───────────────────────────────────── */}
       <section className="mx-auto max-w-3xl px-5 pb-20">
-        <div className="rounded-2xl bg-[#6B5ED9] px-8 py-16 text-center shadow-sm">
+        <div className=" bg-[#6B5ED9] px-8 py-16 text-center ">
           <h2 className="text-2xl font-bold text-white sm:text-3xl">
             Ready to start getting referrals?
           </h2>
@@ -275,7 +275,7 @@ export const PractitionerLanding = () => {
           </p>
           <Link
             to="/practitioner/register"
-            className="mt-8 inline-flex items-center gap-2 rounded-xl bg-white px-8 py-3.5 text-base font-semibold text-[#6B5ED9] shadow-sm transition-all hover:bg-white/90 active:scale-[0.98]"
+            className="mt-8 inline-flex items-center gap-2  bg-white px-8 py-3.5 text-base font-semibold text-[#6B5ED9]  transition-all hover:bg-white/90 active:scale-[0.98]"
           >
             Create your practitioner account
             <ArrowRight size={18} />

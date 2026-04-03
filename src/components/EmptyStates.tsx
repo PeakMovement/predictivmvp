@@ -73,7 +73,7 @@ export const EmptyState = ({
         </div>
 
         {estimatedTime && (
-          <div className="flex items-center gap-2 text-sm text-muted-foreground bg-muted px-4 py-2 rounded-lg">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground bg-muted px-4 py-2 ">
             <Clock className="h-4 w-4" />
             <span>Estimated time: {estimatedTime}</span>
           </div>

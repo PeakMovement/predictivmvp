@@ -48,7 +48,7 @@ export function BlockLibrary({ open, onOpenChange, onAddBlock, existingBlocks }:
                       <div
                         key={block.id}
                         className={cn(
-                          "flex items-center justify-between p-4 rounded-lg border transition-colors",
+                          "flex items-center justify-between p-4  border transition-colors",
                           added
                             ? "bg-primary/5 border-primary/20"
                             : "bg-card border-border hover:border-primary/30 hover:bg-accent/50"

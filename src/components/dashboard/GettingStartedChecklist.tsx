@@ -94,7 +94,7 @@ export function GettingStartedChecklist({ onNavigate }: GettingStartedChecklistP
   const overallPct = Math.round((doneCount / steps.length) * 100);
 
   return (
-    <div className="rounded-2xl border border-border/40 bg-card/60 backdrop-blur overflow-hidden mb-6">
+    <div className=" border border-border/40 bg-card/60  overflow-hidden mb-6">
       {/* Header */}
       <button
         className="w-full flex items-center justify-between px-4 py-3 text-left"
@@ -140,7 +140,7 @@ export function GettingStartedChecklist({ onNavigate }: GettingStartedChecklistP
                 )}
                 <div className="flex items-center gap-3 flex-1 min-w-0">
                   <div className={cn(
-                    "w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0",
+                    "w-8 h-8  flex items-center justify-center flex-shrink-0",
                     step.done ? "bg-green-500/10" : "bg-muted/40"
                   )}>
                     <Icon className={cn("w-4 h-4", step.done ? "text-green-400" : "text-muted-foreground")} />

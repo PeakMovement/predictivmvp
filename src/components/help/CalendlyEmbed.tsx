@@ -63,7 +63,7 @@ export function CalendlyEmbed({ calendlyUrl, providerName }: CalendlyEmbedProps)
   }, []);
 
   return (
-    <div className="relative w-full h-[600px] rounded-lg overflow-hidden border">
+    <div className="relative w-full h-[600px]  overflow-hidden border">
       {isLoading && (
         <div className="absolute inset-0 flex items-center justify-center bg-background/80 z-10">
           <div className="flex flex-col items-center gap-3">

@@ -75,7 +75,7 @@ export function SessionTimeoutWarning({
                 For your security, you'll be automatically logged out if you
                 remain inactive. Would you like to stay signed in?
               </p>
-              <div className="bg-muted/50 rounded-lg p-3 text-sm">
+              <div className="bg-muted/50  p-3 text-sm">
                 <p className="text-muted-foreground">
                   <strong>Tip:</strong> Any unsaved changes will be lost when
                   you're logged out. Save your work before the timer expires.

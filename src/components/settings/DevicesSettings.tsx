@@ -80,15 +80,15 @@ export const DevicesSettings = ({ isSectionVisible }: DevicesSettingsProps) => {
       size="standard"
       visible={isSectionVisible("devices")}
     >
-      <div className="bg-glass backdrop-blur-xl border border-glass-border rounded-2xl p-6 shadow-glass hover:bg-glass-highlight transition-all duration-300">
+      <div className="bg-glass  border border-glass-border  p-6  hover:bg-glass-highlight transition-all duration-300">
         <div className="flex items-center gap-3 mb-6">
-          <div className="w-8 h-8 bg-primary/20 rounded-lg flex items-center justify-center">
+          <div className="w-8 h-8 bg-primary/20  flex items-center justify-center">
             <Smartphone size={16} className="text-primary" />
           </div>
           <h3 className="text-lg font-semibold text-foreground">Connected Devices</h3>
         </div>
         <div className="space-y-3">
-          <div className="w-full flex items-center justify-between p-4 rounded-xl border bg-glass/30 border-glass-border hover:bg-glass-highlight transition-all duration-200">
+          <div className="w-full flex items-center justify-between p-4  border bg-glass/30 border-glass-border hover:bg-glass-highlight transition-all duration-200">
             <div className="flex items-center gap-3 flex-1">
               <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-indigo-500 rounded-full flex items-center justify-center">
                 <div className="w-4 h-4 rounded-full border-2 border-white" />
@@ -126,7 +126,7 @@ export const DevicesSettings = ({ isSectionVisible }: DevicesSettingsProps) => {
             )}
           </div>
 
-          <div className={`w-full flex items-center justify-between p-4 rounded-xl border transition-all duration-200 ${
+          <div className={`w-full flex items-center justify-between p-4  border transition-all duration-200 ${
             garminTokenExpired
               ? "bg-destructive/5 border-destructive/30"
               : "bg-glass/30 border-glass-border hover:bg-glass-highlight"

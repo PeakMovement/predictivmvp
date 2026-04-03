@@ -94,7 +94,7 @@ export function BookingModal({ provider, open, onClose, onSuccess }: BookingModa
         </DialogHeader>
 
         <div className="py-4">
-          <div className="flex items-center gap-3 mb-6 p-4 bg-muted/50 rounded-lg">
+          <div className="flex items-center gap-3 mb-6 p-4 bg-muted/50 ">
             <Avatar className="h-12 w-12">
               <AvatarFallback className="bg-primary/10 text-primary text-sm font-semibold">
                 {getInitials(provider.name)}
@@ -114,7 +114,7 @@ export function BookingModal({ provider, open, onClose, onSuccess }: BookingModa
                 selected={selectedDate}
                 onSelect={setSelectedDate}
                 disabled={(date) => date < new Date() || date < new Date(new Date().setHours(0, 0, 0, 0))}
-                className="rounded-md border"
+                className=" border"
               />
             </div>
 

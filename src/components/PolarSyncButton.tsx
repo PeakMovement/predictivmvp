@@ -156,7 +156,7 @@ export const PolarSyncButton = ({ isConnected, onSyncComplete }: PolarSyncButton
       } else {
         const totalSynced = exercisesSynced + sleepSynced;
         toast({
-          title: `Sync successful! 🎉`,
+          title: `Sync successful! `,
           description: `Synced ${exercisesSynced} exercise${exercisesSynced !== 1 ? 's' : ''} and ${sleepSynced} sleep session${sleepSynced !== 1 ? 's' : ''}`,
         });
 

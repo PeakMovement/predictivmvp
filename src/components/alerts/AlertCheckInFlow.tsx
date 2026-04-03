@@ -201,7 +201,7 @@ export function AlertCheckInFlow({ alert, onComplete, onSnooze, onNavigateToHelp
   // STEP 1: Initial prompt - "We're detecting some potential issues. Would you like to check in?"
   if (currentStep === "initial_prompt") {
     return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm">
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 ">
         <Card className="max-w-md w-full bg-card border-border/50 shadow-xl">
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-foreground">
@@ -230,7 +230,7 @@ export function AlertCheckInFlow({ alert, onComplete, onSnooze, onNavigateToHelp
   // STEP 2a: User declined check-in - show explanation + generic advice + snooze options
   if (currentStep === "declined_checkin") {
     return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm">
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 ">
         <Card className="max-w-md w-full bg-card border-border/50 shadow-xl">
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
@@ -244,7 +244,7 @@ export function AlertCheckInFlow({ alert, onComplete, onSnooze, onNavigateToHelp
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="p-4 rounded-lg bg-muted/50 border border-border/50">
+            <div className="p-4  bg-muted/50 border border-border/50">
               <h4 className="font-semibold text-foreground mb-2">{genericAdvice.title}</h4>
               <p className="text-sm text-muted-foreground">
                 {genericAdvice.advice}
@@ -312,7 +312,7 @@ export function AlertCheckInFlow({ alert, onComplete, onSnooze, onNavigateToHelp
   // STEP 2b: Symptom question - "Are you currently experiencing any symptoms?"
   if (currentStep === "symptom_question") {
     return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm">
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 ">
         <Card className="max-w-md w-full bg-card border-border/50 shadow-xl">
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-foreground">
@@ -341,7 +341,7 @@ export function AlertCheckInFlow({ alert, onComplete, onSnooze, onNavigateToHelp
   // STEP 3: Symptom form (full check-in)
   if (currentStep === "symptom_form") {
     return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm overflow-y-auto">
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80  overflow-y-auto">
         <div className="max-w-lg w-full my-8">
           <div className="flex justify-end mb-2">
             <Button variant="ghost" size="icon" onClick={handleClose}>
@@ -360,7 +360,7 @@ export function AlertCheckInFlow({ alert, onComplete, onSnooze, onNavigateToHelp
   // STEP 4: Referral question - "Would you like to be referred to a medical professional?"
   if (currentStep === "referral_question") {
     return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm">
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 ">
         <Card className="max-w-md w-full bg-card border-border/50 shadow-xl">
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-foreground">
@@ -392,7 +392,7 @@ export function AlertCheckInFlow({ alert, onComplete, onSnooze, onNavigateToHelp
   // STEP 5: Evaluation result (AI guidance - dynamic and personalized)
   if (currentStep === "evaluation_result") {
     return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm">
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 ">
         <Card className="max-w-md w-full bg-card border-border/50 shadow-xl max-h-[90vh] overflow-y-auto">
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
@@ -435,7 +435,7 @@ export function AlertCheckInFlow({ alert, onComplete, onSnooze, onNavigateToHelp
                 {/* AI Interpretation Summary */}
                 {aiInterpretation ? (
                   <div className="space-y-3">
-                    <div className="p-4 rounded-lg bg-primary/10 border border-primary/20">
+                    <div className="p-4  bg-primary/10 border border-primary/20">
                       <div className="flex items-center gap-2 mb-2">
                         <Brain className="h-4 w-4 text-primary" />
                         <span className="text-xs font-medium text-primary">AI Analysis</span>
@@ -447,7 +447,7 @@ export function AlertCheckInFlow({ alert, onComplete, onSnooze, onNavigateToHelp
                     
                     {/* Recommendations */}
                     {aiInterpretation.recommendations && aiInterpretation.recommendations.length > 0 && (
-                      <div className="p-4 rounded-lg bg-muted/50 border border-border/50">
+                      <div className="p-4  bg-muted/50 border border-border/50">
                         <h4 className="font-semibold text-foreground mb-2 text-sm">Recommendations</h4>
                         <ul className="space-y-1.5">
                           {aiInterpretation.recommendations.map((rec, idx) => (
@@ -467,7 +467,7 @@ export function AlertCheckInFlow({ alert, onComplete, onSnooze, onNavigateToHelp
                   </div>
                 ) : (
                   /* Fallback to generic advice when AI is unavailable */
-                  <div className="p-4 rounded-lg bg-muted/50 border border-border/50">
+                  <div className="p-4  bg-muted/50 border border-border/50">
                     <h4 className="font-semibold text-foreground mb-2">{genericAdvice.title}</h4>
                     <p className="text-sm text-muted-foreground">
                       {genericAdvice.advice}
@@ -475,7 +475,7 @@ export function AlertCheckInFlow({ alert, onComplete, onSnooze, onNavigateToHelp
                   </div>
                 )}
 
-                <div className="p-3 rounded-lg bg-secondary/50 border border-border/50">
+                <div className="p-3  bg-secondary/50 border border-border/50">
                   <p className="text-sm text-foreground">
                     <strong>Tip:</strong> Monitor how you feel over the next 24-48 hours. If symptoms develop or worsen, use the "Find Help" feature to connect with a healthcare provider.
                   </p>
@@ -597,7 +597,7 @@ function SymptomCheckInFlowForm({ onSuccess, onCancel }: SymptomCheckInFlowFormP
   };
 
   return (
-    <Card className="bg-card/50 backdrop-blur-xl border-border/50">
+    <Card className="bg-card/50  border-border/50">
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-foreground">
           <Stethoscope className="h-5 w-5 text-primary" />

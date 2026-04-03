@@ -19,7 +19,7 @@ export function PractitionerCard({ practitioner, onBook, onViewProfile }: Practi
     .toUpperCase();
 
   return (
-    <Card className="hover:shadow-md transition-shadow">
+    <Card className="hover: transition-shadow">
       <CardHeader className="pb-3">
         <div className="flex items-start gap-4">
           <Avatar className="h-16 w-16">

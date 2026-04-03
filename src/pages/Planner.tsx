@@ -42,7 +42,7 @@ function ThemeCard({ theme, onAcceptChallenge }: { theme: WeeklyTheme; onAcceptC
 
   return (
     <div className={cn(
-      "flex flex-col gap-3 p-4 rounded-xl border",
+      "flex flex-col gap-3 p-4  border",
       styles.bg,
       styles.border
     )}>
@@ -84,7 +84,7 @@ function WeeklyFocusBanner({ focus, tone }: { focus: string; tone: 'coach' | 'wa
     )}>
       <div className="flex items-start gap-4">
         <div className={cn(
-          "w-12 h-12 rounded-xl flex items-center justify-center",
+          "w-12 h-12  flex items-center justify-center",
           styles.bg,
           "border",
           styles.border
@@ -115,7 +115,7 @@ function WeekIntentSection({ intent }: { intent: WeekIntent }) {
         {/* Intent Statement */}
         <div className="flex items-start gap-4">
           <div className={cn(
-            "w-12 h-12 rounded-xl flex items-center justify-center shrink-0",
+            "w-12 h-12  flex items-center justify-center shrink-0",
             styles.bg,
             "border",
             styles.border
@@ -137,7 +137,7 @@ function WeekIntentSection({ intent }: { intent: WeekIntent }) {
           {/* Prioritize */}
           <div className="flex items-start gap-3">
             <div className={cn(
-              "w-8 h-8 rounded-lg flex items-center justify-center shrink-0",
+              "w-8 h-8  flex items-center justify-center shrink-0",
               "bg-emerald-500/10 border border-emerald-500/30"
             )}>
               <CheckCircle2 className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
@@ -155,7 +155,7 @@ function WeekIntentSection({ intent }: { intent: WeekIntent }) {
           {/* Be Careful With */}
           <div className="flex items-start gap-3">
             <div className={cn(
-              "w-8 h-8 rounded-lg flex items-center justify-center shrink-0",
+              "w-8 h-8  flex items-center justify-center shrink-0",
               "bg-amber-500/10 border border-amber-500/30"
             )}>
               <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-400" />
@@ -300,7 +300,7 @@ export function Planner() {
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-xl bg-primary/10 border border-primary/30 flex items-center justify-center">
+            <div className="w-12 h-12  bg-primary/10 border border-primary/30 flex items-center justify-center">
               <Calendar className="h-6 w-6 text-primary" />
             </div>
             <div>
@@ -372,7 +372,7 @@ export function Planner() {
           >
             <Card className="p-8 border border-border/50">
               <div className="flex flex-col items-center text-center space-y-4">
-                <div className="w-14 h-14 rounded-xl bg-primary/10 border border-primary/30 flex items-center justify-center">
+                <div className="w-14 h-14  bg-primary/10 border border-primary/30 flex items-center justify-center">
                   <CalendarDays className="h-7 w-7 text-primary" />
                 </div>
                 <h3 className="text-lg font-semibold text-foreground">Your Week Ahead</h3>

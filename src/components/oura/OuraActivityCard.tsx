@@ -27,7 +27,7 @@ export const OuraActivityCard = ({
   const isStale = hoursSinceSync !== null && hoursSinceSync > STALE_HOURS;
   if (isLoading) {
     return (
-      <div className="bg-glass backdrop-blur-xl border border-glass-border rounded-2xl p-6 shadow-glass">
+      <div className="bg-glass  border border-glass-border  p-6 ">
         <Skeleton className="h-8 w-48 mb-6" />
         <div className="flex flex-col items-center mb-6">
           <Skeleton className="h-32 w-32 rounded-full mb-4" />
@@ -43,9 +43,9 @@ export const OuraActivityCard = ({
 
   if (score === null && steps === null) {
     return (
-      <div className="bg-glass backdrop-blur-xl border border-glass-border rounded-2xl p-6 shadow-glass">
+      <div className="bg-glass  border border-glass-border  p-6 ">
         <div className="flex items-center gap-3 mb-6">
-          <div className="w-10 h-10 bg-orange-500/20 rounded-xl flex items-center justify-center">
+          <div className="w-10 h-10 bg-orange-500/20  flex items-center justify-center">
             <Zap className="w-5 h-5 text-orange-500" />
           </div>
           <h2 className="text-xl font-semibold text-foreground">Activity</h2>
@@ -82,9 +82,9 @@ export const OuraActivityCard = ({
 
   return (
     <TooltipProvider>
-      <div className="bg-glass backdrop-blur-xl border border-glass-border rounded-2xl p-6 shadow-glass hover-glow animate-fade-in">
+      <div className="bg-glass  border border-glass-border  p-6  hover-glow animate-fade-in">
         <div className="flex items-center gap-3 mb-6">
-          <div className="w-10 h-10 bg-orange-500/20 rounded-xl flex items-center justify-center">
+          <div className="w-10 h-10 bg-orange-500/20  flex items-center justify-center">
             <Zap className="w-5 h-5 text-orange-500" />
           </div>
           <h2 className="text-xl font-semibold text-foreground">Activity</h2>
@@ -147,7 +147,7 @@ export const OuraActivityCard = ({
 
       <div className="space-y-4">
         {steps !== null && (
-          <div className="bg-background/50 backdrop-blur border border-glass-border rounded-xl p-4">
+          <div className="bg-background/50  border border-glass-border  p-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <Footprints className="w-5 h-5 text-blue-400" />
@@ -163,7 +163,7 @@ export const OuraActivityCard = ({
         )}
 
         {activeCalories !== null && (
-          <div className="bg-background/50 backdrop-blur border border-glass-border rounded-xl p-4">
+          <div className="bg-background/50  border border-glass-border  p-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <Flame className="w-5 h-5 text-orange-400" />
@@ -179,7 +179,7 @@ export const OuraActivityCard = ({
         )}
 
         {totalCalories !== null && (
-          <div className="bg-background/50 backdrop-blur border border-glass-border rounded-xl p-4">
+          <div className="bg-background/50  border border-glass-border  p-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <Flame className="w-5 h-5 text-red-400" />

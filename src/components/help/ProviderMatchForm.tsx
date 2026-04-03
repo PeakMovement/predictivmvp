@@ -128,7 +128,7 @@ export function ProviderMatchForm() {
   return (
     <div className="space-y-4">
       {/* Search Form */}
-      <Card className="bg-card/50 backdrop-blur-xl border-border/50">
+      <Card className="bg-card/50  border-border/50">
         <CardHeader className="pb-3">
           <CardTitle className="text-lg flex items-center gap-2">
             <Search className="h-5 w-5 text-primary" />

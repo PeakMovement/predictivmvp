@@ -36,7 +36,7 @@ function PatternItem({ pattern }: { pattern: ObservedPattern }) {
   const Icon = categoryIcons[pattern.category];
 
   return (
-    <div className={cn('rounded-lg p-3 border', styles.bg, styles.border)}>
+    <div className={cn(' p-3 border', styles.bg, styles.border)}>
       <div className="flex items-start gap-2.5">
         <Icon className={cn('h-4 w-4 mt-0.5 shrink-0', styles.icon)} />
         <p className={cn('text-sm leading-relaxed', styles.text)}>
@@ -57,9 +57,9 @@ export function LearnedPatternsSection({ className }: LearnedPatternsProps) {
 
   return (
     <Collapsible open={isOpen} onOpenChange={setIsOpen} className={className}>
-      <div className="rounded-lg border border-border bg-card/50">
+      <div className=" border border-border bg-card/50">
         <CollapsibleTrigger asChild>
-          <button className="w-full p-3 flex items-center justify-between gap-3 text-left hover:bg-muted/30 transition-colors rounded-lg">
+          <button className="w-full p-3 flex items-center justify-between gap-3 text-left hover:bg-muted/30 transition-colors ">
             <div className="flex items-center gap-2 min-w-0 flex-1">
               <div className="shrink-0 text-muted-foreground">
                 <Lightbulb className="h-4 w-4" />

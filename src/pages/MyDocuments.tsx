@@ -163,7 +163,7 @@ const MyDocuments = () => {
             documentType="training"
             onUpload={uploadDocument}
             uploading={uploading}
-            icon="💪"
+            icon=""
             title="Training Programs"
             description="Workout plans, coaching"
           />
@@ -184,15 +184,15 @@ const MyDocuments = () => {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-3 gap-4">
-              <div className="text-center p-3 bg-card/50 rounded-lg">
+              <div className="text-center p-3 bg-card/50 ">
                 <div className="text-2xl font-bold text-primary">{documentCounts.nutrition}</div>
                 <div className="text-xs text-muted-foreground">Nutrition</div>
               </div>
-              <div className="text-center p-3 bg-card/50 rounded-lg">
+              <div className="text-center p-3 bg-card/50 ">
                 <div className="text-2xl font-bold text-primary">{documentCounts.medical}</div>
                 <div className="text-xs text-muted-foreground">Medical</div>
               </div>
-              <div className="text-center p-3 bg-card/50 rounded-lg">
+              <div className="text-center p-3 bg-card/50 ">
                 <div className="text-2xl font-bold text-primary">{documentCounts.training}</div>
                 <div className="text-xs text-muted-foreground">Training</div>
               </div>
@@ -220,7 +220,7 @@ const MyDocuments = () => {
                     <TabsTrigger value="all" className="text-xs">All</TabsTrigger>
                     <TabsTrigger value="nutrition" className="text-xs">🍽️</TabsTrigger>
                     <TabsTrigger value="medical" className="text-xs">🏥</TabsTrigger>
-                    <TabsTrigger value="training" className="text-xs">💪</TabsTrigger>
+                    <TabsTrigger value="training" className="text-xs"></TabsTrigger>
                   </TabsList>
                 </Tabs>
               </div>

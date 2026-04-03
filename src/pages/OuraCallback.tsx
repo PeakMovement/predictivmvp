@@ -183,7 +183,7 @@ Expected redirect URI: https://predictiv.netlify.app/oauth/callback/oura`;
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
-      <div className="max-w-md w-full bg-glass backdrop-blur-xl border border-glass-border rounded-2xl p-8 shadow-glass text-center space-y-6">
+      <div className="max-w-md w-full bg-glass  border border-glass-border  p-8  text-center space-y-6">
         {status === "loading" && (
           <>
             <div className="w-16 h-16 mx-auto bg-gradient-to-br from-purple-500 to-indigo-500 rounded-full flex items-center justify-center">
@@ -255,7 +255,7 @@ Expected redirect URI: https://predictiv.netlify.app/oauth/callback/oura`;
                 errorMessage.includes("Redirect URI") ||
                 errorMessage.includes("credentials") ||
                 errorMessage.includes("Edge Function")) && (
-                <div className="mt-4 p-4 bg-yellow-500/10 border border-yellow-500/30 rounded-lg text-left">
+                <div className="mt-4 p-4 bg-yellow-500/10 border border-yellow-500/30  text-left">
                   <p className="text-xs font-semibold text-yellow-600 dark:text-yellow-400 mb-2">
                     Troubleshooting Steps:
                   </p>

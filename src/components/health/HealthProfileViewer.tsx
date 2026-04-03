@@ -59,7 +59,7 @@ export function HealthProfileViewer({ profile }: HealthProfileViewerProps) {
         </CardHeader>
         <CardContent>
           {ai_synthesis && (
-            <div className="rounded-lg bg-muted p-4 mb-4">
+            <div className=" bg-muted p-4 mb-4">
               <p className="text-sm leading-relaxed">{ai_synthesis}</p>
             </div>
           )}

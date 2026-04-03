@@ -42,7 +42,7 @@ const CustomTooltip = ({
 }) => {
   if (!active || !payload?.length) return null;
   return (
-    <div className="bg-card/95 backdrop-blur border border-border rounded-xl p-3 shadow-lg text-sm">
+    <div className="bg-card/95  border border-border  p-3  text-sm">
       <p className="text-muted-foreground text-xs mb-1.5">{label}</p>
       {payload.map((entry: any) => {
         const meta = metrics.find((m) => m.key === entry.dataKey);

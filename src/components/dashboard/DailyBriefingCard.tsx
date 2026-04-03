@@ -115,7 +115,7 @@ export function DailyBriefingCard({
 
   if (isLoading) {
     return (
-      <Card className="animate-fade-in bg-glass backdrop-blur-xl border-glass-border">
+      <Card className="animate-fade-in bg-glass  border-glass-border">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Sparkles className="h-5 w-5 text-primary" />
@@ -130,12 +130,12 @@ export function DailyBriefingCard({
   }
 
   return (
-    <Card className="animate-fade-in bg-glass backdrop-blur-xl border-glass-border shadow-glass">
+    <Card className="animate-fade-in bg-glass  border-glass-border ">
       <CardHeader className="p-4 sm:p-6">
         <div className="flex items-start sm:items-center justify-between gap-3">
           <div className="flex items-center gap-2 min-w-0">
             <Sparkles className="h-5 w-5 text-primary shrink-0" />
-            <CardTitle className="text-base sm:text-lg truncate">🧠 Yves Daily Briefing</CardTitle>
+            <CardTitle className="text-base sm:text-lg truncate"> Yves Daily Briefing</CardTitle>
           </div>
           <div className="relative">
             {isGenerating && (
@@ -254,13 +254,13 @@ function CollapsibleSection({ title, icon, preview, children, variant = "default
   return (
     <Collapsible open={isOpen} onOpenChange={setIsOpen}>
       <div className={cn(
-        "rounded-lg border transition-colors",
+        " border transition-colors",
         variant === "warning" 
           ? "border-destructive/30 bg-destructive/5" 
           : "border-border bg-card/50"
       )}>
         <CollapsibleTrigger asChild>
-          <button className="w-full p-3 sm:p-4 flex items-center justify-between gap-2 sm:gap-3 text-left hover:bg-muted/30 transition-colors rounded-lg touch-manipulation">
+          <button className="w-full p-3 sm:p-4 flex items-center justify-between gap-2 sm:gap-3 text-left hover:bg-muted/30 transition-colors  touch-manipulation">
             <div className="flex items-center gap-2 min-w-0 flex-1">
               <div className={cn(
                 "shrink-0",
@@ -349,8 +349,8 @@ function CollapsibleBriefingSections({ briefing, recommendations = [] }: { brief
               const relevantDoc = hasDocuments ? getRelevantDocument(change) : null;
               return (
                 <div key={idx}>
-                  <div className="p-2 rounded-md bg-muted/50 text-sm">
-                    📊 {change}
+                  <div className="p-2  bg-muted/50 text-sm">
+                     {change}
                   </div>
                   {explanation && (
                     <WhyThisMatters 
@@ -384,8 +384,8 @@ function CollapsibleBriefingSections({ briefing, recommendations = [] }: { brief
               const relevantDoc = hasDocuments ? getRelevantDocument(risk) : null;
               return (
                 <div key={idx}>
-                  <div className="p-2 rounded-md bg-destructive/10 text-sm">
-                    ⚠️ {risk}
+                  <div className="p-2  bg-destructive/10 text-sm">
+                     {risk}
                   </div>
                   {explanation && (
                     <WhyThisMatters 
@@ -446,16 +446,16 @@ function getCategoryLabel(category: string) {
 
 function getCategoryIcon(category: string) {
   const icons: Record<string, string> = {
-    training: "💪",
-    recovery: "🧘",
+    training: "",
+    recovery: "",
     nutrition: "🥗",
-    sleep: "😴",
-    mindset: "🧠",
-    performance: "🎯",
+    sleep: "",
+    mindset: "",
+    performance: "",
     medical: "🏥",
-    activity: "⚡",
+    activity: "",
   };
-  return icons[category] || "🎯";
+  return icons[category] || "";
 }
 
 function getPriorityBadge(priority: string) {
@@ -513,7 +513,7 @@ function RecommendationItem({ recommendation, index }: RecommendationItemProps) 
     if (success) {
       setFeedbackGiven('followed');
       toast({
-        title: "Great job! 🎉",
+        title: "Feedback noted",
         description: "Keep up the momentum!",
       });
     }
@@ -562,14 +562,14 @@ function RecommendationItem({ recommendation, index }: RecommendationItemProps) 
   return (
     <Collapsible open={isOpen} onOpenChange={setIsOpen}>
       <div className={cn(
-        "rounded-lg border transition-colors bg-card/50",
+        " border transition-colors bg-card/50",
         recommendation.priority === "high"
           ? "border-l-4 border-l-destructive border-destructive/30"
           : "border-border",
         feedbackGiven === 'followed' && "border-l-4 border-l-emerald-500 border-emerald-500/30 bg-emerald-500/5"
       )}>
         <CollapsibleTrigger asChild>
-          <button className="w-full p-3 sm:p-4 flex items-center justify-between gap-2 sm:gap-3 text-left hover:bg-muted/30 transition-colors rounded-lg touch-manipulation">
+          <button className="w-full p-3 sm:p-4 flex items-center justify-between gap-2 sm:gap-3 text-left hover:bg-muted/30 transition-colors  touch-manipulation">
             <div className="flex items-center gap-3 min-w-0 flex-1">
               <span className="text-lg shrink-0">{categoryIcon}</span>
               <div className="min-w-0 flex-1">

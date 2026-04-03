@@ -35,7 +35,7 @@ export function InsightBox({ query, response, timestamp }: InsightBoxProps) {
             <Bot className="h-4 w-4 text-green-600 dark:text-green-400" />
           </div>
           <div className="flex-1">
-            <div className="rounded-lg bg-gray-50 dark:bg-gray-800 p-4 sm:p-5">
+            <div className=" bg-gray-50 dark:bg-gray-800 p-4 sm:p-5">
               <div className="text-sm text-gray-700 dark:text-gray-300 prose prose-sm dark:prose-invert max-w-none">
                 <ReactMarkdown
                   components={{

@@ -35,7 +35,7 @@ export function TreatmentPlanDetails({ plan, onBack, onConfirm }: TreatmentPlanD
         </CardHeader>
 
         <CardContent className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-muted/50 rounded-lg">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-muted/50 ">
             <div className="flex items-center gap-3">
               <div className="p-2 rounded-full bg-primary/10">
                 <Banknote className="h-5 w-5 text-primary" />
@@ -119,7 +119,7 @@ export function TreatmentPlanDetails({ plan, onBack, onConfirm }: TreatmentPlanD
                 <h3 className="text-lg font-semibold mb-4">Expected Outcomes</h3>
                 <div className="grid gap-3">
                   {plan.expectedOutcomes.map((outcome, index) => (
-                    <div key={index} className="flex items-start gap-3 p-3 bg-muted/30 rounded-lg">
+                    <div key={index} className="flex items-start gap-3 p-3 bg-muted/30 ">
                       <CheckCircle2 className="h-5 w-5 text-green-500 flex-shrink-0 mt-0.5" />
                       <div>
                         <div className="font-medium">{outcome.milestone}</div>

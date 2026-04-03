@@ -26,7 +26,7 @@ export function TreatmentPlanCard({ plan, onSelect, onViewDetails }: TreatmentPl
   };
 
   return (
-    <Card className="hover:shadow-lg transition-shadow">
+    <Card className="hover: transition-shadow">
       <CardHeader>
         <div className="flex items-start justify-between gap-2">
           <div className="flex-1">
@@ -70,7 +70,7 @@ export function TreatmentPlanCard({ plan, onSelect, onViewDetails }: TreatmentPl
         </div>
 
         {plan.matchScore && (
-          <div className="flex items-center gap-2 p-3 bg-primary/5 rounded-lg">
+          <div className="flex items-center gap-2 p-3 bg-primary/5 ">
             <TrendingUp className="h-4 w-4 text-primary" />
             <span className="text-sm font-medium">
               {Math.round(plan.matchScore * 100)}% match for your needs

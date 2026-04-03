@@ -293,10 +293,10 @@ export const PractitionerRegister = () => {
   // ── Shared styles ───────────────────────────────────────────────────────
 
   const inputCls =
-    "w-full rounded-xl border border-black/10 bg-white px-4 py-3 text-sm text-[#1a1a1a] placeholder:text-[#aaa] outline-none focus:border-[#6B5ED9] focus:ring-2 focus:ring-[#6B5ED9]/20 transition-all";
+    "w-full  border border-black/10 bg-white px-4 py-3 text-sm text-[#1a1a1a] placeholder:text-[#aaa] outline-none focus:border-[#6B5ED9] focus:ring-2 focus:ring-[#6B5ED9]/20 transition-all";
   const labelCls = "block text-sm font-medium text-[#333] mb-1.5";
   const hintCls = "text-xs text-[#999] mt-1";
-  const cardCls = "rounded-xl bg-white p-6 shadow-sm sm:p-8";
+  const cardCls = " bg-white p-6  sm:p-8";
 
   // ── Success state ─────────────────────────────────────────────────────
 
@@ -336,7 +336,7 @@ export const PractitionerRegister = () => {
               key={value}
               type="button"
               onClick={() => set("specialty", value)}
-              className={`flex flex-col items-center gap-2 rounded-xl border p-4 text-center transition-all ${
+              className={`flex flex-col items-center gap-2  border p-4 text-center transition-all ${
                 active
                   ? "border-[#6B5ED9] bg-[#f0ebff]"
                   : "border-black/10 bg-white hover:border-black/20"
@@ -402,7 +402,7 @@ export const PractitionerRegister = () => {
           <button
             type="button"
             onClick={addQualification}
-            className="flex shrink-0 items-center gap-1 rounded-xl border border-[#6B5ED9] px-4 py-3 text-sm font-medium text-[#6B5ED9] transition-colors hover:bg-[#6B5ED9]/5"
+            className="flex shrink-0 items-center gap-1  border border-[#6B5ED9] px-4 py-3 text-sm font-medium text-[#6B5ED9] transition-colors hover:bg-[#6B5ED9]/5"
           >
             <Plus size={14} />
             Add
@@ -663,7 +663,7 @@ export const PractitionerRegister = () => {
             <div>
               <button
                 type="button"
-                className="rounded-lg border border-black/10 bg-white px-4 py-2 text-sm font-medium text-[#555] transition-colors hover:bg-black/5"
+                className=" border border-black/10 bg-white px-4 py-2 text-sm font-medium text-[#555] transition-colors hover:bg-black/5"
               >
                 Upload photo
               </button>
@@ -853,7 +853,7 @@ export const PractitionerRegister = () => {
           <button
             type="button"
             onClick={() => set("pricing_tier", "basic")}
-            className={`rounded-xl border p-5 text-left transition-all ${
+            className={` border p-5 text-left transition-all ${
               form.pricing_tier === "basic"
                 ? "border-[#6B5ED9] bg-[#f0ebff]/50"
                 : "border-black/10 bg-white hover:border-black/20"
@@ -898,7 +898,7 @@ export const PractitionerRegister = () => {
           <button
             type="button"
             onClick={() => set("pricing_tier", "verified")}
-            className={`relative rounded-xl border p-5 text-left transition-all ${
+            className={`relative  border p-5 text-left transition-all ${
               form.pricing_tier === "verified"
                 ? "border-[#6B5ED9] bg-[#f0ebff]/50"
                 : "border-black/10 bg-white hover:border-black/20"
@@ -941,7 +941,7 @@ export const PractitionerRegister = () => {
           This is how your listing will appear in Find Help
         </p>
 
-        <div className="rounded-xl border border-black/10 bg-white p-5">
+        <div className=" border border-black/10 bg-white p-5">
           {/* Header */}
           <div className="flex items-start justify-between gap-2">
             <div>
@@ -1003,10 +1003,10 @@ export const PractitionerRegister = () => {
 
           {/* Disabled buttons */}
           <div className="mt-4 flex gap-2">
-            <span className="flex-1 rounded-lg bg-black/5 py-2 text-center text-sm font-medium text-[#bbb]">
+            <span className="flex-1  bg-black/5 py-2 text-center text-sm font-medium text-[#bbb]">
               Book
             </span>
-            <span className="rounded-lg border border-black/5 px-4 py-2 text-center text-sm font-medium text-[#bbb]">
+            <span className=" border border-black/5 px-4 py-2 text-center text-sm font-medium text-[#bbb]">
               Profile
             </span>
           </div>
@@ -1021,7 +1021,7 @@ export const PractitionerRegister = () => {
         type="button"
         onClick={handleSubmit}
         disabled={submitting}
-        className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#6B5ED9] px-6 py-4 text-base font-semibold text-white shadow-sm transition-all hover:bg-[#5a4ec5] active:scale-[0.98] disabled:opacity-60"
+        className="flex w-full items-center justify-center gap-2  bg-[#6B5ED9] px-6 py-4 text-base font-semibold text-white  transition-all hover:bg-[#5a4ec5] active:scale-[0.98] disabled:opacity-60"
       >
         {submitting ? (
           <span className="flex items-center gap-2">
@@ -1037,7 +1037,7 @@ export const PractitionerRegister = () => {
       </button>
 
       {submitError && (
-        <div className="mt-4 rounded-xl border border-red-200 bg-red-50 p-4 text-center text-sm text-red-700">
+        <div className="mt-4  border border-red-200 bg-red-50 p-4 text-center text-sm text-red-700">
           {submitError}
         </div>
       )}
@@ -1060,7 +1060,7 @@ export const PractitionerRegister = () => {
     <div className="min-h-screen" style={{ background: "#f0ede8" }}>
       {/* Sticky header with step indicator */}
       <div
-        className="sticky top-0 z-50 border-b border-black/5 backdrop-blur-md"
+        className="sticky top-0 z-50 border-b border-black/5 -md"
         style={{ background: "rgba(240,237,232,0.9)" }}
       >
         <div className="mx-auto max-w-2xl px-5 pb-3 pt-4">
@@ -1145,7 +1145,7 @@ export const PractitionerRegister = () => {
             {step > 1 ? (
               <button
                 onClick={back}
-                className="flex items-center gap-1.5 rounded-xl border border-black/10 bg-white px-5 py-3 text-sm font-medium text-[#555] shadow-sm transition-all hover:bg-black/5"
+                className="flex items-center gap-1.5  border border-black/10 bg-white px-5 py-3 text-sm font-medium text-[#555]  transition-all hover:bg-black/5"
               >
                 <ArrowLeft size={16} />
                 Back
@@ -1157,7 +1157,7 @@ export const PractitionerRegister = () => {
             <button
               onClick={next}
               disabled={!stepValid()}
-              className="flex items-center gap-2 rounded-xl bg-[#6B5ED9] px-6 py-3 text-sm font-semibold text-white shadow-sm transition-all hover:bg-[#5a4ec5] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40"
+              className="flex items-center gap-2  bg-[#6B5ED9] px-6 py-3 text-sm font-semibold text-white  transition-all hover:bg-[#5a4ec5] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40"
             >
               Continue
               <ArrowRight size={16} />
@@ -1169,7 +1169,7 @@ export const PractitionerRegister = () => {
           <div className="mt-6">
             <button
               onClick={back}
-              className="flex items-center gap-1.5 rounded-xl border border-black/10 bg-white px-5 py-3 text-sm font-medium text-[#555] shadow-sm transition-all hover:bg-black/5"
+              className="flex items-center gap-1.5  border border-black/10 bg-white px-5 py-3 text-sm font-medium text-[#555]  transition-all hover:bg-black/5"
             >
               <ArrowLeft size={16} />
               Back

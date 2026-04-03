@@ -112,14 +112,14 @@ export function DailyHealthPanel() {
 
   if (isLoading) {
     return (
-      <Card className="bg-glass backdrop-blur-xl border-glass-border animate-panel-enter">
+      <Card className="bg-glass  border-glass-border animate-panel-enter">
         <CardHeader>
           <CardTitle className="text-lg font-semibold">Daily Health Trends</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 gap-3">
             {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="space-y-2 p-4 rounded-xl bg-muted/20">
+              <div key={i} className="space-y-2 p-4  bg-muted/20">
                 <Skeleton className="h-4 w-20" />
                 <Skeleton className="h-8 w-16" />
                 <Skeleton className="h-3 w-24" />
@@ -133,7 +133,7 @@ export function DailyHealthPanel() {
 
   if (error) {
     return (
-      <Card className="bg-glass backdrop-blur-xl border-glass-border animate-panel-enter">
+      <Card className="bg-glass  border-glass-border animate-panel-enter">
         <CardHeader>
           <CardTitle className="text-lg font-semibold">Daily Health Trends</CardTitle>
         </CardHeader>
@@ -149,7 +149,7 @@ export function DailyHealthPanel() {
 
   if (displayMetrics.length === 0) {
     return (
-      <Card className="bg-glass backdrop-blur-xl border-glass-border animate-panel-enter">
+      <Card className="bg-glass  border-glass-border animate-panel-enter">
         <CardHeader>
           <CardTitle className="text-lg font-semibold">Daily Health Trends</CardTitle>
         </CardHeader>
@@ -164,7 +164,7 @@ export function DailyHealthPanel() {
   }
 
   return (
-    <Card className="bg-glass backdrop-blur-xl border-glass-border animate-panel-enter">
+    <Card className="bg-glass  border-glass-border animate-panel-enter">
       <CardHeader>
         <CardTitle className="text-lg font-semibold">Daily Health Trends</CardTitle>
       </CardHeader>
@@ -179,8 +179,8 @@ export function DailyHealthPanel() {
               <div
                 key={metric.metric_name}
                 className={cn(
-                  "group p-4 rounded-xl border transition-all duration-300",
-                  "bg-gradient-to-br hover:scale-[1.02] hover:shadow-lg cursor-default",
+                  "group p-4  border transition-all duration-300",
+                  "bg-gradient-to-br hover:scale-[1.02] hover: cursor-default",
                   config.gradient, config.border
                 )}
                 style={{ animationDelay: `${idx * 100}ms` }}
@@ -188,7 +188,7 @@ export function DailyHealthPanel() {
                 aria-label={`${config.name}: ${formatValue(metric.metric_name, metric.value)}${unit}`}
               >
                 <div className="flex items-center gap-2 mb-2">
-                  <div className={cn("p-1.5 rounded-lg", config.iconBg)}>
+                  <div className={cn("p-1.5 ", config.iconBg)}>
                     <MetricIcon metric={metric.metric_name} />
                   </div>
                   <span className="text-sm font-medium text-muted-foreground">

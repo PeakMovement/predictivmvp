@@ -174,7 +174,7 @@ export const UnifiedTrendCard = () => {
 
   if (isLoading) {
     return (
-      <Card className="bg-glass backdrop-blur-xl border-glass-border shadow-glass">
+      <Card className="bg-glass  border-glass-border ">
         <CardHeader>
           <div className="h-6 w-32 bg-muted animate-pulse rounded" />
         </CardHeader>
@@ -187,7 +187,7 @@ export const UnifiedTrendCard = () => {
 
   if (metrics.length === 0) {
     return (
-      <Card className="bg-glass backdrop-blur-xl border-glass-border shadow-glass">
+      <Card className="bg-glass  border-glass-border ">
         <CardContent className="pt-6 text-center">
           <p className="text-muted-foreground">No trend data available</p>
         </CardContent>
@@ -199,7 +199,7 @@ export const UnifiedTrendCard = () => {
   const statusColor = getStatusColor();
 
   return (
-    <Card className="bg-glass backdrop-blur-xl border-glass-border shadow-glass">
+    <Card className="bg-glass  border-glass-border ">
       <CardHeader>
         <div className="flex items-center justify-between">
           <Button

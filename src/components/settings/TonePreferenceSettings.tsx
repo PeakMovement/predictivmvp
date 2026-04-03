@@ -43,7 +43,7 @@ export function TonePreferenceSettings() {
     return (
       <div className="grid grid-cols-5 gap-2">
         {[1, 2, 3, 4, 5].map((i) => (
-          <Skeleton key={i} className="h-20 w-full rounded-xl" />
+          <Skeleton key={i} className="h-20 w-full " />
         ))}
       </div>
     );
@@ -63,10 +63,10 @@ export function TonePreferenceSettings() {
               key={option.value}
               onClick={() => updatePreference(option.value)}
               className={cn(
-                "relative flex flex-col items-center gap-1.5 p-3 rounded-xl border transition-all duration-200 text-center",
+                "relative flex flex-col items-center gap-1.5 p-3  border transition-all duration-200 text-center",
                 "hover:bg-muted/40 cursor-pointer",
                 isSelected
-                  ? "border-primary bg-primary/10 shadow-[0_0_12px_rgba(139,92,246,0.15)]"
+                  ? "border-primary bg-primary/10 "
                   : "border-border/50 bg-card/30"
               )}
             >

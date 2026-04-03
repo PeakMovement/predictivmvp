@@ -159,9 +159,9 @@ export const NotificationsSettings = ({ isSectionVisible, onNavigate }: Notifica
     <>
       {/* ── SMS Alerts ─────────────────────────────────────────────────────── */}
       <LayoutBlock blockId="notifications" displayName="Notifications" pageId="profile" size="standard" visible={isSectionVisible("notifications")}>
-        <div className="bg-glass backdrop-blur-xl border border-glass-border rounded-2xl p-6 shadow-glass hover:bg-glass-highlight transition-all duration-300">
+        <div className="bg-glass  border border-glass-border  p-6  hover:bg-glass-highlight transition-all duration-300">
           <div className="flex items-center gap-3 mb-6">
-            <div className="w-8 h-8 bg-primary/20 rounded-lg flex items-center justify-center">
+            <div className="w-8 h-8 bg-primary/20  flex items-center justify-center">
               <Bell size={16} className="text-primary" />
             </div>
             <h3 className="text-lg font-semibold text-foreground">SMS Alerts</h3>
@@ -196,9 +196,9 @@ export const NotificationsSettings = ({ isSectionVisible, onNavigate }: Notifica
 
       {/* ── Email Notifications ──────────────────────────────────────────────── */}
       <LayoutBlock blockId="emailPrefs" displayName="Email Notifications" pageId="profile" size="standard" visible={isSectionVisible("emailPrefs")}>
-        <div className="bg-glass backdrop-blur-xl border border-glass-border rounded-2xl p-6 shadow-glass hover:bg-glass-highlight transition-all duration-300">
+        <div className="bg-glass  border border-glass-border  p-6  hover:bg-glass-highlight transition-all duration-300">
           <div className="flex items-center gap-3 mb-5">
-            <div className="w-8 h-8 bg-primary/20 rounded-lg flex items-center justify-center">
+            <div className="w-8 h-8 bg-primary/20  flex items-center justify-center">
               <Mail size={16} className="text-primary" />
             </div>
             <div>

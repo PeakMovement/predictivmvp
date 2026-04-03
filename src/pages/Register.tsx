@@ -77,7 +77,7 @@ export default function Register() {
         }
 
         // Email confirmation required — prompt user and redirect to login
-        setSuccess("✅ Account created! Check your email to verify.");
+        setSuccess(" Account created! Check your email to verify.");
         toast({
           title: "Account created!",
           description: "Please check your email to verify your account.",

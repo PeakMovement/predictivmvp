@@ -29,7 +29,7 @@ const SessionLogCard = ({
 }) => (
   <div
     onClick={compareMode ? undefined : onClick}
-    className="bg-glass backdrop-blur-xl border border-glass-border rounded-xl p-3 shadow-glass hover:bg-glass-highlight transition-all duration-200 cursor-pointer group"
+    className="bg-glass  border border-glass-border  p-3  hover:bg-glass-highlight transition-all duration-200 cursor-pointer group"
   >
     <div className="flex items-center justify-between mb-1.5">
       <div className="flex items-center gap-2 flex-1">
@@ -49,7 +49,7 @@ const SessionLogCard = ({
         </div>
       </div>
       <div className="flex items-center gap-1.5">
-        <span className="px-2 py-0.5 text-xs rounded-lg font-medium bg-blue-500/20 text-blue-400">Training</span>
+        <span className="px-2 py-0.5 text-xs  font-medium bg-blue-500/20 text-blue-400">Training</span>
         {!compareMode && (
           <ChevronRight size={14} className="text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
         )}
@@ -204,16 +204,16 @@ export const SessionLogList = ({ onCompareRequested }: SessionLogListProps = {})
 
   if (isLoading || isFetchingFallback) {
     return (
-      <div className="bg-glass backdrop-blur-xl border border-glass-border rounded-2xl p-4 shadow-glass">
+      <div className="bg-glass  border border-glass-border  p-4 ">
         <div className="flex items-center gap-3 mb-3">
-          <div className="w-8 h-8 bg-primary/20 rounded-lg flex items-center justify-center">
+          <div className="w-8 h-8 bg-primary/20  flex items-center justify-center">
             <Activity size={16} className="text-primary" />
           </div>
           <h3 className="text-lg font-semibold text-foreground">Recent Sessions</h3>
         </div>
         <div className="space-y-2">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="h-16 bg-glass/30 rounded-xl animate-pulse" />
+            <div key={i} className="h-16 bg-glass/30  animate-pulse" />
           ))}
         </div>
       </div>
@@ -222,10 +222,10 @@ export const SessionLogList = ({ onCompareRequested }: SessionLogListProps = {})
 
   return (
     <>
-      <div className="bg-glass backdrop-blur-xl border border-glass-border rounded-2xl p-4 shadow-glass animate-fade-in">
+      <div className="bg-glass  border border-glass-border  p-4  animate-fade-in">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-primary/20 rounded-lg flex items-center justify-center">
+            <div className="w-8 h-8 bg-primary/20  flex items-center justify-center">
               <Activity size={16} className="text-primary" />
             </div>
             <h3 className="text-lg font-semibold text-foreground">Recent Sessions</h3>
@@ -246,7 +246,7 @@ export const SessionLogList = ({ onCompareRequested }: SessionLogListProps = {})
         </div>
 
         {compareMode && (
-          <div className="mb-3 p-2 rounded-lg bg-secondary/30 border border-border/50">
+          <div className="mb-3 p-2  bg-secondary/30 border border-border/50">
             <p className="text-xs text-muted-foreground mb-2">
               Select 2 sessions to compare ({selectedForCompare.length}/2 selected)
             </p>

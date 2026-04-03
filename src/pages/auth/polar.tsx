@@ -69,7 +69,7 @@ export default function PolarCallback() {
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <div className="max-w-md w-full">
-        <div className="bg-glass backdrop-blur-xl border border-glass-border rounded-2xl p-8 shadow-glass text-center space-y-6">
+        <div className="bg-glass  border border-glass-border  p-8  text-center space-y-6">
           {status === "loading" && (
             <>
               <div className="flex justify-center">

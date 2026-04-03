@@ -195,7 +195,7 @@ export function RecoveryPanel() {
 
   if (isLoading) {
     return (
-      <Card className="bg-glass backdrop-blur-xl border-glass-border animate-panel-enter">
+      <Card className="bg-glass  border-glass-border animate-panel-enter">
         <CardHeader>
           <CardTitle className="text-lg font-semibold">Recovery & Load</CardTitle>
         </CardHeader>
@@ -212,7 +212,7 @@ export function RecoveryPanel() {
 
   if (error) {
     return (
-      <Card className="bg-glass backdrop-blur-xl border-glass-border animate-panel-enter">
+      <Card className="bg-glass  border-glass-border animate-panel-enter">
         <CardHeader>
           <CardTitle className="text-lg font-semibold">Recovery & Load</CardTitle>
         </CardHeader>
@@ -227,7 +227,7 @@ export function RecoveryPanel() {
 
   if (!summary) {
     return (
-      <Card className="bg-glass backdrop-blur-xl border-glass-border animate-panel-enter">
+      <Card className="bg-glass  border-glass-border animate-panel-enter">
         <CardHeader>
           <CardTitle className="text-lg font-semibold">Recovery & Load</CardTitle>
         </CardHeader>
@@ -244,13 +244,13 @@ export function RecoveryPanel() {
   const acwr = summary.current_acwr ?? 0;
 
   return (
-    <Card className="bg-glass backdrop-blur-xl border-glass-border animate-panel-enter">
+    <Card className="bg-glass  border-glass-border animate-panel-enter">
       <CardHeader>
         <CardTitle className="text-lg font-semibold">Recovery & Load</CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
         {/* ACWR Gauge */}
-        <div className="p-4 rounded-xl bg-background/50 border border-border/50">
+        <div className="p-4  bg-background/50 border border-border/50">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
               <StatusIcon status={summary.acwr_status} />
@@ -288,7 +288,7 @@ export function RecoveryPanel() {
         </div>
 
         {/* Load Metrics with animated bars */}
-        <div className="space-y-4 p-4 rounded-xl bg-background/50 border border-border/50">
+        <div className="space-y-4 p-4  bg-background/50 border border-border/50">
           <AnimatedBar
             label="Strain"
             value={summary.strain}
@@ -314,7 +314,7 @@ export function RecoveryPanel() {
             <div 
               key={item.label}
               className={cn(
-                "p-3 rounded-xl border transition-all duration-300 hover:scale-105",
+                "p-3  border transition-all duration-300 hover:scale-105",
                 "bg-gradient-to-br", item.color, item.border
               )}
               style={{ animationDelay: `${(idx + 3) * 100}ms` }}
@@ -329,7 +329,7 @@ export function RecoveryPanel() {
 
         {/* Recovery Score */}
         {summary.recovery_score !== null && (
-          <div className="p-4 rounded-xl bg-gradient-to-r from-emerald-500/10 to-teal-500/10 border border-emerald-500/20 transition-all duration-300 hover:shadow-lg hover:shadow-emerald-500/10">
+          <div className="p-4  bg-gradient-to-r from-emerald-500/10 to-teal-500/10 border border-emerald-500/20 transition-all duration-300 hover: hover:shadow-emerald-500/10">
             <div className="flex items-center justify-between">
               <span className="text-sm font-medium text-muted-foreground">Recovery Score</span>
               <span className="text-2xl font-bold text-emerald-400 animate-number-pop">

@@ -89,7 +89,7 @@ export function HealthAnomalyBanner() {
   return (
     <div
       className={cn(
-        "mb-6 rounded-2xl border p-4 sm:p-5 flex flex-col sm:flex-row gap-3 sm:items-start",
+        "mb-6  border p-4 sm:p-5 flex flex-col sm:flex-row gap-3 sm:items-start",
         "animate-fade-in",
         isCritical
           ? "bg-orange-500/10 border-orange-500/30"
@@ -99,7 +99,7 @@ export function HealthAnomalyBanner() {
       {/* Icon */}
       <div
         className={cn(
-          "w-9 h-9 rounded-xl flex items-center justify-center shrink-0",
+          "w-9 h-9  flex items-center justify-center shrink-0",
           isCritical ? "bg-orange-500/20" : "bg-amber-500/15"
         )}
       >

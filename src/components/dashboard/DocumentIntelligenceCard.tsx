@@ -36,22 +36,22 @@ export const DocumentIntelligenceCard = ({ onNavigate }: DocumentIntelligenceCar
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="grid grid-cols-3 gap-3">
-          <div className="text-center p-3 bg-card/50 rounded-lg">
+          <div className="text-center p-3 bg-card/50 ">
             <div className="text-xl font-bold text-primary">{documentCounts.nutrition}</div>
             <div className="text-xs text-muted-foreground">🍽️ Nutrition</div>
           </div>
-          <div className="text-center p-3 bg-card/50 rounded-lg">
+          <div className="text-center p-3 bg-card/50 ">
             <div className="text-xl font-bold text-primary">{documentCounts.medical}</div>
             <div className="text-xs text-muted-foreground">🏥 Medical</div>
           </div>
-          <div className="text-center p-3 bg-card/50 rounded-lg">
+          <div className="text-center p-3 bg-card/50 ">
             <div className="text-xl font-bold text-primary">{documentCounts.training}</div>
-            <div className="text-xs text-muted-foreground">💪 Training</div>
+            <div className="text-xs text-muted-foreground"> Training</div>
           </div>
         </div>
 
         {latestInsight && (
-          <div className="p-3 bg-primary/10 rounded-lg">
+          <div className="p-3 bg-primary/10 ">
             <p className="text-xs text-muted-foreground mb-1">💡 Latest Insight:</p>
             <p className="text-xs line-clamp-2">
               {latestInsight.ai_summary}

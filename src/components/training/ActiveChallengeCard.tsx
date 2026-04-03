@@ -32,7 +32,7 @@ export const ActiveChallengeCard = ({
     try {
       await onComplete(challenge.id);
       toast({
-        title: "Challenge Completed! 🎉",
+        title: "Challenge Completed! ",
         description: `You completed "${challenge.challenge_title}"`,
       });
     } catch {
@@ -76,7 +76,7 @@ export const ActiveChallengeCard = ({
         {/* Header */}
         <div className="flex items-start justify-between">
           <div className="flex items-start gap-3 flex-1">
-            <div className="w-10 h-10 rounded-xl bg-primary/20 border border-primary/30 flex items-center justify-center flex-shrink-0">
+            <div className="w-10 h-10  bg-primary/20 border border-primary/30 flex items-center justify-center flex-shrink-0">
               <Trophy className="h-5 w-5 text-primary" />
             </div>
             <div className="flex-1">
@@ -100,7 +100,7 @@ export const ActiveChallengeCard = ({
 
         {/* AI Reasoning */}
         {challenge.ai_reasoning && (
-          <div className="flex items-start gap-2 p-3 rounded-lg bg-secondary/50 border border-border/50">
+          <div className="flex items-start gap-2 p-3  bg-secondary/50 border border-border/50">
             <Brain className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
             <p className="text-xs text-muted-foreground">{challenge.ai_reasoning}</p>
           </div>
@@ -117,7 +117,7 @@ export const ActiveChallengeCard = ({
             </div>
             <Progress value={progressPercent} className="h-2" />
             {progressPercent >= 100 && (
-              <p className="text-xs text-primary font-medium">🎯 Target reached!</p>
+              <p className="text-xs text-primary font-medium"> Target reached!</p>
             )}
           </div>
         )}

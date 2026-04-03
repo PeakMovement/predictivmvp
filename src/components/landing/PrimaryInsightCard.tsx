@@ -11,7 +11,7 @@ interface PrimaryInsightCardProps {
 export function PrimaryInsightCard({ summary, isLoading, error }: PrimaryInsightCardProps) {
   if (isLoading) {
     return (
-      <Card className="border border-border/50 bg-card/50 backdrop-blur-sm">
+      <Card className="border border-border/50 bg-card/50 ">
         <CardContent className="pt-6 space-y-4">
           <Skeleton className="h-5 w-32" />
           <Skeleton className="h-6 w-full" />
@@ -23,7 +23,7 @@ export function PrimaryInsightCard({ summary, isLoading, error }: PrimaryInsight
 
   if (error) {
     return (
-      <Card className="border border-destructive/30 bg-destructive/5 backdrop-blur-sm">
+      <Card className="border border-destructive/30 bg-destructive/5 ">
         <CardContent className="pt-6">
           <div className="flex items-start gap-3">
             <AlertCircle className="h-5 w-5 text-destructive mt-0.5 shrink-0" />
@@ -39,7 +39,7 @@ export function PrimaryInsightCard({ summary, isLoading, error }: PrimaryInsight
 
   if (!summary) {
     return (
-      <Card className="border border-border/50 bg-muted/30 backdrop-blur-sm">
+      <Card className="border border-border/50 bg-muted/30 ">
         <CardContent className="pt-6">
           <div className="flex items-start gap-3">
             <Lightbulb className="h-5 w-5 text-muted-foreground mt-0.5 shrink-0" />
@@ -56,7 +56,7 @@ export function PrimaryInsightCard({ summary, isLoading, error }: PrimaryInsight
   }
 
   return (
-    <Card className="border border-border/50 bg-card/50 backdrop-blur-sm">
+    <Card className="border border-border/50 bg-card/50 ">
       <CardContent className="pt-6 space-y-3">
         <div className="flex items-center gap-2">
           <Lightbulb className="h-4 w-4 text-primary" />

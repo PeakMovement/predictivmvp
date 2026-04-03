@@ -81,8 +81,8 @@ export const OuraDataDiagnostics = () => {
           step: "Oura Tokens",
           status: isExpired ? "warning" : "success",
           message: isExpired
-            ? "⚠️ Token expired. Reconnect your Oura Ring in Settings."
-            : "✅ Valid token found",
+            ? " Token expired. Reconnect your Oura Ring in Settings."
+            : " Valid token found",
           data: {
             expires_at: tokenData.expires_at,
             has_access_token: !!tokenData.access_token,
@@ -115,13 +115,13 @@ export const OuraDataDiagnostics = () => {
         addResult({
           step: "Wearable Sessions",
           status: "warning",
-          message: "⚠️ No Oura data found in database. Click 'Update Now' to sync.",
+          message: " No Oura data found in database. Click 'Update Now' to sync.",
         });
       } else {
         addResult({
           step: "Wearable Sessions",
           status: "success",
-          message: `✅ Found ${sessions.length} day(s) of Oura data`,
+          message: ` Found ${sessions.length} day(s) of Oura data`,
           data: {
             latest_date: sessions[0].date,
             readiness_score: sessions[0].readiness_score,
@@ -167,8 +167,8 @@ export const OuraDataDiagnostics = () => {
           step: "Oura Logs",
           status: hasErrors ? "warning" : "success",
           message: hasErrors
-            ? `⚠️ ${logs.filter((l) => l.status === "failed").length} failed sync(s) found`
-            : `✅ ${logs.length} sync attempt(s) recorded`,
+            ? ` ${logs.filter((l) => l.status === "failed").length} failed sync(s) found`
+            : ` ${logs.length} sync attempt(s) recorded`,
           data: {
             last_sync: lastLog.created_at,
             last_status: lastLog.status,
@@ -213,7 +213,7 @@ export const OuraDataDiagnostics = () => {
         addResult({
           step: "Data Fields Check",
           status: populatedFields.length > 0 ? "success" : "warning",
-          message: `✅ ${populatedFields.length}/${fieldsToCheck.length} fields populated`,
+          message: ` ${populatedFields.length}/${fieldsToCheck.length} fields populated`,
           data: {
             populated: populatedFields,
             missing: missingFields,
@@ -315,7 +315,7 @@ export const OuraDataDiagnostics = () => {
                         <summary className="cursor-pointer text-xs text-muted-foreground hover:text-foreground">
                           View Details
                         </summary>
-                        <pre className="mt-2 p-3 bg-muted rounded-md text-xs overflow-x-auto">
+                        <pre className="mt-2 p-3 bg-muted  text-xs overflow-x-auto">
                           {JSON.stringify(result.data, null, 2)}
                         </pre>
                       </details>
@@ -341,12 +341,12 @@ export const OuraDataDiagnostics = () => {
                   (r) => r.step === "Wearable Sessions" && r.status === "warning"
                 ) ? (
                 <p>
-                  ⚠️ <strong>Action Required:</strong> Click "Update Now" button in Settings or on
+                   <strong>Action Required:</strong> Click "Update Now" button in Settings or on
                   the Health page to sync your Oura data.
                 </p>
               ) : (
                 <p>
-                  ✅ <strong>Everything looks good!</strong> Your Oura data should be displaying on
+                   <strong>Everything looks good!</strong> Your Oura data should be displaying on
                   the Health page.
                 </p>
               )}

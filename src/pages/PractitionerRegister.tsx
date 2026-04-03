@@ -171,7 +171,7 @@ export const PractitionerRegister = () => {
       <div className="w-full max-w-lg">
         {/* Logo */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-blue-600 mb-4 shadow-lg">
+          <div className="inline-flex items-center justify-center w-14 h-14  bg-blue-600 mb-4 ">
             <Stethoscope className="h-7 w-7 text-white" />
           </div>
           <h1 className="text-3xl font-bold text-slate-800">Predictiv</h1>
@@ -206,7 +206,7 @@ export const PractitionerRegister = () => {
 
         {/* ── Step 1: Account ── */}
         {step === 1 && (
-          <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-8">
+          <div className="bg-white   border border-slate-200 p-8">
             <h2 className="text-lg font-semibold text-slate-800 mb-1">Create your account</h2>
             <p className="text-sm text-slate-500 mb-6">Basic details to get you started.</p>
 
@@ -248,7 +248,7 @@ export const PractitionerRegister = () => {
               </div>
 
               {error && (
-                <div className="text-red-600 text-sm bg-red-50 border border-red-200 rounded-lg px-3 py-2">
+                <div className="text-red-600 text-sm bg-red-50 border border-red-200  px-3 py-2">
                   {error}
                 </div>
               )}
@@ -276,7 +276,7 @@ export const PractitionerRegister = () => {
 
         {/* ── Step 2: Profile ── */}
         {step === 2 && (
-          <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-8">
+          <div className="bg-white   border border-slate-200 p-8">
             <h2 className="text-lg font-semibold text-slate-800 mb-1">Complete your profile</h2>
             <p className="text-sm text-slate-500 mb-6">
               This information will appear in Find Help after your account is approved.
@@ -381,7 +381,7 @@ export const PractitionerRegister = () => {
               </div>
 
               {error && (
-                <div className="text-red-600 text-sm bg-red-50 border border-red-200 rounded-lg px-3 py-2">
+                <div className="text-red-600 text-sm bg-red-50 border border-red-200  px-3 py-2">
                   {error}
                 </div>
               )}
@@ -404,7 +404,7 @@ export const PractitionerRegister = () => {
 
         {/* ── Done ── */}
         {step === "done" && (
-          <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-10 text-center space-y-5">
+          <div className="bg-white   border border-slate-200 p-10 text-center space-y-5">
             <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mx-auto">
               <CheckCircle2 className="h-8 w-8 text-emerald-600" />
             </div>
@@ -415,7 +415,7 @@ export const PractitionerRegister = () => {
                 typically within 1–2 business days.
               </p>
             </div>
-            <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 text-left space-y-2">
+            <div className="bg-blue-50 border border-blue-100  p-4 text-left space-y-2">
               <p className="text-xs font-semibold text-blue-700 uppercase tracking-wide">What happens next</p>
               <ul className="text-xs text-slate-500 space-y-1">
                 <li>• Verify your email via the link we sent you</li>

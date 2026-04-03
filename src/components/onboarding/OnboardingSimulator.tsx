@@ -295,14 +295,14 @@ export function OnboardingSimulator({
                   { id: "polar", name: "Polar", icon: "⌚" },
                   { id: "garmin", name: "Garmin", icon: "⌚" },
                   { id: "apple", name: "Apple Watch", icon: "🍎", disabled: true },
-                  { id: "other", name: "Other", icon: "📊" },
+                  { id: "other", name: "Other", icon: "" },
                   { id: "none", name: "None yet", icon: "🔜" },
                 ].map((device) => (
                   <button
                     key={device.id}
                     onClick={() => updateData("device", device.id)}
                     disabled={device.disabled}
-                    className={`p-4 rounded-xl border transition-all duration-200 ${
+                    className={`p-4  border transition-all duration-200 ${
                       data.device === device.id
                         ? "bg-primary/20 border-primary"
                         : "bg-glass/30 border-glass-border hover:bg-glass-highlight"
@@ -349,7 +349,7 @@ export function OnboardingSimulator({
                   you use the app, the more personalized your insights will become.
                 </p>
               </div>
-              <div className="bg-glass/50 border border-glass-border rounded-xl p-4 text-left">
+              <div className="bg-glass/50 border border-glass-border  p-4 text-left">
                 <p className="text-sm text-muted-foreground">
                   <span className="font-medium text-foreground">Next step:</span>{" "}
                   Head to your Profile page to add more details about your health

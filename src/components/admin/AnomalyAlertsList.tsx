@@ -106,7 +106,7 @@ export function AnomalyAlertsList({ anomalies, isLoading, onAcknowledge }: Anoma
                     {unacknowledged.map((anomaly) => (
                       <div
                         key={anomaly.id}
-                        className="p-4 rounded-lg bg-destructive/5 border border-destructive/20 hover:bg-destructive/10 transition-colors"
+                        className="p-4  bg-destructive/5 border border-destructive/20 hover:bg-destructive/10 transition-colors"
                       >
                         <div className="flex items-start justify-between gap-4">
                           <div className="flex-1">
@@ -199,7 +199,7 @@ export function AnomalyAlertsList({ anomalies, isLoading, onAcknowledge }: Anoma
                     {acknowledged.slice(0, 5).map((anomaly) => (
                       <div
                         key={anomaly.id}
-                        className="p-3 rounded-lg bg-muted/10 border border-glass-border opacity-60"
+                        className="p-3  bg-muted/10 border border-glass-border opacity-60"
                       >
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-2">

@@ -63,7 +63,7 @@ export default function ResetPassword() {
   if (done) {
     return (
       <div className="min-h-screen flex items-center justify-center px-4">
-        <div className="w-full max-w-md bg-card p-8 rounded-2xl shadow-lg border border-border text-center space-y-4">
+        <div className="w-full max-w-md bg-card p-8   border border-border text-center space-y-4">
           <h1 className="text-2xl font-semibold">Password updated</h1>
           <p className="text-muted-foreground text-sm">
             Your password has been changed. Sign in with your new password.
@@ -79,7 +79,7 @@ export default function ResetPassword() {
   if (!ready) {
     return (
       <div className="min-h-screen flex items-center justify-center px-4">
-        <div className="w-full max-w-md bg-card p-8 rounded-2xl shadow-lg border border-border text-center space-y-4">
+        <div className="w-full max-w-md bg-card p-8   border border-border text-center space-y-4">
           <h1 className="text-2xl font-semibold">Invalid or expired link</h1>
           <p className="text-muted-foreground text-sm">
             This password reset link is no longer valid. Request a new one.
@@ -97,7 +97,7 @@ export default function ResetPassword() {
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4">
-      <div className="w-full max-w-md bg-card p-8 rounded-2xl shadow-lg border border-border">
+      <div className="w-full max-w-md bg-card p-8   border border-border">
         <div className="mb-6">
           <h1 className="text-2xl font-semibold text-center">Set new password</h1>
           <p className="text-muted-foreground text-sm text-center mt-1">

@@ -143,7 +143,7 @@ export const HealthTrendsChart = ({ source }: HealthTrendsChartProps) => {
 
   if (isLoading) {
     return (
-      <Card className="bg-card/50 backdrop-blur-xl border-border/50">
+      <Card className="bg-card/50  border-border/50">
         <CardHeader>
           <CardTitle>Health Trends</CardTitle>
           <CardDescription>Loading trends...</CardDescription>
@@ -160,7 +160,7 @@ export const HealthTrendsChart = ({ source }: HealthTrendsChartProps) => {
 
   return (
     <TooltipProvider>
-      <Card className="bg-card/50 backdrop-blur-xl border-border/50">
+      <Card className="bg-card/50  border-border/50">
         <CardHeader>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">

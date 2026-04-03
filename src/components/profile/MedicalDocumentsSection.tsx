@@ -59,7 +59,7 @@ export function MedicalDocumentsSection() {
 
       {/* Upload Zone */}
       <div
-        className={`relative border-2 border-dashed rounded-lg p-6 transition-colors ${
+        className={`relative border-2 border-dashed  p-6 transition-colors ${
           dragActive ? 'border-primary bg-primary/5' : 'border-muted-foreground/25'
         }`}
         onDragEnter={handleDrag}

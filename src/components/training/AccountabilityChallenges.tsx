@@ -53,7 +53,7 @@ export const AccountabilityChallenges = () => {
     try {
       await acceptChallenge(id);
       toast({
-        title: "Challenge Accepted! 💪",
+        title: "Challenge Accepted! ",
         description: "Progress will be tracked automatically from your wearable data",
       });
     } catch {
@@ -64,7 +64,7 @@ export const AccountabilityChallenges = () => {
   const handleComplete = async (id: string) => {
     try {
       await completeChallenge(id);
-      toast({ title: "Challenge Completed! 🎉" });
+      toast({ title: "Challenge Completed! " });
     } catch {
       toast({ title: "Error", description: "Failed to complete challenge", variant: "destructive" });
     }
@@ -102,7 +102,7 @@ export const AccountabilityChallenges = () => {
 
   if (isLoading) {
     return (
-      <Card className="bg-card/50 backdrop-blur-xl border-border/50">
+      <Card className="bg-card/50  border-border/50">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Trophy className="h-5 w-5 text-primary" />
@@ -115,7 +115,7 @@ export const AccountabilityChallenges = () => {
   }
 
   return (
-    <Card className="bg-card/50 backdrop-blur-xl border-border/50">
+    <Card className="bg-card/50  border-border/50">
       <CardHeader>
         <div className="flex items-center justify-between">
           <div>
@@ -169,11 +169,11 @@ export const AccountabilityChallenges = () => {
               return (
                 <div
                   key={challenge.id}
-                  className="p-4 rounded-lg border border-border/50 bg-secondary/30 space-y-3"
+                  className="p-4  border border-border/50 bg-secondary/30 space-y-3"
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex items-start gap-3 flex-1">
-                      <div className="w-8 h-8 rounded-lg bg-primary/20 flex items-center justify-center flex-shrink-0">
+                      <div className="w-8 h-8  bg-primary/20 flex items-center justify-center flex-shrink-0">
                         {getChallengeIcon(challenge.challenge_type)}
                       </div>
                       <div className="flex-1 min-w-0">
@@ -224,7 +224,7 @@ export const AccountabilityChallenges = () => {
                       </div>
                       <Progress value={progress} className="h-2" />
                       {progress >= 100 && (
-                        <p className="text-xs text-primary font-medium">🎯 Target reached!</p>
+                        <p className="text-xs text-primary font-medium"> Target reached!</p>
                       )}
                     </div>
                   )}

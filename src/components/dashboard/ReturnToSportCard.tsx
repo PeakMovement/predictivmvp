@@ -52,7 +52,7 @@ export const ReturnToSportCard = ({ profile }: ReturnToSportCardProps) => {
   const injuryLabel = INJURY_TYPE_LABELS[profile.injury_type] ?? 'Injury';
 
   return (
-    <div className="bg-card border border-border rounded-2xl p-5 space-y-5">
+    <div className="bg-card border border-border  p-5 space-y-5">
       {/* Header */}
       <div className="flex items-start justify-between gap-3">
         <div>
@@ -113,7 +113,7 @@ export const ReturnToSportCard = ({ profile }: ReturnToSportCardProps) => {
 
       {/* Load restrictions — most safety-critical, styled as a warning */}
       {profile.load_restrictions && (
-        <div className="flex gap-2.5 rounded-xl border border-amber-500/40 bg-amber-500/8 p-3">
+        <div className="flex gap-2.5  border border-amber-500/40 bg-amber-500/8 p-3">
           <AlertTriangle className="h-4 w-4 text-amber-500 mt-0.5 shrink-0" />
           <div>
             <p className="text-xs font-semibold text-amber-600 dark:text-amber-400 mb-0.5">

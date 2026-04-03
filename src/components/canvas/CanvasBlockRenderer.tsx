@@ -52,16 +52,16 @@ export function CanvasBlockRenderer({
         'relative w-full transition-all',
         sizeStyles[block.size],
         !block.visible && 'opacity-50',
-        isEditing && 'ring-2 ring-primary/20 rounded-lg'
+        isEditing && 'ring-2 ring-primary/20 '
       )}
     >
       {isEditing && (
         <div className="absolute -top-3 left-0 right-0 flex items-center justify-between px-2 z-10">
-          <div className="flex items-center gap-1 bg-card border border-border rounded-full px-2 py-1 shadow-sm">
+          <div className="flex items-center gap-1 bg-card border border-border rounded-full px-2 py-1 ">
             <GripVertical className="h-3 w-3 text-muted-foreground" />
             <span className="text-xs font-medium text-foreground">{block.name}</span>
           </div>
-          <div className="flex items-center gap-1 bg-card border border-border rounded-full px-1 py-1 shadow-sm">
+          <div className="flex items-center gap-1 bg-card border border-border rounded-full px-1 py-1 ">
             <Button
               variant="ghost"
               size="icon"

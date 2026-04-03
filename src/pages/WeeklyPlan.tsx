@@ -244,7 +244,7 @@ function WeeklySummary({ plan }: { plan: DayPlan[] }) {
 
   return (
     <div className=" border border-border/30 bg-card/40 p-4">
-      <p className="text-xs text-muted-foreground uppercase tracking-wide font-medium mb-2">
+      <p className="section-header">
         Weekly Summary
       </p>
       <div className="flex flex-wrap gap-2">

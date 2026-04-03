@@ -254,6 +254,49 @@
 }
 
 @layer utilities {
+  /* ── Section header label ────────────────────────────────────────── */
+  .section-header {
+    font-family: var(--font-mono);
+    font-size: 8px;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    opacity: 0.6;
+    margin-bottom: 16px;
+    margin-top: 40px;
+  }
+
+  .dark .section-header,
+  :root .section-header {
+    color: #A8C4D4;
+  }
+
+  .light .section-header {
+    color: rgba(13, 13, 30, 0.4);
+  }
+
+  /* ── Spacing system ────────────────────────────────────────────── */
+  .page-container {
+    padding-left: 24px;
+    padding-right: 24px;
+    padding-top: 48px;
+  }
+
+  @media (min-width: 768px) {
+    .page-container {
+      padding-left: 40px;
+      padding-right: 40px;
+    }
+  }
+
+  .card-grid {
+    display: grid;
+    gap: 1px;
+  }
+
+  .section-gap {
+    margin-top: 48px;
+  }
+
   /* ── Predictiv. card — no radius, no shadow, 1px border ───────── */
   .predictiv-card {
     background: hsl(var(--card));

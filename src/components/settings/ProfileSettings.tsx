@@ -207,7 +207,7 @@ export const ProfileSettings = ({ onSaveStart, onSaveComplete }: ProfileSettings
 
         {/* ── Athletic Profile ───────────────────────────────────────────── */}
         <div className="pt-4 border-t border-border/40">
-          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-4">Athletic Profile</p>
+          <p className="section-header">Athletic Profile</p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
 
             <div>

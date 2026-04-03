@@ -179,7 +179,7 @@ export const SessionDetailSheet = ({
             <div className="p-4 space-y-5">
               {/* Load Metrics */}
               <section>
-                <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">
+                <h4 className="section-header">
                   Load Metrics
                 </h4>
                 <div className="bg-card/50  border border-border/40 px-3 divide-y divide-border/30">
@@ -208,7 +208,7 @@ export const SessionDetailSheet = ({
 
               {/* Physiological Data */}
               <section>
-                <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">
+                <h4 className="section-header">
                   Physiological Data
                 </h4>
                 <div className="bg-card/50  border border-border/40 px-3 divide-y divide-border/30">
@@ -223,7 +223,7 @@ export const SessionDetailSheet = ({
 
               {/* Recovery Context */}
               <section>
-                <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">
+                <h4 className="section-header">
                   Recovery Context
                 </h4>
                 <div className="bg-card/50  border border-border/40 px-3 divide-y divide-border/30">

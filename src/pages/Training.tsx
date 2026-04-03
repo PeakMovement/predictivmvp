@@ -399,7 +399,7 @@ export const Training = () => {
 
   const trainingContent = (
     <TooltipProvider>
-      <div className="container mx-auto px-4 md:px-6 pt-6 md:pt-8 max-w-7xl overflow-x-hidden">
+      <div className="container mx-auto px-6 md:px-10 pt-12 max-w-7xl overflow-x-hidden">
           {/* Header */}
           <LayoutBlock
             blockId="header"
@@ -521,8 +521,8 @@ export const Training = () => {
                     className="mb-4"
                   />
                   {/* ── Recovery ── */}
-                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-2">Recovery</p>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4 mb-6">
+                  <p className="section-header">Recovery</p>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-px mb-12">
                     <CircularGauge title="Readiness" value={wearableData?.readiness_score ?? 0} maxValue={100} unit="%" />
                     <CircularGauge title="Body Battery" value={wearableData?.body_battery_end ?? wearableData?.body_battery_max ?? 0} maxValue={100} unit="%" />
                     <CircularGauge title="Avg Stress" value={wearableData?.stress_avg ? Math.round(wearableData.stress_avg) : 0} maxValue={100} unit="" />
@@ -532,8 +532,8 @@ export const Training = () => {
                   </div>
 
                   {/* ── Performance ── */}
-                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-2">Performance</p>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4 mb-6">
+                  <p className="section-header">Performance</p>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-px mb-12">
                     <CircularGauge title="VO₂ Max" value={wearableData?.vo2_max ? parseFloat(wearableData.vo2_max.toFixed(1)) : 0} maxValue={70} unit="mL/kg" />
                     <CircularGauge title="Intensity Mod" value={wearableData?.intensity_minutes_moderate ?? 0} maxValue={150} unit="min" />
                     <CircularGauge title="Intensity Vig" value={wearableData?.intensity_minutes_vigorous ?? 0} maxValue={75} unit="min" />
@@ -547,8 +547,8 @@ export const Training = () => {
                   </div>
 
                   {/* ── Load ── */}
-                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-2">Load</p>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
+                  <p className="section-header">Load</p>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-px">
                     <CircularGauge title="Monotony" value={latestAvailableTrend?.monotony ? parseFloat(latestAvailableTrend.monotony.toFixed(1)) : 0} maxValue={5} unit="ratio" />
                     <CircularGauge title="Strain" value={latestAvailableTrend?.strain ? Math.round(latestAvailableTrend.strain) : 0} maxValue={200} unit="TSS" />
                     <CircularGauge title="Fatigue Index" value={fatigueIndex} maxValue={100} unit="%" />

@@ -132,7 +132,7 @@ export const DailyPlanView = ({ selectedDate, onDateChange }: DailyPlanViewProps
       {/* Date Navigation */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-foreground">
+          <h2 className="text-2xl font-display font-light text-foreground">
             {format(selectedDate, "EEEE, MMMM d, yyyy")}
           </h2>
           <p className="text-sm text-muted-foreground mt-1">

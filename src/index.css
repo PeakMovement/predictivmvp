@@ -177,7 +177,8 @@
     @apply text-foreground;
     font-family: var(--font-ui);
     font-weight: 400;
-    letter-spacing: 0.04em;
+    letter-spacing: 0.4px;
+    line-height: 1.75;
     min-height: 100vh;
     min-height: -webkit-fill-available;
     padding-bottom: env(safe-area-inset-bottom);
@@ -231,6 +232,38 @@
       padding-left: max(0px, env(safe-area-inset-left));
       padding-right: max(0px, env(safe-area-inset-right));
     }
+  }
+
+  /* ── Typography refinement ────────────────────────────────────────── */
+
+  /* Rajdhani body text */
+  p, li, span, div {
+    line-height: 1.75;
+  }
+
+  /* Space Mono — labels, identifiers, data */
+  .font-mono, [class*="font-mono"] {
+    line-height: 1.6;
+    letter-spacing: 0.8px;
+  }
+
+  /* Space Mono tiny labels (section headers, eyebrows) */
+  .section-header,
+  [class*="text-\\[7px\\]"],
+  [class*="text-\\[8px\\]"],
+  [class*="text-\\[9px\\]"] {
+    letter-spacing: 3px;
+  }
+
+  /* Cormorant Garamond display — metric numbers */
+  .font-display, [class*="font-display"] {
+    line-height: 1;
+    font-weight: 300;
+  }
+
+  /* Remove any text shadows */
+  * {
+    text-shadow: none;
   }
 
   /* Scrollable containers */

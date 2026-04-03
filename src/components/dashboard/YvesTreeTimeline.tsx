@@ -105,7 +105,7 @@ export function YvesTreeTimeline() {
     return (
       <Card className="bg-gradient-to-br from-[#0f172a] to-[#1e293b] border-border/50">
         <CardHeader>
-          <CardTitle className="text-xl font-bold text-foreground flex items-center gap-2">
+          <CardTitle className="text-xl font-display font-light text-foreground flex items-center gap-2">
             🌿 Yves Tree — Adaptive Timeline
           </CardTitle>
         </CardHeader>
@@ -121,7 +121,7 @@ export function YvesTreeTimeline() {
     return (
       <Card className="bg-gradient-to-br from-[#0f172a] to-[#1e293b] border-border/50">
         <CardHeader>
-          <CardTitle className="text-xl font-bold text-foreground">🌿 Yves Tree — Adaptive Timeline</CardTitle>
+          <CardTitle className="text-xl font-display font-light text-foreground">🌿 Yves Tree — Adaptive Timeline</CardTitle>
         </CardHeader>
         <CardContent className="flex items-center justify-center h-64">
           <p className="text-muted-foreground text-sm">{error}</p>
@@ -135,7 +135,7 @@ export function YvesTreeTimeline() {
     return (
       <Card className="bg-gradient-to-br from-[#0f172a] to-[#1e293b] border-border/50">
         <CardHeader>
-          <CardTitle className="text-xl font-bold text-foreground">🌿 Yves Tree — Adaptive Timeline</CardTitle>
+          <CardTitle className="text-xl font-display font-light text-foreground">🌿 Yves Tree — Adaptive Timeline</CardTitle>
         </CardHeader>
         <CardContent className="flex items-center justify-center h-64">
           <p className="text-muted-foreground text-sm text-center">
@@ -150,7 +150,7 @@ export function YvesTreeTimeline() {
   return (
     <Card className="bg-gradient-to-br from-[#0f172a] to-[#1e293b] border-border/50 ">
       <CardHeader>
-        <CardTitle className="text-xl font-bold text-foreground flex items-center gap-2">
+        <CardTitle className="text-xl font-display font-light text-foreground flex items-center gap-2">
           🌿 Yves Tree — Adaptive Timeline
         </CardTitle>
       </CardHeader>

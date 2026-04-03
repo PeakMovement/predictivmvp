@@ -78,7 +78,7 @@ export default function PolarCallback() {
                 </div>
               </div>
               <div>
-                <h2 className="text-2xl font-bold text-foreground mb-2">Connecting Polar</h2>
+                <h2 className="text-2xl font-display font-light text-foreground mb-2">Connecting Polar</h2>
                 <p className="text-muted-foreground">Please wait while we connect your device...</p>
               </div>
             </>
@@ -92,7 +92,7 @@ export default function PolarCallback() {
                 </div>
               </div>
               <div>
-                <h2 className="text-2xl font-bold text-foreground mb-2">Polar Connected!</h2>
+                <h2 className="text-2xl font-display font-light text-foreground mb-2">Polar Connected!</h2>
                 <p className="text-muted-foreground">Your Polar device has been successfully connected.</p>
               </div>
               <p className="text-sm text-muted-foreground">Redirecting to your dashboard...</p>
@@ -107,7 +107,7 @@ export default function PolarCallback() {
                 </div>
               </div>
               <div>
-                <h2 className="text-2xl font-bold text-foreground mb-2">Consent Required</h2>
+                <h2 className="text-2xl font-display font-light text-foreground mb-2">Consent Required</h2>
                 <p className="text-muted-foreground mb-4">
                   Please enable mandatory consents for Polar AccessLink at:
                 </p>
@@ -134,7 +134,7 @@ export default function PolarCallback() {
                 </div>
               </div>
               <div>
-                <h2 className="text-2xl font-bold text-foreground mb-2">Missing Authorization Code</h2>
+                <h2 className="text-2xl font-display font-light text-foreground mb-2">Missing Authorization Code</h2>
                 <p className="text-muted-foreground">
                   The authorization process was incomplete. Please try connecting again.
                 </p>
@@ -153,7 +153,7 @@ export default function PolarCallback() {
                 </div>
               </div>
               <div>
-                <h2 className="text-2xl font-bold text-foreground mb-2">Connection Failed</h2>
+                <h2 className="text-2xl font-display font-light text-foreground mb-2">Connection Failed</h2>
                 <p className="text-muted-foreground">
                   {errorMessage || "Something went wrong. Try connecting again."}
                 </p>

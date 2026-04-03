@@ -15,7 +15,7 @@ export function CanvasEmptyState({ onOpenLibrary }: CanvasEmptyStateProps) {
         </div>
       </div>
 
-      <h1 className="text-2xl font-bold text-foreground mb-3">
+      <h1 className="text-2xl font-display font-light text-foreground mb-3">
         Welcome to Your Personal Canvas
       </h1>
       

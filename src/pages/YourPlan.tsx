@@ -784,7 +784,7 @@ const WeeklyInsightsSection = () => {
           </div>
           <div className="bg-glass/30  border border-glass-border  p-3 transition-all duration-300 hover:bg-glass-highlight">
             <p className="text-xs text-muted-foreground mb-1">EWMA Load</p>
-            <p className="text-lg font-bold text-foreground">{avgEWMA.toFixed(0)}</p>
+            <p className="text-lg font-semibold text-foreground">{avgEWMA.toFixed(0)}</p>
           </div>
         </div>
         
@@ -815,7 +815,7 @@ const WeeklyInsightsSection = () => {
           </div>
           <div className="bg-glass/30  border border-glass-border  p-3 transition-all duration-300 hover:bg-glass-highlight">
             <p className="text-xs text-muted-foreground mb-1">Avg HRV</p>
-            <p className="text-lg font-bold text-foreground">{avgHRV.toFixed(1)}</p>
+            <p className="text-lg font-semibold text-foreground">{avgHRV.toFixed(1)}</p>
           </div>
         </div>
 

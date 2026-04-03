@@ -190,7 +190,7 @@ Expected redirect URI: https://predictiv.netlify.app/oauth/callback/oura`;
               <Loader2 className="w-8 h-8 text-white animate-spin" />
             </div>
             <div className="space-y-2">
-              <h2 className="text-2xl font-bold text-foreground">
+              <h2 className="text-2xl font-display font-light text-foreground">
                 Connecting your Ōura account...
               </h2>
               <p className="text-muted-foreground">
@@ -218,7 +218,7 @@ Expected redirect URI: https://predictiv.netlify.app/oauth/callback/oura`;
               </svg>
             </div>
             <div className="space-y-2">
-              <h2 className="text-2xl font-bold text-foreground">
+              <h2 className="text-2xl font-display font-light text-foreground">
                 Connection Successful!
               </h2>
               <p className="text-muted-foreground">
@@ -246,7 +246,7 @@ Expected redirect URI: https://predictiv.netlify.app/oauth/callback/oura`;
               </svg>
             </div>
             <div className="space-y-2">
-              <h2 className="text-2xl font-bold text-foreground">
+              <h2 className="text-2xl font-display font-light text-foreground">
                 Connection Failed
               </h2>
               <p className="text-sm text-muted-foreground">{errorMessage}</p>

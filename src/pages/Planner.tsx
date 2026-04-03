@@ -304,7 +304,7 @@ export function Planner() {
               <Calendar className="h-6 w-6 text-primary" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-foreground">Weekly Planner</h1>
+              <h1 className="text-2xl font-display font-light text-foreground">Weekly Planner</h1>
               <p className="text-sm text-muted-foreground">
                 {format(overview.weekStart, 'MMM d')} to {format(overview.weekEnd, 'MMM d, yyyy')}
               </p>

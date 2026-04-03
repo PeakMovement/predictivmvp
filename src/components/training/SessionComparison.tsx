@@ -168,7 +168,7 @@ export const SessionComparison = ({
                   className="grid grid-cols-[1fr_auto_1fr] gap-4 items-center p-4  border border-border/50 bg-secondary/20"
                 >
                   <div className="text-right">
-                    <p className="text-2xl font-bold text-foreground">
+                    <p className="text-2xl font-display font-light text-foreground">
                       {metric.value1 || 0}
                       <span className="text-sm font-normal text-muted-foreground ml-1">
                         {metric.unit}
@@ -198,7 +198,7 @@ export const SessionComparison = ({
                   </div>
 
                   <div className="text-left">
-                    <p className="text-2xl font-bold text-foreground">
+                    <p className="text-2xl font-display font-light text-foreground">
                       {metric.value2 || 0}
                       <span className="text-sm font-normal text-muted-foreground ml-1">
                         {metric.unit}

@@ -204,14 +204,14 @@ function BaselineCard({ def, baseline, todayVal, sparkData, minVal, maxVal }: Ca
       <div className="grid grid-cols-2 gap-3 mb-4">
         <div>
           <p className="text-xs text-muted-foreground mb-0.5">Your baseline</p>
-          <p className="text-xl font-bold text-foreground">
+          <p className="text-xl font-display font-light text-foreground">
             {fmt(baseline, baseline != null && baseline < 10 ? 1 : 0)}
             <span className="text-xs text-muted-foreground ml-1">{unit}</span>
           </p>
         </div>
         <div>
           <p className="text-xs text-muted-foreground mb-0.5">Today</p>
-          <p className="text-xl font-bold text-foreground">
+          <p className="text-xl font-display font-light text-foreground">
             {fmt(todayVal, todayVal != null && todayVal < 10 ? 1 : 0)}
             <span className="text-xs text-muted-foreground ml-1">{todayVal != null ? unit : ""}</span>
           </p>
@@ -367,7 +367,7 @@ export default function MyBaselines() {
                 <TrendingUp className="w-5 h-5 text-primary" />
               </div>
               <div>
-                <h1 className="text-2xl font-bold text-foreground">Your Baselines</h1>
+                <h1 className="text-2xl font-display font-light text-foreground">Your Baselines</h1>
                 <p className="text-sm text-muted-foreground">Personal normal ranges calculated from your data</p>
               </div>
             </div>

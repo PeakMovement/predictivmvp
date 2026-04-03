@@ -138,7 +138,7 @@ function RiskScoreTimeline({ rows, loading }: { rows: RiskHistoryRow[]; loading:
 
             {/* Score + badge */}
             <div className="shrink-0 flex flex-col items-center gap-1">
-              <span className="text-lg font-bold text-foreground leading-none">{row.score}</span>
+              <span className="text-lg font-semibold text-foreground leading-none">{row.score}</span>
               <span className={cn(
                 "text-[9px] font-bold px-2 py-0.5 border",
                 badge.cls,
@@ -334,7 +334,7 @@ export default function AlertHistory() {
     <div className="container mx-auto px-4 py-6 pb-nav-safe max-w-lg space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-foreground">Alerts</h1>
+        <h1 className="text-2xl font-display font-light text-foreground">Alerts</h1>
         <p className="text-sm text-muted-foreground mt-0.5">
           {countActive > 0 ? `${countActive} active alert${countActive !== 1 ? "s" : ""}` : "No active alerts"}
         </p>

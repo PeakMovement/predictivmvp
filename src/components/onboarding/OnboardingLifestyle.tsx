@@ -1,5 +1,3 @@
-import { Moon, Brain, MessageCircle } from "lucide-react";
-import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { OnboardingChips } from "./OnboardingChips";
 
@@ -9,68 +7,40 @@ interface Props {
 }
 
 const SLEEP_OPTIONS = [
-  {
-    value: "solid",
-    label: "Solid",
-    description: "7-9 hrs, wake rested",
-  },
-  {
-    value: "variable",
-    label: "Variable",
-    description: "Some good, some rough",
-  },
-  {
-    value: "short",
-    label: "Chronically Short",
-    description: "Under 6.5 hrs regularly",
-  },
-  {
-    value: "disrupted",
-    label: "Disrupted",
-    description: "Shift work, kids, irregular",
-  },
+  { value: "solid", label: "Solid", description: "7-9 hrs, wake rested" },
+  { value: "variable", label: "Variable", description: "Some good, some rough" },
+  { value: "short", label: "Chronically Short", description: "Under 6.5 hrs regularly" },
+  { value: "disrupted", label: "Disrupted", description: "Shift work, kids, irregular" },
 ];
 
 const COMPLIANCE_OPTIONS = [
-  {
-    value: "high",
-    label: "High",
-    description: "4-6 questions daily — unlocks deepest insights",
-  },
-  {
-    value: "medium",
-    label: "Medium",
-    description: "1-3 questions most days — good balance",
-  },
-  {
-    value: "low",
-    label: "Low",
-    description: "Data only, minimal questions — passive mode",
-  },
+  { value: "high", label: "High", description: "4-6 questions daily — deepest insights" },
+  { value: "medium", label: "Balanced", description: "1-3 questions most days" },
+  { value: "low", label: "Passive", description: "Data only, minimal questions" },
 ];
 
 const stressLabel = (v: number) =>
-  v <= 3 ? "Low stress" : v <= 6 ? "Medium stress" : "High stress";
+  v <= 3 ? "Low" : v <= 6 ? "Medium" : "High";
 
 export function OnboardingLifestyle({ data, onUpdate }: Props) {
   return (
-    <div className="space-y-6">
+    <div className="space-y-7">
       <div className="text-center space-y-2">
-        <div className="w-14 h-14 bg-primary/10 rounded-full flex items-center justify-center mx-auto">
-          <Brain className="h-7 w-7 text-primary" />
-        </div>
-        <h2 className="text-2xl font-bold text-foreground">Daily Life</h2>
-        <p className="text-sm text-muted-foreground">Stress, sleep, and how much you want Yves involved</p>
+        <p className="font-mono text-[9px] tracking-[0.4em] uppercase text-coldBlue/40">Lifestyle</p>
+        <h2 className="font-display font-light text-3xl text-marble3">Daily Life</h2>
+        <p className="font-sans text-sm text-marble1/50 tracking-wide">Stress, sleep, and how involved Yves should be</p>
       </div>
 
       {/* Stress slider */}
       <div className="space-y-3">
-        <div className="flex items-center gap-2">
-          <Brain className="h-4 w-4 text-muted-foreground" />
-          <Label className="text-sm font-medium">
-            Life Stress Level: <span className="text-primary">{data.stressLevel}/10</span>
-            <span className="text-xs text-muted-foreground ml-2">({stressLabel(data.stressLevel)})</span>
-          </Label>
+        <div className="flex items-baseline justify-between">
+          <label className="font-mono text-[9px] tracking-[0.3em] uppercase text-marble1/40">
+            Life Stress Level
+          </label>
+          <span className="font-mono text-sm text-coldBlue tracking-wider">
+            {data.stressLevel}/10
+            <span className="text-[9px] text-marble1/30 ml-2">{stressLabel(data.stressLevel)}</span>
+          </span>
         </div>
         <Slider
           value={[data.stressLevel]}
@@ -79,7 +49,7 @@ export function OnboardingLifestyle({ data, onUpdate }: Props) {
           max={10}
           step={1}
         />
-        <div className="flex justify-between text-[10px] text-muted-foreground/60">
+        <div className="flex justify-between font-mono text-[8px] tracking-[0.2em] uppercase text-marble1/20">
           <span>Low</span>
           <span>Medium</span>
           <span>High</span>
@@ -88,10 +58,7 @@ export function OnboardingLifestyle({ data, onUpdate }: Props) {
 
       {/* Sleep quality */}
       <div className="space-y-2">
-        <div className="flex items-center gap-2">
-          <Moon className="h-4 w-4 text-muted-foreground" />
-          <Label className="text-sm font-medium">How's Your Sleep?</Label>
-        </div>
+        <label className="font-mono text-[9px] tracking-[0.3em] uppercase text-marble1/40">Sleep Quality</label>
         <OnboardingChips
           options={SLEEP_OPTIONS}
           value={data.sleepQuality}
@@ -101,12 +68,9 @@ export function OnboardingLifestyle({ data, onUpdate }: Props) {
         />
       </div>
 
-      {/* Compliance / check-in willingness */}
+      {/* Compliance */}
       <div className="space-y-2">
-        <div className="flex items-center gap-2">
-          <MessageCircle className="h-4 w-4 text-muted-foreground" />
-          <Label className="text-sm font-medium">Yves Check-in Willingness</Label>
-        </div>
+        <label className="font-mono text-[9px] tracking-[0.3em] uppercase text-marble1/40">Yves Engagement</label>
         <OnboardingChips
           options={COMPLIANCE_OPTIONS}
           value={data.compliance}

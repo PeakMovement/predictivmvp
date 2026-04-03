@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Sparkles, Loader2, Check } from "lucide-react";
+import { Loader2, Check } from "lucide-react";
 import { generateBriefing } from "@/api/dailyBriefing";
 
 interface OnboardingData {
@@ -22,8 +22,8 @@ const LABELS: Record<string, string> = {
   oura: "Oura Ring", garmin: "Garmin", polar: "Polar", none: "No wearable",
   injury_prevention: "Injury Prevention", performance: "Performance", recovery: "Recovery",
   stress: "Stress Management", longevity: "Longevity", rehab: "Rehab / Healing",
-  solid: "Solid sleep", variable: "Variable", short: "Chronically short", disrupted: "Disrupted",
-  high: "High engagement", medium: "Balanced", low: "Passive",
+  solid: "Solid", variable: "Variable", short: "Chronically short", disrupted: "Disrupted",
+  high: "High", medium: "Balanced", low: "Passive",
   "none": "No injuries", overuse: "Overuse history", acute: "Acute history",
   current: "Current injury", multiple: "Multiple / recurring",
 };
@@ -43,16 +43,15 @@ export function OnboardingComplete({ data }: Props) {
   return (
     <div className="space-y-6">
       <div className="text-center space-y-2">
-        <div className="w-14 h-14 bg-primary/10 rounded-full flex items-center justify-center mx-auto">
-          <Sparkles className="h-7 w-7 text-primary" />
-        </div>
-        <h2 className="text-2xl font-bold text-foreground">
-          You're ready{data.firstName ? `, ${data.firstName}` : ""}!
+        <p className="font-mono text-[9px] tracking-[0.4em] uppercase text-coldBlue/40">Complete</p>
+        <h2 className="font-display font-light text-3xl text-marble3">
+          {data.firstName ? `Ready, ${data.firstName}.` : "Ready."}
         </h2>
-        <p className="text-sm text-muted-foreground">Here's your profile at a glance</p>
+        <p className="font-sans text-sm text-marble1/50 tracking-wide">Your profile at a glance</p>
       </div>
 
-      <div className="bg-card/50 border border-border/50 rounded-xl p-4 space-y-3">
+      {/* Summary */}
+      <div className="border border-line divide-y divide-line">
         <SummaryRow label="Wearables" value={data.wearables.map(label).join(", ") || "—"} />
         <SummaryRow label="Sports" value={data.sports.map(label).join(", ") || "—"} />
         <SummaryRow label="Goals" value={data.healthGoals.map(label).join(", ") || "—"} />
@@ -62,29 +61,30 @@ export function OnboardingComplete({ data }: Props) {
         <SummaryRow label="Engagement" value={label(data.compliance)} />
       </div>
 
+      {/* Briefing status */}
       <div className="text-center">
         {generating ? (
-          <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
-            <Loader2 className="h-4 w-4 animate-spin" />
-            Generating your first briefing…
+          <div className="flex items-center justify-center gap-2">
+            <Loader2 className="h-3.5 w-3.5 animate-spin text-coldBlue/50" />
+            <span className="font-mono text-[10px] tracking-wider text-marble1/40">Generating first briefing...</span>
           </div>
         ) : briefingReady ? (
-          <div className="flex items-center justify-center gap-2 text-sm text-green-600 dark:text-green-400 font-medium">
-            <Check className="h-4 w-4" />
-            Your first briefing is ready on the dashboard.
+          <div className="flex items-center justify-center gap-2">
+            <Check className="h-3.5 w-3.5 text-bioGreen" />
+            <span className="font-mono text-[10px] tracking-wider text-bioGreen/80">Briefing ready on dashboard.</span>
           </div>
         ) : (
-          <p className="text-sm text-muted-foreground">
-            Your dashboard will generate a briefing once your data syncs.
+          <p className="font-mono text-[10px] tracking-wider text-marble1/30">
+            Dashboard will generate a briefing once data syncs.
           </p>
         )}
       </div>
 
-      <div className="bg-gradient-to-r from-primary/10 to-purple-500/10 rounded-lg p-4">
-        <ul className="text-sm text-muted-foreground space-y-1">
-          <li>• Your dashboard updates automatically as data syncs</li>
-          <li>• Check back daily for fresh insights from Yves</li>
-          <li>• Connect your wearable in Settings if you haven't yet</li>
+      <div className="border border-line p-4">
+        <ul className="font-sans text-xs text-marble1/40 tracking-wide space-y-1.5 leading-relaxed">
+          <li>Dashboard updates automatically as data syncs</li>
+          <li>Check back daily for fresh insights from Yves</li>
+          <li>Connect your wearable in Settings</li>
         </ul>
       </div>
     </div>
@@ -93,9 +93,9 @@ export function OnboardingComplete({ data }: Props) {
 
 function SummaryRow({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex justify-between items-center text-sm">
-      <span className="text-muted-foreground">{label}</span>
-      <span className="text-foreground font-medium text-right max-w-[60%]">{value}</span>
+    <div className="flex justify-between items-center px-4 py-3">
+      <span className="font-mono text-[9px] tracking-[0.25em] uppercase text-marble1/35">{label}</span>
+      <span className="font-sans text-sm text-marble2 text-right max-w-[60%] tracking-wide">{value}</span>
     </div>
   );
 }

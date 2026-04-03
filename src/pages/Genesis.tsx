@@ -1,18 +1,9 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import {
-  Activity,
-  Brain,
-  Shield,
-  ChevronRight,
-  ArrowRight,
-  Loader2,
-} from "lucide-react";
+import { ArrowRight, Loader2 } from "lucide-react";
 
 type View = "hero" | "signup";
 
@@ -65,7 +56,6 @@ export default function Genesis() {
 
       if (data.user) {
         if (data.session) {
-          // Auto-confirmed — seed profile and go to onboarding
           try {
             await supabase
               .from("user_profiles")
@@ -75,13 +65,11 @@ export default function Genesis() {
           return;
         }
 
-        // Email confirmation required — show message and stay on signup view
         setError("");
         toast({
           title: "Check your email",
           description: "We've sent you a verification link. Click it to get started.",
         });
-        // Don't navigate away — user stays here until they confirm email and log in
       }
     } catch (err: any) {
       setError(err.message || "Something went wrong");
@@ -91,130 +79,128 @@ export default function Genesis() {
   };
 
   return (
-    <div className="min-h-screen bg-background text-foreground overflow-hidden">
-      {/* ── Ambient glow ──────────────────────────────────────────── */}
+    <div className="min-h-screen bg-void text-marble2 overflow-hidden">
+      {/* ── Ambient radial ────────────────────────────────────────── */}
       <div className="fixed inset-0 pointer-events-none">
-        <div className="absolute top-[-20%] left-[-10%] w-[600px] h-[600px] rounded-full bg-primary/5 blur-[120px]" />
-        <div className="absolute bottom-[-20%] right-[-10%] w-[500px] h-[500px] rounded-full bg-purple-500/5 blur-[100px]" />
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-coldBlue/[0.03] blur-[100px]" />
       </div>
 
       {/* ── Navigation ────────────────────────────────────────────── */}
-      <nav className="relative z-10 flex items-center justify-between px-6 py-5 max-w-6xl mx-auto">
-        <span className="text-lg font-bold tracking-tight text-foreground">
-          PREDICTIV
+      <nav className="relative z-10 flex items-center justify-between px-6 py-6 max-w-5xl mx-auto">
+        <span className="font-mono text-[10px] tracking-[0.35em] uppercase text-coldBlue/60">
+          Predictiv.
         </span>
-        <Button
-          variant="ghost"
-          size="sm"
+        <button
           onClick={() => navigate("/login")}
-          className="text-muted-foreground hover:text-foreground"
+          className="font-mono text-[10px] tracking-[0.25em] uppercase text-marble1/50 hover:text-marble2 transition-colors"
         >
           Sign In
-        </Button>
+        </button>
       </nav>
 
       {view === "hero" ? (
-        /* ── Hero Section ──────────────────────────────────────────── */
-        <main className="relative z-10 flex flex-col items-center text-center px-6 pt-16 pb-24 max-w-4xl mx-auto">
-          {/* Badge */}
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-primary/20 bg-primary/5 text-xs text-primary mb-8">
-            <Activity className="h-3 w-3" />
+        <main className="relative z-10 flex flex-col items-center text-center px-6 pt-20 pb-24 max-w-3xl mx-auto animate-fade-in">
+          {/* ── Eyebrow ──────────────────────────────────────────── */}
+          <p className="font-mono text-[9px] tracking-[0.4em] uppercase text-coldBlue/50 mb-10">
             AI-Powered Health Intelligence
-          </div>
-
-          {/* Headline */}
-          <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold leading-[1.1] tracking-tight mb-6">
-            <span className="text-foreground">Predictiv.</span>
-            <br />
-            <span className="bg-gradient-to-r from-primary to-purple-400 bg-clip-text text-transparent">
-              The Future Of Health Today.
-            </span>
-          </h1>
-
-          {/* Subheadline */}
-          <p className="text-lg text-muted-foreground max-w-xl mb-10 leading-relaxed">
-            Connect your wearable. Answer 7 questions.
-            Get an AI health coach that knows your body, your sport, and your goals.
           </p>
 
-          {/* CTA */}
-          <Button
-            size="lg"
-            onClick={() => setView("signup")}
-            className="text-base px-8 py-6 rounded-xl gap-2 shadow-[0_0_24px_rgba(139,92,246,0.2)] hover:shadow-[0_0_32px_rgba(139,92,246,0.3)] transition-all"
-          >
-            Get Started
-            <ArrowRight className="h-5 w-5" />
-          </Button>
+          {/* ── Headline ─────────────────────────────────────────── */}
+          <h1 className="font-display font-light text-5xl sm:text-6xl md:text-7xl leading-[1.05] tracking-tight text-marble3 mb-4">
+            Predictiv.
+          </h1>
+          <h2 className="font-display font-light italic text-2xl sm:text-3xl md:text-4xl leading-tight text-gold/80 mb-10">
+            The Future Of Health Today.
+          </h2>
 
-          <p className="text-xs text-muted-foreground/60 mt-4">
-            Free to start. No credit card required.
+          {/* ── Subheadline ──────────────────────────────────────── */}
+          <p className="font-sans text-base text-marble1/70 max-w-lg mb-12 leading-relaxed tracking-wide">
+            Connect your wearable. Answer 7 questions.
+            Get an AI coach that knows your body, your sport, and your goals.
+          </p>
+
+          {/* ── CTA ──────────────────────────────────────────────── */}
+          <button
+            onClick={() => setView("signup")}
+            className="group bg-marble3 text-void font-sans font-semibold text-xs tracking-[0.25em] uppercase px-10 py-4 hover:opacity-90 active:scale-[0.97] active:opacity-85 transition-all duration-100"
+          >
+            Begin
+            <ArrowRight className="inline-block h-3.5 w-3.5 ml-3 group-hover:translate-x-0.5 transition-transform" />
+          </button>
+
+          <p className="font-mono text-[9px] tracking-[0.2em] uppercase text-marble1/30 mt-6">
+            Free to start
           </p>
 
           {/* ── Feature cards ────────────────────────────────────── */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-20 w-full">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-px mt-24 w-full bg-line">
             <FeatureCard
-              icon={<Activity className="h-5 w-5" />}
+              eyebrow="01"
               title="Wearable Intelligence"
-              description="Oura, Garmin, or Polar — we decode your biometrics into actionable formulas."
+              description="Oura, Garmin, or Polar decoded into actionable formulas."
             />
             <FeatureCard
-              icon={<Brain className="h-5 w-5" />}
+              eyebrow="02"
               title="AI Coach (Yves)"
-              description="Daily briefings, risk alerts, and personalised recommendations — not generic advice."
+              description="Daily briefings and personalised risk alerts. Not generic advice."
             />
             <FeatureCard
-              icon={<Shield className="h-5 w-5" />}
+              eyebrow="03"
               title="Injury Prevention"
-              description="ACWR monitoring, load tracking, and recovery scoring to keep you training safely."
+              description="ACWR monitoring, load tracking, and recovery scoring."
             />
           </div>
 
-          {/* ── How it works ──────────────────────────────────────── */}
+          {/* ── How it works ─────────────────────────────────────── */}
           <div className="mt-24 w-full">
-            <h2 className="text-2xl font-bold mb-10">How it works</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-4 gap-6">
-              <Step number="1" title="Sign Up" description="Create your account in 30 seconds" />
-              <Step number="2" title="Answer 7 Questions" description="Tell us about your training, goals, and lifestyle" />
-              <Step number="3" title="Connect Your Device" description="Link Oura, Garmin, or Polar" />
-              <Step number="4" title="Get Your First Briefing" description="Yves analyses your data and starts coaching" />
+            <p className="font-mono text-[9px] tracking-[0.4em] uppercase text-coldBlue/40 mb-10">
+              How It Works
+            </p>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-6">
+              <Step number="01" title="Sign Up" description="30 seconds to create your account" />
+              <Step number="02" title="7 Questions" description="Training, goals, and lifestyle" />
+              <Step number="03" title="Connect Device" description="Link Oura, Garmin, or Polar" />
+              <Step number="04" title="First Briefing" description="Yves analyses and begins" />
             </div>
           </div>
 
-          {/* ── Bottom CTA ────────────────────────────────────────── */}
+          {/* ── Bottom CTA ───────────────────────────────────────── */}
           <div className="mt-24">
-            <Button
-              size="lg"
+            <button
               onClick={() => setView("signup")}
-              className="text-base px-8 py-6 rounded-xl gap-2"
+              className="border border-marble1/20 text-marble2 font-sans font-semibold text-xs tracking-[0.25em] uppercase px-10 py-4 hover:border-marble1/40 active:scale-[0.97] active:opacity-85 transition-all duration-100"
             >
               Start Your Journey
-              <ChevronRight className="h-5 w-5" />
-            </Button>
+            </button>
           </div>
 
-          {/* ── Footer ────────────────────────────────────────────── */}
-          <footer className="mt-20 pt-8 border-t border-border/30 w-full text-center">
-            <p className="text-xs text-muted-foreground/50">
-              <a href="/terms" className="hover:underline">Terms</a>
-              {" · "}
-              <a href="/privacy" className="hover:underline">Privacy</a>
-              {" · "}
-              &copy; {new Date().getFullYear()} Predictiv
+          {/* ── Footer ───────────────────────────────────────────── */}
+          <footer className="mt-20 pt-8 border-t border-line w-full text-center">
+            <p className="font-mono text-[9px] tracking-[0.2em] uppercase text-marble1/30">
+              <a href="/terms" className="hover:text-marble1/50">Terms</a>
+              <span className="mx-3">&middot;</span>
+              <a href="/privacy" className="hover:text-marble1/50">Privacy</a>
+              <span className="mx-3">&middot;</span>
+              &copy; {new Date().getFullYear()} Predictiv.
             </p>
           </footer>
         </main>
       ) : (
         /* ── Signup Form ───────────────────────────────────────────── */
-        <main className="relative z-10 flex flex-col items-center px-6 pt-12 pb-24 max-w-md mx-auto">
-          <h2 className="text-2xl font-bold mb-2">Create Your Account</h2>
-          <p className="text-sm text-muted-foreground mb-8">
-            Then we'll ask you 7 quick questions to set up your profile
+        <main className="relative z-10 flex flex-col items-center px-6 pt-16 pb-24 max-w-sm mx-auto animate-fade-in">
+          <p className="font-mono text-[9px] tracking-[0.4em] uppercase text-coldBlue/50 mb-6">
+            Create Account
+          </p>
+          <h2 className="font-display font-light text-3xl text-marble3 mb-2">Begin here.</h2>
+          <p className="font-sans text-sm text-marble1/50 mb-10">
+            Then 7 quick questions to set up your profile.
           </p>
 
           <form onSubmit={handleSignup} className="w-full space-y-5">
-            <div className="space-y-2">
-              <Label htmlFor="username">Name</Label>
+            <div className="space-y-1.5">
+              <label htmlFor="username" className="font-mono text-[9px] tracking-[0.3em] uppercase text-marble1/40">
+                Name
+              </label>
               <Input
                 id="username"
                 placeholder="Your first name"
@@ -222,12 +208,14 @@ export default function Genesis() {
                 onChange={(e) => setUsername(e.target.value)}
                 required
                 disabled={isLoading}
-                className="bg-card border-border"
+                className="bg-surface border-line text-marble2 placeholder:text-marble1/25 font-sans"
               />
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+            <div className="space-y-1.5">
+              <label htmlFor="email" className="font-mono text-[9px] tracking-[0.3em] uppercase text-marble1/40">
+                Email
+              </label>
               <Input
                 id="email"
                 type="email"
@@ -236,12 +224,14 @@ export default function Genesis() {
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 disabled={isLoading}
-                className="bg-card border-border"
+                className="bg-surface border-line text-marble2 placeholder:text-marble1/25 font-sans"
               />
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+            <div className="space-y-1.5">
+              <label htmlFor="password" className="font-mono text-[9px] tracking-[0.3em] uppercase text-marble1/40">
+                Password
+              </label>
               <Input
                 id="password"
                 type="password"
@@ -250,43 +240,48 @@ export default function Genesis() {
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 disabled={isLoading}
-                className="bg-card border-border"
+                className="bg-surface border-line text-marble2 placeholder:text-marble1/25 font-sans"
               />
             </div>
 
             {error && (
-              <p className="text-sm text-destructive text-center">{error}</p>
+              <p className="font-mono text-[10px] tracking-wider text-critical text-center">{error}</p>
             )}
 
-            <Button type="submit" className="w-full py-5 text-base" disabled={isLoading}>
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="w-full bg-marble3 text-void font-sans font-semibold text-xs tracking-[0.25em] uppercase py-4 hover:opacity-90 active:scale-[0.97] active:opacity-85 transition-all duration-100 disabled:opacity-50"
+            >
               {isLoading ? (
-                <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Creating account...</>
+                <span className="flex items-center justify-center gap-2">
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" /> Initialising...
+                </span>
               ) : (
-                <>Create Account <ArrowRight className="h-4 w-4 ml-2" /></>
+                <span className="flex items-center justify-center gap-2">
+                  Create Account <ArrowRight className="h-3.5 w-3.5" />
+                </span>
               )}
-            </Button>
+            </button>
           </form>
 
-          <p className="text-xs text-muted-foreground mt-6 text-center">
+          <p className="font-mono text-[8px] tracking-[0.15em] text-marble1/25 mt-8 text-center leading-relaxed">
             By signing up you agree to our{" "}
-            <a href="/terms" className="underline hover:text-foreground">Terms</a>
+            <a href="/terms" className="underline hover:text-marble1/50">Terms</a>
             {" and "}
-            <a href="/privacy" className="underline hover:text-foreground">Privacy Policy</a>.
+            <a href="/privacy" className="underline hover:text-marble1/50">Privacy Policy</a>.
           </p>
 
           <button
             onClick={() => setView("hero")}
-            className="mt-6 text-sm text-muted-foreground hover:text-foreground transition-colors"
+            className="mt-8 font-mono text-[10px] tracking-[0.2em] uppercase text-marble1/40 hover:text-marble2 transition-colors"
           >
             &larr; Back
           </button>
 
-          <p className="mt-4 text-sm text-muted-foreground">
+          <p className="mt-4 font-sans text-sm text-marble1/40">
             Already have an account?{" "}
-            <button
-              onClick={() => navigate("/login")}
-              className="text-primary hover:underline"
-            >
+            <button onClick={() => navigate("/login")} className="text-coldBlue hover:text-ice transition-colors">
               Sign in
             </button>
           </p>
@@ -296,44 +291,24 @@ export default function Genesis() {
   );
 }
 
-// ── Sub-components ───────────────────────────────────────────────────
+/* ── Sub-components ────────────────────────────────────────────────── */
 
-function FeatureCard({
-  icon,
-  title,
-  description,
-}: {
-  icon: React.ReactNode;
-  title: string;
-  description: string;
-}) {
+function FeatureCard({ eyebrow, title, description }: { eyebrow: string; title: string; description: string }) {
   return (
-    <div className="bg-card/30 border border-border/40 rounded-xl p-5 text-left hover:bg-card/50 transition-colors">
-      <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center text-primary mb-3">
-        {icon}
-      </div>
-      <h3 className="font-semibold text-sm mb-1">{title}</h3>
-      <p className="text-xs text-muted-foreground leading-relaxed">{description}</p>
+    <div className="bg-surface p-6 text-left">
+      <p className="font-mono text-[8px] tracking-[0.4em] uppercase text-coldBlue/40 mb-4">{eyebrow}</p>
+      <h3 className="font-sans font-semibold text-sm text-marble2 tracking-wide mb-2">{title}</h3>
+      <p className="font-sans text-xs text-marble1/50 leading-relaxed tracking-wide">{description}</p>
     </div>
   );
 }
 
-function Step({
-  number,
-  title,
-  description,
-}: {
-  number: string;
-  title: string;
-  description: string;
-}) {
+function Step({ number, title, description }: { number: string; title: string; description: string }) {
   return (
     <div className="text-center">
-      <div className="w-10 h-10 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center mx-auto mb-3">
-        <span className="text-sm font-bold text-primary">{number}</span>
-      </div>
-      <h3 className="font-semibold text-sm mb-1">{title}</h3>
-      <p className="text-xs text-muted-foreground">{description}</p>
+      <p className="font-mono text-[10px] tracking-[0.2em] text-coldBlue/50 mb-3">{number}</p>
+      <h3 className="font-sans font-semibold text-sm text-marble2 tracking-wide mb-1">{title}</h3>
+      <p className="font-sans text-xs text-marble1/40 tracking-wide">{description}</p>
     </div>
   );
 }

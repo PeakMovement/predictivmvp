@@ -1,6 +1,3 @@
-import { useState, useEffect } from "react";
-import { ShieldAlert } from "lucide-react";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { OnboardingChips } from "./OnboardingChips";
 
@@ -10,31 +7,11 @@ interface Props {
 }
 
 const INJURY_OPTIONS = [
-  {
-    value: "none",
-    label: "No Significant Injuries",
-    description: "Clean slate — allows aggressive load monitoring",
-  },
-  {
-    value: "overuse",
-    label: "Overuse History",
-    description: "Tendon issues, shin splints, repetitive strain",
-  },
-  {
-    value: "acute",
-    label: "Acute Injuries",
-    description: "Tears, fractures, or surgery in the past",
-  },
-  {
-    value: "current",
-    label: "Currently Managing an Injury",
-    description: "Active rehab or recovery in progress",
-  },
-  {
-    value: "multiple",
-    label: "Multiple / Recurring",
-    description: "Several past or recurring injury patterns",
-  },
+  { value: "none", label: "No Significant Injuries", description: "Clean slate — allows aggressive load monitoring" },
+  { value: "overuse", label: "Overuse History", description: "Tendon issues, shin splints, repetitive strain" },
+  { value: "acute", label: "Acute Injuries", description: "Tears, fractures, or surgery in the past" },
+  { value: "current", label: "Currently Managing an Injury", description: "Active rehab or recovery in progress" },
+  { value: "multiple", label: "Multiple / Recurring", description: "Several past or recurring injury patterns" },
 ];
 
 export function OnboardingInjuryQ({ data, onUpdate }: Props) {
@@ -43,11 +20,9 @@ export function OnboardingInjuryQ({ data, onUpdate }: Props) {
   return (
     <div className="space-y-6">
       <div className="text-center space-y-2">
-        <div className="w-14 h-14 bg-primary/10 rounded-full flex items-center justify-center mx-auto">
-          <ShieldAlert className="h-7 w-7 text-primary" />
-        </div>
-        <h2 className="text-2xl font-bold text-foreground">Injury History</h2>
-        <p className="text-sm text-muted-foreground">This helps Yves calibrate safety thresholds and load advice</p>
+        <p className="font-mono text-[9px] tracking-[0.4em] uppercase text-coldBlue/40">Safety</p>
+        <h2 className="font-display font-light text-3xl text-marble3">Injury History</h2>
+        <p className="font-sans text-sm text-marble1/50 tracking-wide">Helps Yves calibrate safety thresholds</p>
       </div>
 
       <OnboardingChips
@@ -57,7 +32,6 @@ export function OnboardingInjuryQ({ data, onUpdate }: Props) {
           const val = v as string;
           onUpdate({
             injuryHistory: val,
-            // Clear description if switching to "none"
             ...(val === "none" ? { injuryDescription: "" } : {}),
           });
         }}
@@ -66,10 +40,10 @@ export function OnboardingInjuryQ({ data, onUpdate }: Props) {
       />
 
       {showDescription && (
-        <div className="space-y-2 animate-fade-in">
-          <Label htmlFor="injuryDesc" className="text-sm font-medium text-foreground">
-            Brief description of your injury
-          </Label>
+        <div className="space-y-1.5 animate-fade-in">
+          <label htmlFor="injuryDesc" className="font-mono text-[9px] tracking-[0.3em] uppercase text-marble1/40">
+            Brief description
+          </label>
           <Textarea
             id="injuryDesc"
             placeholder="e.g. Left ACL reconstruction 6 months ago, currently in return-to-sport phase..."
@@ -77,15 +51,15 @@ export function OnboardingInjuryQ({ data, onUpdate }: Props) {
             onChange={(e) => onUpdate({ injuryDescription: e.target.value.slice(0, 500) })}
             rows={3}
             maxLength={500}
-            className="bg-card border-border"
+            className="bg-surface border-line text-marble2 placeholder:text-marble1/20 font-sans text-sm"
           />
-          <p className="text-[10px] text-muted-foreground/60 text-right">{data.injuryDescription.length}/500</p>
+          <p className="font-mono text-[8px] tracking-wider text-marble1/20 text-right">{data.injuryDescription.length}/500</p>
         </div>
       )}
 
-      <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-3">
-        <p className="text-xs text-blue-600 dark:text-blue-400">
-          This is private — it's only used to keep AI recommendations safe.
+      <div className="border border-line p-3">
+        <p className="font-mono text-[8px] tracking-[0.15em] text-coldBlue/30">
+          This information is private and only used to calibrate safety thresholds.
         </p>
       </div>
     </div>

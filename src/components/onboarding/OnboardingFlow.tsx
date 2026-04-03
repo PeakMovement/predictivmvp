@@ -322,32 +322,36 @@ export const OnboardingFlow = ({ onComplete, onSkip }: OnboardingFlowProps) => {
 
   // ── Render ─────────────────────────────────────────────────────────
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
-      <Card className="w-full max-w-2xl relative">
-        <Button variant="ghost" size="icon" onClick={handleSkip} className="absolute top-4 right-4 z-10">
+    <div className="min-h-screen bg-void flex items-center justify-center p-4">
+      <div className="w-full max-w-2xl relative bg-surface border border-line">
+        {/* Close / skip */}
+        <button onClick={handleSkip} className="absolute top-5 right-5 z-10 text-marble1/30 hover:text-marble2 transition-colors">
           <X className="h-4 w-4" />
-        </Button>
+        </button>
 
-        <CardContent className="pt-8 pb-8 px-6">
+        <div className="pt-8 pb-8 px-6 sm:px-10">
           <div className="space-y-6">
             {/* Progress */}
-            <div className="space-y-2">
+            <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <span className="text-xs text-muted-foreground">
+                <span className="font-mono text-[9px] tracking-[0.3em] uppercase text-marble1/40">
                   {step + 1} of {TOTAL_STEPS} — {STEP_TITLES[step]}
                 </span>
-                <span className="text-xs font-medium text-primary">{Math.round(progress)}%</span>
+                <span className="font-mono text-[9px] tracking-[0.2em] text-coldBlue/50">{Math.round(progress)}%</span>
               </div>
-              <Progress value={progress} className="h-1.5" />
+              {/* Hairline progress bar */}
+              <div className="h-px bg-line w-full">
+                <div className="h-px bg-coldBlue/60 transition-all duration-500" style={{ width: `${progress}%` }} />
+              </div>
               {/* Dot indicators */}
               <div className="flex justify-center gap-1.5 pt-1">
                 {STEP_TITLES.map((_, i) => (
                   <div
                     key={i}
-                    className={`h-1.5 rounded-full transition-all duration-300 ${
-                      i < step ? "w-3 bg-primary" :
-                      i === step ? "w-5 bg-primary" :
-                      "w-1.5 bg-border"
+                    className={`h-px transition-all duration-300 ${
+                      i < step ? "w-3 bg-coldBlue/60" :
+                      i === step ? "w-6 bg-coldBlue" :
+                      "w-1.5 bg-marble1/15"
                     }`}
                   />
                 ))}
@@ -355,7 +359,7 @@ export const OnboardingFlow = ({ onComplete, onSkip }: OnboardingFlowProps) => {
             </div>
 
             {/* Screen content */}
-            <div className="min-h-[420px]">
+            <div className="min-h-[420px] animate-fade-in" key={step}>
               {step === 0 && <OnboardingWelcome onNext={handleNext} onBack={handleBack} />}
               {step === 1 && <OnboardingAboutYou data={data} onUpdate={update} />}
               {step === 2 && <OnboardingWearableQ data={data} onUpdate={update} />}
@@ -368,22 +372,30 @@ export const OnboardingFlow = ({ onComplete, onSkip }: OnboardingFlowProps) => {
 
             {/* Validation error */}
             {validationError && (
-              <p className="text-sm text-destructive text-center">{validationError}</p>
+              <p className="font-mono text-[10px] tracking-wider text-critical text-center">{validationError}</p>
             )}
 
             {/* Navigation */}
-            <div className="flex items-center justify-between pt-4 border-t">
-              <Button variant="ghost" onClick={handleSkip} className="text-muted-foreground text-sm">
-                Skip for now
-              </Button>
-              <div className="flex gap-2">
+            <div className="flex items-center justify-between pt-5 border-t border-line">
+              <button onClick={handleSkip} className="font-mono text-[9px] tracking-[0.2em] uppercase text-marble1/30 hover:text-marble1/60 transition-colors">
+                Skip
+              </button>
+              <div className="flex gap-3">
                 {step > 0 && (
-                  <Button variant="outline" onClick={handleBack}>Back</Button>
+                  <button
+                    onClick={handleBack}
+                    className="border border-marble1/15 text-marble1/60 font-sans font-semibold text-xs tracking-[0.2em] uppercase px-6 py-3 hover:border-marble1/30 active:scale-[0.97] transition-all duration-100"
+                  >
+                    Back
+                  </button>
                 )}
-                <Button onClick={handleNext}>
-                  {step === TOTAL_STEPS - 1 ? "Go to Dashboard" : step === 0 ? "Let's Go" : "Next"}
-                  {step < TOTAL_STEPS - 1 && <ChevronRight className="h-4 w-4 ml-1" />}
-                </Button>
+                <button
+                  onClick={handleNext}
+                  className="bg-marble3 text-void font-sans font-semibold text-xs tracking-[0.25em] uppercase px-8 py-3 hover:opacity-90 active:scale-[0.97] active:opacity-85 transition-all duration-100 flex items-center gap-2"
+                >
+                  {step === TOTAL_STEPS - 1 ? "Go to Dashboard" : step === 0 ? "Begin" : "Next"}
+                  {step < TOTAL_STEPS - 1 && <ChevronRight className="h-3.5 w-3.5" />}
+                </button>
               </div>
             </div>
           </div>

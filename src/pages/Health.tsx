@@ -393,14 +393,13 @@ export const Health = () => {
                 )}
               </div>
 
-              {/* Stale sync warning */}
+              {/* Sync status */}
               {lastSyncDate && (
-                <div className={`mt-4 flex items-center justify-center gap-1.5 text-xs ${isStale ? "text-amber-500" : "text-muted-foreground"}`}>
-                  {isStale && <AlertTriangle className="h-3 w-3" />}
-                  <span>
+                <div className="mt-4 flex items-center justify-center">
+                  <span className={`font-mono text-[7px] tracking-[3px] uppercase ${isStale ? "text-amber" : "text-bioGreen"}`}>
                     {isStale
-                      ? `Data may be out of date — synced ${formatDistanceToNowStrict(lastSyncDate)} ago`
-                      : `Synced ${formatDistanceToNowStrict(lastSyncDate)} ago`}
+                      ? `Wearable · Sync Required`
+                      : `Wearable · Synced`}
                   </span>
                 </div>
               )}

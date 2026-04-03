@@ -76,11 +76,11 @@ export const BottomNavigation = ({ activeTab, onNavigate }: BottomNavigationProp
                       "min-h-[72px] touch-manipulation",
                       isActive
                         ? "bg-surface text-coldBlue"
-                        : "bg-deep text-marble1/40 hover:text-marble1/70"
+                        : "bg-deep text-[rgba(200,194,190,0.35)] hover:text-marble1/60"
                     )}
                   >
                     <div className="relative mb-1.5">
-                      <Icon className={cn("h-5 w-5", isActive ? "text-coldBlue" : "text-marble1/35")} />
+                      <Icon className={cn("h-5 w-5", isActive ? "text-coldBlue" : "text-[rgba(200,194,190,0.25)]")} />
                       {showBadge && (
                         <span className="absolute -top-1 -right-1 h-2 w-2 bg-critical" />
                       )}
@@ -138,11 +138,11 @@ export const BottomNavigation = ({ activeTab, onNavigate }: BottomNavigationProp
             aria-current={isActive ? 'page' : undefined}
             className={cn(
               "flex flex-col items-center justify-center transition-colors",
-              isActive ? "text-coldBlue" : "text-marble1/35 hover:text-marble1/60"
+              isActive ? "text-coldBlue" : "text-[rgba(200,194,190,0.35)] hover:text-marble1/60"
             )}
           >
             <div className="relative mb-1">
-              <Icon className={cn("h-5 w-5", isActive ? "text-coldBlue" : "text-marble1/35")} />
+              <Icon className={cn("h-5 w-5", isActive ? "text-coldBlue" : "text-[rgba(200,194,190,0.25)]")} />
               {showBadge && (
                 <span className="absolute -top-1 -right-1 h-1.5 w-1.5 bg-critical" />
               )}

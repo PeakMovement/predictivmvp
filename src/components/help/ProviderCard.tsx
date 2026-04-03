@@ -27,7 +27,7 @@ export function ProviderCard({ provider, onSelect, onBook }: ProviderCardProps) 
   };
 
   return (
-    <Card className="hover:shadow-lg transition-shadow cursor-pointer">
+    <Card className="hover: transition-shadow cursor-pointer">
       <CardContent className="p-6">
         <div className="flex gap-4">
           <Avatar className="h-16 w-16">

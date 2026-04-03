@@ -32,7 +32,7 @@ export function SuggestedQuestions({ onSelectQuestion, onSend, disabled }: Sugge
             key={q}
             disabled={disabled}
             onClick={() => handleTap(q)}
-            className="w-full text-left rounded-xl border border-border/50 bg-muted/30 px-4 py-3 text-sm text-foreground hover:bg-muted/60 hover:border-primary/30 active:scale-[0.98] transition-all touch-manipulation disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full text-left  border border-border/50 bg-muted/30 px-4 py-3 text-sm text-foreground hover:bg-muted/60 hover:border-primary/30 active:scale-[0.98] transition-all touch-manipulation disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {q}
           </button>

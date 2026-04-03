@@ -77,14 +77,14 @@ export function SymptomCheckInSheet() {
             <button
               className={cn(
                 "fixed top-[8rem] right-4 sm:right-6 z-50",
-                "w-12 h-12 rounded-xl bg-glass backdrop-blur-xl border-glass-border",
+                "w-12 h-12  bg-glass  border-glass-border",
                 "flex items-center justify-center",
                 "hover:bg-glass-highlight hover:scale-110 active:scale-95",
                 "transition-all duration-300 ease-out transform-gpu animate-fade-in",
               )}
               aria-label="Symptom Check In"
             >
-              <Stethoscope size={20} className="text-primary drop-shadow-[0_0_8px_hsl(var(--primary)/0.6)]" />
+              <Stethoscope size={20} className="text-primary drop-" />
             </button>
           </DialogTrigger>
         </TooltipTrigger>
@@ -93,10 +93,10 @@ export function SymptomCheckInSheet() {
         </TooltipContent>
       </Tooltip>
 
-      <DialogContent className="sm:max-w-lg max-h-[80vh] p-0 rounded-2xl overflow-hidden border-border/50 bg-background shadow-xl">
+      <DialogContent className="sm:max-w-lg max-h-[80vh] p-0  overflow-hidden border-border/50 bg-background shadow-xl">
         <DialogHeader className="px-6 pt-6 pb-4 border-b border-border/30">
           <DialogTitle className="flex items-center gap-3 text-foreground">
-            <div className="p-2 rounded-xl bg-primary/20">
+            <div className="p-2  bg-primary/20">
               <Stethoscope className="h-5 w-5 text-primary" />
             </div>
             Symptom Check In
@@ -108,7 +108,7 @@ export function SymptomCheckInSheet() {
             <SymptomCheckInForm onSuccess={handleSuccess} onRequestClose={() => setOpen(false)} />
 
             {(latestCheckinId || isLoading) && (
-              <Card className="bg-card/50 backdrop-blur-xl border-border/50">
+              <Card className="bg-card/50  border-border/50">
                 <CardHeader className="flex flex-row items-center justify-between pb-2">
                   <CardTitle className="flex items-center gap-2 text-foreground text-base">
                     <Brain className="h-5 w-5 text-primary" />
@@ -142,7 +142,7 @@ export function SymptomCheckInSheet() {
 
                   {interpretation && (
                     <div className="space-y-4">
-                      <div className="p-3 rounded-lg bg-secondary/50">
+                      <div className="p-3  bg-secondary/50">
                         <p className="text-foreground text-sm">{interpretation.summary}</p>
                       </div>
 

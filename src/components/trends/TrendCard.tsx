@@ -54,7 +54,7 @@ export const TrendCard = ({ metric, onRefresh }: TrendCardProps) => {
   const statusColor = getStatusColor();
 
   return (
-    <Card className="bg-glass backdrop-blur-xl border-glass-border rounded-2xl p-6 shadow-glass min-w-[320px] md:min-w-[400px]">
+    <Card className="bg-glass  border-glass-border  p-6  min-w-[320px] md:min-w-[400px]">
       {/* Header */}
       <div className="flex items-start justify-between mb-4">
         <div>
@@ -92,7 +92,7 @@ export const TrendCard = ({ metric, onRefresh }: TrendCardProps) => {
           <button
             key={range}
             onClick={() => setTimeRange(range)}
-            className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
+            className={`px-3 py-1  text-sm font-medium transition-colors ${
               timeRange === range
                 ? "bg-primary text-primary-foreground"
                 : "bg-glass-highlight text-muted-foreground hover:text-foreground"
@@ -169,7 +169,7 @@ export const TrendCard = ({ metric, onRefresh }: TrendCardProps) => {
           </AreaChart>
         </ResponsiveContainer>
       ) : (
-        <div className="h-[280px] flex items-center justify-center bg-glass-highlight rounded-xl">
+        <div className="h-[280px] flex items-center justify-center bg-glass-highlight ">
           <div className="text-center space-y-2">
             <p className="text-sm text-muted-foreground">No data available</p>
             <p className="text-xs text-muted-foreground">

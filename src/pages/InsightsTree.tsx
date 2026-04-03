@@ -14,15 +14,15 @@ interface InsightNode {
 const getLevelColor = (level: string) => {
   switch (level) {
     case "optimal":
-      return { bg: "bg-green-500/20", border: "border-green-500/60", text: "text-green-400", glow: "shadow-[0_0_30px_rgba(34,197,94,0.5)]" };
+      return { bg: "bg-green-500/20", border: "border-green-500/60", text: "text-green-400", glow: "" };
     case "good":
-      return { bg: "bg-blue-500/20", border: "border-blue-500/60", text: "text-blue-400", glow: "shadow-[0_0_30px_rgba(59,130,246,0.5)]" };
+      return { bg: "bg-blue-500/20", border: "border-blue-500/60", text: "text-blue-400", glow: "" };
     case "warning":
-      return { bg: "bg-orange-500/20", border: "border-orange-500/60", text: "text-orange-400", glow: "shadow-[0_0_30px_rgba(251,146,60,0.5)]" };
+      return { bg: "bg-orange-500/20", border: "border-orange-500/60", text: "text-orange-400", glow: "" };
     case "critical":
-      return { bg: "bg-red-500/20", border: "border-red-500/60", text: "text-red-400", glow: "shadow-[0_0_30px_rgba(239,68,68,0.5)]" };
+      return { bg: "bg-red-500/20", border: "border-red-500/60", text: "text-red-400", glow: "" };
     default:
-      return { bg: "bg-violet-500/20", border: "border-violet-400/60", text: "text-violet-400", glow: "shadow-[0_0_30px_rgba(139,92,246,0.6)]" };
+      return { bg: "bg-violet-500/20", border: "border-violet-400/60", text: "text-violet-400", glow: "" };
   }
 };
 
@@ -31,13 +31,13 @@ const getLevelEmoji = (level: string) => {
     case "optimal":
       return "🟢";
     case "good":
-      return "✅";
+      return "";
     case "warning":
       return "🟠";
     case "critical":
-      return "🔴";
+      return "";
     default:
-      return "📊";
+      return "";
   }
 };
 
@@ -108,7 +108,7 @@ const InsightNode = ({
       {/* Node */}
       <div
         className={cn(
-          "relative w-14 h-14 rounded-full border-2 backdrop-blur-xl z-10",
+          "relative w-14 h-14 rounded-full border-2  z-10",
           "flex items-center justify-center cursor-pointer",
           "hover:scale-125 active:scale-95 transition-all duration-300",
           colors.bg,
@@ -123,7 +123,7 @@ const InsightNode = ({
         {/* Tooltip */}
         {showTooltip && (
           <div className="absolute bottom-full mb-4 left-1/2 -translate-x-1/2 z-50 w-64 animate-fade-in">
-            <div className="bg-slate-900/95 backdrop-blur-xl border border-violet-500/40 rounded-xl p-4 shadow-[0_0_40px_rgba(139,92,246,0.4)]">
+            <div className="bg-slate-900/95  border border-violet-500/40  p-4 ">
               <div className="flex items-center gap-2 mb-2">
                 <span className={cn("text-xs font-semibold uppercase tracking-wide", colors.text)}>
                   {insight.category}
@@ -267,7 +267,7 @@ export const InsightsTree = ({ onNavigate }: { onNavigate: (tab: string) => void
             onClick={() => onNavigate("health")}
             variant="ghost"
             size="icon"
-            className="w-10 h-10 md:w-12 md:h-12 bg-glass backdrop-blur-xl border border-violet-500/40 rounded-xl hover:bg-violet-500/20 min-h-[44px]"
+            className="w-10 h-10 md:w-12 md:h-12 bg-glass  border border-violet-500/40  hover:bg-violet-500/20 min-h-[44px]"
             aria-label="Go back"
           >
             <ArrowLeft size={20} className="text-foreground" />
@@ -292,8 +292,8 @@ export const InsightsTree = ({ onNavigate }: { onNavigate: (tab: string) => void
 
           {/* Top Node (Origin) */}
           <div className="absolute left-1/2 top-8 -translate-x-1/2 z-10">
-            <div className="w-16 h-16 rounded-full bg-slate-900/90 backdrop-blur-xl border-2 border-violet-400/60 flex items-center justify-center shadow-[0_0_40px_rgba(139,92,246,0.6)] animate-fade-in">
-              <span className="text-2xl">🧠</span>
+            <div className="w-16 h-16 rounded-full bg-slate-900/90  border-2 border-violet-400/60 flex items-center justify-center  animate-fade-in">
+              <span className="text-2xl"></span>
             </div>
           </div>
 
@@ -312,14 +312,14 @@ export const InsightsTree = ({ onNavigate }: { onNavigate: (tab: string) => void
         </div>
 
         {/* Legend */}
-        <div className="mt-12 bg-slate-900/80 backdrop-blur-xl border border-violet-500/40 rounded-2xl p-6 animate-fade-in shadow-[0_0_30px_rgba(139,92,246,0.3)]">
+        <div className="mt-12 bg-slate-900/80  border border-violet-500/40  p-6 animate-fade-in ">
           <h3 className="text-base md:text-lg font-semibold text-foreground mb-4">Network Status Legend</h3>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {[
               { level: "optimal", label: "Optimal", emoji: "🟢" },
-              { level: "good", label: "Good", emoji: "✅" },
+              { level: "good", label: "Good", emoji: "" },
               { level: "warning", label: "Caution", emoji: "🟠" },
-              { level: "critical", label: "Alert", emoji: "🔴" },
+              { level: "critical", label: "Alert", emoji: "" },
             ].map((item) => {
               const colors = getLevelColor(item.level);
               return (

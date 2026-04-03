@@ -25,7 +25,7 @@ export const OuraReadinessCard = ({
   const isStale = hoursSinceSync !== null && hoursSinceSync > STALE_HOURS;
   if (isLoading) {
     return (
-      <div className="bg-glass backdrop-blur-xl border border-glass-border rounded-2xl p-6 shadow-glass">
+      <div className="bg-glass  border border-glass-border  p-6 ">
         <Skeleton className="h-8 w-48 mb-6" />
         <div className="flex flex-col items-center mb-6">
           <Skeleton className="h-32 w-32 rounded-full mb-4" />
@@ -42,9 +42,9 @@ export const OuraReadinessCard = ({
 
   if (score === null) {
     return (
-      <div className="bg-glass backdrop-blur-xl border border-glass-border rounded-2xl p-6 shadow-glass">
+      <div className="bg-glass  border border-glass-border  p-6 ">
         <div className="flex items-center gap-3 mb-6">
-          <div className="w-10 h-10 bg-teal-500/20 rounded-xl flex items-center justify-center">
+          <div className="w-10 h-10 bg-teal-500/20  flex items-center justify-center">
             <Battery className="w-5 h-5 text-teal-500" />
           </div>
           <h2 className="text-xl font-semibold text-foreground">Readiness</h2>
@@ -80,9 +80,9 @@ export const OuraReadinessCard = ({
 
   return (
     <TooltipProvider>
-      <div className="bg-glass backdrop-blur-xl border border-glass-border rounded-2xl p-6 shadow-glass hover-glow animate-fade-in">
+      <div className="bg-glass  border border-glass-border  p-6  hover-glow animate-fade-in">
         <div className="flex items-center gap-3 mb-6">
-          <div className="w-10 h-10 bg-teal-500/20 rounded-xl flex items-center justify-center">
+          <div className="w-10 h-10 bg-teal-500/20  flex items-center justify-center">
             <Battery className="w-5 h-5 text-teal-500" />
           </div>
           <h2 className="text-xl font-semibold text-foreground">Readiness</h2>
@@ -145,7 +145,7 @@ export const OuraReadinessCard = ({
         {restingHR !== null && (
           <Tooltip>
             <TooltipTrigger asChild>
-              <div className="bg-background/50 backdrop-blur border border-glass-border rounded-xl p-4 cursor-help">
+              <div className="bg-background/50  border border-glass-border  p-4 cursor-help">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <Heart className="w-5 h-5 text-red-400" />
@@ -173,7 +173,7 @@ export const OuraReadinessCard = ({
         {hrv !== null && (
           <Tooltip>
             <TooltipTrigger asChild>
-              <div className="bg-background/50 backdrop-blur border border-glass-border rounded-xl p-4 cursor-help">
+              <div className="bg-background/50  border border-glass-border  p-4 cursor-help">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <Activity className="w-5 h-5 text-blue-400" />
@@ -198,7 +198,7 @@ export const OuraReadinessCard = ({
           </Tooltip>
         )}
 
-        <div className="bg-background/50 backdrop-blur border border-glass-border rounded-xl p-4">
+        <div className="bg-background/50  border border-glass-border  p-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <TrendingUp className="w-5 h-5 text-teal-400" />

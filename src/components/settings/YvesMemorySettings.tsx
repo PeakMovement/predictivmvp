@@ -162,11 +162,11 @@ export const YvesMemorySettings = () => {
   ];
 
   return (
-    <div className="bg-glass backdrop-blur-xl border border-glass-border rounded-2xl p-6 shadow-glass hover:bg-glass-highlight transition-all duration-300">
+    <div className="bg-glass  border border-glass-border  p-6  hover:bg-glass-highlight transition-all duration-300">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 bg-primary/20 rounded-lg flex items-center justify-center">
+          <div className="w-8 h-8 bg-primary/20  flex items-center justify-center">
             <Brain size={16} className="text-primary" />
           </div>
           <div>
@@ -190,7 +190,7 @@ export const YvesMemorySettings = () => {
       {isLoading && (
         <div className="space-y-3">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="h-14 bg-muted/20 rounded-xl animate-pulse" />
+            <div key={i} className="h-14 bg-muted/20  animate-pulse" />
           ))}
         </div>
       )}
@@ -224,7 +224,7 @@ export const YvesMemorySettings = () => {
                   {items.map((m) => (
                     <div
                       key={m.id}
-                      className="flex items-start justify-between gap-3 p-3 rounded-xl bg-glass/30 border border-glass-border group"
+                      className="flex items-start justify-between gap-3 p-3  bg-glass/30 border border-glass-border group"
                     >
                       <div className="flex-1 min-w-0">
                         <p className="text-xs font-medium text-muted-foreground mb-0.5">

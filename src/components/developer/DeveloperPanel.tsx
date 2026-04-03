@@ -88,7 +88,7 @@ export const DeveloperPanel = () => {
   };
 
   return (
-    <div className="bg-glass backdrop-blur-xl border border-glass-border rounded-2xl shadow-glass overflow-hidden transition-all">
+    <div className="bg-glass  border border-glass-border   overflow-hidden transition-all">
       <button
         onClick={() => setIsExpanded(!isExpanded)}
         className="w-full p-6 flex items-center justify-between hover:bg-glass-highlight transition-colors"
@@ -142,7 +142,7 @@ export const DeveloperPanel = () => {
             <h4 className="text-sm font-semibold mb-3 text-muted-foreground">
               Execution Logs (auto-refreshes every 10s)
             </h4>
-            <div className="bg-black/30 border border-white/10 rounded-xl max-h-64 overflow-y-auto">
+            <div className="bg-black/30 border border-white/10  max-h-64 overflow-y-auto">
               {logs.length === 0 ? (
                 <div className="p-4 text-center text-muted-foreground text-sm">
                   No logs available

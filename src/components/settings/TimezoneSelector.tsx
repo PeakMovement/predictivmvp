@@ -139,7 +139,7 @@ export const TimezoneSelector = ({ value, onChange, disabled }: TimezoneSelector
         </Alert>
       )}
 
-      <div className="p-4 bg-muted rounded-lg">
+      <div className="p-4 bg-muted ">
         <div className="flex items-center justify-between">
           <div>
             <p className="text-sm font-medium">Current time in selected timezone</p>

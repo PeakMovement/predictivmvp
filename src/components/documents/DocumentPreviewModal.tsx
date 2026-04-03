@@ -122,7 +122,7 @@ export function DocumentPreviewModal({
           </div>
         </DialogHeader>
 
-        <div className="flex-1 overflow-hidden rounded-lg border bg-muted/50 mt-4">
+        <div className="flex-1 overflow-hidden  border bg-muted/50 mt-4">
           {loading ? (
             <div className="h-full flex items-center justify-center">
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -163,7 +163,7 @@ export function DocumentPreviewModal({
         </div>
 
         {document.ai_summary && document.processing_status === 'completed' && (
-          <div className="flex-shrink-0 mt-4 p-4 bg-primary/10 rounded-lg">
+          <div className="flex-shrink-0 mt-4 p-4 bg-primary/10 ">
             <h4 className="font-semibold text-sm mb-2">AI Summary</h4>
             <p className="text-sm text-muted-foreground">{document.ai_summary}</p>
           </div>

@@ -112,7 +112,7 @@ export const DailyPlanView = ({ selectedDate, onDateChange }: DailyPlanViewProps
     return (
       <Card className="p-8 border border-border/50">
         <div className="flex flex-col items-center text-center space-y-4">
-          <div className="w-14 h-14 rounded-xl bg-primary/10 border border-primary/30 flex items-center justify-center">
+          <div className="w-14 h-14  bg-primary/10 border border-primary/30 flex items-center justify-center">
             <Calendar className="h-7 w-7 text-primary" />
           </div>
           <h3 className="text-lg font-semibold text-foreground">Daily Schedule</h3>
@@ -159,7 +159,7 @@ export const DailyPlanView = ({ selectedDate, onDateChange }: DailyPlanViewProps
             key={day.toISOString()}
             onClick={() => onDateChange(day)}
             className={cn(
-              "p-3 rounded-lg text-center transition-colors",
+              "p-3  text-center transition-colors",
               isSameDay(day, selectedDate)
                 ? "bg-primary text-primary-foreground"
                 : "bg-secondary/50 hover:bg-secondary text-foreground"
@@ -185,7 +185,7 @@ export const DailyPlanView = ({ selectedDate, onDateChange }: DailyPlanViewProps
             <div
               key={hour}
               className={cn(
-                "flex gap-4 p-3 rounded-lg border transition-colors",
+                "flex gap-4 p-3  border transition-colors",
                 isCurrentHour
                   ? "border-primary bg-primary/5"
                   : "border-border/50 bg-card/50"
@@ -206,7 +206,7 @@ export const DailyPlanView = ({ selectedDate, onDateChange }: DailyPlanViewProps
                     {hourEvents.map((event) => (
                       <div
                         key={event.id}
-                        className="p-3 bg-primary/10 border border-primary/30 rounded-lg"
+                        className="p-3 bg-primary/10 border border-primary/30 "
                       >
                         <div className="flex items-start gap-2">
                           <Clock className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />

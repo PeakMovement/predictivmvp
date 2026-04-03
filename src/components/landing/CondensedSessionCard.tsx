@@ -13,7 +13,7 @@ interface CondensedSessionCardProps {
 export function CondensedSessionCard({ decision, isLoading }: CondensedSessionCardProps) {
   if (isLoading) {
     return (
-      <Card className="border border-border/50 bg-card/80 backdrop-blur-sm">
+      <Card className="border border-border/50 bg-card/80 ">
         <CardContent className="pt-6 space-y-4">
           <Skeleton className="h-5 w-40" />
           <Skeleton className="h-4 w-full" />
@@ -42,7 +42,7 @@ export function CondensedSessionCard({ decision, isLoading }: CondensedSessionCa
   };
 
   return (
-    <Card className="border border-border/50 bg-card/80 backdrop-blur-sm">
+    <Card className="border border-border/50 bg-card/80 ">
       <CardContent className="pt-6 space-y-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">

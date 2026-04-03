@@ -276,7 +276,7 @@ export const Dashboard = () => {
           )}
 
           {!userId ? (
-            <div className="text-center py-12 px-4 bg-glass backdrop-blur-xl border border-glass-border rounded-2xl">
+            <div className="text-center py-12 px-4 bg-glass  border border-glass-border ">
               <p className="text-muted-foreground mb-4">Please log in to view your wearable data</p>
               <p className="text-sm text-muted-foreground">Connect your account to see your metrics</p>
             </div>

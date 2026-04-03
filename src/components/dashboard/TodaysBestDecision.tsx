@@ -360,7 +360,7 @@ function TodaysBestDecision({ className }, ref) {
               <>
                 {/* A. Observation — Yves internal reasoning */}
                 {yvesRec.internal_reasoning && (
-                  <div className="rounded-xl bg-muted/40 border border-border/50 p-4">
+                  <div className=" bg-muted/40 border border-border/50 p-4">
                     <div className="flex items-center gap-2 mb-3">
                       <Info className="h-4 w-4 text-muted-foreground" />
                       <span className="text-sm font-medium text-muted-foreground">What we're noticing today</span>
@@ -372,7 +372,7 @@ function TodaysBestDecision({ className }, ref) {
                 )}
 
                 {/* B. Recommendation — Yves recommendation_text */}
-                <div className="rounded-xl bg-primary/8 border border-primary/20 p-4">
+                <div className=" bg-primary/8 border border-primary/20 p-4">
                   <div className="flex items-center gap-2 mb-3">
                     <Heart className="h-4 w-4 text-primary" />
                     <span className="text-sm font-medium text-primary">Today's recommendation</span>
@@ -409,7 +409,7 @@ function TodaysBestDecision({ className }, ref) {
                         </button>
                       </CollapsibleTrigger>
                       <CollapsibleContent>
-                        <p className="mt-2 text-xs text-muted-foreground bg-muted/50 p-3 rounded-lg">
+                        <p className="mt-2 text-xs text-muted-foreground bg-muted/50 p-3 ">
                           Based on: {yvesRec.data_sources.join(", ")}
                         </p>
                       </CollapsibleContent>
@@ -455,7 +455,7 @@ function TodaysBestDecision({ className }, ref) {
               <>
                 {/* A. Observation Card - "What we're noticing today" */}
                 {riskDrivers && riskDrivers.primary && (
-                  <div className="rounded-xl bg-muted/40 border border-border/50 p-4">
+                  <div className=" bg-muted/40 border border-border/50 p-4">
                     <div className="flex items-center gap-2 mb-3">
                       <Info className="h-4 w-4 text-muted-foreground" />
                       <span className="text-sm font-medium text-muted-foreground">What we're noticing today</span>
@@ -468,7 +468,7 @@ function TodaysBestDecision({ className }, ref) {
 
                 {/* B. Recommendation Card - "Today's best option" */}
                 {session && (
-                  <div className="rounded-xl bg-primary/8 border border-primary/20 overflow-hidden">
+                  <div className=" bg-primary/8 border border-primary/20 overflow-hidden">
                     <div className="p-4">
                       <div className="flex items-center gap-2 mb-3">
                         <Heart className="h-4 w-4 text-primary" />
@@ -505,7 +505,7 @@ function TodaysBestDecision({ className }, ref) {
                           </div>
 
                           {session.intensity.hrZone && (
-                            <div className="p-3 rounded-lg bg-muted/50 text-sm">
+                            <div className="p-3  bg-muted/50 text-sm">
                               <span className="font-medium">Target zone:</span> {session.intensity.hrZone}
                             </div>
                           )}
@@ -540,7 +540,7 @@ function TodaysBestDecision({ className }, ref) {
                                   key={idx}
                                   onClick={() => toggleExercise(idx)}
                                   className={cn(
-                                    "w-full text-left p-3 rounded-lg border transition-all",
+                                    "w-full text-left p-3  border transition-all",
                                     completedExercises.has(idx)
                                       ? "bg-primary/10 border-primary/30"
                                       : "bg-card hover:bg-muted/50 border-border/50"
@@ -587,7 +587,7 @@ function TodaysBestDecision({ className }, ref) {
                           )}
 
                           {session.safetyNotes.length > 0 && (
-                            <div className="p-3 rounded-lg bg-muted/30 border border-border/50 space-y-2">
+                            <div className="p-3  bg-muted/30 border border-border/50 space-y-2">
                               <p className="text-xs font-medium text-muted-foreground">Things to keep in mind</p>
                               <div className="space-y-1">
                                 {session.safetyNotes.map((note, idx) => (
@@ -632,7 +632,7 @@ function TodaysBestDecision({ className }, ref) {
                         </button>
                       </CollapsibleTrigger>
                       <CollapsibleContent>
-                        <p className="mt-2 text-xs text-muted-foreground bg-muted/50 p-3 rounded-lg">
+                        <p className="mt-2 text-xs text-muted-foreground bg-muted/50 p-3 ">
                           {generateDataText()}
                         </p>
                       </CollapsibleContent>

@@ -72,7 +72,7 @@ export const ChallengeAcceptanceModal = ({
       }
 
       toast({
-        title: "Challenge Accepted! 💪",
+        title: "Challenge Accepted! ",
         description: "Track your progress in the Training page",
       });
 
@@ -96,7 +96,7 @@ export const ChallengeAcceptanceModal = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <div className="w-12 h-12 rounded-xl bg-primary/10 border border-primary/30 flex items-center justify-center mx-auto mb-4">
+          <div className="w-12 h-12  bg-primary/10 border border-primary/30 flex items-center justify-center mx-auto mb-4">
             <Trophy className="h-6 w-6 text-primary" />
           </div>
           <DialogTitle className="text-center">
@@ -109,7 +109,7 @@ export const ChallengeAcceptanceModal = ({
         </DialogHeader>
 
         <div className="space-y-4 py-4">
-          <div className="p-4 rounded-lg border border-primary/30 bg-primary/5">
+          <div className="p-4  border border-primary/30 bg-primary/5">
             <div className="flex items-start gap-3">
               <Target className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
               <div>
@@ -125,7 +125,7 @@ export const ChallengeAcceptanceModal = ({
 
           {/* AI Reasoning */}
           {challenge.ai_reasoning && (
-            <div className="flex items-start gap-3 p-4 rounded-lg bg-secondary/50 border border-border/50">
+            <div className="flex items-start gap-3 p-4  bg-secondary/50 border border-border/50">
               <Brain className="h-5 w-5 text-muted-foreground mt-0.5 flex-shrink-0" />
               <div>
                 <h4 className="text-sm font-medium text-foreground mb-1">
@@ -138,7 +138,7 @@ export const ChallengeAcceptanceModal = ({
             </div>
           )}
 
-          <div className="bg-secondary/30 p-4 rounded-lg">
+          <div className="bg-secondary/30 p-4 ">
             <h4 className="text-sm font-medium text-foreground mb-2">
               What happens next?
             </h4>

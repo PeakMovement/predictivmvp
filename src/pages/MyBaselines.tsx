@@ -178,11 +178,11 @@ function BaselineCard({ def, baseline, todayVal, sparkData, minVal, maxVal }: Ca
   const status = getStatus(todayVal, baseline, lowerIsBetter);
 
   return (
-    <div className="bg-glass backdrop-blur-xl border border-glass-border rounded-2xl p-5 shadow-glass hover:bg-glass-highlight transition-all duration-200">
+    <div className="bg-glass  border border-glass-border  p-5  hover:bg-glass-highlight transition-all duration-200">
       {/* Header */}
       <div className="flex items-start justify-between mb-3">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+          <div className="w-8 h-8  bg-primary/10 flex items-center justify-center">
             <Icon className={`h-4 w-4 ${def.color}`} />
           </div>
           <span className="text-sm font-semibold text-foreground">{label}</span>
@@ -363,7 +363,7 @@ export default function MyBaselines() {
         <LayoutBlock blockId="header" displayName="Header" pageId="baselines" size="wide" visible={isSectionVisible("header")}>
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center">
+              <div className="w-10 h-10 bg-primary/10  flex items-center justify-center">
                 <TrendingUp className="w-5 h-5 text-primary" />
               </div>
               <div>
@@ -418,12 +418,12 @@ export default function MyBaselines() {
           {loading ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {METRICS.map((m) => (
-                <Skeleton key={m.key} className="h-[220px] rounded-2xl" />
+                <Skeleton key={m.key} className="h-[220px] " />
               ))}
             </div>
           ) : sessions.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 text-center">
-              <div className="w-14 h-14 bg-primary/10 rounded-2xl flex items-center justify-center mb-4">
+              <div className="w-14 h-14 bg-primary/10  flex items-center justify-center mb-4">
                 <TrendingUp className="w-7 h-7 text-primary/60" />
               </div>
               <h2 className="text-lg font-semibold text-foreground mb-2">No data yet</h2>

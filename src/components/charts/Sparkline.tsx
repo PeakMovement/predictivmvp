@@ -136,7 +136,7 @@ export const MetricSparklineCard = ({
     : "text-muted-foreground";
 
   return (
-    <div className="rounded-lg border bg-card p-4 space-y-3">
+    <div className=" border bg-card p-4 space-y-3">
       <div className="flex items-start justify-between">
         <div className="space-y-1">
           <p className="text-sm font-medium text-muted-foreground">{label}</p>

@@ -69,9 +69,9 @@ export const AppearanceSettings = () => {
   }, []);
 
   return (
-    <div className="bg-glass backdrop-blur-xl border border-glass-border rounded-2xl p-6 shadow-glass hover:bg-glass-highlight transition-all duration-300">
+    <div className="bg-glass  border border-glass-border  p-6  hover:bg-glass-highlight transition-all duration-300">
       <div className="flex items-center gap-3 mb-6">
-        <div className="w-8 h-8 bg-primary/20 rounded-lg flex items-center justify-center">
+        <div className="w-8 h-8 bg-primary/20  flex items-center justify-center">
           <Palette size={16} className="text-primary" />
         </div>
         <h3 className="text-lg font-semibold text-foreground">Theme</h3>
@@ -84,7 +84,7 @@ export const AppearanceSettings = () => {
             <button
               onClick={() => setTheme("light")}
               className={cn(
-                "flex-1 p-4 rounded-xl border transition-all duration-200",
+                "flex-1 p-4  border transition-all duration-200",
                 theme === "light"
                   ? "bg-primary/10 border-primary/30 ring-2 ring-primary/20"
                   : "bg-glass/30 border-glass-border hover:bg-glass-highlight",
@@ -98,7 +98,7 @@ export const AppearanceSettings = () => {
             <button
               onClick={() => setTheme("dark")}
               className={cn(
-                "flex-1 p-4 rounded-xl border transition-all duration-200",
+                "flex-1 p-4  border transition-all duration-200",
                 theme === "dark"
                   ? "bg-primary/10 border-primary/30 ring-2 ring-primary/20"
                   : "bg-glass/30 border-glass-border hover:bg-glass-highlight",
@@ -156,7 +156,7 @@ export const AppearanceSettings = () => {
               <div
                 className={cn(
                   "absolute w-10 h-10 rounded-full border-[3px] transition-all duration-150 pointer-events-none z-20",
-                  "dark:border-background dark:shadow-lg",
+                  "dark:border-background dark:",
                   isDragging && "scale-125",
                 )}
                 style={{
@@ -184,13 +184,13 @@ export const AppearanceSettings = () => {
               <div className="flex items-center justify-center gap-4">
                 <div className="text-center">
                   <p className="text-xs text-muted-foreground mb-1">HSL</p>
-                  <p className="text-sm font-mono font-medium text-foreground bg-glass/50 px-3 py-1.5 rounded-lg border border-glass-border">
+                  <p className="text-sm font-mono font-medium text-foreground bg-glass/50 px-3 py-1.5  border border-glass-border">
                     {primaryHue}°, 70%, 50%
                   </p>
                 </div>
                 <div className="text-center">
                   <p className="text-xs text-muted-foreground mb-1">HEX</p>
-                  <p className="text-sm font-mono font-medium text-foreground bg-glass/50 px-3 py-1.5 rounded-lg border border-glass-border">
+                  <p className="text-sm font-mono font-medium text-foreground bg-glass/50 px-3 py-1.5  border border-glass-border">
                     {hexColor}
                   </p>
                 </div>

@@ -28,7 +28,7 @@ export function YvesChatSheet() {
                 isMobile
                   ? "bottom-24 right-4"
                   : "top-[11.5rem] right-4 sm:right-6",
-                "w-12 h-12 rounded-xl bg-glass backdrop-blur-xl border-glass-border",
+                "w-12 h-12  bg-glass  border-glass-border",
                 "flex items-center justify-center",
                 "hover:bg-glass-highlight hover:scale-110 active:scale-95",
                 "transition-all duration-300 ease-out transform-gpu animate-fade-in",
@@ -36,7 +36,7 @@ export function YvesChatSheet() {
               )}
               aria-label="Chat with Yves AI"
             >
-              <Sparkles size={20} className="text-primary drop-shadow-[0_0_8px_hsl(var(--primary)/0.6)]" />
+              <Sparkles size={20} className="text-primary drop-" />
             </button>
           </DialogTrigger>
         </TooltipTrigger>
@@ -49,14 +49,14 @@ export function YvesChatSheet() {
         "p-0 overflow-hidden border-border/50 bg-background shadow-xl",
         isMobile
           ? "inset-0 top-0 left-0 right-0 bottom-0 w-full h-full max-w-none max-h-none rounded-none translate-x-0 translate-y-0 data-[state=closed]:slide-out-to-bottom data-[state=open]:slide-in-from-bottom"
-          : "sm:max-w-lg max-h-[80vh] rounded-2xl"
+          : "sm:max-w-lg max-h-[80vh] "
       )}>
         <DialogHeader className={cn(
           "px-4 sm:px-6 pt-4 sm:pt-6 pb-4 border-b border-border/30 shrink-0",
           isMobile && "pt-[calc(1rem+env(safe-area-inset-top))]"
         )}>
           <DialogTitle className="flex items-center gap-3 text-foreground text-base sm:text-lg">
-            <div className="p-2 rounded-xl bg-primary/20">
+            <div className="p-2  bg-primary/20">
               <Sparkles className="h-5 w-5 text-primary" />
             </div>
             Yves AI

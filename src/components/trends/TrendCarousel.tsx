@@ -174,7 +174,7 @@ export const TrendCarousel = () => {
       <div className="w-full px-4 md:px-0">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {[1, 2, 3].map((i) => (
-            <Skeleton key={i} className="h-[500px] rounded-2xl" />
+            <Skeleton key={i} className="h-[500px] " />
           ))}
         </div>
       </div>
@@ -183,9 +183,9 @@ export const TrendCarousel = () => {
 
   if (metrics.length === 0) {
     return (
-      <div className="bg-glass backdrop-blur-xl border border-glass-border rounded-2xl p-8 shadow-glass text-center mx-4 md:mx-0">
+      <div className="bg-glass  border border-glass-border  p-8  text-center mx-4 md:mx-0">
         <div className="space-y-4">
-          <div className="text-4xl mb-2">📊</div>
+          <div className="text-4xl mb-2"></div>
           <h3 className="text-xl font-semibold text-foreground">No Trend Data Available</h3>
           <p className="text-sm text-muted-foreground mb-4">
             Training trends need to be calculated from your Fitbit data.

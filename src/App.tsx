@@ -187,14 +187,14 @@ const AuthenticatedApp = () => {
                 onClick={() => handleNavigate("practitioner")}
                 className={cn(
                   "fixed top-[calc(4rem+env(safe-area-inset-top))] right-[3.75rem] sm:right-[4.5rem] sm:top-20 z-50",
-                  "w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-glass backdrop-blur-xl border-glass-border touch-manipulation",
+                  "w-10 h-10 bg-surface border border-line touch-manipulation",
                   "flex items-center justify-center",
-                  "hover:bg-glass-highlight hover:scale-110 active:scale-95",
-                  "transition-all duration-300 ease-out transform-gpu animate-fade-in",
+                  "hover:border-marble1/30 active:scale-[0.97]",
+                  "transition-all duration-100",
                 )}
                 aria-label="Practitioner Dashboard"
               >
-                <Stethoscope size={18} className="text-primary drop-shadow-[0_0_8px_hsl(var(--primary)/0.6)]" />
+                <Stethoscope size={16} className="text-coldBlue/60" />
               </button>
             </TooltipTrigger>
             <TooltipContent><p>Practitioner Dashboard</p></TooltipContent>
@@ -207,14 +207,14 @@ const AuthenticatedApp = () => {
               onClick={() => handleNavigate("settings")}
               className={cn(
                 "fixed top-[calc(3.5rem+env(safe-area-inset-top))] right-4 sm:top-[4.5rem] sm:right-6 z-50",
-                "w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-glass backdrop-blur-xl border-glass-border touch-manipulation",
+                "w-10 h-10 bg-surface border border-line touch-manipulation",
                 "flex items-center justify-center",
-                "hover:bg-glass-highlight hover:scale-110 active:scale-95",
-                "transition-all duration-300 ease-out transform-gpu animate-fade-in",
+                "hover:border-marble1/30 active:scale-[0.97]",
+                "transition-all duration-100",
               )}
               aria-label="Settings"
             >
-              <SettingsIcon size={20} className="text-primary drop-shadow-[0_0_8px_hsl(var(--primary)/0.6)]" />
+              <SettingsIcon size={16} className="text-coldBlue/60" />
             </button>
           </TooltipTrigger>
           <TooltipContent><p>Settings</p></TooltipContent>
@@ -334,7 +334,7 @@ const AppInner = () => {
   if (isAuthenticated === null) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-glow-pulse text-primary text-xl">Loading...</div>
+        <div className="w-32 h-px bg-line overflow-hidden"><div className="h-px w-full bg-coldBlue/60 animate-hairline-sweep" /></div>
       </div>
     );
   }
@@ -361,7 +361,7 @@ const AppInner = () => {
   if (needsOnboarding === null) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-glow-pulse text-primary text-xl">Loading...</div>
+        <div className="w-32 h-px bg-line overflow-hidden"><div className="h-px w-full bg-coldBlue/60 animate-hairline-sweep" /></div>
       </div>
     );
   }

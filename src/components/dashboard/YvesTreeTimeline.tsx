@@ -35,7 +35,7 @@ export function YvesTreeTimeline() {
         setIsLoading(true);
         setError(null);
 
-        // 🧠 Resolve user
+        //  Resolve user
         const {
           data: { user },
         } = await supabase.auth.getUser();
@@ -83,12 +83,12 @@ export function YvesTreeTimeline() {
     return () => clearInterval(interval);
   }, []);
 
-  /** 🧠 Custom Tooltip */
+  /**  Custom Tooltip */
   const CustomTooltip = ({ active, payload }: { active?: boolean; payload?: Array<{ payload: ChartDataPoint }> }) => {
     if (active && payload && payload.length) {
       const { date, label, color, value } = payload[0].payload;
       return (
-        <div className="bg-card border border-border rounded-lg p-3 shadow-lg backdrop-blur-sm">
+        <div className="bg-card border border-border  p-3  ">
           <p className="text-sm font-medium">{date}</p>
           <p className="text-xs text-muted-foreground mt-1">{label}</p>
           <p className="text-sm font-semibold mt-1" style={{ color }}>
@@ -130,7 +130,7 @@ export function YvesTreeTimeline() {
     );
   }
 
-  /** 📉 Empty State */
+  /**  Empty State */
   if (chartData.length === 0) {
     return (
       <Card className="bg-gradient-to-br from-[#0f172a] to-[#1e293b] border-border/50">
@@ -146,9 +146,9 @@ export function YvesTreeTimeline() {
     );
   }
 
-  /** 📊 Chart Rendering */
+  /**  Chart Rendering */
   return (
-    <Card className="bg-gradient-to-br from-[#0f172a] to-[#1e293b] border-border/50 rounded-2xl">
+    <Card className="bg-gradient-to-br from-[#0f172a] to-[#1e293b] border-border/50 ">
       <CardHeader>
         <CardTitle className="text-xl font-bold text-foreground flex items-center gap-2">
           🌿 Yves Tree — Adaptive Timeline

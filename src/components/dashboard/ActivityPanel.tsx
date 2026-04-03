@@ -102,13 +102,13 @@ const MetricCard = ({
   return (
     <div 
       className={cn(
-        "p-4 rounded-xl bg-background/50 border border-border/50",
-        "transition-all duration-300 hover:scale-[1.02] hover:border-primary/30 hover:shadow-lg"
+        "p-4  bg-background/50 border border-border/50",
+        "transition-all duration-300 hover:scale-[1.02] hover:border-primary/30 hover:"
       )}
       style={{ animationDelay: `${delay}ms` }}
     >
       <div className="flex items-start gap-3">
-        <div className={cn("p-2.5 rounded-xl transition-transform duration-300 hover:scale-110", iconBg)}>
+        <div className={cn("p-2.5  transition-transform duration-300 hover:scale-110", iconBg)}>
           <Icon className={cn("h-5 w-5", iconColor)} />
         </div>
         <div className="flex-1 min-w-0">
@@ -168,7 +168,7 @@ export function ActivityPanel() {
 
   if (isLoading) {
     return (
-      <Card className="bg-glass backdrop-blur-xl border-glass-border animate-panel-enter">
+      <Card className="bg-glass  border-glass-border animate-panel-enter">
         <CardHeader>
           <CardTitle className="text-lg font-semibold">Activity Trends</CardTitle>
         </CardHeader>
@@ -185,7 +185,7 @@ export function ActivityPanel() {
 
   if (error) {
     return (
-      <Card className="bg-glass backdrop-blur-xl border-glass-border animate-panel-enter">
+      <Card className="bg-glass  border-glass-border animate-panel-enter">
         <CardHeader>
           <CardTitle className="text-lg font-semibold">Activity Trends</CardTitle>
         </CardHeader>
@@ -200,7 +200,7 @@ export function ActivityPanel() {
 
   if (!summary) {
     return (
-      <Card className="bg-glass backdrop-blur-xl border-glass-border animate-panel-enter">
+      <Card className="bg-glass  border-glass-border animate-panel-enter">
         <CardHeader>
           <CardTitle className="text-lg font-semibold">Activity Trends</CardTitle>
         </CardHeader>
@@ -218,7 +218,7 @@ export function ActivityPanel() {
   const caloriesDelta = formatDelta(summary.calories_change);
 
   return (
-    <Card className="bg-glass backdrop-blur-xl border-glass-border animate-panel-enter">
+    <Card className="bg-glass  border-glass-border animate-panel-enter">
       <CardHeader>
         <CardTitle className="text-lg font-semibold">Activity Trends</CardTitle>
       </CardHeader>
@@ -251,7 +251,7 @@ export function ActivityPanel() {
 
         {/* Activity Score with Ring */}
         {summary.activity_score !== null && (
-          <div className="p-4 rounded-xl bg-gradient-to-br from-purple-500/10 to-pink-500/5 border border-purple-500/20 transition-all duration-300 hover:shadow-lg hover:shadow-purple-500/10">
+          <div className="p-4  bg-gradient-to-br from-purple-500/10 to-pink-500/5 border border-purple-500/20 transition-all duration-300 hover: hover:shadow-purple-500/10">
             <div className="flex items-center gap-4">
               <ActivityRing score={summary.activity_score} />
               <div className="flex-1">
@@ -263,7 +263,7 @@ export function ActivityPanel() {
                    "Consider increasing activity"}
                 </p>
               </div>
-              <div className="p-2 rounded-lg bg-purple-500/10">
+              <div className="p-2  bg-purple-500/10">
                 <Gauge className="h-5 w-5 text-purple-400" />
               </div>
             </div>

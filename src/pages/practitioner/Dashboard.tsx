@@ -162,13 +162,13 @@ export const PractitionerDashboard = () => {
           </div>
         </div>
         <div className="mx-auto max-w-4xl px-5 py-8 space-y-6">
-          <div className="h-32 animate-pulse rounded-xl bg-white/60" />
+          <div className="h-32 animate-pulse  bg-white/60" />
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
             {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="h-28 animate-pulse rounded-xl bg-white/60" />
+              <div key={i} className="h-28 animate-pulse  bg-white/60" />
             ))}
           </div>
-          <div className="h-48 animate-pulse rounded-xl bg-white/60" />
+          <div className="h-48 animate-pulse  bg-white/60" />
         </div>
       </div>
     );
@@ -192,7 +192,7 @@ export const PractitionerDashboard = () => {
           </p>
           <Link
             to="/practitioner/register"
-            className="mt-4 inline-flex items-center gap-2 rounded-xl bg-[#6B5ED9] px-6 py-3 text-sm font-semibold text-white shadow-sm transition-all hover:bg-[#5a4ec5]"
+            className="mt-4 inline-flex items-center gap-2  bg-[#6B5ED9] px-6 py-3 text-sm font-semibold text-white  transition-all hover:bg-[#5a4ec5]"
           >
             Create your listing
             <ArrowRight size={16} />
@@ -268,7 +268,7 @@ function OverviewTab({ p }: { p: PractitionerData }) {
   return (
     <div className="space-y-6">
       {/* Welcome card */}
-      <div className="rounded-xl bg-white p-6 shadow-sm">
+      <div className=" bg-white p-6 ">
         <h2 className="text-lg font-bold text-[#1a1a1a]">
           Welcome back, {p.name.split(" ")[0]}.
         </h2>
@@ -309,7 +309,7 @@ function OverviewTab({ p }: { p: PractitionerData }) {
       </div>
 
       {/* How Yves works */}
-      <div className="rounded-xl bg-white p-6 shadow-sm">
+      <div className=" bg-white p-6 ">
         <h3 className="mb-6 text-base font-semibold text-[#1a1a1a]">
           How Yves refers patients to you
         </h3>
@@ -357,7 +357,7 @@ function OverviewTab({ p }: { p: PractitionerData }) {
 
       {/* Upgrade CTA — only for basic tier */}
       {p.pricing_tier === "basic" && (
-        <div className="rounded-xl bg-[#6B5ED9]/10 p-6">
+        <div className=" bg-[#6B5ED9]/10 p-6">
           <h3 className="text-base font-bold text-[#1a1a1a]">
             Upgrade to Verified Partner
           </h3>
@@ -365,7 +365,7 @@ function OverviewTab({ p }: { p: PractitionerData }) {
             Get priority placement, patient health data access, and Yves anomaly
             alerts sent directly to you.
           </p>
-          <button className="mt-4 inline-flex items-center gap-2 rounded-xl bg-[#6B5ED9] px-6 py-3 text-sm font-semibold text-white shadow-sm transition-all hover:bg-[#5a4ec5] active:scale-[0.98]">
+          <button className="mt-4 inline-flex items-center gap-2  bg-[#6B5ED9] px-6 py-3 text-sm font-semibold text-white  transition-all hover:bg-[#5a4ec5] active:scale-[0.98]">
             Upgrade for R1,499/month
             <ArrowRight size={16} />
           </button>
@@ -402,7 +402,7 @@ function ListingTab({ p }: { p: PractitionerData }) {
       </div>
 
       {/* Listing preview card */}
-      <div className="max-w-md rounded-xl border border-black/10 bg-white p-5 shadow-sm">
+      <div className="max-w-md  border border-black/10 bg-white p-5 ">
         {/* Header */}
         <div className="flex items-start justify-between gap-2">
           <div>
@@ -483,10 +483,10 @@ function ListingTab({ p }: { p: PractitionerData }) {
 
         {/* Disabled buttons */}
         <div className="mt-4 flex gap-2">
-          <span className="flex-1 rounded-lg bg-black/5 py-2 text-center text-sm font-medium text-[#bbb]">
+          <span className="flex-1  bg-black/5 py-2 text-center text-sm font-medium text-[#bbb]">
             Book
           </span>
-          <span className="rounded-lg border border-black/5 px-4 py-2 text-center text-sm font-medium text-[#bbb]">
+          <span className=" border border-black/5 px-4 py-2 text-center text-sm font-medium text-[#bbb]">
             Profile
           </span>
         </div>
@@ -499,7 +499,7 @@ function ListingTab({ p }: { p: PractitionerData }) {
       <div className="flex flex-wrap items-center gap-4">
         <Link
           to="/practitioner/register"
-          className="inline-flex items-center gap-2 rounded-xl bg-[#6B5ED9] px-6 py-3 text-sm font-semibold text-white shadow-sm transition-all hover:bg-[#5a4ec5] active:scale-[0.98]"
+          className="inline-flex items-center gap-2  bg-[#6B5ED9] px-6 py-3 text-sm font-semibold text-white  transition-all hover:bg-[#5a4ec5] active:scale-[0.98]"
         >
           Edit listing details
           <ArrowRight size={16} />
@@ -517,7 +517,7 @@ function ListingTab({ p }: { p: PractitionerData }) {
       </div>
 
       {/* Listing checklist */}
-      <div className="rounded-xl bg-white p-6 shadow-sm">
+      <div className=" bg-white p-6 ">
         <h3 className="text-base font-semibold text-[#1a1a1a]">
           Make your listing stronger
         </h3>
@@ -579,7 +579,7 @@ function ReferralsTab() {
   return (
     <div className="space-y-6">
       {/* Empty state */}
-      <div className="flex flex-col items-center rounded-xl bg-white py-16 text-center shadow-sm">
+      <div className="flex flex-col items-center  bg-white py-16 text-center ">
         <span className="mb-4 text-4xl">{"\uD83D\uDCCB"}</span>
         <h2 className="text-lg font-bold text-[#1a1a1a]">
           Referral tracking coming in Phase 2
@@ -592,7 +592,7 @@ function ReferralsTab() {
       </div>
 
       {/* Greyed-out preview table */}
-      <div className="relative rounded-xl bg-white p-6 shadow-sm">
+      <div className="relative  bg-white p-6 ">
         <div className="opacity-30">
           <div className="grid grid-cols-5 gap-4 border-b border-black/5 pb-3 text-xs font-semibold text-[#555]">
             <span>Patient</span>
@@ -638,8 +638,8 @@ function StatCard({
   value: string;
 }) {
   return (
-    <div className="rounded-xl bg-white p-5 shadow-sm">
-      <div className="mb-2 flex h-8 w-8 items-center justify-center rounded-lg bg-[#6B5ED9]/10">
+    <div className=" bg-white p-5 ">
+      <div className="mb-2 flex h-8 w-8 items-center justify-center  bg-[#6B5ED9]/10">
         <Icon size={16} className="text-[#6B5ED9]" />
       </div>
       <p className="text-2xl font-bold text-[#1a1a1a]">{value}</p>

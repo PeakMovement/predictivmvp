@@ -112,9 +112,9 @@ export const AccountSettings = ({ isSectionVisible, onNavigate }: AccountSetting
 
   return (
     <>
-      <div className="bg-glass backdrop-blur-xl border border-glass-border rounded-2xl p-6 shadow-glass hover:bg-glass-highlight transition-all duration-300">
+      <div className="bg-glass  border border-glass-border  p-6  hover:bg-glass-highlight transition-all duration-300">
         <div className="flex items-center gap-3 mb-6">
-          <div className="w-8 h-8 bg-primary/20 rounded-lg flex items-center justify-center">
+          <div className="w-8 h-8 bg-primary/20  flex items-center justify-center">
             <Info size={16} className="text-primary" />
           </div>
           <h3 className="text-lg font-semibold text-foreground">About & Support</h3>
@@ -139,9 +139,9 @@ export const AccountSettings = ({ isSectionVisible, onNavigate }: AccountSetting
         </div>
       </div>
 
-      <div className="bg-glass backdrop-blur-xl border border-glass-border rounded-2xl p-6 shadow-glass hover:bg-glass-highlight transition-all duration-300">
+      <div className="bg-glass  border border-glass-border  p-6  hover:bg-glass-highlight transition-all duration-300">
         <div className="flex items-center gap-3 mb-6">
-          <div className="w-8 h-8 bg-primary/20 rounded-lg flex items-center justify-center">
+          <div className="w-8 h-8 bg-primary/20  flex items-center justify-center">
             <User size={16} className="text-primary" />
           </div>
           <h3 className="text-lg font-semibold text-foreground">Account</h3>
@@ -151,11 +151,11 @@ export const AccountSettings = ({ isSectionVisible, onNavigate }: AccountSetting
           <Button
             onClick={handleExportData}
             disabled={isExporting}
-            className="w-full flex items-center justify-between p-4 rounded-xl border bg-glass/30 border-glass-border hover:bg-glass-highlight transition-all duration-200 h-auto"
+            className="w-full flex items-center justify-between p-4  border bg-glass/30 border-glass-border hover:bg-glass-highlight transition-all duration-200 h-auto"
             variant="ghost"
           >
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-blue-500/20 rounded-lg flex items-center justify-center">
+              <div className="w-8 h-8 bg-blue-500/20  flex items-center justify-center">
                 {isExporting ? <RefreshCw size={16} className="text-blue-400 animate-spin" /> : <Download size={16} className="text-blue-400" />}
               </div>
               <div className="text-left">
@@ -169,9 +169,9 @@ export const AccountSettings = ({ isSectionVisible, onNavigate }: AccountSetting
           {/* Delete account */}
           <AlertDialog onOpenChange={(open) => { if (!open) setDeleteConfirmText(""); }}>
             <AlertDialogTrigger asChild>
-              <button className="w-full flex items-center justify-between p-4 rounded-xl border bg-destructive/5 border-destructive/20 hover:bg-destructive/10 transition-all duration-200">
+              <button className="w-full flex items-center justify-between p-4  border bg-destructive/5 border-destructive/20 hover:bg-destructive/10 transition-all duration-200">
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 bg-destructive/20 rounded-lg flex items-center justify-center">
+                  <div className="w-8 h-8 bg-destructive/20  flex items-center justify-center">
                     <Trash2 size={16} className="text-destructive" />
                   </div>
                   <div className="text-left">
@@ -224,7 +224,7 @@ export const AccountSettings = ({ isSectionVisible, onNavigate }: AccountSetting
               await supabase.auth.signOut();
               toast({ title: "Signed out", description: "You have been successfully signed out." });
             }}
-            className="w-full flex items-center justify-center p-4 rounded-xl border bg-destructive/10 border-destructive/20 hover:bg-destructive/20 transition-all duration-200"
+            className="w-full flex items-center justify-center p-4  border bg-destructive/10 border-destructive/20 hover:bg-destructive/20 transition-all duration-200"
             variant="ghost"
           >
             <span className="font-medium text-destructive">Sign Out</span>
@@ -233,9 +233,9 @@ export const AccountSettings = ({ isSectionVisible, onNavigate }: AccountSetting
       </div>
 
       <LayoutBlock blockId="dataPrivacy" displayName="Data & Privacy" pageId="profile" size="standard" visible={isSectionVisible("dataPrivacy")}>
-        <div className="bg-glass backdrop-blur-xl border border-glass-border rounded-2xl p-6 shadow-glass hover:bg-glass-highlight transition-all duration-300">
+        <div className="bg-glass  border border-glass-border  p-6  hover:bg-glass-highlight transition-all duration-300">
           <div className="flex items-center gap-3 mb-6">
-            <div className="w-8 h-8 bg-primary/20 rounded-lg flex items-center justify-center">
+            <div className="w-8 h-8 bg-primary/20  flex items-center justify-center">
               <Database size={16} className="text-primary" />
             </div>
             <h3 className="text-lg font-semibold text-foreground">Data & Privacy</h3>
@@ -244,9 +244,9 @@ export const AccountSettings = ({ isSectionVisible, onNavigate }: AccountSetting
         </div>
       </LayoutBlock>
 
-      <div className="bg-glass backdrop-blur-xl border border-glass-border rounded-2xl p-6 shadow-glass hover:bg-glass-highlight transition-all duration-300">
+      <div className="bg-glass  border border-glass-border  p-6  hover:bg-glass-highlight transition-all duration-300">
         <div className="flex items-center gap-3 mb-6">
-          <div className="w-8 h-8 bg-primary/20 rounded-lg flex items-center justify-center">
+          <div className="w-8 h-8 bg-primary/20  flex items-center justify-center">
             <Database size={16} className="text-primary" />
           </div>
           <h3 className="text-lg font-semibold text-foreground">Developer Tools</h3>
@@ -254,10 +254,10 @@ export const AccountSettings = ({ isSectionVisible, onNavigate }: AccountSetting
         <div className="space-y-3">
           <button
             onClick={() => onNavigate?.("admin-dashboard")}
-            className="w-full flex items-center justify-between p-4 rounded-xl border bg-glass/30 border-glass-border hover:bg-glass-highlight transition-all duration-200"
+            className="w-full flex items-center justify-between p-4  border bg-glass/30 border-glass-border hover:bg-glass-highlight transition-all duration-200"
           >
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-primary/20 rounded-lg flex items-center justify-center">
+              <div className="w-8 h-8 bg-primary/20  flex items-center justify-center">
                 <Shield size={16} className="text-primary" />
               </div>
               <div className="text-left">
@@ -271,11 +271,11 @@ export const AccountSettings = ({ isSectionVisible, onNavigate }: AccountSetting
           <Button
             onClick={handleCalculateTrends}
             disabled={isCalculatingTrends}
-            className="w-full flex items-center justify-between p-4 rounded-xl border bg-glass/30 border-glass-border hover:bg-glass-highlight transition-all duration-200 h-auto"
+            className="w-full flex items-center justify-between p-4  border bg-glass/30 border-glass-border hover:bg-glass-highlight transition-all duration-200 h-auto"
             variant="ghost"
           >
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center">
+              <div className="w-8 h-8 bg-primary/10  flex items-center justify-center">
                 <Database size={16} className="text-primary" />
               </div>
               <div className="text-left">
@@ -291,9 +291,9 @@ export const AccountSettings = ({ isSectionVisible, onNavigate }: AccountSetting
             }
           </Button>
 
-          <div className="w-full flex items-center justify-between p-4 rounded-xl border bg-glass/30 border-glass-border transition-all duration-200">
+          <div className="w-full flex items-center justify-between p-4  border bg-glass/30 border-glass-border transition-all duration-200">
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-amber-500/20 rounded-lg flex items-center justify-center">
+              <div className="w-8 h-8 bg-amber-500/20  flex items-center justify-center">
                 <Info size={16} className="text-amber-500" />
               </div>
               <div className="text-left">
@@ -306,10 +306,10 @@ export const AccountSettings = ({ isSectionVisible, onNavigate }: AccountSetting
 
           <button
             onClick={() => setShowSymptomChecker(true)}
-            className="w-full flex items-center justify-between p-4 rounded-xl border bg-glass/30 border-glass-border hover:bg-glass-highlight transition-all duration-200"
+            className="w-full flex items-center justify-between p-4  border bg-glass/30 border-glass-border hover:bg-glass-highlight transition-all duration-200"
           >
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-orange-500/20 rounded-lg flex items-center justify-center">
+              <div className="w-8 h-8 bg-orange-500/20  flex items-center justify-center">
                 <Stethoscope size={16} className="text-orange-500" />
               </div>
               <div className="text-left">
@@ -322,10 +322,10 @@ export const AccountSettings = ({ isSectionVisible, onNavigate }: AccountSetting
 
           <button
             onClick={() => setShowOnboardingSimulator(true)}
-            className="w-full flex items-center justify-between p-4 rounded-xl border bg-glass/30 border-glass-border hover:bg-glass-highlight transition-all duration-200"
+            className="w-full flex items-center justify-between p-4  border bg-glass/30 border-glass-border hover:bg-glass-highlight transition-all duration-200"
           >
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-primary/20 rounded-lg flex items-center justify-center">
+              <div className="w-8 h-8 bg-primary/20  flex items-center justify-center">
                 <Sparkles size={16} className="text-primary" />
               </div>
               <div className="text-left">

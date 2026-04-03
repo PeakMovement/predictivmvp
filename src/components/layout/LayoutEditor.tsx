@@ -91,11 +91,11 @@ export function LayoutEditor({
   };
 
   return (
-    <Card className="bg-gradient-to-br from-background via-background to-primary/5 border-2 border-primary/20 shadow-lg">
+    <Card className="bg-gradient-to-br from-background via-background to-primary/5 border-2 border-primary/20 ">
       <CardHeader className="pb-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-primary/20 rounded-xl flex items-center justify-center">
+            <div className="w-10 h-10 bg-primary/20  flex items-center justify-center">
               <Sparkles className="w-5 h-5 text-primary" />
             </div>
             <div>
@@ -112,7 +112,7 @@ export function LayoutEditor({
       </CardHeader>
       <CardContent className="space-y-4">
         {/* Preview Mode Toggle */}
-        <div className="flex items-center justify-between bg-primary/10 rounded-lg p-3">
+        <div className="flex items-center justify-between bg-primary/10  p-3">
           <div className="flex items-center gap-3">
             <MonitorPlay className="w-5 h-5 text-primary" />
             <div>
@@ -128,7 +128,7 @@ export function LayoutEditor({
         </div>
 
         {/* Instructions */}
-        <div className="bg-muted/30 rounded-lg p-3 text-sm text-muted-foreground space-y-1">
+        <div className="bg-muted/30  p-3 text-sm text-muted-foreground space-y-1">
           <p className="flex items-center gap-2">
             <GripVertical className="w-4 h-4 flex-shrink-0" />
             Drag sections to reorder, or use the arrows
@@ -157,7 +157,7 @@ export function LayoutEditor({
                 onDrop={(e) => handleDrop(e, index)}
                 onDragLeave={handleDragLeave}
                 className={cn(
-                  "flex items-center gap-3 p-3 rounded-lg border transition-all duration-200",
+                  "flex items-center gap-3 p-3  border transition-all duration-200",
                   "bg-background/80 hover:bg-background cursor-grab active:cursor-grabbing",
                   section.visible 
                     ? "border-border hover:border-primary/50" 
@@ -275,7 +275,7 @@ export function LayoutEditor({
         </div>
 
         {/* Data Safety Notice */}
-        <div className="bg-green-500/10 border border-green-500/20 rounded-lg p-3 text-sm text-green-700 dark:text-green-400">
+        <div className="bg-green-500/10 border border-green-500/20  p-3 text-sm text-green-700 dark:text-green-400">
           <p className="flex items-center gap-2">
             <Check className="w-4 h-4 flex-shrink-0" />
             Your data is always safe. Hiding sections only changes what you see, not what is stored or synced.
@@ -317,7 +317,7 @@ export function LayoutEditor({
             <AlertDialogDescription>
               This will reset your layout configuration to the default settings.
               All your customizations for this page will be lost.
-              <div className="mt-3 p-3 bg-muted rounded-lg">
+              <div className="mt-3 p-3 bg-muted ">
                 <p className="text-sm font-medium text-foreground mb-1">What will be reset:</p>
                 <ul className="text-sm space-y-1 text-muted-foreground">
                   <li>• Section order and arrangement</li>

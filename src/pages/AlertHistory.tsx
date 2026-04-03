@@ -101,7 +101,7 @@ function RiskScoreTimeline({ rows, loading }: { rows: RiskHistoryRow[]; loading:
     return (
       <div className="space-y-2">
         {Array.from({ length: 4 }).map((_, i) => (
-          <Skeleton key={i} className="h-16 rounded-xl" />
+          <Skeleton key={i} className="h-16 " />
         ))}
       </div>
     );
@@ -124,7 +124,7 @@ function RiskScoreTimeline({ rows, loading }: { rows: RiskHistoryRow[]; loading:
         return (
           <div
             key={row.calculated_at}
-            className="rounded-xl border border-border/40 bg-card/50 px-4 py-3 flex items-start gap-3"
+            className=" border border-border/40 bg-card/50 px-4 py-3 flex items-start gap-3"
           >
             {/* Date */}
             <div className="shrink-0 text-center min-w-[44px]">
@@ -174,7 +174,7 @@ function RiskScoreTimeline({ rows, loading }: { rows: RiskHistoryRow[]; loading:
 
 function RiskExplainer() {
   return (
-    <div className="rounded-2xl border border-border/40 bg-card/40 p-5 space-y-4">
+    <div className=" border border-border/40 bg-card/40 p-5 space-y-4">
       <div className="flex items-center gap-2">
         <Info className="h-4 w-4 text-primary shrink-0" />
         <h3 className="text-sm font-semibold text-foreground">What does this mean?</h3>
@@ -354,15 +354,15 @@ export default function AlertHistory() {
         <h2 className="text-sm font-semibold text-foreground">Metric Alerts</h2>
 
         {/* Filter tabs */}
-        <div className="flex gap-1.5 p-1 bg-muted/30 rounded-xl">
+        <div className="flex gap-1.5 p-1 bg-muted/30 ">
           {(["all", "active", "dismissed"] as FilterTab[]).map((tab) => (
             <button
               key={tab}
               onClick={() => setFilter(tab)}
               className={cn(
-                "flex-1 text-xs font-semibold py-1.5 rounded-lg capitalize transition-all",
+                "flex-1 text-xs font-semibold py-1.5  capitalize transition-all",
                 filter === tab
-                  ? "bg-card text-foreground shadow-sm"
+                  ? "bg-card text-foreground "
                   : "text-muted-foreground hover:text-foreground",
               )}
             >
@@ -379,7 +379,7 @@ export default function AlertHistory() {
         {loading ? (
           <div className="space-y-2">
             {Array.from({ length: 3 }).map((_, i) => (
-              <Skeleton key={i} className="h-24 rounded-2xl" />
+              <Skeleton key={i} className="h-24 " />
             ))}
           </div>
         ) : filtered.length === 0 ? (
@@ -456,7 +456,7 @@ function AlertCard({
 
   return (
     <div className={cn(
-      "relative rounded-2xl border bg-card/60 overflow-hidden",
+      "relative  border bg-card/60 overflow-hidden",
       isActive ? "border-border/50" : "border-border/20 opacity-75",
     )}>
       {/* Severity stripe */}
@@ -524,7 +524,7 @@ function AlertCard({
 
         {/* User notes */}
         {alert.user_notes && (
-          <div className="rounded-lg bg-muted/20 border border-border/20 p-2.5">
+          <div className=" bg-muted/20 border border-border/20 p-2.5">
             <p className="text-xs text-muted-foreground italic">{alert.user_notes}</p>
           </div>
         )}

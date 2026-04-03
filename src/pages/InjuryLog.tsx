@@ -65,7 +65,7 @@ function SeverityBadge({ severity }: { severity: number | null }) {
   const meta = SEVERITY_META[s];
   return (
     <span className={cn(
-      "inline-flex items-center px-2 py-0.5 rounded-lg text-xs font-semibold border",
+      "inline-flex items-center px-2 py-0.5  text-xs font-semibold border",
       meta.bg, meta.text, meta.border
     )}>
       {meta.label}
@@ -86,12 +86,12 @@ function InjuryCard({
   const [resolving, setResolving] = useState(false);
 
   return (
-    <div className="rounded-2xl border border-border/40 bg-card/60 backdrop-blur overflow-hidden">
+    <div className=" border border-border/40 bg-card/60  overflow-hidden">
       <button
         className="w-full text-left p-4 flex items-start gap-3"
         onClick={() => setExpanded((v) => !v)}
       >
-        <div className="mt-0.5 flex-shrink-0 w-9 h-9 rounded-xl bg-orange-500/10 flex items-center justify-center">
+        <div className="mt-0.5 flex-shrink-0 w-9 h-9  bg-orange-500/10 flex items-center justify-center">
           <ShieldAlert className="w-5 h-5 text-orange-400" />
         </div>
         <div className="flex-1 min-w-0 space-y-1">
@@ -223,7 +223,7 @@ function LogInjurySheet({
             <select
               value={form.body_part}
               onChange={(e) => set("body_part", e.target.value)}
-              className="w-full rounded-xl border border-border bg-muted/30 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
+              className="w-full  border border-border bg-muted/30 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
             >
               <option value="">Select body part…</option>
               {BODY_PARTS.map((bp) => (
@@ -236,7 +236,7 @@ function LogInjurySheet({
           <div>
             <label className="text-sm font-medium block mb-1.5">Injury Type</label>
             <input
-              className="w-full rounded-xl border border-border bg-muted/30 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
+              className="w-full  border border-border bg-muted/30 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
               placeholder="e.g. Grade 2 sprain, Tendinopathy, Stress fracture…"
               value={form.injury_type}
               onChange={(e) => set("injury_type", e.target.value)}
@@ -284,7 +284,7 @@ function LogInjurySheet({
               type="date"
               value={form.injury_date}
               onChange={(e) => set("injury_date", e.target.value)}
-              className="w-full rounded-xl border border-border bg-muted/30 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
+              className="w-full  border border-border bg-muted/30 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
             />
           </div>
 
@@ -296,7 +296,7 @@ function LogInjurySheet({
               value={form.notes}
               onChange={(e) => set("notes", e.target.value)}
               placeholder="e.g. Happened during sprint session, physio booked…"
-              className="w-full rounded-xl border border-border bg-muted/30 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 resize-none"
+              className="w-full  border border-border bg-muted/30 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 resize-none"
             />
           </div>
 
@@ -386,11 +386,11 @@ export default function InjuryLog() {
 
         {loading ? (
           <div className="space-y-3">
-            <Skeleton className="h-[72px] rounded-2xl" />
-            <Skeleton className="h-[72px] rounded-2xl" />
+            <Skeleton className="h-[72px] " />
+            <Skeleton className="h-[72px] " />
           </div>
         ) : active.length === 0 ? (
-          <div className="rounded-2xl border border-border/30 bg-card/40 p-8 text-center">
+          <div className=" border border-border/30 bg-card/40 p-8 text-center">
             <p className="text-3xl mb-2">🙌</p>
             <p className="font-semibold text-foreground">No injuries logged — stay healthy!</p>
             <p className="text-sm text-muted-foreground mt-1">

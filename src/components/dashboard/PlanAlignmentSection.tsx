@@ -48,9 +48,9 @@ export function PlanAlignmentSection({ className }: PlanAlignmentSectionProps) {
   return (
     <div className={className}>
       <Collapsible open={isOpen} onOpenChange={setIsOpen}>
-        <div className="rounded-lg border border-border bg-card/50">
+        <div className=" border border-border bg-card/50">
           <CollapsibleTrigger asChild>
-            <button className="w-full p-3 flex items-center justify-between gap-3 text-left hover:bg-muted/30 transition-colors rounded-lg">
+            <button className="w-full p-3 flex items-center justify-between gap-3 text-left hover:bg-muted/30 transition-colors ">
               <div className="flex items-center gap-2 min-w-0 flex-1">
                 <FileText className="h-4 w-4 text-muted-foreground shrink-0" />
                 <div className="min-w-0 flex-1">
@@ -76,7 +76,7 @@ export function PlanAlignmentSection({ className }: PlanAlignmentSectionProps) {
                 <div 
                   key={index}
                   className={cn(
-                    "p-3 rounded-lg border",
+                    "p-3  border",
                     item.tone === "coach" 
                       ? "bg-primary/5 border-primary/20" 
                       : "bg-emerald-500/5 border-emerald-500/20"

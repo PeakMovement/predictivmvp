@@ -23,7 +23,7 @@ export function BaselineBanner({ tier, daysWithData, className }: BaselineBanner
   return (
     <div
       className={cn(
-        'flex items-start gap-2 rounded-lg border border-border/60 bg-muted/40 px-3 py-2',
+        'flex items-start gap-2  border border-border/60 bg-muted/40 px-3 py-2',
         className
       )}
     >

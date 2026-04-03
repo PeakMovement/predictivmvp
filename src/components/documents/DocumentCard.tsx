@@ -15,7 +15,7 @@ interface DocumentCardProps {
 const typeIcons = {
   nutrition: '🍽️',
   medical: '🏥',
-  training: '💪'
+  training: ''
 };
 
 const typeLabels = {
@@ -48,7 +48,7 @@ export const DocumentCard = ({ document, onDelete, onPreview, onViewHistory }: D
             </div>
 
             {document.ai_summary && document.processing_status === 'completed' && (
-              <div className="bg-primary/10 p-3 rounded-md">
+              <div className="bg-primary/10 p-3 ">
                 <p className="text-xs text-muted-foreground line-clamp-3">
                   {document.ai_summary}
                 </p>

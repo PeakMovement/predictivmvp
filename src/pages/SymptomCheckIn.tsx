@@ -30,7 +30,7 @@ export const SymptomCheckIn = () => {
         {/* Header */}
         <div className="mb-6">
           <div className="flex items-center gap-3 mb-2">
-            <div className="p-2 rounded-xl bg-primary/20">
+            <div className="p-2  bg-primary/20">
               <Stethoscope className="h-6 w-6 text-primary" />
             </div>
             <h1 className="text-2xl font-bold text-foreground">Symptom Check In</h1>
@@ -47,7 +47,7 @@ export const SymptomCheckIn = () => {
 
         {/* AI Interpretation Result */}
         {(latestCheckinId || isLoading) && (
-          <Card className="mb-6 bg-card/50 backdrop-blur-xl border-border/50">
+          <Card className="mb-6 bg-card/50  border-border/50">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="flex items-center gap-2 text-foreground">
                 <Brain className="h-5 w-5 text-primary" />
@@ -82,7 +82,7 @@ export const SymptomCheckIn = () => {
               {interpretation && (
                 <div className="space-y-4">
                   {/* Summary */}
-                  <div className="p-3 rounded-lg bg-secondary/50">
+                  <div className="p-3  bg-secondary/50">
                     <p className="text-foreground">{interpretation.summary}</p>
                   </div>
 

@@ -256,7 +256,7 @@ export function SymptomCheckInForm({ onSuccess, onRequestClose }: SymptomCheckIn
 
   return (
     <>
-      <Card className="bg-card/50 backdrop-blur-xl border-border/50">
+      <Card className="bg-card/50  border-border/50">
         <CardHeader className="pb-4">
           <CardTitle className="flex items-center gap-2 text-foreground">
             <Stethoscope className="h-5 w-5 text-primary" />

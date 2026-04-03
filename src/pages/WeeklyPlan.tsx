@@ -32,7 +32,7 @@ const SESSION_META: Record<SessionType, {
   label: string;
 }> = {
   Rest: {
-    emoji: "😴",
+    emoji: "",
     label: "REST",
     pill: "bg-slate-500/20 text-slate-300 border-slate-500/30",
     card: "bg-slate-500/5 border-slate-500/20",
@@ -53,7 +53,7 @@ const SESSION_META: Record<SessionType, {
     ring: "ring-yellow-400/40",
   },
   Hard: {
-    emoji: "💪",
+    emoji: "",
     label: "HARD",
     pill: "bg-red-500/15 text-red-400 border-red-500/25",
     card: "bg-red-500/5 border-red-500/20",
@@ -196,9 +196,9 @@ function DayCard({ day, onClick }: { day: DayPlan; onClick: () => void }) {
     <button
       onClick={onClick}
       className={cn(
-        "flex flex-col items-center gap-2 p-3 rounded-2xl border transition-all active:scale-95 touch-manipulation w-full",
+        "flex flex-col items-center gap-2 p-3  border transition-all active:scale-95 touch-manipulation w-full",
         meta.card,
-        todayFlag && `ring-2 ${meta.ring} shadow-md`,
+        todayFlag && `ring-2 ${meta.ring} `,
       )}
     >
       <div className="text-center">
@@ -243,7 +243,7 @@ function WeeklySummary({ plan }: { plan: DayPlan[] }) {
   if (counts.Rest > 0) parts.push(`${counts.Rest} rest`);
 
   return (
-    <div className="rounded-2xl border border-border/30 bg-card/40 p-4">
+    <div className=" border border-border/30 bg-card/40 p-4">
       <p className="text-xs text-muted-foreground uppercase tracking-wide font-medium mb-2">
         Weekly Summary
       </p>
@@ -370,7 +370,7 @@ export default function WeeklyPlan() {
         {loading ? (
           <div className="grid grid-cols-7 gap-1.5 min-w-[476px]">
             {Array.from({ length: 7 }).map((_, i) => (
-              <Skeleton key={i} className="h-28 rounded-2xl" />
+              <Skeleton key={i} className="h-28 " />
             ))}
           </div>
         ) : (
@@ -414,7 +414,7 @@ export default function WeeklyPlan() {
                 </SheetHeader>
 
                 <div className="space-y-3 pb-2">
-                  <div className="rounded-xl bg-muted/30 border border-border/30 p-4">
+                  <div className=" bg-muted/30 border border-border/30 p-4">
                     <div className="flex items-center gap-1.5 mb-2 text-xs text-muted-foreground font-medium">
                       <Sparkles className="w-3.5 h-3.5 text-primary" />
                       Yves says

@@ -28,15 +28,25 @@ export function ActiveGoalSection({ className }: ActiveGoalSectionProps) {
 
         if (data?.goals && data.goals.length > 0) {
           const goalLabels: Record<string, string> = {
-            performance: "Improve Athletic Performance",
-            recovery: "Optimize Recovery",
+            // New onboarding values
+            injury_prevention: "Injury Prevention",
+            performance: "Performance",
+            recovery: "Better Recovery",
+            stress: "Stress Management",
+            longevity: "Longevity",
+            rehab: "Rehab / Healing",
+            // Legacy/Settings values
+            health_fitness: "Health & Fitness",
+            injury_recovery: "Injury Recovery",
+            weight_management: "Weight Management",
+            general_wellness: "General Wellness",
+            // Old onboarding values (backwards compat)
             health: "General Health & Wellness",
             weight: "Weight Management",
             sleep: "Better Sleep Quality",
-            stress: "Reduce Stress",
           };
           const raw = data.goals[0];
-          setPrimaryGoal(goalLabels[raw] ?? raw);
+          setPrimaryGoal(goalLabels[raw] ?? raw.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()));
         }
       } catch (error) {
         console.error('Error fetching user goal:', error);

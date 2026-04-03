@@ -75,13 +75,13 @@ export default function Genesis() {
           return;
         }
 
-        // Email confirmation required
+        // Email confirmation required — show message and stay on signup view
+        setError("");
         toast({
           title: "Check your email",
           description: "We've sent you a verification link. Click it to get started.",
         });
-        setError("");
-        setView("hero");
+        // Don't navigate away — user stays here until they confirm email and log in
       }
     } catch (err: any) {
       setError(err.message || "Something went wrong");

@@ -14,6 +14,11 @@
 
 @layer base {
   :root {
+    /* ── TYPOGRAPHY ─────────────────────────────────────────────── */
+    --font-display: 'Cormorant Garamond', Georgia, serif;
+    --font-ui: 'Rajdhani', sans-serif;
+    --font-mono: 'Space Mono', monospace;
+
     /* ── FOUNDATION ──────────────────────────────────────────────── */
     --background: 240 43% 3%;          /* #04040A void */
     --foreground: 30 15% 88%;          /* #E8E2DC marble2 */
@@ -161,7 +166,7 @@
 
   body {
     @apply text-foreground;
-    font-family: 'Rajdhani', sans-serif;
+    font-family: var(--font-ui);
     font-weight: 400;
     letter-spacing: 0.04em;
     min-height: 100vh;

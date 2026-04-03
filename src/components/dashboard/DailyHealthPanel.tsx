@@ -197,7 +197,7 @@ export function DailyHealthPanel() {
                 </div>
                 
                 <div className="flex items-baseline gap-1.5 mb-1">
-                  <span className="text-2xl font-bold text-foreground animate-number-pop">
+                  <span className="text-[40px] sm:text-[52px] font-display font-light leading-none text-marble3">
                     {formatValue(metric.metric_name, metric.value)}
                   </span>
                   {unit && <span className="text-xs text-muted-foreground">{unit}</span>}

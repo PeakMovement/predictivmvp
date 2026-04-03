@@ -309,7 +309,7 @@ export const Health = () => {
                       <div className="relative w-28 h-28 flex items-center justify-center">
                         <ScoreRing score={sleepScore} size={112} />
                         <div className="absolute inset-0 flex flex-col items-center justify-center">
-                          <span className={`text-3xl font-bold ${scoreColor(sleepScore)}`}>{sleepScore}</span>
+                          <span className={`text-[40px] sm:text-[52px] font-display font-light leading-none ${scoreColor(sleepScore)}`}>{sleepScore}</span>
                           <span className="text-xs text-muted-foreground">/ 100</span>
                         </div>
                       </div>
@@ -317,7 +317,7 @@ export const Health = () => {
                     </>
                   ) : (
                     <div className="flex flex-col items-center gap-1 py-4">
-                      <span className="text-3xl font-bold text-muted-foreground">—</span>
+                      <span className="text-[40px] sm:text-[52px] font-display font-light leading-none text-marble1/40">—</span>
                       <p className="text-sm text-muted-foreground">Sleep Score</p>
                     </div>
                   )}
@@ -448,7 +448,7 @@ export const Health = () => {
                       <TooltipTrigger asChild>
                         <div className="bg-background/50 border border-glass-border  p-5 text-center cursor-help hover:bg-background/70 transition-colors">
                           <div className="flex justify-center mb-2">{icon}</div>
-                          <p className="text-2xl font-bold text-foreground">{value}</p>
+                          <p className="text-[40px] sm:text-[52px] font-display font-light leading-none text-marble3">{value}</p>
                           <p className="text-xs text-muted-foreground">{label}</p>
                           <p className="text-xs text-muted-foreground">{unit}</p>
                         </div>

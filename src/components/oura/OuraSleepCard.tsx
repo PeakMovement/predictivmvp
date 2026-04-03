@@ -256,8 +256,8 @@ export const OuraSleepCard = ({
               {isStale && <AlertTriangle className="h-3 w-3 shrink-0" />}
               <span>
                 {isStale
-                  ? `Data may be out of date — synced ${formatDistanceToNowStrict(lastSyncDate)} ago`
-                  : `Synced ${formatDistanceToNowStrict(lastSyncDate)} ago`}
+                  ? `Wearable · sync required —  ${formatDistanceToNowStrict(lastSyncDate)} ago`
+                  : `Wearable · synced`}
               </span>
             </div>
           ) : (

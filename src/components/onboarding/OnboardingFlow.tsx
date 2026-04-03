@@ -96,18 +96,42 @@ export const OnboardingFlow = ({ onComplete, onSkip }: OnboardingFlowProps) => {
     }
 
     // Hydrate form from existing DB data
-    const [{ data: profile }, { data: aiProfile }, { data: medical }, { data: training }] = await Promise.all([
+    const [{ data: profile }, { data: aiProfile }, { data: medical }, { data: training }, { data: injuries }, { data: lifestyle }, { data: recovery }, { data: goals }] = await Promise.all([
       supabase.from("user_profiles").select("full_name, date_of_birth, primary_goal").eq("user_id", user.id).maybeSingle(),
       supabase.from("user_profile").select("name, dob, goals, gender, activity_level").eq("user_id", user.id).maybeSingle(),
       supabase.from("user_medical").select("medical_notes, conditions").eq("user_id", user.id).maybeSingle(),
       supabase.from("user_training").select("preferred_activities, training_frequency, intensity_preference").eq("user_id", user.id).maybeSingle(),
+      supabase.from("user_injuries").select("injuries, injury_details").eq("user_id", user.id).maybeSingle(),
+      supabase.from("user_lifestyle").select("stress_level").eq("user_id", user.id).maybeSingle(),
+      supabase.from("user_recovery").select("sleep_quality, sleep_hours").eq("user_id", user.id).maybeSingle(),
+      supabase.from("user_wellness_goals").select("goals").eq("user_id", user.id).maybeSingle(),
     ]);
+
+    // Recover wearable selections from memory bank
+    const { data: wearableMem } = await supabase
+      .from("yves_memory_bank")
+      .select("memory_value")
+      .eq("user_id", user.id)
+      .eq("memory_key", "wearable_device")
+      .maybeSingle();
+
+    let savedWearables: string[] = [];
+    if (wearableMem?.memory_value) {
+      try { savedWearables = JSON.parse(wearableMem.memory_value); } catch { /* ignore */ }
+    }
 
     setData((prev) => ({
       ...prev,
       firstName: profile?.full_name || aiProfile?.name || prev.firstName,
       dateOfBirth: profile?.date_of_birth || aiProfile?.dob || prev.dateOfBirth,
       gender: aiProfile?.gender || prev.gender,
+      wearables: savedWearables.length ? savedWearables : prev.wearables,
+      sports: training?.preferred_activities?.map((s: string) => s.toLowerCase()) || prev.sports,
+      healthGoals: goals?.goals || aiProfile?.goals || prev.healthGoals,
+      injuryHistory: (injuries?.injury_details as any)?.type || prev.injuryHistory,
+      injuryDescription: (injuries?.injury_details as any)?.description || prev.injuryDescription,
+      stressLevel: lifestyle?.stress_level === "low" ? 2 : lifestyle?.stress_level === "medium" ? 5 : lifestyle?.stress_level === "high" ? 8 : prev.stressLevel,
+      sleepQuality: recovery?.sleep_quality || prev.sleepQuality,
     }));
   };
 
@@ -150,9 +174,9 @@ export const OnboardingFlow = ({ onComplete, onSkip }: OnboardingFlowProps) => {
     return true;
   };
 
-  // ── Save progress per step ─────────────────────────────────────────
-  const saveStep = async (stepIndex: number) => {
-    if (!userId) return;
+  // ── Save progress per step (returns true on success) ────────────────
+  const saveStep = async (stepIndex: number): Promise<boolean> => {
+    if (!userId) return false;
     const now = new Date().toISOString();
 
     try {
@@ -165,25 +189,14 @@ export const OnboardingFlow = ({ onComplete, onSkip }: OnboardingFlowProps) => {
 
       // Step-specific saves
       switch (stepIndex) {
-        case 1: // About You
-          await saveAboutYou(userId, data, now);
-          break;
-        case 2: // Wearable
-          await saveWearable(userId, data, now);
-          break;
-        case 3: // Training
-          await saveTraining(userId, data, now);
-          break;
-        case 4: // Goals
-          await saveGoals(userId, data, now);
-          break;
-        case 5: // Injury
-          await saveInjury(userId, data, now);
-          break;
-        case 6: // Lifestyle
-          await saveLifestyle(userId, data, now);
-          break;
+        case 1: await saveAboutYou(userId, data, now); break;
+        case 2: await saveWearable(userId, data, now); break;
+        case 3: await saveTraining(userId, data, now); break;
+        case 4: await saveGoals(userId, data, now); break;
+        case 5: await saveInjury(userId, data, now); break;
+        case 6: await saveLifestyle(userId, data, now); break;
       }
+      return true;
     } catch (err) {
       console.error("Error saving onboarding step:", err);
       toast({
@@ -191,6 +204,7 @@ export const OnboardingFlow = ({ onComplete, onSkip }: OnboardingFlowProps) => {
         description: "Please try again.",
         variant: "destructive",
       });
+      return false;
     }
   };
 
@@ -198,7 +212,8 @@ export const OnboardingFlow = ({ onComplete, onSkip }: OnboardingFlowProps) => {
   const handleNext = async () => {
     if (!validate()) return;
 
-    await saveStep(step);
+    const saved = await saveStep(step);
+    if (!saved) return; // Don't advance if save failed
 
     if (step < TOTAL_STEPS - 1) {
       setStep(step + 1);
@@ -231,6 +246,7 @@ export const OnboardingFlow = ({ onComplete, onSkip }: OnboardingFlowProps) => {
     if (!userId) return;
     const now = new Date().toISOString();
 
+    try {
     await ensureUserProfileExists(userId);
 
     // Store raw questionnaire signals in memory bank (for AI prompts)
@@ -291,6 +307,14 @@ export const OnboardingFlow = ({ onComplete, onSkip }: OnboardingFlowProps) => {
 
     toast({ title: "Welcome to Predictiv!", description: "Your profile is configured" });
     onComplete();
+    } catch (error) {
+      console.error("Error completing onboarding:", error);
+      toast({
+        title: "Failed to complete setup",
+        description: "Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   // ── Progress bar ───────────────────────────────────────────────────

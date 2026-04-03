@@ -145,7 +145,7 @@ export function DocumentVersionHistoryModal({
           <div className="flex-1 overflow-y-auto">
             {loading ? (
               <div className="flex items-center justify-center py-12">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                <div className="w-24 h-px overflow-hidden"><div className="h-px w-full bg-coldBlue animate-hairline-sweep" /></div>
               </div>
             ) : (
               <div className="space-y-4">

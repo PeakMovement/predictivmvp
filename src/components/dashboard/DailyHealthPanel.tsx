@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 import { useMemo } from "react";
 
 const TrendIcon = ({ direction }: { direction: string }) => {
-  if (direction === "increasing") return <TrendingUp className="h-4 w-4 text-emerald-400" />;
+  if (direction === "increasing") return <TrendingUp className="h-4 w-4 text-bioGreen" />;
   if (direction === "declining") return <TrendingDown className="h-4 w-4 text-rose-400" />;
   return <Minus className="h-4 w-4 text-muted-foreground" />;
 };
@@ -16,7 +16,7 @@ const MetricIcon = ({ metric }: { metric: string }) => {
   switch (metric) {
     case "sleep_score": return <Moon className={cn(iconClass, "text-indigo-400")} />;
     case "readiness_score": return <Zap className={cn(iconClass, "text-amber-400")} />;
-    case "hrv": return <Activity className={cn(iconClass, "text-emerald-400")} />;
+    case "hrv": return <Activity className={cn(iconClass, "text-bioGreen")} />;
     case "resting_hr": return <Heart className={cn(iconClass, "text-rose-400")} />;
     default: return <Activity className={cn(iconClass, "text-muted-foreground")} />;
   }
@@ -39,8 +39,8 @@ const getMetricConfig = (metric: string) => {
     hrv: { 
       name: "HRV", 
       gradient: "from-emerald-500/15 to-emerald-500/5",
-      border: "border-emerald-500/30 hover:border-emerald-400/50",
-      iconBg: "bg-emerald-500/10"
+      border: "border-bioGreen/30 hover:border-emerald-400/50",
+      iconBg: "bg-bioGreen/10"
     },
     resting_hr: { 
       name: "Resting HR", 
@@ -82,11 +82,11 @@ const MiniProgress = ({ value, baseline, isGoodWhenHigh = true }: { value: numbe
   const isGood = isGoodWhenHigh ? isAboveBaseline : !isAboveBaseline;
   
   return (
-    <div className="w-full h-1 bg-muted/30 rounded-full overflow-hidden">
+    <div className="w-full h-1 bg-muted/30 overflow-hidden">
       <div 
         className={cn(
-          "h-full rounded-full origin-left animate-bar-grow",
-          isGood ? "bg-emerald-500/50" : "bg-rose-500/50"
+          "h-full origin-left animate-bar-grow",
+          isGood ? "bg-bioGreen/50" : "bg-rose-500/50"
         )}
         style={{ width: `${Math.min(percentage, 100)}%` }}
       />
@@ -217,9 +217,9 @@ export function DailyHealthPanel() {
                   <p className={cn(
                     "text-xs mt-2",
                     metric.delta > 0 
-                      ? (isGoodWhenHigh ? "text-emerald-400" : "text-rose-400")
+                      ? (isGoodWhenHigh ? "text-bioGreen" : "text-rose-400")
                       : metric.delta < 0 
-                        ? (isGoodWhenHigh ? "text-rose-400" : "text-emerald-400")
+                        ? (isGoodWhenHigh ? "text-rose-400" : "text-bioGreen")
                         : "text-muted-foreground"
                   )}>
                     {formatDelta(metric.delta, metric.metric_name)} vs baseline

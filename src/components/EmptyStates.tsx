@@ -62,7 +62,7 @@ export const EmptyState = ({
     <Card className="p-8 md:p-12">
       <div className="flex flex-col items-center text-center space-y-4 max-w-md mx-auto">
         {icon && (
-          <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center text-muted-foreground">
+          <div className="w-16 h-16 bg-muted flex items-center justify-center text-muted-foreground">
             {icon}
           </div>
         )}
@@ -269,7 +269,7 @@ export const LoadingDataState = ({ message = "Loading data..." }: { message?: st
   return (
     <Card className="p-8 md:p-12">
       <div className="flex flex-col items-center text-center space-y-4 max-w-md mx-auto">
-        <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center">
+        <div className="w-16 h-16 bg-muted flex items-center justify-center">
           <RefreshCw className="h-8 w-8 text-muted-foreground animate-spin" />
         </div>
         <p className="text-muted-foreground">{message}</p>

@@ -36,7 +36,7 @@ export function YvesChatSheet() {
               )}
               aria-label="Chat with Yves AI"
             >
-              <Sparkles size={20} className="text-primary drop-" />
+              <Sparkles size={20} className="text-primary " />
             </button>
           </DialogTrigger>
         </TooltipTrigger>

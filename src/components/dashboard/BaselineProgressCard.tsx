@@ -132,7 +132,7 @@ export function BaselineProgressCard({ maturity, onSyncComplete }: BaselineProgr
           <span>{days_with_data} day{days_with_data !== 1 ? 's' : ''} of data</span>
           <span>{TOTAL} days for full baseline</span>
         </div>
-        <div className="flex gap-px h-2 rounded-full overflow-hidden bg-muted">
+        <div className="flex gap-px h-2 overflow-hidden bg-muted">
           {Array.from({ length: TOTAL }).map((_, i) => (
             <div
               key={i}
@@ -183,9 +183,9 @@ export function BaselineProgressCard({ maturity, onSyncComplete }: BaselineProgr
             data_sources.map((source) => (
               <span
                 key={source}
-                className="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full bg-emerald-500/12 text-emerald-700 dark:text-emerald-400 border border-emerald-500/25"
+                className="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 bg-bioGreen/12 text-emerald-700 dark:text-bioGreen border border-bioGreen/25"
               >
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                <span className="w-1.5 h-1.5 bg-bioGreen" />
                 {DEVICE_LABELS[source] ?? source}
               </span>
             ))

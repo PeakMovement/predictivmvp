@@ -56,9 +56,9 @@ const SEVERITY_COLORS: Record<string, string> = {
 
 const READINESS_COLOR = (score: number | null) => {
   if (!score) return "text-slate-400";
-  if (score >= 80) return "text-emerald-600";
+  if (score >= 80) return "text-bioGreen";
   if (score >= 60) return "text-amber-500";
-  return "text-red-500";
+  return "text-critical";
 };
 
 // ─── DATA FETCHING ────────────────────────────────────────────────────────────
@@ -158,7 +158,7 @@ const PatientCard = ({ patient }: { patient: PatientSummary }) => {
       {/* Header */}
       <div className="px-5 py-4 border-b border-slate-100 flex items-start justify-between gap-3">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center flex-shrink-0">
+          <div className="w-10 h-10 bg-slate-100 flex items-center justify-center flex-shrink-0">
             <User className="h-5 w-5 text-slate-500" />
           </div>
           <div>
@@ -184,7 +184,7 @@ const PatientCard = ({ patient }: { patient: PatientSummary }) => {
             className={cn(
               "flex-shrink-0 text-xs font-semibold",
               highSeverityAlerts.length > 0
-                ? "border-red-200 bg-red-50 text-red-600"
+                ? "border-red-200 bg-red-50 text-critical"
                 : "border-yellow-200 bg-yellow-50 text-yellow-600"
             )}
           >
@@ -303,7 +303,7 @@ const PatientCard = ({ patient }: { patient: PatientSummary }) => {
 
         {/* No alerts */}
         {!hasAlerts && (
-          <div className="flex items-center gap-2 text-emerald-600">
+          <div className="flex items-center gap-2 text-bioGreen">
             <CheckCircle className="h-4 w-4" />
             <span className="text-xs font-medium">No active alerts</span>
           </div>
@@ -431,7 +431,7 @@ export const PractitionerDashboard = () => {
             <p className="text-xs text-slate-500 mt-0.5">Patients</p>
           </div>
           <div className="bg-white  border border-slate-200 p-4 text-center">
-            <p className="text-2xl font-bold text-red-500">
+            <p className="text-2xl font-bold text-critical">
               {patients.reduce((n, p) => n + p.unacknowledgedAnomalies.filter(a => a.severity === "critical" || a.severity === "high").length, 0)}
             </p>
             <p className="text-xs text-slate-500 mt-0.5">High Alerts</p>

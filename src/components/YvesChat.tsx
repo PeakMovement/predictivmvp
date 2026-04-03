@@ -260,7 +260,7 @@ export function YvesChat({ compact = false }: YvesChatProps) {
             compact && "gap-2"
           )}>
             <div className="flex items-center gap-2">
-              <Sparkles className="h-5 w-5 text-green-600 shrink-0" />
+              <Sparkles className="h-5 w-5 text-bioGreen shrink-0" />
               <CardTitle className={cn(compact && "text-base")}>Chat with Yves</CardTitle>
             </div>
             <div className="flex flex-wrap items-center gap-2">

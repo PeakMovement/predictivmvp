@@ -22,11 +22,11 @@ const BODY_PARTS = [
 ];
 
 const SEVERITY_META: Record<number, { label: string; bg: string; text: string; border: string }> = {
-  1: { label: "1 – Minimal",  bg: "bg-green-500/10",  text: "text-green-400",  border: "border-green-500/20" },
-  2: { label: "2 – Mild",     bg: "bg-yellow-500/10", text: "text-yellow-400", border: "border-yellow-500/20" },
-  3: { label: "3 – Moderate", bg: "bg-orange-500/10", text: "text-orange-400", border: "border-orange-500/20" },
-  4: { label: "4 – Severe",   bg: "bg-red-500/10",    text: "text-red-400",    border: "border-red-500/20" },
-  5: { label: "5 – Critical", bg: "bg-red-600/15",    text: "text-red-500",    border: "border-red-500/30" },
+  1: { label: "1 – Minimal",  bg: "bg-bioGreen/10",  text: "text-bioGreen",  border: "border-bioGreen/20" },
+  2: { label: "2 – Mild",     bg: "bg-amber/10", text: "text-yellow-400", border: "border-amber/20" },
+  3: { label: "3 – Moderate", bg: "bg-amber/10", text: "text-orange-400", border: "border-amber/20" },
+  4: { label: "4 – Severe",   bg: "bg-critical/10",    text: "text-red-400",    border: "border-critical/20" },
+  5: { label: "5 – Critical", bg: "bg-critical/15",    text: "text-critical",    border: "border-critical/30" },
 };
 
 // ── Types ──────────────────────────────────────────────────────────────────
@@ -91,7 +91,7 @@ function InjuryCard({
         className="w-full text-left p-4 flex items-start gap-3"
         onClick={() => setExpanded((v) => !v)}
       >
-        <div className="mt-0.5 flex-shrink-0 w-9 h-9  bg-orange-500/10 flex items-center justify-center">
+        <div className="mt-0.5 flex-shrink-0 w-9 h-9  bg-amber/10 flex items-center justify-center">
           <ShieldAlert className="w-5 h-5 text-orange-400" />
         </div>
         <div className="flex-1 min-w-0 space-y-1">
@@ -131,7 +131,7 @@ function InjuryCard({
               size="sm"
               variant="outline"
               disabled={resolving}
-              className="w-full border-green-500/30 text-green-400 hover:bg-green-500/10"
+              className="w-full border-bioGreen/30 text-bioGreen hover:bg-bioGreen/10"
               onClick={async (e) => {
                 e.stopPropagation();
                 setResolving(true);
@@ -211,7 +211,7 @@ function LogInjurySheet({
 
   return (
     <Sheet open={open} onOpenChange={(o) => { if (!o) onClose(); }}>
-      <SheetContent side="bottom" className="rounded-t-3xl max-h-[90vh] overflow-y-auto">
+      <SheetContent side="bottom" className=" max-h-[90vh] overflow-y-auto">
         <SheetHeader className="text-left mb-5">
           <SheetTitle>Log New Injury</SheetTitle>
         </SheetHeader>
@@ -269,7 +269,7 @@ function LogInjurySheet({
                 <div
                   key={n}
                   className={cn(
-                    "flex-1 h-1.5 rounded-full transition-all",
+                    "flex-1 h-1.5 transition-all",
                     n <= sev ? SEVERITY_META[n].bg.replace("/10", "/60").replace("/15", "/60") : "bg-muted/30"
                   )}
                 />

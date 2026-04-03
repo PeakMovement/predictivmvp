@@ -45,7 +45,7 @@ export function CustomFocusEditor({
         {/* Header with warm, supportive language */}
         <div className="text-center space-y-2">
           <div className="flex items-center justify-center gap-2">
-            <Heart className="h-5 w-5 text-emerald-500" />
+            <Heart className="h-5 w-5 text-bioGreen" />
             <h3 className="text-lg font-semibold text-foreground">
               What feels important to you today?
             </h3>
@@ -68,19 +68,19 @@ export function CustomFocusEditor({
                   "relative p-4  border-2 transition-all duration-200 text-left",
                   "hover:scale-[1.02] active:scale-[0.98]",
                   isSelected
-                    ? "bg-emerald-500/10 border-emerald-500/50 "
+                    ? "bg-bioGreen/10 border-bioGreen/50 "
                     : "bg-muted/30 border-transparent hover:border-muted-foreground/20"
                 )}
               >
                 {isSelected && (
                   <div className="absolute top-2 right-2">
-                    <Star className="h-4 w-4 text-emerald-500 fill-emerald-500" />
+                    <Star className="h-4 w-4 text-bioGreen fill-emerald-500" />
                   </div>
                 )}
                 <div className="space-y-1">
                   <span className={cn(
                     "font-medium text-sm",
-                    isSelected ? "text-emerald-600 dark:text-emerald-400" : "text-foreground"
+                    isSelected ? "text-bioGreen dark:text-bioGreen" : "text-foreground"
                   )}>
                     {card.label}
                   </span>
@@ -101,7 +101,7 @@ export function CustomFocusEditor({
               Tap the areas that matter most to you right now
             </p>
           ) : (
-            <p className="text-sm text-emerald-600 dark:text-emerald-400">
+            <p className="text-sm text-bioGreen dark:text-bioGreen">
               {emphasizedCount === 1 
                 ? "One area selected. Your dashboard will highlight this for you."
                 : `${emphasizedCount} areas selected. Your dashboard will bring these forward.`
@@ -122,7 +122,7 @@ export function CustomFocusEditor({
           </Button>
           <Button
             onClick={handleSave}
-            className="gap-2 bg-emerald-500 hover:bg-emerald-600 text-white"
+            className="gap-2 bg-bioGreen hover:bg-emerald-600 text-white"
           >
             <Check className="h-4 w-4" />
             Save my focus

@@ -28,48 +28,48 @@ export function SystemHealthOverview({ data, isLoading }: SystemHealthOverviewPr
       label: "Sync Success Rate",
       value: `${data.syncSuccessRate.toFixed(1)}%`,
       icon: Activity,
-      color: data.syncSuccessRate >= 95 ? "text-green-500" : data.syncSuccessRate >= 80 ? "text-yellow-500" : "text-destructive",
-      bgColor: data.syncSuccessRate >= 95 ? "bg-green-500/20" : data.syncSuccessRate >= 80 ? "bg-yellow-500/20" : "bg-destructive/20",
+      color: data.syncSuccessRate >= 95 ? "text-bioGreen" : data.syncSuccessRate >= 80 ? "text-amber" : "text-destructive",
+      bgColor: data.syncSuccessRate >= 95 ? "bg-bioGreen/20" : data.syncSuccessRate >= 80 ? "bg-amber/20" : "bg-destructive/20",
       trend: data.syncSuccessRate >= 95 ? "up" : "down",
     },
     {
       label: "Avg Latency",
       value: `${data.avgLatencyMs.toFixed(0)}ms`,
       icon: Clock,
-      color: data.avgLatencyMs <= 500 ? "text-green-500" : data.avgLatencyMs <= 1000 ? "text-yellow-500" : "text-destructive",
-      bgColor: data.avgLatencyMs <= 500 ? "bg-green-500/20" : data.avgLatencyMs <= 1000 ? "bg-yellow-500/20" : "bg-destructive/20",
+      color: data.avgLatencyMs <= 500 ? "text-bioGreen" : data.avgLatencyMs <= 1000 ? "text-amber" : "text-destructive",
+      bgColor: data.avgLatencyMs <= 500 ? "bg-bioGreen/20" : data.avgLatencyMs <= 1000 ? "bg-amber/20" : "bg-destructive/20",
       trend: data.avgLatencyMs <= 500 ? "up" : "down",
     },
     {
       label: "Rate Limits",
       value: data.activeRateLimits.toString(),
       icon: AlertTriangle,
-      color: data.activeRateLimits === 0 ? "text-green-500" : "text-yellow-500",
-      bgColor: data.activeRateLimits === 0 ? "bg-green-500/20" : "bg-yellow-500/20",
+      color: data.activeRateLimits === 0 ? "text-bioGreen" : "text-amber",
+      bgColor: data.activeRateLimits === 0 ? "bg-bioGreen/20" : "bg-amber/20",
       trend: data.activeRateLimits === 0 ? "up" : "down",
     },
     {
       label: "Retry Queue",
       value: data.retryQueueBacklog.toString(),
       icon: RotateCcw,
-      color: data.retryQueueBacklog === 0 ? "text-green-500" : data.retryQueueBacklog <= 5 ? "text-yellow-500" : "text-destructive",
-      bgColor: data.retryQueueBacklog === 0 ? "bg-green-500/20" : data.retryQueueBacklog <= 5 ? "bg-yellow-500/20" : "bg-destructive/20",
+      color: data.retryQueueBacklog === 0 ? "text-bioGreen" : data.retryQueueBacklog <= 5 ? "text-amber" : "text-destructive",
+      bgColor: data.retryQueueBacklog === 0 ? "bg-bioGreen/20" : data.retryQueueBacklog <= 5 ? "bg-amber/20" : "bg-destructive/20",
       trend: data.retryQueueBacklog === 0 ? "up" : "down",
     },
     {
       label: "Anomalies",
       value: data.unacknowledgedAnomalies.toString(),
       icon: Bell,
-      color: data.unacknowledgedAnomalies === 0 ? "text-green-500" : data.unacknowledgedAnomalies <= 3 ? "text-yellow-500" : "text-destructive",
-      bgColor: data.unacknowledgedAnomalies === 0 ? "bg-green-500/20" : data.unacknowledgedAnomalies <= 3 ? "bg-yellow-500/20" : "bg-destructive/20",
+      color: data.unacknowledgedAnomalies === 0 ? "text-bioGreen" : data.unacknowledgedAnomalies <= 3 ? "text-amber" : "text-destructive",
+      bgColor: data.unacknowledgedAnomalies === 0 ? "bg-bioGreen/20" : data.unacknowledgedAnomalies <= 3 ? "bg-amber/20" : "bg-destructive/20",
       trend: data.unacknowledgedAnomalies === 0 ? "up" : "down",
     },
     {
       label: "Tokens Expiring",
       value: data.tokensExpiringIn24h.toString(),
       icon: Key,
-      color: data.tokensExpiringIn24h === 0 ? "text-green-500" : "text-yellow-500",
-      bgColor: data.tokensExpiringIn24h === 0 ? "bg-green-500/20" : "bg-yellow-500/20",
+      color: data.tokensExpiringIn24h === 0 ? "text-bioGreen" : "text-amber",
+      bgColor: data.tokensExpiringIn24h === 0 ? "bg-bioGreen/20" : "bg-amber/20",
       trend: data.tokensExpiringIn24h === 0 ? "up" : "down",
     },
   ];
@@ -84,7 +84,7 @@ export function SystemHealthOverview({ data, isLoading }: SystemHealthOverviewPr
                 <metric.icon size={16} className={metric.color} />
               </div>
               {metric.trend === "up" ? (
-                <TrendingUp size={14} className="text-green-500" />
+                <TrendingUp size={14} className="text-bioGreen" />
               ) : (
                 <TrendingDown size={14} className="text-destructive" />
               )}

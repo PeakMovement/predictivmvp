@@ -126,8 +126,8 @@ export const WeeklyReflectionModal = ({
                   className={cn(
                     "p-2  transition-all",
                     rating >= star
-                      ? "text-yellow-500 scale-110"
-                      : "text-muted-foreground hover:text-yellow-500/50"
+                      ? "text-amber scale-110"
+                      : "text-muted-foreground hover:text-amber/50"
                   )}
                 >
                   <Star

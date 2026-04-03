@@ -100,9 +100,9 @@ export function UserOverviewTable({ users, isLoading }: UserOverviewTableProps) 
                             className={cn(
                               "font-mono text-sm font-medium",
                               u.readiness_score >= 70
-                                ? "text-green-500"
+                                ? "text-bioGreen"
                                 : u.readiness_score >= 50
-                                ? "text-yellow-500"
+                                ? "text-amber"
                                 : "text-destructive"
                             )}
                           >
@@ -118,9 +118,9 @@ export function UserOverviewTable({ users, isLoading }: UserOverviewTableProps) 
                             className={cn(
                               "font-mono text-sm font-medium",
                               u.risk_score_acwr <= 1.3
-                                ? "text-green-500"
+                                ? "text-bioGreen"
                                 : u.risk_score_acwr <= 1.5
-                                ? "text-yellow-500"
+                                ? "text-amber"
                                 : "text-destructive"
                             )}
                           >
@@ -133,7 +133,7 @@ export function UserOverviewTable({ users, isLoading }: UserOverviewTableProps) 
                       <TableCell className="text-sm text-muted-foreground">
                         {u.last_sync_time ? (
                           <span className="flex items-center gap-1">
-                            <Wifi size={12} className="text-green-500" />
+                            <Wifi size={12} className="text-bioGreen" />
                             {format(new Date(u.last_sync_time), "MMM d, HH:mm")}
                           </span>
                         ) : (

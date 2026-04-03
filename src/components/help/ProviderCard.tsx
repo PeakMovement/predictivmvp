@@ -81,7 +81,7 @@ export function ProviderCard({ provider, onSelect, onBook }: ProviderCardProps) 
 
             <div className="flex flex-wrap gap-2 mt-3">
               {provider.accepting_new_patients && (
-                <Badge variant="secondary" className="bg-green-500/10 text-green-700 dark:text-green-400">
+                <Badge variant="secondary" className="bg-bioGreen/10 text-green-700 dark:text-bioGreen">
                   Accepting New Patients
                 </Badge>
               )}

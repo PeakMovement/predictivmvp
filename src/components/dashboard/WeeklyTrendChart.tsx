@@ -25,7 +25,7 @@ interface ChartDataPoint {
 
 const TrendIcon = ({ value }: { value: number | null | undefined }) => {
   if (value === null || value === undefined) return null;
-  if (value > 0) return <TrendingUp className="h-3 w-3 text-emerald-400" />;
+  if (value > 0) return <TrendingUp className="h-3 w-3 text-bioGreen" />;
   if (value < 0) return <TrendingDown className="h-3 w-3 text-rose-400" />;
   return <Minus className="h-3 w-3 text-muted-foreground" />;
 };
@@ -45,7 +45,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
           return (
             <div key={index} className="flex items-center justify-between gap-4 text-sm">
               <div className="flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full" style={{ backgroundColor: entry.color }} />
+                <div className="w-2 h-2" style={{ backgroundColor: entry.color }} />
                 <span className="text-muted-foreground">{entry.name}</span>
               </div>
               <div className="flex items-center gap-2">
@@ -53,7 +53,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
                 {delta !== undefined && delta !== null && (
                   <span className={cn(
                     "text-xs flex items-center gap-0.5",
-                    delta > 0 ? "text-emerald-400" : delta < 0 ? "text-rose-400" : "text-muted-foreground"
+                    delta > 0 ? "text-bioGreen" : delta < 0 ? "text-rose-400" : "text-muted-foreground"
                   )}>
                     <TrendIcon value={delta} />
                     {delta > 0 ? "+" : ""}{delta.toFixed(1)}%
@@ -158,7 +158,7 @@ export function WeeklyTrendChart() {
   const metricCards = [
     { label: "Sleep", value: wowChanges?.sleep, color: "from-indigo-500/20 to-indigo-500/5", textColor: "text-indigo-400", borderColor: "border-indigo-500/30" },
     { label: "Readiness", value: wowChanges?.readiness, color: "from-amber-500/20 to-amber-500/5", textColor: "text-amber-400", borderColor: "border-amber-500/30" },
-    { label: "HRV", value: wowChanges?.hrv, color: "from-emerald-500/20 to-emerald-500/5", textColor: "text-emerald-400", borderColor: "border-emerald-500/30" },
+    { label: "HRV", value: wowChanges?.hrv, color: "from-emerald-500/20 to-emerald-500/5", textColor: "text-bioGreen", borderColor: "border-bioGreen/30" },
     { label: "Activity", value: wowChanges?.activity, color: "from-purple-500/20 to-purple-500/5", textColor: "text-purple-400", borderColor: "border-purple-500/30" },
   ];
 

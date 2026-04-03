@@ -38,10 +38,10 @@ export const FeedbackSummaryPanel = () => {
               className={cn(
                 "text-sm font-bold px-3 py-1.5 ",
                 item.avg_score >= 4
-                  ? "bg-green-500/20 text-green-400"
+                  ? "bg-bioGreen/20 text-bioGreen"
                   : item.avg_score >= 3
-                    ? "bg-yellow-500/20 text-yellow-400"
-                    : "bg-red-500/20 text-red-400",
+                    ? "bg-amber/20 text-yellow-400"
+                    : "bg-critical/20 text-red-400",
               )}
             >
               {item.avg_score?.toFixed(1) ?? "–"}/5

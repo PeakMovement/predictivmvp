@@ -24,9 +24,9 @@ const toneStyles: Record<'coach' | 'warm' | 'strategic', { bg: string; border: s
     icon: <Zap className="h-4 w-4" />,
   },
   warm: {
-    bg: 'bg-emerald-500/10',
-    border: 'border-emerald-500/30',
-    text: 'text-emerald-600 dark:text-emerald-400',
+    bg: 'bg-bioGreen/10',
+    border: 'border-bioGreen/30',
+    text: 'text-bioGreen dark:text-bioGreen',
     icon: <Heart className="h-4 w-4" />,
   },
   strategic: {
@@ -138,12 +138,12 @@ function WeekIntentSection({ intent }: { intent: WeekIntent }) {
           <div className="flex items-start gap-3">
             <div className={cn(
               "w-8 h-8  flex items-center justify-center shrink-0",
-              "bg-emerald-500/10 border border-emerald-500/30"
+              "bg-bioGreen/10 border border-bioGreen/30"
             )}>
-              <CheckCircle2 className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+              <CheckCircle2 className="h-4 w-4 text-bioGreen dark:text-bioGreen" />
             </div>
             <div>
-              <span className="text-xs font-medium text-emerald-600 dark:text-emerald-400 uppercase tracking-wide">
+              <span className="text-xs font-medium text-bioGreen dark:text-bioGreen uppercase tracking-wide">
                 Prioritize
               </span>
               <p className="text-sm text-foreground mt-0.5 leading-relaxed">

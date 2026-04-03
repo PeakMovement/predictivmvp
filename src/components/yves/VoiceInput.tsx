@@ -123,8 +123,8 @@ export function VoiceInput({ onTranscript, disabled }: VoiceInputProps) {
           <>
             <MicOff className="h-4 w-4" />
             <span className="absolute -top-1 -right-1 flex h-3 w-3">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-destructive opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-3 w-3 bg-destructive"></span>
+              <span className="animate-ping absolute inline-flex h-full w-full bg-destructive opacity-75"></span>
+              <span className="relative inline-flex h-3 w-3 bg-destructive"></span>
             </span>
           </>
         ) : (
@@ -135,11 +135,11 @@ export function VoiceInput({ onTranscript, disabled }: VoiceInputProps) {
       {isRecording && (
         <div className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 whitespace-nowrap">
           <div className="flex items-center gap-1">
-            <div className="h-1 w-1 bg-destructive rounded-full animate-pulse" style={{ animationDelay: '0ms' }}></div>
-            <div className="h-1.5 w-1.5 bg-destructive rounded-full animate-pulse" style={{ animationDelay: '150ms' }}></div>
-            <div className="h-2 w-2 bg-destructive rounded-full animate-pulse" style={{ animationDelay: '300ms' }}></div>
-            <div className="h-1.5 w-1.5 bg-destructive rounded-full animate-pulse" style={{ animationDelay: '450ms' }}></div>
-            <div className="h-1 w-1 bg-destructive rounded-full animate-pulse" style={{ animationDelay: '600ms' }}></div>
+            <div className="h-1 w-1 bg-destructive animate-pulse" style={{ animationDelay: '0ms' }}></div>
+            <div className="h-1.5 w-1.5 bg-destructive animate-pulse" style={{ animationDelay: '150ms' }}></div>
+            <div className="h-2 w-2 bg-destructive animate-pulse" style={{ animationDelay: '300ms' }}></div>
+            <div className="h-1.5 w-1.5 bg-destructive animate-pulse" style={{ animationDelay: '450ms' }}></div>
+            <div className="h-1 w-1 bg-destructive animate-pulse" style={{ animationDelay: '600ms' }}></div>
           </div>
         </div>
       )}

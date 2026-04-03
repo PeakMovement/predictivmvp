@@ -162,7 +162,7 @@ export const InjuryProfileSettings = () => {
           </p>
         </div>
         {profile && (
-          <span className="text-xs font-medium bg-amber-500/15 text-amber-600 dark:text-amber-400 px-2 py-1 rounded-full border border-amber-500/30">
+          <span className="text-xs font-medium bg-amber-500/15 text-amber-600 dark:text-amber-400 px-2 py-1 border border-amber-500/30">
             Active injury
           </span>
         )}

@@ -20,7 +20,7 @@ export function PlanAlignmentSection({ className }: PlanAlignmentSectionProps) {
   const getStatusIcon = (status: PlanAlignmentItem["alignmentStatus"]) => {
     switch (status) {
       case "aligned":
-        return <CheckCircle2 className="h-4 w-4 text-emerald-500" />;
+        return <CheckCircle2 className="h-4 w-4 text-bioGreen" />;
       case "modified":
         return <RefreshCw className="h-4 w-4 text-amber-500" />;
       case "adjusted":
@@ -79,12 +79,12 @@ export function PlanAlignmentSection({ className }: PlanAlignmentSectionProps) {
                     "p-3  border",
                     item.tone === "coach" 
                       ? "bg-primary/5 border-primary/20" 
-                      : "bg-emerald-500/5 border-emerald-500/20"
+                      : "bg-bioGreen/5 border-bioGreen/20"
                   )}
                 >
                   <div className="flex items-center gap-2 mb-2">
                     <span className={cn(
-                      item.tone === "coach" ? "text-primary" : "text-emerald-600"
+                      item.tone === "coach" ? "text-primary" : "text-bioGreen"
                     )}>
                       {getPlanIcon(item.planType)}
                     </span>

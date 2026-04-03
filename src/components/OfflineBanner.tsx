@@ -61,7 +61,7 @@ export const OfflineBanner = () => {
               <CloudOff className="h-4 w-4" />
               You're offline. Changes will sync when connection is restored.
               {pendingActions > 0 && (
-                <span className="text-xs bg-background/20 px-2 py-0.5 rounded-full">
+                <span className="text-xs bg-background/20 px-2 py-0.5">
                   {pendingActions} pending {pendingActions === 1 ? "action" : "actions"}
                 </span>
               )}
@@ -72,7 +72,7 @@ export const OfflineBanner = () => {
         <Alert
           className={cn(
             "rounded-none border-x-0 border-t-0",
-            "bg-green-500/10 border-green-500/20 text-green-600 dark:text-green-400"
+            "bg-bioGreen/10 border-bioGreen/20 text-bioGreen dark:text-bioGreen"
           )}
         >
           <Wifi className="h-4 w-4" />

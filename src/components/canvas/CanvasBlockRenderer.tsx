@@ -57,11 +57,11 @@ export function CanvasBlockRenderer({
     >
       {isEditing && (
         <div className="absolute -top-3 left-0 right-0 flex items-center justify-between px-2 z-10">
-          <div className="flex items-center gap-1 bg-card border border-border rounded-full px-2 py-1 ">
+          <div className="flex items-center gap-1 bg-card border border-border px-2 py-1 ">
             <GripVertical className="h-3 w-3 text-muted-foreground" />
             <span className="text-xs font-medium text-foreground">{block.name}</span>
           </div>
-          <div className="flex items-center gap-1 bg-card border border-border rounded-full px-1 py-1 ">
+          <div className="flex items-center gap-1 bg-card border border-border px-1 py-1 ">
             <Button
               variant="ghost"
               size="icon"

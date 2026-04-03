@@ -36,9 +36,9 @@ const URGENCY_OPTIONS = [
 
 function ProviderCard({ provider, isTop }: { provider: ProviderMatch; isTop?: boolean }) {
   const getScoreColor = (score: number) => {
-    if (score >= 80) return "text-green-500";
-    if (score >= 60) return "text-yellow-500";
-    return "text-red-500";
+    if (score >= 80) return "text-bioGreen";
+    if (score >= 60) return "text-amber";
+    return "text-critical";
   };
 
   return (
@@ -83,11 +83,11 @@ function ProviderCard({ provider, isTop }: { provider: ProviderMatch; isTop?: bo
         <div className="mt-3 pt-3 border-t border-border/50 flex items-center justify-between">
           <span className="text-sm font-medium">{provider.estimatedCost}</span>
           {provider.withinBudget ? (
-            <span className="text-xs text-green-500 flex items-center gap-1">
+            <span className="text-xs text-bioGreen flex items-center gap-1">
               <CheckCircle2 className="h-3 w-3" /> Within budget
             </span>
           ) : (
-            <span className="text-xs text-yellow-500 flex items-center gap-1">
+            <span className="text-xs text-amber flex items-center gap-1">
               <AlertCircle className="h-3 w-3" /> May exceed budget
             </span>
           )}

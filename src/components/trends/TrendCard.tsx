@@ -76,7 +76,7 @@ export const TrendCard = ({ metric, onRefresh }: TrendCardProps) => {
       {/* Current Value Badge */}
       <div className="mb-4 flex items-center gap-2">
         <div
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-full"
+          className="inline-flex items-center gap-2 px-4 py-2"
           style={{ backgroundColor: `${statusColor}20`, border: `1px solid ${statusColor}` }}
         >
           <span className="text-[40px] sm:text-[52px] font-display font-light leading-none" style={{ color: statusColor }}>

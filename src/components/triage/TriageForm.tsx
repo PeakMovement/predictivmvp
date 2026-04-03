@@ -55,7 +55,7 @@ export const TriageForm = () => {
       case "soon":
         return { icon: Clock, color: "text-yellow-400", bg: "bg-yellow-400/20", label: "See Soon" };
       default:
-        return { icon: CheckCircle, color: "text-green-400", bg: "bg-green-400/20", label: "Routine" };
+        return { icon: CheckCircle, color: "text-bioGreen", bg: "bg-bioGreen/20", label: "Routine" };
     }
   };
 

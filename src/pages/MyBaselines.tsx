@@ -118,7 +118,7 @@ function getStatus(
 
 function statusBadge(status: Status) {
   switch (status) {
-    case "normal": return <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30 text-xs">Normal</Badge>;
+    case "normal": return <Badge className="bg-bioGreen/20 text-bioGreen border-bioGreen/30 text-xs">Normal</Badge>;
     case "above":  return <Badge className="bg-blue-500/20 text-blue-400 border-blue-500/30 text-xs">Above baseline</Badge>;
     case "below":  return <Badge className="bg-amber-500/20 text-amber-400 border-amber-500/30 text-xs">Below baseline</Badge>;
     default:       return <Badge className="bg-muted/30 text-muted-foreground text-xs">No data</Badge>;

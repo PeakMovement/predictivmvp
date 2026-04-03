@@ -35,7 +35,7 @@ export const DeviceSourceSwitcher = ({
   return (
     <div className={cn("flex items-center gap-2", className)}>
       <span className="text-xs text-muted-foreground font-medium">Data from:</span>
-      <div className="flex items-center gap-1 bg-muted/40 rounded-full p-1">
+      <div className="flex items-center gap-1 bg-muted/40 p-1">
         {availableSources.map((source) => {
           const meta = DEVICE_META[source] ?? { label: source, icon: <Activity className="h-3.5 w-3.5" /> };
           const isActive = selectedSource === source;
@@ -44,7 +44,7 @@ export const DeviceSourceSwitcher = ({
               key={source}
               onClick={() => onSourceChange(source)}
               className={cn(
-                "flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium transition-all duration-200",
+                "flex items-center gap-1.5 px-3 py-1 text-xs font-medium transition-all duration-200",
                 isActive
                   ? "bg-primary text-primary-foreground "
                   : "text-muted-foreground hover:text-foreground hover:bg-muted/60"

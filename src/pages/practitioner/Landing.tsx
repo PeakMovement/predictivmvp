@@ -102,7 +102,7 @@ export const PractitionerLanding = () => {
 
       {/* ── Hero ───────────────────────────────────────────────── */}
       <section className="mx-auto max-w-3xl px-5 py-20 text-center sm:py-28">
-        <span className="mb-5 inline-block rounded-full bg-[#6B5ED9] px-4 py-1.5 text-xs font-semibold uppercase tracking-wider text-white">
+        <span className="mb-5 inline-block bg-[#6B5ED9] px-4 py-1.5 text-xs font-semibold uppercase tracking-wider text-white">
           For Practitioners
         </span>
         <h1 className="text-4xl font-bold leading-tight tracking-tight text-[#1a1a1a] sm:text-5xl lg:text-[3.5rem]">
@@ -185,7 +185,7 @@ export const PractitionerLanding = () => {
             <div className=" border border-black/10 bg-white p-7 ">
               <div className="flex items-center gap-3">
                 <h3 className="text-lg font-bold text-[#1a1a1a]">Basic</h3>
-                <span className="rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-semibold text-emerald-700">
+                <span className="bg-emerald-50 px-2.5 py-0.5 text-xs font-semibold text-emerald-700">
                   Free to list
                 </span>
               </div>
@@ -212,7 +212,7 @@ export const PractitionerLanding = () => {
 
             {/* Verified Partner */}
             <div className="relative  border-2 border-[#6B5ED9] bg-white p-7 ">
-              <span className="absolute -top-3 right-5 rounded-full bg-[#6B5ED9] px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-white">
+              <span className="absolute -top-3 right-5 bg-[#6B5ED9] px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-white">
                 Recommended
               </span>
               <div className="flex items-center gap-3">
@@ -256,7 +256,7 @@ export const PractitionerLanding = () => {
           {SPECIALTIES.map((s) => (
             <span
               key={s}
-              className="rounded-full border border-black/10 bg-white px-4 py-2 text-sm font-medium text-[#555]"
+              className="border border-black/10 bg-white px-4 py-2 text-sm font-medium text-[#555]"
             >
               {s}
             </span>

@@ -76,12 +76,12 @@ export const DeveloperPanel = () => {
     switch (status.toLowerCase()) {
       case "success":
       case "completed":
-        return "text-green-500";
+        return "text-bioGreen";
       case "error":
       case "failed":
-        return "text-red-500";
+        return "text-critical";
       case "running":
-        return "text-yellow-500";
+        return "text-amber";
       default:
         return "text-muted-foreground";
     }

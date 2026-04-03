@@ -57,15 +57,15 @@ export default function PlanCompliance() {
   };
 
   const getAdherenceColor = (score: number) => {
-    if (score >= 0.9) return 'text-green-600 dark:text-green-400';
+    if (score >= 0.9) return 'text-bioGreen dark:text-bioGreen';
     if (score >= 0.7) return 'text-yellow-600 dark:text-yellow-400';
-    return 'text-red-600 dark:text-red-400';
+    return 'text-critical dark:text-red-400';
   };
 
   const getAdherenceIcon = (score: number) => {
-    if (score >= 0.9) return <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400" />;
+    if (score >= 0.9) return <CheckCircle className="h-5 w-5 text-bioGreen dark:text-bioGreen" />;
     if (score >= 0.7) return <AlertTriangle className="h-5 w-5 text-yellow-600 dark:text-yellow-400" />;
-    return <XCircle className="h-5 w-5 text-red-600 dark:text-red-400" />;
+    return <XCircle className="h-5 w-5 text-critical dark:text-red-400" />;
   };
 
   const groupedByDate = adherenceData.reduce((acc, item) => {

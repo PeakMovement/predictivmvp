@@ -14,13 +14,13 @@ interface InsightNode {
 const getLevelColor = (level: string) => {
   switch (level) {
     case "optimal":
-      return { bg: "bg-green-500/20", border: "border-green-500/60", text: "text-green-400", glow: "" };
+      return { bg: "bg-bioGreen/20", border: "border-bioGreen/60", text: "text-bioGreen", glow: "" };
     case "good":
       return { bg: "bg-blue-500/20", border: "border-blue-500/60", text: "text-blue-400", glow: "" };
     case "warning":
-      return { bg: "bg-orange-500/20", border: "border-orange-500/60", text: "text-orange-400", glow: "" };
+      return { bg: "bg-amber/20", border: "border-amber/60", text: "text-orange-400", glow: "" };
     case "critical":
-      return { bg: "bg-red-500/20", border: "border-red-500/60", text: "text-red-400", glow: "" };
+      return { bg: "bg-critical/20", border: "border-critical/60", text: "text-red-400", glow: "" };
     default:
       return { bg: "bg-violet-500/20", border: "border-violet-400/60", text: "text-violet-400", glow: "" };
   }
@@ -108,7 +108,7 @@ const InsightNode = ({
       {/* Node */}
       <div
         className={cn(
-          "relative w-14 h-14 rounded-full border-2  z-10",
+          "relative w-14 h-14 border-2  z-10",
           "flex items-center justify-center cursor-pointer",
           "hover:scale-125 active:scale-95 transition-all duration-300",
           colors.bg,
@@ -144,7 +144,7 @@ const InsightNode = ({
       {/* Pulse Ring */}
       <div
         className={cn(
-          "absolute inset-0 rounded-full border-2 animate-ping",
+          "absolute inset-0 border-2 animate-ping",
           colors.border,
           "opacity-30"
         )}
@@ -255,9 +255,9 @@ export const InsightsTree = ({ onNavigate }: { onNavigate: (tab: string) => void
     <div className="min-h-screen bg-slate-950 pb-[calc(6rem+env(safe-area-inset-bottom))] md:pb-32 overflow-x-hidden relative">
       {/* Animated Background */}
       <div className="fixed inset-0 -z-10 overflow-hidden">
-        <div className="absolute top-0 left-1/4 w-96 h-96 bg-violet-500/10 rounded-full blur-3xl animate-pulse" />
-        <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: "1s" }} />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-violet-500/5 rounded-full blur-3xl" />
+        <div className="absolute top-0 left-1/4 w-96 h-96 bg-violet-500/10 blur-3xl animate-pulse" />
+        <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-purple-500/10 blur-3xl animate-pulse" style={{ animationDelay: "1s" }} />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-violet-500/5 blur-3xl" />
       </div>
 
       <div className="container mx-auto px-4 md:px-6 pt-6 md:pt-8 pb-32">
@@ -288,11 +288,11 @@ export const InsightsTree = ({ onNavigate }: { onNavigate: (tab: string) => void
           <ConnectionLines insights={insights} />
 
           {/* Central Vertical Spine */}
-          <div className="absolute left-1/2 top-0 w-1 bg-gradient-to-b from-violet-500/60 via-violet-400/30 to-transparent h-full -translate-x-1/2 rounded-full" />
+          <div className="absolute left-1/2 top-0 w-1 bg-gradient-to-b from-violet-500/60 via-violet-400/30 to-transparent h-full -translate-x-1/2" />
 
           {/* Top Node (Origin) */}
           <div className="absolute left-1/2 top-8 -translate-x-1/2 z-10">
-            <div className="w-16 h-16 rounded-full bg-slate-900/90  border-2 border-violet-400/60 flex items-center justify-center  animate-fade-in">
+            <div className="w-16 h-16 bg-slate-900/90  border-2 border-violet-400/60 flex items-center justify-center  animate-fade-in">
               <span className="text-2xl"></span>
             </div>
           </div>
@@ -324,7 +324,7 @@ export const InsightsTree = ({ onNavigate }: { onNavigate: (tab: string) => void
               const colors = getLevelColor(item.level);
               return (
                 <div key={item.level} className="flex items-center gap-2">
-                  <div className={cn("w-10 h-10 rounded-full border-2 flex items-center justify-center", colors.bg, colors.border, colors.glow)}>
+                  <div className={cn("w-10 h-10 border-2 flex items-center justify-center", colors.bg, colors.border, colors.glow)}>
                     <span className="text-sm">{item.emoji}</span>
                   </div>
                   <span className="text-sm text-muted-foreground">{item.label}</span>

@@ -14,7 +14,7 @@ const categoryIcons: Record<PersonalContextChip['category'], React.ReactNode> = 
 
 const toneStyles: Record<PersonalContextChip['tone'], string> = {
   coach: 'bg-primary/10 text-primary border-primary/20',
-  warm: 'bg-orange-500/10 text-orange-700 dark:text-orange-400 border-orange-500/20',
+  warm: 'bg-amber/10 text-orange-700 dark:text-orange-400 border-amber/20',
   strategic: 'bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-500/20',
 };
 
@@ -39,7 +39,7 @@ export function PersonalContextChips({ className }: PersonalContextChipsProps) {
           <div
             key={chip.id}
             className={cn(
-              'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border transition-colors',
+              'inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium border transition-colors',
               toneStyles[chip.tone]
             )}
           >

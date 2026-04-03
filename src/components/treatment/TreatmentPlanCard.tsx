@@ -14,8 +14,8 @@ export function TreatmentPlanCard({ plan, onSelect, onViewDetails }: TreatmentPl
   const planTypeColors = {
     'best-fit': 'bg-blue-500/10 text-blue-500 border-blue-500/20',
     'high-impact': 'bg-purple-500/10 text-purple-500 border-purple-500/20',
-    'progressive': 'bg-green-500/10 text-green-500 border-green-500/20',
-    'budget-conscious': 'bg-orange-500/10 text-orange-500 border-orange-500/20',
+    'progressive': 'bg-bioGreen/10 text-bioGreen border-bioGreen/20',
+    'budget-conscious': 'bg-amber/10 text-amber border-amber/20',
   };
 
   const planTypeLabels = {
@@ -61,7 +61,7 @@ export function TreatmentPlanCard({ plan, onSelect, onViewDetails }: TreatmentPl
           <div className="space-y-1">
             {plan.services.map((service, index) => (
               <div key={index} className="flex items-center gap-2 text-sm">
-                <CheckCircle className="h-3 w-3 text-green-500 flex-shrink-0" />
+                <CheckCircle className="h-3 w-3 text-bioGreen flex-shrink-0" />
                 <span className="capitalize">{service.type.replace('-', ' ')}</span>
                 <span className="text-muted-foreground">({service.sessions}x sessions)</span>
               </div>

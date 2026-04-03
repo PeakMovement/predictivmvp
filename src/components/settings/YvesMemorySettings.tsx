@@ -50,9 +50,9 @@ const CATEGORY_MAP: { label: string; keys: string[] }[] = [
 
 const CATEGORY_COLORS: Record<string, string> = {
   "Training Preferences": "bg-blue-500/15 text-blue-400 border-blue-500/30",
-  "Health Patterns": "bg-emerald-500/15 text-emerald-400 border-emerald-500/30",
+  "Health Patterns": "bg-bioGreen/15 text-bioGreen border-bioGreen/30",
   "Goals": "bg-purple-500/15 text-purple-400 border-purple-500/30",
-  "Injury History": "bg-orange-500/15 text-orange-400 border-orange-500/30",
+  "Injury History": "bg-amber/15 text-orange-400 border-amber/30",
   "Lifestyle": "bg-cyan-500/15 text-cyan-400 border-cyan-500/30",
   "Other": "bg-muted/30 text-muted-foreground border-border",
 };
@@ -215,7 +215,7 @@ export const YvesMemorySettings = () => {
             return (
               <div key={cat}>
                 <div className="flex items-center gap-2 mb-3">
-                  <span className={`text-xs font-semibold px-2 py-0.5 rounded-full border ${CATEGORY_COLORS[cat]}`}>
+                  <span className={`text-xs font-semibold px-2 py-0.5 border ${CATEGORY_COLORS[cat]}`}>
                     {cat}
                   </span>
                   <span className="text-xs text-muted-foreground">{items.length} insight{items.length !== 1 ? "s" : ""}</span>

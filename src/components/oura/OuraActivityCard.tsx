@@ -30,7 +30,7 @@ export const OuraActivityCard = ({
       <div className="bg-glass  border border-glass-border  p-6 ">
         <Skeleton className="h-8 w-48 mb-6" />
         <div className="flex flex-col items-center mb-6">
-          <Skeleton className="h-32 w-32 rounded-full mb-4" />
+          <Skeleton className="h-32 w-32 mb-4" />
           <Skeleton className="h-6 w-24" />
         </div>
         <div className="space-y-4">
@@ -45,8 +45,8 @@ export const OuraActivityCard = ({
     return (
       <div className="bg-glass  border border-glass-border  p-6 ">
         <div className="flex items-center gap-3 mb-6">
-          <div className="w-10 h-10 bg-orange-500/20  flex items-center justify-center">
-            <Zap className="w-5 h-5 text-orange-500" />
+          <div className="w-10 h-10 bg-amber/20  flex items-center justify-center">
+            <Zap className="w-5 h-5 text-amber" />
           </div>
           <h2 className="text-xl font-semibold text-foreground">Activity</h2>
         </div>
@@ -59,9 +59,9 @@ export const OuraActivityCard = ({
   }
 
   const getScoreColor = (value: number) => {
-    if (value >= 85) return "text-orange-500";
-    if (value >= 70) return "text-yellow-500";
-    return "text-red-500";
+    if (value >= 85) return "text-amber";
+    if (value >= 70) return "text-amber";
+    return "text-critical";
   };
 
   const getScoreBgColor = (value: number) => {
@@ -84,8 +84,8 @@ export const OuraActivityCard = ({
     <TooltipProvider>
       <div className="bg-glass  border border-glass-border  p-6  hover-glow animate-fade-in">
         <div className="flex items-center gap-3 mb-6">
-          <div className="w-10 h-10 bg-orange-500/20  flex items-center justify-center">
-            <Zap className="w-5 h-5 text-orange-500" />
+          <div className="w-10 h-10 bg-amber/20  flex items-center justify-center">
+            <Zap className="w-5 h-5 text-amber" />
           </div>
           <h2 className="text-xl font-semibold text-foreground">Activity</h2>
           <Tooltip>
@@ -96,9 +96,9 @@ export const OuraActivityCard = ({
               <p className="font-semibold mb-1">Activity Score (0-100)</p>
               <p className="text-sm">Measures your daily physical activity, including steps, calories, and movement intensity.</p>
               <p className="text-sm mt-2">
-                <span className="text-green-500">85+</span>: Very active |{" "}
-                <span className="text-yellow-500">70-84</span>: Active |{" "}
-                <span className="text-red-500">&lt;70</span>: Increase activity
+                <span className="text-bioGreen">85+</span>: Very active |{" "}
+                <span className="text-amber">70-84</span>: Active |{" "}
+                <span className="text-critical">&lt;70</span>: Increase activity
               </p>
             </TooltipContent>
           </Tooltip>

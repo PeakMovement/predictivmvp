@@ -184,7 +184,7 @@ export default function Register() {
             )}
 
             {success && (
-              <div className="text-green-400 text-sm font-medium animate-fade-in">
+              <div className="text-bioGreen text-sm font-medium animate-fade-in">
                 {success}
               </div>
             )}

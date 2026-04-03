@@ -120,7 +120,7 @@ function TodaysBestDecision({ className }, ref) {
     return (
       <Card className={cn("overflow-hidden", className)}>
         <div className="flex items-center gap-3 p-4">
-          <div className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+          <div className="h-9 w-9 bg-primary/10 flex items-center justify-center shrink-0">
             <Compass className="h-4.5 w-4.5 text-primary" />
           </div>
           <div className="space-y-1.5 flex-1">
@@ -136,7 +136,7 @@ function TodaysBestDecision({ className }, ref) {
     return (
       <Card className={cn("overflow-hidden", className)}>
         <div className="flex items-center gap-3 p-4 border-b border-border/50">
-          <div className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+          <div className="h-9 w-9 bg-primary/10 flex items-center justify-center shrink-0">
             <Compass className="h-4.5 w-4.5 text-primary" />
           </div>
           <div>
@@ -335,9 +335,9 @@ function TodaysBestDecision({ className }, ref) {
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-border/50">
           <CollapsibleTrigger asChild>
-            <button className="flex-1 flex items-center justify-between text-left group hover:bg-muted/30 transition-colors -m-4 p-4 rounded-t-lg">
+            <button className="flex-1 flex items-center justify-between text-left group hover:bg-muted/30 transition-colors -m-4 p-4 ">
               <div className="flex items-center gap-3">
-                <div className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center">
+                <div className="h-9 w-9 bg-primary/10 flex items-center justify-center">
                   <Compass className="h-4.5 w-4.5 text-primary" />
                 </div>
                 <div>
@@ -498,7 +498,7 @@ function TodaysBestDecision({ className }, ref) {
                               {session.title}
                             </h5>
                             {completedExercises.size > 0 && (
-                              <div className="text-xs font-medium text-primary bg-primary/10 px-2.5 py-1 rounded-full">
+                              <div className="text-xs font-medium text-primary bg-primary/10 px-2.5 py-1">
                                 {completionPercent}% complete
                               </div>
                             )}
@@ -548,7 +548,7 @@ function TodaysBestDecision({ className }, ref) {
                                 >
                                   <div className="flex items-start gap-3">
                                     <div className={cn(
-                                      "mt-0.5 h-5 w-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors",
+                                      "mt-0.5 h-5 w-5 border-2 flex items-center justify-center shrink-0 transition-colors",
                                       completedExercises.has(idx)
                                         ? "bg-primary border-primary"
                                         : "border-muted-foreground/30"

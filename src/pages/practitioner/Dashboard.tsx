@@ -274,18 +274,18 @@ function OverviewTab({ p }: { p: PractitionerData }) {
         </h2>
         <div className="mt-3 flex flex-wrap items-center gap-2 text-xs">
           {p.listing_active ? (
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1 font-medium text-emerald-700">
-              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+            <span className="inline-flex items-center gap-1.5 bg-emerald-50 px-3 py-1 font-medium text-emerald-700">
+              <span className="h-1.5 w-1.5 bg-bioGreen" />
               Listing active
             </span>
           ) : (
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-3 py-1 font-medium text-amber-700">
-              <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
+            <span className="inline-flex items-center gap-1.5 bg-amber-50 px-3 py-1 font-medium text-amber-700">
+              <span className="h-1.5 w-1.5 bg-amber-500" />
               Listing paused
             </span>
           )}
           <span className="text-[#ccc]">&middot;</span>
-          <span className="rounded-full bg-black/5 px-3 py-1 font-medium text-[#555]">
+          <span className="bg-black/5 px-3 py-1 font-medium text-[#555]">
             {p.pricing_tier === "verified" ? "Verified Partner" : "Basic tier"}
           </span>
           <span className="text-[#ccc]">&middot;</span>
@@ -437,13 +437,13 @@ function ListingTab({ p }: { p: PractitionerData }) {
         {/* Badges */}
         <div className="mt-3 flex flex-wrap gap-1.5">
           {(p.session_fee_min != null || p.session_fee_max != null) && (
-            <span className="rounded-full border border-black/10 px-2.5 py-0.5 text-xs font-medium text-[#555]">
+            <span className="border border-black/10 px-2.5 py-0.5 text-xs font-medium text-[#555]">
               R{p.session_fee_min ?? "?"}&ndash;R{p.session_fee_max ?? "?"} /
               visit
             </span>
           )}
           {p.telehealth && (
-            <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-0.5 text-xs font-medium text-emerald-700">
+            <span className="border border-emerald-200 bg-emerald-50 px-2.5 py-0.5 text-xs font-medium text-emerald-700">
               <CheckCircle2
                 size={10}
                 className="mr-1 inline-block align-text-top"
@@ -452,7 +452,7 @@ function ListingTab({ p }: { p: PractitionerData }) {
             </span>
           )}
           {p.in_person && (
-            <span className="rounded-full border border-blue-200 bg-blue-50 px-2.5 py-0.5 text-xs font-medium text-blue-600">
+            <span className="border border-blue-200 bg-blue-50 px-2.5 py-0.5 text-xs font-medium text-blue-600">
               <Video
                 size={10}
                 className="mr-1 inline-block align-text-top"
@@ -473,7 +473,7 @@ function ListingTab({ p }: { p: PractitionerData }) {
             {p.niche_tags.map((tag) => (
               <span
                 key={tag}
-                className="rounded-full border border-black/10 bg-black/[0.02] px-2.5 py-0.5 text-[11px] font-medium text-[#777]"
+                className="border border-black/10 bg-black/[0.02] px-2.5 py-0.5 text-[11px] font-medium text-[#777]"
               >
                 {tag}
               </span>
@@ -529,11 +529,11 @@ function ListingTab({ p }: { p: PractitionerData }) {
           {checklist.map((item) => (
             <div key={item.label} className="flex items-center gap-3">
               {item.done ? (
-                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-100">
-                  <CheckCircle2 size={14} className="text-emerald-600" />
+                <span className="flex h-5 w-5 shrink-0 items-center justify-center bg-emerald-100">
+                  <CheckCircle2 size={14} className="text-bioGreen" />
                 </span>
               ) : (
-                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-black/10" />
+                <span className="flex h-5 w-5 shrink-0 items-center justify-center border border-black/10" />
               )}
               <span
                 className={`text-sm ${item.done ? "text-[#333]" : "text-[#999]"}`}
@@ -559,9 +559,9 @@ function ListingTab({ p }: { p: PractitionerData }) {
               {doneCount} / {checklist.length} complete
             </span>
           </div>
-          <div className="mt-1.5 h-1.5 w-full rounded-full bg-black/5">
+          <div className="mt-1.5 h-1.5 w-full bg-black/5">
             <div
-              className="h-full rounded-full bg-[#6B5ED9] transition-all"
+              className="h-full bg-[#6B5ED9] transition-all"
               style={{
                 width: `${(doneCount / checklist.length) * 100}%`,
               }}
@@ -617,7 +617,7 @@ function ReferralsTab() {
         </div>
 
         <div className="absolute inset-0 flex items-center justify-center">
-          <span className="rounded-full bg-[#6B5ED9]/10 px-4 py-1.5 text-xs font-medium text-[#6B5ED9]">
+          <span className="bg-[#6B5ED9]/10 px-4 py-1.5 text-xs font-medium text-[#6B5ED9]">
             Available once your first referral is received
           </span>
         </div>

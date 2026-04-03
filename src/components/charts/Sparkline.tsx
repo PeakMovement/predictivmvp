@@ -58,7 +58,7 @@ export const Sparkline = ({
     : "0";
 
   const TrendIcon = trend > 0 ? TrendingUp : trend < 0 ? TrendingDown : Minus;
-  const trendColor = trend > 0 ? "text-green-600" : trend < 0 ? "text-red-600" : "text-muted-foreground";
+  const trendColor = trend > 0 ? "text-bioGreen" : trend < 0 ? "text-critical" : "text-muted-foreground";
 
   return (
     <div className={cn("flex items-center gap-2", className)}>
@@ -130,9 +130,9 @@ export const MetricSparklineCard = ({
   description,
 }: MetricSparklineCardProps) => {
   const changeColor = change && change > 0
-    ? "text-green-600"
+    ? "text-bioGreen"
     : change && change < 0
-    ? "text-red-600"
+    ? "text-critical"
     : "text-muted-foreground";
 
   return (

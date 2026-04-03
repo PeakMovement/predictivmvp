@@ -182,7 +182,7 @@ export function ProviderDetailModal({
           <div className="space-y-6 py-4">
             <div className="flex flex-wrap gap-2">
               {provider.accepting_new_patients && (
-                <Badge className="bg-green-500/10 text-green-700 dark:text-green-400">
+                <Badge className="bg-bioGreen/10 text-green-700 dark:text-bioGreen">
                   Accepting New Patients
                 </Badge>
               )}
@@ -311,7 +311,7 @@ export function ProviderDetailModal({
                       {starDistribution.map(({ stars, count, percentage }) => (
                         <div key={stars} className="flex items-center gap-2">
                           <span className="text-xs w-8">{stars} ★</span>
-                          <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
+                          <div className="flex-1 h-2 bg-muted overflow-hidden">
                             <div
                               className="h-full bg-yellow-400"
                               style={{ width: `${percentage}%` }}

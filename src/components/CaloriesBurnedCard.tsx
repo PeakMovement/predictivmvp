@@ -100,7 +100,7 @@ export const CaloriesBurnedCard = () => {
       <Card className="bg-glass  border-glass-border hover: transition-all duration-300">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Flame className="w-5 h-5 text-orange-500" />
+            <Flame className="w-5 h-5 text-amber" />
             Calories Burned Today
           </CardTitle>
         </CardHeader>
@@ -117,7 +117,7 @@ export const CaloriesBurnedCard = () => {
       <CardHeader>
         <CardTitle className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Flame className="w-5 h-5 text-orange-500 group-hover:animate-pulse" />
+            <Flame className="w-5 h-5 text-amber group-hover:animate-pulse" />
             Calories Burned Today
           </div>
           <Button
@@ -139,7 +139,7 @@ export const CaloriesBurnedCard = () => {
           <span className="text-lg text-muted-foreground">kcal</span>
         </div>
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+          <div className="w-2 h-2 bg-bioGreen animate-pulse" />
           Last synced: {getLastSyncTime()}
         </div>
         {!calorieData && (

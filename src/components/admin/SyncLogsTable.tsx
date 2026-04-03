@@ -16,11 +16,11 @@ export function SyncLogsTable({ logs, isLoading }: SyncLogsTableProps) {
   const getStatusIcon = (status: string) => {
     switch (status) {
       case "success":
-        return <CheckCircle size={14} className="text-green-500" />;
+        return <CheckCircle size={14} className="text-bioGreen" />;
       case "error":
         return <XCircle size={14} className="text-destructive" />;
       case "pending":
-        return <Clock size={14} className="text-yellow-500" />;
+        return <Clock size={14} className="text-amber" />;
       default:
         return <AlertCircle size={14} className="text-muted-foreground" />;
     }
@@ -28,9 +28,9 @@ export function SyncLogsTable({ logs, isLoading }: SyncLogsTableProps) {
 
   const getStatusBadge = (status: string) => {
     const variants: Record<string, string> = {
-      success: "bg-green-500/20 text-green-500 border-green-500/30",
+      success: "bg-bioGreen/20 text-bioGreen border-bioGreen/30",
       error: "bg-destructive/20 text-destructive border-destructive/30",
-      pending: "bg-yellow-500/20 text-yellow-500 border-yellow-500/30",
+      pending: "bg-amber/20 text-amber border-amber/30",
     };
     return variants[status] || "bg-muted text-muted-foreground";
   };
@@ -94,7 +94,7 @@ export function SyncLogsTable({ logs, isLoading }: SyncLogsTableProps) {
                       {log.latency_ms ? (
                         <span className={cn(
                           "font-mono text-sm",
-                          log.latency_ms <= 500 ? "text-green-500" : log.latency_ms <= 1000 ? "text-yellow-500" : "text-destructive"
+                          log.latency_ms <= 500 ? "text-bioGreen" : log.latency_ms <= 1000 ? "text-amber" : "text-destructive"
                         )}>
                           {log.latency_ms}ms
                         </span>

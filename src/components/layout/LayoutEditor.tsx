@@ -275,7 +275,7 @@ export function LayoutEditor({
         </div>
 
         {/* Data Safety Notice */}
-        <div className="bg-green-500/10 border border-green-500/20  p-3 text-sm text-green-700 dark:text-green-400">
+        <div className="bg-bioGreen/10 border border-bioGreen/20  p-3 text-sm text-green-700 dark:text-bioGreen">
           <p className="flex items-center gap-2">
             <Check className="w-4 h-4 flex-shrink-0" />
             Your data is always safe. Hiding sections only changes what you see, not what is stored or synced.

@@ -92,7 +92,7 @@ export function HealthAnomalyBanner() {
         "mb-6  border p-4 sm:p-5 flex flex-col sm:flex-row gap-3 sm:items-start",
         "animate-fade-in",
         isCritical
-          ? "bg-orange-500/10 border-orange-500/30"
+          ? "bg-amber/10 border-amber/30"
           : "bg-amber-500/8 border-amber-500/25"
       )}
     >
@@ -100,7 +100,7 @@ export function HealthAnomalyBanner() {
       <div
         className={cn(
           "w-9 h-9  flex items-center justify-center shrink-0",
-          isCritical ? "bg-orange-500/20" : "bg-amber-500/15"
+          isCritical ? "bg-amber/20" : "bg-amber-500/15"
         )}
       >
         <HeartPulse
@@ -116,9 +116,9 @@ export function HealthAnomalyBanner() {
           </span>
           <span
             className={cn(
-              "text-xs px-2 py-0.5 rounded-full font-medium",
+              "text-xs px-2 py-0.5 font-medium",
               isCritical
-                ? "bg-orange-500/20 text-orange-400"
+                ? "bg-amber/20 text-orange-400"
                 : "bg-amber-500/20 text-amber-400"
             )}
           >
@@ -135,7 +135,7 @@ export function HealthAnomalyBanner() {
           className={cn(
             "text-xs font-medium",
             isCritical
-              ? "border-orange-500/40 text-orange-400 hover:bg-orange-500/10"
+              ? "border-amber/40 text-orange-400 hover:bg-amber/10"
               : "border-amber-500/40 text-amber-400 hover:bg-amber-500/10"
           )}
         >

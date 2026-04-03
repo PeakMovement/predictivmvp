@@ -14,7 +14,7 @@ const toneStyles: Record<InsightTone, { bg: string; text: string; label: string 
     label: 'text-primary/70',
   },
   warm: {
-    bg: 'bg-orange-500/5',
+    bg: 'bg-amber/5',
     text: 'text-orange-800 dark:text-orange-300',
     label: 'text-orange-600/80 dark:text-orange-400/70',
   },

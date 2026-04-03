@@ -115,11 +115,11 @@ export function SymptomCheckInForm({ onSuccess, onRequestClose }: SymptomCheckIn
 
   // Get severity color class
   const getSeverityColor = (value: number): string => {
-    if (value <= 2) return "text-emerald-500";
-    if (value <= 4) return "text-yellow-500";
-    if (value <= 6) return "text-orange-500";
-    if (value <= 8) return "text-red-500";
-    return "text-red-600";
+    if (value <= 2) return "text-bioGreen";
+    if (value <= 4) return "text-amber";
+    if (value <= 6) return "text-amber";
+    if (value <= 8) return "text-critical";
+    return "text-critical";
   };
 
   const onSubmit = async (data: FormData) => {

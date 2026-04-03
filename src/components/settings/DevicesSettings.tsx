@@ -90,14 +90,14 @@ export const DevicesSettings = ({ isSectionVisible }: DevicesSettingsProps) => {
         <div className="space-y-3">
           <div className="w-full flex items-center justify-between p-4  border bg-glass/30 border-glass-border hover:bg-glass-highlight transition-all duration-200">
             <div className="flex items-center gap-3 flex-1">
-              <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-indigo-500 rounded-full flex items-center justify-center">
-                <div className="w-4 h-4 rounded-full border-2 border-white" />
+              <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-indigo-500 flex items-center justify-center">
+                <div className="w-4 h-4 border-2 border-white" />
               </div>
               <div className="text-left flex-1">
                 <p className="font-medium text-foreground flex items-center gap-2">
                   Wearable (Oura)
                   {isConnected && (
-                    <span className="text-xs px-2 py-0.5 rounded-full bg-green-500/20 text-green-400 border border-green-500/30">
+                    <span className="text-xs px-2 py-0.5 bg-bioGreen/20 text-bioGreen border border-bioGreen/30">
                       Connected
                     </span>
                   )}
@@ -105,7 +105,7 @@ export const DevicesSettings = ({ isSectionVisible }: DevicesSettingsProps) => {
                 {isConnected ? (
                   <div className="space-y-1">
                     <p className="text-xs text-muted-foreground flex items-center gap-1">
-                      <Zap size={12} className="text-green-500" />
+                      <Zap size={12} className="text-bioGreen" />
                       Auto-sync enabled
                     </p>
                     {lastSyncTime && (
@@ -132,7 +132,7 @@ export const DevicesSettings = ({ isSectionVisible }: DevicesSettingsProps) => {
               : "bg-glass/30 border-glass-border hover:bg-glass-highlight"
           }`}>
             <div className="flex items-center gap-3 flex-1">
-              <div className="w-10 h-10 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-full flex items-center justify-center">
+              <div className="w-10 h-10 bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-white">
                   <path d="M12 2L2 7l10 5 10-5-10-5z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
                   <path d="M2 17l10 5 10-5" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
@@ -143,12 +143,12 @@ export const DevicesSettings = ({ isSectionVisible }: DevicesSettingsProps) => {
                 <p className="font-medium text-foreground flex items-center gap-2 flex-wrap">
                   Wearable (Garmin)
                   {garminTokenExpired ? (
-                    <span className="text-xs px-2 py-0.5 rounded-full bg-destructive/20 text-destructive border border-destructive/30 flex items-center gap-1">
+                    <span className="text-xs px-2 py-0.5 bg-destructive/20 text-destructive border border-destructive/30 flex items-center gap-1">
                       <AlertTriangle size={10} />
                       Reconnection needed
                     </span>
                   ) : isGarminConnected ? (
-                    <span className="text-xs px-2 py-0.5 rounded-full bg-green-500/20 text-green-400 border border-green-500/30">
+                    <span className="text-xs px-2 py-0.5 bg-bioGreen/20 text-bioGreen border border-bioGreen/30">
                       Connected
                     </span>
                   ) : null}

@@ -566,7 +566,7 @@ function RecommendationItem({ recommendation, index }: RecommendationItemProps) 
         recommendation.priority === "high"
           ? "border-l-4 border-l-destructive border-destructive/30"
           : "border-border",
-        feedbackGiven === 'followed' && "border-l-4 border-l-emerald-500 border-emerald-500/30 bg-emerald-500/5"
+        feedbackGiven === 'followed' && "border-l-4 border-l-emerald-500 border-bioGreen/30 bg-bioGreen/5"
       )}>
         <CollapsibleTrigger asChild>
           <button className="w-full p-3 sm:p-4 flex items-center justify-between gap-2 sm:gap-3 text-left hover:bg-muted/30 transition-colors  touch-manipulation">
@@ -579,7 +579,7 @@ function RecommendationItem({ recommendation, index }: RecommendationItemProps) 
                   </span>
                   {priorityBadge}
                   {feedbackGiven === 'followed' && (
-                    <Badge variant="outline" className="text-xs bg-emerald-500/10 text-emerald-600 border-emerald-500/30">
+                    <Badge variant="outline" className="text-xs bg-bioGreen/10 text-bioGreen border-bioGreen/30">
                       <Check className="h-3 w-3 mr-1" /> Done
                     </Badge>
                   )}

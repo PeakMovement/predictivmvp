@@ -25,10 +25,10 @@ const typeLabels = {
 };
 
 const statusConfig = {
-  pending: { icon: Clock, color: 'text-yellow-500', label: 'Pending', animate: '' },
+  pending: { icon: Clock, color: 'text-amber', label: 'Pending', animate: '' },
   processing: { icon: RefreshCw, color: 'text-blue-500', label: 'Analyzing...', animate: 'animate-spin' },
-  completed: { icon: CheckCircle, color: 'text-green-500', label: 'Complete', animate: '' },
-  failed: { icon: AlertCircle, color: 'text-red-500', label: 'Failed', animate: '' }
+  completed: { icon: CheckCircle, color: 'text-bioGreen', label: 'Complete', animate: '' },
+  failed: { icon: AlertCircle, color: 'text-critical', label: 'Failed', animate: '' }
 };
 
 export const DocumentCard = ({ document, onDelete, onPreview, onViewHistory }: DocumentCardProps) => {

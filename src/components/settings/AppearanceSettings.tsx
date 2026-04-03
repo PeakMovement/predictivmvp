@@ -131,7 +131,7 @@ export const AppearanceSettings = () => {
               onMouseMove={handleMouseMove}
             >
               <div
-                className="absolute inset-0 rounded-full transition-all duration-300"
+                className="absolute inset-0 transition-all duration-300"
                 style={{
                   boxShadow: theme === "dark"
                     ? `0 0 60px hsl(${primaryHue}, 70%, 50%, 0.4), 0 0 100px hsl(${primaryHue}, 70%, 50%, 0.2)`
@@ -139,7 +139,7 @@ export const AppearanceSettings = () => {
                 }}
               />
               <div
-                className="absolute inset-0 rounded-full transition-transform group-hover:scale-[1.02] duration-300 ease-out"
+                className="absolute inset-0 transition-transform group-hover:scale-[1.02] duration-300 ease-out"
                 style={{
                   background: `conic-gradient(
                     hsl(0,70%,50%), hsl(30,70%,50%), hsl(60,70%,50%),
@@ -155,7 +155,7 @@ export const AppearanceSettings = () => {
               />
               <div
                 className={cn(
-                  "absolute w-10 h-10 rounded-full border-[3px] transition-all duration-150 pointer-events-none z-20",
+                  "absolute w-10 h-10 border-[3px] transition-all duration-150 pointer-events-none z-20",
                   "dark:border-background dark:",
                   isDragging && "scale-125",
                 )}
@@ -170,7 +170,7 @@ export const AppearanceSettings = () => {
                 }}
               />
               <div
-                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-24 h-24 rounded-full border-[3px] transition-all duration-150 dark:border-background"
+                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-24 h-24 border-[3px] transition-all duration-150 dark:border-background"
                 style={{
                   backgroundColor: `hsl(${primaryHue}, 70%, 50%)`,
                   boxShadow: theme === "dark"

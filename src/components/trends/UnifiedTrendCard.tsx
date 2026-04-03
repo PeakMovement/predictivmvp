@@ -294,7 +294,7 @@ export const UnifiedTrendCard = () => {
                 setCurrentMetricIndex(index);
               }}
               className={cn(
-                "h-2 rounded-full transition-all duration-300",
+                "h-2 transition-all duration-300",
                 index === currentMetricIndex ? "w-6 bg-primary" : "w-2 bg-muted"
               )}
             />

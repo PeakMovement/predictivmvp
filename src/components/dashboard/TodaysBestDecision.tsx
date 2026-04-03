@@ -18,81 +18,81 @@ interface TodaysBestDecisionProps {
   className?: string;
 }
 
-// Observation text variations - rotated daily for freshness
+// Observation text — Yves voice: short, declarative, data-first. No warmth.
 const OBSERVATION_VARIATIONS: Record<string, string[]> = {
   'monotony': [
-    "Your recent training has followed a very similar pattern, with limited time for recovery. This is common during consistent training blocks and doesn't mean anything is wrong—it simply suggests adding some variation today would support recovery.",
-    "You've been training in a similar way for several days now. While consistency is valuable, your body responds best to varied stimuli. Today is a good opportunity to mix things up.",
-    "Your workout patterns have been quite repetitive recently. This isn't a problem, but introducing some variety today will help your body continue adapting effectively."
+    "Training pattern repetition detected. Monotony index elevated. Variation recommended to reduce cumulative tissue load.",
+    "Session similarity above threshold. Adaptation response plateauing. Different stimulus required.",
+    "Repeated movement pattern identified. Monotony score warrants cross-training today."
   ],
   'acwr': [
-    "Your training load has increased noticeably over the past week. Your body is adapting, but today is a good opportunity to give it a little extra support.",
-    "You've ramped up your training recently, which is great for progress. Your system could use a lighter day to consolidate those gains.",
-    "The intensity of your recent sessions has been higher than your usual baseline. A gentler approach today helps your body catch up."
+    "Acute-to-chronic workload ratio elevated. 7-day load exceeds baseline. Reduced output recommended.",
+    "ACWR above safe threshold. Training ramp rate requires moderation. Consolidation day.",
+    "Load spike detected. Workload ratio indicates elevated injury probability. Reduce intensity."
   ],
   'strain': [
-    "You've been working hard lately, and the cumulative effort is showing in your numbers. This is actually a sign of consistent training—now is the time to let your body catch up.",
-    "Your recent training has accumulated more stress than usual. Taking it easier today isn't a step back—it's part of smart training.",
-    "The past few sessions have added up. Your body is ready to absorb those gains with a lighter day today."
+    "Cumulative strain index elevated. 7-day accumulation above threshold. Recovery session indicated.",
+    "Training stress accumulation above baseline. Deload day recommended to complete adaptation cycle.",
+    "Strain accumulation detected. Tissue recovery incomplete. Reduced output today."
   ],
   'hrv': [
-    "Your recovery metrics suggest your body could use a gentler day. This isn't unusual after demanding periods, and responding to these signals is exactly how sustainable progress happens.",
-    "Your heart rate variability indicates your nervous system is still processing recent stress. A lighter session today supports your body's natural recovery.",
-    "Your autonomic nervous system is showing signs of needing extra recovery. Easy movement today will help restore balance faster."
+    "HRV below personal baseline. Autonomic nervous system recovery incomplete. Low-intensity session only.",
+    "Heart rate variability depressed. Parasympathetic recovery insufficient. Reduce training stimulus.",
+    "HRV deviation detected. Nervous system still processing recent load. Restorative movement only."
   ],
   'sleep': [
-    "Your sleep patterns indicate you may not have fully recovered yet. On days like this, listening to your body and adjusting intensity helps maintain long-term consistency.",
-    "Recent sleep data suggests your body hasn't had all the rest it needs. Gentler movement today can actually improve tonight's sleep while keeping you active.",
-    "Sleep quality directly affects how your body responds to training. Today is a good opportunity to let your system catch up."
+    "Sleep quality below threshold. Recovery capacity reduced. Intensity adjustment required.",
+    "Sleep deficit detected. Neuromuscular recovery incomplete. Low-output session recommended.",
+    "Sleep data indicates insufficient recovery. Training response will be suboptimal. Modify accordingly."
   ],
   'fatigue': [
-    "Your system is showing signs of accumulated fatigue. Rather than pushing through, today is an opportunity to train smarter—keeping you on track without adding unnecessary stress.",
-    "Fatigue is your body's way of asking for a different stimulus. Responding appropriately today helps prevent the accumulated stress that leads to plateaus.",
-    "Your recent training has accumulated more fatigue than usual. A recovery-focused day helps your body complete the adaptation process."
+    "Fatigue index elevated. Accumulated load exceeds recovery capacity. Deload session indicated.",
+    "System fatigue detected. Coordination and reaction time impaired. Light movement only.",
+    "Fatigue accumulation above threshold. Recovery-focused session to complete adaptation."
   ],
   'symptoms': [
-    "Your body has been sending signals that deserve attention. Today is a good day to focus on recovery and give your system a chance to restore balance.",
-    "You've reported some discomfort recently. Your body communicates through these signals, and acknowledging them builds a more sustainable training practice.",
-    "Recent symptoms suggest your body needs a modified approach today. Working around the affected area keeps you active while allowing proper healing."
+    "Symptom report logged. Area requires protection. Modified session around affected region.",
+    "Reported discomfort noted. Training around affected area to maintain activity without aggravation.",
+    "Symptom signal detected. Tissue attention required. Load restricted to unaffected areas."
   ]
 };
 
-// Meaning text variations - rotated daily for variety
+// Data basis text — clinical, factual. No coaching language.
 const MEANING_VARIATIONS: Record<string, string[]> = {
   'monotony': [
-    "When training stays too similar for too long, the body can struggle to recover and adapt. Adding some variety helps reduce strain, supports long-term progress, and often keeps motivation high.",
-    "Repetitive stress accumulates over time. Cross-training distributes load across different tissues and joints, helping you stay healthy and progressing.",
-    "Training variety builds a more resilient body. Different movements strengthen connective tissue from multiple angles, keeping training sustainable."
+    "Repetitive loading patterns increase overuse injury risk. Varied stimulus distributes mechanical stress across tissue groups.",
+    "Monotony above 2.0 correlates with increased soft tissue complaint frequency. Cross-training reduces this metric.",
+    "High monotony reduces adaptation rate. Different movement patterns activate alternate motor units and connective tissue."
   ],
   'acwr': [
-    "Gradual load increases are essential, but the body needs time to adapt. By moderating today's intensity, you're giving your system time to strengthen—allowing you to handle more in the coming weeks.",
-    "Your recent training spike has been productive, but backing off now prevents tissue overload. You'll feel stronger in tomorrow's session because you recovered properly today.",
-    "Workload balance is key to long-term progress. Today's reduction helps your body consolidate recent gains safely."
+    "ACWR above 1.5 associated with 2-4x injury risk increase. Moderation today returns ratio to safe zone within 48 hours.",
+    "Acute load spike detected. Backing off prevents tissue overload and preserves training capacity for subsequent sessions.",
+    "Workload ratio imbalance requires correction. Consolidation allows structural adaptation to catch up with training stimulus."
   ],
   'strain': [
-    "Accumulated effort needs to be balanced with recovery. Today's lighter approach isn't a step backward—it's an investment in your capacity to train harder later.",
-    "High strain accumulates micro-damage in tissues. Reducing load allows repair and prevents minor stress from becoming a setback.",
-    "Your weekly load has been high. Managing it now protects your ability to train consistently over the coming months."
+    "7-day strain accumulation exceeds recovery capacity estimate. Reduced load allows micro-damage repair cycle to complete.",
+    "High strain accumulates tissue micro-damage. Load reduction prevents minor stress from compounding into clinical presentation.",
+    "Weekly load management protects training consistency over subsequent weeks. Short-term reduction, long-term gain."
   ],
   'hrv': [
-    "Recovery isn't just about rest—it's when your body actually gets stronger. By adjusting today's session to match your current state, you're maximizing the return on all the hard work you've already put in.",
-    "Low HRV signals your nervous system is still processing stress. Gentle movement helps restore nervous system balance without adding more load.",
-    "Your autonomic nervous system needs recovery time. Restorative movement today sets you up for a strong training response once HRV normalizes."
+    "HRV reflects autonomic nervous system recovery state. Below-baseline readings indicate incomplete parasympathetic restoration.",
+    "Depressed HRV signals nervous system still processing recent load. Gentle movement restores balance without additional demand.",
+    "Autonomic recovery incomplete. Restorative movement facilitates parasympathetic upregulation more effectively than rest alone."
   ],
   'sleep': [
-    "Sleep quality directly affects how your body responds to training. Gentler movement on lower-recovery days can actually improve subsequent sleep while keeping you active.",
-    "Without quality sleep, muscles and nervous system haven't fully recovered. Easy movement is all your body can productively handle right now.",
-    "Sleep deficit reduces your body's ability to handle training stress. A lighter session today helps you recover faster and sleep better tonight."
+    "Sleep quality directly modulates training adaptation. Insufficient sleep reduces protein synthesis and hormonal recovery.",
+    "Sleep deficit impairs neuromuscular recovery. Training response under these conditions is suboptimal to counterproductive.",
+    "Sleep data indicates recovery debt. Lower intensity allows the body to allocate resources to restoration processes."
   ],
   'fatigue': [
-    "Fatigue is your body's way of asking for a different stimulus. Responding appropriately today helps prevent the accumulated stress that leads to plateaus or setbacks.",
-    "Training on accumulated fatigue leads to poor form and higher injury risk. Light movement promotes blood flow and recovery without adding stress.",
-    "Fatigue impairs coordination and reaction time. Easy movement today protects you and sets you up for better performance tomorrow."
+    "Elevated fatigue index correlates with impaired motor control and increased injury probability. Light movement preserves blood flow.",
+    "Accumulated fatigue degrades form quality and reaction time. Deload session maintains activity without compounding risk.",
+    "Fatigue above threshold impairs coordination. Recovery-focused movement supports adaptation without additional strain."
   ],
   'symptoms': [
-    "Your body communicates through subtle signals that experienced coaches learn to respect. By acknowledging these today, you're building a more sustainable training practice.",
-    "Training through symptoms often worsens the underlying issue. Protecting the area now prevents longer time off later.",
-    "Symptoms indicate tissue needs attention. Working around the affected area keeps you active while allowing proper healing."
+    "Symptom reports indicate tissue requiring attention. Training around affected area maintains fitness while protecting recovery.",
+    "Continued loading through symptomatic tissue risks chronification. Modified approach preserves long-term function.",
+    "Symptom signal warrants load modification. Unaffected areas can be trained normally to maintain conditioning."
   ]
 };
 
@@ -140,7 +140,7 @@ function TodaysBestDecision({ className }, ref) {
             <Compass className="h-4.5 w-4.5 text-primary" />
           </div>
           <div>
-            <h3 className="text-base font-semibold text-foreground">Today's training focus</h3>
+            <h3 className="text-base font-semibold text-foreground">Load Assessment</h3>
             <p className="text-xs text-muted-foreground">Powered by Yves</p>
           </div>
         </div>
@@ -163,7 +163,7 @@ function TodaysBestDecision({ className }, ref) {
   const handleFeedback = (type: 'helpful' | 'not-helpful') => {
     setFeedbackGiven(true);
     setFeedbackType(type);
-    toast.success("Thanks for your feedback!", {
+    toast.success("Noted!", {
       description: "This helps us improve your recommendations"
     });
   };
@@ -295,13 +295,13 @@ function TodaysBestDecision({ className }, ref) {
       return variations[index];
     }
 
-    return riskDrivers.explanation || "Based on your recent patterns, we've identified an opportunity to optimize today's training for better results.";
+    return riskDrivers.explanation || "Training pattern analysis complete. Adjustment identified.";
   };
 
   // Generate calm recommendation text
   const generateRecommendationText = () => {
     if (!session) return null;
-    return `A ${session.title.toLowerCase()} is a good option today, allowing you to stay active while giving your body space to recover.`;
+    return `Recommended: ${session.title.toLowerCase()}. Maintains activity while reducing system load.`;
   };
 
   // Generate meaning paragraph - rotated daily
@@ -341,8 +341,8 @@ function TodaysBestDecision({ className }, ref) {
                   <Compass className="h-4.5 w-4.5 text-primary" />
                 </div>
                 <div>
-                  <h3 className="text-base font-semibold text-foreground">Today's training focus</h3>
-                  <p className="text-xs text-muted-foreground">{yvesRec ? "Powered by Yves · Updated today" : "Based on your recent training patterns"}</p>
+                  <h3 className="text-base font-semibold text-foreground">Load Assessment</h3>
+                  <p className="text-xs text-muted-foreground">{yvesRec ? "Compiled today" : "Current session assessment"}</p>
                 </div>
               </div>
               <ChevronDown className={cn(
@@ -363,7 +363,7 @@ function TodaysBestDecision({ className }, ref) {
                   <div className=" bg-muted/40 border border-border/50 p-4">
                     <div className="flex items-center gap-2 mb-3">
                       <Info className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-sm font-medium text-muted-foreground">What we're noticing today</span>
+                      <span className="text-sm font-medium text-muted-foreground">Pattern Identified</span>
                     </div>
                     <p className="text-sm text-foreground leading-relaxed">
                       {yvesRec.internal_reasoning}
@@ -390,7 +390,7 @@ function TodaysBestDecision({ className }, ref) {
                         <TooltipTrigger asChild>
                           <button className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors">
                             <HelpCircle className="h-3.5 w-3.5" />
-                            <span>Why this matters?</span>
+                            <span>Data Basis</span>
                           </button>
                         </TooltipTrigger>
                         <TooltipContent className="max-w-[300px] p-3">
@@ -404,7 +404,7 @@ function TodaysBestDecision({ className }, ref) {
                     <Collapsible open={isDataExpanded} onOpenChange={setIsDataExpanded}>
                       <CollapsibleTrigger asChild>
                         <button className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors">
-                          <span>{isDataExpanded ? "Hide data details" : "See the data"}</span>
+                          <span>{isDataExpanded ? "Hide Data" : "View Data"}</span>
                           <ChevronDown className={cn("h-3 w-3 transition-transform", isDataExpanded && "rotate-180")} />
                         </button>
                       </CollapsibleTrigger>
@@ -422,11 +422,11 @@ function TodaysBestDecision({ className }, ref) {
                   {feedbackGiven ? (
                     <div className="flex items-center justify-center gap-2 py-3 text-sm text-muted-foreground">
                       <CheckCircle2 className="h-4 w-4 text-primary" />
-                      <span>Thanks for your feedback!</span>
+                      <span>Noted!</span>
                     </div>
                   ) : (
                     <div className="space-y-3">
-                      <p className="text-sm text-center text-muted-foreground">Was this recommendation helpful?</p>
+                      <p className="text-sm text-center text-muted-foreground"></p>
                       <div className="flex gap-3 justify-center">
                         <Button
                           variant="outline"
@@ -453,12 +453,12 @@ function TodaysBestDecision({ className }, ref) {
               </>
             ) : (
               <>
-                {/* A. Observation Card - "What we're noticing today" */}
+                {/* A. Observation Card - "Pattern Identified" */}
                 {riskDrivers && riskDrivers.primary && (
                   <div className=" bg-muted/40 border border-border/50 p-4">
                     <div className="flex items-center gap-2 mb-3">
                       <Info className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-sm font-medium text-muted-foreground">What we're noticing today</span>
+                      <span className="text-sm font-medium text-muted-foreground">Pattern Identified</span>
                     </div>
                     <p className="text-sm text-foreground leading-relaxed">
                       {generateObservationText()}
@@ -466,13 +466,13 @@ function TodaysBestDecision({ className }, ref) {
                   </div>
                 )}
 
-                {/* B. Recommendation Card - "Today's best option" */}
+                {/* B. Recommendation Card - "Recommendation" */}
                 {session && (
                   <div className=" bg-primary/8 border border-primary/20 overflow-hidden">
                     <div className="p-4">
                       <div className="flex items-center gap-2 mb-3">
                         <Heart className="h-4 w-4 text-primary" />
-                        <span className="text-sm font-medium text-primary">Today's best option</span>
+                        <span className="text-sm font-medium text-primary">Recommendation</span>
                       </div>
                       <p className="text-sm text-foreground leading-relaxed mb-3">
                         {generateRecommendationText()}
@@ -485,7 +485,7 @@ function TodaysBestDecision({ className }, ref) {
                     <Collapsible open={isSessionExpanded} onOpenChange={setIsSessionExpanded}>
                       <CollapsibleTrigger asChild>
                         <button className="w-full p-3 flex items-center justify-center gap-2 text-sm text-primary/80 hover:text-primary hover:bg-primary/5 transition-colors border-t border-primary/10">
-                          <span>{isSessionExpanded ? "Hide workout details" : "Would you like to see today's workout?"}</span>
+                          <span>{isSessionExpanded ? "Hide Session Plan" : "View Session Plan"}</span>
                           <ChevronDown className={cn("h-4 w-4 transition-transform", isSessionExpanded && "rotate-180")} />
                         </button>
                       </CollapsibleTrigger>
@@ -615,7 +615,7 @@ function TodaysBestDecision({ className }, ref) {
                         <TooltipTrigger asChild>
                           <button className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors">
                             <HelpCircle className="h-3.5 w-3.5" />
-                            <span>Why this matters?</span>
+                            <span>Data Basis</span>
                           </button>
                         </TooltipTrigger>
                         <TooltipContent className="max-w-[300px] p-3">
@@ -627,7 +627,7 @@ function TodaysBestDecision({ className }, ref) {
                     <Collapsible open={isDataExpanded} onOpenChange={setIsDataExpanded}>
                       <CollapsibleTrigger asChild>
                         <button className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors">
-                          <span>{isDataExpanded ? "Hide data details" : "See the data"}</span>
+                          <span>{isDataExpanded ? "Hide Data" : "View Data"}</span>
                           <ChevronDown className={cn("h-3 w-3 transition-transform", isDataExpanded && "rotate-180")} />
                         </button>
                       </CollapsibleTrigger>
@@ -645,11 +645,11 @@ function TodaysBestDecision({ className }, ref) {
                   {feedbackGiven ? (
                     <div className="flex items-center justify-center gap-2 py-3 text-sm text-muted-foreground">
                       <CheckCircle2 className="h-4 w-4 text-primary" />
-                      <span>Thanks for your feedback!</span>
+                      <span>Noted!</span>
                     </div>
                   ) : (
                     <div className="space-y-3">
-                      <p className="text-sm text-center text-muted-foreground">Was this recommendation helpful?</p>
+                      <p className="text-sm text-center text-muted-foreground"></p>
                       <div className="flex gap-3 justify-center">
                         <Button
                           variant="outline"

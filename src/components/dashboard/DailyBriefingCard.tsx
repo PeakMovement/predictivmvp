@@ -297,8 +297,8 @@ function CollapsibleBriefingSections({ briefing, recommendations = [] }: { brief
     ? `${briefing.keyChanges.length} change${briefing.keyChanges.length > 1 ? 's' : ''} detected`
     : "No significant changes";
   const riskPreview = briefing.riskHighlights.length > 0
-    ? `${briefing.riskHighlights.length} item${briefing.riskHighlights.length > 1 ? 's' : ''} need attention`
-    : "No immediate concerns";
+    ? `${briefing.riskHighlights.length} item${briefing.riskHighlights.length > 1 ? 's' : ''} flagged`
+    : "No flags";
 
   // Get explanation and document for the summary
   const summaryExplanation = hasContext ? getExplanation(briefing.summary) : null;
@@ -308,7 +308,7 @@ function CollapsibleBriefingSections({ briefing, recommendations = [] }: { brief
     <div className="space-y-3">
       {/* Brief of the Day */}
       <CollapsibleSection
-        title="Brief of the Day"
+        title="Status"
         icon={<Brain className="h-4 w-4" />}
         preview={summaryPreview}
       >
@@ -328,7 +328,7 @@ function CollapsibleBriefingSections({ briefing, recommendations = [] }: { brief
 
       {/* Key Changes */}
       <CollapsibleSection
-        title="Key Changes"
+        title="Deviations"
         icon={<TrendingUp className="h-4 w-4" />}
         preview={keyChangesPreview}
       >
@@ -356,13 +356,13 @@ function CollapsibleBriefingSections({ briefing, recommendations = [] }: { brief
             })}
           </div>
         ) : (
-          <p className="text-sm text-muted-foreground">No significant changes detected today.</p>
+          <p className="text-sm text-muted-foreground">No deviations from baseline.</p>
         )}
       </CollapsibleSection>
 
       {/* Attention Needed */}
       <CollapsibleSection
-        title="Attention Needed"
+        title="Risk Flags"
         icon={<AlertTriangle className="h-4 w-4" />}
         preview={riskPreview}
         variant={briefing.riskHighlights.length > 0 ? "warning" : "default"}
@@ -391,7 +391,7 @@ function CollapsibleBriefingSections({ briefing, recommendations = [] }: { brief
             })}
           </div>
         ) : (
-          <p className="text-sm text-muted-foreground">No immediate concerns. Keep up the good work!</p>
+          <p className="text-sm text-muted-foreground">No flags. Keep up the good work!</p>
         )}
       </CollapsibleSection>
 

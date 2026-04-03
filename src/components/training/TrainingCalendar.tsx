@@ -57,10 +57,10 @@ function activityEmoji(sessionType: string | null): string {
 
 function loadColour(load: number | null): string {
   if (!load) return "bg-slate-400/40";
-  if (load >= 8) return "bg-red-500";
+  if (load >= 8) return "bg-critical";
   if (load >= 5) return "bg-orange-400";
   if (load >= 3) return "bg-yellow-400";
-  return "bg-emerald-400";
+  return "bg-bioGreen";
 }
 
 function trainingStatusLabel(status: string | null): string {
@@ -264,7 +264,7 @@ export const TrainingCalendar = () => {
 
                     {/* Load dot */}
                     {hasSession && (
-                      <div className={cn("w-1.5 h-1.5 rounded-full mt-0.5", dotColour)} />
+                      <div className={cn("w-1.5 h-1.5 mt-0.5", dotColour)} />
                     )}
                   </button>
                 );
@@ -276,13 +276,13 @@ export const TrainingCalendar = () => {
         {/* Legend */}
         <div className="flex items-center gap-3 px-4 py-2 border-t border-border/20 flex-wrap">
           {[
-            { colour: "bg-emerald-400", label: "Light" },
+            { colour: "bg-bioGreen", label: "Light" },
             { colour: "bg-yellow-400", label: "Moderate" },
             { colour: "bg-orange-400", label: "High" },
-            { colour: "bg-red-500", label: "Very High" },
+            { colour: "bg-critical", label: "Very High" },
           ].map(({ colour, label }) => (
             <div key={label} className="flex items-center gap-1">
-              <div className={cn("w-2 h-2 rounded-full", colour)} />
+              <div className={cn("w-2 h-2", colour)} />
               <span className="text-[10px] text-muted-foreground">{label}</span>
             </div>
           ))}
@@ -292,7 +292,7 @@ export const TrainingCalendar = () => {
 
       {/* ── Session detail sheet ─────────────────────────────────────────────── */}
       <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
-        <SheetContent side="bottom" className="rounded-t-2xl max-h-[90vh] overflow-y-auto pb-safe">
+        <SheetContent side="bottom" className=" max-h-[90vh] overflow-y-auto pb-safe">
           {selectedSession && (
             <>
               <SheetHeader className="mb-4">
@@ -330,7 +330,7 @@ export const TrainingCalendar = () => {
                     label="Duration" value={`${selectedSession.duration_minutes} min`} />
                 )}
                 {selectedSession.total_distance_km && (
-                  <MetricCell icon={<Route className="h-4 w-4 text-green-400" />}
+                  <MetricCell icon={<Route className="h-4 w-4 text-bioGreen" />}
                     label="Distance" value={`${selectedSession.total_distance_km.toFixed(2)} km`} />
                 )}
                 {selectedSession.avg_heart_rate && (
@@ -338,7 +338,7 @@ export const TrainingCalendar = () => {
                     label="Avg HR" value={`${Math.round(selectedSession.avg_heart_rate)} bpm`} />
                 )}
                 {selectedSession.max_heart_rate && (
-                  <MetricCell icon={<Heart className="h-4 w-4 text-red-600" />}
+                  <MetricCell icon={<Heart className="h-4 w-4 text-critical" />}
                     label="Max HR" value={`${Math.round(selectedSession.max_heart_rate)} bpm`} />
                 )}
                 {selectedSession.training_load && (

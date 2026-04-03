@@ -50,8 +50,8 @@ export function BookingConfirmationModal({
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <div className="flex flex-col items-center text-center mb-4">
-            <div className="h-16 w-16 rounded-full bg-green-500/10 flex items-center justify-center mb-4 animate-in zoom-in duration-300">
-              <CheckCircle2 className="h-8 w-8 text-green-500" />
+            <div className="h-16 w-16 bg-bioGreen/10 flex items-center justify-center mb-4 animate-in zoom-in duration-300">
+              <CheckCircle2 className="h-8 w-8 text-bioGreen" />
             </div>
             <DialogTitle className="text-2xl">Appointment Confirmed!</DialogTitle>
             <p className="text-sm text-muted-foreground mt-2">
@@ -63,7 +63,7 @@ export function BookingConfirmationModal({
         <div className="space-y-4 py-4">
           <div className="bg-muted/50  p-4 space-y-3">
             <div className="flex items-start gap-3">
-              <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+              <div className="h-10 w-10 bg-primary/10 flex items-center justify-center flex-shrink-0">
                 <span className="text-sm font-semibold text-primary">
                   {booking.physician.name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2)}
                 </span>
@@ -109,7 +109,7 @@ export function BookingConfirmationModal({
             )}
           </div>
 
-          <div className="bg-yellow-500/10 border border-yellow-500/20  p-3">
+          <div className="bg-amber/10 border border-amber/20  p-3">
             <p className="text-sm text-yellow-700 dark:text-yellow-400">
               <strong>Please arrive 10 minutes early</strong> to complete any necessary paperwork.
               {isVirtual && ' You will receive a virtual meeting link 24 hours before your appointment.'}

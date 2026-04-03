@@ -25,7 +25,7 @@ export function AdminDashboard() {
     return (
       <div className="flex items-center justify-center min-h-screen bg-background">
         <div className="flex flex-col items-center gap-4 text-center p-8">
-          <div className="w-16 h-16 bg-destructive/10 rounded-full flex items-center justify-center">
+          <div className="w-16 h-16 bg-destructive/10 flex items-center justify-center">
             <ShieldAlert size={32} className="text-destructive" />
           </div>
           <h2 className="text-xl font-semibold text-foreground">Access Denied</h2>

@@ -16,8 +16,8 @@ const toneStyles = {
     text: 'text-primary/90',
   },
   warm: {
-    bg: 'bg-orange-500/5',
-    border: 'border-orange-500/20',
+    bg: 'bg-amber/5',
+    border: 'border-amber/20',
     icon: 'text-orange-600 dark:text-orange-400',
     text: 'text-orange-800 dark:text-orange-300',
   },

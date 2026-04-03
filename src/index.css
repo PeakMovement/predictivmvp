@@ -108,41 +108,51 @@
     --glow-primary: 200 30% 75%;
   }
 
-  /* Light mode — marble-toned, not white */
+  /* Light mode — marble warm, NOT cool grey, NOT white */
   .light {
-    --background: 30 10% 92%;         /* warm light grey */
-    --foreground: 240 20% 12%;
+    --background: 30 24% 94%;         /* #F5F0EB marble warm */
+    --foreground: 240 43% 3%;         /* #04040A void — primary text */
 
-    --card: 30 8% 96%;
-    --card-foreground: 240 20% 12%;
+    --card: 60 20% 97%;              /* #FAFAF8 */
+    --card-foreground: 240 43% 3%;   /* #04040A */
 
-    --popover: 30 8% 96%;
-    --popover-foreground: 240 20% 12%;
+    --popover: 60 20% 97%;           /* #FAFAF8 */
+    --popover-foreground: 240 43% 3%;
 
-    --primary: 200 40% 40%;           /* darker coldBlue for contrast */
-    --primary-foreground: 30 8% 96%;
+    --primary: 200 30% 45%;           /* darker coldBlue for light bg contrast */
+    --primary-foreground: 60 20% 97%;
 
-    --secondary: 30 8% 90%;
-    --secondary-foreground: 240 20% 12%;
+    --secondary: 30 15% 92%;
+    --secondary-foreground: 240 43% 3%;
 
-    --muted: 30 8% 90%;
-    --muted-foreground: 220 10% 40%;
+    --muted: 30 15% 92%;
+    --muted-foreground: 240 43% 13% / 0.4;  /* rgba(13,13,30,0.4) section labels */
 
-    --accent: 200 40% 40%;
-    --accent-foreground: 30 8% 96%;
+    --accent: 200 30% 45%;
+    --accent-foreground: 60 20% 97%;
 
-    --destructive: 0 50% 50%;
-    --destructive-foreground: 0 0% 100%;
+    --destructive: 0 30% 60%;         /* #C46B6B same critical in both modes */
+    --destructive-foreground: 60 20% 97%;
 
-    --border: 220 10% 80%;
-    --input: 220 10% 85%;
-    --ring: 200 40% 40%;
+    --border: 30 5% 76% / 0.2;       /* rgba(200,194,190,0.2) */
+    --input: 30 10% 90%;
+    --ring: 200 30% 45%;
 
-    --glass-bg: 30 8% 96% / 0.9;
-    --glass-border: 220 10% 80%;
-    --glass-highlight: 0 0% 100% / 0.6;
+    --glass-bg: 60 20% 97% / 0.9;
+    --glass-border: 30 5% 76% / 0.2;  /* rgba(200,194,190,0.2) */
+    --glass-highlight: 0 0% 100% / 0.5;
 
-    --glow-primary: 200 40% 40%;
+    --glow-primary: 200 30% 45%;
+
+    /* Light mode sidebar */
+    --sidebar-background: 30 24% 94%;
+    --sidebar-foreground: 240 43% 3%;
+    --sidebar-primary: 200 30% 45%;
+    --sidebar-primary-foreground: 60 20% 97%;
+    --sidebar-accent: 30 15% 92%;
+    --sidebar-accent-foreground: 240 43% 3%;
+    --sidebar-border: 30 5% 76% / 0.2;
+    --sidebar-ring: 200 30% 45%;
   }
 }
 
@@ -178,16 +188,15 @@
     overflow-y: auto;
   }
 
-  /* Dark mode — void with subtle cold-blue radial */
+  /* Dark mode — #04040A void */
   .dark body,
   :root body {
-    background: radial-gradient(ellipse at 50% 0%, hsl(200 30% 75% / 0.04), transparent 60%),
-                hsl(240 43% 3%);
+    background: #04040A;
   }
 
-  /* Light mode — clean warm grey */
+  /* Light mode — #F5F0EB marble warm */
   .light body {
-    background: hsl(30 10% 92%);
+    background: #F5F0EB;
   }
 
   /* ── Focus states ──────────────────────────────────────────────── */

@@ -186,7 +186,7 @@ Expected redirect URI: https://predictiv.netlify.app/oauth/callback/oura`;
       <div className="max-w-md w-full bg-glass  border border-glass-border  p-8  text-center space-y-6">
         {status === "loading" && (
           <>
-            <div className="w-16 h-16 mx-auto bg-gradient-to-br from-purple-500 to-indigo-500 rounded-full flex items-center justify-center">
+            <div className="w-16 h-16 mx-auto bg-gradient-to-br from-purple-500 to-indigo-500 flex items-center justify-center">
               <Loader2 className="w-8 h-8 text-white animate-spin" />
             </div>
             <div className="space-y-2">
@@ -202,7 +202,7 @@ Expected redirect URI: https://predictiv.netlify.app/oauth/callback/oura`;
 
         {status === "success" && (
           <>
-            <div className="w-16 h-16 mx-auto bg-gradient-to-br from-green-500 to-emerald-500 rounded-full flex items-center justify-center">
+            <div className="w-16 h-16 mx-auto bg-gradient-to-br from-green-500 to-emerald-500 flex items-center justify-center">
               <svg
                 className="w-8 h-8 text-white"
                 fill="none"
@@ -230,7 +230,7 @@ Expected redirect URI: https://predictiv.netlify.app/oauth/callback/oura`;
 
         {status === "error" && (
           <>
-            <div className="w-16 h-16 mx-auto bg-gradient-to-br from-red-500 to-rose-500 rounded-full flex items-center justify-center">
+            <div className="w-16 h-16 mx-auto bg-gradient-to-br from-red-500 to-rose-500 flex items-center justify-center">
               <svg
                 className="w-8 h-8 text-white"
                 fill="none"
@@ -255,7 +255,7 @@ Expected redirect URI: https://predictiv.netlify.app/oauth/callback/oura`;
                 errorMessage.includes("Redirect URI") ||
                 errorMessage.includes("credentials") ||
                 errorMessage.includes("Edge Function")) && (
-                <div className="mt-4 p-4 bg-yellow-500/10 border border-yellow-500/30  text-left">
+                <div className="mt-4 p-4 bg-amber/10 border border-amber/30  text-left">
                   <p className="text-xs font-semibold text-yellow-600 dark:text-yellow-400 mb-2">
                     Troubleshooting Steps:
                   </p>

@@ -82,7 +82,7 @@ export const AccountabilityChallenges = () => {
   const getStatusColor = (status: string) => {
     switch (status) {
       case "active": return "border-primary/30 text-primary bg-primary/10";
-      case "completed": return "border-green-500/30 text-green-600 bg-green-500/10";
+      case "completed": return "border-bioGreen/30 text-bioGreen bg-bioGreen/10";
       case "pending": return "border-amber-500/30 text-amber-600 bg-amber-500/10";
       case "expired": return "border-muted-foreground/30 text-muted-foreground bg-muted/50";
       default: return "border-border text-muted-foreground bg-muted/50";
@@ -263,7 +263,7 @@ export const AccountabilityChallenges = () => {
             {completedChallenges.length > 0 && (
               <div className="pt-4 border-t border-border/50">
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <Check className="h-4 w-4 text-green-500" />
+                  <Check className="h-4 w-4 text-bioGreen" />
                   <span>
                     {completedChallenges.length} challenge{completedChallenges.length !== 1 ? "s" : ""} completed
                   </span>

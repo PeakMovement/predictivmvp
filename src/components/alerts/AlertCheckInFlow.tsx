@@ -205,7 +205,7 @@ export function AlertCheckInFlow({ alert, onComplete, onSnooze, onNavigateToHelp
         <Card className="max-w-md w-full bg-card border-border/50 shadow-xl">
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-foreground">
-              <AlertTriangle className="h-5 w-5 text-orange-500" />
+              <AlertTriangle className="h-5 w-5 text-amber" />
               Health Check
             </CardTitle>
           </CardHeader>
@@ -364,7 +364,7 @@ export function AlertCheckInFlow({ alert, onComplete, onSnooze, onNavigateToHelp
         <Card className="max-w-md w-full bg-card border-border/50 shadow-xl">
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-foreground">
-              <UserRound className="h-5 w-5 text-orange-500" />
+              <UserRound className="h-5 w-5 text-amber" />
               Professional Help
             </CardTitle>
           </CardHeader>
@@ -404,7 +404,7 @@ export function AlertCheckInFlow({ alert, onComplete, onSnooze, onNavigateToHelp
                   </>
                 ) : (
                   <>
-                    <CheckCircle2 className="h-5 w-5 text-green-500" />
+                    <CheckCircle2 className="h-5 w-5 text-bioGreen" />
                     {hasSymptoms ? "Check In Complete" : "All Clear"}
                   </>
                 )}
@@ -452,7 +452,7 @@ export function AlertCheckInFlow({ alert, onComplete, onSnooze, onNavigateToHelp
                         <ul className="space-y-1.5">
                           {aiInterpretation.recommendations.map((rec, idx) => (
                             <li key={idx} className="flex items-start gap-2 text-sm text-muted-foreground">
-                              <span className="text-green-500 mt-0.5">•</span>
+                              <span className="text-bioGreen mt-0.5">•</span>
                               {rec}
                             </li>
                           ))}
@@ -542,7 +542,7 @@ function SymptomCheckInFlowForm({ onSuccess, onCancel }: SymptomCheckInFlowFormP
   };
 
   const getSeverityColor = (value: number) => {
-    if (value <= 3) return "text-green-400";
+    if (value <= 3) return "text-bioGreen";
     if (value <= 6) return "text-yellow-400";
     if (value <= 8) return "text-orange-400";
     return "text-destructive";

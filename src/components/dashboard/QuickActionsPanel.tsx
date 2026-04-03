@@ -119,9 +119,9 @@ export const QuickActionsPanel = () => {
       label: "Sync Data",
       description: "Update Oura data",
       onClick: handleSyncData,
-      color: "text-green-500",
-      bgColor: "bg-green-500/10",
-      hoverColor: "hover:bg-green-500/20",
+      color: "text-bioGreen",
+      bgColor: "bg-bioGreen/10",
+      hoverColor: "hover:bg-bioGreen/20",
       spinning: isSyncing,
     },
     {

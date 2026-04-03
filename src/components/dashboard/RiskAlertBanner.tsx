@@ -67,8 +67,8 @@ export function RiskAlertBanner() {
     <div className={cn(
       "mb-6  border px-4 py-3 flex items-start gap-3",
       isHigh
-        ? "bg-red-500/10 border-red-500/40"
-        : "bg-yellow-500/10 border-yellow-500/40",
+        ? "bg-critical/10 border-critical/40"
+        : "bg-amber/10 border-amber/40",
     )}>
       <AlertTriangle className={cn(
         "h-4 w-4 mt-0.5 shrink-0",

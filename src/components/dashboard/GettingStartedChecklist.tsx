@@ -108,9 +108,9 @@ export function GettingStartedChecklist({ onNavigate }: GettingStartedChecklistP
         </div>
         <div className="flex items-center gap-3">
           {/* Mini progress bar */}
-          <div className="hidden sm:block w-24 h-1.5 rounded-full bg-muted/50 overflow-hidden">
+          <div className="hidden sm:block w-24 h-1.5 bg-muted/50 overflow-hidden">
             <div
-              className="h-full rounded-full bg-primary transition-all duration-500"
+              className="h-full bg-primary transition-all duration-500"
               style={{ width: `${overallPct}%` }}
             />
           </div>
@@ -134,16 +134,16 @@ export function GettingStartedChecklist({ onNavigate }: GettingStartedChecklistP
                 )}
               >
                 {step.done ? (
-                  <CheckCircle2 className="w-5 h-5 text-green-400 flex-shrink-0" />
+                  <CheckCircle2 className="w-5 h-5 text-bioGreen flex-shrink-0" />
                 ) : (
                   <Circle className="w-5 h-5 text-muted-foreground/50 flex-shrink-0" />
                 )}
                 <div className="flex items-center gap-3 flex-1 min-w-0">
                   <div className={cn(
                     "w-8 h-8  flex items-center justify-center flex-shrink-0",
-                    step.done ? "bg-green-500/10" : "bg-muted/40"
+                    step.done ? "bg-bioGreen/10" : "bg-muted/40"
                   )}>
-                    <Icon className={cn("w-4 h-4", step.done ? "text-green-400" : "text-muted-foreground")} />
+                    <Icon className={cn("w-4 h-4", step.done ? "text-bioGreen" : "text-muted-foreground")} />
                   </div>
                   <div className="min-w-0">
                     <p className={cn("text-sm font-medium", step.done && "line-through text-muted-foreground")}>

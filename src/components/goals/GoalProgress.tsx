@@ -157,14 +157,14 @@ export const GoalCard = ({ goal, onComplete }: GoalCardProps) => {
   return (
     <Card className={cn(
       "transition-all",
-      isComplete && "border-green-500 bg-green-50/50 dark:bg-green-950/20"
+      isComplete && "border-bioGreen bg-green-50/50 dark:bg-green-950/20"
     )}>
       <CardHeader>
         <div className="flex items-start justify-between">
           <div className="space-y-1">
             <CardTitle className="flex items-center gap-2">
               {isComplete ? (
-                <CheckCircle2 className="h-5 w-5 text-green-600" />
+                <CheckCircle2 className="h-5 w-5 text-bioGreen" />
               ) : (
                 <Target className="h-5 w-5 text-primary" />
               )}
@@ -199,7 +199,7 @@ export const GoalCard = ({ goal, onComplete }: GoalCardProps) => {
               </div>
             )}
             {isComplete && (
-              <div className="flex items-center gap-1 text-sm text-green-600 font-medium">
+              <div className="flex items-center gap-1 text-sm text-bioGreen font-medium">
                 <Trophy className="h-4 w-4" />
                 <span>Completed!</span>
               </div>
@@ -217,7 +217,7 @@ export const GoalCard = ({ goal, onComplete }: GoalCardProps) => {
                 return (
                   <div key={milestone.id} className="flex items-center gap-2">
                     {isReached ? (
-                      <CheckCircle2 className="h-4 w-4 text-green-600 flex-shrink-0" />
+                      <CheckCircle2 className="h-4 w-4 text-bioGreen flex-shrink-0" />
                     ) : (
                       <Circle className="h-4 w-4 text-muted-foreground flex-shrink-0" />
                     )}
@@ -271,7 +271,7 @@ export const MilestoneTimeline = ({ goal }: MilestoneTimelineProps) => {
 
         <div className="relative flex justify-between">
           <div className="flex flex-col items-center">
-            <div className="w-4 h-4 rounded-full bg-primary mb-2" />
+            <div className="w-4 h-4 bg-primary mb-2" />
             <span className="text-xs font-medium">Start</span>
             <span className="text-xs text-muted-foreground">
               {goal.startDate.toLocaleDateString()}
@@ -289,7 +289,7 @@ export const MilestoneTimeline = ({ goal }: MilestoneTimelineProps) => {
                 style={{ position: "absolute", left: `${milestoneProgress}%` }}
               >
                 <div className={cn(
-                  "w-4 h-4 rounded-full mb-2 border-2",
+                  "w-4 h-4 mb-2 border-2",
                   isReached
                     ? "bg-primary border-primary"
                     : "bg-background border-muted"
@@ -310,8 +310,8 @@ export const MilestoneTimeline = ({ goal }: MilestoneTimelineProps) => {
 
           <div className="flex flex-col items-center">
             <div className={cn(
-              "w-5 h-5 rounded-full mb-2 flex items-center justify-center",
-              progress >= 100 ? "bg-green-600" : "bg-muted"
+              "w-5 h-5 mb-2 flex items-center justify-center",
+              progress >= 100 ? "bg-bioGreen" : "bg-muted"
             )}>
               {progress >= 100 && <Trophy className="w-3 h-3 text-white" />}
             </div>
@@ -357,7 +357,7 @@ export const GoalHistory = ({ goals }: GoalHistoryProps) => {
           </div>
           <div className="space-y-1">
             <p className="text-sm text-muted-foreground">Completed</p>
-            <p className="text-2xl font-bold text-green-600">{completedGoals.length}</p>
+            <p className="text-2xl font-bold text-bioGreen">{completedGoals.length}</p>
           </div>
           <div className="space-y-1">
             <p className="text-sm text-muted-foreground">Success Rate</p>

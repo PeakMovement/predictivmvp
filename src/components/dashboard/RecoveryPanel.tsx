@@ -7,7 +7,7 @@ import { useMemo } from "react";
 
 const getAcwrColor = (status: string) => {
   switch (status) {
-    case "optimal": return "text-emerald-400";
+    case "optimal": return "text-bioGreen";
     case "undertrained": return "text-sky-400";
     case "elevated_risk": return "text-amber-400";
     case "high_risk": return "text-rose-400";
@@ -38,7 +38,7 @@ const getStatusLabel = (status: string) => {
 const StatusIcon = ({ status }: { status: string }) => {
   const baseClass = "h-5 w-5 animate-number-pop";
   switch (status) {
-    case "optimal": return <CheckCircle className={cn(baseClass, "text-emerald-400")} />;
+    case "optimal": return <CheckCircle className={cn(baseClass, "text-bioGreen")} />;
     case "undertrained": return <AlertCircle className={cn(baseClass, "text-sky-400")} />;
     case "elevated_risk": return <AlertTriangle className={cn(baseClass, "text-amber-400")} />;
     case "high_risk": return <AlertTriangle className={cn(baseClass, "text-rose-400")} />;
@@ -111,7 +111,7 @@ const ACWRGauge = ({ value, status }: { value: number; status: string }) => {
           strokeDashoffset={strokeDashoffset}
           className="transition-all duration-1000 ease-out"
           style={{
-            filter: `drop-shadow(0 0 6px ${colors.fill})`,
+            filter: `shadow(0 0 6px ${colors.fill})`,
           }}
         />
         {/* Pulse ring effect */}
@@ -167,7 +167,7 @@ const AnimatedBar = ({
           {value?.toFixed(1) ?? "—"}
         </span>
       </div>
-      <div className="relative h-2 bg-muted/50 rounded-full overflow-hidden">
+      <div className="relative h-2 bg-muted/50 overflow-hidden">
         {/* Baseline marker */}
         {baselinePercentage !== null && (
           <div 
@@ -177,7 +177,7 @@ const AnimatedBar = ({
         )}
         {/* Animated fill */}
         <div 
-          className={cn("h-full rounded-full origin-left animate-bar-grow", color)}
+          className={cn("h-full origin-left animate-bar-grow", color)}
           style={{ 
             width: `${percentage}%`,
             animationDelay: `${delay}ms`,
@@ -200,7 +200,7 @@ export function RecoveryPanel() {
           <CardTitle className="text-lg font-semibold">Recovery & Load</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <Skeleton className="h-32 w-32 mx-auto rounded-full" />
+          <Skeleton className="h-32 w-32 mx-auto" />
           <div className="grid grid-cols-2 gap-4">
             <Skeleton className="h-16 w-full" />
             <Skeleton className="h-16 w-full" />
@@ -269,19 +269,19 @@ export function RecoveryPanel() {
           {/* Zone legend */}
           <div className="flex justify-center gap-4 mt-4 text-xs">
             <div className="flex items-center gap-1">
-              <div className="w-2 h-2 rounded-full bg-sky-400" />
+              <div className="w-2 h-2 bg-sky-400" />
               <span className="text-muted-foreground">&lt;0.8</span>
             </div>
             <div className="flex items-center gap-1">
-              <div className="w-2 h-2 rounded-full bg-emerald-400" />
+              <div className="w-2 h-2 bg-bioGreen" />
               <span className="text-muted-foreground">0.8-1.3</span>
             </div>
             <div className="flex items-center gap-1">
-              <div className="w-2 h-2 rounded-full bg-amber-400" />
+              <div className="w-2 h-2 bg-amber-400" />
               <span className="text-muted-foreground">1.3-1.5</span>
             </div>
             <div className="flex items-center gap-1">
-              <div className="w-2 h-2 rounded-full bg-rose-400" />
+              <div className="w-2 h-2 bg-rose-400" />
               <span className="text-muted-foreground">&gt;1.5</span>
             </div>
           </div>
@@ -329,7 +329,7 @@ export function RecoveryPanel() {
 
         {/* Recovery Score */}
         {summary.recovery_score !== null && (
-          <div className="p-4  bg-gradient-to-r from-emerald-500/10 to-teal-500/10 border border-emerald-500/20 transition-all duration-300 hover: hover:shadow-emerald-500/10">
+          <div className="p-4  bg-gradient-to-r from-emerald-500/10 to-teal-500/10 border border-bioGreen/20 transition-all duration-300 hover: hover:shadow-emerald-500/10">
             <div className="flex items-center justify-between">
               <span className="text-sm font-medium text-muted-foreground">Recovery Score</span>
               <span className="text-[40px] sm:text-[52px] font-display font-light leading-none text-marble3 text-bioGreen">

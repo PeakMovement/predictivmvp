@@ -32,7 +32,7 @@ export function OnboardingStep({
           <div
             key={index}
             className={cn(
-              "h-2 rounded-full transition-all duration-300",
+              "h-2 transition-all duration-300",
               index === currentStep
                 ? "w-8 bg-primary"
                 : index < currentStep

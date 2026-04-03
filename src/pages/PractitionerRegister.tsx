@@ -185,11 +185,11 @@ export const PractitionerRegister = () => {
               <div key={s} className="flex items-center gap-2">
                 <div
                   className={cn(
-                    "w-7 h-7 rounded-full flex items-center justify-center text-xs font-semibold transition-all",
+                    "w-7 h-7 flex items-center justify-center text-xs font-semibold transition-all",
                     step === s
                       ? "bg-blue-600 text-white"
                       : step > s
-                      ? "bg-emerald-500 text-white"
+                      ? "bg-bioGreen text-white"
                       : "bg-slate-200 text-slate-500"
                   )}
                 >
@@ -248,7 +248,7 @@ export const PractitionerRegister = () => {
               </div>
 
               {error && (
-                <div className="text-red-600 text-sm bg-red-50 border border-red-200  px-3 py-2">
+                <div className="text-critical text-sm bg-red-50 border border-red-200  px-3 py-2">
                   {error}
                 </div>
               )}
@@ -286,7 +286,7 @@ export const PractitionerRegister = () => {
               {/* Location */}
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1.5">
-                  <Label className="text-slate-700">City <span className="text-red-500">*</span></Label>
+                  <Label className="text-slate-700">City <span className="text-critical">*</span></Label>
                   <Input placeholder="Cape Town" value={locationCity}
                     onChange={(e) => setLocationCity(e.target.value)} required
                     className="border-slate-200 focus:border-blue-400" />
@@ -303,7 +303,7 @@ export const PractitionerRegister = () => {
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
                   <Label className="text-slate-700">Bio</Label>
-                  <span className={cn("text-xs", bio.length > 280 ? "text-red-500" : "text-slate-400")}>
+                  <span className={cn("text-xs", bio.length > 280 ? "text-critical" : "text-slate-400")}>
                     {bio.length}/300
                   </span>
                 </div>
@@ -326,7 +326,7 @@ export const PractitionerRegister = () => {
                       type="button"
                       onClick={() => toggleSpec(s)}
                       className={cn(
-                        "px-3 py-1 rounded-full text-xs font-medium border transition-all",
+                        "px-3 py-1 text-xs font-medium border transition-all",
                         specs.includes(s)
                           ? "bg-blue-600 text-white border-blue-600"
                           : "bg-white text-slate-600 border-slate-200 hover:border-blue-300"
@@ -381,7 +381,7 @@ export const PractitionerRegister = () => {
               </div>
 
               {error && (
-                <div className="text-red-600 text-sm bg-red-50 border border-red-200  px-3 py-2">
+                <div className="text-critical text-sm bg-red-50 border border-red-200  px-3 py-2">
                   {error}
                 </div>
               )}
@@ -405,8 +405,8 @@ export const PractitionerRegister = () => {
         {/* ── Done ── */}
         {step === "done" && (
           <div className="bg-white   border border-slate-200 p-10 text-center space-y-5">
-            <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mx-auto">
-              <CheckCircle2 className="h-8 w-8 text-emerald-600" />
+            <div className="w-16 h-16 bg-emerald-100 flex items-center justify-center mx-auto">
+              <CheckCircle2 className="h-8 w-8 text-bioGreen" />
             </div>
             <div>
               <h2 className="text-xl font-bold text-slate-800 mb-2">Profile submitted!</h2>

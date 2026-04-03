@@ -234,11 +234,11 @@ export const OuraDataDiagnostics = () => {
   const getStatusIcon = (status: DiagnosticResult["status"]) => {
     switch (status) {
       case "success":
-        return <CheckCircle2 className="w-5 h-5 text-green-500" />;
+        return <CheckCircle2 className="w-5 h-5 text-bioGreen" />;
       case "error":
-        return <XCircle className="w-5 h-5 text-red-500" />;
+        return <XCircle className="w-5 h-5 text-critical" />;
       case "warning":
-        return <AlertCircle className="w-5 h-5 text-yellow-500" />;
+        return <AlertCircle className="w-5 h-5 text-amber" />;
       case "pending":
         return <Loader2 className="w-5 h-5 text-blue-500 animate-spin" />;
     }
@@ -246,9 +246,9 @@ export const OuraDataDiagnostics = () => {
 
   const getStatusBadge = (status: DiagnosticResult["status"]) => {
     const variants: Record<DiagnosticResult["status"], string> = {
-      success: "bg-green-500/20 text-green-500",
-      error: "bg-red-500/20 text-red-500",
-      warning: "bg-yellow-500/20 text-yellow-500",
+      success: "bg-bioGreen/20 text-bioGreen",
+      error: "bg-critical/20 text-critical",
+      warning: "bg-amber/20 text-amber",
       pending: "bg-blue-500/20 text-blue-500",
     };
 

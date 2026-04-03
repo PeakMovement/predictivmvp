@@ -108,13 +108,13 @@ export const SymptomCheckIn = () => {
                   {interpretation.recommendations && interpretation.recommendations.length > 0 && (
                     <div>
                       <h4 className="text-sm font-medium text-muted-foreground mb-2 flex items-center gap-2">
-                        <CheckCircle className="h-4 w-4 text-emerald-500" />
+                        <CheckCircle className="h-4 w-4 text-bioGreen" />
                         Recommendations
                       </h4>
                       <ul className="space-y-1">
                         {interpretation.recommendations.map((rec, idx) => (
                           <li key={idx} className="flex items-start gap-2 text-sm text-foreground">
-                            <span className="text-emerald-500 mt-1">•</span>
+                            <span className="text-bioGreen mt-1">•</span>
                             {rec}
                           </li>
                         ))}

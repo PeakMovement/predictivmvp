@@ -24,8 +24,8 @@ export function AnomalyAlertsList({ anomalies, isLoading, onAcknowledge }: Anoma
   const getSeverityBadge = (severity: string) => {
     const variants: Record<string, string> = {
       critical: "bg-destructive/20 text-destructive border-destructive/30",
-      high: "bg-orange-500/20 text-orange-500 border-orange-500/30",
-      medium: "bg-yellow-500/20 text-yellow-500 border-yellow-500/30",
+      high: "bg-amber/20 text-amber border-amber/30",
+      medium: "bg-amber/20 text-amber border-amber/30",
       low: "bg-blue-500/20 text-blue-500 border-blue-500/30",
     };
     return variants[severity] || "bg-muted text-muted-foreground";
@@ -34,11 +34,11 @@ export function AnomalyAlertsList({ anomalies, isLoading, onAcknowledge }: Anoma
   const getAnomalyIcon = (type: string) => {
     switch (type) {
       case "spike":
-        return <TrendingUp size={14} className="text-orange-500" />;
+        return <TrendingUp size={14} className="text-amber" />;
       case "drop":
         return <TrendingDown size={14} className="text-blue-500" />;
       default:
-        return <AlertTriangle size={14} className="text-yellow-500" />;
+        return <AlertTriangle size={14} className="text-amber" />;
     }
   };
 
@@ -93,7 +93,7 @@ export function AnomalyAlertsList({ anomalies, isLoading, onAcknowledge }: Anoma
           <div className="space-y-3">
             {anomalies.length === 0 ? (
               <div className="text-center text-muted-foreground py-8">
-                <CheckCircle size={48} className="mx-auto mb-4 text-green-500 opacity-50" />
+                <CheckCircle size={48} className="mx-auto mb-4 text-bioGreen opacity-50" />
                 <p>No anomalies detected</p>
               </div>
             ) : (
@@ -203,7 +203,7 @@ export function AnomalyAlertsList({ anomalies, isLoading, onAcknowledge }: Anoma
                       >
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-2">
-                            <CheckCircle size={14} className="text-green-500" />
+                            <CheckCircle size={14} className="text-bioGreen" />
                             <span className="text-sm">{anomaly.metric_name}</span>
                             <Badge variant="outline" className="text-xs">
                               {anomaly.anomaly_type}

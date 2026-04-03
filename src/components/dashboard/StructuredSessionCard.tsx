@@ -41,7 +41,7 @@ export function StructuredSessionCard({ session, className }: StructuredSessionC
             <p className="text-xs text-muted-foreground mt-0.5">{session.sessionGoal}</p>
           </div>
           {completedExercises.size > 0 && (
-            <div className="text-xs font-medium text-primary bg-primary/10 px-2 py-0.5 rounded-full">
+            <div className="text-xs font-medium text-primary bg-primary/10 px-2 py-0.5">
               {completionPercent}%
             </div>
           )}
@@ -85,7 +85,7 @@ export function StructuredSessionCard({ session, className }: StructuredSessionC
                 <div className="space-y-2">
                   {/* Trigger metric */}
                   <div className="flex items-start gap-2">
-                    <div className="mt-0.5 h-5 w-5 rounded-full bg-warning/20 flex items-center justify-center shrink-0">
+                    <div className="mt-0.5 h-5 w-5 bg-warning/20 flex items-center justify-center shrink-0">
                       <AlertTriangle className="h-3 w-3 text-warning" />
                     </div>
                     <div>
@@ -96,8 +96,8 @@ export function StructuredSessionCard({ session, className }: StructuredSessionC
                   
                   {/* Injury risk reduction */}
                   <div className="flex items-start gap-2">
-                    <div className="mt-0.5 h-5 w-5 rounded-full bg-emerald-500/20 flex items-center justify-center shrink-0">
-                      <Shield className="h-3 w-3 text-emerald-600 dark:text-emerald-400" />
+                    <div className="mt-0.5 h-5 w-5 bg-bioGreen/20 flex items-center justify-center shrink-0">
+                      <Shield className="h-3 w-3 text-bioGreen dark:text-bioGreen" />
                     </div>
                     <div>
                       <p className="text-xs font-medium text-foreground">How this protects you</p>
@@ -107,7 +107,7 @@ export function StructuredSessionCard({ session, className }: StructuredSessionC
                   
                   {/* Today's benefit */}
                   <div className="flex items-start gap-2">
-                    <div className="mt-0.5 h-5 w-5 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
+                    <div className="mt-0.5 h-5 w-5 bg-primary/20 flex items-center justify-center shrink-0">
                       <Zap className="h-3 w-3 text-primary" />
                     </div>
                     <div>
@@ -169,7 +169,7 @@ export function StructuredSessionCard({ session, className }: StructuredSessionC
                   >
                     <div className="flex items-start gap-2">
                       <div className={cn(
-                        "mt-0.5 h-4 w-4 rounded-full border flex items-center justify-center shrink-0",
+                        "mt-0.5 h-4 w-4 border flex items-center justify-center shrink-0",
                         completedExercises.has(idx)
                           ? "bg-primary border-primary"
                           : "border-muted-foreground/40"

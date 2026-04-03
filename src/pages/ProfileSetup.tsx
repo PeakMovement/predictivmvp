@@ -18,7 +18,7 @@ const PRIMARY_GOALS = ["Performance", "Health", "Recovery", "Weight"];
 
 function CompletionBar({ pct }: { pct: number }) {
   const color =
-    pct >= 80 ? "bg-green-500" : pct >= 50 ? "bg-yellow-400" : "bg-primary";
+    pct >= 80 ? "bg-bioGreen" : pct >= 50 ? "bg-yellow-400" : "bg-primary";
 
   return (
     <div className=" border border-border/40 bg-card/60  p-4">
@@ -27,15 +27,15 @@ function CompletionBar({ pct }: { pct: number }) {
           Profile {pct}% complete
         </span>
         {pct >= 80 && (
-          <span className="flex items-center gap-1 text-xs text-green-400 font-medium">
+          <span className="flex items-center gap-1 text-xs text-bioGreen font-medium">
             <Check className="w-3.5 h-3.5" />
             Better Yves recommendations
           </span>
         )}
       </div>
-      <div className="h-2 rounded-full bg-muted/50 overflow-hidden">
+      <div className="h-2 bg-muted/50 overflow-hidden">
         <div
-          className={cn("h-full rounded-full transition-all duration-500", color)}
+          className={cn("h-full transition-all duration-500", color)}
           style={{ width: `${pct}%` }}
         />
       </div>
@@ -67,14 +67,14 @@ function AvatarUploader({
         type="button"
         onClick={() => inputRef.current?.click()}
         disabled={uploading}
-        className="relative w-24 h-24 rounded-full border-2 border-dashed border-border hover:border-primary/60 transition-colors overflow-hidden bg-muted/30 flex items-center justify-center group"
+        className="relative w-24 h-24 border-2 border-dashed border-border hover:border-primary/60 transition-colors overflow-hidden bg-muted/30 flex items-center justify-center group"
       >
         {url ? (
           <img src={url} alt="Avatar" className="w-full h-full object-cover" />
         ) : (
           <User className="w-10 h-10 text-muted-foreground group-hover:text-primary transition-colors" />
         )}
-        <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity rounded-full">
+        <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity">
           {uploading ? (
             <Loader2 className="w-6 h-6 text-white animate-spin" />
           ) : (

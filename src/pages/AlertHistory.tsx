@@ -46,16 +46,16 @@ type FilterTab = "all" | "active" | "dismissed";
 
 const SEVERITY_COLORS: Record<string, string> = {
   low: "bg-blue-500",
-  medium: "bg-yellow-500",
-  high: "bg-orange-500",
-  critical: "bg-red-500",
+  medium: "bg-amber",
+  high: "bg-amber",
+  critical: "bg-critical",
 };
 
 const SEVERITY_TEXT: Record<string, string> = {
   low: "text-blue-400 bg-blue-500/15 border-blue-500/25",
-  medium: "text-yellow-400 bg-yellow-500/15 border-yellow-500/25",
-  high: "text-orange-400 bg-orange-500/15 border-orange-500/25",
-  critical: "text-red-400 bg-red-500/15 border-red-500/25",
+  medium: "text-yellow-400 bg-amber/15 border-amber/25",
+  high: "text-orange-400 bg-amber/15 border-amber/25",
+  critical: "text-red-400 bg-critical/15 border-critical/25",
 };
 
 const TYPE_LABEL: Record<string, string> = {
@@ -65,9 +65,9 @@ const TYPE_LABEL: Record<string, string> = {
 };
 
 function scoreBadge(score: number) {
-  if (score >= 67) return { label: "High", cls: "bg-red-500/15 text-red-400 border-red-500/30" };
-  if (score >= 34) return { label: "Moderate", cls: "bg-yellow-500/15 text-yellow-400 border-yellow-500/30" };
-  return { label: "Low", cls: "bg-emerald-500/15 text-emerald-400 border-emerald-500/30" };
+  if (score >= 67) return { label: "High", cls: "bg-critical/15 text-red-400 border-critical/30" };
+  if (score >= 34) return { label: "Moderate", cls: "bg-amber/15 text-yellow-400 border-amber/30" };
+  return { label: "Low", cls: "bg-bioGreen/15 text-bioGreen border-bioGreen/30" };
 }
 
 const COMPONENT_LABELS: Record<string, string> = {
@@ -140,7 +140,7 @@ function RiskScoreTimeline({ rows, loading }: { rows: RiskHistoryRow[]; loading:
             <div className="shrink-0 flex flex-col items-center gap-1">
               <span className="text-lg font-bold text-foreground leading-none">{row.score}</span>
               <span className={cn(
-                "text-[9px] font-bold px-2 py-0.5 rounded-full border",
+                "text-[9px] font-bold px-2 py-0.5 border",
                 badge.cls,
               )}>
                 {badge.label}
@@ -155,7 +155,7 @@ function RiskScoreTimeline({ rows, loading }: { rows: RiskHistoryRow[]; loading:
                   {top2.map((c) => (
                     <span
                       key={c.key}
-                      className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-muted/40 border border-border/30 text-muted-foreground"
+                      className="text-[10px] font-semibold px-2 py-0.5 bg-muted/40 border border-border/30 text-muted-foreground"
                     >
                       {COMPONENT_LABELS[c.key] ?? c.key}: {c.pts}pt
                     </span>
@@ -215,9 +215,9 @@ function RiskExplainer() {
       </div>
 
       <div className="flex items-center gap-3 pt-1 border-t border-border/30">
-        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">0–33 Low</span>
-        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-yellow-500/15 text-yellow-400 border border-yellow-500/30">34–66 Moderate</span>
-        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-red-500/15 text-red-400 border border-red-500/30">67+ High</span>
+        <span className="text-[10px] font-bold px-2 py-0.5 bg-bioGreen/15 text-bioGreen border border-bioGreen/30">0–33 Low</span>
+        <span className="text-[10px] font-bold px-2 py-0.5 bg-amber/15 text-yellow-400 border border-amber/30">34–66 Moderate</span>
+        <span className="text-[10px] font-bold px-2 py-0.5 bg-critical/15 text-red-400 border border-critical/30">67+ High</span>
       </div>
     </div>
   );
@@ -368,7 +368,7 @@ export default function AlertHistory() {
             >
               {tab}
               {tab === "active" && countActive > 0 && (
-                <span className="ml-1 text-[10px] bg-red-500 text-white rounded-full px-1.5 py-0.5">
+                <span className="ml-1 text-[10px] bg-critical text-white px-1.5 py-0.5">
                   {countActive}
                 </span>
               )}
@@ -384,7 +384,7 @@ export default function AlertHistory() {
           </div>
         ) : filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-12 text-center">
-            <ShieldCheck className="w-12 h-12 text-green-400 mb-3" />
+            <ShieldCheck className="w-12 h-12 text-bioGreen mb-3" />
             <p className="text-sm text-muted-foreground">
               {filter === "active" ? "No active alerts — you're doing great!" : "No alerts here."}
             </p>
@@ -479,28 +479,28 @@ function AlertCard({
                 {alert.metric_name} · {TYPE_LABEL[alert.alert_type] ?? alert.alert_type}
               </span>
               {isActive && (
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-red-500/15 text-red-400 border border-red-500/25">
+                <span className="text-[10px] font-bold px-2 py-0.5 bg-critical/15 text-red-400 border border-critical/25">
                   Active
                 </span>
               )}
               {isSnoozed && (
-                <span className="flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-full bg-muted/30 text-muted-foreground border border-border/30">
+                <span className="flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 bg-muted/30 text-muted-foreground border border-border/30">
                   <Clock className="w-3 h-3" />
                   Snoozed
                 </span>
               )}
               {isResolved && (
-                <span className="flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-green-500/15 text-green-400 border border-green-500/25">
+                <span className="flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 bg-bioGreen/15 text-bioGreen border border-bioGreen/25">
                   <CheckCircle2 className="w-3 h-3" />
                   Resolved
                 </span>
               )}
               {alert.status === "dismissed" && (
-                <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-muted/20 text-muted-foreground border border-border/20">
+                <span className="text-[10px] font-medium px-2 py-0.5 bg-muted/20 text-muted-foreground border border-border/20">
                   Dismissed
                 </span>
               )}
-              <span className={cn("text-[10px] font-bold px-2 py-0.5 rounded-full border capitalize", SEVERITY_TEXT[alert.severity] || "")}>
+              <span className={cn("text-[10px] font-bold px-2 py-0.5 border capitalize", SEVERITY_TEXT[alert.severity] || "")}>
                 {alert.severity}
               </span>
             </div>

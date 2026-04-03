@@ -73,7 +73,7 @@ export default function PolarCallback() {
           {status === "loading" && (
             <>
               <div className="flex justify-center">
-                <div className="w-16 h-16 bg-primary/20 rounded-full flex items-center justify-center">
+                <div className="w-16 h-16 bg-primary/20 flex items-center justify-center">
                   <Loader2 size={32} className="text-primary animate-spin" />
                 </div>
               </div>
@@ -87,8 +87,8 @@ export default function PolarCallback() {
           {status === "success" && (
             <>
               <div className="flex justify-center">
-                <div className="w-16 h-16 bg-green-500/20 rounded-full flex items-center justify-center">
-                  <CheckCircle size={32} className="text-green-500" />
+                <div className="w-16 h-16 bg-bioGreen/20 flex items-center justify-center">
+                  <CheckCircle size={32} className="text-bioGreen" />
                 </div>
               </div>
               <div>
@@ -102,8 +102,8 @@ export default function PolarCallback() {
           {status === "consent_required" && (
             <>
               <div className="flex justify-center">
-                <div className="w-16 h-16 bg-yellow-500/20 rounded-full flex items-center justify-center">
-                  <AlertCircle size={32} className="text-yellow-500" />
+                <div className="w-16 h-16 bg-amber/20 flex items-center justify-center">
+                  <AlertCircle size={32} className="text-amber" />
                 </div>
               </div>
               <div>
@@ -129,8 +129,8 @@ export default function PolarCallback() {
           {status === "missing_code" && (
             <>
               <div className="flex justify-center">
-                <div className="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center">
-                  <XCircle size={32} className="text-red-500" />
+                <div className="w-16 h-16 bg-critical/20 flex items-center justify-center">
+                  <XCircle size={32} className="text-critical" />
                 </div>
               </div>
               <div>
@@ -148,8 +148,8 @@ export default function PolarCallback() {
           {status === "error" && (
             <>
               <div className="flex justify-center">
-                <div className="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center">
-                  <XCircle size={32} className="text-red-500" />
+                <div className="w-16 h-16 bg-critical/20 flex items-center justify-center">
+                  <XCircle size={32} className="text-critical" />
                 </div>
               </div>
               <div>

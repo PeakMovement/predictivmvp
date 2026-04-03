@@ -39,7 +39,7 @@ export const ChartSkeleton = () => (
 
 export const ListItemSkeleton = () => (
   <div className="flex items-center space-x-4 p-4">
-    <Skeleton className="h-12 w-12 rounded-full" />
+    <Skeleton className="h-12 w-12" />
     <div className="space-y-2 flex-1">
       <Skeleton className="h-4 w-3/4" />
       <Skeleton className="h-3 w-1/2" />
@@ -164,7 +164,7 @@ export const FormSkeleton = () => (
 export const ProfileSkeleton = () => (
   <div className="space-y-6 p-6">
     <div className="flex items-center space-x-4">
-      <Skeleton className="h-24 w-24 rounded-full" />
+      <Skeleton className="h-24 w-24" />
       <div className="space-y-2 flex-1">
         <Skeleton className="h-8 w-48" />
         <Skeleton className="h-4 w-64" />
@@ -218,8 +218,8 @@ export const FullPageLoader = ({ message = "Loading..." }: { message?: string })
   <div className="min-h-screen flex flex-col items-center justify-center p-4">
     <div className="space-y-4 text-center">
       <div className="relative w-16 h-16 mx-auto">
-        <div className="absolute inset-0 rounded-full border-4 border-primary/20"></div>
-        <div className="absolute inset-0 rounded-full border-4 border-primary border-t-transparent animate-spin"></div>
+        <div className="absolute inset-0 border-4 border-primary/20"></div>
+        <div className="absolute inset-0 border-4 border-primary border-t-transparent animate-spin"></div>
       </div>
       <p className="text-muted-foreground">{message}</p>
     </div>

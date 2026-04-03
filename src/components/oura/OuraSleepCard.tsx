@@ -34,7 +34,7 @@ export const OuraSleepCard = ({
       <div className="bg-glass  border border-glass-border  p-6 ">
         <Skeleton className="h-8 w-48 mb-6" />
         <div className="flex flex-col items-center mb-6">
-          <Skeleton className="h-32 w-32 rounded-full mb-4" />
+          <Skeleton className="h-32 w-32 mb-4" />
           <Skeleton className="h-6 w-24" />
         </div>
         <div className="space-y-4">
@@ -64,8 +64,8 @@ export const OuraSleepCard = ({
 
   const getScoreColor = (value: number) => {
     if (value >= 85) return "text-blue-500";
-    if (value >= 70) return "text-yellow-500";
-    return "text-red-500";
+    if (value >= 70) return "text-amber";
+    return "text-critical";
   };
 
   const getScoreBgColor = (value: number) => {
@@ -130,9 +130,9 @@ export const OuraSleepCard = ({
               <p className="font-semibold mb-1">Sleep Score (0-100)</p>
               <p className="text-sm">A comprehensive measure of sleep quality based on duration, efficiency, restfulness, and timing.</p>
               <p className="text-sm mt-2">
-                <span className="text-green-500">85+</span>: Excellent |{" "}
-                <span className="text-yellow-500">70-84</span>: Good |{" "}
-                <span className="text-red-500">&lt;70</span>: Pay attention
+                <span className="text-bioGreen">85+</span>: Excellent |{" "}
+                <span className="text-amber">70-84</span>: Good |{" "}
+                <span className="text-critical">&lt;70</span>: Pay attention
               </p>
             </TooltipContent>
           </Tooltip>
@@ -234,7 +234,7 @@ export const OuraSleepCard = ({
             ))}
           </div>
 
-          <div className="w-full h-4 bg-background/50 rounded-full overflow-hidden flex">
+          <div className="w-full h-4 bg-background/50 overflow-hidden flex">
             {sleepStages.map((stage) => {
               const percentage = totalStageHours > 0 ? ((stage.hours || 0) / totalStageHours) * 100 : 0;
               return (

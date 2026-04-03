@@ -46,11 +46,11 @@ function ProviderResultCard({ provider, isTop }: { provider: ProviderMatch; isTo
         <div className="flex items-center justify-between text-sm">
           <span className="font-medium">{provider.estimatedCost}</span>
           {provider.withinBudget ? (
-            <span className="text-green-500 flex items-center gap-1 text-xs">
+            <span className="text-bioGreen flex items-center gap-1 text-xs">
               <CheckCircle2 className="h-3 w-3" /> Within budget
             </span>
           ) : (
-            <span className="text-yellow-500 flex items-center gap-1 text-xs">
+            <span className="text-amber flex items-center gap-1 text-xs">
               <AlertTriangle className="h-3 w-3" /> May exceed budget
             </span>
           )}
@@ -121,10 +121,10 @@ export function RedFlagFunnel({
   // Step 1: Intro - explain why we're asking and offer direct redirect to Help page
   if (step === "intro") {
     return (
-      <Card className="bg-orange-500/10 border-orange-500/30">
+      <Card className="bg-amber/10 border-amber/30">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-foreground">
-            <AlertTriangle className="h-5 w-5 text-orange-500" />
+            <AlertTriangle className="h-5 w-5 text-amber" />
             Important: Help Finding
           </CardTitle>
         </CardHeader>

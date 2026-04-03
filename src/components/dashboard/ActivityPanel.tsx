@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 import { useMemo } from "react";
 
 const TrendIcon = ({ direction }: { direction: string }) => {
-  if (direction === "increasing") return <TrendingUp className="h-4 w-4 text-emerald-400" />;
+  if (direction === "increasing") return <TrendingUp className="h-4 w-4 text-bioGreen" />;
   if (direction === "declining") return <TrendingDown className="h-4 w-4 text-rose-400" />;
   return <Minus className="h-4 w-4 text-muted-foreground" />;
 };
@@ -65,7 +65,7 @@ const ActivityRing = ({ score }: { score: number }) => {
           strokeDasharray={circumference}
           strokeDashoffset={strokeDashoffset}
           className="transition-all duration-1000 ease-out"
-          style={{ filter: `drop-shadow(0 0 4px ${color})` }}
+          style={{ filter: `shadow(0 0 4px ${color})` }}
         />
       </svg>
       <div className="absolute inset-0 flex items-center justify-center">
@@ -123,10 +123,10 @@ const MetricCard = ({
           {/* Baseline comparison bar */}
           {baseline && value && (
             <div className="mt-2 space-y-1">
-              <div className="h-1.5 bg-muted/50 rounded-full overflow-hidden">
+              <div className="h-1.5 bg-muted/50 overflow-hidden">
                 <div 
                   className={cn(
-                    "h-full rounded-full origin-left animate-bar-grow",
+                    "h-full origin-left animate-bar-grow",
                     iconBg.replace('/10', '/50')
                   )}
                   style={{ 
@@ -152,7 +152,7 @@ const MetricCard = ({
       {delta && (
         <p className={cn(
           "text-xs mt-2 pl-12",
-          delta.startsWith('+') ? "text-emerald-400" : delta.startsWith('-') ? "text-rose-400" : "text-muted-foreground"
+          delta.startsWith('+') ? "text-bioGreen" : delta.startsWith('-') ? "text-rose-400" : "text-muted-foreground"
         )}>
           {delta} vs previous week
         </p>
@@ -240,7 +240,7 @@ export function ActivityPanel() {
         <MetricCard
           icon={Flame}
           iconColor="text-orange-400"
-          iconBg="bg-orange-500/10"
+          iconBg="bg-amber/10"
           label="Calories (7-day avg)"
           value={summary.current_calories_avg}
           baseline={summary.calories_baseline}

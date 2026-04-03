@@ -35,7 +35,7 @@ export function TreatmentPlanInput({ onGenerate, isLoading }: TreatmentPlanInput
       <Card>
         <CardHeader className="text-center">
           <div className="flex items-center justify-center gap-2 mb-2">
-            <div className="p-2 rounded-full bg-primary/10">
+            <div className="p-2 bg-primary/10">
               <Brain className="h-6 w-6 text-primary" />
             </div>
             <CardTitle className="text-2xl">AI Treatment Plan Generator</CardTitle>

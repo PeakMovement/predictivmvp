@@ -95,7 +95,7 @@ export function DocumentSearchFilters({
               {activeFilterCount > 0 && (
                 <Badge
                   variant="default"
-                  className="ml-2 h-5 w-5 p-0 flex items-center justify-center rounded-full"
+                  className="ml-2 h-5 w-5 p-0 flex items-center justify-center"
                 >
                   {activeFilterCount}
                 </Badge>

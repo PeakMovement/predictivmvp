@@ -28,7 +28,7 @@ export const OuraReadinessCard = ({
       <div className="bg-glass  border border-glass-border  p-6 ">
         <Skeleton className="h-8 w-48 mb-6" />
         <div className="flex flex-col items-center mb-6">
-          <Skeleton className="h-32 w-32 rounded-full mb-4" />
+          <Skeleton className="h-32 w-32 mb-4" />
           <Skeleton className="h-6 w-24" />
         </div>
         <div className="space-y-4">
@@ -59,8 +59,8 @@ export const OuraReadinessCard = ({
 
   const getScoreColor = (value: number) => {
     if (value >= 85) return "text-teal-500";
-    if (value >= 70) return "text-yellow-500";
-    return "text-red-500";
+    if (value >= 70) return "text-amber";
+    return "text-critical";
   };
 
   const getScoreBgColor = (value: number) => {
@@ -94,9 +94,9 @@ export const OuraReadinessCard = ({
               <p className="font-semibold mb-1">Readiness Score (0-100)</p>
               <p className="text-sm">Indicates how prepared your body is for physical and mental strain based on recovery, sleep, and previous activity.</p>
               <p className="text-sm mt-2">
-                <span className="text-green-500">85+</span>: Optimal |{" "}
-                <span className="text-yellow-500">70-84</span>: Good |{" "}
-                <span className="text-red-500">&lt;70</span>: Rest needed
+                <span className="text-bioGreen">85+</span>: Optimal |{" "}
+                <span className="text-amber">70-84</span>: Good |{" "}
+                <span className="text-critical">&lt;70</span>: Rest needed
               </p>
             </TooltipContent>
           </Tooltip>

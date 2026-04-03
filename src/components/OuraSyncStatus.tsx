@@ -66,7 +66,7 @@ const OuraSyncStatus = ({ onSync, isSyncing = false }: OuraSyncStatusProps) => {
   const getStatusIcon = () => {
     if (tokenExpired) return <WifiOff className="h-3 w-3 text-amber-500" />;
     if (isStale) return <AlertTriangle className="h-3 w-3 text-amber-500" />;
-    if (connectedDevices.length > 0) return <CheckCircle2 className="h-3 w-3 text-green-500" />;
+    if (connectedDevices.length > 0) return <CheckCircle2 className="h-3 w-3 text-bioGreen" />;
     return <Circle className="h-3 w-3 text-muted-foreground" />;
   };
 
@@ -85,7 +85,7 @@ const OuraSyncStatus = ({ onSync, isSyncing = false }: OuraSyncStatusProps) => {
   };
 
   const syncText = getSyncText();
-  const syncColor = tokenExpired || isStale ? "text-amber-500" : "text-green-500/80";
+  const syncColor = tokenExpired || isStale ? "text-amber-500" : "text-bioGreen/80";
 
   return (
     <div className="flex flex-col items-center gap-1 text-xs text-muted-foreground">

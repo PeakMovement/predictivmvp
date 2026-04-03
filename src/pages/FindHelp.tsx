@@ -180,7 +180,7 @@ export function FindHelp() {
   const inputCls =
     "w-full  border border-border/50 bg-card/60 px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all";
   const pillCls = (active: boolean) =>
-    `rounded-full px-4 py-2 text-sm font-medium transition-all ${
+    `px-4 py-2 text-sm font-medium transition-all ${
       active
         ? "bg-primary text-primary-foreground"
         : "border border-border/50 bg-card/60 text-muted-foreground hover:border-border"
@@ -227,7 +227,7 @@ export function FindHelp() {
           <SlidersHorizontal size={14} />
           Filters
           {activeFilterCount > 0 && (
-            <span className="ml-1 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground">
+            <span className="ml-1 flex h-5 w-5 items-center justify-center bg-primary text-[10px] font-bold text-primary-foreground">
               {activeFilterCount}
             </span>
           )}
@@ -403,12 +403,12 @@ function PractitionerCard({ p }: { p: Practitioner }) {
       {/* Badges */}
       <div className="flex flex-wrap gap-1.5">
         {(p.session_fee_min || p.session_fee_max) && (
-          <span className="rounded-full border border-border/50 px-2.5 py-0.5 text-xs font-medium text-muted-foreground">
+          <span className="border border-border/50 px-2.5 py-0.5 text-xs font-medium text-muted-foreground">
             R{p.session_fee_min ?? "?"}–R{p.session_fee_max ?? "?"} / visit
           </span>
         )}
         {p.accepts_medical_aid && (
-          <span className="rounded-full border border-green-500/30 bg-green-500/5 px-2.5 py-0.5 text-xs font-medium text-green-600">
+          <span className="border border-bioGreen/30 bg-bioGreen/5 px-2.5 py-0.5 text-xs font-medium text-bioGreen">
             <CheckCircle2
               size={10}
               className="mr-1 inline-block align-text-top"
@@ -417,7 +417,7 @@ function PractitionerCard({ p }: { p: Practitioner }) {
           </span>
         )}
         {p.telehealth && (
-          <span className="rounded-full border border-blue-500/30 bg-blue-500/5 px-2.5 py-0.5 text-xs font-medium text-blue-500">
+          <span className="border border-blue-500/30 bg-blue-500/5 px-2.5 py-0.5 text-xs font-medium text-blue-500">
             <Video
               size={10}
               className="mr-1 inline-block align-text-top"

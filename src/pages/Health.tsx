@@ -35,7 +35,7 @@ function formatMinutes(minutes: number | null): string {
 }
 
 function scoreColor(value: number): string {
-  if (value >= 85) return "text-emerald-400";
+  if (value >= 85) return "text-bioGreen";
   if (value >= 70) return "text-yellow-400";
   return "text-red-400";
 }
@@ -363,7 +363,7 @@ export const Health = () => {
                     ))}
                   </div>
                   {/* Stacked bar */}
-                  <div className="w-full h-3 bg-background/50 rounded-full overflow-hidden flex">
+                  <div className="w-full h-3 bg-background/50 overflow-hidden flex">
                     {[
                       { value: deepMin, cls: "bg-indigo-500" },
                       { value: remMin,  cls: "bg-purple-500" },
@@ -413,7 +413,7 @@ export const Health = () => {
             <div className="bg-glass  border border-glass-border  p-6 ">
               {/* Section header */}
               <div className="flex items-center gap-3 mb-6">
-                <div className="w-9 h-9 bg-red-500/20  flex items-center justify-center">
+                <div className="w-9 h-9 bg-critical/20  flex items-center justify-center">
                   <Heart className="w-5 h-5 text-red-400" />
                 </div>
                 <h2 className="text-lg font-semibold text-foreground">Heart Rate</h2>

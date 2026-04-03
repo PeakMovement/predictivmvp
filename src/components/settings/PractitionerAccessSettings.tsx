@@ -192,7 +192,7 @@ export const PractitionerAccessSettings = () => {
                 className="flex items-center justify-between p-3  border border-border bg-muted/30"
               >
                 <div className="flex items-center gap-3 min-w-0">
-                  <div className="w-8 h-8 rounded-full bg-blue-500/10 flex items-center justify-center flex-shrink-0">
+                  <div className="w-8 h-8 bg-blue-500/10 flex items-center justify-center flex-shrink-0">
                     {rec.practitioner_id ? (
                       <UserCheck className="h-4 w-4 text-blue-600" />
                     ) : (
@@ -211,7 +211,7 @@ export const PractitionerAccessSettings = () => {
                         {TYPE_LABELS[rec.practitioner_type || "other"] || "Practitioner"}
                       </Badge>
                       {rec.practitioner_id ? (
-                        <span className="text-xs text-green-600 font-medium">Active</span>
+                        <span className="text-xs text-bioGreen font-medium">Active</span>
                       ) : (
                         <span className="text-xs text-amber-500 font-medium">Invite pending</span>
                       )}

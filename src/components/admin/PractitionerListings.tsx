@@ -134,7 +134,7 @@ export function PractitionerListings() {
                   <div className="w-8 h-8  flex items-center justify-center bg-primary/20">
                     <Users size={16} className="text-primary" />
                   </div>
-                  <TrendingUp size={14} className="text-green-500" />
+                  <TrendingUp size={14} className="text-bioGreen" />
                 </div>
                 <p className="text-2xl font-bold text-primary">8</p>
                 <p className="text-xs text-muted-foreground mt-1">Total Registered</p>
@@ -143,23 +143,23 @@ export function PractitionerListings() {
             <Card className="bg-glass border-glass-border hover:bg-glass-highlight transition-all">
               <CardContent className="p-4">
                 <div className="flex items-center justify-between mb-2">
-                  <div className="w-8 h-8  flex items-center justify-center bg-green-500/20">
-                    <CheckCircle2 size={16} className="text-green-500" />
+                  <div className="w-8 h-8  flex items-center justify-center bg-bioGreen/20">
+                    <CheckCircle2 size={16} className="text-bioGreen" />
                   </div>
-                  <TrendingUp size={14} className="text-green-500" />
+                  <TrendingUp size={14} className="text-bioGreen" />
                 </div>
-                <p className="text-2xl font-bold text-green-500">6</p>
+                <p className="text-2xl font-bold text-bioGreen">6</p>
                 <p className="text-xs text-muted-foreground mt-1">Listings Active</p>
               </CardContent>
             </Card>
             <Card className="bg-glass border-glass-border hover:bg-glass-highlight transition-all">
               <CardContent className="p-4">
                 <div className="flex items-center justify-between mb-2">
-                  <div className="w-8 h-8  flex items-center justify-center bg-yellow-500/20">
-                    <Clock size={16} className="text-yellow-500" />
+                  <div className="w-8 h-8  flex items-center justify-center bg-amber/20">
+                    <Clock size={16} className="text-amber" />
                   </div>
                 </div>
-                <p className="text-2xl font-bold text-yellow-500">2</p>
+                <p className="text-2xl font-bold text-amber">2</p>
                 <p className="text-xs text-muted-foreground mt-1">Pending Approval</p>
               </CardContent>
             </Card>
@@ -249,7 +249,7 @@ export function PractitionerListings() {
                                     <Button
                                       size="sm"
                                       variant="outline"
-                                      className="h-7 px-2 text-xs text-red-600 border-red-200 hover:bg-red-50"
+                                      className="h-7 px-2 text-xs text-critical border-red-200 hover:bg-red-50"
                                       onClick={() => console.log("Reject:", row.name)}
                                     >
                                       <X size={12} className="mr-1" />Reject
@@ -287,7 +287,7 @@ export function PractitionerListings() {
                                     <Button
                                       size="sm"
                                       variant="outline"
-                                      className="h-7 px-2 text-xs text-red-600 border-red-200 hover:bg-red-50"
+                                      className="h-7 px-2 text-xs text-critical border-red-200 hover:bg-red-50"
                                       onClick={() => console.log("Suspend:", row.name)}
                                     >
                                       <Ban size={12} className="mr-1" />Suspend
@@ -343,7 +343,7 @@ export function PractitionerListings() {
                     {p.qualifications.map((q) => (
                       <span
                         key={q}
-                        className="px-2 py-0.5 bg-muted/50 border border-border rounded-full text-xs text-muted-foreground"
+                        className="px-2 py-0.5 bg-muted/50 border border-border text-xs text-muted-foreground"
                       >
                         {q}
                       </span>
@@ -382,7 +382,7 @@ export function PractitionerListings() {
                     <Button
                       size="sm"
                       variant="outline"
-                      className="h-8 px-3 text-red-600 border-red-200 hover:bg-red-50"
+                      className="h-8 px-3 text-critical border-red-200 hover:bg-red-50"
                       onClick={() => console.log("Reject:", p.name)}
                     >
                       <X size={14} className="mr-1" />Reject

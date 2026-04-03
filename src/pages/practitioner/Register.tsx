@@ -307,8 +307,8 @@ export const PractitionerRegister = () => {
         style={{ background: "#f0ede8" }}
       >
         <div className="text-center">
-          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100">
-            <CheckCircle2 size={32} className="text-emerald-600" />
+          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center bg-emerald-100">
+            <CheckCircle2 size={32} className="text-bioGreen" />
           </div>
           <h2 className="text-xl font-bold text-[#1a1a1a]">
             Your listing is live!
@@ -421,7 +421,7 @@ export const PractitionerRegister = () => {
           {form.qualifications.map((q) => (
             <span
               key={q}
-              className="inline-flex items-center gap-1.5 rounded-full bg-[#6B5ED9] px-3 py-1.5 text-xs font-medium text-white"
+              className="inline-flex items-center gap-1.5 bg-[#6B5ED9] px-3 py-1.5 text-xs font-medium text-white"
             >
               {q}
               <button
@@ -548,7 +548,7 @@ export const PractitionerRegister = () => {
                   key={mode}
                   type="button"
                   onClick={() => set(key, !active)}
-                  className={`rounded-full px-5 py-2.5 text-sm font-medium transition-all ${
+                  className={`px-5 py-2.5 text-sm font-medium transition-all ${
                     active
                       ? "bg-[#6B5ED9] text-white"
                       : "border border-black/10 bg-white text-[#555] hover:border-black/20"
@@ -575,7 +575,7 @@ export const PractitionerRegister = () => {
                   onClick={() =>
                     set("session_duration_minutes", active ? null : d)
                   }
-                  className={`rounded-full px-4 py-2.5 text-sm font-medium transition-all ${
+                  className={`px-4 py-2.5 text-sm font-medium transition-all ${
                     active
                       ? "bg-[#6B5ED9] text-white"
                       : "border border-black/10 bg-white text-[#555] hover:border-black/20"
@@ -604,7 +604,7 @@ export const PractitionerRegister = () => {
                   onClick={() =>
                     set("accepts_medical_aid", opt === "Yes")
                   }
-                  className={`rounded-full px-5 py-2.5 text-sm font-medium transition-all ${
+                  className={`px-5 py-2.5 text-sm font-medium transition-all ${
                     active
                       ? "bg-[#6B5ED9] text-white"
                       : "border border-black/10 bg-white text-[#555] hover:border-black/20"
@@ -657,7 +657,7 @@ export const PractitionerRegister = () => {
         <div className="mt-6">
           <label className={labelCls}>Profile photo</label>
           <div className="flex items-center gap-4">
-            <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-full bg-black/5">
+            <div className="flex h-20 w-20 shrink-0 items-center justify-center bg-black/5">
               <Camera size={24} className="text-[#bbb]" />
             </div>
             <div>
@@ -693,7 +693,7 @@ export const PractitionerRegister = () => {
               {form.niche_tags.map((n) => (
                 <span
                   key={n}
-                  className="inline-flex items-center gap-1.5 rounded-full bg-[#6B5ED9] px-3 py-1.5 text-xs font-medium text-white"
+                  className="inline-flex items-center gap-1.5 bg-[#6B5ED9] px-3 py-1.5 text-xs font-medium text-white"
                 >
                   {n}
                   <button
@@ -716,7 +716,7 @@ export const PractitionerRegister = () => {
               type="button"
               onClick={() => toggleNiche(n)}
               disabled={form.niche_tags.length >= 8}
-              className={`rounded-full border border-black/10 bg-white px-3.5 py-1.5 text-xs font-medium text-[#555] transition-all ${
+              className={`border border-black/10 bg-white px-3.5 py-1.5 text-xs font-medium text-[#555] transition-all ${
                 form.niche_tags.length >= 8
                   ? "cursor-not-allowed opacity-40"
                   : "hover:border-black/20"
@@ -810,7 +810,7 @@ export const PractitionerRegister = () => {
                   key={opt}
                   type="button"
                   onClick={() => set("deposit_required", opt === "Yes")}
-                  className={`rounded-full px-5 py-2.5 text-sm font-medium transition-all ${
+                  className={`px-5 py-2.5 text-sm font-medium transition-all ${
                     active
                       ? "bg-[#6B5ED9] text-white"
                       : "border border-black/10 bg-white text-[#555] hover:border-black/20"
@@ -861,7 +861,7 @@ export const PractitionerRegister = () => {
           >
             <div className="flex items-center gap-2">
               <p className="text-lg font-bold text-[#1a1a1a]">Basic</p>
-              <span className="rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-semibold text-emerald-700">
+              <span className="bg-emerald-50 px-2.5 py-0.5 text-xs font-semibold text-emerald-700">
                 Free
               </span>
             </div>
@@ -904,7 +904,7 @@ export const PractitionerRegister = () => {
                 : "border-black/10 bg-white hover:border-black/20"
             }`}
           >
-            <span className="absolute -top-2.5 right-4 rounded-full bg-[#6B5ED9] px-2.5 py-0.5 text-[10px] font-semibold text-white">
+            <span className="absolute -top-2.5 right-4 bg-[#6B5ED9] px-2.5 py-0.5 text-[10px] font-semibold text-white">
               Recommended
             </span>
             <p className="text-lg font-bold text-[#1a1a1a]">
@@ -973,11 +973,11 @@ export const PractitionerRegister = () => {
 
           {/* Badges */}
           <div className="mt-3 flex flex-wrap gap-1.5">
-            <span className="rounded-full border border-black/10 px-2.5 py-0.5 text-xs font-medium text-[#555]">
+            <span className="border border-black/10 px-2.5 py-0.5 text-xs font-medium text-[#555]">
               R{displayFeeMin}–R{displayFeeMax} / visit
             </span>
             {form.accepts_medical_aid && (
-              <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-0.5 text-xs font-medium text-emerald-700">
+              <span className="border border-emerald-200 bg-emerald-50 px-2.5 py-0.5 text-xs font-medium text-emerald-700">
                 <CheckCircle2
                   size={10}
                   className="mr-1 inline-block align-text-top"
@@ -986,7 +986,7 @@ export const PractitionerRegister = () => {
               </span>
             )}
             {form.telehealth && (
-              <span className="rounded-full border border-blue-200 bg-blue-50 px-2.5 py-0.5 text-xs font-medium text-blue-600">
+              <span className="border border-blue-200 bg-blue-50 px-2.5 py-0.5 text-xs font-medium text-blue-600">
                 <Video
                   size={10}
                   className="mr-1 inline-block align-text-top"
@@ -1025,7 +1025,7 @@ export const PractitionerRegister = () => {
       >
         {submitting ? (
           <span className="flex items-center gap-2">
-            <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+            <span className="h-4 w-4 animate-spin border-2 border-white/30 border-t-white" />
             Saving…
           </span>
         ) : (
@@ -1085,7 +1085,7 @@ export const PractitionerRegister = () => {
                   className="flex items-center gap-1.5"
                 >
                   <span
-                    className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-bold transition-all ${
+                    className={`flex h-6 w-6 shrink-0 items-center justify-center text-xs font-bold transition-all ${
                       done
                         ? "bg-[#6B5ED9] text-white"
                         : current
@@ -1115,9 +1115,9 @@ export const PractitionerRegister = () => {
           </div>
 
           {/* Progress bar */}
-          <div className="mt-3 h-1 w-full rounded-full bg-black/5">
+          <div className="mt-3 h-1 w-full bg-black/5">
             <div
-              className="h-full rounded-full bg-[#6B5ED9] transition-all duration-500"
+              className="h-full bg-[#6B5ED9] transition-all duration-500"
               style={{ width: `${pct}%` }}
             />
           </div>

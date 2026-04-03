@@ -21,7 +21,7 @@ export function CustomizeLayoutButton({ onClick, isCustomized }: CustomizeLayout
             <Settings2 className="w-4 h-4" />
             <span className="hidden sm:inline">Customize Layout</span>
             {isCustomized && (
-              <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+              <span className="w-2 h-2 bg-primary animate-pulse" />
             )}
           </Button>
         </TooltipTrigger>

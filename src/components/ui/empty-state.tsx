@@ -31,7 +31,7 @@ export const EmptyState = ({
     <Card className={className}>
       <CardContent className="flex flex-col items-center justify-center text-center p-8 md:p-12">
         {Icon && (
-          <div className="w-20 h-20 bg-muted rounded-full flex items-center justify-center mb-6">
+          <div className="w-20 h-20 bg-muted flex items-center justify-center mb-6">
             <Icon className="h-10 w-10 text-muted-foreground" />
           </div>
         )}

@@ -165,28 +165,28 @@ export const DataPrivacySettings = () => {
         </CardHeader>
         <CardContent className="space-y-3 text-sm text-muted-foreground">
           <div className="flex gap-3">
-            <div className="w-2 h-2 rounded-full bg-green-500 mt-1.5 flex-shrink-0" />
+            <div className="w-2 h-2 bg-bioGreen mt-1.5 flex-shrink-0" />
             <div>
               <p className="font-medium text-foreground">End-to-End Encryption</p>
               <p>All your data is encrypted in transit and at rest.</p>
             </div>
           </div>
           <div className="flex gap-3">
-            <div className="w-2 h-2 rounded-full bg-green-500 mt-1.5 flex-shrink-0" />
+            <div className="w-2 h-2 bg-bioGreen mt-1.5 flex-shrink-0" />
             <div>
               <p className="font-medium text-foreground">Data Ownership</p>
               <p>You own your health data. Export or delete it anytime.</p>
             </div>
           </div>
           <div className="flex gap-3">
-            <div className="w-2 h-2 rounded-full bg-green-500 mt-1.5 flex-shrink-0" />
+            <div className="w-2 h-2 bg-bioGreen mt-1.5 flex-shrink-0" />
             <div>
               <p className="font-medium text-foreground">HIPAA Compliant</p>
               <p>Our infrastructure meets healthcare data protection standards.</p>
             </div>
           </div>
           <div className="flex gap-3">
-            <div className="w-2 h-2 rounded-full bg-green-500 mt-1.5 flex-shrink-0" />
+            <div className="w-2 h-2 bg-bioGreen mt-1.5 flex-shrink-0" />
             <div>
               <p className="font-medium text-foreground">No Third-Party Sharing</p>
               <p>We never sell or share your personal health information.</p>

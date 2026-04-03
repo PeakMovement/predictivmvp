@@ -229,7 +229,7 @@ export const SessionLogList = ({ onCompareRequested }: SessionLogListProps = {})
               <Activity size={16} className="text-primary" />
             </div>
             <h3 className="text-lg font-semibold text-foreground">Recent Sessions</h3>
-            <div className="px-2 py-0.5 text-xs font-medium bg-primary/20 text-primary rounded-full">
+            <div className="px-2 py-0.5 text-xs font-medium bg-primary/20 text-primary">
               {sessions.length} Logged
             </div>
           </div>

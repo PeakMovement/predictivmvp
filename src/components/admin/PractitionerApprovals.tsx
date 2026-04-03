@@ -125,7 +125,7 @@ export function PractitionerApprovals() {
             key={f}
             onClick={() => setFilter(f)}
             className={cn(
-              "px-3 py-1 rounded-full text-xs font-medium border transition-all",
+              "px-3 py-1 text-xs font-medium border transition-all",
               filter === f
                 ? "bg-primary text-primary-foreground border-primary"
                 : "bg-muted/30 text-muted-foreground border-border hover:border-primary/30"
@@ -195,7 +195,7 @@ export function PractitionerApprovals() {
                       variant="outline"
                       disabled={updating === p.id}
                       onClick={() => updateStatus(p.id, "suspended")}
-                      className="text-red-600 border-red-200 hover:bg-red-50 h-8 px-3"
+                      className="text-critical border-red-200 hover:bg-red-50 h-8 px-3"
                     >
                       <Ban className="h-3.5 w-3.5 mr-1" />Suspend
                     </Button>
@@ -238,7 +238,7 @@ export function PractitionerApprovals() {
                     <span className="font-medium text-foreground">R{p.fee_per_session}/session</span>
                   )}
                   {p.accepts_medical_aid && (
-                    <span className="text-emerald-600 flex items-center gap-1">
+                    <span className="text-bioGreen flex items-center gap-1">
                       <CheckCircle2 className="h-3 w-3" />Medical aid
                     </span>
                   )}
@@ -260,7 +260,7 @@ export function PractitionerApprovals() {
                     {p.specialisations.map((s) => (
                       <span
                         key={s}
-                        className="px-2 py-0.5 bg-primary/5 border border-primary/10 rounded-full text-xs text-muted-foreground"
+                        className="px-2 py-0.5 bg-primary/5 border border-primary/10 text-xs text-muted-foreground"
                       >
                         {s}
                       </span>

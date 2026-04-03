@@ -135,7 +135,7 @@ export const ProfileSettings = ({ onSaveStart, onSaveComplete }: ProfileSettings
     return (
       <div className="space-y-4">
         <div className="flex items-center gap-4">
-          <Skeleton className="w-20 h-20 rounded-full" />
+          <Skeleton className="w-20 h-20" />
           <div className="flex-1 space-y-2">
             <Skeleton className="h-10 w-full" />
             <Skeleton className="h-10 w-full" />
@@ -155,7 +155,7 @@ export const ProfileSettings = ({ onSaveStart, onSaveComplete }: ProfileSettings
         <div className="flex flex-col items-center gap-5 sm:flex-row sm:items-start">
           <div className="flex flex-col items-center gap-2 shrink-0">
             <div
-              className="relative w-16 h-16 rounded-full bg-muted flex items-center justify-center overflow-hidden cursor-pointer group"
+              className="relative w-16 h-16 bg-muted flex items-center justify-center overflow-hidden cursor-pointer group"
               onClick={() => !isUploading && fileInputRef.current?.click()}
             >
               {profile?.avatar_url ? (

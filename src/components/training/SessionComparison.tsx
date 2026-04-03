@@ -39,15 +39,15 @@ export const SessionComparison = ({
   };
 
   const getDifferenceIcon = (diff: number) => {
-    if (diff > 5) return <TrendingUp className="h-3 w-3 text-green-500" />;
-    if (diff < -5) return <TrendingDown className="h-3 w-3 text-red-500" />;
+    if (diff > 5) return <TrendingUp className="h-3 w-3 text-bioGreen" />;
+    if (diff < -5) return <TrendingDown className="h-3 w-3 text-critical" />;
     return <Minus className="h-3 w-3 text-muted-foreground" />;
   };
 
   const getDifferenceColor = (diff: number, higherIsBetter: boolean = true) => {
     const isPositive = higherIsBetter ? diff > 0 : diff < 0;
     if (Math.abs(diff) < 5) return "text-muted-foreground";
-    return isPositive ? "text-green-500" : "text-red-500";
+    return isPositive ? "text-bioGreen" : "text-critical";
   };
 
   const metrics = [
@@ -223,13 +223,13 @@ export const SessionComparison = ({
                       key={metric.label}
                       className={cn(
                         "flex items-center gap-2 p-2 rounded",
-                        isImprovement ? "bg-green-500/10" : "bg-red-500/10"
+                        isImprovement ? "bg-bioGreen/10" : "bg-critical/10"
                       )}
                     >
                       {isImprovement ? (
-                        <TrendingUp className="h-4 w-4 text-green-500 flex-shrink-0" />
+                        <TrendingUp className="h-4 w-4 text-bioGreen flex-shrink-0" />
                       ) : (
-                        <TrendingDown className="h-4 w-4 text-red-500 flex-shrink-0" />
+                        <TrendingDown className="h-4 w-4 text-critical flex-shrink-0" />
                       )}
                       <p className="text-foreground">
                         <span className="font-medium">{metric.label}</span>{" "}

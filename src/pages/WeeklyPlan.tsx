@@ -41,22 +41,22 @@ const SESSION_META: Record<SessionType, {
   Easy: {
     emoji: "🚶",
     label: "EASY",
-    pill: "bg-green-500/15 text-green-400 border-green-500/25",
-    card: "bg-green-500/5 border-green-500/20",
+    pill: "bg-bioGreen/15 text-bioGreen border-bioGreen/25",
+    card: "bg-bioGreen/5 border-bioGreen/20",
     ring: "ring-green-400/40",
   },
   Moderate: {
     emoji: "🏃",
     label: "MODERATE",
-    pill: "bg-yellow-500/15 text-yellow-400 border-yellow-500/25",
-    card: "bg-yellow-500/5 border-yellow-500/20",
+    pill: "bg-amber/15 text-yellow-400 border-amber/25",
+    card: "bg-amber/5 border-amber/20",
     ring: "ring-yellow-400/40",
   },
   Hard: {
     emoji: "",
     label: "HARD",
-    pill: "bg-red-500/15 text-red-400 border-red-500/25",
-    card: "bg-red-500/5 border-red-500/20",
+    pill: "bg-critical/15 text-red-400 border-critical/25",
+    card: "bg-critical/5 border-critical/20",
     ring: "ring-red-400/40",
   },
 };
@@ -219,7 +219,7 @@ function DayCard({ day, onClick }: { day: DayPlan; onClick: () => void }) {
       <span className="text-xl leading-none">{meta.emoji}</span>
 
       <span className={cn(
-        "text-[9px] font-bold tracking-wider px-2 py-0.5 rounded-full border",
+        "text-[9px] font-bold tracking-wider px-2 py-0.5 border",
         meta.pill,
       )}>
         {meta.label}
@@ -255,7 +255,7 @@ function WeeklySummary({ plan }: { plan: DayPlan[] }) {
             <span
               key={s}
               className={cn(
-                "flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full border",
+                "flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 border",
                 meta.pill
               )}
             >
@@ -387,7 +387,7 @@ export default function WeeklyPlan() {
 
       {/* Day detail sheet */}
       <Sheet open={!!selected} onOpenChange={(o) => { if (!o) setSelected(null); }}>
-        <SheetContent side="bottom" className="rounded-t-3xl">
+        <SheetContent side="bottom" className="">
           {selected && (() => {
             const meta = SESSION_META[selected.session];
             const todayFlag = isToday(parseISO(selected.date));
@@ -404,7 +404,7 @@ export default function WeeklyPlan() {
                         )}
                       </SheetTitle>
                       <span className={cn(
-                        "inline-flex mt-1 text-xs font-bold tracking-wider px-2 py-0.5 rounded-full border",
+                        "inline-flex mt-1 text-xs font-bold tracking-wider px-2 py-0.5 border",
                         meta.pill,
                       )}>
                         {meta.label}

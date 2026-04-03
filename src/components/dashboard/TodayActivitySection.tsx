@@ -100,7 +100,7 @@ export function TodayActivitySection() {
 
           {/* ACWR */}
           <div className="text-center p-3  bg-secondary/30">
-            <Flame className="h-5 w-5 text-orange-500 mx-auto mb-1" />
+            <Flame className="h-5 w-5 text-amber mx-auto mb-1" />
             <p className="text-lg font-semibold text-foreground">
               {acwr ?? "--"}
             </p>
@@ -109,7 +109,7 @@ export function TodayActivitySection() {
 
           {/* Strain */}
           <div className="text-center p-3  bg-secondary/30">
-            <Flame className="h-5 w-5 text-red-500 mx-auto mb-1" />
+            <Flame className="h-5 w-5 text-critical mx-auto mb-1" />
             <p className="text-lg font-semibold text-foreground">
               {strain ?? "--"}
             </p>

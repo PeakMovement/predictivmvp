@@ -309,8 +309,8 @@ export const AccountSettings = ({ isSectionVisible, onNavigate }: AccountSetting
             className="w-full flex items-center justify-between p-4  border bg-glass/30 border-glass-border hover:bg-glass-highlight transition-all duration-200"
           >
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-orange-500/20  flex items-center justify-center">
-                <Stethoscope size={16} className="text-orange-500" />
+              <div className="w-8 h-8 bg-amber/20  flex items-center justify-center">
+                <Stethoscope size={16} className="text-amber" />
               </div>
               <div className="text-left">
                 <p className="font-medium text-foreground">Test Symptom Checker</p>
@@ -342,7 +342,7 @@ export const AccountSettings = ({ isSectionVisible, onNavigate }: AccountSetting
         <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <Stethoscope className="h-5 w-5 text-orange-500" />
+              <Stethoscope className="h-5 w-5 text-amber" />
               Test Symptom Checker
             </DialogTitle>
           </DialogHeader>

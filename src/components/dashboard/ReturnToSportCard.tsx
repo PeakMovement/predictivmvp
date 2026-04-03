@@ -88,9 +88,9 @@ export const ReturnToSportCard = ({ profile }: ReturnToSportCardProps) => {
             Phase {currentPhaseIndex + 1} of {PHASES.length}
           </span>
         </div>
-        <div className="relative h-2 bg-muted rounded-full overflow-hidden">
+        <div className="relative h-2 bg-muted overflow-hidden">
           <div
-            className="absolute left-0 top-0 h-full rounded-full bg-amber-500 transition-all duration-500"
+            className="absolute left-0 top-0 h-full bg-amber-500 transition-all duration-500"
             style={{ width: `${progressPercent}%` }}
           />
         </div>
@@ -166,7 +166,7 @@ export const ReturnToSportCard = ({ profile }: ReturnToSportCardProps) => {
               </div>
             </div>
           ) : (
-            <div className="flex items-center gap-2 text-sm text-green-600 dark:text-green-400">
+            <div className="flex items-center gap-2 text-sm text-bioGreen dark:text-bioGreen">
               <CheckCircle2 className="h-4 w-4" />
               <span>All milestones achieved</span>
             </div>

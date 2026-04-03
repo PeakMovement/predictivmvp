@@ -37,7 +37,7 @@ export function TreatmentPlanDetails({ plan, onBack, onConfirm }: TreatmentPlanD
         <CardContent className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-muted/50 ">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-full bg-primary/10">
+              <div className="p-2 bg-primary/10">
                 <Banknote className="h-5 w-5 text-primary" />
               </div>
               <div>
@@ -46,7 +46,7 @@ export function TreatmentPlanDetails({ plan, onBack, onConfirm }: TreatmentPlanD
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-full bg-primary/10">
+              <div className="p-2 bg-primary/10">
                 <Clock className="h-5 w-5 text-primary" />
               </div>
               <div>
@@ -55,7 +55,7 @@ export function TreatmentPlanDetails({ plan, onBack, onConfirm }: TreatmentPlanD
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-full bg-primary/10">
+              <div className="p-2 bg-primary/10">
                 <TrendingUp className="h-5 w-5 text-primary" />
               </div>
               <div>
@@ -120,7 +120,7 @@ export function TreatmentPlanDetails({ plan, onBack, onConfirm }: TreatmentPlanD
                 <div className="grid gap-3">
                   {plan.expectedOutcomes.map((outcome, index) => (
                     <div key={index} className="flex items-start gap-3 p-3 bg-muted/30 ">
-                      <CheckCircle2 className="h-5 w-5 text-green-500 flex-shrink-0 mt-0.5" />
+                      <CheckCircle2 className="h-5 w-5 text-bioGreen flex-shrink-0 mt-0.5" />
                       <div>
                         <div className="font-medium">{outcome.milestone}</div>
                         <div className="text-sm text-muted-foreground">{outcome.description}</div>

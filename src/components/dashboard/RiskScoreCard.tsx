@@ -213,22 +213,22 @@ export const RiskScoreCard = () => {
 
   const colors = {
     low: {
-      icon: "text-green-400 bg-green-500/20 border-green-500/30",
-      bar: "bg-green-500",
-      pill: "text-green-400 bg-green-500/20 border-green-500/30",
-      msg: "text-green-400 bg-green-500/10 border-green-500/20",
+      icon: "text-bioGreen bg-bioGreen/20 border-bioGreen/30",
+      bar: "bg-bioGreen",
+      pill: "text-bioGreen bg-bioGreen/20 border-bioGreen/30",
+      msg: "text-bioGreen bg-bioGreen/10 border-bioGreen/20",
     },
     moderate: {
-      icon: "text-yellow-400 bg-yellow-500/20 border-yellow-500/30",
-      bar: "bg-yellow-500",
-      pill: "text-yellow-400 bg-yellow-500/20 border-yellow-500/30",
-      msg: "text-yellow-400 bg-yellow-500/10 border-yellow-500/20",
+      icon: "text-yellow-400 bg-amber/20 border-amber/30",
+      bar: "bg-amber",
+      pill: "text-yellow-400 bg-amber/20 border-amber/30",
+      msg: "text-yellow-400 bg-amber/10 border-amber/20",
     },
     high: {
-      icon: "text-red-400 bg-red-500/20 border-red-500/30",
-      bar: "bg-red-500",
-      pill: "text-red-400 bg-red-500/20 border-red-500/30",
-      msg: "text-red-400 bg-red-500/10 border-red-500/20",
+      icon: "text-red-400 bg-critical/20 border-critical/30",
+      bar: "bg-critical",
+      pill: "text-red-400 bg-critical/20 border-critical/30",
+      msg: "text-red-400 bg-critical/10 border-critical/20",
     },
     unknown: {
       icon: "text-muted-foreground bg-muted/20 border-muted/30",
@@ -283,22 +283,22 @@ export const RiskScoreCard = () => {
             <p className="text-xs text-muted-foreground">7-day injury risk assessment</p>
           </div>
         </div>
-        <div className={cn("px-3 py-1 rounded-full text-sm font-bold border", colors.pill)}>
+        <div className={cn("px-3 py-1 text-sm font-bold border", colors.pill)}>
           {score} · {levelLabel}
         </div>
       </div>
 
       {/* Progress bar — divided into 3 zones */}
       <div className="mb-1">
-        <div className="h-3 rounded-full overflow-hidden flex">
-          <div className="bg-green-500/40 flex-[33]" />
-          <div className="bg-yellow-500/40 flex-[33] mx-0.5" />
-          <div className="bg-red-500/40 flex-[34]" />
+        <div className="h-3 overflow-hidden flex">
+          <div className="bg-bioGreen/40 flex-[33]" />
+          <div className="bg-amber/40 flex-[33] mx-0.5" />
+          <div className="bg-critical/40 flex-[34]" />
         </div>
         {/* Indicator */}
         <div className="relative h-1.5 mt-0.5">
           <div
-            className={cn("absolute top-0 w-2 h-2 rounded-full -translate-x-1/2 -translate-y-1/2", colors.bar)}
+            className={cn("absolute top-0 w-2 h-2 -translate-x-1/2 -translate-y-1/2", colors.bar)}
             style={{ left: `${score}%` }}
           />
         </div>

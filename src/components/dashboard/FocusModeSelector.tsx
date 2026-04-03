@@ -22,13 +22,13 @@ const modeIcons: Record<FocusMode, React.ReactNode> = {
 
 const toneColors: Record<'coach' | 'warm' | 'strategic', string> = {
   coach: 'bg-primary/10 border-primary/30 text-primary hover:bg-primary/20',
-  warm: 'bg-emerald-500/10 border-emerald-500/30 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20',
+  warm: 'bg-bioGreen/10 border-bioGreen/30 text-bioGreen dark:text-bioGreen hover:bg-bioGreen/20',
   strategic: 'bg-blue-500/10 border-blue-500/30 text-blue-600 dark:text-blue-400 hover:bg-blue-500/20',
 };
 
 const selectedToneColors: Record<'coach' | 'warm' | 'strategic', string> = {
   coach: 'bg-primary text-primary-foreground border-primary',
-  warm: 'bg-emerald-500 text-white border-emerald-500',
+  warm: 'bg-bioGreen text-white border-bioGreen',
   strategic: 'bg-blue-500 text-white border-blue-500',
 };
 
@@ -76,7 +76,7 @@ export function FocusModeSelector({
                   variant="ghost"
                   size="sm"
                   onClick={onEditCustom}
-                  className="h-8 w-8 p-0 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10"
+                  className="h-8 w-8 p-0 text-bioGreen dark:text-bioGreen hover:bg-bioGreen/10"
                 >
                   <Pencil className="h-3.5 w-3.5" />
                 </Button>

@@ -23,8 +23,9 @@ import { useRef, useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { Loader as Loader2, RefreshCw, Sparkles, Calendar, TriangleAlert as AlertTriangle, TrendingUp, ChevronDown, Brain, Lightbulb } from "lucide-react";
-import { formatDistanceToNow } from "date-fns";
+import { Loader as Loader2, RefreshCw, TriangleAlert as AlertTriangle, TrendingUp, ChevronDown, Brain, Lightbulb } from "lucide-react";
+import { format } from "date-fns";
+import { PredictivMark } from "@/components/PredictivMark";
 import { YvesDailyBriefing, YvesRecommendation } from "@/hooks/useYvesIntelligence";
 import { cn } from "@/lib/utils";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
@@ -117,10 +118,10 @@ export function DailyBriefingCard({
     return (
       <Card className="animate-fade-in bg-glass  border-glass-border">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Sparkles className="h-5 w-5 text-primary" />
-            Yves Daily Briefing
-          </CardTitle>
+          <div className="flex items-center gap-2">
+            <PredictivMark size={14} />
+            <span className="font-mono text-[8px] tracking-[4px] uppercase text-coldBlue">Yves · Daily Briefing</span>
+          </div>
         </CardHeader>
         <CardContent className="flex items-center justify-center py-8">
           <div className="w-24 h-px overflow-hidden"><div className="h-px w-full bg-coldBlue animate-hairline-sweep" /></div>
@@ -134,8 +135,8 @@ export function DailyBriefingCard({
       <CardHeader className="p-4 sm:p-6">
         <div className="flex items-start sm:items-center justify-between gap-3">
           <div className="flex items-center gap-2 min-w-0">
-            <Sparkles className="h-5 w-5 text-primary shrink-0" />
-            <CardTitle className="text-base sm:text-lg truncate"> Yves Daily Briefing</CardTitle>
+            <PredictivMark size={14} />
+            <span className="font-mono text-[8px] tracking-[4px] uppercase text-coldBlue">Yves · Daily Briefing</span>
           </div>
           <div className="relative">
             {isGenerating && (
@@ -184,10 +185,9 @@ export function DailyBriefingCard({
           </div>
         </div>
         {createdAt && (
-          <CardDescription className="flex items-center gap-2 text-xs">
-            <Calendar className="h-3 w-3" />
-            {cached ? "Generated" : "Updated"} {formatDistanceToNow(new Date(createdAt), { addSuffix: true })}
-          </CardDescription>
+          <p className="font-mono text-[7px] tracking-[2px] uppercase text-marble1/30 mt-1">
+            Compiled {format(new Date(createdAt), "HH:mm")} · {format(new Date(createdAt), "dd.MM.yy")}
+          </p>
         )}
       </CardHeader>
       <CardContent className="space-y-4 p-4 pt-0 sm:p-6 sm:pt-0">
@@ -201,22 +201,12 @@ export function DailyBriefingCard({
         <TodaysBestDecision ref={trainingFocusRef} className="pb-2 border-b border-border/50" />
         
         {!briefing ? (
-          <div className="text-center py-6 space-y-3">
-            <p className="text-muted-foreground">
-              Click refresh to generate your personalized daily briefing
+          <div className="text-center py-6 space-y-4">
+            <p className="font-mono text-[9px] tracking-[0.3em] uppercase text-marble1/30">
+              No briefing compiled yet
             </p>
-            <Button onClick={() => onRefresh()} disabled={isGenerating}>
-              {isGenerating ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Generating...
-                </>
-              ) : (
-                <>
-                  <Sparkles className="h-4 w-4 mr-2" />
-                  Generate Briefing
-                </>
-              )}
+            <Button onClick={() => onRefresh()} disabled={isGenerating} variant="outline" size="sm">
+              {isGenerating ? "Compiling..." : "Compile Briefing"}
             </Button>
           </div>
         ) : (

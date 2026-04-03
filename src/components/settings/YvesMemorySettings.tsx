@@ -201,7 +201,7 @@ export const YvesMemorySettings = () => {
           <Brain size={32} className="mx-auto text-muted-foreground/40 mb-3" />
           <p className="text-sm font-medium text-muted-foreground">Yves is still learning about you.</p>
           <p className="text-xs text-muted-foreground max-w-xs mx-auto">
-            Chat with Yves or complete more training sessions to build your profile.
+            Initialise Yves or complete more training sessions to build your profile.
           </p>
         </div>
       )}

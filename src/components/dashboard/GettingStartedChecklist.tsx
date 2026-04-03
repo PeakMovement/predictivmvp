@@ -69,8 +69,8 @@ export function GettingStartedChecklist({ onNavigate }: GettingStartedChecklistP
         },
         {
           id: "chat",
-          label: "Chat with Yves",
-          description: "Ask your first question to get personalised advice",
+          label: "Initialise Yves",
+          description: "Begin your first session with Yves",
           icon: MessageCircle,
           done: !!chatRes.data,
           navigateTo: "yves-insights",

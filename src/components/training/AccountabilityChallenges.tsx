@@ -53,7 +53,7 @@ export const AccountabilityChallenges = () => {
     try {
       await acceptChallenge(id);
       toast({
-        title: "Challenge Accepted! ",
+        title: "Challenge accepted. ",
         description: "Progress will be tracked automatically from your wearable data",
       });
     } catch {
@@ -64,7 +64,7 @@ export const AccountabilityChallenges = () => {
   const handleComplete = async (id: string) => {
     try {
       await completeChallenge(id);
-      toast({ title: "Challenge Completed! " });
+      toast({ title: "Challenge completed. " });
     } catch {
       toast({ title: "Error", description: "Failed to complete challenge", variant: "destructive" });
     }

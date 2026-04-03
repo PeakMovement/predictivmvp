@@ -123,8 +123,28 @@ export const OnboardingFlow = ({ onComplete, onSkip }: OnboardingFlowProps) => {
       setValidationError("Please enter your name");
       return false;
     }
+    if (step === 2 && data.wearables.length === 0) {
+      setValidationError("Please select your wearable (or 'No Wearable')");
+      return false;
+    }
+    if (step === 3 && data.sports.length === 0) {
+      setValidationError("Please select at least one sport");
+      return false;
+    }
     if (step === 4 && data.healthGoals.length === 0) {
       setValidationError("Please select at least one health goal");
+      return false;
+    }
+    if (step === 5 && !data.injuryHistory) {
+      setValidationError("Please select your injury history");
+      return false;
+    }
+    if (step === 6 && !data.sleepQuality) {
+      setValidationError("Please select your sleep quality");
+      return false;
+    }
+    if (step === 6 && !data.compliance) {
+      setValidationError("Please select your engagement preference");
       return false;
     }
     return true;

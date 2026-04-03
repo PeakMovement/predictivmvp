@@ -150,9 +150,9 @@ const CircularGauge = ({
   const strokeDashoffset = circumference - (percentage / 100) * circumference;
 
   return (
-    <div className="bg-glass  border border-glass-border  p-3 sm:p-6  hover:bg-glass-highlight hover:scale-105 hover:-translate-y-1 transition-all duration-300 ease-out animate-fade-in transform-gpu">
+    <div className="bg-surface border border-line p-3 sm:p-6 hover:border-marble1/20 transition-all duration-150">
       {/* Card title */}
-      <h3 className="font-sans font-semibold text-[12px] tracking-[2px] uppercase text-marble1/60 mb-3">{title}</h3>
+      <h3 className="font-sans font-semibold text-[10px] sm:text-[12px] tracking-[2px] uppercase text-marble1/60 mb-3 whitespace-nowrap">{title}</h3>
       <div className="flex flex-col items-center justify-center gap-2">
         <div className="relative w-24 h-24 sm:w-32 sm:h-32">
           <svg className="w-24 h-24 sm:w-32 sm:h-32 transform -rotate-90" viewBox="0 0 100 100">
@@ -525,21 +525,21 @@ export const Training = () => {
                   <p className="section-header">Recovery</p>
                   <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-px mb-12">
                     <CircularGauge title="Readiness" value={wearableData?.readiness_score ?? 0} maxValue={100} unit="%" />
-                    <CircularGauge title="Body Battery" value={wearableData?.body_battery_end ?? wearableData?.body_battery_max ?? 0} maxValue={100} unit="%" />
+                    <CircularGauge title="Battery" value={wearableData?.body_battery_end ?? wearableData?.body_battery_max ?? 0} maxValue={100} unit="%" />
                     <CircularGauge title="Avg Stress" value={wearableData?.stress_avg ? Math.round(wearableData.stress_avg) : 0} maxValue={100} unit="" />
                     <CircularGauge title="SpO₂" value={wearableData?.spo2_avg ? parseFloat(wearableData.spo2_avg.toFixed(1)) : 0} maxValue={100} unit="%" />
                     <CircularGauge title="Respiration" value={wearableData?.respiration_rate_avg ? parseFloat(wearableData.respiration_rate_avg.toFixed(1)) : 0} maxValue={30} unit="brpm" />
-                    <CircularGauge title="Total Calories" value={wearableData?.total_calories ? Math.round(wearableData.total_calories) : 0} maxValue={4000} unit="kcal" />
+                    <CircularGauge title="Total Cal" value={wearableData?.total_calories ? Math.round(wearableData.total_calories) : 0} maxValue={4000} unit="kcal" />
                   </div>
 
                   {/* ── Performance ── */}
                   <p className="section-header">Performance</p>
                   <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-px mb-12">
                     <CircularGauge title="VO₂ Max" value={wearableData?.vo2_max ? parseFloat(wearableData.vo2_max.toFixed(1)) : 0} maxValue={70} unit="mL/kg" />
-                    <CircularGauge title="Intensity Mod" value={wearableData?.intensity_minutes_moderate ?? 0} maxValue={150} unit="min" />
-                    <CircularGauge title="Intensity Vig" value={wearableData?.intensity_minutes_vigorous ?? 0} maxValue={75} unit="min" />
+                    <CircularGauge title="Intens Mod" value={wearableData?.intensity_minutes_moderate ?? 0} maxValue={150} unit="min" />
+                    <CircularGauge title="Intens Vig" value={wearableData?.intensity_minutes_vigorous ?? 0} maxValue={75} unit="min" />
                     <CircularGauge
-                      title="Running Dist"
+                      title="Distance"
                       value={runningDistanceLoading ? 0 : parseFloat(runningDistance.toFixed(1))}
                       maxValue={50}
                       unit="km"
@@ -552,7 +552,7 @@ export const Training = () => {
                   <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-px">
                     <CircularGauge title="Monotony" value={latestAvailableTrend?.monotony ? parseFloat(latestAvailableTrend.monotony.toFixed(1)) : 0} maxValue={5} unit="ratio" />
                     <CircularGauge title="Strain" value={latestAvailableTrend?.strain ? Math.round(latestAvailableTrend.strain) : 0} maxValue={200} unit="TSS" />
-                    <CircularGauge title="Fatigue Index" value={fatigueIndex} maxValue={100} unit="%" />
+                    <CircularGauge title="Fatigue Idx" value={fatigueIndex} maxValue={100} unit="%" />
                   </div>
 
                   {selectedSource === "garmin" && (

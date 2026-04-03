@@ -294,7 +294,7 @@ export const HealthTrendsChart = ({ source }: HealthTrendsChartProps) => {
             <div className="grid grid-cols-3 gap-4 pt-4 border-t border-border/50">
               <div className="text-center">
                 <p className="text-xs text-muted-foreground mb-1">Average</p>
-                <p className="text-lg font-bold text-foreground">
+                <p className="text-lg font-semibold text-foreground">
                   {(
                     chartData.reduce((sum, d) => sum + (d[getMetricKey()] || 0), 0) /
                     chartData.filter((d) => d[getMetricKey()] !== null).length
@@ -303,13 +303,13 @@ export const HealthTrendsChart = ({ source }: HealthTrendsChartProps) => {
               </div>
               <div className="text-center">
                 <p className="text-xs text-muted-foreground mb-1">Highest</p>
-                <p className="text-lg font-bold text-foreground">
+                <p className="text-lg font-semibold text-foreground">
                   {Math.max(...chartData.map((d) => d[getMetricKey()] || 0)).toFixed(1)}
                 </p>
               </div>
               <div className="text-center">
                 <p className="text-xs text-muted-foreground mb-1">Lowest</p>
-                <p className="text-lg font-bold text-foreground">
+                <p className="text-lg font-semibold text-foreground">
                   {Math.min(
                     ...chartData.filter((d) => d[getMetricKey()] !== null).map((d) => d[getMetricKey()] || 0)
                   ).toFixed(1)}

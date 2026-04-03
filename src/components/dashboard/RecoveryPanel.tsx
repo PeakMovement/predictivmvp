@@ -320,7 +320,7 @@ export function RecoveryPanel() {
               style={{ animationDelay: `${(idx + 3) * 100}ms` }}
             >
               <p className="text-xs text-muted-foreground mb-1">{item.label}</p>
-              <p className="text-xl font-bold text-foreground animate-number-pop">
+              <p className="text-xl font-display font-light text-foreground animate-number-pop">
                 {item.value?.toFixed(1) ?? "—"}
               </p>
             </div>

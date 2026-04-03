@@ -219,7 +219,7 @@ export const OuraSleepCard = ({
                       <p className="text-xs text-muted-foreground">{stage.label}</p>
                       <Info className="w-3 h-3 text-muted-foreground" />
                     </div>
-                    <p className="text-lg font-bold text-foreground">{formatHours(stage.hours)}</p>
+                    <p className="text-lg font-semibold text-foreground">{formatHours(stage.hours)}</p>
                     <p className="text-xs text-muted-foreground">
                       {totalStageHours > 0 ? Math.round(((stage.hours || 0) / totalStageHours) * 100) : 0}%
                     </p>

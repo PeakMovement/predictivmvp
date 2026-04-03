@@ -357,7 +357,7 @@ export const Health = () => {
                     ].map(({ label, value, color }) => (
                       <div key={label} className="text-center bg-background/30  p-3">
                         <p className="text-xs text-muted-foreground mb-1">{label}</p>
-                        <p className={`text-base font-bold ${color}`}>{formatMinutes(value)}</p>
+                        <p className={`text-base font-semibold ${color}`}>{formatMinutes(value)}</p>
                         <p className="text-xs text-muted-foreground">{stagePercent(value)}%</p>
                       </div>
                     ))}

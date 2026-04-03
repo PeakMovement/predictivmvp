@@ -122,10 +122,18 @@ export default {
 
       /* ── LETTER SPACING ────────────────────────────────────────── */
       letterSpacing: {
-        data:    "0.15em",
-        label:   "0.25em",
-        eyebrow: "0.35em",
-        nav:     "0.18em",
+        body:    "0.4px",    // Rajdhani body text 14-16px
+        label:   "1.8px",   // Rajdhani bold uppercase 10-12px
+        data:    "0.8px",    // Space Mono body 11-13px
+        eyebrow: "3px",     // Space Mono tiny 7-9px
+        nav:     "2px",      // Navigation labels
+      },
+
+      /* ── LINE HEIGHT ───────────────────────────────────────────── */
+      lineHeight: {
+        body:    "1.75",
+        metric:  "1.4",
+        mono:    "1.6",
       },
 
       /* ── ANIMATIONS ────────────────────────────────────────────── */

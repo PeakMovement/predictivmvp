@@ -190,7 +190,7 @@ export function FindHelp() {
     <div className="container mx-auto px-4 py-6 pb-nav-safe max-w-4xl scrollable-content">
       {/* Header */}
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-foreground">Find Help</h1>
+        <h1 className="text-2xl font-display font-light text-foreground">Find Help</h1>
         <p className="mt-1 text-sm text-muted-foreground">
           Browse practitioners matched to your needs by Yves
         </p>
@@ -323,7 +323,7 @@ export function FindHelp() {
       {!loading && !error && filtered.length === 0 && (
         <div className="flex flex-col items-center py-16 text-center">
           <Search size={40} className="mb-4 text-muted-foreground/40" />
-          <h2 className="text-lg font-bold text-foreground">
+          <h2 className="text-lg font-semibold text-foreground">
             No practitioners match your filters yet
           </h2>
           <p className="mx-auto mt-2 max-w-sm text-sm text-muted-foreground">

@@ -69,7 +69,7 @@ const ActivityRing = ({ score }: { score: number }) => {
         />
       </svg>
       <div className="absolute inset-0 flex items-center justify-center">
-        <span className="text-xl font-bold text-foreground animate-number-pop">{Math.round(score)}</span>
+        <span className="text-xl font-display font-light text-foreground animate-number-pop">{Math.round(score)}</span>
       </div>
     </div>
   );

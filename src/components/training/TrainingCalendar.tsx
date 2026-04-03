@@ -299,7 +299,7 @@ export const TrainingCalendar = () => {
                 <SheetTitle className="flex items-center gap-3">
                   <span className="text-3xl">{activityEmoji(selectedSession.session_type)}</span>
                   <div>
-                    <p className="text-base font-bold text-foreground">
+                    <p className="text-base font-semibold text-foreground">
                       {selectedSession.session_type
                         ? selectedSession.session_type.replace(/_/g, " ").replace(/^\w/, c => c.toUpperCase())
                         : "Training Session"}

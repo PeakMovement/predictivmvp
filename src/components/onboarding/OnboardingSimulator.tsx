@@ -113,7 +113,7 @@ export function OnboardingSimulator({
                 <Sparkles className="h-10 w-10 text-primary" />
               </div>
               <div className="space-y-3">
-                <h2 className="text-2xl font-bold text-foreground">
+                <h2 className="text-2xl font-display font-light text-foreground">
                   Welcome to Yves
                 </h2>
                 <p className="text-muted-foreground max-w-sm mx-auto">
@@ -341,7 +341,7 @@ export function OnboardingSimulator({
                 <CheckCircle2 className="h-10 w-10 text-bioGreen" />
               </div>
               <div className="space-y-3">
-                <h2 className="text-2xl font-bold text-foreground">
+                <h2 className="text-2xl font-display font-light text-foreground">
                   You're All Set{data.firstName ? `, ${data.firstName}` : ""}!
                 </h2>
                 <p className="text-muted-foreground max-w-sm mx-auto">

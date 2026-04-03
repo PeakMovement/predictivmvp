@@ -361,7 +361,7 @@ export default function InjuryLog() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Injury Log</h1>
+          <h1 className="text-2xl font-display font-light text-foreground">Injury Log</h1>
           <p className="text-sm text-muted-foreground mt-0.5">Track and manage your injuries</p>
         </div>
         <Button size="sm" className="gap-2" onClick={() => setSheetOpen(true)}>

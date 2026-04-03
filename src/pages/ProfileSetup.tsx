@@ -208,7 +208,7 @@ export const ProfileSetup = () => {
     <div className="container mx-auto px-4 py-6 pb-nav-safe max-w-lg space-y-5">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-foreground">Profile</h1>
+        <h1 className="text-2xl font-display font-light text-foreground">Profile</h1>
         <p className="text-sm text-muted-foreground mt-0.5">
           A complete profile gives Yves the context for better advice.
         </p>

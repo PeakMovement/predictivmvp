@@ -74,7 +74,7 @@ export function YvesRecommendationsCard({ recommendations = [], isLoading = fals
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Lightbulb className="h-5 w-5 text-primary" />
-            Yves Recommendations
+            Yves · Recommendations
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -89,7 +89,7 @@ export function YvesRecommendationsCard({ recommendations = [], isLoading = fals
       <CardHeader className="p-4 sm:p-6">
         <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
           <Lightbulb className="h-5 w-5 text-primary" />
-           Yves Recommendations
+           Yves · Recommendations
         </CardTitle>
         <CardDescription>
           AI-powered actions based on your health data
@@ -131,7 +131,7 @@ export function YvesRecommendationsCard({ recommendations = [], isLoading = fals
               className="w-full mt-4"
               onClick={() => window.dispatchEvent(new CustomEvent("navigate-tab", { detail: "yves-insights" }))}
             >
-              View All & Initialise Yves <ExternalLink className="ml-2 h-4 w-4" />
+              View All <ExternalLink className="ml-2 h-4 w-4" />
             </Button>
           </>
         )}
@@ -183,7 +183,7 @@ function RecommendationItem({ recommendation, categoryLabel, categoryIcon, prior
     if (success) {
       setFeedbackGiven(helpful ? 'helpful' : 'not_helpful');
       toast({
-        title: helpful ? "Thanks for the feedback!" : "Got it",
+        title: helpful ? "Noted." : "Noted",
         description: helpful 
           ? "I'll provide more insights like this" 
           : "I'll adjust my recommendations",
@@ -337,7 +337,7 @@ function RecommendationItem({ recommendation, categoryLabel, categoryIcon, prior
 
             {feedbackGiven && (
               <div className="flex items-center gap-2 pt-2 border-t border-border/50 text-xs text-muted-foreground">
-                {feedbackGiven === 'helpful' && <><ThumbsUp className="h-3 w-3 text-bioGreen" /> Thanks for the feedback!</>}
+                {feedbackGiven === 'helpful' && <><ThumbsUp className="h-3 w-3 text-bioGreen" /> Noted.</>}
                 {feedbackGiven === 'not_helpful' && <><ThumbsDown className="h-3 w-3 text-destructive" /> Noted. I'll improve!</>}
                 {feedbackGiven === 'followed' && <><Check className="h-3 w-3 text-bioGreen" /> Noted.</>}
               </div>

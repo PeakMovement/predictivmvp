@@ -109,7 +109,7 @@ export default function PlanCompliance() {
           <CardContent>
             <div className="space-y-2">
               <div className="flex justify-between items-center">
-                <span className="text-2xl font-bold">{weeklyAverage.toFixed(0)}%</span>
+                <span className="text-3xl font-display font-light">{weeklyAverage.toFixed(0)}%</span>
                 <Badge variant={weeklyAverage >= 90 ? "default" : weeklyAverage >= 70 ? "secondary" : "destructive"}>
                   {weeklyAverage >= 90 ? "Excellent" : weeklyAverage >= 70 ? "Good" : "Needs Work"}
                 </Badge>

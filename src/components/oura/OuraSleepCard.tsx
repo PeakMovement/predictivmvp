@@ -168,7 +168,7 @@ export const OuraSleepCard = ({
               />
             </svg>
             <div className="absolute inset-0 flex flex-col items-center justify-center">
-              <span className={`text-4xl font-bold ${getScoreColor(scoreValue)}`}>
+              <span className={`text-[40px] sm:text-[52px] font-display font-light leading-none ${getScoreColor(scoreValue)}`}>
                 {scoreValue}
               </span>
             </div>

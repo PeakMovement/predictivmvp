@@ -151,12 +151,8 @@ const CircularGauge = ({
 
   return (
     <div className="bg-glass  border border-glass-border  p-3 sm:p-6  hover:bg-glass-highlight hover:scale-105 hover:-translate-y-1 transition-all duration-300 ease-out animate-fade-in transform-gpu">
-      <div className="flex items-center gap-2 mb-3">
-        <div className="w-7 h-7 sm:w-8 sm:h-8 bg-primary/20  flex items-center justify-center shrink-0">
-          <Gauge size={14} className="text-primary" />
-        </div>
-        <h3 className="text-sm sm:text-lg font-semibold text-foreground truncate">{title}</h3>
-      </div>
+      {/* Card title */}
+      <h3 className="font-sans font-semibold text-[12px] tracking-[2px] uppercase text-marble1/60 mb-3">{title}</h3>
       <div className="flex flex-col items-center justify-center gap-2">
         <div className="relative w-24 h-24 sm:w-32 sm:h-32">
           <svg className="w-24 h-24 sm:w-32 sm:h-32 transform -rotate-90" viewBox="0 0 100 100">
@@ -183,8 +179,10 @@ const CircularGauge = ({
             />
           </svg>
           <div className="absolute inset-0 flex flex-col items-center justify-center">
-            <span className="text-xl sm:text-2xl font-bold text-foreground">{safeValue}</span>
-            <span className="text-xs text-muted-foreground">{unit}</span>
+            {/* Big metric number */}
+            <span className="text-[40px] sm:text-[52px] font-display font-light leading-none text-marble3">{safeValue}</span>
+            {/* Unit label */}
+            <span className="font-mono text-[9px] tracking-[2px] uppercase text-marble1/45 mt-1">{unit}</span>
           </div>
         </div>
         {note && (

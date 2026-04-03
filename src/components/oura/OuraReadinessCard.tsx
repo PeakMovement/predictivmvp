@@ -131,7 +131,7 @@ export const OuraReadinessCard = ({
             />
           </svg>
           <div className="absolute inset-0 flex flex-col items-center justify-center">
-            <span className={`text-4xl font-bold ${getScoreColor(score)}`}>
+            <span className={`text-[40px] sm:text-[52px] font-display font-light leading-none ${getScoreColor(score)}`}>
               {score}
             </span>
           </div>

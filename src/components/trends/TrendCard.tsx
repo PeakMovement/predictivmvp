@@ -79,7 +79,7 @@ export const TrendCard = ({ metric, onRefresh }: TrendCardProps) => {
           className="inline-flex items-center gap-2 px-4 py-2 rounded-full"
           style={{ backgroundColor: `${statusColor}20`, border: `1px solid ${statusColor}` }}
         >
-          <span className="text-2xl font-bold" style={{ color: statusColor }}>
+          <span className="text-[40px] sm:text-[52px] font-display font-light leading-none" style={{ color: statusColor }}>
             {metric.currentValue.toFixed(2)}
           </span>
           <span className="text-sm text-muted-foreground">{metric.unit}</span>

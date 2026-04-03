@@ -125,7 +125,7 @@ export function DocumentPreviewModal({
         <div className="flex-1 overflow-hidden  border bg-muted/50 mt-4">
           {loading ? (
             <div className="h-full flex items-center justify-center">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              <div className="w-24 h-px overflow-hidden"><div className="h-px w-full bg-coldBlue animate-hairline-sweep" /></div>
             </div>
           ) : fileType === 'pdf' ? (
             <iframe

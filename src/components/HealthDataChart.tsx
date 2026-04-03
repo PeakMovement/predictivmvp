@@ -116,7 +116,7 @@ export default function HealthDataChart() {
     return (
       <div className="bg-glass  border border-glass-border  p-8  flex items-center justify-center min-h-[400px]">
         <div className="flex flex-col items-center gap-3">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <div className="w-24 h-px overflow-hidden"><div className="h-px w-full bg-coldBlue animate-hairline-sweep" /></div>
           <p className="text-sm text-muted-foreground">Loading health data...</p>
         </div>
       </div>

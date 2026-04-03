@@ -67,7 +67,7 @@ export function CalendlyEmbed({ calendlyUrl, providerName }: CalendlyEmbedProps)
       {isLoading && (
         <div className="absolute inset-0 flex items-center justify-center bg-background/80 z-10">
           <div className="flex flex-col items-center gap-3">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <div className="w-24 h-px overflow-hidden"><div className="h-px w-full bg-coldBlue animate-hairline-sweep" /></div>
             <p className="text-sm text-muted-foreground">
               Loading booking calendar{providerName ? ` for ${providerName}` : ''}...
             </p>

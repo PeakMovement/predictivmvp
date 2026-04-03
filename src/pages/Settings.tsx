@@ -71,7 +71,7 @@ export const Settings = ({ onNavigate }: SettingsProps) => {
   } = useLayoutCustomization("profile");
 
   return (
-    <div className="container mx-auto px-4 py-8 pb-24 max-w-2xl overflow-x-hidden">
+    <div className="container mx-auto px-6 md:px-10 pt-12 pb-24 max-w-2xl overflow-x-hidden">
       <div className="mb-8">
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-3">

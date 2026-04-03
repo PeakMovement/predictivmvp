@@ -374,7 +374,7 @@ export default function InjuryLog() {
       <section>
         <div className="flex items-center gap-2 mb-3">
           <AlertCircle className="w-4 h-4 text-orange-400" />
-          <h2 className="font-semibold text-sm uppercase tracking-wide text-muted-foreground">
+          <h2 className="section-header">
             Active Injuries
           </h2>
           {active.length > 0 && (

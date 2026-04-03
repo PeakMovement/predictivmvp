@@ -108,49 +108,49 @@
     --glow-primary: 200 30% 75%;
   }
 
-  /* Light mode — warm marble, readable contrast */
+  /* Light mode — warm greige, high contrast text */
   .light {
-    --background: 30 15% 90%;         /* warm stone — darker than before */
-    --foreground: 240 33% 5%;         /* #080812 deep — primary text */
+    --background: 30 12% 89%;         /* #EDE8E3 warm greige */
+    --foreground: 240 30% 9%;         /* #0D0D1E near-black */
 
-    --card: 30 20% 94%;              /* #F0EBE5 warm card — visible against bg */
-    --card-foreground: 240 33% 5%;
+    --card: 30 24% 94%;              /* #F5F0EB marble warm */
+    --card-foreground: 240 30% 9%;   /* #0D0D1E */
 
-    --popover: 30 20% 94%;
-    --popover-foreground: 240 33% 5%;
+    --popover: 30 24% 94%;
+    --popover-foreground: 240 30% 9%;
 
-    --primary: 200 35% 38%;           /* darker coldBlue for light bg contrast */
-    --primary-foreground: 30 20% 94%;
+    --primary: 200 35% 38%;
+    --primary-foreground: 30 24% 94%;
 
-    --secondary: 30 12% 88%;
-    --secondary-foreground: 240 33% 5%;
+    --secondary: 30 12% 87%;
+    --secondary-foreground: 240 30% 9%;
 
-    --muted: 30 12% 88%;
-    --muted-foreground: 240 20% 20% / 0.5;  /* readable secondary text */
+    --muted: 30 12% 87%;
+    --muted-foreground: 240 30% 9% / 0.65;  /* rgba(13,13,30,0.65) secondary */
 
     --accent: 200 35% 38%;
-    --accent-foreground: 30 20% 94%;
+    --accent-foreground: 30 24% 94%;
 
     --destructive: 0 30% 50%;
-    --destructive-foreground: 30 20% 94%;
+    --destructive-foreground: 30 24% 94%;
 
-    --border: 30 10% 75% / 0.35;      /* stronger border visibility */
-    --input: 30 12% 88%;
+    --border: 240 30% 9% / 0.08;      /* rgba(13,13,30,0.08) */
+    --input: 30 12% 87%;
     --ring: 200 35% 38%;
 
-    --glass-bg: 30 20% 94% / 0.9;
-    --glass-border: 30 10% 75% / 0.35;
-    --glass-highlight: 30 20% 96%;
+    --glass-bg: 30 24% 94% / 0.9;
+    --glass-border: 240 30% 9% / 0.08;
+    --glass-highlight: 30 24% 96%;
 
     --glow-primary: 200 35% 38%;
 
-    --sidebar-background: 30 15% 90%;
-    --sidebar-foreground: 240 33% 5%;
+    --sidebar-background: 30 12% 89%;
+    --sidebar-foreground: 240 30% 9%;
     --sidebar-primary: 200 35% 38%;
-    --sidebar-primary-foreground: 30 20% 94%;
-    --sidebar-accent: 30 12% 88%;
-    --sidebar-accent-foreground: 240 33% 5%;
-    --sidebar-border: 30 10% 75% / 0.35;
+    --sidebar-primary-foreground: 30 24% 94%;
+    --sidebar-accent: 30 12% 87%;
+    --sidebar-accent-foreground: 240 30% 9%;
+    --sidebar-border: 240 30% 9% / 0.08;
     --sidebar-ring: 200 35% 38%;
   }
 }
@@ -193,9 +193,9 @@
     background: #04040A;
   }
 
-  /* Light mode — warm stone */
+  /* Light mode — #EDE8E3 warm greige */
   .light body {
-    background: hsl(30 15% 90%);
+    background: #EDE8E3;
   }
 
   /* ── Focus states ──────────────────────────────────────────────── */
@@ -270,7 +270,7 @@
   }
 
   .light .section-header {
-    color: rgba(13, 13, 30, 0.4);
+    color: rgba(13, 13, 30, 0.35);
   }
 
   /* ── Spacing system ────────────────────────────────────────────── */

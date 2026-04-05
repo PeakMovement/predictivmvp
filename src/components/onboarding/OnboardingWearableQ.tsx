@@ -17,8 +17,8 @@ export function OnboardingWearableQ({ data, onUpdate }: Props) {
     <div className="space-y-6">
       <div className="text-center space-y-2">
         <p className="font-mono text-[9px] tracking-[0.4em] uppercase text-coldBlue/40">Devices</p>
-        <h2 className="font-display font-light text-3xl text-marble3">Your Wearable</h2>
-        <p className="font-sans text-sm text-marble1/50 tracking-wide">Select all devices you use. This determines which formulas activate.</p>
+        <h2 className="font-display font-light text-3xl text-foreground">Your Wearable</h2>
+        <p className="font-sans text-sm text-muted-foreground tracking-wide">Select all devices you use. This determines which formulas activate.</p>
       </div>
 
       <OnboardingChips
@@ -31,7 +31,7 @@ export function OnboardingWearableQ({ data, onUpdate }: Props) {
         size="lg"
       />
 
-      <p className="font-mono text-[8px] tracking-[0.2em] uppercase text-marble1/25 text-center">
+      <p className="font-mono text-[8px] tracking-[0.2em] uppercase text-muted-foreground/50 text-center">
         Connect your device after onboarding in Settings.
       </p>
     </div>

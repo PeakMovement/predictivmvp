@@ -45,7 +45,7 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-void text-marble2 px-4">
+    <div className="min-h-screen flex items-center justify-center bg-background text-foreground px-4">
       {/* Ambient */}
       <div className="fixed inset-0 pointer-events-none">
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-coldBlue/[0.02] blur-[80px]" />
@@ -55,13 +55,13 @@ export default function Login() {
         {/* Brand */}
         <div className="text-center mb-10">
           <p className="font-mono text-[10px] tracking-[0.35em] uppercase text-coldBlue/50 mb-4">Predictiv.</p>
-          <h1 className="font-display font-light text-3xl text-marble3">Sign In</h1>
+          <h1 className="font-display font-light text-3xl text-foreground">Sign In</h1>
         </div>
 
-        <div className="border border-line bg-surface p-8">
+        <div className="border border-border bg-card p-8">
           <form onSubmit={handleLogin} className="space-y-5">
             <div className="space-y-1.5">
-              <label htmlFor="identifier" className="font-mono text-[9px] tracking-[0.3em] uppercase text-marble1/40">
+              <label htmlFor="identifier" className="font-mono text-[9px] tracking-[0.3em] uppercase text-muted-foreground">
                 Email
               </label>
               <Input
@@ -70,14 +70,14 @@ export default function Login() {
                 value={identifier}
                 onChange={(e) => setIdentifier(e.target.value)}
                 placeholder="you@example.com"
-                className="bg-deep border-line text-marble2 placeholder:text-marble1/20 font-sans"
+                className="bg-background border-border text-foreground placeholder:text-muted-foreground/40 font-sans"
                 required
               />
             </div>
 
             <div className="space-y-1.5">
               <div className="flex items-center justify-between">
-                <label htmlFor="password" className="font-mono text-[9px] tracking-[0.3em] uppercase text-marble1/40">
+                <label htmlFor="password" className="font-mono text-[9px] tracking-[0.3em] uppercase text-muted-foreground">
                   Password
                 </label>
                 <button
@@ -94,7 +94,7 @@ export default function Login() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Enter password"
-                className="bg-deep border-line text-marble2 placeholder:text-marble1/20 font-sans"
+                className="bg-background border-border text-foreground placeholder:text-muted-foreground/40 font-sans"
                 required
               />
             </div>
@@ -105,7 +105,7 @@ export default function Login() {
 
             <button
               type="submit"
-              className="w-full bg-marble3 text-void font-sans font-semibold text-xs tracking-[0.25em] uppercase py-4 mt-2 hover:opacity-90 active:scale-[0.97] active:opacity-85 transition-all duration-100 disabled:opacity-50"
+              className="w-full bg-marble3 text-background font-sans font-semibold text-xs tracking-[0.25em] uppercase py-4 mt-2 hover:opacity-90 active:scale-[0.97] active:opacity-85 transition-all duration-100 disabled:opacity-50"
               disabled={isLoading}
             >
               {isLoading ? (
@@ -119,7 +119,7 @@ export default function Login() {
           </form>
 
           <div className="text-center mt-6">
-            <p className="font-sans text-sm text-marble1/40">
+            <p className="font-sans text-sm text-muted-foreground">
               No account?{" "}
               <a href="/genesis" className="text-coldBlue hover:text-ice transition-colors">
                 Sign up
@@ -127,11 +127,11 @@ export default function Login() {
             </p>
           </div>
 
-          <div className="mt-6 pt-4 border-t border-line text-center">
-            <p className="font-mono text-[8px] tracking-[0.15em] uppercase text-marble1/20">
-              <a href="/terms" className="hover:text-marble1/40">Terms</a>
+          <div className="mt-6 pt-4 border-t border-border text-center">
+            <p className="font-mono text-[8px] tracking-[0.15em] uppercase text-muted-foreground/40">
+              <a href="/terms" className="hover:text-muted-foreground">Terms</a>
               <span className="mx-2">&middot;</span>
-              <a href="/privacy" className="hover:text-marble1/40">Privacy</a>
+              <a href="/privacy" className="hover:text-muted-foreground">Privacy</a>
             </p>
           </div>
         </div>

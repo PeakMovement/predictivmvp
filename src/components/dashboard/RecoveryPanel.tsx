@@ -130,7 +130,7 @@ const ACWRGauge = ({ value, status }: { value: number; status: string }) => {
       {/* Center value */}
       <div className="absolute inset-0 flex items-center justify-center">
         <div className="text-center">
-          <span className={cn("text-[40px] sm:text-[52px] font-display font-light leading-none text-marble3", getAcwrColor(status))}>
+          <span className={cn("text-[40px] sm:text-[52px] font-display font-light leading-none text-foreground", getAcwrColor(status))}>
             {value.toFixed(2)}
           </span>
           <p className="text-xs text-muted-foreground">ACWR</p>
@@ -332,7 +332,7 @@ export function RecoveryPanel() {
           <div className="p-4  bg-gradient-to-r from-emerald-500/10 to-teal-500/10 border border-bioGreen/20 transition-all duration-300 hover: hover:shadow-emerald-500/10">
             <div className="flex items-center justify-between">
               <span className="text-sm font-medium text-muted-foreground">Recovery Score</span>
-              <span className="text-[40px] sm:text-[52px] font-display font-light leading-none text-marble3 text-bioGreen">
+              <span className="text-[40px] sm:text-[52px] font-display font-light leading-none text-foreground text-bioGreen">
                 {Math.round(summary.recovery_score)}
               </span>
             </div>

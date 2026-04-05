@@ -114,7 +114,7 @@ const MetricCard = ({
         <div className="flex-1 min-w-0">
           <p className="text-xs text-muted-foreground mb-1">{label}</p>
           <div className="flex items-baseline gap-2">
-            <span className="text-[40px] sm:text-[52px] font-display font-light leading-none text-marble3">
+            <span className="text-[40px] sm:text-[52px] font-display font-light leading-none text-foreground">
               {formatNumber(value)}
             </span>
             {trend && <TrendIcon direction={trend} />}

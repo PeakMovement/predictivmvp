@@ -185,7 +185,7 @@ export function DailyBriefingCard({
           </div>
         </div>
         {createdAt && (
-          <p className="timestamp text-marble1/30 mt-1">
+          <p className="timestamp text-muted-foreground/60 mt-1">
             Compiled {format(new Date(createdAt), "HH:mm")} · {format(new Date(createdAt), "dd.MM.yy")}
           </p>
         )}
@@ -202,7 +202,7 @@ export function DailyBriefingCard({
         
         {!briefing ? (
           <div className="text-center py-6 space-y-4">
-            <p className="font-mono text-[9px] tracking-[0.3em] uppercase text-marble1/30">
+            <p className="font-mono text-[9px] tracking-[0.3em] uppercase text-muted-foreground/60">
               No briefing compiled yet
             </p>
             <Button onClick={() => onRefresh()} disabled={isGenerating} variant="outline" size="sm">

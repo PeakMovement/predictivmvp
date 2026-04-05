@@ -82,7 +82,7 @@ const OuraSyncStatus = ({ onSync, isSyncing = false }: OuraSyncStatusProps) => {
           title="Sync now"
           className="p-1 hover:opacity-70 transition-opacity disabled:opacity-30"
         >
-          <RefreshCw className={`h-3 w-3 text-marble1/30 ${isSyncing ? "animate-spin" : ""}`} />
+          <RefreshCw className={`h-3 w-3 text-muted-foreground/60 ${isSyncing ? "animate-spin" : ""}`} />
         </button>
       )}
     </div>

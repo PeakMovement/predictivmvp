@@ -15,7 +15,7 @@ export const ThemeToggle = () => {
       className={cn(
         "fixed top-4 right-4 sm:top-6 sm:right-6 z-50",
         "w-10 h-10",
-        "bg-surface border border-line",
+        "bg-card border border-border",
         "flex items-center justify-center",
         "hover:border-marble1/30 active:scale-[0.97] active:opacity-85",
         "transition-all duration-100"

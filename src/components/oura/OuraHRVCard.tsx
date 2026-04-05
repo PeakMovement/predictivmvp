@@ -66,21 +66,21 @@ export const OuraHRVCard = ({
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className={`bg-background/50  border border-glass-border  p-5 text-center ${hrv === null ? 'opacity-50' : ''}`}>
           <Activity className="w-7 h-7 text-blue-400 mx-auto mb-3" />
-          <p className="text-[40px] sm:text-[52px] font-display font-light leading-none text-marble3 mb-1">{hrv ?? '—'}</p>
+          <p className="text-[40px] sm:text-[52px] font-display font-light leading-none text-foreground mb-1">{hrv ?? '—'}</p>
           <p className="text-sm text-muted-foreground">HRV</p>
-          <p className="metric-unit text-marble1/45 mt-1">MS</p>
+          <p className="metric-unit text-muted-foreground mt-1">MS</p>
         </div>
 
         <div className={`bg-background/50  border border-glass-border  p-5 text-center ${restingHR === null ? 'opacity-50' : ''}`}>
           <Heart className="w-7 h-7 text-red-400 mx-auto mb-3" />
-          <p className="text-[40px] sm:text-[52px] font-display font-light leading-none text-marble3 mb-1">{restingHR ?? '—'}</p>
+          <p className="text-[40px] sm:text-[52px] font-display font-light leading-none text-foreground mb-1">{restingHR ?? '—'}</p>
           <p className="text-sm text-muted-foreground">Resting HR</p>
-          <p className="metric-unit text-marble1/45 mt-1">BPM</p>
+          <p className="metric-unit text-muted-foreground mt-1">BPM</p>
         </div>
 
         <div className={`bg-background/50  border border-glass-border  p-5 text-center ${spo2 === null ? 'opacity-50' : ''}`}>
           <Droplets className="w-7 h-7 text-cyan-400 mx-auto mb-3" />
-          <p className="text-[40px] sm:text-[52px] font-display font-light leading-none text-marble3 mb-1">{spo2 !== null ? spo2.toFixed(1) : '—'}</p>
+          <p className="text-[40px] sm:text-[52px] font-display font-light leading-none text-foreground mb-1">{spo2 !== null ? spo2.toFixed(1) : '—'}</p>
           <p className="text-sm text-muted-foreground">Blood Oxygen</p>
           <p className="text-xs text-muted-foreground mt-1">SpO₂ %</p>
         </div>

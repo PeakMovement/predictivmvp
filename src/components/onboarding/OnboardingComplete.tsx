@@ -44,14 +44,14 @@ export function OnboardingComplete({ data }: Props) {
     <div className="space-y-6">
       <div className="text-center space-y-2">
         <p className="font-mono text-[9px] tracking-[0.4em] uppercase text-coldBlue/40">Complete</p>
-        <h2 className="font-display font-light text-3xl text-marble3">
+        <h2 className="font-display font-light text-3xl text-foreground">
           {data.firstName ? `Ready, ${data.firstName}.` : "Ready."}
         </h2>
-        <p className="font-sans text-sm text-marble1/50 tracking-wide">Your profile at a glance</p>
+        <p className="font-sans text-sm text-muted-foreground tracking-wide">Your profile at a glance</p>
       </div>
 
       {/* Summary */}
-      <div className="border border-line divide-y divide-line">
+      <div className="border border-border divide-y divide-line">
         <SummaryRow label="Wearables" value={data.wearables.map(label).join(", ") || "—"} />
         <SummaryRow label="Sports" value={data.sports.map(label).join(", ") || "—"} />
         <SummaryRow label="Goals" value={data.healthGoals.map(label).join(", ") || "—"} />
@@ -66,7 +66,7 @@ export function OnboardingComplete({ data }: Props) {
         {generating ? (
           <div className="flex items-center justify-center gap-2">
             <Loader2 className="h-3.5 w-3.5 animate-spin text-coldBlue/50" />
-            <span className="font-mono text-[10px] tracking-wider text-marble1/40">Generating first briefing...</span>
+            <span className="font-mono text-[10px] tracking-wider text-muted-foreground">Generating first briefing...</span>
           </div>
         ) : briefingReady ? (
           <div className="flex items-center justify-center gap-2">
@@ -74,14 +74,14 @@ export function OnboardingComplete({ data }: Props) {
             <span className="font-mono text-[10px] tracking-wider text-bioGreen/80">Briefing ready on dashboard.</span>
           </div>
         ) : (
-          <p className="font-mono text-[10px] tracking-wider text-marble1/30">
+          <p className="font-mono text-[10px] tracking-wider text-muted-foreground/60">
             Dashboard will generate a briefing once data syncs.
           </p>
         )}
       </div>
 
-      <div className="border border-line p-4">
-        <ul className="font-sans text-xs text-marble1/40 tracking-wide space-y-1.5 leading-relaxed">
+      <div className="border border-border p-4">
+        <ul className="font-sans text-xs text-muted-foreground tracking-wide space-y-1.5 leading-relaxed">
           <li>Dashboard updates automatically as data syncs</li>
           <li>Check back daily for fresh insights from Yves</li>
           <li>Connect your wearable in Settings</li>
@@ -94,8 +94,8 @@ export function OnboardingComplete({ data }: Props) {
 function SummaryRow({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex justify-between items-center px-4 py-3">
-      <span className="font-mono text-[9px] tracking-[0.25em] uppercase text-marble1/35">{label}</span>
-      <span className="font-sans text-sm text-marble2 text-right max-w-[60%] tracking-wide">{value}</span>
+      <span className="font-mono text-[9px] tracking-[0.25em] uppercase text-muted-foreground/70">{label}</span>
+      <span className="font-sans text-sm text-foreground text-right max-w-[60%] tracking-wide">{value}</span>
     </div>
   );
 }

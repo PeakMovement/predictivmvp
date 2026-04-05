@@ -54,13 +54,13 @@ export const BottomNavigation = ({ activeTab, onNavigate }: BottomNavigationProp
       <>
         {isOpen && (
           <div
-            className="fixed inset-0 z-40 bg-void/80 animate-fade-in"
+            className="fixed inset-0 z-40 bg-background/80 animate-fade-in"
             onClick={() => setIsOpen(false)}
           />
         )}
 
         {isOpen && (
-          <div className="fixed bottom-24 left-4 right-4 z-50 bg-panel border border-line p-4 animate-fade-in">
+          <div className="fixed bottom-24 left-4 right-4 z-50 bg-popover border border-border p-4 animate-fade-in">
             <div className="grid grid-cols-3 gap-px bg-line">
               {navItems.map(({ name, icon: Icon, label }) => {
                 const isActive = activeTab === name;
@@ -75,8 +75,8 @@ export const BottomNavigation = ({ activeTab, onNavigate }: BottomNavigationProp
                       "flex flex-col items-center justify-center p-3 transition-all",
                       "min-h-[72px] touch-manipulation",
                       isActive
-                        ? "bg-surface text-coldBlue"
-                        : "bg-deep text-[rgba(200,194,190,0.35)] hover:text-marble1/60"
+                        ? "bg-card text-coldBlue"
+                        : "bg-background text-[rgba(200,194,190,0.35)] hover:text-muted-foreground"
                     )}
                   >
                     <div className="relative mb-1.5">
@@ -95,7 +95,7 @@ export const BottomNavigation = ({ activeTab, onNavigate }: BottomNavigationProp
 
             <button
               onClick={() => setIsOpen(false)}
-              className="w-full mt-3 py-3 bg-surface border border-line text-marble1/50 flex items-center justify-center gap-2 hover:text-marble2 transition-colors"
+              className="w-full mt-3 py-3 bg-card border border-border text-muted-foreground flex items-center justify-center gap-2 hover:text-foreground transition-colors"
             >
               <X className="h-4 w-4" />
               <span className="font-mono text-[9px] tracking-[0.2em] uppercase">Close</span>
@@ -108,7 +108,7 @@ export const BottomNavigation = ({ activeTab, onNavigate }: BottomNavigationProp
             onClick={() => setIsOpen(!isOpen)}
             aria-label={isOpen ? "Close navigation" : "Open navigation"}
             aria-expanded={isOpen}
-            className="pointer-events-auto flex items-center justify-center gap-2 h-12 px-6 bg-marble3 text-void active:scale-[0.97] active:opacity-85 transition-all duration-100 touch-manipulation"
+            className="pointer-events-auto flex items-center justify-center gap-2 h-12 px-6 bg-marble3 text-background active:scale-[0.97] active:opacity-85 transition-all duration-100 touch-manipulation"
           >
             {isOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
             <span className="font-sans text-xs font-semibold tracking-[0.2em] uppercase">
@@ -125,7 +125,7 @@ export const BottomNavigation = ({ activeTab, onNavigate }: BottomNavigationProp
     <nav
       role="navigation"
       aria-label="Main navigation"
-      className="fixed bottom-0 left-0 right-0 z-50 flex justify-around items-center h-[64px] bg-deep border-t border-line px-3 pb-[calc(env(safe-area-inset-bottom)+4px)]"
+      className="fixed bottom-0 left-0 right-0 z-50 flex justify-around items-center h-[64px] bg-background border-t border-border px-3 pb-[calc(env(safe-area-inset-bottom)+4px)]"
     >
       {navItems.map(({ name, icon: Icon, label }) => {
         const isActive = activeTab === name;
@@ -138,7 +138,7 @@ export const BottomNavigation = ({ activeTab, onNavigate }: BottomNavigationProp
             aria-current={isActive ? 'page' : undefined}
             className={cn(
               "flex flex-col items-center justify-center transition-colors",
-              isActive ? "text-coldBlue" : "text-[rgba(200,194,190,0.35)] hover:text-marble1/60"
+              isActive ? "text-coldBlue" : "text-[rgba(200,194,190,0.35)] hover:text-muted-foreground"
             )}
           >
             <div className="relative mb-1">

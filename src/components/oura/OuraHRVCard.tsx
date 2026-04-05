@@ -68,14 +68,14 @@ export const OuraHRVCard = ({
           <Activity className="w-7 h-7 text-blue-400 mx-auto mb-3" />
           <p className="text-[40px] sm:text-[52px] font-display font-light leading-none text-marble3 mb-1">{hrv ?? '—'}</p>
           <p className="text-sm text-muted-foreground">HRV</p>
-          <p className="font-mono text-[9px] tracking-[2px] uppercase text-marble1/45 mt-1">MS</p>
+          <p className="metric-unit text-marble1/45 mt-1">MS</p>
         </div>
 
         <div className={`bg-background/50  border border-glass-border  p-5 text-center ${restingHR === null ? 'opacity-50' : ''}`}>
           <Heart className="w-7 h-7 text-red-400 mx-auto mb-3" />
           <p className="text-[40px] sm:text-[52px] font-display font-light leading-none text-marble3 mb-1">{restingHR ?? '—'}</p>
           <p className="text-sm text-muted-foreground">Resting HR</p>
-          <p className="font-mono text-[9px] tracking-[2px] uppercase text-marble1/45 mt-1">BPM</p>
+          <p className="metric-unit text-marble1/45 mt-1">BPM</p>
         </div>
 
         <div className={`bg-background/50  border border-glass-border  p-5 text-center ${spo2 === null ? 'opacity-50' : ''}`}>

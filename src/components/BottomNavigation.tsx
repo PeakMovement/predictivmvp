@@ -85,7 +85,7 @@ export const BottomNavigation = ({ activeTab, onNavigate }: BottomNavigationProp
                         <span className="absolute -top-1 -right-1 h-2 w-2 bg-critical" />
                       )}
                     </div>
-                    <span className="font-mono text-[7px] tracking-[0.2em] uppercase">
+                    <span className="nav-label">
                       {label}
                     </span>
                   </button>
@@ -147,7 +147,7 @@ export const BottomNavigation = ({ activeTab, onNavigate }: BottomNavigationProp
                 <span className="absolute -top-1 -right-1 h-1.5 w-1.5 bg-critical" />
               )}
             </div>
-            <span className="font-mono text-[7px] tracking-[0.2em] uppercase">{label}</span>
+            <span className="nav-label">{label}</span>
           </button>
         );
       })}

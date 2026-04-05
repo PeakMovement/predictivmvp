@@ -233,7 +233,7 @@ export const UnifiedTrendCard = () => {
           "flex items-center justify-center gap-2 mt-4 transition-all duration-300",
           isTransitioning ? "opacity-0 scale-95" : "opacity-100 scale-100"
         )}>
-          <span className="text-[40px] sm:text-[52px] font-display font-light leading-none text-marble3">{currentMetric?.currentValue.toFixed(1)}</span>
+          <span className="text-[40px] sm:text-[52px] font-display font-light leading-none text-foreground">{currentMetric?.currentValue.toFixed(1)}</span>
           <Badge style={{ backgroundColor: statusColor }} className="text-white">
             {currentMetric?.unit}
           </Badge>

@@ -77,8 +77,8 @@ export function OnboardingChips({
               padClass,
               "cursor-pointer",
               isSelected
-                ? "bg-surface border-l-2 border-l-coldBlue"
-                : "bg-deep hover:bg-surface border-l-2 border-l-transparent"
+                ? "bg-card border-l-2 border-l-coldBlue"
+                : "bg-background hover:bg-card border-l-2 border-l-transparent"
             )}
           >
             {isSelected && (
@@ -90,7 +90,7 @@ export function OnboardingChips({
               <div className={cn(
                 "shrink-0 flex items-center justify-center",
                 size === "sm" ? "w-7 h-7" : "w-8 h-8",
-                isSelected ? "text-coldBlue" : "text-marble1/30"
+                isSelected ? "text-coldBlue" : "text-muted-foreground/60"
               )}>
                 {opt.icon}
               </div>
@@ -99,7 +99,7 @@ export function OnboardingChips({
               <div className={cn(
                 "font-sans font-medium tracking-wide leading-tight",
                 size === "sm" ? "text-xs" : "text-sm",
-                isSelected ? "text-marble2" : "text-marble1/60"
+                isSelected ? "text-foreground" : "text-muted-foreground"
               )}>
                 {opt.label}
               </div>
@@ -107,7 +107,7 @@ export function OnboardingChips({
                 <p className={cn(
                   "mt-0.5 leading-tight tracking-wide",
                   size === "sm" ? "text-[10px]" : "text-xs",
-                  isSelected ? "text-marble1/40" : "text-marble1/25"
+                  isSelected ? "text-muted-foreground" : "text-muted-foreground/50"
                 )}>
                   {opt.description}
                 </p>

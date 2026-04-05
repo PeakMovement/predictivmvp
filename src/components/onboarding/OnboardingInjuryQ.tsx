@@ -21,8 +21,8 @@ export function OnboardingInjuryQ({ data, onUpdate }: Props) {
     <div className="space-y-6">
       <div className="text-center space-y-2">
         <p className="font-mono text-[9px] tracking-[0.4em] uppercase text-coldBlue/40">Safety</p>
-        <h2 className="font-display font-light text-3xl text-marble3">Injury History</h2>
-        <p className="font-sans text-sm text-marble1/50 tracking-wide">Helps Yves calibrate safety thresholds</p>
+        <h2 className="font-display font-light text-3xl text-foreground">Injury History</h2>
+        <p className="font-sans text-sm text-muted-foreground tracking-wide">Helps Yves calibrate safety thresholds</p>
       </div>
 
       <OnboardingChips
@@ -41,7 +41,7 @@ export function OnboardingInjuryQ({ data, onUpdate }: Props) {
 
       {showDescription && (
         <div className="space-y-1.5 animate-fade-in">
-          <label htmlFor="injuryDesc" className="font-mono text-[9px] tracking-[0.3em] uppercase text-marble1/40">
+          <label htmlFor="injuryDesc" className="font-mono text-[9px] tracking-[0.3em] uppercase text-muted-foreground">
             Brief description
           </label>
           <Textarea
@@ -51,13 +51,13 @@ export function OnboardingInjuryQ({ data, onUpdate }: Props) {
             onChange={(e) => onUpdate({ injuryDescription: e.target.value.slice(0, 500) })}
             rows={3}
             maxLength={500}
-            className="bg-surface border-line text-marble2 placeholder:text-marble1/20 font-sans text-sm"
+            className="bg-card border-border text-foreground placeholder:text-muted-foreground/40 font-sans text-sm"
           />
-          <p className="font-mono text-[8px] tracking-wider text-marble1/20 text-right">{data.injuryDescription.length}/500</p>
+          <p className="font-mono text-[8px] tracking-wider text-muted-foreground/40 text-right">{data.injuryDescription.length}/500</p>
         </div>
       )}
 
-      <div className="border border-line p-3">
+      <div className="border border-border p-3">
         <p className="font-mono text-[8px] tracking-[0.15em] text-coldBlue/30">
           This information is private and only used to calibrate safety thresholds.
         </p>

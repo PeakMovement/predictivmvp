@@ -67,7 +67,7 @@ export function ActiveGoalSection({ className }: ActiveGoalSectionProps) {
         <p className="font-sans text-sm font-medium text-coldBlue tracking-wide">
           {primaryGoal}
         </p>
-        <p className="font-sans text-xs text-marble1/40 mt-1.5 leading-relaxed tracking-wide">
+        <p className="font-sans text-xs text-muted-foreground mt-1.5 leading-relaxed tracking-wide">
           Insights are framed around this priority. Recommendations consider how current choices affect your trajectory.
         </p>
       </div>

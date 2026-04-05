@@ -5,7 +5,7 @@ interface LoadingFallbackProps {
 
 export function LoadingFallback({ fullScreen = true }: LoadingFallbackProps) {
   const containerClass = fullScreen
-    ? 'flex items-center justify-center min-h-screen bg-void'
+    ? 'flex items-center justify-center min-h-screen bg-background'
     : 'flex items-center justify-center py-12';
 
   return (

@@ -33,8 +33,8 @@ export function OnboardingTrainingType({ data, onUpdate }: Props) {
     <div className="space-y-6">
       <div className="text-center space-y-2">
         <p className="font-mono text-[9px] tracking-[0.4em] uppercase text-coldBlue/40">Training</p>
-        <h2 className="font-display font-light text-3xl text-marble3">What Sports Do You Do?</h2>
-        <p className="font-sans text-sm text-marble1/50 tracking-wide">Select all that apply (up to 5)</p>
+        <h2 className="font-display font-light text-3xl text-foreground">What Sports Do You Do?</h2>
+        <p className="font-sans text-sm text-muted-foreground tracking-wide">Select all that apply (up to 5)</p>
       </div>
 
       <OnboardingChips

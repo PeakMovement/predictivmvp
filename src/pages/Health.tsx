@@ -318,7 +318,7 @@ export const Health = () => {
                     </>
                   ) : (
                     <div className="flex flex-col items-center gap-1 py-4">
-                      <span className="text-[40px] sm:text-[52px] font-display font-light leading-none text-marble1/40">—</span>
+                      <span className="text-[40px] sm:text-[52px] font-display font-light leading-none text-muted-foreground">—</span>
                       <p className="text-sm text-muted-foreground">Sleep Score</p>
                     </div>
                   )}
@@ -448,7 +448,7 @@ export const Health = () => {
                       <TooltipTrigger asChild>
                         <div className="bg-background/50 border border-glass-border  p-5 text-center cursor-help hover:bg-background/70 transition-colors">
                           <div className="flex justify-center mb-2">{icon}</div>
-                          <p className="text-[40px] sm:text-[52px] font-display font-light leading-none text-marble3">{value}</p>
+                          <p className="text-[40px] sm:text-[52px] font-display font-light leading-none text-foreground">{value}</p>
                           <p className="text-xs text-muted-foreground">{label}</p>
                           <p className="text-xs text-muted-foreground">{unit}</p>
                         </div>

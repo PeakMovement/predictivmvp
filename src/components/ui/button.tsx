@@ -8,14 +8,14 @@ export const buttonVariants = cva(
     variants: {
       variant: {
         default:
-          "bg-marble3 text-void hover:opacity-90",
+          "bg-marble3 text-background hover:opacity-90",
         destructive:
           "bg-critical text-pure hover:opacity-90",
         outline:
-          "border border-line bg-transparent text-marble1 hover:border-marble1/30 hover:text-marble2",
+          "border border-border bg-transparent text-muted-foreground hover:border-marble1/30 hover:text-foreground",
         secondary:
-          "bg-surface border border-line text-marble1 hover:text-marble2",
-        ghost: "text-marble1/60 hover:text-marble2 hover:bg-surface",
+          "bg-card border border-border text-muted-foreground hover:text-foreground",
+        ghost: "text-muted-foreground hover:text-foreground hover:bg-card",
         link: "text-coldBlue underline-offset-4 hover:underline tracking-normal font-normal",
       },
       size: {

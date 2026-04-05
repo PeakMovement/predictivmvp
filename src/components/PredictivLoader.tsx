@@ -40,7 +40,7 @@ export function PredictivLoadingState({ label }: { label?: string }) {
   return (
     <div className="flex flex-col items-center justify-center py-16 gap-4">
       {label && (
-        <p className="font-mono text-[9px] tracking-[0.3em] uppercase text-marble1/30">{label}</p>
+        <p className="font-mono text-[9px] tracking-[0.3em] uppercase text-muted-foreground/60">{label}</p>
       )}
       <PredictivLoader width="w-24" />
     </div>

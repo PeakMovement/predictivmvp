@@ -79,7 +79,7 @@ export default function Genesis() {
   };
 
   return (
-    <div className="min-h-screen bg-void text-marble2 overflow-hidden">
+    <div className="min-h-screen bg-background text-foreground overflow-hidden">
       {/* ── Ambient radial ────────────────────────────────────────── */}
       <div className="fixed inset-0 pointer-events-none">
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-coldBlue/[0.03] blur-[100px]" />
@@ -92,7 +92,7 @@ export default function Genesis() {
         </span>
         <button
           onClick={() => navigate("/login")}
-          className="font-mono text-[10px] tracking-[0.25em] uppercase text-marble1/50 hover:text-marble2 transition-colors"
+          className="font-mono text-[10px] tracking-[0.25em] uppercase text-muted-foreground hover:text-foreground transition-colors"
         >
           Sign In
         </button>
@@ -106,7 +106,7 @@ export default function Genesis() {
           </p>
 
           {/* ── Headline ─────────────────────────────────────────── */}
-          <h1 className="font-display font-light text-5xl sm:text-6xl md:text-7xl leading-[1.05] tracking-tight text-marble3 mb-4">
+          <h1 className="font-display font-light text-5xl sm:text-6xl md:text-7xl leading-[1.05] tracking-tight text-foreground mb-4">
             Predictiv.
           </h1>
           <h2 className="font-display font-light italic text-2xl sm:text-3xl md:text-4xl leading-tight text-gold/80 mb-10">
@@ -114,7 +114,7 @@ export default function Genesis() {
           </h2>
 
           {/* ── Subheadline ──────────────────────────────────────── */}
-          <p className="font-sans text-base text-marble1/70 max-w-lg mb-12 leading-relaxed tracking-wide">
+          <p className="font-sans text-base text-muted-foreground/70 max-w-lg mb-12 leading-relaxed tracking-wide">
             Connect your wearable. Answer 7 questions.
             Get an AI coach that knows your body, your sport, and your goals.
           </p>
@@ -122,13 +122,13 @@ export default function Genesis() {
           {/* ── CTA ──────────────────────────────────────────────── */}
           <button
             onClick={() => setView("signup")}
-            className="group bg-marble3 text-void font-sans font-semibold text-xs tracking-[0.25em] uppercase px-10 py-4 hover:opacity-90 active:scale-[0.97] active:opacity-85 transition-all duration-100"
+            className="group bg-marble3 text-background font-sans font-semibold text-xs tracking-[0.25em] uppercase px-10 py-4 hover:opacity-90 active:scale-[0.97] active:opacity-85 transition-all duration-100"
           >
             Begin
             <ArrowRight className="inline-block h-3.5 w-3.5 ml-3 group-hover:translate-x-0.5 transition-transform" />
           </button>
 
-          <p className="font-mono text-[9px] tracking-[0.2em] uppercase text-marble1/30 mt-6">
+          <p className="font-mono text-[9px] tracking-[0.2em] uppercase text-muted-foreground/60 mt-6">
             Free to start
           </p>
 
@@ -168,18 +168,18 @@ export default function Genesis() {
           <div className="mt-24">
             <button
               onClick={() => setView("signup")}
-              className="border border-marble1/20 text-marble2 font-sans font-semibold text-xs tracking-[0.25em] uppercase px-10 py-4 hover:border-marble1/40 active:scale-[0.97] active:opacity-85 transition-all duration-100"
+              className="border border-marble1/20 text-foreground font-sans font-semibold text-xs tracking-[0.25em] uppercase px-10 py-4 hover:border-marble1/40 active:scale-[0.97] active:opacity-85 transition-all duration-100"
             >
               Start Your Journey
             </button>
           </div>
 
           {/* ── Footer ───────────────────────────────────────────── */}
-          <footer className="mt-20 pt-8 border-t border-line w-full text-center">
-            <p className="font-mono text-[9px] tracking-[0.2em] uppercase text-marble1/30">
-              <a href="/terms" className="hover:text-marble1/50">Terms</a>
+          <footer className="mt-20 pt-8 border-t border-border w-full text-center">
+            <p className="font-mono text-[9px] tracking-[0.2em] uppercase text-muted-foreground/60">
+              <a href="/terms" className="hover:text-muted-foreground">Terms</a>
               <span className="mx-3">&middot;</span>
-              <a href="/privacy" className="hover:text-marble1/50">Privacy</a>
+              <a href="/privacy" className="hover:text-muted-foreground">Privacy</a>
               <span className="mx-3">&middot;</span>
               &copy; {new Date().getFullYear()} Predictiv.
             </p>
@@ -191,14 +191,14 @@ export default function Genesis() {
           <p className="font-mono text-[9px] tracking-[0.4em] uppercase text-coldBlue/50 mb-6">
             Create Account
           </p>
-          <h2 className="font-display font-light text-3xl text-marble3 mb-2">Begin here.</h2>
-          <p className="font-sans text-sm text-marble1/50 mb-10">
+          <h2 className="font-display font-light text-3xl text-foreground mb-2">Begin here.</h2>
+          <p className="font-sans text-sm text-muted-foreground mb-10">
             Then 7 quick questions to set up your profile.
           </p>
 
           <form onSubmit={handleSignup} className="w-full space-y-5">
             <div className="space-y-1.5">
-              <label htmlFor="username" className="font-mono text-[9px] tracking-[0.3em] uppercase text-marble1/40">
+              <label htmlFor="username" className="font-mono text-[9px] tracking-[0.3em] uppercase text-muted-foreground">
                 Name
               </label>
               <Input
@@ -208,12 +208,12 @@ export default function Genesis() {
                 onChange={(e) => setUsername(e.target.value)}
                 required
                 disabled={isLoading}
-                className="bg-surface border-line text-marble2 placeholder:text-marble1/25 font-sans"
+                className="bg-card border-border text-foreground placeholder:text-muted-foreground/50 font-sans"
               />
             </div>
 
             <div className="space-y-1.5">
-              <label htmlFor="email" className="font-mono text-[9px] tracking-[0.3em] uppercase text-marble1/40">
+              <label htmlFor="email" className="font-mono text-[9px] tracking-[0.3em] uppercase text-muted-foreground">
                 Email
               </label>
               <Input
@@ -224,12 +224,12 @@ export default function Genesis() {
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 disabled={isLoading}
-                className="bg-surface border-line text-marble2 placeholder:text-marble1/25 font-sans"
+                className="bg-card border-border text-foreground placeholder:text-muted-foreground/50 font-sans"
               />
             </div>
 
             <div className="space-y-1.5">
-              <label htmlFor="password" className="font-mono text-[9px] tracking-[0.3em] uppercase text-marble1/40">
+              <label htmlFor="password" className="font-mono text-[9px] tracking-[0.3em] uppercase text-muted-foreground">
                 Password
               </label>
               <Input
@@ -240,7 +240,7 @@ export default function Genesis() {
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 disabled={isLoading}
-                className="bg-surface border-line text-marble2 placeholder:text-marble1/25 font-sans"
+                className="bg-card border-border text-foreground placeholder:text-muted-foreground/50 font-sans"
               />
             </div>
 
@@ -251,7 +251,7 @@ export default function Genesis() {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full bg-marble3 text-void font-sans font-semibold text-xs tracking-[0.25em] uppercase py-4 hover:opacity-90 active:scale-[0.97] active:opacity-85 transition-all duration-100 disabled:opacity-50"
+              className="w-full bg-marble3 text-background font-sans font-semibold text-xs tracking-[0.25em] uppercase py-4 hover:opacity-90 active:scale-[0.97] active:opacity-85 transition-all duration-100 disabled:opacity-50"
             >
               {isLoading ? (
                 <span className="flex items-center justify-center gap-2">
@@ -265,21 +265,21 @@ export default function Genesis() {
             </button>
           </form>
 
-          <p className="font-mono text-[8px] tracking-[0.15em] text-marble1/25 mt-8 text-center leading-relaxed">
+          <p className="font-mono text-[8px] tracking-[0.15em] text-muted-foreground/50 mt-8 text-center leading-relaxed">
             By signing up you agree to our{" "}
-            <a href="/terms" className="underline hover:text-marble1/50">Terms</a>
+            <a href="/terms" className="underline hover:text-muted-foreground">Terms</a>
             {" and "}
-            <a href="/privacy" className="underline hover:text-marble1/50">Privacy Policy</a>.
+            <a href="/privacy" className="underline hover:text-muted-foreground">Privacy Policy</a>.
           </p>
 
           <button
             onClick={() => setView("hero")}
-            className="mt-8 font-mono text-[10px] tracking-[0.2em] uppercase text-marble1/40 hover:text-marble2 transition-colors"
+            className="mt-8 font-mono text-[10px] tracking-[0.2em] uppercase text-muted-foreground hover:text-foreground transition-colors"
           >
             &larr; Back
           </button>
 
-          <p className="mt-4 font-sans text-sm text-marble1/40">
+          <p className="mt-4 font-sans text-sm text-muted-foreground">
             Already have an account?{" "}
             <button onClick={() => navigate("/login")} className="text-coldBlue hover:text-ice transition-colors">
               Sign in
@@ -295,10 +295,10 @@ export default function Genesis() {
 
 function FeatureCard({ eyebrow, title, description }: { eyebrow: string; title: string; description: string }) {
   return (
-    <div className="bg-surface p-6 text-left">
+    <div className="bg-card p-6 text-left">
       <p className="font-mono text-[8px] tracking-[0.4em] uppercase text-coldBlue/40 mb-4">{eyebrow}</p>
-      <h3 className="font-sans font-semibold text-sm text-marble2 tracking-wide mb-2">{title}</h3>
-      <p className="font-sans text-xs text-marble1/50 leading-relaxed tracking-wide">{description}</p>
+      <h3 className="font-sans font-semibold text-sm text-foreground tracking-wide mb-2">{title}</h3>
+      <p className="font-sans text-xs text-muted-foreground leading-relaxed tracking-wide">{description}</p>
     </div>
   );
 }
@@ -307,8 +307,8 @@ function Step({ number, title, description }: { number: string; title: string; d
   return (
     <div className="text-center">
       <p className="font-mono text-[10px] tracking-[0.2em] text-coldBlue/50 mb-3">{number}</p>
-      <h3 className="font-sans font-semibold text-sm text-marble2 tracking-wide mb-1">{title}</h3>
-      <p className="font-sans text-xs text-marble1/40 tracking-wide">{description}</p>
+      <h3 className="font-sans font-semibold text-sm text-foreground tracking-wide mb-1">{title}</h3>
+      <p className="font-sans text-xs text-muted-foreground tracking-wide">{description}</p>
     </div>
   );
 }

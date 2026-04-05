@@ -152,7 +152,7 @@ const CircularGauge = ({
   return (
     <div className="bg-surface border border-line p-3 sm:p-6 hover:border-marble1/20 transition-all duration-150">
       {/* Card title */}
-      <h3 className="font-sans font-semibold text-[10px] sm:text-[12px] tracking-[2px] uppercase text-marble1/60 mb-3 whitespace-nowrap">{title}</h3>
+      <h3 className="card-title-metric text-marble1/60 mb-3 whitespace-nowrap">{title}</h3>
       <div className="flex flex-col items-center justify-center gap-2">
         <div className="relative w-24 h-24 sm:w-32 sm:h-32">
           <svg className="w-24 h-24 sm:w-32 sm:h-32 transform -rotate-90" viewBox="0 0 100 100">
@@ -180,9 +180,9 @@ const CircularGauge = ({
           </svg>
           <div className="absolute inset-0 flex flex-col items-center justify-center">
             {/* Big metric number */}
-            <span className="text-[40px] sm:text-[52px] font-display font-light leading-none text-marble3">{safeValue}</span>
+            <span className="font-display text-[40px] sm:text-[52px] text-marble3">{safeValue}</span>
             {/* Unit label */}
-            <span className="font-mono text-[9px] tracking-[2px] uppercase text-marble1/45 mt-1">{unit}</span>
+            <span className="metric-unit text-marble1/45 mt-1">{unit}</span>
           </div>
         </div>
         {note && (

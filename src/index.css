@@ -3,6 +3,141 @@
 @tailwind utilities;
 
 /* ══════════════════════════════════════════════════════════════════════
+   PREDICTIV. FONT ENFORCEMENT — These rules use !important to guarantee
+   fonts are applied regardless of component-level overrides.
+   ══════════════════════════════════════════════════════════════════════ */
+
+/* STEP 2 — Global default font */
+* {
+  font-family: 'Rajdhani', sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* STEP 3 — Metric values: the big numbers */
+.font-display,
+[class*="font-display"] {
+  font-family: 'Cormorant Garamond', Georgia, serif !important;
+  font-weight: 300 !important;
+  line-height: 1 !important;
+  letter-spacing: -0.5px !important;
+}
+
+/* STEP 4 — Unit labels (%, ms, km, bpm, mL/kg, TSS, kcal) */
+.metric-unit {
+  font-family: 'Space Mono', monospace !important;
+  font-size: 8px !important;
+  letter-spacing: 2.5px !important;
+  text-transform: uppercase !important;
+}
+
+/* STEP 5 — Section header labels (RECOVERY, PERFORMANCE, LOAD) */
+.section-header {
+  font-family: 'Space Mono', monospace !important;
+  font-size: 8px !important;
+  letter-spacing: 4px !important;
+  text-transform: uppercase !important;
+  opacity: 0.5 !important;
+  margin-bottom: 16px;
+  margin-top: 40px;
+}
+
+.dark .section-header,
+:root .section-header {
+  color: #A8C4D4;
+}
+
+.light .section-header {
+  color: rgba(13, 13, 30, 0.35);
+}
+
+/* STEP 6 — Card titles (Resting HR, VO2 Max, Strain, etc) */
+.card-title-metric {
+  font-family: 'Rajdhani', sans-serif !important;
+  font-weight: 600 !important;
+  font-size: 12px !important;
+  letter-spacing: 2px !important;
+  text-transform: uppercase !important;
+}
+
+/* STEP 7 — Yves data output lines */
+.yves-data {
+  font-family: 'Space Mono', monospace !important;
+  font-size: 10px !important;
+  letter-spacing: 1.5px !important;
+  text-transform: uppercase !important;
+  line-height: 2.2 !important;
+}
+
+/* Yves italic insight */
+.yves-insight {
+  font-family: 'Cormorant Garamond', Georgia, serif !important;
+  font-weight: 300 !important;
+  font-style: italic !important;
+  font-size: 15px !important;
+  line-height: 1.6 !important;
+}
+
+/* STEP 8 — Body copy / descriptions */
+.body-text {
+  font-family: 'Rajdhani', sans-serif !important;
+  font-weight: 400 !important;
+  font-size: 15px !important;
+  letter-spacing: 0.4px !important;
+  line-height: 1.75 !important;
+}
+
+/* STEP 9 — Navigation labels */
+.nav-label {
+  font-family: 'Space Mono', monospace !important;
+  font-size: 7px !important;
+  letter-spacing: 2px !important;
+  text-transform: uppercase !important;
+}
+
+/* STEP 10 — Button text */
+button,
+[role="button"],
+.btn-text {
+  font-family: 'Rajdhani', sans-serif !important;
+  font-weight: 600 !important;
+  letter-spacing: 3px !important;
+  text-transform: uppercase !important;
+}
+
+/* Reset font for inputs inside buttons and non-button elements */
+input, textarea, select {
+  font-family: 'Rajdhani', sans-serif !important;
+  font-weight: 400 !important;
+  letter-spacing: 0.4px !important;
+  text-transform: none !important;
+}
+
+/* STEP 11 — Timestamps, captions */
+.timestamp,
+.caption {
+  font-family: 'Space Mono', monospace !important;
+  font-size: 8px !important;
+  letter-spacing: 2px !important;
+  text-transform: uppercase !important;
+  opacity: 0.4 !important;
+}
+
+/* STEP 12 — Status badges */
+.status-badge {
+  font-family: 'Space Mono', monospace !important;
+  font-size: 7px !important;
+  letter-spacing: 2.5px !important;
+  text-transform: uppercase !important;
+}
+
+/* ── Enforce Space Mono on all font-mono elements ──────────────────── */
+.font-mono,
+[class*="font-mono"],
+code, pre {
+  font-family: 'Space Mono', monospace !important;
+}
+
+/* ══════════════════════════════════════════════════════════════════════
    PREDICTIV. DESIGN SYSTEM v1.0
    ══════════════════════════════════════════════════════════════════════
    Colour distribution law:

@@ -185,7 +185,7 @@ export function DailyBriefingCard({
           </div>
         </div>
         {createdAt && (
-          <p className="font-mono text-[7px] tracking-[2px] uppercase text-marble1/30 mt-1">
+          <p className="timestamp text-marble1/30 mt-1">
             Compiled {format(new Date(createdAt), "HH:mm")} · {format(new Date(createdAt), "dd.MM.yy")}
           </p>
         )}
@@ -312,7 +312,7 @@ function CollapsibleBriefingSections({ briefing, recommendations = [] }: { brief
         icon={<Brain className="h-4 w-4" />}
         preview={summaryPreview}
       >
-        <p className="text-sm leading-relaxed text-foreground">
+        <p className="body-text text-foreground">
           {briefing.summary}
         </p>
         {summaryExplanation && (

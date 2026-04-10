@@ -42,6 +42,9 @@ interface WearableSession {
   rem_sleep_duration: number | null;
   light_sleep_duration: number | null;
   sleep_efficiency: number | null;
+  // Oura temperature (Gen 3+)
+  temperature_deviation: number | null;
+  temperature_trend_deviation: number | null;
 }
 
 export const useWearableSessions = (userId: string | undefined, source?: string) => {
@@ -88,6 +91,8 @@ export const useWearableSessions = (userId: string | undefined, source?: string)
           // Sleep stage columns (migration 20260208114830)
           "total_sleep_duration", "deep_sleep_duration",
           "rem_sleep_duration", "light_sleep_duration", "sleep_efficiency",
+          // Oura temperature (Gen 3+)
+          "temperature_deviation", "temperature_trend_deviation",
         ].join(",");
 
         let query = supabase
@@ -95,18 +100,69 @@ export const useWearableSessions = (userId: string | undefined, source?: string)
           .select(COLUMNS)
           .eq("user_id", userId)
           .order("date", { ascending: false })
-          .limit(1);
+          .limit(2);
 
         // Filter by source when specified
         if (source && source !== "auto") {
           query = query.eq("source", source);
         }
 
-        const { data: sessionData, error: fetchError } = await query.maybeSingle();
+        const { data: sessions, error: fetchError } = await query;
 
         if (fetchError) throw fetchError;
 
-        setData(sessionData as unknown as WearableSession);
+        if (!sessions || sessions.length === 0) {
+          setData(null);
+          return;
+        }
+
+        // Postgres `numeric`/`decimal` columns come back from PostgREST as
+        // strings to preserve precision. Coerce to number so consumers can
+        // safely call `.toFixed()` / arithmetic without runtime crashes.
+        const NUMERIC_FIELDS: (keyof WearableSession)[] = [
+          "readiness_score", "sleep_score", "activity_score",
+          "hrv_avg", "resting_hr", "spo2_avg",
+          "total_steps", "active_calories", "total_calories",
+          "total_distance_km", "running_distance_km",
+          "duration_minutes", "avg_heart_rate", "max_heart_rate",
+          "training_load",
+          "body_battery_start", "body_battery_end",
+          "body_battery_min", "body_battery_max",
+          "stress_avg", "stress_max", "vo2_max",
+          "respiration_rate_avg",
+          "intensity_minutes_moderate", "intensity_minutes_vigorous",
+          "total_sleep_duration", "deep_sleep_duration",
+          "rem_sleep_duration", "light_sleep_duration", "sleep_efficiency",
+          "temperature_deviation", "temperature_trend_deviation",
+        ];
+        const coerceNumerics = (row: any): WearableSession => {
+          const out = { ...row };
+          for (const key of NUMERIC_FIELDS) {
+            const v = out[key];
+            out[key] = v == null || v === "" ? null : Number(v);
+          }
+          return out as WearableSession;
+        };
+
+        // Use most recent session as base, but fill null activity fields
+        // from the previous session if today's data hasn't synced yet
+        const latest = coerceNumerics(sessions[0]);
+        const previous = sessions[1] ? coerceNumerics(sessions[1]) : undefined;
+
+        const merged: WearableSession = { ...latest };
+        if (previous) {
+          if (merged.activity_score === null) merged.activity_score = previous.activity_score;
+          if (merged.total_steps === null) merged.total_steps = previous.total_steps;
+          if (merged.active_calories === null) merged.active_calories = previous.active_calories;
+          if (merged.total_calories === null) merged.total_calories = previous.total_calories;
+          // Temperature deviation is a slowly-changing daily metric — fall back
+          // to yesterday's value so the gauge shows data while today's Oura
+          // daily summary is still being computed.
+          if (merged.temperature_deviation === null) merged.temperature_deviation = previous.temperature_deviation;
+          if (merged.temperature_trend_deviation === null) merged.temperature_trend_deviation = previous.temperature_trend_deviation;
+        }
+
+        setData(merged);
       } catch (err) {
         console.error("Error fetching wearable session:", err);
         setError(err instanceof Error ? err : new Error("Failed to fetch wearable session"));

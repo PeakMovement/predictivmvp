@@ -75,12 +75,12 @@ export const BottomNavigation = ({ activeTab, onNavigate }: BottomNavigationProp
                       "flex flex-col items-center justify-center p-3 transition-all",
                       "min-h-[72px] touch-manipulation",
                       isActive
-                        ? "bg-card text-coldBlue"
-                        : "bg-background text-[rgba(200,194,190,0.35)] hover:text-muted-foreground"
+                        ? "bg-card text-primary"
+                        : "bg-background text-muted-foreground/50 hover:text-foreground hover:bg-card"
                     )}
                   >
                     <div className="relative mb-1.5">
-                      <Icon className={cn("h-5 w-5", isActive ? "text-coldBlue" : "text-[rgba(200,194,190,0.25)]")} />
+                      <Icon className={cn("h-5 w-5", isActive ? "text-primary" : "text-muted-foreground/40")} />
                       {showBadge && (
                         <span className="absolute -top-1 -right-1 h-2 w-2 bg-critical" />
                       )}
@@ -137,12 +137,14 @@ export const BottomNavigation = ({ activeTab, onNavigate }: BottomNavigationProp
             aria-label={`Navigate to ${label}`}
             aria-current={isActive ? 'page' : undefined}
             className={cn(
-              "flex flex-col items-center justify-center transition-colors",
-              isActive ? "text-coldBlue" : "text-[rgba(200,194,190,0.35)] hover:text-muted-foreground"
+              "flex flex-col items-center justify-center px-2 py-1 transition-all duration-150 border-t-2",
+              isActive
+                ? "text-primary border-t-primary"
+                : "text-muted-foreground/50 border-t-transparent hover:text-foreground hover:border-t-muted-foreground/30 hover:bg-muted"
             )}
           >
             <div className="relative mb-1">
-              <Icon className={cn("h-5 w-5", isActive ? "text-coldBlue" : "text-[rgba(200,194,190,0.25)]")} />
+              <Icon className={cn("h-5 w-5", isActive ? "text-primary" : "text-muted-foreground/40 group-hover:text-foreground")} />
               {showBadge && (
                 <span className="absolute -top-1 -right-1 h-1.5 w-1.5 bg-critical" />
               )}

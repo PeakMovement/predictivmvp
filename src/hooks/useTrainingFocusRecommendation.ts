@@ -31,7 +31,6 @@ export function useTrainingFocusRecommendation() {
         .from("yves_recommendations")
         .select("id, category, priority, recommendation_text, internal_reasoning, data_sources, confidence, created_at")
         .eq("user_id", user.id)
-        .in("category", ["training", "recovery"])
         .gte("created_at", since.toISOString())
         .order("created_at", { ascending: false })
         .limit(10);

@@ -103,12 +103,6 @@ Deno.serve(async (req: Request) => {
       client_secret: ouraClientSecret,
     };
 
-      grant_type: tokenRequestBody.grant_type,
-      redirect_uri: tokenRequestBody.redirect_uri,
-      client_id: `${ouraClientId.substring(0, 8)}...`,
-      code_length: code.length
-    });
-
     const tokenResponse = await fetch("https://api.ouraring.com/oauth/token", {
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -161,15 +155,15 @@ Deno.serve(async (req: Request) => {
 
     // Upsert tokens to database with proper scope
     const { data: upsertData, error } = await supabase
-      .from("oura_tokens")
+      .from("wearable_tokens")
       .upsert({
         user_id,
         access_token: tokenData.access_token,
         refresh_token: tokenData.refresh_token,
         expires_at: expiresAtTimestamp,
-        scope: tokenData.scope || "email personal daily heartrate workout tag session spo2",
+        scope: "oura",
       }, {
-        onConflict: 'user_id'
+        onConflict: 'user_id,scope'
       })
       .select();
 

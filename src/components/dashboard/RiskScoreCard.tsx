@@ -50,6 +50,8 @@ function calcScore(
   trends: RecoveryTrend[],
   sessions: WearableSession[],
   hrvBaseline: number | null,
+  latestHrv?: number | null,
+  latestSleep?: number | null,
 ): ScoreResult {
   if (trends.length === 0 && sessions.length === 0) {
     return { score: 0, level: "unknown", explanation: "", componentScores: { acwr: 0, fatigue: 0, hrv: 0, sleep: 0 }, factors: { acwr: 0, fatigueIndex: 0, hrvDropPct: null, sleepScore: null, baselineHrv: null } };

@@ -99,7 +99,7 @@ export default function Register() {
       <div className="w-full max-w-md">
         {/* Logo/Title */}
         <div className="text-center mb-8 animate-fade-in">
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent mb-2">
+          <h1 className="font-display text-4xl font-light text-foreground mb-2 tracking-tight">
             PREDICTIV
           </h1>
           <p className="text-muted-foreground">Create your account</p>
@@ -192,7 +192,7 @@ export default function Register() {
             <Button
               type="submit"
               disabled={isLoading}
-              className="w-full btn-primary-gradient hover:scale-105 transition-transform"
+              className="w-full"
             >
               {isLoading ? "Creating account..." : "Create Account"}
             </Button>

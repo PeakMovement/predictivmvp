@@ -10,6 +10,7 @@ import { OnboardingGoalsQ } from "./OnboardingGoalsQ";
 import { OnboardingInjuryQ } from "./OnboardingInjuryQ";
 import { OnboardingLifestyle } from "./OnboardingLifestyle";
 import { OnboardingComplete } from "./OnboardingComplete";
+import { OnboardingPreferences } from "./OnboardingPreferences";
 
 // ── Types ────────────────────────────────────────────────────────────
 export interface OnboardingData {
@@ -19,14 +20,19 @@ export interface OnboardingData {
   gender: string;
   // Screen 3 — Wearable (Q1) — multi-select
   wearables: string[];
-  // Screen 4 — Sports (Q2) — multi-select individual sports
+  // Screen 4 — Activity Preferences (Stream 3)
+  preferredActivities: string[];
+  excludedActivities: string[];
+  equipmentAccess: string[];
+  availableMinutes: number | null;
+  // Screen 5 — Sports (Q2) — multi-select individual sports
   sports: string[];
-  // Screen 5 — Goals (Q6)
+  // Screen 6 — Goals (Q6)
   healthGoals: string[];
-  // Screen 6 — Injury (Q7)
+  // Screen 7 — Injury (Q7)
   injuryHistory: string;
   injuryDescription: string;
-  // Screen 7 — Lifestyle (Q3+Q4+Q5)
+  // Screen 8 — Lifestyle (Q3+Q4+Q5)
   stressLevel: number;
   sleepQuality: string;
   compliance: string;
@@ -37,6 +43,10 @@ const INITIAL_DATA: OnboardingData = {
   dateOfBirth: "",
   gender: "",
   wearables: [],
+  preferredActivities: [],
+  excludedActivities: [],
+  equipmentAccess: [],
+  availableMinutes: null,
   sports: [],
   healthGoals: [],
   injuryHistory: "",
@@ -50,6 +60,7 @@ const STEP_TITLES = [
   "Welcome",
   "About You",
   "Wearable",
+  "Activity Preferences",
   "Training",
   "Goals",
   "Injury History",
@@ -148,23 +159,23 @@ export const OnboardingFlow = ({ onComplete, onSkip }: OnboardingFlowProps) => {
       setValidationError("Please select your wearable (or 'No Wearable')");
       return false;
     }
-    if (step === 3 && data.sports.length === 0) {
+    if (step === 4 && data.sports.length === 0) {
       setValidationError("Please select at least one sport");
       return false;
     }
-    if (step === 4 && data.healthGoals.length === 0) {
+    if (step === 5 && data.healthGoals.length === 0) {
       setValidationError("Please select at least one health goal");
       return false;
     }
-    if (step === 5 && !data.injuryHistory) {
+    if (step === 6 && !data.injuryHistory) {
       setValidationError("Please select your injury history");
       return false;
     }
-    if (step === 6 && !data.sleepQuality) {
+    if (step === 7 && !data.sleepQuality) {
       setValidationError("Please select your sleep quality");
       return false;
     }
-    if (step === 6 && !data.compliance) {
+    if (step === 7 && !data.compliance) {
       setValidationError("Please select your engagement preference");
       return false;
     }
@@ -188,10 +199,11 @@ export const OnboardingFlow = ({ onComplete, onSkip }: OnboardingFlowProps) => {
       switch (stepIndex) {
         case 1: await saveAboutYou(userId, data, now); break;
         case 2: await saveWearable(userId, data, now); break;
-        case 3: await saveTraining(userId, data, now); break;
-        case 4: await saveGoals(userId, data, now); break;
-        case 5: await saveInjury(userId, data, now); break;
-        case 6: await saveLifestyle(userId, data, now); break;
+        case 3: await savePreferences(userId, data, now); break; // Stream 3
+        case 4: await saveTraining(userId, data, now); break;
+        case 5: await saveGoals(userId, data, now); break;
+        case 6: await saveInjury(userId, data, now); break;
+        case 7: await saveLifestyle(userId, data, now); break;
       }
       return true;
     } catch (err) {
@@ -252,6 +264,10 @@ export const OnboardingFlow = ({ onComplete, onSkip }: OnboardingFlowProps) => {
       memory_key: "onboarding_signals",
       memory_value: JSON.stringify({
         wearables: data.wearables,
+        preferredActivities: data.preferredActivities,
+        excludedActivities: data.excludedActivities,
+        equipmentAccess: data.equipmentAccess,
+        availableMinutes: data.availableMinutes,
         sports: data.sports,
         healthGoals: data.healthGoals,
         injuryHistory: data.injuryHistory,
@@ -360,11 +376,12 @@ export const OnboardingFlow = ({ onComplete, onSkip }: OnboardingFlowProps) => {
               {step === 0 && <OnboardingWelcome onNext={handleNext} onBack={handleBack} />}
               {step === 1 && <OnboardingAboutYou data={data} onUpdate={update} />}
               {step === 2 && <OnboardingWearableQ data={data} onUpdate={update} />}
-              {step === 3 && <OnboardingTrainingType data={data} onUpdate={update} />}
-              {step === 4 && <OnboardingGoalsQ data={data} onUpdate={update} />}
-              {step === 5 && <OnboardingInjuryQ data={data} onUpdate={update} />}
-              {step === 6 && <OnboardingLifestyle data={data} onUpdate={update} />}
-              {step === 7 && <OnboardingComplete data={data} />}
+              {step === 3 && <OnboardingPreferences data={data} onUpdate={update} />}
+              {step === 4 && <OnboardingTrainingType data={data} onUpdate={update} />}
+              {step === 5 && <OnboardingGoalsQ data={data} onUpdate={update} />}
+              {step === 6 && <OnboardingInjuryQ data={data} onUpdate={update} />}
+              {step === 7 && <OnboardingLifestyle data={data} onUpdate={update} />}
+              {step === 8 && <OnboardingComplete data={data} />}
             </div>
 
             {/* Validation error */}
@@ -431,6 +448,34 @@ async function saveAboutYou(userId: string, data: OnboardingData, now: string) {
       user_id: userId, memory_key: "preferred_name", memory_value: firstName, last_updated: now,
     }, { onConflict: "user_id,memory_key" });
   }
+}
+
+async function savePreferences(userId: string, data: OnboardingData, now: string) {
+  const { preferredActivities, excludedActivities, equipmentAccess, availableMinutes } = data;
+
+  await supabase.from("user_interests").upsert({
+    user_id: userId,
+    preferred_activities: preferredActivities,
+    excluded_activities: excludedActivities,
+    equipment_access: equipmentAccess,
+    available_minutes: availableMinutes,
+    collected_at: now,
+    collection_method: "onboarding",
+    updated_at: now,
+  }, { onConflict: "user_id" });
+
+  // Mirror to memory bank so Yves can read preferences in briefings
+  await supabase.from("yves_memory_bank").upsert({
+    user_id: userId,
+    memory_key: "activity_preferences",
+    memory_value: JSON.stringify({
+      preferred_activities: preferredActivities,
+      excluded_activities: excludedActivities,
+      equipment_access: equipmentAccess,
+      available_minutes: availableMinutes,
+    }),
+    last_updated: now,
+  }, { onConflict: "user_id,memory_key" });
 }
 
 async function saveWearable(userId: string, data: OnboardingData, now: string) {

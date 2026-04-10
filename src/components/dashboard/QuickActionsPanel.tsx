@@ -130,9 +130,9 @@ export const QuickActionsPanel = () => {
       label: "Initialise Yves",
       description: "Ask anything",
       onClick: () => setIsChatOpen(true),
-      color: "text-purple-500",
-      bgColor: "bg-purple-500/10",
-      hoverColor: "hover:bg-purple-500/20",
+      color: "text-[#C9A96E]",
+      bgColor: "bg-[#C9A96E]/10",
+      hoverColor: "hover:bg-[#C9A96E]/20",
     },
     {
       id: "view-plan",

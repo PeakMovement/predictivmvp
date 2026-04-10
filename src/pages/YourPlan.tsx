@@ -52,7 +52,7 @@ const getCategoryStyle = (category: string) => {
   switch (category) {
     case "Training": return "border-blue-400/30 text-blue-400 bg-blue-500/10";
     case "Recovery": return "border-green-400/30 text-bioGreen bg-bioGreen/10";
-    case "Insight": return "border-purple-400/30 text-purple-400 bg-purple-500/10";
+    case "Insight": return "border-[#C9A96E]/30 text-[#C9A96E] bg-[#C9A96E]/10";
     default: return "border-muted text-muted-foreground bg-muted/10";
   }
 };
@@ -746,8 +746,8 @@ const WeeklyInsightsSection = () => {
     <>
       <div className="bg-glass  border border-glass-border  p-6  hover:bg-glass-highlight hover:scale-105 hover:-translate-y-1 transition-all duration-300 ease-out animate-fade-in transform-gpu mb-8">
         <div className="flex items-center gap-3 mb-6">
-          <div className="w-8 h-8 bg-purple-500/20  flex items-center justify-center hover:scale-110 transition-transform duration-200">
-            <TrendingUp size={16} className="text-purple-400" />
+          <div className="w-8 h-8 bg-primary/10 flex items-center justify-center hover:scale-110 transition-transform duration-200">
+            <TrendingUp size={16} className="text-primary" />
           </div>
           <h3 className="text-lg font-semibold text-foreground">Weekly Insights</h3>
           <button
@@ -864,7 +864,7 @@ const WeeklyInsightsSection = () => {
             recommendations: generateRecommendations()
           })}
           disabled={trends.length === 0}
-          className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-purple-500/20 text-purple-400  border border-purple-400/30 hover:bg-purple-500/30 hover:scale-105 active:scale-95 transition-all duration-200 font-medium  disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+          className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-primary/10 text-primary border border-primary/30 hover:bg-primary/20 hover:scale-105 active:scale-95 transition-all duration-200 font-medium disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
         >
           <Download size={18} />
           <span>Download Weekly Report</span>

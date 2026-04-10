@@ -26,6 +26,7 @@ import { RiskAlertBanner } from "@/components/dashboard/RiskAlertBanner";
 import { useGarminTokenStatus } from "@/hooks/useGarminTokenStatus";
 import { GarminExpiredBanner } from "@/components/GarminExpiredBanner";
 import { GettingStartedChecklist } from "@/components/dashboard/GettingStartedChecklist";
+import { LearnedPatternsSection } from "@/components/dashboard/LearnedPatternsSection";
 
 const WelcomeHeader = ({
   onCustomize,
@@ -355,6 +356,19 @@ export const Dashboard = () => {
               >
                 <div className="mb-8 transition-all duration-300">
                   <QuickActionsPanel />
+                </div>
+              </LayoutBlock>
+
+              {/* Transparency Card — What Yves knows about you */}
+              <LayoutBlock
+                blockId="learnedPatterns"
+                displayName="What Yves Knows"
+                pageId="dashboard"
+                size="wide"
+                visible={isSectionVisible('learnedPatterns')}
+              >
+                <div className="mb-8">
+                  <LearnedPatternsSection />
                 </div>
               </LayoutBlock>
 

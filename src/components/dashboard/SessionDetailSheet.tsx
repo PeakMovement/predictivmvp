@@ -227,7 +227,7 @@ export const SessionDetailSheet = ({
                   Recovery Context
                 </h4>
                 <div className="bg-card/50  border border-border/40 px-3 divide-y divide-border/30">
-                  <MetricRow icon={Moon} label="Sleep Score" value={wearable?.sleep_score} unit="/100" accent="text-indigo-400" />
+                  <MetricRow icon={Moon} label="Sleep Score" value={wearable?.sleep_score} unit="/100" accent="text-[#C9A96E]" />
                   <MetricRow icon={BatteryCharging} label="Readiness Score" value={wearable?.readiness_score} unit="/100" accent="text-bioGreen" />
                 </div>
               </section>

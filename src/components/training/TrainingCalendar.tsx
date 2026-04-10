@@ -343,19 +343,19 @@ export const TrainingCalendar = () => {
                 )}
                 {selectedSession.training_load && (
                   <MetricCell icon={<Zap className="h-4 w-4 text-yellow-400" />}
-                    label="Training Load" value={selectedSession.training_load.toFixed(1)} />
+                    label="Training Load" value={Number(selectedSession.training_load).toFixed(1)} />
                 )}
                 {selectedSession.active_calories && (
                   <MetricCell icon={<Flame className="h-4 w-4 text-orange-400" />}
-                    label="Active Cal" value={`${Math.round(selectedSession.active_calories)} kcal`} />
+                    label="Active Cal" value={`${Math.round(Number(selectedSession.active_calories))} kcal`} />
                 )}
                 {selectedSession.spo2_avg && (
                   <MetricCell icon={<Activity className="h-4 w-4 text-cyan-400" />}
-                    label="SpO₂" value={`${selectedSession.spo2_avg.toFixed(1)}%`} />
+                    label="SpO₂" value={`${Number(selectedSession.spo2_avg).toFixed(1)}%`} />
                 )}
                 {selectedSession.vo2_max && (
                   <MetricCell icon={<Activity className="h-4 w-4 text-purple-400" />}
-                    label="VO₂ Max" value={`${selectedSession.vo2_max.toFixed(1)} mL/kg/min`} />
+                    label="VO₂ Max" value={`${Number(selectedSession.vo2_max).toFixed(1)} mL/kg/min`} />
                 )}
                 {selectedSession.body_battery_end !== null && selectedSession.body_battery_end !== undefined && (
                   <MetricCell icon={<Zap className="h-4 w-4 text-green-300" />}

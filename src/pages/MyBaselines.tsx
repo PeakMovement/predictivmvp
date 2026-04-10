@@ -77,8 +77,8 @@ const METRICS: MetricDef[] = [
     description: "Average sleep quality score from your wearable. Above 70 is good; above 85 is excellent.",
     unit: "/ 100",
     icon: Moon,
-    color: "text-purple-400",
-    hexColor: "#a78bfa",
+    color: "text-[#C9A96E]",
+    hexColor: "#C9A96E",
   },
   {
     key: "readiness_score",
@@ -87,8 +87,8 @@ const METRICS: MetricDef[] = [
     description: "Readiness / recovery score from your wearable. Reflects how ready your body is for the day.",
     unit: "/ 100",
     icon: TrendingUp,
-    color: "text-orange-400",
-    hexColor: "#fb923c",
+    color: "text-[#D4956A]",
+    hexColor: "#D4956A",
   },
 ];
 
@@ -356,7 +356,7 @@ export default function MyBaselines() {
   // ── Render ────────────────────────────────────────────────────────────────
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5 p-4 md:p-6 pb-32 md:pb-24">
+    <div className="min-h-screen bg-background p-4 md:p-6 pb-32 md:pb-24">
       <div className="max-w-4xl mx-auto">
 
         {/* Header */}

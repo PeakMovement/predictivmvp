@@ -35,10 +35,10 @@ const ActivityRing = ({ score }: { score: number }) => {
   const strokeDashoffset = circumference * (1 - progress);
   
   const getColor = (s: number) => {
-    if (s >= 80) return "#a855f7";
-    if (s >= 60) return "#8b5cf6";
-    if (s >= 40) return "#6366f1";
-    return "#64748b";
+    if (s >= 80) return "#7ECBA1";
+    if (s >= 60) return "#D4956A";
+    if (s >= 40) return "#C46B6B";
+    return "#A8C4D4";
   };
   
   const color = getColor(score);
@@ -226,8 +226,8 @@ export function ActivityPanel() {
         {/* Steps */}
         <MetricCard
           icon={Footprints}
-          iconColor="text-sky-400"
-          iconBg="bg-sky-500/10"
+          iconColor="text-primary"
+          iconBg="bg-primary/10"
           label="Steps (7-day avg)"
           value={summary.current_steps_avg}
           baseline={summary.steps_baseline}
@@ -251,7 +251,7 @@ export function ActivityPanel() {
 
         {/* Activity Score with Ring */}
         {summary.activity_score !== null && (
-          <div className="p-4  bg-gradient-to-br from-purple-500/10 to-pink-500/5 border border-purple-500/20 transition-all duration-300 hover: hover:shadow-purple-500/10">
+          <div className="p-4 bg-card border border-border transition-all duration-300 hover:border-[#C9A96E]/30">
             <div className="flex items-center gap-4">
               <ActivityRing score={summary.activity_score} />
               <div className="flex-1">
@@ -263,8 +263,8 @@ export function ActivityPanel() {
                    "Consider increasing activity"}
                 </p>
               </div>
-              <div className="p-2  bg-purple-500/10">
-                <Gauge className="h-5 w-5 text-purple-400" />
+              <div className="p-2 bg-[#C9A96E]/10">
+                <Gauge className="h-5 w-5 text-[#C9A96E]" />
               </div>
             </div>
           </div>

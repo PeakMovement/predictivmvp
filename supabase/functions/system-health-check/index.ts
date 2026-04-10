@@ -75,7 +75,7 @@ Deno.serve(async (req: Request) => {
       .from("wearable_tokens")
       .select("*", { count: "exact", head: true })
       .lte("expires_at", soonExpiry)
-      .ilike("scope", "%extapi%");
+      .eq("scope", "oura");
 
     // Get last successful sync time
     const { data: lastSync } = await supabase

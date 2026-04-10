@@ -22,25 +22,10 @@ export const ConnectPolarButton = ({ isConnected, onConnectionChange }: ConnectP
         throw new Error("You must be logged in to connect your Polar device");
       }
 
-      const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/polar-auth-initiate`,
-        {
-          method: "POST",
-          headers: {
-            "Authorization": `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
-            "Content-Type": "application/json",
-          },
-        }
-      );
+      const { data, error } = await supabase.functions.invoke("polar-auth-initiate");
 
-      if (!response.ok) {
-        throw new Error("Failed to initiate Polar connection");
-      }
-
-      const data = await response.json();
-
-      if (!data?.auth_url) {
-        throw new Error("No authorization URL received");
+      if (error || !data?.auth_url) {
+        throw new Error(data?.error || "Failed to initiate Polar connection");
       }
 
 

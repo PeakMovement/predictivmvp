@@ -188,3 +188,9 @@ verify_jwt = false
 
 [functions.calculate-life-formulas]
 verify_jwt = false
+
+[functions.polar-auth-initiate]
+verify_jwt = true
+
+[functions.polar-auth]
+verify_jwt = false

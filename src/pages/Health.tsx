@@ -263,7 +263,7 @@ export const Health = () => {
       {/* Empty state — no device connected */}
       {emptyState && hasAnyToken === false && (
         <div className="flex flex-col items-center justify-center py-20 text-center">
-          <div className="w-16 h-16 bg-primary/10  flex items-center justify-center mb-6">
+          <div className="w-16 h-16 bg-primary/10 rounded-md flex items-center justify-center mb-6">
             <Heart className="w-8 h-8 text-primary/60" />
           </div>
           <h2 className="text-xl font-semibold text-foreground mb-2">No health data yet</h2>
@@ -292,10 +292,10 @@ export const Health = () => {
         <>
           {/* ── SLEEP SECTION ────────────────────────────────────────────── */}
           <LayoutBlock blockId="sleep" displayName="Sleep" pageId="health" size="wide" visible={isSectionVisible("sleep")} className="mb-6">
-            <div className="bg-glass  border border-glass-border  p-6 ">
+            <div className="bg-glass rounded-md border border-glass-border p-6 ">
               {/* Section header */}
               <div className="flex items-center gap-3 mb-6">
-                <div className="w-9 h-9 bg-blue-500/20  flex items-center justify-center">
+                <div className="w-9 h-9 bg-blue-500/20 rounded-md flex items-center justify-center">
                   <Moon className="w-5 h-5 text-blue-400" />
                 </div>
                 <h2 className="text-lg font-semibold text-foreground">Sleep</h2>
@@ -326,7 +326,7 @@ export const Health = () => {
 
                 {/* Duration + efficiency */}
                 <div className="space-y-3">
-                  <div className="bg-background/50 border border-glass-border  p-4 flex items-center gap-3">
+                  <div className="bg-background/50 border border-glass-border rounded-md p-4 flex items-center gap-3">
                     <Clock className="w-5 h-5 text-blue-400 shrink-0" />
                     <div>
                       <p className="text-xs text-muted-foreground">Duration</p>
@@ -334,7 +334,7 @@ export const Health = () => {
                     </div>
                   </div>
                   {efficiency != null && (
-                    <div className="bg-background/50 border border-glass-border  p-4 flex items-center gap-3">
+                    <div className="bg-background/50 border border-glass-border rounded-md p-4 flex items-center gap-3">
                       <Zap className="w-5 h-5 text-yellow-400 shrink-0" />
                       <div>
                         <p className="text-xs text-muted-foreground">Efficiency</p>
@@ -355,7 +355,7 @@ export const Health = () => {
                       { label: "REM",  value: remMin,  color: "text-[#C9A96E]" },
                       { label: "Light", value: lightMin, color: "text-[#7ECBA1]" },
                     ].map(({ label, value, color }) => (
-                      <div key={label} className="text-center bg-background/30  p-3">
+                      <div key={label} className="text-center bg-background/30 rounded-md p-3">
                         <p className="text-xs text-muted-foreground mb-1">{label}</p>
                         <p className={`text-base font-semibold ${color}`}>{formatMinutes(value)}</p>
                         <p className="text-xs text-muted-foreground">{stagePercent(value)}%</p>
@@ -409,10 +409,10 @@ export const Health = () => {
 
           {/* ── HEART RATE SECTION ───────────────────────────────────────── */}
           <LayoutBlock blockId="heartRate" displayName="Heart Rate" pageId="health" size="wide" visible={isSectionVisible("heartRate")} className="mb-6">
-            <div className="bg-glass  border border-glass-border  p-6 ">
+            <div className="bg-glass rounded-md border border-glass-border p-6 ">
               {/* Section header */}
               <div className="flex items-center gap-3 mb-6">
-                <div className="w-9 h-9 bg-critical/20  flex items-center justify-center">
+                <div className="w-9 h-9 bg-critical/20 rounded-md flex items-center justify-center">
                   <Heart className="w-5 h-5 text-red-400" />
                 </div>
                 <h2 className="text-lg font-semibold text-foreground">Heart Rate</h2>
@@ -446,7 +446,7 @@ export const Health = () => {
                   ].map(({ icon, label, value, unit, tip }) => (
                     <Tooltip key={label}>
                       <TooltipTrigger asChild>
-                        <div className="bg-background/50 border border-glass-border  p-5 text-center cursor-help hover:bg-background/70 transition-colors">
+                        <div className="bg-background/50 border border-glass-border rounded-md p-5 text-center cursor-help hover:bg-background/70 transition-colors">
                           <div className="flex justify-center mb-2">{icon}</div>
                           <p className="text-[40px] sm:text-[52px] font-display font-light leading-none text-foreground">{value}</p>
                           <p className="text-xs text-muted-foreground">{label}</p>

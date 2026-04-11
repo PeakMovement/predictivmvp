@@ -111,10 +111,10 @@ const generateSuggestions = (csvData: HealthDataRow[]) => {
 // (Paste your versions — they do not affect layout alignment)
 
 const SessionLogCard = ({ title, date, load }: { title: string; date: string; load: number }) => (
-  <div className="bg-glass  border border-glass-border  p-4  hover:bg-glass-highlight hover:scale-105 hover:-translate-y-1 transition-all duration-300 ease-out transform-gpu">
+  <div className="bg-glass rounded-md border border-glass-border p-4 hover:bg-glass-highlight hover:scale-105 hover:-translate-y-1 transition-all duration-300 ease-out transform-gpu">
     <div className="flex items-center justify-between mb-2">
       <h4 className="font-semibold text-foreground">{title}</h4>
-      <span className="px-2 py-1 text-xs  font-medium bg-blue-500/20 text-blue-400">Training</span>
+      <span className="px-2 py-1 text-xs rounded-md font-medium bg-blue-500/20 text-blue-400">Training</span>
     </div>
     <div className="flex items-center justify-between text-sm">
       <div className="flex items-center gap-2 text-muted-foreground">
@@ -460,7 +460,7 @@ export const Training = () => {
           )}
 
           {!userId && (
-            <div className="text-center py-12 px-4 bg-card/50  border border-border/50  mb-8">
+            <div className="text-center py-12 px-4 bg-card/50 rounded-md border border-border/50 mb-8">
               <p className="text-muted-foreground mb-4">No user authenticated</p>
               <p className="text-sm text-muted-foreground">Please log in to view your training data</p>
             </div>
@@ -474,7 +474,7 @@ export const Training = () => {
           )}
 
           {showGarminPending && !garminTokenExpired && (
-            <div className="flex items-center gap-3 px-4 py-3 mb-6  border border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400 text-sm animate-fade-in">
+            <div className="flex items-center gap-3 px-4 py-3 mb-6 rounded-md border border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400 text-sm animate-fade-in">
               <WifiOff className="h-4 w-4 shrink-0" />
               <span>
                 <strong>Your wearable is connected</strong> but no workout data has synced yet. Data will arrive automatically when your device syncs.

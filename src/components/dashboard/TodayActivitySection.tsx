@@ -30,7 +30,7 @@ export function TodayActivitySection() {
 
   if (isLoading) {
     return (
-      <Card className="bg-card/50  border-border/50">
+      <Card className="bg-card/50 rounded-md border-border/50">
         <CardHeader className="pb-2">
           <CardTitle className="text-lg flex items-center gap-2">
             <Activity className="h-5 w-5 text-primary" />
@@ -50,7 +50,7 @@ export function TodayActivitySection() {
 
   if (!todaySession) {
     return (
-      <Card className="bg-card/50  border-border/50">
+      <Card className="bg-card/50 rounded-md border-border/50">
         <CardHeader className="pb-2">
           <CardTitle className="text-lg flex items-center gap-2">
             <Activity className="h-5 w-5 text-primary" />
@@ -75,7 +75,7 @@ export function TodayActivitySection() {
   const strain = todaySession.strain ? Math.round(todaySession.strain) : null;
 
   return (
-    <Card className="bg-card/50  border-border/50">
+    <Card className="bg-card/50 rounded-md border-border/50">
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
           <CardTitle className="text-lg flex items-center gap-2">
@@ -90,7 +90,7 @@ export function TodayActivitySection() {
       <CardContent>
         <div className="grid grid-cols-3 gap-4">
           {/* Training Load */}
-          <div className="text-center p-3  bg-secondary/30">
+          <div className="text-center p-3 rounded-md bg-secondary/30">
             <Activity className="h-5 w-5 text-primary mx-auto mb-1" />
             <p className="text-lg font-semibold text-foreground">
               {trainingLoad > 0 ? trainingLoad : "--"}
@@ -99,7 +99,7 @@ export function TodayActivitySection() {
           </div>
 
           {/* ACWR */}
-          <div className="text-center p-3  bg-secondary/30">
+          <div className="text-center p-3 rounded-md bg-secondary/30">
             <Flame className="h-5 w-5 text-amber mx-auto mb-1" />
             <p className="text-lg font-semibold text-foreground">
               {acwr ?? "--"}
@@ -108,7 +108,7 @@ export function TodayActivitySection() {
           </div>
 
           {/* Strain */}
-          <div className="text-center p-3  bg-secondary/30">
+          <div className="text-center p-3 rounded-md bg-secondary/30">
             <Flame className="h-5 w-5 text-critical mx-auto mb-1" />
             <p className="text-lg font-semibold text-foreground">
               {strain ?? "--"}

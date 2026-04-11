@@ -149,7 +149,7 @@ const PatientCard = ({ patient }: { patient: PatientSummary }) => {
   return (
     <div
       className={cn(
-        "bg-white border   overflow-hidden",
+        "bg-white border rounded-md overflow-hidden",
         hasAlerts && highSeverityAlerts.length > 0
           ? "border-red-200"
           : "border-slate-200"
@@ -216,7 +216,7 @@ const PatientCard = ({ patient }: { patient: PatientSummary }) => {
           </div>
 
           {/* HRV Sparkline */}
-          <div className="p-2 bg-slate-50  flex flex-col justify-between">
+          <div className="p-2 bg-slate-50 rounded-md flex flex-col justify-between">
             <p className="text-xs text-slate-500 text-center mb-1">7d HRV</p>
             {patient.hrvTrend.length >= 2 ? (
               <Sparkline
@@ -270,7 +270,7 @@ const PatientCard = ({ patient }: { patient: PatientSummary }) => {
               <div
                 key={anomaly.id}
                 className={cn(
-                  "flex items-center justify-between px-3 py-2  border text-xs",
+                  "flex items-center justify-between px-3 py-2 rounded-md border text-xs",
                   SEVERITY_COLORS[anomaly.severity] || SEVERITY_COLORS.low
                 )}
               >
@@ -394,13 +394,13 @@ export const PractitionerDashboard = () => {
           <div className="flex items-center gap-3">
             <button
               onClick={() => navigate("/dashboard")}
-              className="p-2  hover:bg-slate-100 text-slate-500 transition-colors"
+              className="p-2 rounded-md hover:bg-slate-100 text-slate-500 transition-colors"
               aria-label="Back to dashboard"
             >
               <ArrowLeft className="h-4 w-4" />
             </button>
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-blue-600  flex items-center justify-center">
+              <div className="w-8 h-8 bg-blue-600 rounded-md flex items-center justify-center">
                 <Stethoscope className="h-4 w-4 text-white" />
               </div>
               <div>
@@ -426,17 +426,17 @@ export const PractitionerDashboard = () => {
       <main className="max-w-5xl mx-auto px-4 sm:px-6 py-6 space-y-6">
         {/* Stats bar */}
         <div className="grid grid-cols-3 gap-3">
-          <div className="bg-white  border border-slate-200 p-4 text-center">
+          <div className="bg-white rounded-md border border-slate-200 p-4 text-center">
             <p className="text-2xl font-bold text-slate-800">{patients.length}</p>
             <p className="text-xs text-slate-500 mt-0.5">Patients</p>
           </div>
-          <div className="bg-white  border border-slate-200 p-4 text-center">
+          <div className="bg-white rounded-md border border-slate-200 p-4 text-center">
             <p className="text-2xl font-bold text-critical">
               {patients.reduce((n, p) => n + p.unacknowledgedAnomalies.filter(a => a.severity === "critical" || a.severity === "high").length, 0)}
             </p>
             <p className="text-xs text-slate-500 mt-0.5">High Alerts</p>
           </div>
-          <div className="bg-white  border border-slate-200 p-4 text-center">
+          <div className="bg-white rounded-md border border-slate-200 p-4 text-center">
             <p className="text-2xl font-bold text-amber-500">
               {patients.filter(p => p.activeInjury).length}
             </p>
@@ -446,7 +446,7 @@ export const PractitionerDashboard = () => {
 
         {/* Error */}
         {error && (
-          <div className="p-4 bg-red-50 border border-red-200  text-sm text-red-700">
+          <div className="p-4 bg-red-50 border border-red-200 rounded-md text-sm text-red-700">
             {error}
           </div>
         )}

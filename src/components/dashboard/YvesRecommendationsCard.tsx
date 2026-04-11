@@ -70,7 +70,7 @@ export function YvesRecommendationsCard({ recommendations = [], isLoading = fals
 
   if (isLoading) {
     return (
-      <Card className="bg-glass  border-glass-border ">
+      <Card className="bg-glass rounded-md border-glass-border ">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Lightbulb className="h-5 w-5 text-primary" />
@@ -85,7 +85,7 @@ export function YvesRecommendationsCard({ recommendations = [], isLoading = fals
   }
 
   return (
-    <Card className="bg-glass  border-glass-border ">
+    <Card className="bg-glass rounded-md border-glass-border ">
       <CardHeader className="p-4 sm:p-6">
         <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
           <Lightbulb className="h-5 w-5 text-primary" />
@@ -245,7 +245,7 @@ function RecommendationItem({ recommendation, categoryLabel, categoryIcon, prior
         feedbackGiven === 'followed' && "border-l-4 border-l-emerald-500 border-bioGreen/30 bg-bioGreen/5"
       )}>
         <CollapsibleTrigger asChild>
-          <button className="w-full p-3 sm:p-4 flex items-center justify-between gap-2 sm:gap-3 text-left hover:bg-muted/30 transition-colors  touch-manipulation">
+          <button className="w-full p-3 sm:p-4 flex items-center justify-between gap-2 sm:gap-3 text-left hover:bg-muted/30 transition-colors rounded-md touch-manipulation">
             <div className="flex items-center gap-3 min-w-0 flex-1">
               <span className="text-lg shrink-0">{categoryIcon}</span>
               <div className="min-w-0 flex-1">

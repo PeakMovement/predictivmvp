@@ -40,7 +40,7 @@ export function CustomFocusEditor({
   const emphasizedCount = Object.values(preferences).filter(Boolean).length;
 
   return (
-    <Card className="p-6 bg-glass  border-glass-border">
+    <Card className="p-6 bg-glass rounded-md border-glass-border">
       <div className="space-y-6">
         {/* Header with warm, supportive language */}
         <div className="text-center space-y-2">
@@ -65,7 +65,7 @@ export function CustomFocusEditor({
                 key={card.id}
                 onClick={() => toggleCard(card.id)}
                 className={cn(
-                  "relative p-4  border-2 transition-all duration-200 text-left",
+                  "relative p-4 rounded-md border-2 transition-all duration-200 text-left",
                   "hover:scale-[1.02] active:scale-[0.98]",
                   isSelected
                     ? "bg-bioGreen/10 border-bioGreen/50 "

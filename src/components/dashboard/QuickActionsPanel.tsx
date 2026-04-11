@@ -148,7 +148,7 @@ export const QuickActionsPanel = () => {
 
   return (
     <>
-      <Card className="p-4 sm:p-6 bg-card/50  border-border/50">
+      <Card className="p-4 sm:p-6 bg-card/50 rounded-md border-border/50">
         <h3 className="text-base sm:text-lg font-semibold text-foreground mb-4">Quick Actions</h3>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3">
           {actions.map((action) => {

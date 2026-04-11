@@ -34,7 +34,7 @@ export default function ForgotPassword() {
   if (submitted) {
     return (
       <div className="min-h-screen flex items-center justify-center px-4">
-        <div className="w-full max-w-md bg-card p-8   border border-border text-center space-y-4">
+        <div className="w-full max-w-md bg-card p-8 rounded-md border border-border text-center space-y-4">
           <h1 className="text-2xl font-semibold">Check your email</h1>
           <p className="text-muted-foreground text-sm">
             We sent a password reset link to <strong>{email}</strong>. Check your
@@ -60,7 +60,7 @@ export default function ForgotPassword() {
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4">
-      <div className="w-full max-w-md bg-card p-8   border border-border">
+      <div className="w-full max-w-md bg-card p-8 rounded-md border border-border">
         <div className="mb-6">
           <h1 className="text-2xl font-semibold text-center">Reset your password</h1>
           <p className="text-muted-foreground text-sm text-center mt-1">

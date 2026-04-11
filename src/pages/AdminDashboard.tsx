@@ -55,7 +55,7 @@ export function AdminDashboard() {
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
           <div className="space-y-1">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-primary/20  flex items-center justify-center">
+              <div className="w-10 h-10 bg-primary/20 rounded-md flex items-center justify-center">
                 <Shield size={20} className="text-primary" />
               </div>
               <div>
@@ -87,7 +87,7 @@ export function AdminDashboard() {
         </div>
 
         {(error || usersError) && (
-          <div className="mb-6 p-4  bg-destructive/10 border border-destructive/20 text-destructive">
+          <div className="mb-6 p-4 rounded-md bg-destructive/10 border border-destructive/20 text-destructive">
             <p className="font-medium">Error loading data</p>
             <p className="text-sm opacity-80">{error || usersError}</p>
           </div>

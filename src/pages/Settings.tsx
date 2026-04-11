@@ -75,7 +75,7 @@ export const Settings = ({ onNavigate }: SettingsProps) => {
       <div className="mb-8">
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-primary/20  flex items-center justify-center">
+            <div className="w-10 h-10 bg-primary/20 rounded-md flex items-center justify-center">
               <Sparkles className="h-5 w-5 text-primary" />
             </div>
             <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Settings</h1>

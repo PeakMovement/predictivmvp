@@ -196,7 +196,7 @@ function DayCard({ day, onClick }: { day: DayPlan; onClick: () => void }) {
     <button
       onClick={onClick}
       className={cn(
-        "flex flex-col items-center gap-2 p-3  border transition-all active:scale-95 touch-manipulation w-full",
+        "flex flex-col items-center gap-2 p-3 rounded-md border transition-all active:scale-95 touch-manipulation w-full",
         meta.card,
         todayFlag && `ring-2 ${meta.ring} `,
       )}

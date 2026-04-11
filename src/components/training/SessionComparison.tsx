@@ -165,7 +165,7 @@ export const SessionComparison = ({
               return (
                 <div
                   key={metric.label}
-                  className="grid grid-cols-[1fr_auto_1fr] gap-4 items-center p-4  border border-border/50 bg-secondary/20"
+                  className="grid grid-cols-[1fr_auto_1fr] gap-4 items-center p-4 rounded-md border border-border/50 bg-secondary/20"
                 >
                   <div className="text-right">
                     <p className="text-2xl font-display font-light text-foreground">

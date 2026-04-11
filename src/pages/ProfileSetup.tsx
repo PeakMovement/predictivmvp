@@ -21,7 +21,7 @@ function CompletionBar({ pct }: { pct: number }) {
     pct >= 80 ? "bg-bioGreen" : pct >= 50 ? "bg-yellow-400" : "bg-primary";
 
   return (
-    <div className=" border border-border/40 bg-card/60  p-4">
+    <div className=" border border-border/40 bg-card/60 rounded-md p-4">
       <div className="flex items-center justify-between mb-2">
         <span className="text-sm font-semibold text-foreground">
           Profile {pct}% complete
@@ -116,7 +116,7 @@ function ChipSelector({
           type="button"
           onClick={() => onChange(opt === value ? "" : opt)}
           className={cn(
-            "px-3 py-1.5  text-sm font-medium border transition-all",
+            "px-3 py-1.5 rounded-md text-sm font-medium border transition-all",
             opt === value
               ? "bg-primary text-primary-foreground border-primary"
               : "bg-muted/30 text-muted-foreground border-border hover:border-primary/40 hover:text-foreground"
@@ -218,7 +218,7 @@ export const ProfileSetup = () => {
       <CompletionBar pct={pct} />
 
       {/* Avatar */}
-      <div className=" border border-border/40 bg-card/60  p-5 flex flex-col items-center">
+      <div className=" border border-border/40 bg-card/60 rounded-md p-5 flex flex-col items-center">
         <AvatarUploader
           url={profile?.avatar_url ?? null}
           onUpload={handleAvatarUpload}
@@ -227,7 +227,7 @@ export const ProfileSetup = () => {
       </div>
 
       {/* Identity */}
-      <div className=" border border-border/40 bg-card/60  p-5 space-y-4">
+      <div className=" border border-border/40 bg-card/60 rounded-md p-5 space-y-4">
         <h2 className="font-sans flex items-center gap-2 font-semibold text-sm uppercase tracking-wide text-muted-foreground">
           <User className="w-4 h-4" /> Identity
         </h2>
@@ -258,7 +258,7 @@ export const ProfileSetup = () => {
       </div>
 
       {/* Sport */}
-      <div className=" border border-border/40 bg-card/60  p-5 space-y-4">
+      <div className=" border border-border/40 bg-card/60 rounded-md p-5 space-y-4">
         <h2 className="font-sans flex items-center gap-2 font-semibold text-sm uppercase tracking-wide text-muted-foreground">
           <Dumbbell className="w-4 h-4" /> Sport
         </h2>
@@ -294,7 +294,7 @@ export const ProfileSetup = () => {
       </div>
 
       {/* Training */}
-      <div className=" border border-border/40 bg-card/60  p-5 space-y-4">
+      <div className=" border border-border/40 bg-card/60 rounded-md p-5 space-y-4">
         <h2 className="font-sans flex items-center gap-2 font-semibold text-sm uppercase tracking-wide text-muted-foreground">
           <Clock className="w-4 h-4" /> Training
         </h2>
@@ -321,7 +321,7 @@ export const ProfileSetup = () => {
       </div>
 
       {/* Goal */}
-      <div className=" border border-border/40 bg-card/60  p-5 space-y-4">
+      <div className=" border border-border/40 bg-card/60 rounded-md p-5 space-y-4">
         <h2 className="font-sans flex items-center gap-2 font-semibold text-sm uppercase tracking-wide text-muted-foreground">
           <Target className="w-4 h-4" /> Primary Goal
         </h2>

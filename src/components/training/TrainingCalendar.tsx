@@ -172,11 +172,11 @@ export const TrainingCalendar = () => {
 
   return (
     <>
-      <div className="bg-glass  border border-glass-border   overflow-hidden">
+      <div className="bg-glass rounded-md border border-glass-border overflow-hidden">
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-border/30">
           <div className="flex items-center gap-2">
-            <div className="w-7 h-7 bg-primary/20  flex items-center justify-center">
+            <div className="w-7 h-7 bg-primary/20 rounded-md flex items-center justify-center">
               <CalendarIcon className="h-4 w-4 text-primary" />
             </div>
             <div>
@@ -195,7 +195,7 @@ export const TrainingCalendar = () => {
         {/* Month / week nav */}
         <div className="flex items-center justify-between px-4 py-2">
           <button onClick={() => navigate(-1)}
-            className="p-1.5  hover:bg-muted/50 text-muted-foreground transition-colors">
+            className="p-1.5 rounded-md hover:bg-muted/50 text-muted-foreground transition-colors">
             <ChevronLeft className="h-4 w-4" />
           </button>
           <span className="text-sm font-semibold text-foreground">
@@ -204,7 +204,7 @@ export const TrainingCalendar = () => {
               : `${format(calendarDays[0], "d MMM")} – ${format(calendarDays[6], "d MMM yyyy")}`}
           </span>
           <button onClick={() => navigate(1)}
-            className="p-1.5  hover:bg-muted/50 text-muted-foreground transition-colors">
+            className="p-1.5 rounded-md hover:bg-muted/50 text-muted-foreground transition-colors">
             <ChevronRight className="h-4 w-4" />
           </button>
         </div>
@@ -241,7 +241,7 @@ export const TrainingCalendar = () => {
                     onClick={() => handleDayClick(day)}
                     disabled={!hasSession}
                     className={cn(
-                      "relative flex flex-col items-center justify-start pt-1 pb-1.5  min-h-[52px] sm:min-h-[60px] transition-all",
+                      "relative flex flex-col items-center justify-start pt-1 pb-1.5 rounded-md min-h-[52px] sm:min-h-[60px] transition-all",
                       hasSession
                         ? "cursor-pointer hover:bg-primary/10 active:scale-95"
                         : "cursor-default",
@@ -382,7 +382,7 @@ export const TrainingCalendar = () => {
 // ── Small metric cell ──────────────────────────────────────────────────────────
 
 const MetricCell = ({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) => (
-  <div className="bg-muted/30  p-3 space-y-1.5">
+  <div className="bg-muted/30 rounded-md p-3 space-y-1.5">
     <div className="flex items-center gap-1.5">
       {icon}
       <span className="text-xs text-muted-foreground">{label}</span>

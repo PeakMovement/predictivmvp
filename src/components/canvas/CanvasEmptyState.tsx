@@ -10,7 +10,7 @@ export function CanvasEmptyState({ onOpenLibrary }: CanvasEmptyStateProps) {
     <div className="flex flex-col items-center justify-center min-h-[60vh] px-6 text-center">
       <div className="relative mb-8">
         <div className="absolute inset-0 bg-primary/20 blur-3xl" />
-        <div className="relative bg-card border border-border/50  p-6 ">
+        <div className="relative bg-card border border-border/50 rounded-md p-6 ">
           <LayoutGrid className="h-12 w-12 text-primary" />
         </div>
       </div>

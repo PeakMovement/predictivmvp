@@ -88,7 +88,7 @@ export function YvesTreeTimeline() {
     if (active && payload && payload.length) {
       const { date, label, color, value } = payload[0].payload;
       return (
-        <div className="bg-card border border-border  p-3  ">
+        <div className="bg-card border border-border rounded-md p-3 ">
           <p className="text-sm font-medium">{date}</p>
           <p className="text-xs text-muted-foreground mt-1">{label}</p>
           <p className="text-sm font-semibold mt-1" style={{ color }}>

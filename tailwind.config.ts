@@ -108,16 +108,20 @@ export default {
         vast:    "96px",
       },
 
-      /* ── ZERO RADIUS — enforced globally ───────────────────────── */
+      /* ── SOFT EDITORIAL RADIUS — per brand guide ───────────────
+         Subtle rounding across the board. Not pill-soft, not sharp.
+         Matches the brand guide's mockup softness without losing
+         the minimal-editorial feel. */
       borderRadius: {
-        lg:  "0",
-        md:  "0",
-        sm:  "0",
-        DEFAULT: "0",
-        xl:  "0",
-        "2xl": "0",
-        "3xl": "0",
-        full: "9999px", // keep for avatar circles only
+        none: "0",
+        sm:  "2px",
+        DEFAULT: "4px",
+        md:  "6px",
+        lg:  "8px",
+        xl:  "12px",
+        "2xl": "16px",
+        "3xl": "24px",
+        full: "9999px",
       },
 
       /* ── LETTER SPACING ────────────────────────────────────────── */

@@ -355,9 +355,9 @@ const AcceptedChallengesSection = () => {
   };
 
   return (
-  <div className="bg-glass  border border-glass-border  p-6  hover:bg-glass-highlight hover:scale-105 hover:-translate-y-1 transition-all duration-300 ease-out animate-fade-in transform-gpu mb-8">
+  <div className="bg-glass rounded-md border border-glass-border p-6 hover:bg-glass-highlight hover:scale-105 hover:-translate-y-1 transition-all duration-300 ease-out animate-fade-in transform-gpu mb-8">
     <div className="flex items-center gap-3 mb-6">
-      <div className="w-8 h-8 bg-bioGreen/20  flex items-center justify-center hover:scale-110 transition-transform duration-200">
+      <div className="w-8 h-8 bg-bioGreen/20 rounded-md flex items-center justify-center hover:scale-110 transition-transform duration-200">
         <CheckCircle size={16} className="text-bioGreen" />
       </div>
       <h3 className="text-lg font-semibold text-foreground">Accepted Challenges</h3>
@@ -368,19 +368,19 @@ const AcceptedChallengesSection = () => {
     <div className="space-y-4">
       {allChallenges.map((challenge) => (
         <div key={challenge.id} className={cn(
-          "bg-glass/30  border border-glass-border  p-4 transition-all duration-200 border-l-4",
+          "bg-glass/30 rounded-md border border-glass-border p-4 transition-all duration-200 border-l-4",
           getAccentColor(challenge.accentColor)
         )}>
           <div className="flex items-start justify-between gap-4">
             <div className="flex-1 space-y-2">
               <div className="flex items-center gap-2">
                 <span className={cn(
-                  "px-2 py-1 text-xs font-medium  border transition-colors duration-200",
+                  "px-2 py-1 text-xs font-medium rounded-md border transition-colors duration-200",
                   getCategoryStyle(challenge.category)
                 )}>
                   {challenge.category}
                 </span>
-                <div className="px-2 py-1 text-xs font-medium bg-bioGreen/20 text-bioGreen  border border-green-400/30">
+                <div className="px-2 py-1 text-xs font-medium bg-bioGreen/20 text-bioGreen rounded-md border border-green-400/30">
                   Active
                 </div>
               </div>
@@ -388,7 +388,7 @@ const AcceptedChallengesSection = () => {
               <div className="flex items-center gap-4 text-xs text-muted-foreground">
                 <span>Accepted: {challenge.dateAccepted}</span>
                 {challenge.scheduledDate && challenge.scheduledTime && (
-                  <div className="flex items-center gap-1 px-2 py-1 bg-primary/10  border border-primary/30">
+                  <div className="flex items-center gap-1 px-2 py-1 bg-primary/10 rounded-md border border-primary/30">
                     <Calendar size={12} className="text-primary" />
                     <span className="text-primary font-medium">
                       Scheduled: {format(new Date(challenge.scheduledDate), "MMM dd")} at {challenge.scheduledTime}
@@ -407,7 +407,7 @@ const AcceptedChallengesSection = () => {
                       <Tooltip>
                         <TooltipTrigger asChild>
                           <button 
-                            className="p-2  hover:bg-primary/10 hover: transition-all duration-200 hover:scale-110 active:scale-95"
+                            className="p-2 rounded-md hover:bg-primary/10 hover: transition-all duration-200 hover:scale-110 active:scale-95"
                             onClick={() => {}}
                           >
                             <FileText size={16} className="text-muted-foreground hover:text-primary transition-colors duration-200" />
@@ -424,7 +424,7 @@ const AcceptedChallengesSection = () => {
                       <Tooltip>
                         <TooltipTrigger asChild>
                           <button 
-                            className="p-2  hover:bg-primary/10 hover: transition-all duration-200 hover:scale-110 active:scale-95"
+                            className="p-2 rounded-md hover:bg-primary/10 hover: transition-all duration-200 hover:scale-110 active:scale-95"
                             onClick={() => {}}
                           >
                             <Play size={16} className="text-muted-foreground hover:text-primary transition-colors duration-200" />
@@ -440,7 +440,7 @@ const AcceptedChallengesSection = () => {
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <button 
-                          className="p-2  hover:bg-primary/10 hover: transition-all duration-200 hover:scale-110 active:scale-95"
+                          className="p-2 rounded-md hover:bg-primary/10 hover: transition-all duration-200 hover:scale-110 active:scale-95"
                           onClick={() => handleCalendarClick(challenge)}
                         >
                           <CalendarPlus size={16} className="text-muted-foreground hover:text-primary transition-colors duration-200" />
@@ -454,7 +454,7 @@ const AcceptedChallengesSection = () => {
                 </div>
               )}
               
-              <div className="px-4 py-2 text-sm font-medium bg-bioGreen/20 text-bioGreen  ">
+              <div className="px-4 py-2 text-sm font-medium bg-bioGreen/20 text-bioGreen rounded-md ">
                 <div className="flex items-center gap-1.5">
                   <CheckCircle size={14} />
                   <span>In Progress</span>
@@ -468,7 +468,7 @@ const AcceptedChallengesSection = () => {
 
     {/* Calendar Modal */}
     <Dialog open={isCalendarModalOpen} onOpenChange={setIsCalendarModalOpen}>
-      <DialogContent className="sm:max-w-md bg-glass  border border-glass-border ">
+      <DialogContent className="sm:max-w-md bg-glass rounded-md border border-glass-border ">
         <DialogHeader>
           <DialogTitle className="text-lg font-semibold text-foreground">
             Add to Google Calendar
@@ -480,7 +480,7 @@ const AcceptedChallengesSection = () => {
             Select when you want to schedule this challenge:
           </p>
           
-          <div className="bg-glass/30  border border-glass-border p-3">
+          <div className="bg-glass/30 rounded-md border border-glass-border p-3">
             <p className="text-sm font-medium text-foreground mb-3">
               {selectedChallenge?.text}
             </p>
@@ -501,7 +501,7 @@ const AcceptedChallengesSection = () => {
                       {selectedDate ? format(selectedDate, "PPP") : <span>Pick a date</span>}
                     </Button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0 bg-glass  border border-glass-border" align="start">
+                  <PopoverContent className="w-auto p-0 bg-glass rounded-md border border-glass-border" align="start">
                     <CalendarComponent
                       mode="single"
                       selected={selectedDate}
@@ -530,7 +530,7 @@ const AcceptedChallengesSection = () => {
           <div className="flex items-center gap-3 pt-2">
             <button
               onClick={handleAddToCalendar}
-              className="flex-1 p-3  bg-bioGreen/20 text-bioGreen hover:bg-bioGreen/30 hover:scale-105 active:scale-95 transition-all duration-200 font-medium"
+              className="flex-1 p-3 rounded-md bg-bioGreen/20 text-bioGreen hover:bg-bioGreen/30 hover:scale-105 active:scale-95 transition-all duration-200 font-medium"
             >
               Add to calendar
             </button>
@@ -539,7 +539,7 @@ const AcceptedChallengesSection = () => {
                 setIsCalendarModalOpen(false);
                 setSelectedChallenge(null);
               }}
-              className="flex-1 p-3  bg-critical/20 text-red-400 hover:bg-critical/30 hover:scale-105 active:scale-95 transition-all duration-200 font-medium"
+              className="flex-1 p-3 rounded-md bg-critical/20 text-red-400 hover:bg-critical/30 hover:scale-105 active:scale-95 transition-all duration-200 font-medium"
             >
               Cancel
             </button>
@@ -744,7 +744,7 @@ const WeeklyInsightsSection = () => {
 
   return (
     <>
-      <div className="bg-glass  border border-glass-border  p-6  hover:bg-glass-highlight hover:scale-105 hover:-translate-y-1 transition-all duration-300 ease-out animate-fade-in transform-gpu mb-8">
+      <div className="bg-glass rounded-md border border-glass-border p-6 hover:bg-glass-highlight hover:scale-105 hover:-translate-y-1 transition-all duration-300 ease-out animate-fade-in transform-gpu mb-8">
         <div className="flex items-center gap-3 mb-6">
           <div className="w-8 h-8 bg-primary/10 flex items-center justify-center hover:scale-110 transition-transform duration-200">
             <TrendingUp size={16} className="text-primary" />
@@ -752,7 +752,7 @@ const WeeklyInsightsSection = () => {
           <h3 className="text-lg font-semibold text-foreground">Weekly Insights</h3>
           <button
             onClick={() => setIsInfoDialogOpen(true)}
-            className="ml-auto p-1.5  hover:bg-glass/30 hover:scale-110 active:scale-95 transition-all duration-200"
+            className="ml-auto p-1.5 rounded-md hover:bg-glass/30 hover:scale-110 active:scale-95 transition-all duration-200"
             aria-label="Information about Weekly Insights"
           >
             <Info size={16} className="text-muted-foreground hover:text-primary transition-colors duration-200" />
@@ -761,28 +761,28 @@ const WeeklyInsightsSection = () => {
 
         {/* Primary Metrics - 4 columns */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
-          <div className="bg-glass/30  border border-glass-border  p-3 transition-all duration-300 hover:bg-glass-highlight">
+          <div className="bg-glass/30 rounded-md border border-glass-border p-3 transition-all duration-300 hover:bg-glass-highlight">
             <p className="text-xs text-muted-foreground mb-1">ACWR</p>
             <p className={cn(
               "text-lg font-bold",
               avgACWR > 1.5 ? "text-red-400" : avgACWR > 1.3 ? "text-yellow-400" : "text-bioGreen"
             )}>{avgACWR.toFixed(2)}</p>
           </div>
-          <div className="bg-glass/30  border border-glass-border  p-3 transition-all duration-300 hover:bg-glass-highlight">
+          <div className="bg-glass/30 rounded-md border border-glass-border p-3 transition-all duration-300 hover:bg-glass-highlight">
             <p className="text-xs text-muted-foreground mb-1">Training Strain</p>
             <p className={cn(
               "text-lg font-bold",
               avgStrain > 150 ? "text-red-400" : avgStrain > 100 ? "text-yellow-400" : "text-foreground"
             )}>{avgStrain.toFixed(0)}</p>
           </div>
-          <div className="bg-glass/30  border border-glass-border  p-3 transition-all duration-300 hover:bg-glass-highlight">
+          <div className="bg-glass/30 rounded-md border border-glass-border p-3 transition-all duration-300 hover:bg-glass-highlight">
             <p className="text-xs text-muted-foreground mb-1">Monotony</p>
             <p className={cn(
               "text-lg font-bold",
               avgMonotony > 2.0 ? "text-yellow-400" : "text-foreground"
             )}>{avgMonotony.toFixed(2)}</p>
           </div>
-          <div className="bg-glass/30  border border-glass-border  p-3 transition-all duration-300 hover:bg-glass-highlight">
+          <div className="bg-glass/30 rounded-md border border-glass-border p-3 transition-all duration-300 hover:bg-glass-highlight">
             <p className="text-xs text-muted-foreground mb-1">EWMA Load</p>
             <p className="text-lg font-semibold text-foreground">{avgEWMA.toFixed(0)}</p>
           </div>
@@ -790,7 +790,7 @@ const WeeklyInsightsSection = () => {
         
         {/* Secondary Metrics - 4 columns */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
-          <div className="bg-glass/30  border border-glass-border  p-3 transition-all duration-300 hover:bg-glass-highlight">
+          <div className="bg-glass/30 rounded-md border border-glass-border p-3 transition-all duration-300 hover:bg-glass-highlight">
             <p className="text-xs text-muted-foreground mb-1">Recovery Score</p>
             <p className={cn(
               "text-lg font-bold",
@@ -798,7 +798,7 @@ const WeeklyInsightsSection = () => {
               recoveryScore !== null && recoveryScore < 75 ? "text-yellow-400" : "text-bioGreen"
             )}>{recoveryScore !== null ? recoveryScore : "—"}</p>
           </div>
-          <div className="bg-glass/30  border border-glass-border  p-3 transition-all duration-300 hover:bg-glass-highlight">
+          <div className="bg-glass/30 rounded-md border border-glass-border p-3 transition-all duration-300 hover:bg-glass-highlight">
             <p className="text-xs text-muted-foreground mb-1">Fatigue Index</p>
             <p className={cn(
               "text-lg font-bold",
@@ -806,21 +806,21 @@ const WeeklyInsightsSection = () => {
               fatigueIndex !== null && fatigueIndex > 50 ? "text-yellow-400" : "text-bioGreen"
             )}>{fatigueIndex !== null ? fatigueIndex : "—"}</p>
           </div>
-          <div className="bg-glass/30  border border-glass-border  p-3 transition-all duration-300 hover:bg-glass-highlight">
+          <div className="bg-glass/30 rounded-md border border-glass-border p-3 transition-all duration-300 hover:bg-glass-highlight">
             <p className="text-xs text-muted-foreground mb-1">Risk Score</p>
             <p className={cn(
               "text-lg font-bold",
               riskScore > 60 ? "text-red-400" : riskScore > 30 ? "text-yellow-400" : "text-bioGreen"
             )}>{riskScore}</p>
           </div>
-          <div className="bg-glass/30  border border-glass-border  p-3 transition-all duration-300 hover:bg-glass-highlight">
+          <div className="bg-glass/30 rounded-md border border-glass-border p-3 transition-all duration-300 hover:bg-glass-highlight">
             <p className="text-xs text-muted-foreground mb-1">Avg HRV</p>
             <p className="text-lg font-semibold text-foreground">{avgHRV.toFixed(1)}</p>
           </div>
         </div>
 
         {/* Summary */}
-        <div className="bg-glass/30  border border-glass-border  p-4 mb-4 transition-all duration-300">
+        <div className="bg-glass/30 rounded-md border border-glass-border p-4 mb-4 transition-all duration-300">
           <p className="text-foreground leading-relaxed">
             {generateSummary()}
           </p>
@@ -833,7 +833,7 @@ const WeeklyInsightsSection = () => {
           </h4>
           <div className="space-y-2">
             {generateRecommendations().map((rec, index) => (
-              <div key={index} className="flex items-start gap-3 bg-glass/30  border border-glass-border  p-3 hover:bg-glass-highlight transition-all duration-300">
+              <div key={index} className="flex items-start gap-3 bg-glass/30 rounded-md border border-glass-border p-3 hover:bg-glass-highlight transition-all duration-300">
                 <div className={cn(
                   "w-1.5 h-1.5 mt-2 flex-shrink-0",
                   rec.color === "green" && "bg-bioGreen",
@@ -873,7 +873,7 @@ const WeeklyInsightsSection = () => {
 
       {/* Info Dialog */}
       <Dialog open={isInfoDialogOpen} onOpenChange={setIsInfoDialogOpen}>
-        <DialogContent className="sm:max-w-md bg-glass  border border-glass-border ">
+        <DialogContent className="sm:max-w-md bg-glass rounded-md border border-glass-border ">
           <DialogHeader>
             <DialogTitle className="text-lg font-semibold text-foreground flex items-center gap-2">
               <Info size={20} className="text-primary" />
@@ -888,7 +888,7 @@ const WeeklyInsightsSection = () => {
             <p className="text-sm text-muted-foreground leading-relaxed">
               This analysis combines your training load, recovery metrics, and health data to provide personalized recommendations that help you optimize performance while minimizing injury risk.
             </p>
-            <div className="bg-primary/10 border border-primary/30  p-3 mt-4">
+            <div className="bg-primary/10 border border-primary/30 rounded-md p-3 mt-4">
               <p className="text-sm text-primary font-medium">
                 💡 Tip: Review these insights every Monday to plan your week effectively.
               </p>
@@ -911,7 +911,7 @@ const UpcomingBookingsSection = () => {
   
   if (allBookings.length === 0) {
     return (
-      <div className="bg-glass  border border-glass-border  p-8  text-center">
+      <div className="bg-glass rounded-md border border-glass-border p-8 text-center">
         <div className="space-y-4">
           <Calendar size={48} className="mx-auto text-muted-foreground" />
           <h3 className="text-xl font-semibold text-foreground">No Upcoming Bookings</h3>
@@ -922,9 +922,9 @@ const UpcomingBookingsSection = () => {
   }
 
   return (
-    <div className="bg-glass  border border-glass-border  p-6  hover:bg-glass-highlight hover:scale-105 hover:-translate-y-1 transition-all duration-300 ease-out animate-fade-in transform-gpu">
+    <div className="bg-glass rounded-md border border-glass-border p-6 hover:bg-glass-highlight hover:scale-105 hover:-translate-y-1 transition-all duration-300 ease-out animate-fade-in transform-gpu">
       <div className="flex items-center gap-3 mb-6">
-        <div className="w-8 h-8 bg-primary/20  flex items-center justify-center hover:scale-110 transition-transform duration-200">
+        <div className="w-8 h-8 bg-primary/20 rounded-md flex items-center justify-center hover:scale-110 transition-transform duration-200">
           <Calendar size={16} className="text-primary" />
         </div>
         <h3 className="text-lg font-semibold text-foreground">Upcoming Bookings</h3>
@@ -934,12 +934,12 @@ const UpcomingBookingsSection = () => {
       </div>
       <div className="space-y-4">
         {allBookings.map((booking) => (
-          <div key={booking.id} className="bg-glass/30  border border-glass-border  p-4 transition-all duration-200 border-l-4 border-l-primary hover:bg-glass-highlight">
+          <div key={booking.id} className="bg-glass/30 rounded-md border border-glass-border p-4 transition-all duration-200 border-l-4 border-l-primary hover:bg-glass-highlight">
             <div className="flex items-start justify-between gap-4">
               <div className="flex-1 space-y-2">
                 <div className="flex items-center gap-2">
                   <span className={cn(
-                    "px-2 py-1 text-xs font-medium  border border-primary/30 text-primary bg-primary/10"
+                    "px-2 py-1 text-xs font-medium rounded-md border border-primary/30 text-primary bg-primary/10"
                   )}>
                     {booking.type}
                   </span>
@@ -1020,7 +1020,7 @@ export const YourPlan = () => {
                           recommendations: [{ color: "blue", text: "Connect your wearable device to generate personalized recommendations." }]
                         });
                       }}
-                      className="flex items-center gap-2 px-6 py-3 bg-primary/20 text-primary  border border-primary/30 hover:bg-primary/30 hover:scale-105 active:scale-95 transition-all duration-200 font-medium "
+                      className="flex items-center gap-2 px-6 py-3 bg-primary/20 text-primary rounded-md border border-primary/30 hover:bg-primary/30 hover:scale-105 active:scale-95 transition-all duration-200 font-medium "
                     >
                       <Download size={18} />
                       <span>Generate Weekly Report</span>
@@ -1036,7 +1036,7 @@ export const YourPlan = () => {
         </div>
 
         {!userId ? (
-          <div className="text-center py-12 px-4 bg-glass  border border-glass-border ">
+          <div className="text-center py-12 px-4 bg-glass rounded-md border border-glass-border ">
             <p className="text-muted-foreground mb-4">No user authenticated</p>
             <p className="text-sm text-muted-foreground">Please log in to view your plan and challenges</p>
           </div>

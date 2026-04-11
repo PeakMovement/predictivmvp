@@ -178,7 +178,7 @@ export function FindHelp() {
   };
 
   const inputCls =
-    "w-full  border border-border/50 bg-card/60 px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all";
+    "w-full rounded-md border border-border/50 bg-card/60 px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all";
   const pillCls = (active: boolean) =>
     `px-4 py-2 text-sm font-medium transition-all ${
       active
@@ -222,7 +222,7 @@ export function FindHelp() {
       <div className="mb-4 flex items-center gap-3">
         <button
           onClick={() => setShowFilters(!showFilters)}
-          className="inline-flex items-center gap-1.5  border border-border/50 bg-card/60 px-4 py-2 text-sm font-medium text-muted-foreground transition-all hover:border-border"
+          className="inline-flex items-center gap-1.5 rounded-md border border-border/50 bg-card/60 px-4 py-2 text-sm font-medium text-muted-foreground transition-all hover:border-border"
         >
           <SlidersHorizontal size={14} />
           Filters
@@ -247,7 +247,7 @@ export function FindHelp() {
 
       {/* Filter panel */}
       {showFilters && (
-        <div className="mb-6  border border-border/50 bg-card/60 p-4 space-y-4">
+        <div className="mb-6 rounded-md border border-border/50 bg-card/60 p-4 space-y-4">
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             {/* Specialty */}
             <div>
@@ -306,7 +306,7 @@ export function FindHelp() {
           {[1, 2, 3].map((i) => (
             <div
               key={i}
-              className="h-48 animate-pulse  bg-card/60 border border-border/30"
+              className="h-48 animate-pulse rounded-md bg-card/60 border border-border/30"
             />
           ))}
         </div>
@@ -333,7 +333,7 @@ export function FindHelp() {
           {activeFilterCount > 0 && (
             <button
               onClick={clearFilters}
-              className="mt-4  bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground transition-all hover:bg-primary/90"
+              className="mt-4 rounded-md bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground transition-all hover:bg-primary/90"
             >
               Clear all filters
             </button>
@@ -360,7 +360,7 @@ function PractitionerCard({ p }: { p: Practitioner }) {
     p.bio.length > 120 ? p.bio.slice(0, 120) + "\u2026" : p.bio;
 
   return (
-    <div className=" border border-border/50 bg-card/60  p-5 flex flex-col gap-3 hover:border-primary/30 transition-colors">
+    <div className=" border border-border/50 bg-card/60 rounded-md p-5 flex flex-col gap-3 hover:border-primary/30 transition-colors">
       {/* Header */}
       <div className="flex items-start justify-between gap-2">
         <div>
@@ -438,7 +438,7 @@ function PractitionerCard({ p }: { p: Practitioner }) {
       <div className="flex gap-2 mt-auto pt-1">
         <button
           disabled
-          className="flex-1  bg-muted/50 py-2 text-center text-sm font-medium text-muted-foreground cursor-not-allowed"
+          className="flex-1 rounded-md bg-muted/50 py-2 text-center text-sm font-medium text-muted-foreground cursor-not-allowed"
         >
           Book
         </button>

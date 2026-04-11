@@ -122,7 +122,7 @@ export function DocumentPreviewModal({
           </div>
         </DialogHeader>
 
-        <div className="flex-1 overflow-hidden  border bg-muted/50 mt-4">
+        <div className="flex-1 overflow-hidden rounded-md border bg-muted/50 mt-4">
           {loading ? (
             <div className="h-full flex items-center justify-center">
               <div className="w-24 h-px overflow-hidden"><div className="h-px w-full bg-coldBlue animate-hairline-sweep" /></div>

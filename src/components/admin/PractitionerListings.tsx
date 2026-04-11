@@ -131,7 +131,7 @@ export function PractitionerListings() {
             <Card className="bg-glass border-glass-border hover:bg-glass-highlight transition-all">
               <CardContent className="p-4">
                 <div className="flex items-center justify-between mb-2">
-                  <div className="w-8 h-8  flex items-center justify-center bg-primary/20">
+                  <div className="w-8 h-8 rounded-md flex items-center justify-center bg-primary/20">
                     <Users size={16} className="text-primary" />
                   </div>
                   <TrendingUp size={14} className="text-bioGreen" />
@@ -143,7 +143,7 @@ export function PractitionerListings() {
             <Card className="bg-glass border-glass-border hover:bg-glass-highlight transition-all">
               <CardContent className="p-4">
                 <div className="flex items-center justify-between mb-2">
-                  <div className="w-8 h-8  flex items-center justify-center bg-bioGreen/20">
+                  <div className="w-8 h-8 rounded-md flex items-center justify-center bg-bioGreen/20">
                     <CheckCircle2 size={16} className="text-bioGreen" />
                   </div>
                   <TrendingUp size={14} className="text-bioGreen" />
@@ -155,7 +155,7 @@ export function PractitionerListings() {
             <Card className="bg-glass border-glass-border hover:bg-glass-highlight transition-all">
               <CardContent className="p-4">
                 <div className="flex items-center justify-between mb-2">
-                  <div className="w-8 h-8  flex items-center justify-center bg-amber/20">
+                  <div className="w-8 h-8 rounded-md flex items-center justify-center bg-amber/20">
                     <Clock size={16} className="text-amber" />
                   </div>
                 </div>
@@ -166,7 +166,7 @@ export function PractitionerListings() {
             <Card className="bg-glass border-glass-border hover:bg-glass-highlight transition-all">
               <CardContent className="p-4">
                 <div className="flex items-center justify-between mb-2">
-                  <div className="w-8 h-8  flex items-center justify-center bg-purple-500/20">
+                  <div className="w-8 h-8 rounded-md flex items-center justify-center bg-purple-500/20">
                     <Check size={16} className="text-purple-500" />
                   </div>
                 </div>
@@ -319,7 +319,7 @@ export function PractitionerListings() {
             {PENDING.map((p) => (
               <div
                 key={p.id}
-                className="bg-card border border-border  overflow-hidden"
+                className="bg-card border border-border rounded-md overflow-hidden"
               >
                 {/* Card header */}
                 <div className="px-5 py-4 flex items-start justify-between gap-3">

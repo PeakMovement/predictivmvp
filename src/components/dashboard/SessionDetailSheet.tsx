@@ -73,7 +73,7 @@ const AcwrZoneBar = ({ acwr }: { acwr: number | null }) => {
           />
         ))}
         <div
-          className="absolute top-1/2 -translate-y-1/2 w-3.5 h-3.5 bg-foreground border-2 border-background  transition-all duration-500"
+          className="absolute top-1/2 -translate-y-1/2 w-3.5 h-3.5 bg-foreground border-2 border-background rounded-md transition-all duration-500"
           style={{ left: `calc(${position}% - 7px)` }}
         />
       </div>
@@ -172,7 +172,7 @@ export const SessionDetailSheet = ({
           {isLoading ? (
             <div className="p-4 space-y-3">
               {[1, 2, 3, 4, 5].map(i => (
-                <div key={i} className="h-8 bg-muted/30  animate-pulse" />
+                <div key={i} className="h-8 bg-muted/30 rounded-md animate-pulse" />
               ))}
             </div>
           ) : (
@@ -182,7 +182,7 @@ export const SessionDetailSheet = ({
                 <h4 className="section-header">
                   Load Metrics
                 </h4>
-                <div className="bg-card/50  border border-border/40 px-3 divide-y divide-border/30">
+                <div className="bg-card/50 rounded-md border border-border/40 px-3 divide-y divide-border/30">
                   <MetricRow icon={Zap} label="Training Load" value={training?.training_load != null ? Math.round(training.training_load) : null} />
                   <div className="py-2">
                     <div className="flex items-center justify-between">
@@ -194,7 +194,7 @@ export const SessionDetailSheet = ({
                         <span className="text-sm font-medium text-foreground">
                           {training?.acwr != null ? training.acwr.toFixed(2) : "–"}
                         </span>
-                        <span className={`text-xs px-1.5 py-0.5  font-medium ${acwrZone.color} ${acwrZone.bg}`}>
+                        <span className={`text-xs px-1.5 py-0.5 rounded-md font-medium ${acwrZone.color} ${acwrZone.bg}`}>
                           {acwrZone.label}
                         </span>
                       </div>
@@ -211,7 +211,7 @@ export const SessionDetailSheet = ({
                 <h4 className="section-header">
                   Physiological Data
                 </h4>
-                <div className="bg-card/50  border border-border/40 px-3 divide-y divide-border/30">
+                <div className="bg-card/50 rounded-md border border-border/40 px-3 divide-y divide-border/30">
                   <MetricRow icon={Heart} label="HRV Average" value={wearable?.hrv_avg != null ? Math.round(wearable.hrv_avg) : null} unit=" ms" accent="text-red-400" />
                   <MetricRow icon={Heart} label="Resting HR" value={wearable?.resting_hr != null ? Math.round(wearable.resting_hr) : null} unit=" bpm" accent="text-rose-400" />
                   <MetricRow icon={Activity} label="Activity Score" value={wearable?.activity_score} unit="/100" accent="text-bioGreen" />
@@ -226,7 +226,7 @@ export const SessionDetailSheet = ({
                 <h4 className="section-header">
                   Recovery Context
                 </h4>
-                <div className="bg-card/50  border border-border/40 px-3 divide-y divide-border/30">
+                <div className="bg-card/50 rounded-md border border-border/40 px-3 divide-y divide-border/30">
                   <MetricRow icon={Moon} label="Sleep Score" value={wearable?.sleep_score} unit="/100" accent="text-[#C9A96E]" />
                   <MetricRow icon={BatteryCharging} label="Readiness Score" value={wearable?.readiness_score} unit="/100" accent="text-bioGreen" />
                 </div>

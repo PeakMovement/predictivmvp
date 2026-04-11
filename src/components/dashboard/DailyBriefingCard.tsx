@@ -117,7 +117,7 @@ export function DailyBriefingCard({
 
   if (isLoading) {
     return (
-      <Card className="animate-fade-in bg-glass  border-glass-border">
+      <Card className="animate-fade-in bg-glass rounded-md border-glass-border">
         <CardHeader>
           <div className="flex items-center gap-2">
             <PredictivMark size={14} />
@@ -132,7 +132,7 @@ export function DailyBriefingCard({
   }
 
   return (
-    <Card className="animate-fade-in bg-glass  border-glass-border ">
+    <Card className="animate-fade-in bg-glass rounded-md border-glass-border ">
       <CardHeader className="p-4 sm:p-6">
         <div className="flex items-start sm:items-center justify-between gap-3">
           <div className="flex items-center gap-2 min-w-0">
@@ -251,7 +251,7 @@ function CollapsibleSection({ title, icon, preview, children, variant = "default
           : "border-border bg-card/50"
       )}>
         <CollapsibleTrigger asChild>
-          <button className="w-full p-3 sm:p-4 flex items-center justify-between gap-2 sm:gap-3 text-left hover:bg-muted/30 transition-colors  touch-manipulation">
+          <button className="w-full p-3 sm:p-4 flex items-center justify-between gap-2 sm:gap-3 text-left hover:bg-muted/30 transition-colors rounded-md touch-manipulation">
             <div className="flex items-center gap-2 min-w-0 flex-1">
               <div className={cn(
                 "shrink-0",
@@ -334,7 +334,7 @@ function CollapsibleBriefingSections({ briefing, recommendations = [] }: { brief
               const relevantDoc = hasDocuments ? getRelevantDocument(change) : null;
               return (
                 <div key={idx}>
-                  <div className="p-2  bg-muted/50 text-sm">
+                  <div className="p-2 rounded-md bg-muted/50 text-sm">
                      {change}
                   </div>
                   {explanation && (
@@ -369,7 +369,7 @@ function CollapsibleBriefingSections({ briefing, recommendations = [] }: { brief
               const relevantDoc = hasDocuments ? getRelevantDocument(risk) : null;
               return (
                 <div key={idx}>
-                  <div className="p-2  bg-destructive/10 text-sm">
+                  <div className="p-2 rounded-md bg-destructive/10 text-sm">
                      {risk}
                   </div>
                   {explanation && (
@@ -566,7 +566,7 @@ function RecommendationItem({ recommendation, index }: RecommendationItemProps) 
         feedbackGiven === 'followed' && "border-l-4 border-l-bioGreen border-bioGreen/30 bg-bioGreen/5"
       )}>
         <CollapsibleTrigger asChild>
-          <button className="w-full p-3 sm:p-4 flex items-center justify-between gap-2 sm:gap-3 text-left hover:bg-muted/30 transition-colors  touch-manipulation">
+          <button className="w-full p-3 sm:p-4 flex items-center justify-between gap-2 sm:gap-3 text-left hover:bg-muted/30 transition-colors rounded-md touch-manipulation">
             <div className="flex items-center gap-3 min-w-0 flex-1">
               <span className="text-lg shrink-0">{categoryIcon}</span>
               <div className="min-w-0 flex-1">

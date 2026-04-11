@@ -293,10 +293,10 @@ export const PractitionerRegister = () => {
   // ── Shared styles ───────────────────────────────────────────────────────
 
   const inputCls =
-    "w-full  border border-black/10 bg-white px-4 py-3 text-sm text-[#1a1a1a] placeholder:text-[#aaa] outline-none focus:border-[#6B5ED9] focus:ring-2 focus:ring-[#6B5ED9]/20 transition-all";
+    "w-full rounded-md border border-black/10 bg-white px-4 py-3 text-sm text-[#1a1a1a] placeholder:text-[#aaa] outline-none focus:border-[#6B5ED9] focus:ring-2 focus:ring-[#6B5ED9]/20 transition-all";
   const labelCls = "block text-sm font-medium text-[#333] mb-1.5";
   const hintCls = "text-xs text-[#999] mt-1";
-  const cardCls = " bg-white p-6  sm:p-8";
+  const cardCls = " bg-white p-6 rounded-md sm:p-8";
 
   // ── Success state ─────────────────────────────────────────────────────
 
@@ -336,11 +336,11 @@ export const PractitionerRegister = () => {
               key={value}
               type="button"
               onClick={() => set("specialty", value)}
-              className={`flex flex-col items-center gap-2  border p-4 text-center transition-all ${
-                active
-                  ? "border-[#6B5ED9] bg-[#f0ebff]"
-                  : "border-black/10 bg-white hover:border-black/20"
-              }`}
+              className={`flex flex-col items-center gap-2 rounded-md border p-4 text-center transition-all ${
+ active
+ ? "border-[#6B5ED9] bg-[#f0ebff]"
+ : "border-black/10 bg-white hover:border-black/20"
+ }`}
             >
               <span className="text-2xl">{emoji}</span>
               <span className="text-xs font-medium text-[#333]">{value}</span>
@@ -402,7 +402,7 @@ export const PractitionerRegister = () => {
           <button
             type="button"
             onClick={addQualification}
-            className="flex shrink-0 items-center gap-1  border border-[#6B5ED9] px-4 py-3 text-sm font-medium text-[#6B5ED9] transition-colors hover:bg-[#6B5ED9]/5"
+            className="flex shrink-0 items-center gap-1 rounded-md border border-[#6B5ED9] px-4 py-3 text-sm font-medium text-[#6B5ED9] transition-colors hover:bg-[#6B5ED9]/5"
           >
             <Plus size={14} />
             Add
@@ -549,10 +549,10 @@ export const PractitionerRegister = () => {
                   type="button"
                   onClick={() => set(key, !active)}
                   className={`px-5 py-2.5 text-sm font-medium transition-all ${
-                    active
-                      ? "bg-[#6B5ED9] text-white"
-                      : "border border-black/10 bg-white text-[#555] hover:border-black/20"
-                  }`}
+ rounded-md active
+ ? "bg-[#6B5ED9] text-white"
+ : "border border-black/10 bg-white text-[#555] hover:border-black/20"
+ }`}
                 >
                   {mode}
                 </button>
@@ -576,10 +576,10 @@ export const PractitionerRegister = () => {
                     set("session_duration_minutes", active ? null : d)
                   }
                   className={`px-4 py-2.5 text-sm font-medium transition-all ${
-                    active
-                      ? "bg-[#6B5ED9] text-white"
-                      : "border border-black/10 bg-white text-[#555] hover:border-black/20"
-                  }`}
+ rounded-md active
+ ? "bg-[#6B5ED9] text-white"
+ : "border border-black/10 bg-white text-[#555] hover:border-black/20"
+ }`}
                 >
                   {d} min
                 </button>
@@ -605,10 +605,10 @@ export const PractitionerRegister = () => {
                     set("accepts_medical_aid", opt === "Yes")
                   }
                   className={`px-5 py-2.5 text-sm font-medium transition-all ${
-                    active
-                      ? "bg-[#6B5ED9] text-white"
-                      : "border border-black/10 bg-white text-[#555] hover:border-black/20"
-                  }`}
+ rounded-md active
+ ? "bg-[#6B5ED9] text-white"
+ : "border border-black/10 bg-white text-[#555] hover:border-black/20"
+ }`}
                 >
                   {opt}
                 </button>
@@ -717,10 +717,10 @@ export const PractitionerRegister = () => {
               onClick={() => toggleNiche(n)}
               disabled={form.niche_tags.length >= 8}
               className={`border border-black/10 bg-white px-3.5 py-1.5 text-xs font-medium text-[#555] transition-all ${
-                form.niche_tags.length >= 8
-                  ? "cursor-not-allowed opacity-40"
-                  : "hover:border-black/20"
-              }`}
+ rounded-md form.niche_tags.length >= 8
+ ? "cursor-not-allowed opacity-40"
+ : "hover:border-black/20"
+ }`}
             >
               {n}
             </button>
@@ -811,10 +811,10 @@ export const PractitionerRegister = () => {
                   type="button"
                   onClick={() => set("deposit_required", opt === "Yes")}
                   className={`px-5 py-2.5 text-sm font-medium transition-all ${
-                    active
-                      ? "bg-[#6B5ED9] text-white"
-                      : "border border-black/10 bg-white text-[#555] hover:border-black/20"
-                  }`}
+ rounded-md active
+ ? "bg-[#6B5ED9] text-white"
+ : "border border-black/10 bg-white text-[#555] hover:border-black/20"
+ }`}
                 >
                   {opt}
                 </button>
@@ -854,10 +854,10 @@ export const PractitionerRegister = () => {
             type="button"
             onClick={() => set("pricing_tier", "basic")}
             className={` border p-5 text-left transition-all ${
-              form.pricing_tier === "basic"
-                ? "border-[#6B5ED9] bg-[#f0ebff]/50"
-                : "border-black/10 bg-white hover:border-black/20"
-            }`}
+ rounded-md form.pricing_tier === "basic"
+ ? "border-[#6B5ED9] bg-[#f0ebff]/50"
+ : "border-black/10 bg-white hover:border-black/20"
+ }`}
           >
             <div className="flex items-center gap-2">
               <p className="text-lg font-bold text-[#1a1a1a]">Basic</p>
@@ -898,11 +898,11 @@ export const PractitionerRegister = () => {
           <button
             type="button"
             onClick={() => set("pricing_tier", "verified")}
-            className={`relative  border p-5 text-left transition-all ${
-              form.pricing_tier === "verified"
-                ? "border-[#6B5ED9] bg-[#f0ebff]/50"
-                : "border-black/10 bg-white hover:border-black/20"
-            }`}
+            className={`relative rounded-md border p-5 text-left transition-all ${
+ form.pricing_tier === "verified"
+ ? "border-[#6B5ED9] bg-[#f0ebff]/50"
+ : "border-black/10 bg-white hover:border-black/20"
+ }`}
           >
             <span className="absolute -top-2.5 right-4 bg-[#6B5ED9] px-2.5 py-0.5 text-[10px] font-semibold text-white">
               Recommended
@@ -1003,7 +1003,7 @@ export const PractitionerRegister = () => {
 
           {/* Disabled buttons */}
           <div className="mt-4 flex gap-2">
-            <span className="flex-1  bg-black/5 py-2 text-center text-sm font-medium text-[#bbb]">
+            <span className="flex-1 rounded-md bg-black/5 py-2 text-center text-sm font-medium text-[#bbb]">
               Book
             </span>
             <span className=" border border-black/5 px-4 py-2 text-center text-sm font-medium text-[#bbb]">
@@ -1021,7 +1021,7 @@ export const PractitionerRegister = () => {
         type="button"
         onClick={handleSubmit}
         disabled={submitting}
-        className="flex w-full items-center justify-center gap-2  bg-[#6B5ED9] px-6 py-4 text-base font-semibold text-white  transition-all hover:bg-[#5a4ec5] active:scale-[0.98] disabled:opacity-60"
+        className="flex w-full items-center justify-center gap-2 rounded-md bg-[#6B5ED9] px-6 py-4 text-base font-semibold text-white transition-all hover:bg-[#5a4ec5] active:scale-[0.98] disabled:opacity-60"
       >
         {submitting ? (
           <span className="flex items-center gap-2">
@@ -1037,7 +1037,7 @@ export const PractitionerRegister = () => {
       </button>
 
       {submitError && (
-        <div className="mt-4  border border-red-200 bg-red-50 p-4 text-center text-sm text-red-700">
+        <div className="mt-4 rounded-md border border-red-200 bg-red-50 p-4 text-center text-sm text-red-700">
           {submitError}
         </div>
       )}
@@ -1086,23 +1086,23 @@ export const PractitionerRegister = () => {
                 >
                   <span
                     className={`flex h-6 w-6 shrink-0 items-center justify-center text-xs font-bold transition-all ${
-                      done
-                        ? "bg-[#6B5ED9] text-white"
-                        : current
-                          ? "bg-[#6B5ED9] text-white"
-                          : "bg-black/8 text-[#bbb]"
-                    }`}
+ rounded-md done
+ ? "bg-[#6B5ED9] text-white"
+ : current
+ ? "bg-[#6B5ED9] text-white"
+ : "bg-black/8 text-[#bbb]"
+ }`}
                   >
                     {done ? <Check size={12} /> : id}
                   </span>
                   <span
                     className={`hidden text-xs font-medium sm:inline ${
-                      current
-                        ? "font-bold text-[#1a1a1a]"
-                        : done
-                          ? "text-[#6B5ED9]"
-                          : "text-[#bbb]"
-                    }`}
+ rounded-md current
+ ? "font-bold text-[#1a1a1a]"
+ : done
+ ? "text-[#6B5ED9]"
+ : "text-[#bbb]"
+ }`}
                   >
                     {label}
                   </span>
@@ -1145,7 +1145,7 @@ export const PractitionerRegister = () => {
             {step > 1 ? (
               <button
                 onClick={back}
-                className="flex items-center gap-1.5  border border-black/10 bg-white px-5 py-3 text-sm font-medium text-[#555]  transition-all hover:bg-black/5"
+                className="flex items-center gap-1.5 rounded-md border border-black/10 bg-white px-5 py-3 text-sm font-medium text-[#555] transition-all hover:bg-black/5"
               >
                 <ArrowLeft size={16} />
                 Back
@@ -1157,7 +1157,7 @@ export const PractitionerRegister = () => {
             <button
               onClick={next}
               disabled={!stepValid()}
-              className="flex items-center gap-2  bg-[#6B5ED9] px-6 py-3 text-sm font-semibold text-white  transition-all hover:bg-[#5a4ec5] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40"
+              className="flex items-center gap-2 rounded-md bg-[#6B5ED9] px-6 py-3 text-sm font-semibold text-white transition-all hover:bg-[#5a4ec5] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40"
             >
               Continue
               <ArrowRight size={16} />
@@ -1169,7 +1169,7 @@ export const PractitionerRegister = () => {
           <div className="mt-6">
             <button
               onClick={back}
-              className="flex items-center gap-1.5  border border-black/10 bg-white px-5 py-3 text-sm font-medium text-[#555]  transition-all hover:bg-black/5"
+              className="flex items-center gap-1.5 rounded-md border border-black/10 bg-white px-5 py-3 text-sm font-medium text-[#555] transition-all hover:bg-black/5"
             >
               <ArrowLeft size={16} />
               Back

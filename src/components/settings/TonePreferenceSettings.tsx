@@ -63,7 +63,7 @@ export function TonePreferenceSettings() {
               key={option.value}
               onClick={() => updatePreference(option.value)}
               className={cn(
-                "relative flex flex-col items-center gap-1.5 p-3  border transition-all duration-200 text-center",
+                "relative flex flex-col items-center gap-1.5 p-3 rounded-md border transition-all duration-200 text-center",
                 "hover:bg-muted/40 cursor-pointer",
                 isSelected
                   ? "border-primary bg-primary/10 "

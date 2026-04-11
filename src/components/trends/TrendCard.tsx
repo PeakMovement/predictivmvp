@@ -54,7 +54,7 @@ export const TrendCard = ({ metric, onRefresh }: TrendCardProps) => {
   const statusColor = getStatusColor();
 
   return (
-    <Card className="bg-glass  border-glass-border  p-6  min-w-[320px] md:min-w-[400px]">
+    <Card className="bg-glass rounded-md border-glass-border p-6 min-w-[320px] md:min-w-[400px]">
       {/* Header */}
       <div className="flex items-start justify-between mb-4">
         <div>

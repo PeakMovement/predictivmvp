@@ -114,7 +114,7 @@ export default function HealthDataChart() {
 
   if (isLoading) {
     return (
-      <div className="bg-glass  border border-glass-border  p-8  flex items-center justify-center min-h-[400px]">
+      <div className="bg-glass rounded-md border border-glass-border p-8 flex items-center justify-center min-h-[400px]">
         <div className="flex flex-col items-center gap-3">
           <div className="w-24 h-px overflow-hidden"><div className="h-px w-full bg-coldBlue animate-hairline-sweep" /></div>
           <p className="text-sm text-muted-foreground">Loading health data...</p>
@@ -125,7 +125,7 @@ export default function HealthDataChart() {
 
   if (chartData.length === 0) {
     return (
-      <div className="bg-glass  border border-glass-border  p-8 ">
+      <div className="bg-glass rounded-md border border-glass-border p-8 ">
         <div className="text-center space-y-3">
           <h3 className="text-lg font-semibold text-foreground">No Health Data Available</h3>
           <p className="text-sm text-muted-foreground">
@@ -137,7 +137,7 @@ export default function HealthDataChart() {
   }
 
   return (
-    <div className="bg-glass  border border-glass-border  p-6  hover:bg-glass-highlight transition-all duration-300">
+    <div className="bg-glass rounded-md border border-glass-border p-6 hover:bg-glass-highlight transition-all duration-300">
       <div className="mb-6">
         <h3 className="text-xl font-semibold text-foreground mb-2">Health Metrics Trend</h3>
         <p className="text-sm text-muted-foreground">

@@ -61,7 +61,7 @@ export function FocusModeSelector({
               <button
                 onClick={() => onModeChange(mode.id)}
                 className={cn(
-                  "flex items-center gap-2 px-3 py-2  border text-sm font-medium transition-all duration-200",
+                  "flex items-center gap-2 px-3 py-2 rounded-md border text-sm font-medium transition-all duration-200",
                   colorClass,
                   isSelected && ""
                 )}

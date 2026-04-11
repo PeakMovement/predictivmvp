@@ -505,7 +505,7 @@ function TodaysBestDecision({ className }, ref) {
                           </div>
 
                           {session.intensity.hrZone && (
-                            <div className="p-3  bg-muted/50 text-sm">
+                            <div className="p-3 rounded-md bg-muted/50 text-sm">
                               <span className="font-medium">Target zone:</span> {session.intensity.hrZone}
                             </div>
                           )}
@@ -540,7 +540,7 @@ function TodaysBestDecision({ className }, ref) {
                                   key={idx}
                                   onClick={() => toggleExercise(idx)}
                                   className={cn(
-                                    "w-full text-left p-3  border transition-all",
+                                    "w-full text-left p-3 rounded-md border transition-all",
                                     completedExercises.has(idx)
                                       ? "bg-primary/10 border-primary/30"
                                       : "bg-card hover:bg-muted/50 border-border/50"
@@ -587,7 +587,7 @@ function TodaysBestDecision({ className }, ref) {
                           )}
 
                           {session.safetyNotes.length > 0 && (
-                            <div className="p-3  bg-muted/30 border border-border/50 space-y-2">
+                            <div className="p-3 rounded-md bg-muted/30 border border-border/50 space-y-2">
                               <p className="text-xs font-medium text-muted-foreground">Things to keep in mind</p>
                               <div className="space-y-1">
                                 {session.safetyNotes.map((note, idx) => (

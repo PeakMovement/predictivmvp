@@ -29,7 +29,7 @@ export function WhyThisMatters({ explanation, tone, className }: WhyThisMattersP
   const styles = toneStyles[tone];
   
   return (
-    <div className={cn('mt-2  p-2.5', styles.bg, className)}>
+    <div className={cn('mt-2 rounded-md p-2.5', styles.bg, className)}>
       <p className="font-mono text-[8px] tracking-[3px] uppercase text-coldBlue/50 mb-1">
         Data Basis
       </p>

@@ -121,7 +121,7 @@ export function StructuredSessionCard({ session, className }: StructuredSessionC
 
             {/* Intensity zone */}
             {session.intensity.hrZone && (
-              <div className="p-2  bg-muted/50 text-xs">
+              <div className="p-2 rounded-md bg-muted/50 text-xs">
                 <span className="font-medium">Target zone:</span> {session.intensity.hrZone}
               </div>
             )}
@@ -161,7 +161,7 @@ export function StructuredSessionCard({ session, className }: StructuredSessionC
                     key={idx}
                     onClick={() => toggleExercise(idx)}
                     className={cn(
-                      "w-full text-left p-2  border transition-all",
+                      "w-full text-left p-2 rounded-md border transition-all",
                       completedExercises.has(idx)
                         ? "bg-primary/10 border-primary/30"
                         : "bg-card hover:bg-muted/50 border-border"
@@ -219,7 +219,7 @@ export function StructuredSessionCard({ session, className }: StructuredSessionC
 
             {/* Safety notes */}
             {session.safetyNotes.length > 0 && (
-              <div className="p-2  bg-warning/10 border border-warning/20 space-y-1">
+              <div className="p-2 rounded-md bg-warning/10 border border-warning/20 space-y-1">
                 <div className="flex items-center gap-1.5 text-xs font-medium text-warning">
                   <AlertTriangle className="h-3 w-3" />
                   Safety Notes

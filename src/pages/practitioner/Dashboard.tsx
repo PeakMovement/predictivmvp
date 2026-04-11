@@ -162,13 +162,13 @@ export const PractitionerDashboard = () => {
           </div>
         </div>
         <div className="mx-auto max-w-4xl px-5 py-8 space-y-6">
-          <div className="h-32 animate-pulse  bg-white/60" />
+          <div className="h-32 animate-pulse rounded-md bg-white/60" />
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
             {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="h-28 animate-pulse  bg-white/60" />
+              <div key={i} className="h-28 animate-pulse rounded-md bg-white/60" />
             ))}
           </div>
-          <div className="h-48 animate-pulse  bg-white/60" />
+          <div className="h-48 animate-pulse rounded-md bg-white/60" />
         </div>
       </div>
     );
@@ -192,7 +192,7 @@ export const PractitionerDashboard = () => {
           </p>
           <Link
             to="/practitioner/register"
-            className="mt-4 inline-flex items-center gap-2  bg-[#6B5ED9] px-6 py-3 text-sm font-semibold text-white  transition-all hover:bg-[#5a4ec5]"
+            className="mt-4 inline-flex items-center gap-2 rounded-md bg-[#6B5ED9] px-6 py-3 text-sm font-semibold text-white transition-all hover:bg-[#5a4ec5]"
           >
             Create your listing
             <ArrowRight size={16} />
@@ -365,7 +365,7 @@ function OverviewTab({ p }: { p: PractitionerData }) {
             Get priority placement, patient health data access, and Yves anomaly
             alerts sent directly to you.
           </p>
-          <button className="mt-4 inline-flex items-center gap-2  bg-[#6B5ED9] px-6 py-3 text-sm font-semibold text-white  transition-all hover:bg-[#5a4ec5] active:scale-[0.98]">
+          <button className="mt-4 inline-flex items-center gap-2 rounded-md bg-[#6B5ED9] px-6 py-3 text-sm font-semibold text-white transition-all hover:bg-[#5a4ec5] active:scale-[0.98]">
             Upgrade for R1,499/month
             <ArrowRight size={16} />
           </button>
@@ -402,7 +402,7 @@ function ListingTab({ p }: { p: PractitionerData }) {
       </div>
 
       {/* Listing preview card */}
-      <div className="max-w-md  border border-black/10 bg-white p-5 ">
+      <div className="max-w-md rounded-md border border-black/10 bg-white p-5 ">
         {/* Header */}
         <div className="flex items-start justify-between gap-2">
           <div>
@@ -483,7 +483,7 @@ function ListingTab({ p }: { p: PractitionerData }) {
 
         {/* Disabled buttons */}
         <div className="mt-4 flex gap-2">
-          <span className="flex-1  bg-black/5 py-2 text-center text-sm font-medium text-[#bbb]">
+          <span className="flex-1 rounded-md bg-black/5 py-2 text-center text-sm font-medium text-[#bbb]">
             Book
           </span>
           <span className=" border border-black/5 px-4 py-2 text-center text-sm font-medium text-[#bbb]">
@@ -499,7 +499,7 @@ function ListingTab({ p }: { p: PractitionerData }) {
       <div className="flex flex-wrap items-center gap-4">
         <Link
           to="/practitioner/register"
-          className="inline-flex items-center gap-2  bg-[#6B5ED9] px-6 py-3 text-sm font-semibold text-white  transition-all hover:bg-[#5a4ec5] active:scale-[0.98]"
+          className="inline-flex items-center gap-2 rounded-md bg-[#6B5ED9] px-6 py-3 text-sm font-semibold text-white transition-all hover:bg-[#5a4ec5] active:scale-[0.98]"
         >
           Edit listing details
           <ArrowRight size={16} />
@@ -579,7 +579,7 @@ function ReferralsTab() {
   return (
     <div className="space-y-6">
       {/* Empty state */}
-      <div className="flex flex-col items-center  bg-white py-16 text-center ">
+      <div className="flex flex-col items-center rounded-md bg-white py-16 text-center ">
         <span className="mb-4 text-4xl">{"\uD83D\uDCCB"}</span>
         <h2 className="text-lg font-bold text-[#1a1a1a]">
           Referral tracking coming in Phase 2
@@ -592,7 +592,7 @@ function ReferralsTab() {
       </div>
 
       {/* Greyed-out preview table */}
-      <div className="relative  bg-white p-6 ">
+      <div className="relative rounded-md bg-white p-6 ">
         <div className="opacity-30">
           <div className="grid grid-cols-5 gap-4 border-b border-black/5 pb-3 text-xs font-semibold text-[#555]">
             <span>Patient</span>
@@ -639,7 +639,7 @@ function StatCard({
 }) {
   return (
     <div className=" bg-white p-5 ">
-      <div className="mb-2 flex h-8 w-8 items-center justify-center  bg-[#6B5ED9]/10">
+      <div className="mb-2 flex h-8 w-8 items-center justify-center rounded-md bg-[#6B5ED9]/10">
         <Icon size={16} className="text-[#6B5ED9]" />
       </div>
       <p className="text-2xl font-bold text-[#1a1a1a]">{value}</p>

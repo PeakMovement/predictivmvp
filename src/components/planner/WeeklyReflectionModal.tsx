@@ -104,7 +104,7 @@ export const WeeklyReflectionModal = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <div className="w-12 h-12  bg-primary/10 border border-primary/30 flex items-center justify-center mx-auto mb-4">
+          <div className="w-12 h-12 rounded-md bg-primary/10 border border-primary/30 flex items-center justify-center mx-auto mb-4">
             <Sparkles className="h-6 w-6 text-primary" />
           </div>
           <DialogTitle className="text-center">How Was Your Week?</DialogTitle>
@@ -124,7 +124,7 @@ export const WeeklyReflectionModal = ({
                   type="button"
                   onClick={() => setRating(star)}
                   className={cn(
-                    "p-2  transition-all",
+                    "p-2 rounded-md transition-all",
                     rating >= star
                       ? "text-amber scale-110"
                       : "text-muted-foreground hover:text-amber/50"

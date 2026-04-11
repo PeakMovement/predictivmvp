@@ -95,7 +95,7 @@ export function LayoutEditor({
       <CardHeader className="pb-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-primary/20  flex items-center justify-center">
+            <div className="w-10 h-10 bg-primary/20 rounded-md flex items-center justify-center">
               <Sparkles className="w-5 h-5 text-primary" />
             </div>
             <div>
@@ -112,7 +112,7 @@ export function LayoutEditor({
       </CardHeader>
       <CardContent className="space-y-4">
         {/* Preview Mode Toggle */}
-        <div className="flex items-center justify-between bg-primary/10  p-3">
+        <div className="flex items-center justify-between bg-primary/10 rounded-md p-3">
           <div className="flex items-center gap-3">
             <MonitorPlay className="w-5 h-5 text-primary" />
             <div>
@@ -128,7 +128,7 @@ export function LayoutEditor({
         </div>
 
         {/* Instructions */}
-        <div className="bg-muted/30  p-3 text-sm text-muted-foreground space-y-1">
+        <div className="bg-muted/30 rounded-md p-3 text-sm text-muted-foreground space-y-1">
           <p className="flex items-center gap-2">
             <GripVertical className="w-4 h-4 flex-shrink-0" />
             Drag sections to reorder, or use the arrows
@@ -157,7 +157,7 @@ export function LayoutEditor({
                 onDrop={(e) => handleDrop(e, index)}
                 onDragLeave={handleDragLeave}
                 className={cn(
-                  "flex items-center gap-3 p-3  border transition-all duration-200",
+                  "flex items-center gap-3 p-3 rounded-md border transition-all duration-200",
                   "bg-background/80 hover:bg-background cursor-grab active:cursor-grabbing",
                   section.visible 
                     ? "border-border hover:border-primary/50" 
@@ -275,7 +275,7 @@ export function LayoutEditor({
         </div>
 
         {/* Data Safety Notice */}
-        <div className="bg-bioGreen/10 border border-bioGreen/20  p-3 text-sm text-green-700 dark:text-bioGreen">
+        <div className="bg-bioGreen/10 border border-bioGreen/20 rounded-md p-3 text-sm text-green-700 dark:text-bioGreen">
           <p className="flex items-center gap-2">
             <Check className="w-4 h-4 flex-shrink-0" />
             Your data is always safe. Hiding sections only changes what you see, not what is stored or synced.

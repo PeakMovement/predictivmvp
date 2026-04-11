@@ -149,7 +149,7 @@ export function DocumentVersionHistoryModal({
               </div>
             ) : (
               <div className="space-y-4">
-                <div className="border  p-4 bg-primary/5">
+                <div className="border rounded-md p-4 bg-primary/5">
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-2">
@@ -193,7 +193,7 @@ export function DocumentVersionHistoryModal({
                       Previous Versions
                     </h4>
                     {versions.map((version) => (
-                      <div key={version.id} className="border  p-4 hover:bg-muted/50 transition-colors">
+                      <div key={version.id} className="border rounded-md p-4 hover:bg-muted/50 transition-colors">
                         <div className="flex items-start justify-between gap-4">
                           <div className="flex-1">
                             <div className="flex items-center gap-2 mb-2">

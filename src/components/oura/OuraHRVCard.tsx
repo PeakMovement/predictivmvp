@@ -24,7 +24,7 @@ export const OuraHRVCard = ({
   const isStale = hoursSinceSync !== null && hoursSinceSync > STALE_HOURS;
   if (isLoading) {
     return (
-      <div className="bg-glass  border border-glass-border  p-6 ">
+      <div className="bg-glass rounded-md border border-glass-border p-6 ">
         <Skeleton className="h-8 w-48 mb-6" />
         <div className="grid grid-cols-3 gap-4">
           <Skeleton className="h-24" />
@@ -39,9 +39,9 @@ export const OuraHRVCard = ({
 
   if (!hasAnyData) {
     return (
-      <div className="bg-glass  border border-glass-border  p-6 ">
+      <div className="bg-glass rounded-md border border-glass-border p-6 ">
         <div className="flex items-center gap-3 mb-6">
-          <div className="w-10 h-10 bg-blue-500/20  flex items-center justify-center">
+          <div className="w-10 h-10 bg-blue-500/20 rounded-md flex items-center justify-center">
             <Activity className="w-5 h-5 text-blue-500" />
           </div>
           <h2 className="text-xl font-semibold text-foreground">Heart & Body Signals</h2>
@@ -55,30 +55,30 @@ export const OuraHRVCard = ({
   }
 
   return (
-    <div className="bg-glass  border border-glass-border  p-6  hover-glow animate-fade-in">
+    <div className="bg-glass rounded-md border border-glass-border p-6 hover-glow animate-fade-in">
       <div className="flex items-center gap-3 mb-6">
-        <div className="w-10 h-10 bg-blue-500/20  flex items-center justify-center">
+        <div className="w-10 h-10 bg-blue-500/20 rounded-md flex items-center justify-center">
           <Activity className="w-5 h-5 text-blue-500" />
         </div>
         <h2 className="text-xl font-semibold text-foreground">Heart & Body Signals</h2>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className={`bg-background/50  border border-glass-border  p-5 text-center ${hrv === null ? 'opacity-50' : ''}`}>
+        <div className={`bg-background/50 rounded-md border border-glass-border p-5 text-center ${hrv === null ? 'opacity-50' : ''}`}>
           <Activity className="w-7 h-7 text-blue-400 mx-auto mb-3" />
           <p className="text-[40px] sm:text-[52px] font-display font-light leading-none text-foreground mb-1">{hrv ?? '—'}</p>
           <p className="text-sm text-muted-foreground">HRV</p>
           <p className="metric-unit text-muted-foreground mt-1">MS</p>
         </div>
 
-        <div className={`bg-background/50  border border-glass-border  p-5 text-center ${restingHR === null ? 'opacity-50' : ''}`}>
+        <div className={`bg-background/50 rounded-md border border-glass-border p-5 text-center ${restingHR === null ? 'opacity-50' : ''}`}>
           <Heart className="w-7 h-7 text-red-400 mx-auto mb-3" />
           <p className="text-[40px] sm:text-[52px] font-display font-light leading-none text-foreground mb-1">{restingHR ?? '—'}</p>
           <p className="text-sm text-muted-foreground">Resting HR</p>
           <p className="metric-unit text-muted-foreground mt-1">BPM</p>
         </div>
 
-        <div className={`bg-background/50  border border-glass-border  p-5 text-center ${spo2 === null ? 'opacity-50' : ''}`}>
+        <div className={`bg-background/50 rounded-md border border-glass-border p-5 text-center ${spo2 === null ? 'opacity-50' : ''}`}>
           <Droplets className="w-7 h-7 text-cyan-400 mx-auto mb-3" />
           <p className="text-[40px] sm:text-[52px] font-display font-light leading-none text-foreground mb-1">{spo2 !== null ? spo2.toFixed(1) : '—'}</p>
           <p className="text-sm text-muted-foreground">Blood Oxygen</p>

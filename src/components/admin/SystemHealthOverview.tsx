@@ -80,7 +80,7 @@ export function SystemHealthOverview({ data, isLoading }: SystemHealthOverviewPr
         <Card key={metric.label} className="bg-glass border-glass-border hover:bg-glass-highlight transition-all">
           <CardContent className="p-4">
             <div className="flex items-center justify-between mb-2">
-              <div className={cn("w-8 h-8  flex items-center justify-center", metric.bgColor)}>
+              <div className={cn("w-8 h-8 rounded-md flex items-center justify-center", metric.bgColor)}>
                 <metric.icon size={16} className={metric.color} />
               </div>
               {metric.trend === "up" ? (

@@ -117,7 +117,7 @@ export const PractitionerAccessSettings = () => {
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-3 mb-4">
-        <div className="w-9 h-9 bg-blue-500/10  flex items-center justify-center">
+        <div className="w-9 h-9 bg-blue-500/10 rounded-md flex items-center justify-center">
           <Stethoscope className="h-5 w-5 text-blue-600" />
         </div>
         <div>
@@ -189,7 +189,7 @@ export const PractitionerAccessSettings = () => {
             {records.map((rec) => (
               <div
                 key={rec.id}
-                className="flex items-center justify-between p-3  border border-border bg-muted/30"
+                className="flex items-center justify-between p-3 rounded-md border border-border bg-muted/30"
               >
                 <div className="flex items-center gap-3 min-w-0">
                   <div className="w-8 h-8 bg-blue-500/10 flex items-center justify-center flex-shrink-0">

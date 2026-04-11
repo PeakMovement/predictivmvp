@@ -17,42 +17,30 @@ Deno.serve(async (req: Request) => {
   try {
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 
-    // Resolve userId: service-role override header > body > JWT sub
+    // Resolve userId: service-role override > body > JWT sub
     let userId: string | undefined;
+
+    const authHeader = req.headers.get("Authorization");
+    const token = authHeader?.replace("Bearer ", "") ?? "";
+    const jwtPayload = parseJwt(token);
+    const isServiceRole = jwtPayload?.role === "service_role";
 
     // 1. Service-role auto-sync header
     const overrideHeader = req.headers.get("x-polar-user-id-override");
-    if (overrideHeader) {
-      const authHeader = req.headers.get("Authorization");
-      const token = authHeader?.replace("Bearer ", "") ?? "";
-      if (token === supabaseServiceKey) {
-        userId = overrideHeader;
-      }
+    if (overrideHeader && isServiceRole) {
+      userId = overrideHeader;
     }
 
     // 2. Body user_id (service-role call)
     if (!userId) {
       const body = await req.clone().json().catch(() => ({}));
-      if (body.user_id) {
-        const authHeader = req.headers.get("Authorization");
-        const token = authHeader?.replace("Bearer ", "") ?? "";
-        if (token === supabaseServiceKey) {
-          userId = body.user_id;
-        }
+      if (body.user_id && isServiceRole) {
+        userId = body.user_id;
       }
     }
 
     // 3. Standard user JWT
     if (!userId) {
-      const authHeader = req.headers.get("Authorization");
-      if (!authHeader || !authHeader.startsWith("Bearer ")) {
-        return new Response(
-          JSON.stringify({ error: "Missing or invalid authorization header" }),
-          { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
-      const token = authHeader.replace("Bearer ", "");
-      const jwtPayload = parseJwt(token);
       userId = jwtPayload?.sub;
     }
 
@@ -226,7 +214,7 @@ Deno.serve(async (req: Request) => {
   }
 });
 
-function parseJwt(token: string): { sub?: string } | null {
+function parseJwt(token: string): { sub?: string; role?: string } | null {
   try {
     const base64Url = token.split('.')[1];
     if (!base64Url) return null;

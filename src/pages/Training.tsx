@@ -557,6 +557,15 @@ export const Training = () => {
                         note={f12Status === "alert" ? "⚠ Alert" : f12Status === "elevated" ? "↑ Elevated" : f12Status === "normal" ? "Normal" : undefined}
                       />
                     </div>
+                  ) : selectedSource === "polar" ? (
+                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-px mb-12">
+                      <CircularGauge title="Sleep Score" value={wearableData?.sleep_score ?? 0} maxValue={100} unit="%" />
+                      <CircularGauge title="HRV" value={wearableData?.hrv_avg ? Math.round(wearableData.hrv_avg) : 0} maxValue={120} unit="ms" />
+                      <CircularGauge title="Resting HR" value={wearableData?.resting_hr ? Math.round(wearableData.resting_hr) : 0} maxValue={100} unit="bpm" />
+                      <CircularGauge title="Avg HR" value={wearableData?.avg_heart_rate ? Math.round(wearableData.avg_heart_rate) : 0} maxValue={200} unit="bpm" />
+                      <CircularGauge title="Max HR" value={wearableData?.max_heart_rate ? Math.round(wearableData.max_heart_rate) : 0} maxValue={220} unit="bpm" />
+                      <CircularGauge title="Training Load" value={wearableData?.training_load ? Math.round(wearableData.training_load) : 0} maxValue={500} unit="" />
+                    </div>
                   ) : (
                     <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-px mb-12">
                       <CircularGauge title="Readiness" value={wearableData?.readiness_score ?? 0} maxValue={100} unit="%" />
@@ -568,8 +577,8 @@ export const Training = () => {
                     </div>
                   )}
 
-                  {/* ── Performance ── Garmin/training only */}
-                  {selectedSource !== "oura" && (
+                  {/* ── Performance ── Garmin only */}
+                  {selectedSource === "garmin" && (
                     <>
                       <p className="section-header">Performance</p>
                       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-px mb-12">
@@ -587,8 +596,8 @@ export const Training = () => {
                     </>
                   )}
 
-                  {/* ── Load ── Garmin/training only — Oura does not provide these metrics */}
-                  {selectedSource !== "oura" && (
+                  {/* ── Load ── Garmin + Polar training metrics */}
+                  {(selectedSource === "garmin" || selectedSource === "polar") && (
                     <>
                       <p className="section-header">Load</p>
                       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-px">

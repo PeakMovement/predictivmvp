@@ -17,42 +17,30 @@ Deno.serve(async (req: Request) => {
   try {
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 
-    // Resolve userId: service-role override header > body > JWT sub
+    // Resolve userId: service-role override > body > JWT sub
     let userId: string | undefined;
+
+    const authHeader = req.headers.get("Authorization");
+    const token = authHeader?.replace("Bearer ", "") ?? "";
+    const jwtPayload = parseJwt(token);
+    const isServiceRole = jwtPayload?.role === "service_role";
 
     // 1. Service-role auto-sync header
     const overrideHeader = req.headers.get("x-polar-user-id-override");
-    if (overrideHeader) {
-      const authHeader = req.headers.get("Authorization");
-      const token = authHeader?.replace("Bearer ", "") ?? "";
-      if (token === supabaseServiceKey) {
-        userId = overrideHeader;
-      }
+    if (overrideHeader && isServiceRole) {
+      userId = overrideHeader;
     }
 
     // 2. Body user_id (service-role call)
     if (!userId) {
       const body = await req.clone().json().catch(() => ({}));
-      if (body.user_id) {
-        const authHeader = req.headers.get("Authorization");
-        const token = authHeader?.replace("Bearer ", "") ?? "";
-        if (token === supabaseServiceKey) {
-          userId = body.user_id;
-        }
+      if (body.user_id && isServiceRole) {
+        userId = body.user_id;
       }
     }
 
     // 3. Standard user JWT
     if (!userId) {
-      const authHeader = req.headers.get("Authorization");
-      if (!authHeader || !authHeader.startsWith("Bearer ")) {
-        return new Response(
-          JSON.stringify({ error: "Missing or invalid authorization header" }),
-          { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
-      const token = authHeader.replace("Bearer ", "");
-      const jwtPayload = parseJwt(token);
       userId = jwtPayload?.sub;
     }
 
@@ -183,7 +171,7 @@ Deno.serve(async (req: Request) => {
         const { error: upsertError } = await supabase
           .from("wearable_sessions")
           .upsert(sessionData, {
-            onConflict: "user_id,start_time,source",
+            onConflict: "user_id,source,date",
           });
 
         if (upsertError) {
@@ -226,7 +214,7 @@ Deno.serve(async (req: Request) => {
   }
 });
 
-function parseJwt(token: string): { sub?: string } | null {
+function parseJwt(token: string): { sub?: string; role?: string } | null {
   try {
     const base64Url = token.split('.')[1];
     if (!base64Url) return null;
@@ -247,39 +235,26 @@ function parseJwt(token: string): { sub?: string } | null {
 }
 
 function mapPolarSleepToSession(night: any, userId: string) {
-  const startTime = night.sleep_start_time;
-  const endTime = night.sleep_end_time;
   const sleepScore = night.sleep_score || null;
-  const continuityScore = night.continuity || null;
 
-  const lightSleep = night.light_sleep || 0;
-  const deepSleep = night.deep_sleep || 0;
-  const remSleep = night.rem_sleep || 0;
+  // Polar returns durations in seconds — convert to minutes to match Garmin/Oura convention
+  const lightSleep = Math.round((night.light_sleep || 0) / 60);
+  const deepSleep = Math.round((night.deep_sleep || 0) / 60);
+  const remSleep = Math.round((night.rem_sleep || 0) / 60);
+  const totalSleep = lightSleep + deepSleep + remSleep;
 
-  const durationSeconds = lightSleep + deepSleep + remSleep;
-
-  const sleepStages = {
-    light: lightSleep,
-    deep: deepSleep,
-    rem: remSleep,
-  };
-
-  const date = startTime ? new Date(startTime).toISOString().split('T')[0] : null;
+  // Use Polar's date field (the morning date), not sleep_start_time
+  const date = night.date || null;
 
   return {
     user_id: userId,
-    start_time: startTime,
-    end_time: endTime,
     date: date,
-    duration_seconds: durationSeconds,
+    source: "polar",
     sleep_score: sleepScore,
-    sleep_continuity_score: continuityScore,
-    sleep_stages: sleepStages,
     light_sleep_duration: lightSleep,
     deep_sleep_duration: deepSleep,
     rem_sleep_duration: remSleep,
-    total_sleep_duration: durationSeconds,
-    source: "polar",
-    updated_at: new Date().toISOString(),
+    total_sleep_duration: totalSleep,
+    fetched_at: new Date().toISOString(),
   };
 }

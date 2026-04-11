@@ -16,7 +16,19 @@ Deno.serve(async (req: Request) => {
   }
 
   try {
+    const supabaseUrl = Deno.env.get("SUPABASE_URL");
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+
+    if (!supabaseUrl || !supabaseServiceKey) {
+      console.error("Missing Supabase configuration");
+      return new Response(
+        JSON.stringify({ error: "Server configuration error" }),
+        {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
+    }
 
     // Resolve userId: service-role override header > body > JWT sub
     let userId: string | undefined;
@@ -61,20 +73,6 @@ Deno.serve(async (req: Request) => {
       return new Response(
         JSON.stringify({ error: "Invalid JWT: unable to extract user_id" }),
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    const supabaseUrl = Deno.env.get("SUPABASE_URL");
-    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-
-    if (!supabaseUrl || !supabaseServiceKey) {
-      console.error("Missing Supabase configuration");
-      return new Response(
-        JSON.stringify({ error: "Server configuration error" }),
-        {
-          status: 500,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        }
       );
     }
 
@@ -251,19 +249,20 @@ function parseJwt(token: string): { sub?: string } | null {
 function mapPolarSleepToSession(night: any, userId: string) {
   const startTime = night.sleep_start_time;
   const endTime = night.sleep_end_time;
-  const sleepScore = night.sleep_score || null;
   const continuityScore = night.continuity || null;
 
-  const lightSleep = night.light_sleep || 0;
-  const deepSleep = night.deep_sleep || 0;
-  const remSleep = night.rem_sleep || 0;
-
-  const durationSeconds = lightSleep + deepSleep + remSleep;
+  // Polar returns sleep stage durations in seconds.
+  // wearable_sessions stores *_sleep_duration columns in minutes (Oura convention),
+  // but duration_seconds stays in seconds.
+  const lightSec = night.light_sleep || 0;
+  const deepSec = night.deep_sleep || 0;
+  const remSec = night.rem_sleep || 0;
+  const totalSec = lightSec + deepSec + remSec;
 
   const sleepStages = {
-    light: lightSleep,
-    deep: deepSleep,
-    rem: remSleep,
+    light: lightSec,
+    deep: deepSec,
+    rem: remSec,
   };
 
   const date = startTime ? new Date(startTime).toISOString().split('T')[0] : null;
@@ -273,14 +272,13 @@ function mapPolarSleepToSession(night: any, userId: string) {
     start_time: startTime,
     end_time: endTime,
     date: date,
-    duration_seconds: durationSeconds,
-    sleep_score: sleepScore,
+    duration_seconds: totalSec,
     sleep_continuity_score: continuityScore,
     sleep_stages: sleepStages,
-    light_sleep_duration: lightSleep,
-    deep_sleep_duration: deepSleep,
-    rem_sleep_duration: remSleep,
-    total_sleep_duration: durationSeconds,
+    light_sleep_duration: Math.round(lightSec / 60),
+    deep_sleep_duration: Math.round(deepSec / 60),
+    rem_sleep_duration: Math.round(remSec / 60),
+    total_sleep_duration: Math.round(totalSec / 60),
     source: "polar",
     updated_at: new Date().toISOString(),
   };

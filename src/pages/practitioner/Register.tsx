@@ -548,8 +548,8 @@ export const PractitionerRegister = () => {
                   key={mode}
                   type="button"
                   onClick={() => set(key, !active)}
-                  className={`px-5 py-2.5 text-sm font-medium transition-all ${
- rounded-md active
+                  className={`rounded-md px-5 py-2.5 text-sm font-medium transition-all ${
+ active
  ? "bg-[#6B5ED9] text-white"
  : "border border-black/10 bg-white text-[#555] hover:border-black/20"
  }`}
@@ -575,8 +575,8 @@ export const PractitionerRegister = () => {
                   onClick={() =>
                     set("session_duration_minutes", active ? null : d)
                   }
-                  className={`px-4 py-2.5 text-sm font-medium transition-all ${
- rounded-md active
+                  className={`rounded-md px-4 py-2.5 text-sm font-medium transition-all ${
+ active
  ? "bg-[#6B5ED9] text-white"
  : "border border-black/10 bg-white text-[#555] hover:border-black/20"
  }`}
@@ -604,8 +604,8 @@ export const PractitionerRegister = () => {
                   onClick={() =>
                     set("accepts_medical_aid", opt === "Yes")
                   }
-                  className={`px-5 py-2.5 text-sm font-medium transition-all ${
- rounded-md active
+                  className={`rounded-md px-5 py-2.5 text-sm font-medium transition-all ${
+ active
  ? "bg-[#6B5ED9] text-white"
  : "border border-black/10 bg-white text-[#555] hover:border-black/20"
  }`}
@@ -716,8 +716,8 @@ export const PractitionerRegister = () => {
               type="button"
               onClick={() => toggleNiche(n)}
               disabled={form.niche_tags.length >= 8}
-              className={`border border-black/10 bg-white px-3.5 py-1.5 text-xs font-medium text-[#555] transition-all ${
- rounded-md form.niche_tags.length >= 8
+              className={`rounded-md border border-black/10 bg-white px-3.5 py-1.5 text-xs font-medium text-[#555] transition-all ${
+ form.niche_tags.length >= 8
  ? "cursor-not-allowed opacity-40"
  : "hover:border-black/20"
  }`}
@@ -810,8 +810,8 @@ export const PractitionerRegister = () => {
                   key={opt}
                   type="button"
                   onClick={() => set("deposit_required", opt === "Yes")}
-                  className={`px-5 py-2.5 text-sm font-medium transition-all ${
- rounded-md active
+                  className={`rounded-md px-5 py-2.5 text-sm font-medium transition-all ${
+ active
  ? "bg-[#6B5ED9] text-white"
  : "border border-black/10 bg-white text-[#555] hover:border-black/20"
  }`}
@@ -853,8 +853,8 @@ export const PractitionerRegister = () => {
           <button
             type="button"
             onClick={() => set("pricing_tier", "basic")}
-            className={` border p-5 text-left transition-all ${
- rounded-md form.pricing_tier === "basic"
+            className={`rounded-md border p-5 text-left transition-all ${
+ form.pricing_tier === "basic"
  ? "border-[#6B5ED9] bg-[#f0ebff]/50"
  : "border-black/10 bg-white hover:border-black/20"
  }`}
@@ -1085,8 +1085,8 @@ export const PractitionerRegister = () => {
                   className="flex items-center gap-1.5"
                 >
                   <span
-                    className={`flex h-6 w-6 shrink-0 items-center justify-center text-xs font-bold transition-all ${
- rounded-md done
+                    className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-xs font-bold transition-all ${
+ done
  ? "bg-[#6B5ED9] text-white"
  : current
  ? "bg-[#6B5ED9] text-white"
@@ -1097,7 +1097,7 @@ export const PractitionerRegister = () => {
                   </span>
                   <span
                     className={`hidden text-xs font-medium sm:inline ${
- rounded-md current
+ current
  ? "font-bold text-[#1a1a1a]"
  : done
  ? "text-[#6B5ED9]"

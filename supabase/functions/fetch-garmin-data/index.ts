@@ -756,6 +756,7 @@ async function syncUserGarminData(
       const trendData = {
         user_id: userId,
         date,
+        source: "garmin",
         training_load: Math.round(calculateLoad(historicalSessions.find(s => s.date === date) || {}) * 100) / 100,
         acute_load: Math.round(acuteLoad * 100) / 100,
         chronic_load: chronicLoad ? Math.round(chronicLoad * 100) / 100 : null,
@@ -768,7 +769,7 @@ async function syncUserGarminData(
 
       const { error: trendError } = await supabase
         .from("training_trends")
-        .upsert(trendData, { onConflict: "user_id,date" });
+        .upsert(trendData, { onConflict: "user_id,source,date" });
 
       if (trendError) {
         console.error(`[fetch-garmin-data] [ERROR] Trend upsert for ${date}: ${trendError.message}`);

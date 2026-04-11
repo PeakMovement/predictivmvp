@@ -69,10 +69,16 @@ Deno.serve(async (req: Request) => {
 
       try {
         // Generate a service-role JWT for the sub-functions (they require Bearer auth)
-        const { data: sessionData, error: sessionError } = await supabase.auth.admin.generateLink({
-          type: "magiclink",
-          email: "noreply@internal",
-        }).catch(() => ({ data: null, error: null }));
+        let sessionData = null;
+        let sessionError = null;
+        try {
+          const res = await supabase.auth.admin.generateLink({
+            type: "magiclink",
+            email: "noreply@internal",
+          });
+          sessionData = res.data;
+          sessionError = res.error;
+        } catch (_) { /* ignore */ }
 
         // Use service role key as Bearer — the sub-functions parse JWT sub,
         // so we pass userId in the body instead for service-role calls.
@@ -99,23 +105,27 @@ Deno.serve(async (req: Request) => {
         userResult.sleep = await sleepResp.json().catch(() => ({ status: sleepResp.status }));
 
         // Log success
-        await supabase.from("polar_logs").insert({
-          user_id: userId,
-          event_type: "auto_sync",
-          status: "success",
-          details: { exercises: userResult.exercises, sleep: userResult.sleep },
-        }).catch(() => null);
+        try {
+          await supabase.from("polar_logs").insert({
+            user_id: userId,
+            event_type: "auto_sync",
+            status: "success",
+            details: { exercises: userResult.exercises, sleep: userResult.sleep },
+          });
+        } catch (_) { /* ignore log failure */ }
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err);
         console.error(`[fetch-polar-auto] Error for user ${userId}:`, msg);
         userResult.error = msg;
 
-        await supabase.from("polar_logs").insert({
-          user_id: userId,
-          event_type: "auto_sync",
-          status: "error",
-          details: { error: msg },
-        }).catch(() => null);
+        try {
+          await supabase.from("polar_logs").insert({
+            user_id: userId,
+            event_type: "auto_sync",
+            status: "error",
+            details: { error: msg },
+          });
+        } catch (_) { /* ignore log failure */ }
       }
 
       results.push(userResult);

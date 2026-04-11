@@ -187,10 +187,10 @@ verify_jwt = true
 verify_jwt = false
 
 [functions.fetch-polar-exercises]
-verify_jwt = true
+verify_jwt = false
 
 [functions.fetch-polar-sleep]
-verify_jwt = true
+verify_jwt = false
 
 [functions.fetch-polar-auto]
 verify_jwt = false

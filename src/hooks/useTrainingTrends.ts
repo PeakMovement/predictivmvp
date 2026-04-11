@@ -5,6 +5,7 @@ import { TrainingTrend } from "@/types/wearables";
 interface UseTrainingTrendsOptions {
   days?: number;
   userId?: string | null;
+  source?: string;
 }
 
 interface UseTrainingTrendsReturn {
@@ -17,7 +18,7 @@ interface UseTrainingTrendsReturn {
 }
 
 export const useTrainingTrends = (options: UseTrainingTrendsOptions = {}): UseTrainingTrendsReturn => {
-  const { days = 30, userId: providedUserId } = options;
+  const { days = 30, userId: providedUserId, source } = options;
   const [trends, setTrends] = useState<TrainingTrend[]>([]);
   const [latestTrend, setLatestTrend] = useState<TrainingTrend | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -45,12 +46,18 @@ export const useTrainingTrends = (options: UseTrainingTrendsOptions = {}): UseTr
       const cutoffDate = new Date();
       cutoffDate.setDate(cutoffDate.getDate() - days);
 
-      const { data, error } = await supabase
+      let query = supabase
         .from("training_trends")
         .select("*")
         .eq("user_id", userId)
         .gte("date", cutoffDate.toISOString().split("T")[0])
         .order("date", { ascending: false });
+
+      if (source && source !== "auto") {
+        query = query.eq("source", source);
+      }
+
+      const { data, error } = await query;
 
       if (error) throw error;
 
@@ -63,7 +70,7 @@ export const useTrainingTrends = (options: UseTrainingTrendsOptions = {}): UseTr
     } finally {
       setIsLoading(false);
     }
-  }, [days, resolveUserId]);
+  }, [days, resolveUserId, source]);
 
   useEffect(() => {
     fetchTrends();

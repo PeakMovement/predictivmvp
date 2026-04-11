@@ -410,6 +410,7 @@ Deno.serve(async (req: Request) => {
             const trendData = {
               user_id: token.user_id,
               date,
+              source: "oura",
               training_load: Math.round(trainingLoad * 100) / 100,
               acute_load: Math.round(acuteLoad * 100) / 100,
               chronic_load: chronicLoad ? Math.round(chronicLoad * 100) / 100 : null,
@@ -423,7 +424,7 @@ Deno.serve(async (req: Request) => {
             const { error: trendError } = await supabase
               .from("training_trends")
               .upsert(trendData, {
-                onConflict: "user_id,date",
+                onConflict: "user_id,source,date",
               });
 
             if (trendError) {

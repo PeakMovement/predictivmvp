@@ -195,9 +195,9 @@ const CircularGauge = ({
 
 //  Main Page Component
 export const Training = () => {
-  const { trends, isLoading: trendsLoading, refresh, userId } = useTrainingTrends({ days: 7 });
   const [availableSources, setAvailableSources] = useState<string[]>([]);
   const [selectedSource, setSelectedSource] = useState<string>("auto");
+  const { trends, isLoading: trendsLoading, refresh, userId } = useTrainingTrends({ days: 7, source: selectedSource });
   const [isSyncing, setIsSyncing] = useState(false);
   const { data: wearableData, refetch: refetchWearable } = useWearableSessions(userId || undefined, selectedSource);
   const [f12Status, setF12Status] = useState<string | null>(null);

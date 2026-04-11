@@ -464,7 +464,7 @@ async function processHRVSummaries(
     // Also update training_trends with HRV
     await supabase
       .from("training_trends")
-      .upsert({ user_id: userId, date, hrv: h.lastNightAvg ?? null }, { onConflict: "user_id,date" });
+      .upsert({ user_id: userId, date, source: "garmin", hrv: h.lastNightAvg ?? null }, { onConflict: "user_id,source,date" });
   }
 
   return { count, userIds };
@@ -583,6 +583,7 @@ async function upsertSummary(
     await supabase.from("training_trends").upsert({
       user_id: userId,
       date,
+      source: "garmin",
       training_load: todaySession ? Math.round(calculateLoad(todaySession) * 100) / 100 : Math.round(mean * 100) / 100,
       acute_load: Math.round(acuteLoad * 100) / 100,
       chronic_load: Math.round(chronicMean * 100) / 100,
@@ -590,7 +591,7 @@ async function upsertSummary(
       strain: Math.round(strain * 100) / 100,
       monotony: Math.round(monotony * 100) / 100,
       sleep_score: todaySession ? ((todaySession.sleep_score as number) || null) : null,
-    }, { onConflict: "user_id,date" });
+    }, { onConflict: "user_id,source,date" });
 
   } catch (err) {
     console.error(`[garmin-webhook] [ERROR] Summary calc for ${userId}/${date}: ${err instanceof Error ? err.message : String(err)}`);

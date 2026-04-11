@@ -323,6 +323,7 @@ serve(async (req) => {
           .upsert({
             user_id: userId,
             date: today,
+            source: "oura",
             acwr: safeNumber(trainingAcwr),
             ewma: safeNumber(ewma), // True EWMA: λ=0.28 * today_load + (1-λ) * prev_ewma
             strain: safeNumber(strain),
@@ -333,7 +334,7 @@ serve(async (req) => {
             acute_load: safeNumber(acuteLoadAvg),
             chronic_load: safeNumber(chronicLoadAvg),
             data_gap: dataGap,
-          }, { onConflict: "user_id,date" });
+          }, { onConflict: "user_id,source,date" });
 
         if (trainingError) {
           console.error(`[calculate-oura-trends] [ERROR] Failed to upsert training trend:`, trainingError);

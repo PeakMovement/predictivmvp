@@ -177,20 +177,20 @@ verify_jwt = false
 [functions.genesis-onboarding]
 verify_jwt = false
 
-[functions.fetch-polar-auto]
-verify_jwt = false
-
-[functions.fetch-polar-exercises]
-verify_jwt = false
-
-[functions.fetch-polar-sleep]
-verify_jwt = false
-
 [functions.calculate-life-formulas]
 verify_jwt = false
 
 [functions.polar-auth-initiate]
 verify_jwt = true
 
-[functions.polar-auth]
+[functions.polar-auth-callback]
+verify_jwt = false
+
+[functions.fetch-polar-exercises]
+verify_jwt = true
+
+[functions.fetch-polar-sleep]
+verify_jwt = true
+
+[functions.fetch-polar-auto]
 verify_jwt = false

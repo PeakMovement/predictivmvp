@@ -76,7 +76,7 @@ export function PlanAlignmentSection({ className }: PlanAlignmentSectionProps) {
                 <div 
                   key={index}
                   className={cn(
-                    "p-3  border",
+                    "p-3 rounded-md border",
                     item.tone === "coach" 
                       ? "bg-primary/5 border-primary/20" 
                       : "bg-bioGreen/5 border-bioGreen/20"

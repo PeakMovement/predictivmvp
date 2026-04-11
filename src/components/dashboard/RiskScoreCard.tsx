@@ -245,7 +245,7 @@ export const RiskScoreCard = () => {
 
   if (isLoading) {
     return (
-      <div className="bg-glass  border border-glass-border  p-6  animate-pulse">
+      <div className="bg-glass rounded-md border border-glass-border p-6 animate-pulse">
         <div className="h-6 bg-muted/30 rounded w-1/3 mb-4" />
         <div className="h-16 bg-muted/30 rounded w-full" />
       </div>
@@ -254,9 +254,9 @@ export const RiskScoreCard = () => {
 
   if (level === "unknown") {
     return (
-      <div className="bg-glass  border border-glass-border  p-6 ">
+      <div className="bg-glass rounded-md border border-glass-border p-6 ">
         <div className="flex items-center gap-3 mb-4">
-          <div className="w-10 h-10  flex items-center justify-center border text-muted-foreground bg-muted/20 border-muted/30">
+          <div className="w-10 h-10 rounded-md flex items-center justify-center border text-muted-foreground bg-muted/20 border-muted/30">
             <Shield size={22} />
           </div>
           <div>
@@ -273,11 +273,11 @@ export const RiskScoreCard = () => {
   }
 
   return (
-    <div className="bg-glass  border border-glass-border  p-4 sm:p-6  hover:bg-glass-highlight transition-all duration-300">
+    <div className="bg-glass rounded-md border border-glass-border p-4 sm:p-6 hover:bg-glass-highlight transition-all duration-300">
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-3">
-          <div className={cn("w-10 h-10  flex items-center justify-center border", colors.icon)}>
+          <div className={cn("w-10 h-10 rounded-md flex items-center justify-center border", colors.icon)}>
             <Icon size={22} />
           </div>
           <div>
@@ -312,31 +312,31 @@ export const RiskScoreCard = () => {
       </div>
 
       {/* Contextual explanation */}
-      <div className={cn("p-3  border text-sm mb-4", colors.msg)}>
+      <div className={cn("p-3 rounded-md border text-sm mb-4", colors.msg)}>
         {explanation}
       </div>
 
       {/* Contributing factors */}
       <div className="grid grid-cols-4 gap-2 text-center">
-        <div className="bg-glass/30  p-2">
+        <div className="bg-glass/30 rounded-md p-2">
           <p className="text-[10px] text-muted-foreground mb-0.5">ACWR</p>
           <p className={cn("text-sm font-semibold", factors.acwr > 1.5 ? "text-red-400" : factors.acwr > 1.3 ? "text-yellow-400" : "text-foreground")}>
             {factors.acwr.toFixed(2)}
           </p>
         </div>
-        <div className="bg-glass/30  p-2">
+        <div className="bg-glass/30 rounded-md p-2">
           <p className="text-[10px] text-muted-foreground mb-0.5">Fatigue</p>
           <p className={cn("text-sm font-semibold", factors.fatigueIndex > 70 ? "text-red-400" : factors.fatigueIndex > 50 ? "text-yellow-400" : "text-foreground")}>
             {factors.fatigueIndex}%
           </p>
         </div>
-        <div className="bg-glass/30  p-2">
+        <div className="bg-glass/30 rounded-md p-2">
           <p className="text-[10px] text-muted-foreground mb-0.5">HRV Δ</p>
           <p className={cn("text-sm font-semibold", factors.hrvDropPct !== null && factors.hrvDropPct >= 20 ? "text-red-400" : factors.hrvDropPct !== null && factors.hrvDropPct >= 10 ? "text-yellow-400" : "text-foreground")}>
             {factors.hrvDropPct !== null ? `${Math.round(factors.hrvDropPct) > 0 ? "-" : "+"}${Math.abs(Math.round(factors.hrvDropPct))}%` : "—"}
           </p>
         </div>
-        <div className="bg-glass/30  p-2">
+        <div className="bg-glass/30 rounded-md p-2">
           <p className="text-[10px] text-muted-foreground mb-0.5">Sleep</p>
           <p className={cn("text-sm font-semibold", factors.sleepScore !== null && factors.sleepScore < 60 ? "text-red-400" : factors.sleepScore !== null && factors.sleepScore < 70 ? "text-yellow-400" : "text-foreground")}>
             {factors.sleepScore !== null ? factors.sleepScore : "—"}

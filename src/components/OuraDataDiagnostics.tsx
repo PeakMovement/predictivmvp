@@ -315,7 +315,7 @@ export const OuraDataDiagnostics = () => {
                         <summary className="cursor-pointer text-xs text-muted-foreground hover:text-foreground">
                           View Details
                         </summary>
-                        <pre className="mt-2 p-3 bg-muted  text-xs overflow-x-auto">
+                        <pre className="mt-2 p-3 bg-muted rounded-md text-xs overflow-x-auto">
                           {JSON.stringify(result.data, null, 2)}
                         </pre>
                       </details>

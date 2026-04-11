@@ -144,7 +144,7 @@ export const InjuryProfileSettings = () => {
 
   if (isLoading) {
     return (
-      <div className="bg-card border border-border  p-6">
+      <div className="bg-card border border-border rounded-md p-6">
         <div className="h-5 w-32 bg-muted animate-pulse rounded mb-4" />
         <div className="h-4 w-64 bg-muted animate-pulse rounded" />
       </div>
@@ -152,7 +152,7 @@ export const InjuryProfileSettings = () => {
   }
 
   return (
-    <div className="bg-card border border-border  p-6">
+    <div className="bg-card border border-border rounded-md p-6">
       <div className="flex items-start justify-between mb-6">
         <div>
           <h2 className="text-lg font-semibold text-foreground">Injury Profile</h2>

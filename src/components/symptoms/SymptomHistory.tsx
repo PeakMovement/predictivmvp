@@ -95,7 +95,7 @@ export const SymptomHistory = ({ refreshTrigger }: SymptomHistoryProps) => {
 
   if (isLoading) {
     return (
-      <Card className="bg-card/50  border-border/50">
+      <Card className="bg-card/50 rounded-md border-border/50">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <History className="h-5 w-5 text-primary" />
@@ -112,7 +112,7 @@ export const SymptomHistory = ({ refreshTrigger }: SymptomHistoryProps) => {
   }
 
   return (
-    <Card className="bg-card/50  border-border/50">
+    <Card className="bg-card/50 rounded-md border-border/50">
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-foreground">
           <History className="h-5 w-5 text-primary" />
@@ -133,7 +133,7 @@ export const SymptomHistory = ({ refreshTrigger }: SymptomHistoryProps) => {
             {symptoms.map((symptom) => (
               <div
                 key={symptom.id}
-                className="flex items-start justify-between p-3  bg-secondary/30 border border-border/30"
+                className="flex items-start justify-between p-3 rounded-md bg-secondary/30 border border-border/30"
               >
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-1">

@@ -34,7 +34,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
   if (!active || !payload || !payload.length) return null;
   
   return (
-    <div className=" border border-border/50 bg-background/95  p-3 shadow-xl animate-fade-in">
+    <div className=" border border-border/50 bg-background/95 rounded-md p-3 shadow-xl animate-fade-in">
       <p className="text-sm font-medium text-foreground mb-2">{label}</p>
       <div className="space-y-1.5">
         {payload.map((entry: any, index: number) => {
@@ -107,7 +107,7 @@ export function WeeklyTrendChart() {
 
   if (isLoading) {
     return (
-      <Card className="bg-glass  border-glass-border animate-panel-enter">
+      <Card className="bg-glass rounded-md border-glass-border animate-panel-enter">
         <CardHeader>
           <CardTitle className="text-lg font-semibold">Weekly Trends</CardTitle>
         </CardHeader>
@@ -120,7 +120,7 @@ export function WeeklyTrendChart() {
 
   if (error) {
     return (
-      <Card className="bg-glass  border-glass-border animate-panel-enter">
+      <Card className="bg-glass rounded-md border-glass-border animate-panel-enter">
         <CardHeader>
           <CardTitle className="text-lg font-semibold">Weekly Trends</CardTitle>
         </CardHeader>
@@ -135,7 +135,7 @@ export function WeeklyTrendChart() {
 
   if (chartData.length === 0) {
     return (
-      <Card className="bg-glass  border-glass-border animate-panel-enter">
+      <Card className="bg-glass rounded-md border-glass-border animate-panel-enter">
         <CardHeader>
           <CardTitle className="text-lg font-semibold">Weekly Trends</CardTitle>
         </CardHeader>
@@ -163,7 +163,7 @@ export function WeeklyTrendChart() {
   ];
 
   return (
-    <Card className="bg-glass  border-glass-border animate-panel-enter">
+    <Card className="bg-glass rounded-md border-glass-border animate-panel-enter">
       <CardHeader>
         <CardTitle className="text-lg font-semibold">Weekly Trends</CardTitle>
       </CardHeader>

@@ -102,13 +102,13 @@ const MetricCard = ({
   return (
     <div 
       className={cn(
-        "p-4  bg-background/50 border border-border/50",
+        "p-4 rounded-md bg-background/50 border border-border/50",
         "transition-all duration-300 hover:scale-[1.02] hover:border-primary/30 hover:"
       )}
       style={{ animationDelay: `${delay}ms` }}
     >
       <div className="flex items-start gap-3">
-        <div className={cn("p-2.5  transition-transform duration-300 hover:scale-110", iconBg)}>
+        <div className={cn("p-2.5 rounded-md transition-transform duration-300 hover:scale-110", iconBg)}>
           <Icon className={cn("h-5 w-5", iconColor)} />
         </div>
         <div className="flex-1 min-w-0">
@@ -168,7 +168,7 @@ export function ActivityPanel() {
 
   if (isLoading) {
     return (
-      <Card className="bg-glass  border-glass-border animate-panel-enter">
+      <Card className="bg-glass rounded-md border-glass-border animate-panel-enter">
         <CardHeader>
           <CardTitle className="text-lg font-semibold">Activity Trends</CardTitle>
         </CardHeader>
@@ -185,7 +185,7 @@ export function ActivityPanel() {
 
   if (error) {
     return (
-      <Card className="bg-glass  border-glass-border animate-panel-enter">
+      <Card className="bg-glass rounded-md border-glass-border animate-panel-enter">
         <CardHeader>
           <CardTitle className="text-lg font-semibold">Activity Trends</CardTitle>
         </CardHeader>
@@ -200,7 +200,7 @@ export function ActivityPanel() {
 
   if (!summary) {
     return (
-      <Card className="bg-glass  border-glass-border animate-panel-enter">
+      <Card className="bg-glass rounded-md border-glass-border animate-panel-enter">
         <CardHeader>
           <CardTitle className="text-lg font-semibold">Activity Trends</CardTitle>
         </CardHeader>
@@ -218,7 +218,7 @@ export function ActivityPanel() {
   const caloriesDelta = formatDelta(summary.calories_change);
 
   return (
-    <Card className="bg-glass  border-glass-border animate-panel-enter">
+    <Card className="bg-glass rounded-md border-glass-border animate-panel-enter">
       <CardHeader>
         <CardTitle className="text-lg font-semibold">Activity Trends</CardTitle>
       </CardHeader>

@@ -11,11 +11,11 @@ export default function Privacy() {
   return (
     <div className="min-h-screen bg-white text-slate-800">
       {/* Nav bar */}
-      <nav className="sticky top-0 bg-white/90  border-b border-slate-100 z-10">
+      <nav className="sticky top-0 bg-white/90 rounded-md border-b border-slate-100 z-10">
         <div className="max-w-3xl mx-auto px-4 py-3 flex items-center gap-3">
           <button
             onClick={() => navigate(-1)}
-            className="p-1.5  hover:bg-slate-100 text-slate-500 transition-colors"
+            className="p-1.5 rounded-md hover:bg-slate-100 text-slate-500 transition-colors"
             aria-label="Go back"
           >
             <ArrowLeft className="h-4 w-4" />
@@ -28,7 +28,7 @@ export default function Privacy() {
       <main className="max-w-3xl mx-auto px-4 py-10 pb-20">
         <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-1">{COMPANY} Privacy Policy</h1>
         <p className="text-sm text-slate-400 mb-2">Effective date: {EFFECTIVE_DATE}</p>
-        <div className="bg-blue-50 border border-blue-100  p-4 mb-8 text-sm text-blue-800 leading-relaxed">
+        <div className="bg-blue-50 border border-blue-100 rounded-md p-4 mb-8 text-sm text-blue-800 leading-relaxed">
           <strong>POPIA notice.</strong> This policy is issued in compliance with the Protection of Personal Information Act 4 of 2013 ("<strong>POPIA</strong>"), the primary data-protection law of the Republic of South Africa. Where this policy refers to your rights as a data subject, those rights are conferred by POPIA.
         </div>
 

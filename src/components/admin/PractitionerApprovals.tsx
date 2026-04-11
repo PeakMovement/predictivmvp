@@ -153,7 +153,7 @@ export function PractitionerApprovals() {
           {rows.map((p) => (
             <div
               key={p.id}
-              className="bg-card border border-border  overflow-hidden"
+              className="bg-card border border-border rounded-md overflow-hidden"
             >
               {/* Card header */}
               <div className="px-5 py-4 flex items-start justify-between gap-3">

@@ -360,7 +360,7 @@ export default function AlertHistory() {
               key={tab}
               onClick={() => setFilter(tab)}
               className={cn(
-                "flex-1 text-xs font-semibold py-1.5  capitalize transition-all",
+                "flex-1 text-xs font-semibold py-1.5 rounded-md capitalize transition-all",
                 filter === tab
                   ? "bg-card text-foreground "
                   : "text-muted-foreground hover:text-foreground",
@@ -456,7 +456,7 @@ function AlertCard({
 
   return (
     <div className={cn(
-      "relative  border bg-card/60 overflow-hidden",
+      "relative rounded-md border bg-card/60 overflow-hidden",
       isActive ? "border-border/50" : "border-border/20 opacity-75",
     )}>
       {/* Severity stripe */}

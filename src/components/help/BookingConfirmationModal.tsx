@@ -61,7 +61,7 @@ export function BookingConfirmationModal({
         </DialogHeader>
 
         <div className="space-y-4 py-4">
-          <div className="bg-muted/50  p-4 space-y-3">
+          <div className="bg-muted/50 rounded-md p-4 space-y-3">
             <div className="flex items-start gap-3">
               <div className="h-10 w-10 bg-primary/10 flex items-center justify-center flex-shrink-0">
                 <span className="text-sm font-semibold text-primary">
@@ -109,7 +109,7 @@ export function BookingConfirmationModal({
             )}
           </div>
 
-          <div className="bg-amber/10 border border-amber/20  p-3">
+          <div className="bg-amber/10 border border-amber/20 rounded-md p-3">
             <p className="text-sm text-yellow-700 dark:text-yellow-400">
               <strong>Please arrive 10 minutes early</strong> to complete any necessary paperwork.
               {isVirtual && ' You will receive a virtual meeting link 24 hours before your appointment.'}

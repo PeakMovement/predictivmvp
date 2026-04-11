@@ -91,7 +91,7 @@ export const PractitionerLanding = () => {
             </Link>
             <Link
               to="/genesis"
-              className="inline-flex items-center gap-1  border border-black/10 px-4 py-2 text-sm font-medium text-[#1a1a1a] transition-colors hover:bg-black/5"
+              className="inline-flex items-center gap-1 rounded-md border border-black/10 px-4 py-2 text-sm font-medium text-[#1a1a1a] transition-colors hover:bg-black/5"
             >
               I'm a patient
               <ArrowRight size={14} />
@@ -116,7 +116,7 @@ export const PractitionerLanding = () => {
         <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
           <Link
             to="/practitioner/register"
-            className="inline-flex items-center gap-2  bg-[#6B5ED9] px-8 py-3.5 text-base font-semibold text-white  transition-all hover:bg-[#5a4ec5] active:scale-[0.98]"
+            className="inline-flex items-center gap-2 rounded-md bg-[#6B5ED9] px-8 py-3.5 text-base font-semibold text-white transition-all hover:bg-[#5a4ec5] active:scale-[0.98]"
           >
             Create your practitioner account
             <ArrowRight size={18} />
@@ -127,7 +127,7 @@ export const PractitionerLanding = () => {
                 .getElementById("how-it-works")
                 ?.scrollIntoView({ behavior: "smooth" })
             }
-            className="inline-flex items-center gap-1.5  border border-black/10 bg-white px-6 py-3.5 text-sm font-medium text-[#555] transition-colors hover:bg-black/5"
+            className="inline-flex items-center gap-1.5 rounded-md border border-black/10 bg-white px-6 py-3.5 text-sm font-medium text-[#555] transition-colors hover:bg-black/5"
           >
             See how it works
             <span className="text-xs">&#8595;</span>
@@ -203,7 +203,7 @@ export const PractitionerLanding = () => {
               </ul>
               <Link
                 to="/practitioner/register"
-                className="mt-8 flex items-center justify-center gap-2  bg-[#6B5ED9] px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#5a4ec5]"
+                className="mt-8 flex items-center justify-center gap-2 rounded-md bg-[#6B5ED9] px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#5a4ec5]"
               >
                 Get listed free
                 <ArrowRight size={16} />
@@ -211,7 +211,7 @@ export const PractitionerLanding = () => {
             </div>
 
             {/* Verified Partner */}
-            <div className="relative  border-2 border-[#6B5ED9] bg-white p-7 ">
+            <div className="relative rounded-md border-2 border-[#6B5ED9] bg-white p-7 ">
               <span className="absolute -top-3 right-5 bg-[#6B5ED9] px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-white">
                 Recommended
               </span>
@@ -237,7 +237,7 @@ export const PractitionerLanding = () => {
               </ul>
               <Link
                 to="/practitioner/register"
-                className="mt-8 flex items-center justify-center gap-2  bg-[#6B5ED9] px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#5a4ec5]"
+                className="mt-8 flex items-center justify-center gap-2 rounded-md bg-[#6B5ED9] px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#5a4ec5]"
               >
                 Apply for Verified
                 <ArrowRight size={16} />
@@ -275,7 +275,7 @@ export const PractitionerLanding = () => {
           </p>
           <Link
             to="/practitioner/register"
-            className="mt-8 inline-flex items-center gap-2  bg-white px-8 py-3.5 text-base font-semibold text-[#6B5ED9]  transition-all hover:bg-white/90 active:scale-[0.98]"
+            className="mt-8 inline-flex items-center gap-2 rounded-md bg-white px-8 py-3.5 text-base font-semibold text-[#6B5ED9] transition-all hover:bg-white/90 active:scale-[0.98]"
           >
             Create your practitioner account
             <ArrowRight size={18} />

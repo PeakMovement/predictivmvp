@@ -31,7 +31,7 @@ export const OuraSleepCard = ({
   const isStale = hoursSinceSync !== null && hoursSinceSync > STALE_HOURS;
   if (isLoading) {
     return (
-      <div className="bg-glass  border border-glass-border  p-6 ">
+      <div className="bg-glass rounded-md border border-glass-border p-6 ">
         <Skeleton className="h-8 w-48 mb-6" />
         <div className="flex flex-col items-center mb-6">
           <Skeleton className="h-32 w-32 mb-4" />
@@ -47,9 +47,9 @@ export const OuraSleepCard = ({
 
   if (score === null && totalSleep === null) {
     return (
-      <div className="bg-glass  border border-glass-border  p-6 ">
+      <div className="bg-glass rounded-md border border-glass-border p-6 ">
         <div className="flex items-center gap-3 mb-6">
-          <div className="w-10 h-10 bg-blue-500/20  flex items-center justify-center">
+          <div className="w-10 h-10 bg-blue-500/20 rounded-md flex items-center justify-center">
             <Moon className="w-5 h-5 text-blue-500" />
           </div>
           <h2 className="text-xl font-semibold text-foreground">Sleep</h2>
@@ -116,9 +116,9 @@ export const OuraSleepCard = ({
 
   return (
     <TooltipProvider>
-      <div className="bg-glass  border border-glass-border  p-6  hover-glow animate-fade-in">
+      <div className="bg-glass rounded-md border border-glass-border p-6 hover-glow animate-fade-in">
         <div className="flex items-center gap-3 mb-6">
-          <div className="w-10 h-10 bg-blue-500/20  flex items-center justify-center">
+          <div className="w-10 h-10 bg-blue-500/20 rounded-md flex items-center justify-center">
             <Moon className="w-5 h-5 text-blue-500" />
           </div>
           <h2 className="text-xl font-semibold text-foreground">Sleep</h2>
@@ -178,7 +178,7 @@ export const OuraSleepCard = ({
 
       <div className="space-y-4 mb-6">
         {totalSleep !== null && (
-          <div className="bg-background/50  border border-glass-border  p-4">
+          <div className="bg-background/50 rounded-md border border-glass-border p-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <Clock className="w-5 h-5 text-blue-400" />
@@ -192,7 +192,7 @@ export const OuraSleepCard = ({
         )}
 
         {efficiency !== null && (
-          <div className="bg-background/50  border border-glass-border  p-4">
+          <div className="bg-background/50 rounded-md border border-glass-border p-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <Zap className="w-5 h-5 text-yellow-400" />
@@ -214,7 +214,7 @@ export const OuraSleepCard = ({
             {sleepStages.map((stage) => (
               <Tooltip key={stage.label}>
                 <TooltipTrigger asChild>
-                  <div className="text-center cursor-help p-2  hover:bg-secondary/30 transition-colors">
+                  <div className="text-center cursor-help p-2 rounded-md hover:bg-secondary/30 transition-colors">
                     <div className="flex items-center justify-center gap-1 mb-1">
                       <p className="text-xs text-muted-foreground">{stage.label}</p>
                       <Info className="w-3 h-3 text-muted-foreground" />

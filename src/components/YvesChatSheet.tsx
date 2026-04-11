@@ -28,7 +28,7 @@ export function YvesChatSheet() {
                 isMobile
                   ? "bottom-24 right-4"
                   : "top-[11.5rem] right-4 sm:right-6",
-                "w-12 h-12  bg-glass  border-glass-border",
+                "w-12 h-12 rounded-md bg-glass border-glass-border",
                 "flex items-center justify-center",
                 "hover:bg-glass-highlight hover:scale-110 active:scale-95",
                 "transition-all duration-300 ease-out transform-gpu animate-fade-in",
@@ -56,7 +56,7 @@ export function YvesChatSheet() {
           isMobile && "pt-[calc(1rem+env(safe-area-inset-top))]"
         )}>
           <DialogTitle className="flex items-center gap-3 text-foreground text-base sm:text-lg">
-            <div className="p-2  bg-primary/20">
+            <div className="p-2 rounded-md bg-primary/20">
               <Sparkles className="h-5 w-5 text-primary" />
             </div>
             Yves AI

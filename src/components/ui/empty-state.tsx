@@ -55,7 +55,7 @@ export const EmptyState = ({
         )}
 
         {estimatedTime && (
-          <div className="bg-blue-500/10 border border-blue-500/20  p-4 mb-4 w-full max-w-md">
+          <div className="bg-blue-500/10 border border-blue-500/20 rounded-md p-4 mb-4 w-full max-w-md">
             <p className="text-sm text-blue-600 dark:text-blue-400">
               {estimatedTime}
             </p>
@@ -63,7 +63,7 @@ export const EmptyState = ({
         )}
 
         {tips && tips.length > 0 && (
-          <div className="bg-muted/50  p-4 w-full max-w-md text-left">
+          <div className="bg-muted/50 rounded-md p-4 w-full max-w-md text-left">
             <h4 className="font-sans font-medium text-foreground text-sm mb-2">Tips:</h4>
             <ul className="text-sm text-muted-foreground space-y-1">
               {tips.map((tip, index) => (

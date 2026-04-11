@@ -9,7 +9,7 @@ interface GarminExpiredBannerProps {
 export function GarminExpiredBanner({ onReconnect, className }: GarminExpiredBannerProps) {
   return (
     <div
-      className={`flex items-center justify-between gap-3 px-4 py-3  border border-amber/40 bg-amber/10 text-yellow-700 dark:text-yellow-400 text-sm animate-fade-in ${className ?? ""}`}
+      className={`flex items-center justify-between gap-3 px-4 py-3 rounded-md border border-amber/40 bg-amber/10 text-yellow-700 dark:text-yellow-400 text-sm animate-fade-in ${className ?? ""}`}
       role="alert"
     >
       <div className="flex items-center gap-2 min-w-0">

@@ -106,7 +106,7 @@ export default function PersonalCanvas() {
   return (
     <div className="min-h-screen bg-background pb-nav-safe">
       {/* Header */}
-      <div className="sticky top-0 z-40 bg-background/95  border-b border-border/50">
+      <div className="sticky top-0 z-40 bg-background/95 rounded-md border-b border-border/50">
         <div className="container max-w-6xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div>
@@ -168,7 +168,7 @@ export default function PersonalCanvas() {
                   isFirst={index === 0}
                   isLast={index === visibleBlocks.length - 1}
                 >
-                  <div className="bg-card border border-border  p-6">
+                  <div className="bg-card border border-border rounded-md p-6">
                     <p className="text-muted-foreground text-center">
                       {block.name} section
                     </p>

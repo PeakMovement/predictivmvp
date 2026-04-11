@@ -11,11 +11,11 @@ export default function Terms() {
   return (
     <div className="min-h-screen bg-white text-slate-800">
       {/* Nav bar */}
-      <nav className="sticky top-0 bg-white/90  border-b border-slate-100 z-10">
+      <nav className="sticky top-0 bg-white/90 rounded-md border-b border-slate-100 z-10">
         <div className="max-w-3xl mx-auto px-4 py-3 flex items-center gap-3">
           <button
             onClick={() => navigate(-1)}
-            className="p-1.5  hover:bg-slate-100 text-slate-500 transition-colors"
+            className="p-1.5 rounded-md hover:bg-slate-100 text-slate-500 transition-colors"
             aria-label="Go back"
           >
             <ArrowLeft className="h-4 w-4" />

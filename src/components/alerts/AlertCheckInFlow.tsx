@@ -244,7 +244,7 @@ export function AlertCheckInFlow({ alert, onComplete, onSnooze, onNavigateToHelp
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="p-4  bg-muted/50 border border-border/50">
+            <div className="p-4 rounded-md bg-muted/50 border border-border/50">
               <h4 className="font-semibold text-foreground mb-2">{genericAdvice.title}</h4>
               <p className="text-sm text-muted-foreground">
                 {genericAdvice.advice}
@@ -341,7 +341,7 @@ export function AlertCheckInFlow({ alert, onComplete, onSnooze, onNavigateToHelp
   // STEP 3: Symptom form (full check-in)
   if (currentStep === "symptom_form") {
     return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80  overflow-y-auto">
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 rounded-md overflow-y-auto">
         <div className="max-w-lg w-full my-8">
           <div className="flex justify-end mb-2">
             <Button variant="ghost" size="icon" onClick={handleClose}>
@@ -435,7 +435,7 @@ export function AlertCheckInFlow({ alert, onComplete, onSnooze, onNavigateToHelp
                 {/* AI Interpretation Summary */}
                 {aiInterpretation ? (
                   <div className="space-y-3">
-                    <div className="p-4  bg-primary/10 border border-primary/20">
+                    <div className="p-4 rounded-md bg-primary/10 border border-primary/20">
                       <div className="flex items-center gap-2 mb-2">
                         <Brain className="h-4 w-4 text-primary" />
                         <span className="text-xs font-medium text-primary">AI Analysis</span>
@@ -447,7 +447,7 @@ export function AlertCheckInFlow({ alert, onComplete, onSnooze, onNavigateToHelp
                     
                     {/* Recommendations */}
                     {aiInterpretation.recommendations && aiInterpretation.recommendations.length > 0 && (
-                      <div className="p-4  bg-muted/50 border border-border/50">
+                      <div className="p-4 rounded-md bg-muted/50 border border-border/50">
                         <h4 className="font-sans font-semibold text-foreground mb-2 text-sm">Recommendations</h4>
                         <ul className="space-y-1.5">
                           {aiInterpretation.recommendations.map((rec, idx) => (
@@ -467,7 +467,7 @@ export function AlertCheckInFlow({ alert, onComplete, onSnooze, onNavigateToHelp
                   </div>
                 ) : (
                   /* Fallback to generic advice when AI is unavailable */
-                  <div className="p-4  bg-muted/50 border border-border/50">
+                  <div className="p-4 rounded-md bg-muted/50 border border-border/50">
                     <h4 className="font-semibold text-foreground mb-2">{genericAdvice.title}</h4>
                     <p className="text-sm text-muted-foreground">
                       {genericAdvice.advice}
@@ -475,7 +475,7 @@ export function AlertCheckInFlow({ alert, onComplete, onSnooze, onNavigateToHelp
                   </div>
                 )}
 
-                <div className="p-3  bg-secondary/50 border border-border/50">
+                <div className="p-3 rounded-md bg-secondary/50 border border-border/50">
                   <p className="text-sm text-foreground">
                     <strong>Tip:</strong> Monitor how you feel over the next 24-48 hours. If symptoms develop or worsen, use the "Find Help" feature to connect with a healthcare provider.
                   </p>
@@ -597,7 +597,7 @@ function SymptomCheckInFlowForm({ onSuccess, onCancel }: SymptomCheckInFlowFormP
   };
 
   return (
-    <Card className="bg-card/50  border-border/50">
+    <Card className="bg-card/50 rounded-md border-border/50">
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-foreground">
           <Stethoscope className="h-5 w-5 text-primary" />

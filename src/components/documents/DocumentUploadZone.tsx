@@ -39,7 +39,7 @@ export const DocumentUploadZone = ({
       onDrop={handleDrop}
       onDragOver={(e) => e.preventDefault()}
       className={cn(
-        "relative border-2 border-dashed  p-8 text-center transition-all hover:border-primary/50",
+        "relative border-2 border-dashed rounded-md p-8 text-center transition-all hover:border-primary/50",
         "bg-card/50 hover:bg-card border-border",
         uploading && "opacity-50 pointer-events-none"
       )}

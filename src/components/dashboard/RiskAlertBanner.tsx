@@ -65,7 +65,7 @@ export function RiskAlertBanner() {
 
   return (
     <div className={cn(
-      "mb-6  border px-4 py-3 flex items-start gap-3",
+      "mb-6 rounded-md border px-4 py-3 flex items-start gap-3",
       isHigh
         ? "bg-critical/10 border-critical/40"
         : "bg-amber/10 border-amber/40",

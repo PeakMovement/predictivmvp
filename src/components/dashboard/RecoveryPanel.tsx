@@ -195,7 +195,7 @@ export function RecoveryPanel() {
 
   if (isLoading) {
     return (
-      <Card className="bg-glass  border-glass-border animate-panel-enter">
+      <Card className="bg-glass rounded-md border-glass-border animate-panel-enter">
         <CardHeader>
           <CardTitle className="text-lg font-semibold">Recovery & Load</CardTitle>
         </CardHeader>
@@ -212,7 +212,7 @@ export function RecoveryPanel() {
 
   if (error) {
     return (
-      <Card className="bg-glass  border-glass-border animate-panel-enter">
+      <Card className="bg-glass rounded-md border-glass-border animate-panel-enter">
         <CardHeader>
           <CardTitle className="text-lg font-semibold">Recovery & Load</CardTitle>
         </CardHeader>
@@ -227,7 +227,7 @@ export function RecoveryPanel() {
 
   if (!summary) {
     return (
-      <Card className="bg-glass  border-glass-border animate-panel-enter">
+      <Card className="bg-glass rounded-md border-glass-border animate-panel-enter">
         <CardHeader>
           <CardTitle className="text-lg font-semibold">Recovery & Load</CardTitle>
         </CardHeader>
@@ -244,13 +244,13 @@ export function RecoveryPanel() {
   const acwr = summary.current_acwr ?? 0;
 
   return (
-    <Card className="bg-glass  border-glass-border animate-panel-enter">
+    <Card className="bg-glass rounded-md border-glass-border animate-panel-enter">
       <CardHeader>
         <CardTitle className="text-lg font-semibold">Recovery & Load</CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
         {/* ACWR Gauge */}
-        <div className="p-4  bg-background/50 border border-border/50">
+        <div className="p-4 rounded-md bg-background/50 border border-border/50">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
               <StatusIcon status={summary.acwr_status} />
@@ -288,7 +288,7 @@ export function RecoveryPanel() {
         </div>
 
         {/* Load Metrics with animated bars */}
-        <div className="space-y-4 p-4  bg-background/50 border border-border/50">
+        <div className="space-y-4 p-4 rounded-md bg-background/50 border border-border/50">
           <AnimatedBar
             label="Strain"
             value={summary.strain}

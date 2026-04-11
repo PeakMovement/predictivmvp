@@ -20,7 +20,7 @@ export function DocumentReference({ document, className }: DocumentReferenceProp
     <button
       onClick={handleClick}
       className={cn(
-        'mt-2 w-full text-left  p-2.5 transition-colors',
+        'mt-2 w-full text-left rounded-md p-2.5 transition-colors',
         'bg-amber-500/5 hover:bg-amber-500/10 border border-amber-500/20',
         'group cursor-pointer',
         className

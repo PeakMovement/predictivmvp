@@ -250,7 +250,7 @@ export function BriefingDiagnostics() {
             ) : (
               <>
                 {diagnostics.map((result, index) => (
-                  <div key={index} className="flex items-start gap-3 p-3  bg-secondary/50">
+                  <div key={index} className="flex items-start gap-3 p-3 rounded-md bg-secondary/50">
                     <div className="flex-shrink-0 mt-0.5">
                       {getStatusIcon(result.status)}
                     </div>

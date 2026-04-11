@@ -108,14 +108,14 @@ export function DailyHealthPanel() {
 
   if (isLoading) {
     return (
-      <Card className="bg-glass  border-glass-border animate-panel-enter">
+      <Card className="bg-glass rounded-md border-glass-border animate-panel-enter">
         <CardHeader>
           <CardTitle className="text-lg font-semibold">Daily Health Trends</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 gap-3">
             {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="space-y-2 p-4  bg-muted/20">
+              <div key={i} className="space-y-2 p-4 rounded-md bg-muted/20">
                 <Skeleton className="h-4 w-20" />
                 <Skeleton className="h-8 w-16" />
                 <Skeleton className="h-3 w-24" />
@@ -129,7 +129,7 @@ export function DailyHealthPanel() {
 
   if (error) {
     return (
-      <Card className="bg-glass  border-glass-border animate-panel-enter">
+      <Card className="bg-glass rounded-md border-glass-border animate-panel-enter">
         <CardHeader>
           <CardTitle className="text-lg font-semibold">Daily Health Trends</CardTitle>
         </CardHeader>
@@ -145,7 +145,7 @@ export function DailyHealthPanel() {
 
   if (displayMetrics.length === 0) {
     return (
-      <Card className="bg-glass  border-glass-border animate-panel-enter">
+      <Card className="bg-glass rounded-md border-glass-border animate-panel-enter">
         <CardHeader>
           <CardTitle className="text-lg font-semibold">Daily Health Trends</CardTitle>
         </CardHeader>
@@ -160,7 +160,7 @@ export function DailyHealthPanel() {
   }
 
   return (
-    <Card className="bg-glass  border-glass-border animate-panel-enter">
+    <Card className="bg-glass rounded-md border-glass-border animate-panel-enter">
       <CardHeader>
         <CardTitle className="text-lg font-semibold">Daily Health Trends</CardTitle>
       </CardHeader>

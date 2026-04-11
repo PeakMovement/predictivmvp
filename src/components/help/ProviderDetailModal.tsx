@@ -287,7 +287,7 @@ export function ProviderDetailModal({
               </div>
 
               {reviews.length > 0 && (
-                <div className="bg-muted/50  p-4 mb-6">
+                <div className="bg-muted/50 rounded-md p-4 mb-6">
                   <div className="flex items-center gap-4 mb-4">
                     <div className="text-center">
                       <p className="text-4xl font-bold">{provider.rating.toFixed(1)}</p>
@@ -340,7 +340,7 @@ export function ProviderDetailModal({
                 ) : (
                   <>
                     {ownReview && (
-                      <div className="bg-primary/5 border border-primary/20  p-4">
+                      <div className="bg-primary/5 border border-primary/20 rounded-md p-4">
                         <div className="flex items-start justify-between mb-2">
                           <div className="flex items-center gap-2">
                             <div className="flex">
@@ -393,7 +393,7 @@ export function ProviderDetailModal({
                     )}
 
                     {otherReviews.map((review) => (
-                      <div key={review.id} className="border  p-4">
+                      <div key={review.id} className="border rounded-md p-4">
                         <div className="flex items-start justify-between mb-2">
                           <div className="flex">
                             {[...Array(5)].map((_, i) => (

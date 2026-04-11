@@ -62,7 +62,7 @@ export const TriageForm = () => {
   return (
     <div className="space-y-6">
       {/* Input Form */}
-      <Card className="bg-card/50  border-border/50">
+      <Card className="bg-card/50 rounded-md border-border/50">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-foreground">
             <UserSearch className="h-5 w-5 text-primary" />
@@ -147,7 +147,7 @@ export const TriageForm = () => {
 
       {/* Results Display */}
       {prediction && (
-        <Card className="bg-card/50  border-border/50">
+        <Card className="bg-card/50 rounded-md border-border/50">
           <CardHeader>
             <CardTitle className="text-foreground">Recommendation</CardTitle>
           </CardHeader>
@@ -170,7 +170,7 @@ export const TriageForm = () => {
 
             {/* Provider Recommendation */}
             {prediction.recommended_provider && (
-              <div className="p-4  bg-primary/10 border border-primary/30">
+              <div className="p-4 rounded-md bg-primary/10 border border-primary/30">
                 <h3 className="font-semibold text-lg text-foreground mb-1">
                   {typeof prediction.recommended_provider === "string" 
                     ? prediction.recommended_provider 

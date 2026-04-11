@@ -370,7 +370,7 @@ export const GoalHistory = ({ goals }: GoalHistoryProps) => {
           {completedGoals.slice(0, 5).map((goal) => (
             <div
               key={goal.id}
-              className="flex items-center justify-between p-3  bg-muted/50"
+              className="flex items-center justify-between p-3 rounded-md bg-muted/50"
             >
               <div className="flex items-center gap-3">
                 <Trophy className="h-5 w-5 text-yellow-600" />

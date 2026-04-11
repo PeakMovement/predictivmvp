@@ -108,7 +108,7 @@ const InsightNode = ({
       {/* Node */}
       <div
         className={cn(
-          "relative w-14 h-14 border-2  z-10",
+          "relative w-14 h-14 border-2 rounded-md z-10",
           "flex items-center justify-center cursor-pointer",
           "hover:scale-125 active:scale-95 transition-all duration-300",
           colors.bg,

@@ -92,7 +92,7 @@ export function TreatmentPlanInput({ onGenerate, isLoading }: TreatmentPlanInput
               key={index}
               onClick={() => handleExampleClick(example)}
               disabled={isLoading}
-              className="text-left px-4 py-3  border border-border hover:border-primary/50 hover:bg-primary/5 transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+              className="text-left px-4 py-3 rounded-md border border-border hover:border-primary/50 hover:bg-primary/5 transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {example}
             </button>

@@ -243,7 +243,7 @@ code, pre {
     --input: 240 30% 14%;              /* #1A1A30 --bg-input */
     --ring: 200 30% 75%;
 
-    --radius: 0rem;
+    --radius: 0.375rem;  /* 6px — soft editorial radius per brand guide */
 
     /* Legacy aliases */
     --glass-bg: 240 30% 12% / 0.8;
@@ -591,10 +591,11 @@ code, pre {
     margin-top: 48px;
   }
 
-  /* ── Predictiv. card — no radius, no shadow, 1px border ───────── */
+  /* ── Predictiv. card — soft radius, no shadow, 1px border ────── */
   .predictiv-card {
     background: hsl(var(--card));
     border: 1px solid hsl(var(--glass-border));
+    border-radius: 6px;
     transition: border-color 0.2s ease;
   }
 

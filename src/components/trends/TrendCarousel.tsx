@@ -183,7 +183,7 @@ export const TrendCarousel = () => {
 
   if (metrics.length === 0) {
     return (
-      <div className="bg-glass  border border-glass-border  p-8  text-center mx-4 md:mx-0">
+      <div className="bg-glass rounded-md border border-glass-border p-8 text-center mx-4 md:mx-0">
         <div className="space-y-4">
           <div className="text-4xl mb-2"></div>
           <h3 className="text-xl font-semibold text-foreground">No Trend Data Available</h3>

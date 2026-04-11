@@ -97,7 +97,7 @@ export const CaloriesBurnedCard = () => {
 
   if (loading) {
     return (
-      <Card className="bg-glass  border-glass-border hover: transition-all duration-300">
+      <Card className="bg-glass rounded-md border-glass-border hover: transition-all duration-300">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Flame className="w-5 h-5 text-amber" />
@@ -113,7 +113,7 @@ export const CaloriesBurnedCard = () => {
   }
 
   return (
-    <Card className="bg-glass  border-glass-border hover: transition-all duration-300 group">
+    <Card className="bg-glass rounded-md border-glass-border hover: transition-all duration-300 group">
       <CardHeader>
         <CardTitle className="flex items-center justify-between">
           <div className="flex items-center gap-2">

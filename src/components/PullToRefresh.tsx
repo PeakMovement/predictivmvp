@@ -116,7 +116,7 @@ export function PullToRefresh({
           className={cn(
             'flex flex-col items-center justify-center gap-2',
             'bg-background/90 ',
-            'px-6 py-3  border border-border/50',
+            'px-6 py-3 rounded-md border border-border/50',
             'transition-all duration-200'
           )}
           style={{

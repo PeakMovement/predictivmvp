@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { CheckCircle, XCircle, Loader2, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -10,8 +10,15 @@ export default function PolarCallback() {
   const [status, setStatus] = useState<ConnectionStatus>("loading");
   const [errorMessage, setErrorMessage] = useState<string>("");
   const navigate = useNavigate();
+  const handledRef = useRef(false);
 
   useEffect(() => {
+    // Guard against React StrictMode double-invocation.
+    // The Polar authorization code is single-use — if we call the callback
+    // twice, the second call fails with "invalid_code".
+    if (handledRef.current) return;
+    handledRef.current = true;
+
     const handleCallback = async () => {
       const params = new URLSearchParams(window.location.search);
       const code = params.get("code");

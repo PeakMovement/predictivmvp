@@ -100,7 +100,7 @@ export function AnomalyAlertsList({ anomalies, isLoading, onAcknowledge }: Anoma
               <>
                 {unacknowledged.length > 0 && (
                   <div className="space-y-2">
-                    <h4 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
+                    <h4 className="font-sans text-sm font-medium text-muted-foreground uppercase tracking-wider">
                       Unacknowledged
                     </h4>
                     {unacknowledged.map((anomaly) => (
@@ -193,7 +193,7 @@ export function AnomalyAlertsList({ anomalies, isLoading, onAcknowledge }: Anoma
 
                 {acknowledged.length > 0 && (
                   <div className="space-y-2 mt-6">
-                    <h4 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
+                    <h4 className="font-sans text-sm font-medium text-muted-foreground uppercase tracking-wider">
                       Acknowledged
                     </h4>
                     {acknowledged.slice(0, 5).map((anomaly) => (

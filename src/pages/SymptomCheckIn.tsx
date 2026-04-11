@@ -89,7 +89,7 @@ export const SymptomCheckIn = () => {
                   {/* Flagged Conditions */}
                   {interpretation.flagged_conditions && interpretation.flagged_conditions.length > 0 && (
                     <div>
-                      <h4 className="text-sm font-medium text-muted-foreground mb-2 flex items-center gap-2">
+                      <h4 className="font-sans text-sm font-medium text-muted-foreground mb-2 flex items-center gap-2">
                         <AlertTriangle className="h-4 w-4 text-amber-500" />
                         Flagged Conditions
                       </h4>
@@ -107,7 +107,7 @@ export const SymptomCheckIn = () => {
                   {/* Recommendations */}
                   {interpretation.recommendations && interpretation.recommendations.length > 0 && (
                     <div>
-                      <h4 className="text-sm font-medium text-muted-foreground mb-2 flex items-center gap-2">
+                      <h4 className="font-sans text-sm font-medium text-muted-foreground mb-2 flex items-center gap-2">
                         <CheckCircle className="h-4 w-4 text-bioGreen" />
                         Recommendations
                       </h4>

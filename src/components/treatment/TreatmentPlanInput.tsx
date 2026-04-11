@@ -84,7 +84,7 @@ export function TreatmentPlanInput({ onGenerate, isLoading }: TreatmentPlanInput
       <div>
         <div className="flex items-center gap-2 mb-3">
           <Sparkles className="h-4 w-4 text-primary" />
-          <h3 className="text-sm font-medium">Try these examples</h3>
+          <h3 className="font-sans text-sm font-medium">Try these examples</h3>
         </div>
         <div className="grid gap-2">
           {examples.map((example, index) => (

@@ -189,7 +189,7 @@ export function DocumentVersionHistoryModal({
                   </div>
                 ) : (
                   <div className="space-y-3">
-                    <h4 className="text-sm font-semibold text-muted-foreground">
+                    <h4 className="font-sans text-sm font-semibold text-muted-foreground">
                       Previous Versions
                     </h4>
                     {versions.map((version) => (

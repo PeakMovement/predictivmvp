@@ -344,7 +344,7 @@ function OverviewTab({ p }: { p: PractitionerData }) {
             <div key={num} className="relative">
               <p className="text-3xl font-bold text-[#6B5ED9]/20">{num}</p>
               <span className="mt-1 inline-block text-xl">{emoji}</span>
-              <h4 className="mt-2 text-sm font-semibold text-[#1a1a1a]">
+              <h4 className="font-sans mt-2 text-sm font-semibold text-[#1a1a1a]">
                 {title}
               </h4>
               <p className="mt-1 text-xs leading-relaxed text-[#777]">

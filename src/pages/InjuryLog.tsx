@@ -414,7 +414,7 @@ export default function InjuryLog() {
             onClick={() => setHistoryExpanded((v) => !v)}
           >
             <Clock className="w-4 h-4 text-muted-foreground" />
-            <h2 className="font-semibold text-sm uppercase tracking-wide text-muted-foreground group-hover:text-foreground transition-colors flex-1">
+            <h2 className="font-sans font-semibold text-sm uppercase tracking-wide text-muted-foreground group-hover:text-foreground transition-colors flex-1">
               Injury History
               {history.length > 0 && (
                 <span className="ml-2 text-muted-foreground font-normal normal-case tracking-normal">

@@ -99,13 +99,13 @@ export const OuraHRVCard = ({
         )}
         <div className="grid grid-cols-2 gap-6">
           <div>
-            <h4 className="text-xs font-medium text-muted-foreground mb-2">HRV</h4>
+            <h4 className="font-sans text-xs font-medium text-muted-foreground mb-2">HRV</h4>
             <p className="text-sm text-foreground">
               Heart rate variability measures the variation in time between heartbeats. Higher HRV typically indicates better recovery and fitness.
             </p>
           </div>
           <div>
-            <h4 className="text-xs font-medium text-muted-foreground mb-2">Blood Oxygen</h4>
+            <h4 className="font-sans text-xs font-medium text-muted-foreground mb-2">Blood Oxygen</h4>
             <p className="text-sm text-foreground">
               SpO₂ measures blood oxygen saturation. Normal levels are 95-100%. Lower levels may indicate breathing or circulation issues.
             </p>

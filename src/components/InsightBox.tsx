@@ -87,7 +87,7 @@ export function InsightBox({ query, response, timestamp }: InsightBoxProps) {
                       </h2>
                     ),
                     h3: ({ children }) => (
-                      <h3 className="text-sm font-semibold mb-2 mt-3 first:mt-0 text-gray-900 dark:text-gray-100">
+                      <h3 className="font-sans text-sm font-semibold mb-2 mt-3 first:mt-0 text-gray-900 dark:text-gray-100">
                         {children}
                       </h3>
                     ),

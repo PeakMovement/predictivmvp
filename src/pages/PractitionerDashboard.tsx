@@ -404,7 +404,7 @@ export const PractitionerDashboard = () => {
                 <Stethoscope className="h-4 w-4 text-white" />
               </div>
               <div>
-                <h1 className="font-semibold text-slate-800 text-sm leading-tight">Practitioner View</h1>
+                <h1 className="font-sans font-semibold text-slate-800 text-sm leading-tight">Practitioner View</h1>
                 <p className="text-xs text-slate-400">{practitionerName}</p>
               </div>
             </div>

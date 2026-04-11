@@ -177,7 +177,7 @@ function RiskExplainer() {
     <div className=" border border-border/40 bg-card/40 p-5 space-y-4">
       <div className="flex items-center gap-2">
         <Info className="h-4 w-4 text-primary shrink-0" />
-        <h3 className="text-sm font-semibold text-foreground">What does this mean?</h3>
+        <h3 className="font-sans text-sm font-semibold text-foreground">What does this mean?</h3>
       </div>
 
       <p className="text-xs text-muted-foreground leading-relaxed">
@@ -344,14 +344,14 @@ export default function AlertHistory() {
       <div className="space-y-3">
         <div className="flex items-center gap-2">
           <TrendingUp className="h-4 w-4 text-primary" />
-          <h2 className="text-sm font-semibold text-foreground">7-Day Risk Score History</h2>
+          <h2 className="font-sans text-sm font-semibold text-foreground">7-Day Risk Score History</h2>
         </div>
         <RiskScoreTimeline rows={riskHistory} loading={riskLoading} />
       </div>
 
       {/* ── Alert History ─────────────────────────────────────────────── */}
       <div className="space-y-3">
-        <h2 className="text-sm font-semibold text-foreground">Metric Alerts</h2>
+        <h2 className="font-sans text-sm font-semibold text-foreground">Metric Alerts</h2>
 
         {/* Filter tabs */}
         <div className="flex gap-1.5 p-1 bg-muted/30 ">

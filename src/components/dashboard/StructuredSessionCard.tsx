@@ -34,7 +34,7 @@ export function StructuredSessionCard({ session, className }: StructuredSessionC
       <div className="bg-primary/5 p-3 border-b border-primary/10">
         <div className="flex items-start justify-between gap-2">
           <div className="flex-1">
-            <h4 className="text-sm font-semibold text-foreground flex items-center gap-2">
+            <h4 className="font-sans text-sm font-semibold text-foreground flex items-center gap-2">
               <Dumbbell className="h-4 w-4 text-primary" />
               {session.title}
             </h4>

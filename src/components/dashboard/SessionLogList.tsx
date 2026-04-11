@@ -44,7 +44,7 @@ const SessionLogCard = ({
           />
         )}
         <div>
-          <h4 className="font-semibold text-foreground text-sm">{title}</h4>
+          <h4 className="font-sans font-semibold text-foreground text-sm">{title}</h4>
           {time && <p className="text-xs text-muted-foreground">{time}</p>}
         </div>
       </div>

@@ -40,7 +40,7 @@ export const DocumentCard = ({ document, onDelete, onPreview, onViewHistory }: D
             <div className="flex items-center gap-2">
               <span className="text-2xl">{typeIcons[document.document_type]}</span>
               <div className="flex-1">
-                <h4 className="font-semibold text-sm truncate">{document.file_name}</h4>
+                <h4 className="font-sans font-semibold text-sm truncate">{document.file_name}</h4>
                 <p className="text-xs text-muted-foreground">
                   {typeLabels[document.document_type]}
                 </p>

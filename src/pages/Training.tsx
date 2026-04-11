@@ -31,6 +31,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { DeviceSourceSwitcher } from "@/components/DeviceSourceSwitcher";
 import { useGarminTokenStatus } from "@/hooks/useGarminTokenStatus";
 import { GarminExpiredBanner } from "@/components/GarminExpiredBanner";
+import { GarminAttribution } from "@/components/GarminAttribution";
 
 const generateSuggestions = (csvData: HealthDataRow[]) => {
   if (csvData.length === 0) return [];
@@ -199,6 +200,7 @@ export const Training = () => {
   const [selectedSource, setSelectedSource] = useState<string>("auto");
   const [isSyncing, setIsSyncing] = useState(false);
   const { data: wearableData, refetch: refetchWearable } = useWearableSessions(userId || undefined, selectedSource);
+  const [f12Status, setF12Status] = useState<string | null>(null);
   const { runningDistance, isEstimated: runningDistanceIsEstimated, isLoading: runningDistanceLoading } = useGarminRunningDistance();
   const [suggestions, setSuggestions] = useState<ReturnType<typeof generateSuggestions>>([]);
   const [comparisonOpen, setComparisonOpen] = useState(false);
@@ -256,6 +258,20 @@ export const Training = () => {
         }
       });
   }, [userId]);
+
+  // Fetch F-12 status from baseline_profiles for Temp Dev gauge note
+  useEffect(() => {
+    if (!userId || selectedSource !== "oura") { setF12Status(null); return; }
+    supabase
+      .from("baseline_profiles")
+      .select("f12_temp_deviation_status")
+      .eq("user_id", userId)
+      .eq("device_source", "oura")
+      .order("date", { ascending: false })
+      .limit(1)
+      .maybeSingle()
+      .then(({ data }) => setF12Status(data?.f12_temp_deviation_status ?? null));
+  }, [userId, selectedSource]);
 
   // Check if Garmin token exists (connected but no data)
   useEffect(() => {
@@ -520,39 +536,72 @@ export const Training = () => {
                     onSourceChange={setSelectedSource}
                     className="mb-4"
                   />
-                  {/* ── Recovery ── */}
+                  {/* ── Recovery — device-specific metrics ── */}
                   <p className="section-header">Recovery</p>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-px mb-12">
-                    <CircularGauge title="Readiness" value={wearableData?.readiness_score ?? 0} maxValue={100} unit="%" />
-                    <CircularGauge title="Battery" value={wearableData?.body_battery_end ?? wearableData?.body_battery_max ?? 0} maxValue={100} unit="%" />
-                    <CircularGauge title="Avg Stress" value={wearableData?.stress_avg ? Math.round(wearableData.stress_avg) : 0} maxValue={100} unit="" />
-                    <CircularGauge title="SpO₂" value={wearableData?.spo2_avg ? parseFloat(wearableData.spo2_avg.toFixed(1)) : 0} maxValue={100} unit="%" />
-                    <CircularGauge title="Respiration" value={wearableData?.respiration_rate_avg ? parseFloat(wearableData.respiration_rate_avg.toFixed(1)) : 0} maxValue={30} unit="brpm" />
-                    <CircularGauge title="Total Cal" value={wearableData?.total_calories ? Math.round(wearableData.total_calories) : 0} maxValue={4000} unit="kcal" />
-                  </div>
+                  {selectedSource === "oura" ? (
+                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-px mb-12">
+                      <CircularGauge title="Readiness" value={wearableData?.readiness_score ?? 0} maxValue={100} unit="%" />
+                      <CircularGauge title="Sleep Score" value={wearableData?.sleep_score ?? 0} maxValue={100} unit="%" />
+                      <CircularGauge title="HRV" value={wearableData?.hrv_avg ? Math.round(wearableData.hrv_avg) : 0} maxValue={120} unit="ms" />
+                      <CircularGauge title="Resting HR" value={wearableData?.resting_hr ? Math.round(wearableData.resting_hr) : 0} maxValue={100} unit="bpm" />
+                      <CircularGauge title="SpO₂" value={wearableData?.spo2_avg ? parseFloat(wearableData.spo2_avg.toFixed(1)) : 0} maxValue={100} unit="%" />
+                      <CircularGauge title="Activity" value={wearableData?.activity_score ?? 0} maxValue={100} unit="%" />
+                      <CircularGauge title="Steps" value={wearableData?.total_steps ?? 0} maxValue={20000} unit="" />
+                      <CircularGauge title="Active Cal" value={wearableData?.active_calories ? Math.round(wearableData.active_calories) : 0} maxValue={1000} unit="kcal" />
+                      <CircularGauge title="Total Cal" value={wearableData?.total_calories ? Math.round(wearableData.total_calories) : 0} maxValue={4000} unit="kcal" />
+                      <CircularGauge
+                        title="Temp Dev"
+                        value={wearableData?.temperature_deviation ? parseFloat(wearableData.temperature_deviation.toFixed(2)) : 0}
+                        maxValue={3}
+                        unit="°C"
+                        note={f12Status === "alert" ? "⚠ Alert" : f12Status === "elevated" ? "↑ Elevated" : f12Status === "normal" ? "Normal" : undefined}
+                      />
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-px mb-12">
+                      <CircularGauge title="Readiness" value={wearableData?.readiness_score ?? 0} maxValue={100} unit="%" />
+                      <CircularGauge title="Battery" value={wearableData?.body_battery_end ?? wearableData?.body_battery_max ?? 0} maxValue={100} unit="%" />
+                      <CircularGauge title="Avg Stress" value={wearableData?.stress_avg ? Math.round(wearableData.stress_avg) : 0} maxValue={100} unit="" />
+                      <CircularGauge title="SpO₂" value={wearableData?.spo2_avg ? parseFloat(wearableData.spo2_avg.toFixed(1)) : 0} maxValue={100} unit="%" />
+                      <CircularGauge title="Respiration" value={wearableData?.respiration_rate_avg ? parseFloat(wearableData.respiration_rate_avg.toFixed(1)) : 0} maxValue={30} unit="brpm" />
+                      <CircularGauge title="Total Cal" value={wearableData?.total_calories ? Math.round(wearableData.total_calories) : 0} maxValue={4000} unit="kcal" />
+                    </div>
+                  )}
 
-                  {/* ── Performance ── */}
-                  <p className="section-header">Performance</p>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-px mb-12">
-                    <CircularGauge title="VO₂ Max" value={wearableData?.vo2_max ? parseFloat(wearableData.vo2_max.toFixed(1)) : 0} maxValue={70} unit="mL/kg" />
-                    <CircularGauge title="Intens Mod" value={wearableData?.intensity_minutes_moderate ?? 0} maxValue={150} unit="min" />
-                    <CircularGauge title="Intens Vig" value={wearableData?.intensity_minutes_vigorous ?? 0} maxValue={75} unit="min" />
-                    <CircularGauge
-                      title="Distance"
-                      value={runningDistanceLoading ? 0 : parseFloat(runningDistance.toFixed(1))}
-                      maxValue={50}
-                      unit="km"
-                      note={runningDistanceIsEstimated && !runningDistanceLoading ? "Estimated from steps" : undefined}
-                    />
-                  </div>
+                  {/* ── Performance ── Garmin/training only */}
+                  {selectedSource !== "oura" && (
+                    <>
+                      <p className="section-header">Performance</p>
+                      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-px mb-12">
+                        <CircularGauge title="VO₂ Max" value={wearableData?.vo2_max ? parseFloat(wearableData.vo2_max.toFixed(1)) : 0} maxValue={70} unit="mL/kg" />
+                        <CircularGauge title="Intens Mod" value={wearableData?.intensity_minutes_moderate ?? 0} maxValue={150} unit="min" />
+                        <CircularGauge title="Intens Vig" value={wearableData?.intensity_minutes_vigorous ?? 0} maxValue={75} unit="min" />
+                        <CircularGauge
+                          title="Distance"
+                          value={runningDistanceLoading ? 0 : parseFloat(runningDistance.toFixed(1))}
+                          maxValue={50}
+                          unit="km"
+                          note={runningDistanceIsEstimated && !runningDistanceLoading ? "Estimated from steps" : undefined}
+                        />
+                      </div>
+                    </>
+                  )}
 
-                  {/* ── Load ── */}
-                  <p className="section-header">Load</p>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-px">
-                    <CircularGauge title="Monotony" value={latestAvailableTrend?.monotony ? parseFloat(latestAvailableTrend.monotony.toFixed(1)) : 0} maxValue={5} unit="ratio" />
-                    <CircularGauge title="Strain" value={latestAvailableTrend?.strain ? Math.round(latestAvailableTrend.strain) : 0} maxValue={200} unit="TSS" />
-                    <CircularGauge title="Fatigue Idx" value={fatigueIndex} maxValue={100} unit="%" />
-                  </div>
+                  {/* ── Load ── Garmin/training only — Oura does not provide these metrics */}
+                  {selectedSource !== "oura" && (
+                    <>
+                      <p className="section-header">Load</p>
+                      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-px">
+                        <CircularGauge title="Monotony" value={latestAvailableTrend?.monotony ? parseFloat(latestAvailableTrend.monotony.toFixed(1)) : 0} maxValue={5} unit="ratio" />
+                        <CircularGauge title="Strain" value={latestAvailableTrend?.strain ? Math.round(latestAvailableTrend.strain) : 0} maxValue={200} unit="TSS" />
+                        <CircularGauge title="Fatigue Idx" value={fatigueIndex} maxValue={100} unit="%" />
+                      </div>
+                    </>
+                  )}
+
+                  {selectedSource === "garmin" && (
+                    <GarminAttribution className="mt-6" />
+                  )}
                 </LayoutBlock>
               </LayoutBlock>
 

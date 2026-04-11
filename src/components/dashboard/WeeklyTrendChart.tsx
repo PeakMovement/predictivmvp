@@ -156,10 +156,10 @@ export function WeeklyTrendChart() {
   };
 
   const metricCards = [
-    { label: "Sleep", value: wowChanges?.sleep, color: "from-indigo-500/20 to-indigo-500/5", textColor: "text-indigo-400", borderColor: "border-indigo-500/30" },
-    { label: "Readiness", value: wowChanges?.readiness, color: "from-amber-500/20 to-amber-500/5", textColor: "text-amber-400", borderColor: "border-amber-500/30" },
-    { label: "HRV", value: wowChanges?.hrv, color: "from-emerald-500/20 to-emerald-500/5", textColor: "text-bioGreen", borderColor: "border-bioGreen/30" },
-    { label: "Activity", value: wowChanges?.activity, color: "from-purple-500/20 to-purple-500/5", textColor: "text-purple-400", borderColor: "border-purple-500/30" },
+    { label: "Sleep",     value: wowChanges?.sleep,     textColor: "text-primary",      borderColor: "border-border hover:border-primary/30" },
+    { label: "Readiness", value: wowChanges?.readiness, textColor: "text-[#D4956A]",    borderColor: "border-border hover:border-[#D4956A]/30" },
+    { label: "HRV",       value: wowChanges?.hrv,       textColor: "text-bioGreen",     borderColor: "border-border hover:border-bioGreen/30" },
+    { label: "Activity",  value: wowChanges?.activity,  textColor: "text-[#C9A96E]",    borderColor: "border-border hover:border-[#C9A96E]/30" },
   ];
 
   return (
@@ -175,9 +175,8 @@ export function WeeklyTrendChart() {
               <div 
                 key={item.label} 
                 className={cn(
-                  "text-center p-3  border transition-all duration-300",
-                  "bg-gradient-to-br hover:scale-105 hover: cursor-default",
-                  item.color, item.borderColor
+                  "text-center p-3 border bg-card transition-all duration-300 hover:scale-105 cursor-default",
+                  item.borderColor
                 )}
                 style={{ animationDelay: `${idx * 100}ms` }}
               >
@@ -200,20 +199,6 @@ export function WeeklyTrendChart() {
               data={chartData} 
               margin={{ top: 5, right: 10, left: -10, bottom: 5 }}
             >
-              <defs>
-                <linearGradient id="sleepGradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#818cf8" stopOpacity={0.3}/>
-                  <stop offset="95%" stopColor="#818cf8" stopOpacity={0}/>
-                </linearGradient>
-                <linearGradient id="readinessGradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#fbbf24" stopOpacity={0.3}/>
-                  <stop offset="95%" stopColor="#fbbf24" stopOpacity={0}/>
-                </linearGradient>
-                <linearGradient id="activityGradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#a855f7" stopOpacity={0.3}/>
-                  <stop offset="95%" stopColor="#a855f7" stopOpacity={0}/>
-                </linearGradient>
-              </defs>
               <CartesianGrid strokeDasharray="3 3" className="stroke-border/20" vertical={false} />
               <XAxis
                 dataKey="week"
@@ -237,10 +222,10 @@ export function WeeklyTrendChart() {
                 type="monotone"
                 dataKey="sleep"
                 name="Sleep"
-                stroke="#818cf8"
+                stroke="#A8C4D4"
                 strokeWidth={2.5}
-                dot={{ r: 3, fill: '#818cf8', strokeWidth: 0 }}
-                activeDot={{ r: 6, fill: '#818cf8', stroke: '#818cf8', strokeWidth: 3, strokeOpacity: 0.3 }}
+                dot={{ r: 3, fill: '#A8C4D4', strokeWidth: 0 }}
+                activeDot={{ r: 6, fill: '#A8C4D4', stroke: '#A8C4D4', strokeWidth: 3, strokeOpacity: 0.3 }}
                 connectNulls
                 animationDuration={1000}
                 animationEasing="ease-out"
@@ -249,10 +234,10 @@ export function WeeklyTrendChart() {
                 type="monotone"
                 dataKey="readiness"
                 name="Readiness"
-                stroke="#fbbf24"
+                stroke="#D4956A"
                 strokeWidth={2.5}
-                dot={{ r: 3, fill: '#fbbf24', strokeWidth: 0 }}
-                activeDot={{ r: 6, fill: '#fbbf24', stroke: '#fbbf24', strokeWidth: 3, strokeOpacity: 0.3 }}
+                dot={{ r: 3, fill: '#D4956A', strokeWidth: 0 }}
+                activeDot={{ r: 6, fill: '#D4956A', stroke: '#D4956A', strokeWidth: 3, strokeOpacity: 0.3 }}
                 connectNulls
                 animationDuration={1000}
                 animationEasing="ease-out"
@@ -261,10 +246,10 @@ export function WeeklyTrendChart() {
                 type="monotone"
                 dataKey="activity"
                 name="Activity"
-                stroke="#a855f7"
+                stroke="#7ECBA1"
                 strokeWidth={2.5}
-                dot={{ r: 3, fill: '#a855f7', strokeWidth: 0 }}
-                activeDot={{ r: 6, fill: '#a855f7', stroke: '#a855f7', strokeWidth: 3, strokeOpacity: 0.3 }}
+                dot={{ r: 3, fill: '#7ECBA1', strokeWidth: 0 }}
+                activeDot={{ r: 6, fill: '#7ECBA1', stroke: '#7ECBA1', strokeWidth: 3, strokeOpacity: 0.3 }}
                 connectNulls
                 animationDuration={1000}
                 animationEasing="ease-out"

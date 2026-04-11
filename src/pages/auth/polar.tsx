@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { CheckCircle, XCircle, Loader2, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { supabase } from "@/integrations/supabase/client";
 
 type ConnectionStatus = "loading" | "success" | "consent_required" | "missing_code" | "error";
 
@@ -29,15 +30,11 @@ export default function PolarCallback() {
       }
 
       try {
-        const callbackUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/polar-auth-callback?code=${encodeURIComponent(code)}&state=${encodeURIComponent(state)}`;
+        // Use the supabase client's URL so this works in any environment
+        const supabaseUrl = (supabase as any).supabaseUrl as string;
+        const callbackUrl = `${supabaseUrl}/functions/v1/polar-auth-callback?code=${encodeURIComponent(code)}&state=${encodeURIComponent(state)}`;
 
-        const response = await fetch(callbackUrl, {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-          },
-        });
-
+        const response = await fetch(callbackUrl, { method: "GET" });
         const data = await response.json();
 
         if (response.status === 403 && data.error === "consent_required") {

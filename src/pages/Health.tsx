@@ -15,6 +15,7 @@ import { LayoutBlock } from "@/components/layout/LayoutBlock";
 import { PullToRefresh } from "@/components/PullToRefresh";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useToast } from "@/hooks/use-toast";
+import { GarminAttribution } from "@/components/GarminAttribution";
 import {
   Moon, Clock, Zap, Heart, Activity, Droplets,
   Settings, Info as InfoIcon, TrendingUp,
@@ -350,9 +351,9 @@ export const Health = () => {
                   <p className="section-header">Sleep Stages</p>
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-3">
                     {[
-                      { label: "Deep", value: deepMin, color: "text-indigo-400" },
-                      { label: "REM",  value: remMin,  color: "text-purple-400" },
-                      { label: "Light", value: lightMin, color: "text-blue-300" },
+                      { label: "Deep", value: deepMin, color: "text-primary" },
+                      { label: "REM",  value: remMin,  color: "text-[#C9A96E]" },
+                      { label: "Light", value: lightMin, color: "text-[#7ECBA1]" },
                     ].map(({ label, value, color }) => (
                       <div key={label} className="text-center bg-background/30  p-3">
                         <p className="text-xs text-muted-foreground mb-1">{label}</p>
@@ -364,9 +365,9 @@ export const Health = () => {
                   {/* Stacked bar */}
                   <div className="w-full h-3 bg-background/50 overflow-hidden flex">
                     {[
-                      { value: deepMin, cls: "bg-indigo-500" },
-                      { value: remMin,  cls: "bg-purple-500" },
-                      { value: lightMin, cls: "bg-blue-400" },
+                      { value: deepMin, cls: "bg-primary" },
+                      { value: remMin,  cls: "bg-[#C9A96E]" },
+                      { value: lightMin, cls: "bg-[#7ECBA1]" },
                     ].map(({ value, cls }, i) => (
                       <div
                         key={i}
@@ -436,7 +437,7 @@ export const Health = () => {
                       tip: "Heart rate variability — variation in time between beats. Higher HRV usually means better recovery.",
                     },
                     {
-                      icon: <Droplets className="w-6 h-6 text-cyan-400" />,
+                      icon: <Droplets className="w-6 h-6 text-primary" />,
                       label: "SpO₂",
                       value: session.spo2_avg != null ? session.spo2_avg.toFixed(1) : "—",
                       unit: "%",
@@ -474,6 +475,9 @@ export const Health = () => {
                 )}
               </div>
             </div>
+            {selectedSource === "garmin" && (
+              <GarminAttribution className="mx-6 mb-4" />
+            )}
           </LayoutBlock>
         </>
       )}

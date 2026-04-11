@@ -161,6 +161,7 @@ Deno.serve(async (req) => {
       dataMaturity = fallback;
     }
 
+    console.log(`[generate-yves-intelligence] Data maturity for user ${userId}:`, {
       maturity_level: dataMaturity?.maturity_level || 'not_found',
       maturity_score: dataMaturity?.maturity_score,
       data_days: dataMaturity?.data_days,
@@ -241,6 +242,7 @@ Deno.serve(async (req) => {
       supabase.from("symptom_check_ins").select("*").eq("user_id", userId).order("created_at", { ascending: false }).limit(5),
     ]);
 
+    console.log(`[generate-yves-intelligence] Data loaded:`, {
       wearable_sessions: wearableSessionsResult.data?.length || 0,
       wearable_summary: wearableSummaryResult.data?.length || 0,
       training_trends: trainingTrendsResult.data?.length || 0,
@@ -352,6 +354,9 @@ Deno.serve(async (req) => {
       // Find yesterday's briefing
       const yesterdayBriefing = pastBriefings.find((b: any) => b.date === yesterdayStr);
       const contextUsed = yesterdayBriefing?.context_used as any;
+
+      // Yesterday's top commitment (highest priority recommendation)
+      const yesterdayCommitment: string | null = contextUsed?.recommendations?.[0]?.text || null;
 
       // Yesterday's recommendation categories
       const yesterdayRecCategories: string[] = (contextUsed?.recommendations || [])
@@ -525,6 +530,7 @@ Deno.serve(async (req) => {
       userTraining
     );
 
+    console.log(`[generate-yves-intelligence] Reasoning result:`, {
       should_speak: reasoningContext.should_speak,
       overall_confidence: reasoningContext.overall_confidence,
       silence_reason: reasoningContext.silence_reason,
@@ -1190,13 +1196,13 @@ If any answer is "no", revise before output.
 Generate a JSON object:
 {
   "dailyBriefing": {
-    "summary": "2-4 sentences that feel personal and insightful. Reference specific metrics, trends, or patterns from their data. Avoid generic statements like 'everything looks stable' - instead, explain WHAT is stable and WHY that matters for them.",
-    "keyChanges": ["1-2 specific observations about trends, patterns, or notable shifts. Include actual numbers or timeframes when relevant."],
-    "riskHighlights": ["Only include if genuinely concerning - this can be empty"]
+    "summary": "STRICT MAX 60 WORDS. 2-3 short sentences. Mention one specific metric with its value. Plain, direct language — no jargon (never use: 'physiological', 'markers', 'significant', 'leverage', 'optimize', 'holistic', 'overall wellness'). Sound like a knowledgeable friend texting you, not a medical report.",
+    "keyChanges": ["MAX 1 item. One short sentence with a specific number or delta. No jargon."],
+    "riskHighlights": ["MAX 1 item only if truly urgent. Empty array if nothing critical."]
   },
   "recommendations": [
     {
-      "text": "Specific, actionable recommendation tied to THEIR data patterns and preferences",
+      "text": "MAX 20 words. One concrete action the person can do today.",
       "category": "training|recovery|nutrition|sleep|mindset|performance",
       "priority": "high|medium|low",
       "reasoning": "Internal justification connecting to their specific metrics and goals"
@@ -1276,7 +1282,7 @@ RESPOND WITH ONLY THE JSON OBJECT.`;
             { role: "system", content: systemPrompt },
             { role: "user", content: userPrompt }
           ],
-          max_tokens: 1200,
+          max_tokens: 700,
         }),
       });
     };
@@ -1311,10 +1317,10 @@ RESPOND WITH ONLY THE JSON OBJECT.`;
     for (const provider of aiProviders) {
       try {
         const resp = await provider.call();
-        // Retry next provider on 5xx or 502/503 gateway errors
-        if (!resp.ok && (resp.status >= 500 || resp.status === 429 || resp.status === 402)) {
+        // Retry next provider on any non-2xx
+        if (!resp.ok) {
           const errText = await resp.text();
-          console.error(`[generate-yves-intelligence] Provider ${provider.name} failed (${resp.status}):`, errText.substring(0, 200));
+          console.error(`[generate-yves-intelligence] Provider ${provider.name} failed (${resp.status}):`, errText.substring(0, 500));
           if (resp.status === 429) {
             return new Response(
               JSON.stringify({ success: false, error: "Rate limit exceeded. Please try again later." }),
@@ -1327,7 +1333,7 @@ RESPOND WITH ONLY THE JSON OBJECT.`;
               { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
             );
           }
-          // 5xx → try next provider
+          // Any other error → try next provider
           continue;
         }
         aiResponse = resp;
@@ -1341,9 +1347,11 @@ RESPOND WITH ONLY THE JSON OBJECT.`;
 
     if (!aiResponse || !aiResponse.ok) {
       const status = aiResponse?.status ?? 503;
-      console.error(`[generate-yves-intelligence] All AI providers failed for user ${userId}`);
+      let errBody = "";
+      try { errBody = await aiResponse?.text() ?? ""; } catch (_) {}
+      console.error(`[generate-yves-intelligence] All AI providers failed for user ${userId}. Status: ${status}, Body: ${errBody.substring(0, 500)}`);
       return new Response(
-        JSON.stringify({ success: false, error: `AI error: ${status}` }),
+        JSON.stringify({ success: false, error: `AI error: ${status}`, detail: errBody.substring(0, 200) }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }

@@ -365,7 +365,7 @@ export async function refreshOuraToken(
             expires_at: expiresAt,
           })
           .eq("user_id", token.user_id)
-          .ilike("scope", "%extapi%");
+          .eq("scope", "oura");
 
         if (updateError) {
           console.error(`[oura-token-refresh] Database update failed:`, updateError);
@@ -429,7 +429,7 @@ export async function getValidOuraToken(
     .from("wearable_tokens")
     .select("*")
     .eq("user_id", userId)
-    .ilike("scope", "%extapi%")
+    .eq("scope", "oura")
     .maybeSingle();
 
   if (tokenError) {

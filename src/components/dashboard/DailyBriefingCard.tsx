@@ -45,6 +45,7 @@ import { useEngagementTracking } from "@/hooks/useEngagementTracking";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 import { useToast } from "@/hooks/use-toast";
 import jsPDF from "jspdf";
+import { supabase } from "@/integrations/supabase/client";
 
 /**
  * Props for the DailyBriefingCard component
@@ -63,7 +64,7 @@ interface DailyBriefingCardProps {
   /** Whether this briefing was served from cache */
   cached: boolean;
   /** Callback function to refresh/regenerate the briefing */
-  onRefresh: () => void;
+  onRefresh: () => void | Promise<void>;
   /** Current data maturity tier — used to show baseline-building banner */
   dataMaturityTier?: DataMaturityTier;
   /** Number of days with wearable data */
@@ -120,7 +121,7 @@ export function DailyBriefingCard({
         <CardHeader>
           <div className="flex items-center gap-2">
             <PredictivMark size={14} />
-            <span className="font-mono text-[8px] tracking-[4px] uppercase text-coldBlue">Yves · Daily Briefing</span>
+            <span className="font-mono text-[9px] tracking-[3px] uppercase text-foreground/80">Yves · Daily Briefing</span>
           </div>
         </CardHeader>
         <CardContent className="flex items-center justify-center py-8">
@@ -136,7 +137,7 @@ export function DailyBriefingCard({
         <div className="flex items-start sm:items-center justify-between gap-3">
           <div className="flex items-center gap-2 min-w-0">
             <PredictivMark size={14} />
-            <span className="font-mono text-[8px] tracking-[4px] uppercase text-coldBlue">Yves · Daily Briefing</span>
+            <span className="font-mono text-[9px] tracking-[3px] uppercase text-foreground/80">Yves · Daily Briefing</span>
           </div>
           <div className="relative">
             {isGenerating && (
@@ -171,7 +172,7 @@ export function DailyBriefingCard({
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => { onRefresh(); trainingFocusRef.current?.refresh(); }}
+              onClick={async () => { await onRefresh(); trainingFocusRef.current?.refresh(); }}
               disabled={isGenerating}
               title="Refresh briefing"
               className="h-9 w-9 shrink-0 touch-manipulation relative z-10"
@@ -185,7 +186,7 @@ export function DailyBriefingCard({
           </div>
         </div>
         {createdAt && (
-          <p className="timestamp text-muted-foreground/60 mt-1">
+          <p className="timestamp text-muted-foreground mt-1">
             Compiled {format(new Date(createdAt), "HH:mm")} · {format(new Date(createdAt), "dd.MM.yy")}
           </p>
         )}
@@ -315,12 +316,6 @@ function CollapsibleBriefingSections({ briefing, recommendations = [] }: { brief
         <p className="body-text text-foreground">
           {briefing.summary}
         </p>
-        {summaryExplanation && (
-          <WhyThisMatters 
-            explanation={summaryExplanation.text} 
-            tone={summaryExplanation.tone} 
-          />
-        )}
         {summaryDocument && (
           <DocumentReference document={summaryDocument} />
         )}
@@ -499,14 +494,26 @@ function RecommendationItem({ recommendation, index }: RecommendationItemProps) 
   };
 
   const handleFollowed = async () => {
-    const success = await trackRecommendationFollowed(recommendationId);
-    if (success) {
-      setFeedbackGiven('followed');
-      toast({
-        title: "Feedback noted",
-        description: "Keep up the momentum!",
-      });
+    setFeedbackGiven('followed');
+    // Write to yves_memory_bank so tomorrow's briefing can acknowledge this
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      await supabase.from("yves_memory_bank").upsert({
+        user_id: user.id,
+        memory_key: "last_completed_recommendation",
+        memory_value: {
+          text: recommendation.text,
+          completed_at: new Date().toISOString(),
+        },
+        last_updated: new Date().toISOString(),
+      }, { onConflict: "user_id,memory_key" });
     }
+    toast({
+      title: "Great job!",
+      description: "Keep up the momentum!",
+    });
+    // Fire-and-forget engagement tracking (non-blocking)
+    void trackRecommendationFollowed(recommendationId);
   };
 
   const handleDownloadPDF = (e: React.MouseEvent) => {
@@ -556,7 +563,7 @@ function RecommendationItem({ recommendation, index }: RecommendationItemProps) 
         recommendation.priority === "high"
           ? "border-l-4 border-l-destructive border-destructive/30"
           : "border-border",
-        feedbackGiven === 'followed' && "border-l-4 border-l-emerald-500 border-bioGreen/30 bg-bioGreen/5"
+        feedbackGiven === 'followed' && "border-l-4 border-l-bioGreen border-bioGreen/30 bg-bioGreen/5"
       )}>
         <CollapsibleTrigger asChild>
           <button className="w-full p-3 sm:p-4 flex items-center justify-between gap-2 sm:gap-3 text-left hover:bg-muted/30 transition-colors  touch-manipulation">

@@ -103,7 +103,7 @@ export function YvesTreeTimeline() {
   /** 🌀 Loading State */
   if (isLoading) {
     return (
-      <Card className="bg-gradient-to-br from-[#0f172a] to-[#1e293b] border-border/50">
+      <Card className="bg-card border-border/50">
         <CardHeader>
           <CardTitle className="text-xl font-display font-light text-foreground flex items-center gap-2">
             🌿 Yves Tree — Adaptive Timeline
@@ -119,7 +119,7 @@ export function YvesTreeTimeline() {
   /** 🚫 Error State */
   if (error) {
     return (
-      <Card className="bg-gradient-to-br from-[#0f172a] to-[#1e293b] border-border/50">
+      <Card className="bg-card border-border/50">
         <CardHeader>
           <CardTitle className="text-xl font-display font-light text-foreground">🌿 Yves Tree — Adaptive Timeline</CardTitle>
         </CardHeader>
@@ -133,7 +133,7 @@ export function YvesTreeTimeline() {
   /**  Empty State */
   if (chartData.length === 0) {
     return (
-      <Card className="bg-gradient-to-br from-[#0f172a] to-[#1e293b] border-border/50">
+      <Card className="bg-card border-border/50">
         <CardHeader>
           <CardTitle className="text-xl font-display font-light text-foreground">🌿 Yves Tree — Adaptive Timeline</CardTitle>
         </CardHeader>
@@ -148,7 +148,7 @@ export function YvesTreeTimeline() {
 
   /**  Chart Rendering */
   return (
-    <Card className="bg-gradient-to-br from-[#0f172a] to-[#1e293b] border-border/50 ">
+    <Card className="bg-card border-border/50 ">
       <CardHeader>
         <CardTitle className="text-xl font-display font-light text-foreground flex items-center gap-2">
           🌿 Yves Tree — Adaptive Timeline

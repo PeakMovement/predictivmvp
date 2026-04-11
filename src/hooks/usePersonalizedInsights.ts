@@ -43,10 +43,15 @@ function detectInsightCategory(text: string): InsightTone {
     'schedule', 'timeline', 'priority', 'focus', 'direction'
   ];
   
+  // Heart rate and HRV are performance metrics — always coach tone regardless of other matches
+  if (lowerText.includes('heart rate') || lowerText.includes('hrv') || lowerText.includes('resting heart')) {
+    return 'coach';
+  }
+
   const hasCoach = coachKeywords.some(k => lowerText.includes(k));
   const hasWarm = warmKeywords.some(k => lowerText.includes(k));
   const hasStrategic = strategicKeywords.some(k => lowerText.includes(k));
-  
+
   // Prioritize warm tone for wellbeing, then strategic, then coach
   if (hasWarm) return 'warm';
   if (hasStrategic) return 'strategic';

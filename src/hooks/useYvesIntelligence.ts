@@ -159,9 +159,9 @@ export function useYvesIntelligence(focusMode?: FocusMode) {
     }
   }, [toast, focusMode]);
 
-  const refresh = useCallback((newFocusMode?: FocusMode) => {
+  const refresh = useCallback((newFocusMode?: FocusMode): Promise<void> => {
     isManualRefreshRef.current = true;
-    fetchIntelligence(true, newFocusMode).finally(() => {
+    return fetchIntelligence(true, newFocusMode).finally(() => {
       isManualRefreshRef.current = false;
     });
   }, [fetchIntelligence]);

@@ -133,10 +133,10 @@ export const CaloriesBurnedCard = () => {
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="flex items-baseline gap-2">
-          <span className="text-5xl font-bold bg-gradient-to-r from-orange-500 to-red-500 bg-clip-text text-transparent">
+          <span className="font-display text-5xl font-light text-[#D4956A]">
             {getCalories()}
           </span>
-          <span className="text-lg text-muted-foreground">kcal</span>
+          <span className="metric-unit text-muted-foreground">kcal</span>
         </div>
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <div className="w-2 h-2 bg-bioGreen animate-pulse" />

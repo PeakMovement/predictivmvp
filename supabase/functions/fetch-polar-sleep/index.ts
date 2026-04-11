@@ -16,28 +16,51 @@ Deno.serve(async (req: Request) => {
   }
 
   try {
-    const authHeader = req.headers.get("Authorization");
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
-      return new Response(
-        JSON.stringify({ error: "Missing or invalid authorization header" }),
-        {
-          status: 401,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        }
-      );
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+
+    // Resolve userId: service-role override header > body > JWT sub
+    let userId: string | undefined;
+
+    // 1. Service-role auto-sync header
+    const overrideHeader = req.headers.get("x-polar-user-id-override");
+    if (overrideHeader) {
+      const authHeader = req.headers.get("Authorization");
+      const token = authHeader?.replace("Bearer ", "") ?? "";
+      if (token === supabaseServiceKey) {
+        userId = overrideHeader;
+      }
     }
 
-    const token = authHeader.replace("Bearer ", "");
-    const jwtPayload = parseJwt(token);
-    const userId = jwtPayload?.sub;
+    // 2. Body user_id (service-role call)
+    if (!userId) {
+      const body = await req.clone().json().catch(() => ({}));
+      if (body.user_id) {
+        const authHeader = req.headers.get("Authorization");
+        const token = authHeader?.replace("Bearer ", "") ?? "";
+        if (token === supabaseServiceKey) {
+          userId = body.user_id;
+        }
+      }
+    }
+
+    // 3. Standard user JWT
+    if (!userId) {
+      const authHeader = req.headers.get("Authorization");
+      if (!authHeader || !authHeader.startsWith("Bearer ")) {
+        return new Response(
+          JSON.stringify({ error: "Missing or invalid authorization header" }),
+          { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      const token = authHeader.replace("Bearer ", "");
+      const jwtPayload = parseJwt(token);
+      userId = jwtPayload?.sub;
+    }
 
     if (!userId) {
       return new Response(
         JSON.stringify({ error: "Invalid JWT: unable to extract user_id" }),
-        {
-          status: 401,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        }
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 

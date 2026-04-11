@@ -3,10 +3,12 @@ import { Zap, Smartphone, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { ConnectGarminButton } from "@/components/ConnectGarminButton";
+import { ConnectPolarButton } from "@/components/ConnectPolarButton";
 import { useWearableSync } from "@/hooks/useWearableSync";
 import { useToast } from "@/hooks/use-toast";
 import { LayoutBlock } from "@/components/layout/LayoutBlock";
 import { useGarminTokenStatus } from "@/hooks/useGarminTokenStatus";
+import { GarminAttribution } from "@/components/GarminAttribution";
 
 interface DevicesSettingsProps {
   isSectionVisible: (id: string) => boolean;
@@ -14,6 +16,7 @@ interface DevicesSettingsProps {
 
 export const DevicesSettings = ({ isSectionVisible }: DevicesSettingsProps) => {
   const [isGarminConnected, setIsGarminConnected] = useState(false);
+  const [isPolarConnected, setIsPolarConnected] = useState(false);
   const [userId, setUserId] = useState<string | undefined>(undefined);
   const [lastSyncTime, setLastSyncTime] = useState<Date | null>(null);
   const { isConnected } = useWearableSync();
@@ -22,8 +25,24 @@ export const DevicesSettings = ({ isSectionVisible }: DevicesSettingsProps) => {
 
   useEffect(() => {
     checkGarminConnection();
+    checkPolarConnection();
     fetchLastSync();
   }, []);
+
+  const checkPolarConnection = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const { data } = await supabase
+        .from("polar_tokens")
+        .select("user_id")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      setIsPolarConnected(!!data);
+    } catch (error) {
+      console.error("Error checking Polar connection:", error);
+    }
+  };
 
   const fetchLastSync = async () => {
     const { data: { user } } = await supabase.auth.getUser();
@@ -90,8 +109,8 @@ export const DevicesSettings = ({ isSectionVisible }: DevicesSettingsProps) => {
         <div className="space-y-3">
           <div className="w-full flex items-center justify-between p-4  border bg-glass/30 border-glass-border hover:bg-glass-highlight transition-all duration-200">
             <div className="flex items-center gap-3 flex-1">
-              <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-indigo-500 flex items-center justify-center">
-                <div className="w-4 h-4 border-2 border-white" />
+              <div className="w-10 h-10 bg-primary/15 border border-primary/30 flex items-center justify-center">
+                <div className="w-4 h-4 border-2 border-primary" />
               </div>
               <div className="text-left flex-1">
                 <p className="font-medium text-foreground flex items-center gap-2">
@@ -132,8 +151,8 @@ export const DevicesSettings = ({ isSectionVisible }: DevicesSettingsProps) => {
               : "bg-glass/30 border-glass-border hover:bg-glass-highlight"
           }`}>
             <div className="flex items-center gap-3 flex-1">
-              <div className="w-10 h-10 bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-white">
+              <div className="w-10 h-10 bg-[#7ECBA1]/15 border border-[#7ECBA1]/30 flex items-center justify-center">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-[#7ECBA1]">
                   <path d="M12 2L2 7l10 5 10-5-10-5z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
                   <path d="M2 17l10 5 10-5" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
                   <path d="M2 12l10 5 10-5" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
@@ -167,6 +186,38 @@ export const DevicesSettings = ({ isSectionVisible }: DevicesSettingsProps) => {
               onConnectionChange={checkGarminConnection}
               isExpired={garminTokenExpired}
               userId={userId}
+            />
+          </div>
+          <GarminAttribution variant="inline" className="px-4 pb-3 pt-1" />
+
+          {/* Polar */}
+          <div className="w-full flex items-center justify-between p-4 border bg-glass/30 border-glass-border hover:bg-glass-highlight transition-all duration-200">
+            <div className="flex items-center gap-3 flex-1">
+              <div className="w-10 h-10 bg-[#C46B6B]/15 border border-[#C46B6B]/30 flex items-center justify-center">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-[#C46B6B]">
+                  <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" />
+                  <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="2" />
+                </svg>
+              </div>
+              <div className="text-left flex-1">
+                <p className="font-medium text-foreground flex items-center gap-2 flex-wrap">
+                  Wearable (Polar)
+                  {isPolarConnected && (
+                    <span className="text-xs px-2 py-0.5 bg-bioGreen/20 text-bioGreen border border-bioGreen/30">
+                      Connected
+                    </span>
+                  )}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {isPolarConnected
+                    ? "Auto-syncing every 4 hours"
+                    : "Connect and sync your Polar exercises and sleep"}
+                </p>
+              </div>
+            </div>
+            <ConnectPolarButton
+              isConnected={isPolarConnected}
+              onConnectionChange={checkPolarConnection}
             />
           </div>
         </div>

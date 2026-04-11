@@ -8,7 +8,7 @@ import { useMemo } from "react";
 const getAcwrColor = (status: string) => {
   switch (status) {
     case "optimal": return "text-bioGreen";
-    case "undertrained": return "text-sky-400";
+    case "undertrained": return "text-primary";
     case "elevated_risk": return "text-amber-400";
     case "high_risk": return "text-rose-400";
     default: return "text-muted-foreground";
@@ -39,7 +39,7 @@ const StatusIcon = ({ status }: { status: string }) => {
   const baseClass = "h-5 w-5 animate-number-pop";
   switch (status) {
     case "optimal": return <CheckCircle className={cn(baseClass, "text-bioGreen")} />;
-    case "undertrained": return <AlertCircle className={cn(baseClass, "text-sky-400")} />;
+    case "undertrained": return <AlertCircle className={cn(baseClass, "text-primary")} />;
     case "elevated_risk": return <AlertTriangle className={cn(baseClass, "text-amber-400")} />;
     case "high_risk": return <AlertTriangle className={cn(baseClass, "text-rose-400")} />;
     default: return null;
@@ -293,14 +293,14 @@ export function RecoveryPanel() {
             label="Strain"
             value={summary.strain}
             maxValue={200}
-            color="bg-gradient-to-r from-rose-500 to-orange-500"
+            color="bg-[#C46B6B]"
             delay={100}
           />
           <AnimatedBar 
             label="Monotony" 
             value={summary.monotony} 
             maxValue={3}
-            color="bg-gradient-to-r from-amber-500 to-yellow-500"
+            color="bg-[#D4956A]"
             delay={200}
           />
         </div>
@@ -308,14 +308,14 @@ export function RecoveryPanel() {
         {/* Load Metrics Grid */}
         <div className="grid grid-cols-2 gap-3">
           {[
-            { label: "Acute Load (7d)", value: summary.acute_load, color: "from-sky-500/20 to-sky-500/5", border: "border-sky-500/30" },
-            { label: "Chronic Load (28d)", value: summary.chronic_load, color: "from-indigo-500/20 to-indigo-500/5", border: "border-indigo-500/30" },
+            { label: "Acute Load (7d)", value: summary.acute_load, border: "border-border hover:border-primary/30" },
+            { label: "Chronic Load (28d)", value: summary.chronic_load, border: "border-border hover:border-[#C9A96E]/30" },
           ].map((item, idx) => (
-            <div 
+            <div
               key={item.label}
               className={cn(
-                "p-3  border transition-all duration-300 hover:scale-105",
-                "bg-gradient-to-br", item.color, item.border
+                "p-3 border bg-card transition-all duration-300 hover:scale-105",
+                item.border
               )}
               style={{ animationDelay: `${(idx + 3) * 100}ms` }}
             >
@@ -329,7 +329,7 @@ export function RecoveryPanel() {
 
         {/* Recovery Score */}
         {summary.recovery_score !== null && (
-          <div className="p-4  bg-gradient-to-r from-emerald-500/10 to-teal-500/10 border border-bioGreen/20 transition-all duration-300 hover: hover:shadow-emerald-500/10">
+          <div className="p-4 bg-card border border-bioGreen/20 transition-all duration-300 hover:border-bioGreen/40">
             <div className="flex items-center justify-between">
               <span className="text-sm font-medium text-muted-foreground">Recovery Score</span>
               <span className="text-[40px] sm:text-[52px] font-display font-light leading-none text-foreground text-bioGreen">

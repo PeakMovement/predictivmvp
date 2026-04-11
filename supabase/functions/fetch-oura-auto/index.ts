@@ -86,8 +86,8 @@ Deno.serve(async (req: Request) => {
     const targetUserId = body.user_id;
 
 
-    // Query wearable_tokens directly, filter by Oura scope (extapi)
-    let query = supabase.from("wearable_tokens").select("*").ilike("scope", "%extapi%");
+    // Query wearable_tokens directly, filter by Oura scope
+    let query = supabase.from("wearable_tokens").select("*").eq("scope", "oura");
     
     if (targetUserId) {
       query = query.eq("user_id", targetUserId);
@@ -319,6 +319,9 @@ Deno.serve(async (req: Request) => {
             resting_hr: restingHr,
             hrv_avg: hrvAvg,
             spo2_avg: dayData.spo2?.spo2_percentage?.average || null,
+            // F-12: Temperature Deviation — from readiness endpoint
+            temperature_deviation: dayData.readiness?.temperature_deviation || null,
+            temperature_trend_deviation: dayData.readiness?.temperature_trend_deviation || null,
           };
 
           const { error: sessionError } = await supabase

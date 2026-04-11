@@ -14,42 +14,38 @@ const TrendIcon = ({ direction }: { direction: string }) => {
 const MetricIcon = ({ metric }: { metric: string }) => {
   const iconClass = "h-5 w-5 transition-transform duration-300 group-hover:scale-110";
   switch (metric) {
-    case "sleep_score": return <Moon className={cn(iconClass, "text-indigo-400")} />;
-    case "readiness_score": return <Zap className={cn(iconClass, "text-amber-400")} />;
+    case "sleep_score": return <Moon className={cn(iconClass, "text-primary")} />;
+    case "readiness_score": return <Zap className={cn(iconClass, "text-[#D4956A]")} />;
     case "hrv": return <Activity className={cn(iconClass, "text-bioGreen")} />;
-    case "resting_hr": return <Heart className={cn(iconClass, "text-rose-400")} />;
+    case "resting_hr": return <Heart className={cn(iconClass, "text-[#C46B6B]")} />;
     default: return <Activity className={cn(iconClass, "text-muted-foreground")} />;
   }
 };
 
 const getMetricConfig = (metric: string) => {
-  const configs: Record<string, { name: string; gradient: string; border: string; iconBg: string }> = {
-    sleep_score: { 
-      name: "Sleep", 
-      gradient: "from-indigo-500/15 to-indigo-500/5",
-      border: "border-indigo-500/30 hover:border-indigo-400/50",
-      iconBg: "bg-indigo-500/10"
+  const configs: Record<string, { name: string; border: string; iconBg: string }> = {
+    sleep_score: {
+      name: "Sleep",
+      border: "border-border hover:border-primary/30",
+      iconBg: "bg-primary/10"
     },
-    readiness_score: { 
-      name: "Readiness", 
-      gradient: "from-amber-500/15 to-amber-500/5",
-      border: "border-amber-500/30 hover:border-amber-400/50",
-      iconBg: "bg-amber-500/10"
+    readiness_score: {
+      name: "Readiness",
+      border: "border-border hover:border-[#D4956A]/30",
+      iconBg: "bg-[#D4956A]/10"
     },
-    hrv: { 
-      name: "HRV", 
-      gradient: "from-emerald-500/15 to-emerald-500/5",
-      border: "border-bioGreen/30 hover:border-emerald-400/50",
+    hrv: {
+      name: "HRV",
+      border: "border-border hover:border-bioGreen/30",
       iconBg: "bg-bioGreen/10"
     },
-    resting_hr: { 
-      name: "Resting HR", 
-      gradient: "from-rose-500/15 to-rose-500/5",
-      border: "border-rose-500/30 hover:border-rose-400/50",
-      iconBg: "bg-rose-500/10"
+    resting_hr: {
+      name: "Resting HR",
+      border: "border-border hover:border-[#C46B6B]/30",
+      iconBg: "bg-[#C46B6B]/10"
     },
   };
-  return configs[metric] || { name: metric, gradient: "from-muted/20 to-muted/5", border: "border-border", iconBg: "bg-muted" };
+  return configs[metric] || { name: metric, border: "border-border", iconBg: "bg-muted" };
 };
 
 const formatValue = (metric: string, value: number | null) => {
@@ -179,9 +175,8 @@ export function DailyHealthPanel() {
               <div
                 key={metric.metric_name}
                 className={cn(
-                  "group p-4  border transition-all duration-300",
-                  "bg-gradient-to-br hover:scale-[1.02] hover: cursor-default",
-                  config.gradient, config.border
+                  "group p-4 border transition-all duration-300 bg-card hover:scale-[1.02] cursor-default",
+                  config.border
                 )}
                 style={{ animationDelay: `${idx * 100}ms` }}
                 role="article"

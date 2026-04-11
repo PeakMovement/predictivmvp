@@ -36,7 +36,7 @@
   font-size: 8px !important;
   letter-spacing: 4px !important;
   text-transform: uppercase !important;
-  opacity: 0.5 !important;
+  opacity: 0.8 !important;
   margin-bottom: 16px;
   margin-top: 40px;
 }
@@ -119,7 +119,7 @@ input, textarea, select {
   font-size: 8px !important;
   letter-spacing: 2px !important;
   text-transform: uppercase !important;
-  opacity: 0.4 !important;
+  color: hsl(var(--muted-foreground)) !important;
 }
 
 /* STEP 12 — Status badges */
@@ -154,139 +154,227 @@ code, pre {
     --font-ui: 'Rajdhani', sans-serif;
     --font-mono: 'Space Mono', monospace;
 
-    /* ── FOUNDATION ──────────────────────────────────────────────── */
-    --background: 240 43% 3%;          /* #04040A void */
-    --foreground: 30 15% 88%;          /* #E8E2DC marble2 */
+    /* ── PREDICTIV. BRAND v2 — Dark mode default ─────────────────
+       Surface hierarchy: root → surface → elevated → card → input
+       Each level slightly lighter. Depth without gradients.
+    ─────────────────────────────────────────────────────────────── */
 
-    --card: 240 30% 9%;               /* #0D0D1E surface */
+    /* Surface layers (dark) */
+    --bg-root:     #04040A;
+    --bg-surface:  #0B0B16;
+    --bg-elevated: #111120;
+    --bg-card:     #15152A;
+    --bg-input:    #1A1A30;
+
+    /* Text hierarchy (dark) */
+    --text-primary:   #E8E2DC;
+    --text-secondary: rgba(232,226,220,0.6);
+    --text-tertiary:  rgba(232,226,220,0.35);
+    --text-ghost:     rgba(232,226,220,0.15);
+
+    /* Brand accents — only two */
+    --accent-cold-steel: #A8C4D4;   /* Cold Steel — primary accent */
+    --accent-muted:      rgba(168,196,212,0.1);
+    --gold:              #C9A96E;   /* Gold — Yves insights ONLY */
+    --gold-muted:        rgba(201,169,110,0.1);
+
+    /* Status — exactly four */
+    --status-good:    #7ECBA1;   /* Recovery, optimal, safe */
+    --status-caution: #D4956A;   /* Elevated, watch, building */
+    --status-risk:    #C46B6B;   /* Injury risk, critical */
+    --status-info:    #A8C4D4;   /* Neutral data, system, Yves */
+
+    /* Status backgrounds (dark) */
+    --status-good-bg:    rgba(126,203,161,0.08);
+    --status-caution-bg: rgba(212,149,106,0.08);
+    --status-risk-bg:    rgba(196,107,107,0.08);
+    --status-info-bg:    rgba(168,196,212,0.08);
+
+    /* Device colours — wearable pages only */
+    --device-oura:   #7B5EA8;
+    --device-garmin: #2E8B6A;
+    --device-polar:  #C05050;
+
+    /* Structural */
+    --border-color: rgba(232,226,220,0.08);
+
+    /* ── Tailwind/shadcn HSL variables (mapped to v2 palette) ───── */
+    --background: 240 43% 3%;          /* #04040A --bg-root */
+    --foreground: 30 15% 88%;          /* #E8E2DC --text-primary */
+
+    --card: 240 30% 12%;               /* #15152A --bg-card */
     --card-foreground: 30 15% 88%;
 
-    --popover: 240 25% 10%;           /* #12121F panel */
+    --popover: 240 35% 10%;            /* #111120 --bg-elevated */
     --popover-foreground: 30 15% 88%;
 
-    /* Cold blue primary — accent, not fill */
-    --primary: 200 30% 75%;           /* #A8C4D4 coldBlue */
+    --primary: 200 30% 75%;            /* #A8C4D4 Cold Steel */
     --primary-foreground: 240 43% 3%;
 
-    --secondary: 240 25% 10%;         /* panel */
+    --secondary: 240 35% 10%;          /* #111120 elevated */
     --secondary-foreground: 30 15% 88%;
 
-    --muted: 240 25% 10%;
-    --muted-foreground: 30 5% 60%;    /* marble1 dimmed */
+    --muted: 240 35% 10%;
+    --muted-foreground: 30 5% 60%;
 
-    --accent: 200 30% 75%;            /* coldBlue */
+    --accent: 200 30% 75%;             /* Cold Steel */
     --accent-foreground: 240 43% 3%;
 
-    --destructive: 0 30% 60%;         /* #C46B6B critical */
+    --destructive: 0 40% 57%;          /* #C46B6B --status-risk */
     --destructive-foreground: 30 20% 94%;
 
-    /* Structural borders — hairline only */
-    --border: 30 5% 60% / 0.12;       /* rgba(200,194,190,0.12) */
-    --input: 240 25% 12%;
+    --border: 30 15% 88% / 0.08;       /* rgba(232,226,220,0.08) */
+    --input: 240 30% 14%;              /* #1A1A30 --bg-input */
     --ring: 200 30% 75%;
 
-    --radius: 0rem;                    /* Zero rounded corners — ALWAYS */
+    --radius: 0rem;
 
-    /* Predictiv. brand tokens */
-    --glass-bg: 240 30% 9% / 0.8;
-    --glass-border: 30 5% 60% / 0.12;
+    /* Legacy aliases */
+    --glass-bg: 240 30% 12% / 0.8;
+    --glass-border: 30 15% 88% / 0.08;
     --glass-highlight: 0 0% 100% / 0.03;
+    --status-optimal: 147 44% 63%;     /* #7ECBA1 */
+    --status-warning: 25 55% 62%;      /* #D4956A */
+    --status-critical: 0 40% 57%;      /* #C46B6B */
 
-    /* Status colours */
-    --status-optimal: 147 44% 63%;    /* #7ECBA1 bioGreen */
-    --status-warning: 25 55% 62%;     /* #D4956A amber */
-    --status-critical: 0 30% 60%;     /* #C46B6B critical */
-    --status-info: 200 30% 75%;       /* #A8C4D4 coldBlue */
-
-    /* Brand gold */
-    --gold: 37 35% 61%;               /* #C9A96E */
-
-    /* Glow — cold blue only, subtle */
-    --glow-primary: 200 30% 75%;
-    --glow-intensity: 0 0 12px;
-
-    /* Sidebar (minimal use) */
+    /* Sidebar */
     --sidebar-background: 240 43% 3%;
     --sidebar-foreground: 30 15% 88%;
     --sidebar-primary: 200 30% 75%;
     --sidebar-primary-foreground: 240 43% 3%;
-    --sidebar-accent: 240 25% 10%;
+    --sidebar-accent: 240 35% 10%;
     --sidebar-accent-foreground: 30 15% 88%;
-    --sidebar-border: 30 5% 60% / 0.12;
+    --sidebar-border: 30 15% 88% / 0.08;
     --sidebar-ring: 200 30% 75%;
   }
 
-  /* Dark mode is the default — same as root */
+  /* Dark mode — identical to root */
   .dark {
+    --bg-root:     #04040A;
+    --bg-surface:  #0B0B16;
+    --bg-elevated: #111120;
+    --bg-card:     #15152A;
+    --bg-input:    #1A1A30;
+    --text-primary:   #E8E2DC;
+    --text-secondary: rgba(232,226,220,0.6);
+    --text-tertiary:  rgba(232,226,220,0.35);
+    --text-ghost:     rgba(232,226,220,0.15);
+    --accent-cold-steel: #A8C4D4;
+    --accent-muted:      rgba(168,196,212,0.1);
+    --gold:              #C9A96E;
+    --gold-muted:        rgba(201,169,110,0.1);
+    --status-good:    #7ECBA1;
+    --status-caution: #D4956A;
+    --status-risk:    #C46B6B;
+    --status-info:    #A8C4D4;
+    --status-good-bg:    rgba(126,203,161,0.08);
+    --status-caution-bg: rgba(212,149,106,0.08);
+    --status-risk-bg:    rgba(196,107,107,0.08);
+    --status-info-bg:    rgba(168,196,212,0.08);
+    --border-color: rgba(232,226,220,0.08);
+
     --background: 240 43% 3%;
     --foreground: 30 15% 88%;
-    --card: 240 30% 9%;
+    --card: 240 30% 12%;
     --card-foreground: 30 15% 88%;
-    --popover: 240 25% 10%;
+    --popover: 240 35% 10%;
     --popover-foreground: 30 15% 88%;
     --primary: 200 30% 75%;
     --primary-foreground: 240 43% 3%;
-    --secondary: 240 25% 10%;
+    --secondary: 240 35% 10%;
     --secondary-foreground: 30 15% 88%;
-    --muted: 240 25% 10%;
+    --muted: 240 35% 10%;
     --muted-foreground: 30 5% 60%;
     --accent: 200 30% 75%;
     --accent-foreground: 240 43% 3%;
-    --destructive: 0 30% 60%;
+    --destructive: 0 40% 57%;
     --destructive-foreground: 30 20% 94%;
-    --border: 30 5% 60% / 0.12;
-    --input: 240 25% 12%;
+    --border: 30 15% 88% / 0.08;
+    --input: 240 30% 14%;
     --ring: 200 30% 75%;
-    --glass-bg: 240 30% 9% / 0.8;
-    --glass-border: 30 5% 60% / 0.12;
+    --glass-bg: 240 30% 12% / 0.8;
+    --glass-border: 30 15% 88% / 0.08;
     --glass-highlight: 0 0% 100% / 0.03;
-    --glow-primary: 200 30% 75%;
   }
 
-  /* Light mode — warm greige, high contrast text */
+  /* Light mode — warm white, Riz v2 palette */
   .light {
-    --background: 30 12% 89%;         /* #EDE8E3 warm greige */
-    --foreground: 240 30% 9%;         /* #0D0D1E near-black */
+    /* Surface layers (light) */
+    --bg-root:     #FAFAF7;
+    --bg-surface:  #F4F3EF;
+    --bg-elevated: #EEEDEA;
+    --bg-card:     #FFFFFF;
+    --bg-input:    #EEEDEA;
 
-    --card: 30 24% 94%;              /* #F5F0EB marble warm */
-    --card-foreground: 240 30% 9%;   /* #0D0D1E */
+    /* Text hierarchy (light) */
+    --text-primary:   #1A1A2E;
+    --text-secondary: rgba(30,30,50,0.6);
+    --text-tertiary:  rgba(30,30,50,0.35);
+    --text-ghost:     rgba(30,30,50,0.15);
 
-    --popover: 30 24% 94%;
-    --popover-foreground: 240 30% 9%;
+    /* Brand accents (light — darker for contrast) */
+    --accent-cold-steel: #4A7A8C;
+    --accent-muted:      rgba(74,122,140,0.1);
+    --gold:              #9A7840;
+    --gold-muted:        rgba(154,120,64,0.1);
 
-    --primary: 200 35% 38%;
-    --primary-foreground: 30 24% 94%;
+    /* Status (light) */
+    --status-good:    #3A8C5A;
+    --status-caution: #A06830;
+    --status-risk:    #993333;
+    --status-info:    #4A7A8C;
+    --status-good-bg:    rgba(58,140,90,0.08);
+    --status-caution-bg: rgba(160,104,48,0.08);
+    --status-risk-bg:    rgba(153,51,51,0.08);
+    --status-info-bg:    rgba(74,122,140,0.08);
 
-    --secondary: 30 12% 87%;
-    --secondary-foreground: 240 30% 9%;
+    --border-color: rgba(30,30,50,0.08);
 
-    --muted: 30 12% 87%;
-    --muted-foreground: 240 30% 9% / 0.65;  /* rgba(13,13,30,0.65) secondary */
+    /* Tailwind/shadcn HSL variables (light) */
+    --background: 60 13% 98%;          /* #FAFAF7 */
+    --foreground: 240 30% 14%;         /* #1A1A2E */
 
-    --accent: 200 35% 38%;
-    --accent-foreground: 30 24% 94%;
+    --card: 0 0% 100%;                 /* #FFFFFF */
+    --card-foreground: 240 30% 14%;
 
-    --destructive: 0 30% 50%;
-    --destructive-foreground: 30 24% 94%;
+    --popover: 40 10% 94%;             /* #EEEDEA */
+    --popover-foreground: 240 30% 14%;
 
-    --border: 240 30% 9% / 0.08;      /* rgba(13,13,30,0.08) */
-    --input: 30 12% 87%;
-    --ring: 200 35% 38%;
+    --primary: 196 31% 41%;            /* #4A7A8C */
+    --primary-foreground: 60 13% 98%;
 
-    --glass-bg: 30 24% 94% / 0.9;
-    --glass-border: 240 30% 9% / 0.08;
-    --glass-highlight: 30 24% 96%;
+    --secondary: 40 10% 94%;           /* #EEEDEA */
+    --secondary-foreground: 240 30% 14%;
 
-    --glow-primary: 200 35% 38%;
+    --muted: 40 10% 94%;
+    --muted-foreground: 240 30% 14% / 0.6;
 
-    --sidebar-background: 30 12% 89%;
-    --sidebar-foreground: 240 30% 9%;
-    --sidebar-primary: 200 35% 38%;
-    --sidebar-primary-foreground: 30 24% 94%;
-    --sidebar-accent: 30 12% 87%;
-    --sidebar-accent-foreground: 240 30% 9%;
-    --sidebar-border: 240 30% 9% / 0.08;
-    --sidebar-ring: 200 35% 38%;
+    --accent: 196 31% 41%;
+    --accent-foreground: 60 13% 98%;
+
+    --destructive: 0 50% 40%;          /* #993333 */
+    --destructive-foreground: 60 13% 98%;
+
+    --border: 240 30% 14% / 0.08;
+    --input: 40 10% 94%;
+    --ring: 196 31% 41%;
+
+    --glass-bg: 0 0% 100% / 0.9;
+    --glass-border: 240 30% 14% / 0.08;
+    --glass-highlight: 60 13% 98%;
+
+    --status-optimal: 147 44% 35%;
+    --status-warning: 25 55% 40%;
+    --status-critical: 0 50% 40%;
+
+    --sidebar-background: 60 13% 98%;
+    --sidebar-foreground: 240 30% 14%;
+    --sidebar-primary: 196 31% 41%;
+    --sidebar-primary-foreground: 60 13% 98%;
+    --sidebar-accent: 40 10% 94%;
+    --sidebar-accent-foreground: 240 30% 14%;
+    --sidebar-border: 240 30% 14% / 0.08;
+    --sidebar-ring: 196 31% 41%;
   }
 }
 
@@ -329,10 +417,33 @@ code, pre {
     background: #04040A;
   }
 
-  /* Light mode — #EDE8E3 warm greige */
+  /* Light mode — #FAFAF7 warm white */
   .light body {
-    background: #EDE8E3;
+    background: #FAFAF7;
   }
+
+  /* ── Light mode: override hardcoded dark-only colours ──────────────
+     coldBlue (#A8C4D4) is invisible on white — remap to darker #4A7A8C
+     ice (#D0E8F5) same issue — remap to #4A7A8C
+  ─────────────────────────────────────────────────────────────────── */
+  .light .text-coldBlue              { color: rgb(74 122 140 / 1) !important; }
+  .light .text-coldBlue\/10          { color: rgb(74 122 140 / 0.10) !important; }
+  .light .text-coldBlue\/20          { color: rgb(74 122 140 / 0.20) !important; }
+  .light .text-coldBlue\/30          { color: rgb(74 122 140 / 0.30) !important; }
+  .light .text-coldBlue\/40          { color: rgb(74 122 140 / 0.40) !important; }
+  .light .text-coldBlue\/50          { color: rgb(74 122 140 / 0.50) !important; }
+  .light .text-coldBlue\/60          { color: rgb(74 122 140 / 0.60) !important; }
+  .light .text-coldBlue\/70          { color: rgb(74 122 140 / 0.70) !important; }
+  .light .text-ice                   { color: rgb(74 122 140 / 1) !important; }
+  .light .text-marble1               { color: rgb(30 30 50 / 0.60) !important; }
+  .light .text-marble2               { color: rgb(30 30 50 / 0.85) !important; }
+  .light .text-marble3               { color: rgb(30 30 50 / 1) !important; }
+
+  /* Backgrounds using coldBlue need to stay subtle in light mode */
+  .light .bg-coldBlue\/10            { background-color: rgb(74 122 140 / 0.08) !important; }
+  .light .bg-coldBlue\/20            { background-color: rgb(74 122 140 / 0.12) !important; }
+  .light .border-coldBlue\/20        { border-color: rgb(74 122 140 / 0.25) !important; }
+  .light .border-coldBlue\/30        { border-color: rgb(74 122 140 / 0.35) !important; }
 
   /* ── Focus states ──────────────────────────────────────────────── */
   *:focus-visible {
@@ -427,7 +538,7 @@ code, pre {
     font-size: 8px;
     letter-spacing: 4px;
     text-transform: uppercase;
-    opacity: 0.6;
+    opacity: 0.8;
     margin-bottom: 16px;
     margin-top: 40px;
   }

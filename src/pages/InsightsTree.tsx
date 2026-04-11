@@ -22,7 +22,7 @@ const getLevelColor = (level: string) => {
     case "critical":
       return { bg: "bg-critical/20", border: "border-critical/60", text: "text-red-400", glow: "" };
     default:
-      return { bg: "bg-violet-500/20", border: "border-violet-400/60", text: "text-violet-400", glow: "" };
+      return { bg: "bg-primary/10", border: "border-primary/40", text: "text-primary", glow: "" };
   }
 };
 
@@ -123,7 +123,7 @@ const InsightNode = ({
         {/* Tooltip */}
         {showTooltip && (
           <div className="absolute bottom-full mb-4 left-1/2 -translate-x-1/2 z-50 w-64 animate-fade-in">
-            <div className="bg-slate-900/95  border border-violet-500/40  p-4 ">
+            <div className="bg-card border border-border p-4">
               <div className="flex items-center gap-2 mb-2">
                 <span className={cn("text-xs font-semibold uppercase tracking-wide", colors.text)}>
                   {insight.category}
@@ -135,7 +135,7 @@ const InsightNode = ({
             </div>
             {/* Arrow */}
             <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-px">
-              <div className="w-3 h-3 bg-slate-900/95 border-r border-b border-violet-500/40 rotate-45" />
+              <div className="w-3 h-3 bg-card border-r border-b border-border rotate-45" />
             </div>
           </div>
         )}
@@ -252,12 +252,11 @@ export const InsightsTree = ({ onNavigate }: { onNavigate: (tab: string) => void
   const hasRealData = insights.length > 0 && !insights[0]?.id?.includes('placeholder');
 
   return (
-    <div className="min-h-screen bg-slate-950 pb-[calc(6rem+env(safe-area-inset-bottom))] md:pb-32 overflow-x-hidden relative">
-      {/* Animated Background */}
-      <div className="fixed inset-0 -z-10 overflow-hidden">
-        <div className="absolute top-0 left-1/4 w-96 h-96 bg-violet-500/10 blur-3xl animate-pulse" />
-        <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-purple-500/10 blur-3xl animate-pulse" style={{ animationDelay: "1s" }} />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-violet-500/5 blur-3xl" />
+    <div className="min-h-screen bg-background pb-[calc(6rem+env(safe-area-inset-bottom))] md:pb-32 overflow-x-hidden relative">
+      {/* Background — subtle coldBlue ambient glow */}
+      <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
+        <div className="absolute top-0 left-1/4 w-96 h-96 bg-primary/5" />
+        <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-primary/3" />
       </div>
 
       <div className="container mx-auto px-4 md:px-6 pt-6 md:pt-8 pb-32">
@@ -267,7 +266,7 @@ export const InsightsTree = ({ onNavigate }: { onNavigate: (tab: string) => void
             onClick={() => onNavigate("health")}
             variant="ghost"
             size="icon"
-            className="w-10 h-10 md:w-12 md:h-12 bg-glass  border border-violet-500/40  hover:bg-violet-500/20 min-h-[44px]"
+            className="w-10 h-10 md:w-12 md:h-12 bg-card border border-border hover:bg-primary/10 min-h-[44px]"
             aria-label="Go back"
           >
             <ArrowLeft size={20} className="text-foreground" />
@@ -288,11 +287,11 @@ export const InsightsTree = ({ onNavigate }: { onNavigate: (tab: string) => void
           <ConnectionLines insights={insights} />
 
           {/* Central Vertical Spine */}
-          <div className="absolute left-1/2 top-0 w-1 bg-gradient-to-b from-violet-500/60 via-violet-400/30 to-transparent h-full -translate-x-1/2" />
+          <div className="absolute left-1/2 top-0 w-px bg-primary/20 h-full -translate-x-1/2" />
 
           {/* Top Node (Origin) */}
           <div className="absolute left-1/2 top-8 -translate-x-1/2 z-10">
-            <div className="w-16 h-16 bg-slate-900/90  border-2 border-violet-400/60 flex items-center justify-center  animate-fade-in">
+            <div className="w-16 h-16 bg-card border-2 border-primary/40 flex items-center justify-center animate-fade-in">
               <span className="text-2xl"></span>
             </div>
           </div>
@@ -312,7 +311,7 @@ export const InsightsTree = ({ onNavigate }: { onNavigate: (tab: string) => void
         </div>
 
         {/* Legend */}
-        <div className="mt-12 bg-slate-900/80  border border-violet-500/40  p-6 animate-fade-in ">
+        <div className="mt-12 bg-card border border-border p-6 animate-fade-in">
           <h3 className="text-base md:text-lg font-semibold text-foreground mb-4">Network Status Legend</h3>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {[

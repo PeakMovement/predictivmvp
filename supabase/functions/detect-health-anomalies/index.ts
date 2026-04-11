@@ -63,7 +63,7 @@ Deno.serve(async (req: Request) => {
 
 
     // Get users with recent wearable data
-    let userQuery = supabase.from("wearable_tokens").select("user_id").ilike("scope", "%extapi%");
+    let userQuery = supabase.from("wearable_tokens").select("user_id").eq("scope", "oura");
     if (targetUserId) {
       userQuery = userQuery.eq("user_id", targetUserId);
     }

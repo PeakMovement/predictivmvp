@@ -173,3 +173,15 @@ verify_jwt = false
 
 [functions.manage-challenge-lifecycle]
 verify_jwt = false
+
+[functions.polar-auth-initiate]
+verify_jwt = true
+
+[functions.polar-auth-callback]
+verify_jwt = false
+
+[functions.fetch-polar-exercises]
+verify_jwt = true
+
+[functions.fetch-polar-sleep]
+verify_jwt = true

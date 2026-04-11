@@ -247,7 +247,7 @@ export function ProviderMatchForm() {
 
           {result.alternatives.length > 0 && (
             <>
-              <h4 className="text-sm font-medium text-muted-foreground mt-4">
+              <h4 className="font-sans text-sm font-medium text-muted-foreground mt-4">
                 Alternative Options
               </h4>
               {result.alternatives.map((alt, idx) => (

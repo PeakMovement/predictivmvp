@@ -128,7 +128,7 @@ export const ChallengeAcceptanceModal = ({
             <div className="flex items-start gap-3 p-4  bg-secondary/50 border border-border/50">
               <Brain className="h-5 w-5 text-muted-foreground mt-0.5 flex-shrink-0" />
               <div>
-                <h4 className="text-sm font-medium text-foreground mb-1">
+                <h4 className="font-sans text-sm font-medium text-foreground mb-1">
                   Why this challenge?
                 </h4>
                 <p className="text-sm text-muted-foreground">
@@ -139,7 +139,7 @@ export const ChallengeAcceptanceModal = ({
           )}
 
           <div className="bg-secondary/30 p-4 ">
-            <h4 className="text-sm font-medium text-foreground mb-2">
+            <h4 className="font-sans text-sm font-medium text-foreground mb-2">
               What happens next?
             </h4>
             <ul className="text-sm text-muted-foreground space-y-2">

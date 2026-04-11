@@ -828,7 +828,7 @@ const WeeklyInsightsSection = () => {
 
         {/* Recommendations */}
         <div className="space-y-3 mb-6">
-          <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+          <h4 className="font-sans text-sm font-semibold text-muted-foreground uppercase tracking-wide">
             Recommendations for Next Week
           </h4>
           <div className="space-y-2">

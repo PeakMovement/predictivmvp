@@ -139,7 +139,7 @@ export const DeveloperPanel = () => {
 
           {/* Execution Logs */}
           <div>
-            <h4 className="text-sm font-semibold mb-3 text-muted-foreground">
+            <h4 className="font-sans text-sm font-semibold mb-3 text-muted-foreground">
               Execution Logs (auto-refreshes every 10s)
             </h4>
             <div className="bg-black/30 border border-white/10  max-h-64 overflow-y-auto">

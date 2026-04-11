@@ -123,7 +123,7 @@ function WeekIntentSection({ intent }: { intent: WeekIntent }) {
             <Shield className={cn("h-6 w-6", styles.text)} />
           </div>
           <div className="flex-1">
-            <h3 className={cn("text-sm font-medium mb-1", "text-muted-foreground")}>
+            <h3 className={cn("font-sans text-sm font-medium mb-1", "text-muted-foreground")}>
               This Week's Intent
             </h3>
             <p className={cn("text-lg font-semibold leading-relaxed", styles.text)}>

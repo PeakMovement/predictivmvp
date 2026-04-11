@@ -164,7 +164,7 @@ export function DocumentPreviewModal({
 
         {document.ai_summary && document.processing_status === 'completed' && (
           <div className="flex-shrink-0 mt-4 p-4 bg-primary/10 ">
-            <h4 className="font-semibold text-sm mb-2">AI Summary</h4>
+            <h4 className="font-sans font-semibold text-sm mb-2">AI Summary</h4>
             <p className="text-sm text-muted-foreground">{document.ai_summary}</p>
           </div>
         )}

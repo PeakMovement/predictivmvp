@@ -105,7 +105,7 @@ export function DocumentSearchFilters({
           <PopoverContent align="end" className="w-80">
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <h4 className="font-semibold text-sm">Advanced Filters</h4>
+                <h4 className="font-sans font-semibold text-sm">Advanced Filters</h4>
                 {hasActiveFilters && (
                   <Button
                     variant="ghost"

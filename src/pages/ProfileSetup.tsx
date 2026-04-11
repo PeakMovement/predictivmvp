@@ -228,7 +228,7 @@ export const ProfileSetup = () => {
 
       {/* Identity */}
       <div className=" border border-border/40 bg-card/60  p-5 space-y-4">
-        <h2 className="flex items-center gap-2 font-semibold text-sm uppercase tracking-wide text-muted-foreground">
+        <h2 className="font-sans flex items-center gap-2 font-semibold text-sm uppercase tracking-wide text-muted-foreground">
           <User className="w-4 h-4" /> Identity
         </h2>
 
@@ -259,7 +259,7 @@ export const ProfileSetup = () => {
 
       {/* Sport */}
       <div className=" border border-border/40 bg-card/60  p-5 space-y-4">
-        <h2 className="flex items-center gap-2 font-semibold text-sm uppercase tracking-wide text-muted-foreground">
+        <h2 className="font-sans flex items-center gap-2 font-semibold text-sm uppercase tracking-wide text-muted-foreground">
           <Dumbbell className="w-4 h-4" /> Sport
         </h2>
 
@@ -295,7 +295,7 @@ export const ProfileSetup = () => {
 
       {/* Training */}
       <div className=" border border-border/40 bg-card/60  p-5 space-y-4">
-        <h2 className="flex items-center gap-2 font-semibold text-sm uppercase tracking-wide text-muted-foreground">
+        <h2 className="font-sans flex items-center gap-2 font-semibold text-sm uppercase tracking-wide text-muted-foreground">
           <Clock className="w-4 h-4" /> Training
         </h2>
 
@@ -322,7 +322,7 @@ export const ProfileSetup = () => {
 
       {/* Goal */}
       <div className=" border border-border/40 bg-card/60  p-5 space-y-4">
-        <h2 className="flex items-center gap-2 font-semibold text-sm uppercase tracking-wide text-muted-foreground">
+        <h2 className="font-sans flex items-center gap-2 font-semibold text-sm uppercase tracking-wide text-muted-foreground">
           <Target className="w-4 h-4" /> Primary Goal
         </h2>
 

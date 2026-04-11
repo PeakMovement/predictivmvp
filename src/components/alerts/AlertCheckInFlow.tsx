@@ -448,7 +448,7 @@ export function AlertCheckInFlow({ alert, onComplete, onSnooze, onNavigateToHelp
                     {/* Recommendations */}
                     {aiInterpretation.recommendations && aiInterpretation.recommendations.length > 0 && (
                       <div className="p-4  bg-muted/50 border border-border/50">
-                        <h4 className="font-semibold text-foreground mb-2 text-sm">Recommendations</h4>
+                        <h4 className="font-sans font-semibold text-foreground mb-2 text-sm">Recommendations</h4>
                         <ul className="space-y-1.5">
                           {aiInterpretation.recommendations.map((rec, idx) => (
                             <li key={idx} className="flex items-start gap-2 text-sm text-muted-foreground">

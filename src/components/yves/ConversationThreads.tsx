@@ -68,7 +68,7 @@ export function ConversationThreads({ insights }: ConversationThreadsProps) {
       {groupedInsights.map((group) => (
         <div key={group.label} className="space-y-3">
           <div className="flex items-center gap-2">
-            <h3 className="text-sm font-semibold text-muted-foreground">
+            <h3 className="font-sans text-sm font-semibold text-muted-foreground">
               {group.label}
             </h3>
             <div className="flex-1 h-px bg-border" />

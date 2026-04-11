@@ -208,7 +208,7 @@ export const OuraSleepCard = ({
 
       {totalStageHours > 0 && (
         <div className="pt-6 border-t border-glass-border">
-          <h3 className="text-sm font-medium text-muted-foreground mb-4">Sleep Stages</h3>
+          <h3 className="font-sans text-sm font-medium text-muted-foreground mb-4">Sleep Stages</h3>
 
           <div className="grid grid-cols-3 gap-3 mb-4">
             {sleepStages.map((stage) => (

@@ -38,7 +38,7 @@ export function BlockLibrary({ open, onOpenChange, onAddBlock, existingBlocks }:
           <div className="space-y-6">
             {Object.entries(blockLibrary).map(([category, { pageId, blocks }]) => (
               <div key={category} className="space-y-3">
-                <h3 className="text-sm font-semibold text-foreground uppercase tracking-wide">
+                <h3 className="font-sans text-sm font-semibold text-foreground uppercase tracking-wide">
                   {category}
                 </h3>
                 <div className="grid gap-2">

@@ -180,7 +180,7 @@ export const TrainingCalendar = () => {
               <CalendarIcon className="h-4 w-4 text-primary" />
             </div>
             <div>
-              <h3 className="font-semibold text-foreground text-sm">Training Calendar</h3>
+              <h3 className="font-sans font-semibold text-foreground text-sm">Training Calendar</h3>
               <p className="text-xs text-muted-foreground">Tap a day to see session details</p>
             </div>
           </div>

@@ -157,7 +157,7 @@ export const SessionComparison = ({
           </div>
 
           <div className="space-y-3">
-            <h4 className="text-sm font-semibold text-foreground">Metrics Comparison</h4>
+            <h4 className="font-sans text-sm font-semibold text-foreground">Metrics Comparison</h4>
             {metrics.map((metric) => {
               const diff = calculateDifference(metric.value1 || 0, metric.value2 || 0);
               const Icon = metric.icon;
@@ -211,7 +211,7 @@ export const SessionComparison = ({
           </div>
 
           <Card className="p-4 bg-secondary/30">
-            <h4 className="text-sm font-semibold text-foreground mb-3">Summary</h4>
+            <h4 className="font-sans text-sm font-semibold text-foreground mb-3">Summary</h4>
             <div className="space-y-2 text-sm">
               {metrics.map((metric) => {
                 const diff = calculateDifference(metric.value1 || 0, metric.value2 || 0);

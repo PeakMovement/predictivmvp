@@ -64,7 +64,7 @@ export const EmptyState = ({
 
         {tips && tips.length > 0 && (
           <div className="bg-muted/50  p-4 w-full max-w-md text-left">
-            <h4 className="font-medium text-foreground text-sm mb-2">Tips:</h4>
+            <h4 className="font-sans font-medium text-foreground text-sm mb-2">Tips:</h4>
             <ul className="text-sm text-muted-foreground space-y-1">
               {tips.map((tip, index) => (
                 <li key={index}>• {tip}</li>

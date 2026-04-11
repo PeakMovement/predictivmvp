@@ -46,7 +46,7 @@ export function MedicalDocumentsSection() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-sm font-medium flex items-center gap-2">
+          <h3 className="font-sans text-sm font-medium flex items-center gap-2">
             <FileText className="h-4 w-4" />
             Medical Documents
           </h3>

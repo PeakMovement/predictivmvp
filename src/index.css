@@ -22,6 +22,22 @@
   letter-spacing: -0.5px !important;
 }
 
+/* STEP 3b — Display headings: h1–h4 default to Cormorant Garamond.
+   These cover page titles, hero text, section titles, and any
+   large editorial moment. UI-label headings that need Rajdhani
+   must opt out explicitly with `.font-sans`. */
+h1, h2, h3, h4 {
+  font-family: var(--font-display) !important;
+}
+
+/* Escape hatch: any heading (or element) that explicitly wants the
+   UI sans font — e.g. small uppercase labels wrapped in <h2> for
+   semantic HTML. */
+.font-sans,
+[class*="font-sans"] {
+  font-family: 'Rajdhani', sans-serif !important;
+}
+
 /* STEP 4 — Unit labels (%, ms, km, bpm, mL/kg, TSS, kcal) */
 .metric-unit {
   font-family: 'Space Mono', monospace !important;

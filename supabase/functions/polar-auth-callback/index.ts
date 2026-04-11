@@ -52,6 +52,7 @@ Deno.serve(async (req: Request) => {
     const tokenParams = new URLSearchParams({
       grant_type: "authorization_code",
       code: code,
+      redirect_uri: "https://predictiv.netlify.app/auth/polar",
     });
 
     const tokenResponse = await fetch("https://polarremote.com/v2/oauth2/token", {
@@ -59,15 +60,21 @@ Deno.serve(async (req: Request) => {
       headers: {
         "Authorization": `Basic ${credentials}`,
         "Content-Type": "application/x-www-form-urlencoded",
+        "Accept": "application/json;charset=UTF-8",
       },
       body: tokenParams.toString(),
     });
 
     if (!tokenResponse.ok) {
       const errorText = await tokenResponse.text();
-      console.error("Token exchange failed:", tokenResponse.status, errorText);
+      console.error("[polar-auth-callback] Token exchange failed:", {
+        status: tokenResponse.status,
+        statusText: tokenResponse.statusText,
+        body: errorText,
+        requestBody: tokenParams.toString().replace(/code=[^&]+/, "code=REDACTED"),
+      });
       return new Response(
-        JSON.stringify({ error: "invalid_code" }),
+        JSON.stringify({ error: "token_exchange_failed", polar_error: errorText, status: tokenResponse.status }),
         {
           status: 400,
           headers: { ...corsHeaders, "Content-Type": "application/json" },

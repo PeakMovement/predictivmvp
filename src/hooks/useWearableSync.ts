@@ -34,37 +34,52 @@ export const useWearableSync = (): WearableSyncState => {
         return false;
       }
 
-      const { data: tokenData, error: tokenError } = await supabase
+      // Check all token sources: oura_tokens, wearable_tokens (garmin), polar_tokens
+      let anyConnected = false;
+
+      // 1. Check oura_tokens
+      const { data: ouraToken } = await supabase
         .from("oura_tokens" as any)
         .select("access_token, expires_at, refresh_token")
         .eq("user_id", user.id)
         .maybeSingle();
 
-      if (tokenError || !tokenData) {
-        setIsConnected(false);
-        localStorage.removeItem('wearable_connected');
-        localStorage.removeItem('wearable_last_sync');
-        console.info('[WearableSync] No Oura token found for user:', user.id);
-        return false;
+      if (ouraToken) {
+        const token = ouraToken as unknown as WearableTokenRow;
+        const hasValid = !!token.access_token && !!token.refresh_token;
+        let isValid = hasValid;
+        if (hasValid && token.expires_at) {
+          const expiresAt = new Date(token.expires_at);
+          const bufferMs = 5 * 60 * 1000;
+          isValid = expiresAt.getTime() - Date.now() > -bufferMs;
+        }
+        if (isValid) anyConnected = true;
       }
 
-      const token = tokenData as unknown as WearableTokenRow;
-      const hasValidToken = !!token.access_token && !!token.refresh_token;
-      
-      // Check if token is not expired (with 5 min buffer for proactive refresh)
-      let isTokenValid = hasValidToken;
-      if (hasValidToken && token.expires_at) {
-        const expiresAt = new Date(token.expires_at);
-        const now = new Date();
-        const bufferMs = 5 * 60 * 1000; // 5 minutes
-        isTokenValid = expiresAt.getTime() - now.getTime() > -bufferMs; // Allow some grace period
+      // 2. Check wearable_tokens (garmin/oura)
+      if (!anyConnected) {
+        const { data: wearableTokens } = await supabase
+          .from("wearable_tokens")
+          .select("scope")
+          .eq("user_id", user.id);
+        if (wearableTokens && wearableTokens.length > 0) anyConnected = true;
       }
 
-      setIsConnected(isTokenValid);
+      // 3. Check polar_tokens
+      if (!anyConnected) {
+        const { data: polarToken } = await supabase
+          .from("polar_tokens")
+          .select("user_id")
+          .eq("user_id", user.id)
+          .maybeSingle();
+        if (polarToken) anyConnected = true;
+      }
 
-      if (!isTokenValid) {
+      setIsConnected(anyConnected);
+
+      if (!anyConnected) {
         localStorage.removeItem('wearable_connected');
-        console.info('[WearableSync] Token invalid or incomplete');
+        console.info('[WearableSync] No valid tokens found');
         return false;
       }
 
@@ -119,10 +134,24 @@ export const useWearableSync = (): WearableSyncState => {
         throw new Error("No wearable devices connected. Please connect one in Settings.");
       }
 
+      // Also check polar_tokens for Polar devices
+      const { data: polarToken } = await supabase
+        .from("polar_tokens")
+        .select("user_id")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      if (polarToken && !scopes.includes("polar")) {
+        scopes.push("polar");
+      }
+
       const deviceNames: Record<string, string> = { oura: "Oura Ring", garmin: "Garmin", polar: "Polar" };
       const invocations: Array<{ scope: string; promise: Promise<any> }> = scopes.flatMap(scope => {
         if (scope === "oura") return [{ scope, promise: supabase.functions.invoke("fetch-oura-data", { body: { user_id: user.id } }) }];
         if (scope === "garmin") return [{ scope, promise: supabase.functions.invoke("fetch-garmin-data", { body: { user_id: user.id } }) }];
+        if (scope === "polar") return [
+          { scope, promise: supabase.functions.invoke("fetch-polar-exercises", { body: { user_id: user.id } }) },
+          { scope: "polar-sleep", promise: supabase.functions.invoke("fetch-polar-sleep", { body: { user_id: user.id } }) },
+        ];
         return [];
       });
 

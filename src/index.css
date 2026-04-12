@@ -489,7 +489,8 @@ code, pre {
   }
 
   /* Kill all borders in light mode for a seamless blend */
-  .light .border,
+  /* Kill theme-variable borders but NOT custom color borders like
+     border-[#D5D6CE]/50 which are intentional eggshell outlines */
   .light .border-border,
   .light [class*="border-border"],
   .light .border-glass-border,

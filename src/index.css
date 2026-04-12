@@ -175,14 +175,15 @@ code, pre {
     /* ── PREDICTIV. BRAND v2 — Dark mode default ─────────────────
        Surface hierarchy: root → surface → elevated → card → input
        Each level slightly lighter. Depth without gradients.
+       Base: Valspar Dark Kettle Black — warm charcoal, not void.
     ─────────────────────────────────────────────────────────────── */
 
     /* Surface layers (dark) */
-    --bg-root:     #04040A;
-    --bg-surface:  #0B0B16;
-    --bg-elevated: #111120;
-    --bg-card:     #15152A;
-    --bg-input:    #1A1A30;
+    --bg-root:     #3A3A3F;
+    --bg-surface:  #424247;
+    --bg-elevated: #4A4A4F;
+    --bg-card:     #505055;
+    --bg-input:    #48484D;
 
     /* Text hierarchy (dark) */
     --text-primary:   #E8E2DC;
@@ -217,46 +218,46 @@ code, pre {
     --border-color: rgba(232,226,220,0.08);
 
     /* ── Tailwind/shadcn HSL variables (mapped to v2 palette) ───── */
-    --background: 240 43% 3%;          /* #04040A --bg-root */
+    --background: 240 4% 24%;           /* #3A3A3F dark kettle charcoal */
     --foreground: 30 15% 88%;          /* #E8E2DC --text-primary */
 
-    --card: 240 30% 12%;               /* #15152A --bg-card */
+    --card: 240 3% 32%;                /* #505055 --bg-card */
     --card-foreground: 30 15% 88%;
 
-    --popover: 240 35% 10%;            /* #111120 --bg-elevated */
+    --popover: 240 3% 30%;             /* #4A4A4F --bg-elevated */
     --popover-foreground: 30 15% 88%;
 
-    --primary: 200 30% 75%;            /* #A8C4D4 Cold Steel */
-    --primary-foreground: 240 43% 3%;
+    --primary: 200 30% 75%;            /* #A8C4D4 Cold Steel — kept */
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 240 35% 10%;          /* #111120 elevated */
+    --secondary: 240 3% 30%;           /* elevated */
     --secondary-foreground: 30 15% 88%;
 
-    --muted: 240 35% 10%;
-    --muted-foreground: 30 5% 60%;
+    --muted: 240 3% 30%;
+    --muted-foreground: 30 5% 70%;
 
-    --accent: 200 30% 75%;             /* Cold Steel */
-    --accent-foreground: 240 43% 3%;
+    --accent: 200 30% 75%;             /* Cold Steel — kept */
+    --accent-foreground: 240 4% 24%;
 
     --destructive: 0 40% 57%;          /* #C46B6B --status-risk */
     --destructive-foreground: 30 20% 94%;
 
-    --border: 30 15% 88% / 0.08;       /* rgba(232,226,220,0.08) */
-    --input: 240 30% 14%;              /* #1A1A30 --bg-input */
+    --border: 0 0% 100% / 0.10;        /* subtle white border on charcoal */
+    --input: 240 3% 28%;               /* #48484D --bg-input */
     --ring: 200 30% 75%;
 
     --radius: 0.375rem;  /* 6px — soft editorial radius per brand guide */
 
     /* Legacy aliases */
-    --glass-bg: 240 30% 12% / 0.8;
-    --glass-border: 30 15% 88% / 0.08;
-    --glass-highlight: 0 0% 100% / 0.03;
+    --glass-bg: 240 3% 32% / 0.8;
+    --glass-border: 0 0% 100% / 0.10;
+    --glass-highlight: 0 0% 100% / 0.05;
     --status-optimal: 147 44% 63%;     /* #7ECBA1 */
     --status-warning: 25 55% 62%;      /* #D4956A */
     --status-critical: 0 40% 57%;      /* #C46B6B */
 
     /* Sidebar */
-    --sidebar-background: 240 43% 3%;
+    --sidebar-background: 240 4% 24%;
     --sidebar-foreground: 30 15% 88%;
     --sidebar-primary: 200 30% 75%;
     --sidebar-primary-foreground: 240 43% 3%;
@@ -268,11 +269,11 @@ code, pre {
 
   /* Dark mode — identical to root */
   .dark {
-    --bg-root:     #04040A;
-    --bg-surface:  #0B0B16;
-    --bg-elevated: #111120;
-    --bg-card:     #15152A;
-    --bg-input:    #1A1A30;
+    --bg-root:     #3A3A3F;
+    --bg-surface:  #424247;
+    --bg-elevated: #4A4A4F;
+    --bg-card:     #505055;
+    --bg-input:    #48484D;
     --text-primary:   #E8E2DC;
     --text-secondary: rgba(232,226,220,0.6);
     --text-tertiary:  rgba(232,226,220,0.35);
@@ -291,20 +292,20 @@ code, pre {
     --status-info-bg:    rgba(168,196,212,0.08);
     --border-color: rgba(232,226,220,0.08);
 
-    --background: 240 43% 3%;
+    --background: 240 4% 24%;
     --foreground: 30 15% 88%;
-    --card: 240 30% 12%;
+    --card: 240 3% 32%;
     --card-foreground: 30 15% 88%;
-    --popover: 240 35% 10%;
+    --popover: 240 3% 30%;
     --popover-foreground: 30 15% 88%;
     --primary: 200 30% 75%;
-    --primary-foreground: 240 43% 3%;
-    --secondary: 240 35% 10%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 240 3% 30%;
     --secondary-foreground: 30 15% 88%;
-    --muted: 240 35% 10%;
-    --muted-foreground: 30 5% 60%;
+    --muted: 240 3% 30%;
+    --muted-foreground: 30 5% 70%;
     --accent: 200 30% 75%;
-    --accent-foreground: 240 43% 3%;
+    --accent-foreground: 240 4% 24%;
     --destructive: 0 40% 57%;
     --destructive-foreground: 30 20% 94%;
     --border: 30 15% 88% / 0.08;
@@ -429,10 +430,10 @@ code, pre {
     overflow-y: auto;
   }
 
-  /* Dark mode — #04040A void */
+  /* Dark mode — #3A3A3F dark kettle charcoal */
   .dark body,
   :root body {
-    background: #04040A;
+    background: #3A3A3F;
   }
 
   /* Light mode — #D5D6CE eggshell silver backdrop */

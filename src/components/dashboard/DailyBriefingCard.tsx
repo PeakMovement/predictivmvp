@@ -245,7 +245,7 @@ function CollapsibleSection({ title, icon, preview, children, variant = "default
   return (
     <Collapsible open={isOpen} onOpenChange={setIsOpen}>
       <div className={cn(
-        "rounded-md border border-[#D5D6CE]/25 transition-all duration-200",
+        "rounded-md border border-[#AAABA5]/25 transition-all duration-200",
         variant === "warning"
           ? "bg-destructive/5"
           : "bg-card hover:brightness-105"
@@ -559,7 +559,7 @@ function RecommendationItem({ recommendation, index }: RecommendationItemProps) 
   return (
     <Collapsible open={isOpen} onOpenChange={setIsOpen}>
       <div className={cn(
-        "rounded-md border border-[#D5D6CE]/25 transition-all duration-200 bg-card hover:brightness-105",
+        "rounded-md border border-[#AAABA5]/25 transition-all duration-200 bg-card hover:brightness-105",
         recommendation.priority === "high"
           ? "border-l-4 border-l-destructive"
           : "",

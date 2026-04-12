@@ -178,12 +178,12 @@ code, pre {
        Base: Valspar Dark Kettle Black — warm charcoal, not void.
     ─────────────────────────────────────────────────────────────── */
 
-    /* Surface layers (dark) */
+    /* Surface layers (dark) — charcoal base, blue-tinted containers */
     --bg-root:     #3A3A3F;
-    --bg-surface:  #424247;
-    --bg-elevated: #4A4A4F;
-    --bg-card:     #505055;
-    --bg-input:    #48484D;
+    --bg-surface:  #3C3C4A;
+    --bg-elevated: #404058;
+    --bg-card:     #464665;
+    --bg-input:    #404058;
 
     /* Text hierarchy (dark) */
     --text-primary:   #E8E2DC;
@@ -221,29 +221,29 @@ code, pre {
     --background: 240 4% 24%;           /* #3A3A3F dark kettle charcoal */
     --foreground: 30 15% 88%;          /* #E8E2DC --text-primary */
 
-    --card: 240 3% 32%;                /* #505055 --bg-card */
+    --card: 240 18% 33%;               /* #464665 blue-tinted card */
     --card-foreground: 30 15% 88%;
 
-    --popover: 240 3% 30%;             /* #4A4A4F --bg-elevated */
+    --popover: 240 18% 30%;            /* #404058 blue-tinted elevated */
     --popover-foreground: 30 15% 88%;
 
     --primary: 200 30% 75%;            /* #A8C4D4 Cold Steel — kept */
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 240 3% 30%;           /* elevated */
+    --secondary: 240 18% 30%;          /* blue-tinted elevated */
     --secondary-foreground: 30 15% 88%;
 
-    --muted: 240 3% 30%;
+    --muted: 240 18% 30%;
     --muted-foreground: 30 5% 70%;
 
     --accent: 200 30% 75%;             /* Cold Steel — kept */
-    --accent-foreground: 240 4% 24%;
+    --accent-foreground: 0 0% 100%;
 
     --destructive: 0 40% 57%;          /* #C46B6B --status-risk */
     --destructive-foreground: 30 20% 94%;
 
     --border: 0 0% 100% / 0.10;        /* subtle white border on charcoal */
-    --input: 240 3% 28%;               /* #48484D --bg-input */
+    --input: 240 18% 30%;              /* #404058 blue-tinted input */
     --ring: 200 30% 75%;
 
     --radius: 0.375rem;  /* 6px — soft editorial radius per brand guide */
@@ -270,10 +270,10 @@ code, pre {
   /* Dark mode — identical to root */
   .dark {
     --bg-root:     #3A3A3F;
-    --bg-surface:  #424247;
-    --bg-elevated: #4A4A4F;
-    --bg-card:     #505055;
-    --bg-input:    #48484D;
+    --bg-surface:  #3C3C4A;
+    --bg-elevated: #404058;
+    --bg-card:     #464665;
+    --bg-input:    #404058;
     --text-primary:   #E8E2DC;
     --text-secondary: rgba(232,226,220,0.6);
     --text-tertiary:  rgba(232,226,220,0.35);
@@ -294,22 +294,22 @@ code, pre {
 
     --background: 240 4% 24%;
     --foreground: 30 15% 88%;
-    --card: 240 3% 32%;
+    --card: 240 18% 33%;
     --card-foreground: 30 15% 88%;
-    --popover: 240 3% 30%;
+    --popover: 240 18% 30%;
     --popover-foreground: 30 15% 88%;
     --primary: 200 30% 75%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 240 3% 30%;
+    --secondary: 240 18% 30%;
     --secondary-foreground: 30 15% 88%;
-    --muted: 240 3% 30%;
+    --muted: 240 18% 30%;
     --muted-foreground: 30 5% 70%;
     --accent: 200 30% 75%;
-    --accent-foreground: 240 4% 24%;
+    --accent-foreground: 0 0% 100%;
     --destructive: 0 40% 57%;
     --destructive-foreground: 30 20% 94%;
-    --border: 30 15% 88% / 0.08;
-    --input: 240 30% 14%;
+    --border: 0 0% 100% / 0.10;
+    --input: 240 18% 30%;
     --ring: 200 30% 75%;
     --glass-bg: 240 30% 12% / 0.8;
     --glass-border: 30 15% 88% / 0.08;
@@ -318,12 +318,12 @@ code, pre {
 
   /* Light mode — warm white, Riz v2 palette */
   .light {
-    /* Surface layers (light) — eggshell silver backdrop, tinted cards */
-    --bg-root:     #D5D6CE;   /* Behr Silver Tradition eggshell */
-    --bg-surface:  #DCDDD5;
-    --bg-elevated: #E3E4DC;
-    --bg-card:     #F2F3F0;   /* 30% silver tint */
-    --bg-input:    #F4F4F0;
+    /* Surface layers (light) — 20% darker across the board */
+    --bg-root:     #AAABA5;   /* eggshell silver darkened 20% */
+    --bg-surface:  #B0B1A9;
+    --bg-elevated: #B6B7AF;
+    --bg-card:     #C2C3BF;   /* card tint darkened 20% */
+    --bg-input:    #C4C4BF;
 
     /* Text hierarchy (light) */
     --text-primary:   #1A1A2E;
@@ -350,23 +350,23 @@ code, pre {
     --border-color: transparent;
 
     /* Tailwind/shadcn HSL variables (light) */
-    --background: 72 9% 82%;           /* #D5D6CE silver tradition eggshell */
-    --foreground: 240 30% 14%;         /* #1A1A2E */
+    --background: 72 4% 66%;            /* #AAABA5 — 20% darker eggshell */
+    --foreground: 240 30% 10%;         /* deeper black for contrast */
 
-    --card: 72 10% 95%;                /* #F2F3F0 — 70% white + 30% silver */
-    --card-foreground: 240 30% 14%;
+    --card: 72 3% 76%;                 /* #C2C3BF — 20% darker card */
+    --card-foreground: 240 30% 10%;
 
-    --popover: 0 0% 100%;              /* #FFFFFF */
-    --popover-foreground: 240 30% 14%;
+    --popover: 72 3% 80%;              /* slightly lighter for dropdowns */
+    --popover-foreground: 240 30% 10%;
 
-    --primary: 196 31% 41%;            /* #4A7A8C */
+    --primary: 196 31% 41%;            /* #4A7A8C — kept */
     --primary-foreground: 60 13% 98%;
 
-    --secondary: 72 9% 92%;            /* lighter silver */
-    --secondary-foreground: 240 30% 14%;
+    --secondary: 72 4% 73%;            /* muted silver */
+    --secondary-foreground: 240 30% 10%;
 
-    --muted: 72 9% 92%;
-    --muted-foreground: 240 30% 14% / 0.6;
+    --muted: 72 4% 73%;
+    --muted-foreground: 240 30% 10% / 0.75;
 
     --accent: 196 31% 41%;
     --accent-foreground: 60 13% 98%;
@@ -436,9 +436,9 @@ code, pre {
     background: #3A3A3F;
   }
 
-  /* Light mode — #D5D6CE eggshell silver backdrop */
+  /* Light mode — #AAABA5 eggshell silver darkened 20% */
   .light body {
-    background: #D5D6CE;
+    background: #AAABA5;
   }
 
   /* ── Light mode: override hardcoded dark-only colours ──────────────
@@ -486,12 +486,12 @@ code, pre {
   .light .bg-elevated,
   .light .bg-marble1,
   .light .bg-marble2 {
-    background-color: #F2F3F0 !important;
+    background-color: #C2C3BF !important;
   }
 
   /* Kill all borders in light mode for a seamless blend */
   /* Kill theme-variable borders but NOT custom color borders like
-     border-[#D5D6CE]/50 which are intentional eggshell outlines */
+     border-[#AAABA5]/50 which are intentional eggshell outlines */
   .light .border-border,
   .light [class*="border-border"],
   .light .border-glass-border,
@@ -504,7 +504,7 @@ code, pre {
      In light mode, hovering a card shifts it from #F2F3F0 toward white,
      creating a subtle "lift" effect without shadows or borders. */
   .light .hover\:brightness-105:hover {
-    background-color: #FAFBF9 !important;
+    background-color: #CDCEC9 !important;
     filter: none !important;
   }
 
@@ -515,12 +515,12 @@ code, pre {
   .light .bg-muted,
   .light .bg-muted\/30,
   .light .bg-muted\/50 {
-    background-color: #EAEBE7 !important;
+    background-color: #BBBCB7 !important;
   }
 
   .light .bg-secondary,
   .light .bg-secondary\/50 {
-    background-color: #EAEBE7 !important;
+    background-color: #BBBCB7 !important;
   }
 
   /* ── Nav icons: bright white in dark, strong black in light ────────── */

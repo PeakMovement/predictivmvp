@@ -321,12 +321,12 @@ code, pre {
 
   /* Light mode — warm white, Riz v2 palette */
   .light {
-    /* Surface layers (light) — 20% darker across the board */
-    --bg-root:     #AAABA5;   /* eggshell silver darkened 20% */
-    --bg-surface:  #B0B1A9;
-    --bg-elevated: #B6B7AF;
-    --bg-card:     #C2C3BF;   /* card tint darkened 20% */
-    --bg-input:    #C4C4BF;
+    /* Surface layers (light) — neutral grey backdrop, blue-tinted cards */
+    --bg-root:     #A8A8A8;   /* pure neutral eggshell grey */
+    --bg-surface:  #B0B0B0;
+    --bg-elevated: #B8B8B8;
+    --bg-card:     #C2C5D0;   /* blue-tinted card */
+    --bg-input:    #C0C3CE;
 
     /* Text hierarchy (light) */
     --text-primary:   #1A1A2E;
@@ -353,22 +353,22 @@ code, pre {
     --border-color: transparent;
 
     /* Tailwind/shadcn HSL variables (light) */
-    --background: 72 4% 66%;            /* #AAABA5 — 20% darker eggshell */
-    --foreground: 240 30% 10%;         /* deeper black for contrast */
+    --background: 0 0% 66%;              /* pure neutral grey backdrop */
+    --foreground: 0 0% 5%;              /* near-black, crystal clear */
 
-    --card: var(--accent-hue) 8% 76%;    /* accent-tinted card */
-    --card-foreground: 0 0% 5%;         /* near-black, crystal clear */
+    --card: var(--accent-hue) 18% 78%;   /* blue-tinted card, matching dark saturation */
+    --card-foreground: 0 0% 5%;
 
-    --popover: var(--accent-hue) 8% 80%;
+    --popover: var(--accent-hue) 18% 82%;
     --popover-foreground: 0 0% 5%;
 
     --primary: 196 31% 41%;            /* #4A7A8C — kept */
     --primary-foreground: 0 0% 100%;
 
-    --secondary: var(--accent-hue) 6% 73%;
+    --secondary: var(--accent-hue) 15% 73%;
     --secondary-foreground: 0 0% 5%;
 
-    --muted: var(--accent-hue) 6% 73%;
+    --muted: var(--accent-hue) 15% 73%;
     --muted-foreground: 0 0% 5% / 0.75;
 
     --accent: 196 31% 41%;
@@ -378,7 +378,7 @@ code, pre {
     --destructive-foreground: 60 13% 98%;
 
     --border: 0 0% 100% / 0;           /* borders removed in light mode */
-    --input: var(--accent-hue) 8% 76%;
+    --input: var(--accent-hue) 18% 78%;
     --ring: 196 31% 41%;
 
     --glass-bg: 0 0% 100% / 0.9;
@@ -439,9 +439,9 @@ code, pre {
     background: #3A3A3F;
   }
 
-  /* Light mode — #AAABA5 eggshell silver darkened 20% */
+  /* Light mode — neutral eggshell grey backdrop */
   .light body {
-    background: #AAABA5;
+    background: #A8A8A8;
   }
 
   /* ── Light mode: override hardcoded dark-only colours ──────────────

@@ -172,13 +172,16 @@ code, pre {
     --font-ui: 'Rajdhani', sans-serif;
     --font-mono: 'Space Mono', monospace;
 
+    /* ── Accent hue — user-configurable via Settings color wheel ── */
+    --accent-hue: 240;
+
     /* ── PREDICTIV. BRAND v2 — Dark mode default ─────────────────
        Surface hierarchy: root → surface → elevated → card → input
-       Each level slightly lighter. Depth without gradients.
+       Containers carry a tint of --accent-hue for personality.
        Base: Valspar Dark Kettle Black — warm charcoal, not void.
     ─────────────────────────────────────────────────────────────── */
 
-    /* Surface layers (dark) — charcoal base, blue-tinted containers */
+    /* Surface layers (dark) — charcoal base, accent-tinted containers */
     --bg-root:     #3A3A3F;
     --bg-surface:  #3C3C4A;
     --bg-elevated: #404058;
@@ -219,22 +222,22 @@ code, pre {
 
     /* ── Tailwind/shadcn HSL variables (mapped to v2 palette) ───── */
     --background: 240 4% 24%;           /* #3A3A3F dark kettle charcoal */
-    --foreground: 30 15% 88%;          /* #E8E2DC --text-primary */
+    --foreground: 0 0% 95%;            /* crystal clear near-white */
 
-    --card: 240 18% 33%;               /* #464665 blue-tinted card */
-    --card-foreground: 30 15% 88%;
+    --card: var(--accent-hue) 18% 33%;
+    --card-foreground: 0 0% 100%;      /* pure white text on cards */
 
-    --popover: 240 18% 30%;            /* #404058 blue-tinted elevated */
-    --popover-foreground: 30 15% 88%;
+    --popover: var(--accent-hue) 18% 30%;
+    --popover-foreground: 0 0% 100%;
 
     --primary: 200 30% 75%;            /* #A8C4D4 Cold Steel — kept */
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 240 18% 30%;          /* blue-tinted elevated */
-    --secondary-foreground: 30 15% 88%;
+    --secondary: var(--accent-hue) 18% 30%;
+    --secondary-foreground: 0 0% 95%;
 
-    --muted: 240 18% 30%;
-    --muted-foreground: 30 5% 70%;
+    --muted: var(--accent-hue) 18% 30%;
+    --muted-foreground: 0 0% 75%;
 
     --accent: 200 30% 75%;             /* Cold Steel — kept */
     --accent-foreground: 0 0% 100%;
@@ -242,15 +245,15 @@ code, pre {
     --destructive: 0 40% 57%;          /* #C46B6B --status-risk */
     --destructive-foreground: 30 20% 94%;
 
-    --border: 0 0% 100% / 0.10;        /* subtle white border on charcoal */
-    --input: 240 18% 30%;              /* #404058 blue-tinted input */
+    --border: 0 0% 100% / 0.12;        /* crisp white border on charcoal */
+    --input: var(--accent-hue) 18% 30%;
     --ring: 200 30% 75%;
 
     --radius: 0.375rem;  /* 6px — soft editorial radius per brand guide */
 
     /* Legacy aliases */
-    --glass-bg: 240 3% 32% / 0.8;
-    --glass-border: 0 0% 100% / 0.10;
+    --glass-bg: var(--accent-hue) 18% 33% / 0.8;
+    --glass-border: 0 0% 100% / 0.12;
     --glass-highlight: 0 0% 100% / 0.05;
     --status-optimal: 147 44% 63%;     /* #7ECBA1 */
     --status-warning: 25 55% 62%;      /* #D4956A */
@@ -293,23 +296,23 @@ code, pre {
     --border-color: rgba(232,226,220,0.08);
 
     --background: 240 4% 24%;
-    --foreground: 30 15% 88%;
-    --card: 240 18% 33%;
-    --card-foreground: 30 15% 88%;
-    --popover: 240 18% 30%;
-    --popover-foreground: 30 15% 88%;
+    --foreground: 0 0% 95%;
+    --card: var(--accent-hue) 18% 33%;
+    --card-foreground: 0 0% 100%;
+    --popover: var(--accent-hue) 18% 30%;
+    --popover-foreground: 0 0% 100%;
     --primary: 200 30% 75%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 240 18% 30%;
-    --secondary-foreground: 30 15% 88%;
-    --muted: 240 18% 30%;
-    --muted-foreground: 30 5% 70%;
+    --secondary: var(--accent-hue) 18% 30%;
+    --secondary-foreground: 0 0% 95%;
+    --muted: var(--accent-hue) 18% 30%;
+    --muted-foreground: 0 0% 75%;
     --accent: 200 30% 75%;
     --accent-foreground: 0 0% 100%;
     --destructive: 0 40% 57%;
-    --destructive-foreground: 30 20% 94%;
-    --border: 0 0% 100% / 0.10;
-    --input: 240 18% 30%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 0 0% 100% / 0.12;
+    --input: var(--accent-hue) 18% 30%;
     --ring: 200 30% 75%;
     --glass-bg: 240 30% 12% / 0.8;
     --glass-border: 30 15% 88% / 0.08;
@@ -353,20 +356,20 @@ code, pre {
     --background: 72 4% 66%;            /* #AAABA5 — 20% darker eggshell */
     --foreground: 240 30% 10%;         /* deeper black for contrast */
 
-    --card: 72 3% 76%;                 /* #C2C3BF — 20% darker card */
-    --card-foreground: 240 30% 10%;
+    --card: var(--accent-hue) 8% 76%;    /* accent-tinted card */
+    --card-foreground: 0 0% 5%;         /* near-black, crystal clear */
 
-    --popover: 72 3% 80%;              /* slightly lighter for dropdowns */
-    --popover-foreground: 240 30% 10%;
+    --popover: var(--accent-hue) 8% 80%;
+    --popover-foreground: 0 0% 5%;
 
     --primary: 196 31% 41%;            /* #4A7A8C — kept */
-    --primary-foreground: 60 13% 98%;
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 72 4% 73%;            /* muted silver */
-    --secondary-foreground: 240 30% 10%;
+    --secondary: var(--accent-hue) 6% 73%;
+    --secondary-foreground: 0 0% 5%;
 
-    --muted: 72 4% 73%;
-    --muted-foreground: 240 30% 10% / 0.75;
+    --muted: var(--accent-hue) 6% 73%;
+    --muted-foreground: 0 0% 5% / 0.75;
 
     --accent: 196 31% 41%;
     --accent-foreground: 60 13% 98%;
@@ -375,7 +378,7 @@ code, pre {
     --destructive-foreground: 60 13% 98%;
 
     --border: 0 0% 100% / 0;           /* borders removed in light mode */
-    --input: 0 0% 100% / 0;
+    --input: var(--accent-hue) 8% 76%;
     --ring: 196 31% 41%;
 
     --glass-bg: 0 0% 100% / 0.9;
@@ -464,11 +467,10 @@ code, pre {
   .light .border-coldBlue\/20        { border-color: rgb(74 122 140 / 0.25) !important; }
   .light .border-coldBlue\/30        { border-color: rgb(74 122 140 / 0.35) !important; }
 
-  /* ── Container interiors: soft 10% silver tint in light mode ──────
-     Every partial-opacity card utility renders as a slightly-tinted
-     white (90% white + 10% silver) so containers softly blend with
-     the silver backdrop instead of snapping to a hard edge. */
-  .light .bg-card,
+  /* ── Container interiors: accent-tinted cards in light mode ──────
+     Partial-opacity card utilities resolve to the accent-tinted card
+     color from var(--card). No hardcoded hex — the color wheel drives
+     the tint via --accent-hue. */
   .light .bg-card\/40,
   .light .bg-card\/50,
   .light .bg-card\/60,
@@ -486,7 +488,7 @@ code, pre {
   .light .bg-elevated,
   .light .bg-marble1,
   .light .bg-marble2 {
-    background-color: #C2C3BF !important;
+    background-color: hsl(var(--card)) !important;
   }
 
   /* Kill all borders in light mode for a seamless blend */
@@ -504,7 +506,7 @@ code, pre {
      In light mode, hovering a card shifts it from #F2F3F0 toward white,
      creating a subtle "lift" effect without shadows or borders. */
   .light .hover\:brightness-105:hover {
-    background-color: #CDCEC9 !important;
+    background-color: hsl(var(--card) / 0.9) !important;
     filter: none !important;
   }
 
@@ -515,12 +517,12 @@ code, pre {
   .light .bg-muted,
   .light .bg-muted\/30,
   .light .bg-muted\/50 {
-    background-color: #BBBCB7 !important;
+    background-color: hsl(var(--muted)) !important;
   }
 
   .light .bg-secondary,
   .light .bg-secondary\/50 {
-    background-color: #BBBCB7 !important;
+    background-color: hsl(var(--muted)) !important;
   }
 
   /* ── Nav icons: bright white in dark, strong black in light ────────── */

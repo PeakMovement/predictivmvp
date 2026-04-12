@@ -23,6 +23,7 @@ export const AppearanceSettings = () => {
 
   const updatePrimaryColor = (hue: number) => {
     const root = document.documentElement;
+    root.style.setProperty("--accent-hue", hue.toString());
     root.style.setProperty("--primary", `${hue} 70% 50%`);
     root.style.setProperty("--primary-foreground", "0 0% 100%");
     localStorage.setItem("primary-hue", hue.toString());

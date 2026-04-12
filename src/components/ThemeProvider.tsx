@@ -40,6 +40,15 @@ export function ThemeProvider({
     } else {
       root.classList.add("light");
     }
+
+    // Apply saved accent hue from color wheel
+    const savedHue = localStorage.getItem("primary-hue");
+    if (savedHue) {
+      const hue = parseInt(savedHue);
+      root.style.setProperty("--accent-hue", hue.toString());
+      root.style.setProperty("--primary", `${hue} 70% 50%`);
+      root.style.setProperty("--primary-foreground", "0 0% 100%");
+    }
   }, [theme]);
 
   const value = {

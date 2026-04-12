@@ -63,7 +63,9 @@ h1, h2, h3, h4 {
 }
 
 .light .section-header {
-  color: rgba(13, 13, 30, 0.35);
+  color: rgb(0, 0, 0) !important;
+  opacity: 1 !important;
+  font-weight: 700 !important;
 }
 
 /* STEP 6 — Card titles (Resting HR, VO2 Max, Strain, etc) */
@@ -451,15 +453,54 @@ code, pre {
   .light .text-coldBlue\/60          { color: rgb(74 122 140 / 0.60) !important; }
   .light .text-coldBlue\/70          { color: rgb(74 122 140 / 0.70) !important; }
   .light .text-ice                   { color: rgb(74 122 140 / 1) !important; }
-  .light .text-marble1               { color: rgb(30 30 50 / 0.60) !important; }
-  .light .text-marble2               { color: rgb(30 30 50 / 0.85) !important; }
-  .light .text-marble3               { color: rgb(30 30 50 / 1) !important; }
+  .light .text-marble1               { color: rgb(0 0 0 / 0.85) !important; }
+  .light .text-marble2               { color: rgb(0 0 0 / 0.95) !important; }
+  .light .text-marble3               { color: rgb(0 0 0 / 1) !important; }
 
   /* Backgrounds using coldBlue need to stay subtle in light mode */
   .light .bg-coldBlue\/10            { background-color: rgb(74 122 140 / 0.08) !important; }
   .light .bg-coldBlue\/20            { background-color: rgb(74 122 140 / 0.12) !important; }
   .light .border-coldBlue\/20        { border-color: rgb(74 122 140 / 0.25) !important; }
   .light .border-coldBlue\/30        { border-color: rgb(74 122 140 / 0.35) !important; }
+
+  /* ── Container interiors: force pure white in light mode ──────────
+     Every partial-opacity card utility renders as solid #FFFFFF on the
+     silver backdrop so containers read as crisp white, not tinted. */
+  .light .bg-card,
+  .light .bg-card\/40,
+  .light .bg-card\/50,
+  .light .bg-card\/60,
+  .light .bg-card\/70,
+  .light .bg-card\/80,
+  .light .bg-card\/90,
+  .light .bg-card\/95,
+  .light .bg-background\/95,
+  .light .bg-background\/80,
+  .light .bg-background\/60,
+  .light .bg-background\/50,
+  .light .bg-glass,
+  .light .bg-glass-highlight,
+  .light .bg-surface,
+  .light .bg-elevated,
+  .light .bg-marble1,
+  .light .bg-marble2 {
+    background-color: #FFFFFF !important;
+  }
+
+  /* ── Text on the silver backdrop: bolder + solid black ──────────────
+     Any text that sits outside a white card needs full contrast against
+     the silver. Force foreground text variants to near-black and bump
+     weight so small caps/labels stay legible on the backdrop. */
+  .light .text-foreground\/80,
+  .light .text-foreground\/70,
+  .light .text-foreground\/60,
+  .light .text-foreground\/50 {
+    color: rgb(0 0 0) !important;
+  }
+
+  .light .text-muted-foreground {
+    color: rgb(0 0 0 / 0.75) !important;
+  }
 
   /* ── Focus states ──────────────────────────────────────────────── */
   *:focus-visible {
@@ -564,9 +605,7 @@ code, pre {
     color: #A8C4D4;
   }
 
-  .light .section-header {
-    color: rgba(13, 13, 30, 0.35);
-  }
+  /* .light .section-header override lives in the !important block above */
 
   /* ── Spacing system ────────────────────────────────────────────── */
   .page-container {

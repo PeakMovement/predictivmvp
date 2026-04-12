@@ -321,12 +321,12 @@ code, pre {
 
   /* Light mode — warm white, Riz v2 palette */
   .light {
-    /* Surface layers (light) — neutral grey backdrop, blue-tinted cards */
-    --bg-root:     #A8A8A8;   /* pure neutral eggshell grey */
-    --bg-surface:  #B0B0B0;
-    --bg-elevated: #B8B8B8;
-    --bg-card:     #C2C5D0;   /* blue-tinted card */
-    --bg-input:    #C0C3CE;
+    /* Surface layers (light) — silver backdrop → white cards → blue inners */
+    --bg-root:     #D5D6CE;   /* eggshell silver backdrop */
+    --bg-surface:  #DDDDD7;
+    --bg-elevated: #E5E5E0;
+    --bg-card:     #FAF9F6;   /* eggshell white large cards */
+    --bg-input:    #F5F4F0;
 
     /* Text hierarchy (light) */
     --text-primary:   #1A1A2E;
@@ -353,22 +353,22 @@ code, pre {
     --border-color: transparent;
 
     /* Tailwind/shadcn HSL variables (light) */
-    --background: 0 0% 66%;              /* pure neutral grey backdrop */
+    --background: 60 9% 82%;              /* #D5D6CE eggshell silver */
     --foreground: 0 0% 5%;              /* near-black, crystal clear */
 
-    --card: var(--accent-hue) 18% 78%;   /* blue-tinted card, matching dark saturation */
+    --card: 40 20% 97%;                  /* #FAF9F6 eggshell white */
     --card-foreground: 0 0% 5%;
 
-    --popover: var(--accent-hue) 18% 82%;
+    --popover: 40 20% 98%;
     --popover-foreground: 0 0% 5%;
 
     --primary: 196 31% 41%;            /* #4A7A8C — kept */
     --primary-foreground: 0 0% 100%;
 
-    --secondary: var(--accent-hue) 15% 73%;
+    --secondary: var(--accent-hue) 18% 82%;  /* blue inner containers */
     --secondary-foreground: 0 0% 5%;
 
-    --muted: var(--accent-hue) 15% 73%;
+    --muted: var(--accent-hue) 18% 82%;     /* blue inner containers */
     --muted-foreground: 0 0% 5% / 0.75;
 
     --accent: 196 31% 41%;
@@ -378,7 +378,7 @@ code, pre {
     --destructive-foreground: 60 13% 98%;
 
     --border: 0 0% 100% / 0;           /* borders removed in light mode */
-    --input: var(--accent-hue) 18% 78%;
+    --input: 40 20% 97%;                 /* eggshell white like cards */
     --ring: 196 31% 41%;
 
     --glass-bg: 0 0% 100% / 0.9;
@@ -439,9 +439,9 @@ code, pre {
     background: #3A3A3F;
   }
 
-  /* Light mode — neutral eggshell grey backdrop */
+  /* Light mode — eggshell silver backdrop */
   .light body {
-    background: #A8A8A8;
+    background: #D5D6CE;
   }
 
   /* ── Light mode: override hardcoded dark-only colours ──────────────
@@ -488,7 +488,7 @@ code, pre {
   .light .bg-elevated,
   .light .bg-marble1,
   .light .bg-marble2 {
-    background-color: hsl(var(--card)) !important;
+    background-color: #FAF9F6 !important;
   }
 
   /* Kill all borders in light mode for a seamless blend */
@@ -517,12 +517,12 @@ code, pre {
   .light .bg-muted,
   .light .bg-muted\/30,
   .light .bg-muted\/50 {
-    background-color: hsl(var(--muted)) !important;
+    background-color: hsl(var(--accent-hue) 18% 82%) !important;
   }
 
   .light .bg-secondary,
   .light .bg-secondary\/50 {
-    background-color: hsl(var(--muted)) !important;
+    background-color: hsl(var(--accent-hue) 18% 82%) !important;
   }
 
   /* ── Nav icons: bright white in dark, strong black in light ────────── */

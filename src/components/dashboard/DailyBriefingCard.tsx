@@ -245,10 +245,10 @@ function CollapsibleSection({ title, icon, preview, children, variant = "default
   return (
     <Collapsible open={isOpen} onOpenChange={setIsOpen}>
       <div className={cn(
-        " border transition-colors",
-        variant === "warning" 
-          ? "border-destructive/30 bg-destructive/5" 
-          : "border-border bg-card/50"
+        "rounded-md border transition-colors",
+        variant === "warning"
+          ? "border-destructive/30 bg-destructive/5"
+          : "border-border bg-card"
       )}>
         <CollapsibleTrigger asChild>
           <button className="w-full p-3 sm:p-4 flex items-center justify-between gap-2 sm:gap-3 text-left hover:bg-muted/30 transition-colors rounded-md touch-manipulation">

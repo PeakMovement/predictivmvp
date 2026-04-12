@@ -317,11 +317,11 @@ code, pre {
 
   /* Light mode — warm white, Riz v2 palette */
   .light {
-    /* Surface layers (light) — eggshell silver backdrop, white cards */
+    /* Surface layers (light) — eggshell silver backdrop, tinted cards */
     --bg-root:     #D5D6CE;   /* Behr Silver Tradition eggshell */
     --bg-surface:  #DCDDD5;
     --bg-elevated: #E3E4DC;
-    --bg-card:     #FFFFFF;
+    --bg-card:     #F2F3F0;   /* 30% silver tint */
     --bg-input:    #F4F4F0;
 
     /* Text hierarchy (light) */
@@ -352,7 +352,7 @@ code, pre {
     --background: 72 9% 82%;           /* #D5D6CE silver tradition eggshell */
     --foreground: 240 30% 14%;         /* #1A1A2E */
 
-    --card: 60 17% 98%;                /* #FBFBFA — 90% white + 10% silver */
+    --card: 72 10% 95%;                /* #F2F3F0 — 70% white + 30% silver */
     --card-foreground: 240 30% 14%;
 
     --popover: 0 0% 100%;              /* #FFFFFF */
@@ -485,7 +485,7 @@ code, pre {
   .light .bg-elevated,
   .light .bg-marble1,
   .light .bg-marble2 {
-    background-color: #FBFBFA !important;
+    background-color: #F2F3F0 !important;
   }
 
   /* Kill all borders in light mode for a seamless blend */
@@ -496,6 +496,21 @@ code, pre {
   .light .border-line,
   .light .predictiv-card {
     border-color: transparent !important;
+  }
+
+  /* ── Nested sub-containers: slightly darker tint for depth ──────────
+     Creates the soft nested-container effect the brand guide uses.
+     Elements using bg-muted inside a bg-card parent get a slightly
+     darker silver tint so the nesting reads visually. */
+  .light .bg-muted,
+  .light .bg-muted\/30,
+  .light .bg-muted\/50 {
+    background-color: #EAEBE7 !important;
+  }
+
+  .light .bg-secondary,
+  .light .bg-secondary\/50 {
+    background-color: #EAEBE7 !important;
   }
 
   /* ── Text on the silver backdrop: bolder + solid black ──────────────

@@ -29,7 +29,7 @@ const SessionLogCard = ({
 }) => (
   <div
     onClick={compareMode ? undefined : onClick}
-    className="bg-glass rounded-md border border-glass-border p-3 hover:bg-glass-highlight transition-all duration-200 cursor-pointer group"
+    className="bg-card rounded-md border border-border p-3 hover:bg-muted/30 transition-all duration-200 cursor-pointer group"
   >
     <div className="flex items-center justify-between mb-1.5">
       <div className="flex items-center gap-2 flex-1">

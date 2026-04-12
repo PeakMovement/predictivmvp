@@ -125,7 +125,7 @@ export const BottomNavigation = ({ activeTab, onNavigate }: BottomNavigationProp
     <nav
       role="navigation"
       aria-label="Main navigation"
-      className="fixed bottom-0 left-0 right-0 z-50 flex justify-around items-center h-[64px] bg-background border-t border-border px-3 pb-[calc(env(safe-area-inset-bottom)+4px)]"
+      className="fixed bottom-0 left-0 right-0 z-50 flex justify-around items-center h-[64px] bg-card border-t border-border px-3 pb-[calc(env(safe-area-inset-bottom)+4px)]"
     >
       {navItems.map(({ name, icon: Icon, label }) => {
         const isActive = activeTab === name;

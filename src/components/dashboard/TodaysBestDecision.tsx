@@ -418,15 +418,14 @@ function TodaysBestDecision({ className }, ref) {
                 </div>
 
                 {/* D. Feedback Section */}
-                <div className="pt-2 border-t border-border/50">
+                <div className="pt-2">
                   {feedbackGiven ? (
-                    <div className="flex items-center justify-center gap-2 py-3 text-sm text-muted-foreground">
+                    <div className="flex items-center justify-center gap-2 py-3 text-sm text-muted-foreground rounded-md bg-card">
                       <CheckCircle2 className="h-4 w-4 text-primary" />
                       <span>Noted!</span>
                     </div>
                   ) : (
-                    <div className="space-y-3">
-                      <p className="text-sm text-center text-muted-foreground"></p>
+                    <div className="rounded-md bg-card p-4 hover:brightness-105 transition-all duration-200">
                       <div className="flex gap-3 justify-center">
                         <Button
                           variant="outline"
@@ -641,15 +640,14 @@ function TodaysBestDecision({ className }, ref) {
                 )}
 
                 {/* D. Feedback Section */}
-                <div className="pt-2 border-t border-border/50">
+                <div className="pt-2">
                   {feedbackGiven ? (
-                    <div className="flex items-center justify-center gap-2 py-3 text-sm text-muted-foreground">
+                    <div className="flex items-center justify-center gap-2 py-3 text-sm text-muted-foreground rounded-md bg-card">
                       <CheckCircle2 className="h-4 w-4 text-primary" />
                       <span>Noted!</span>
                     </div>
                   ) : (
-                    <div className="space-y-3">
-                      <p className="text-sm text-center text-muted-foreground"></p>
+                    <div className="rounded-md bg-card p-4 hover:brightness-105 transition-all duration-200">
                       <div className="flex gap-3 justify-center">
                         <Button
                           variant="outline"

@@ -498,6 +498,14 @@ code, pre {
     border-color: transparent !important;
   }
 
+  /* ── Hover lighten: cards brighten on hover to signal interactivity ──
+     In light mode, hovering a card shifts it from #F2F3F0 toward white,
+     creating a subtle "lift" effect without shadows or borders. */
+  .light .hover\:brightness-105:hover {
+    background-color: #FAFBF9 !important;
+    filter: none !important;
+  }
+
   /* ── Nested sub-containers: slightly darker tint for depth ──────────
      Creates the soft nested-container effect the brand guide uses.
      Elements using bg-muted inside a bg-card parent get a slightly

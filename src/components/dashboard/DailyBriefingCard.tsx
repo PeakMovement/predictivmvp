@@ -245,13 +245,13 @@ function CollapsibleSection({ title, icon, preview, children, variant = "default
   return (
     <Collapsible open={isOpen} onOpenChange={setIsOpen}>
       <div className={cn(
-        "rounded-md border transition-colors",
+        "rounded-md transition-all duration-200",
         variant === "warning"
-          ? "border-destructive/30 bg-destructive/5"
-          : "border-border bg-card"
+          ? "bg-destructive/5"
+          : "bg-card hover:brightness-105"
       )}>
         <CollapsibleTrigger asChild>
-          <button className="w-full p-3 sm:p-4 flex items-center justify-between gap-2 sm:gap-3 text-left hover:bg-muted/30 transition-colors rounded-md touch-manipulation">
+          <button className="w-full p-3 sm:p-4 flex items-center justify-between gap-2 sm:gap-3 text-left transition-colors rounded-md touch-manipulation">
             <div className="flex items-center gap-2 min-w-0 flex-1">
               <div className={cn(
                 "shrink-0",
@@ -559,14 +559,14 @@ function RecommendationItem({ recommendation, index }: RecommendationItemProps) 
   return (
     <Collapsible open={isOpen} onOpenChange={setIsOpen}>
       <div className={cn(
-        " border transition-colors bg-card/50",
+        "rounded-md transition-all duration-200 bg-card hover:brightness-105",
         recommendation.priority === "high"
-          ? "border-l-4 border-l-destructive border-destructive/30"
-          : "border-border",
-        feedbackGiven === 'followed' && "border-l-4 border-l-bioGreen border-bioGreen/30 bg-bioGreen/5"
+          ? "border-l-4 border-l-destructive"
+          : "",
+        feedbackGiven === 'followed' && "border-l-4 border-l-bioGreen bg-bioGreen/5"
       )}>
         <CollapsibleTrigger asChild>
-          <button className="w-full p-3 sm:p-4 flex items-center justify-between gap-2 sm:gap-3 text-left hover:bg-muted/30 transition-colors rounded-md touch-manipulation">
+          <button className="w-full p-3 sm:p-4 flex items-center justify-between gap-2 sm:gap-3 text-left transition-colors rounded-md touch-manipulation">
             <div className="flex items-center gap-3 min-w-0 flex-1">
               <span className="text-lg shrink-0">{categoryIcon}</span>
               <div className="min-w-0 flex-1">

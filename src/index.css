@@ -346,13 +346,13 @@ code, pre {
     --status-risk-bg:    rgba(153,51,51,0.08);
     --status-info-bg:    rgba(74,122,140,0.08);
 
-    --border-color: rgba(30,30,50,0.7);
+    --border-color: transparent;
 
     /* Tailwind/shadcn HSL variables (light) */
     --background: 72 9% 82%;           /* #D5D6CE silver tradition eggshell */
     --foreground: 240 30% 14%;         /* #1A1A2E */
 
-    --card: 0 0% 100%;                 /* #FFFFFF */
+    --card: 60 17% 98%;                /* #FBFBFA — 90% white + 10% silver */
     --card-foreground: 240 30% 14%;
 
     --popover: 0 0% 100%;              /* #FFFFFF */
@@ -373,8 +373,8 @@ code, pre {
     --destructive: 0 50% 40%;          /* #993333 */
     --destructive-foreground: 60 13% 98%;
 
-    --border: 240 15% 20% / 0.7;       /* medium black — clearly visible */
-    --input: 240 15% 20% / 0.7;
+    --border: 0 0% 100% / 0;           /* borders removed in light mode */
+    --input: 0 0% 100% / 0;
     --ring: 196 31% 41%;
 
     --glass-bg: 0 0% 100% / 0.9;
@@ -463,9 +463,10 @@ code, pre {
   .light .border-coldBlue\/20        { border-color: rgb(74 122 140 / 0.25) !important; }
   .light .border-coldBlue\/30        { border-color: rgb(74 122 140 / 0.35) !important; }
 
-  /* ── Container interiors: force pure white in light mode ──────────
-     Every partial-opacity card utility renders as solid #FFFFFF on the
-     silver backdrop so containers read as crisp white, not tinted. */
+  /* ── Container interiors: soft 10% silver tint in light mode ──────
+     Every partial-opacity card utility renders as a slightly-tinted
+     white (90% white + 10% silver) so containers softly blend with
+     the silver backdrop instead of snapping to a hard edge. */
   .light .bg-card,
   .light .bg-card\/40,
   .light .bg-card\/50,
@@ -484,7 +485,17 @@ code, pre {
   .light .bg-elevated,
   .light .bg-marble1,
   .light .bg-marble2 {
-    background-color: #FFFFFF !important;
+    background-color: #FBFBFA !important;
+  }
+
+  /* Kill all borders in light mode for a seamless blend */
+  .light .border,
+  .light .border-border,
+  .light [class*="border-border"],
+  .light .border-glass-border,
+  .light .border-line,
+  .light .predictiv-card {
+    border-color: transparent !important;
   }
 
   /* ── Text on the silver backdrop: bolder + solid black ──────────────

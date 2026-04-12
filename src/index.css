@@ -315,12 +315,12 @@ code, pre {
 
   /* Light mode — warm white, Riz v2 palette */
   .light {
-    /* Surface layers (light) */
-    --bg-root:     #FAFAF7;
-    --bg-surface:  #F4F3EF;
-    --bg-elevated: #EEEDEA;
+    /* Surface layers (light) — eggshell silver backdrop, white cards */
+    --bg-root:     #D5D6CE;   /* Behr Silver Tradition eggshell */
+    --bg-surface:  #DCDDD5;
+    --bg-elevated: #E3E4DC;
     --bg-card:     #FFFFFF;
-    --bg-input:    #EEEDEA;
+    --bg-input:    #F4F4F0;
 
     /* Text hierarchy (light) */
     --text-primary:   #1A1A2E;
@@ -344,25 +344,25 @@ code, pre {
     --status-risk-bg:    rgba(153,51,51,0.08);
     --status-info-bg:    rgba(74,122,140,0.08);
 
-    --border-color: rgba(30,30,50,0.08);
+    --border-color: rgba(30,30,50,0.7);
 
     /* Tailwind/shadcn HSL variables (light) */
-    --background: 60 13% 98%;          /* #FAFAF7 */
+    --background: 72 9% 82%;           /* #D5D6CE silver tradition eggshell */
     --foreground: 240 30% 14%;         /* #1A1A2E */
 
     --card: 0 0% 100%;                 /* #FFFFFF */
     --card-foreground: 240 30% 14%;
 
-    --popover: 40 10% 94%;             /* #EEEDEA */
+    --popover: 0 0% 100%;              /* #FFFFFF */
     --popover-foreground: 240 30% 14%;
 
     --primary: 196 31% 41%;            /* #4A7A8C */
     --primary-foreground: 60 13% 98%;
 
-    --secondary: 40 10% 94%;           /* #EEEDEA */
+    --secondary: 72 9% 92%;            /* lighter silver */
     --secondary-foreground: 240 30% 14%;
 
-    --muted: 40 10% 94%;
+    --muted: 72 9% 92%;
     --muted-foreground: 240 30% 14% / 0.6;
 
     --accent: 196 31% 41%;
@@ -371,8 +371,8 @@ code, pre {
     --destructive: 0 50% 40%;          /* #993333 */
     --destructive-foreground: 60 13% 98%;
 
-    --border: 240 30% 14% / 0.08;
-    --input: 40 10% 94%;
+    --border: 240 15% 20% / 0.7;       /* medium black — clearly visible */
+    --input: 240 15% 20% / 0.7;
     --ring: 196 31% 41%;
 
     --glass-bg: 0 0% 100% / 0.9;
@@ -433,9 +433,9 @@ code, pre {
     background: #04040A;
   }
 
-  /* Light mode — #FAFAF7 warm white */
+  /* Light mode — #D5D6CE eggshell silver backdrop */
   .light body {
-    background: #FAFAF7;
+    background: #D5D6CE;
   }
 
   /* ── Light mode: override hardcoded dark-only colours ──────────────

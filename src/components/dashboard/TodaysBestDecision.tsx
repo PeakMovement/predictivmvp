@@ -425,7 +425,7 @@ function TodaysBestDecision({ className }, ref) {
                       <span>Noted!</span>
                     </div>
                   ) : (
-                    <div className="rounded-md border border-[#D5D6CE]/50 bg-card p-4 hover:brightness-105 transition-all duration-200">
+                    <div className="rounded-md border border-[#D5D6CE]/25 bg-card p-4 hover:brightness-105 transition-all duration-200">
                       <div className="flex gap-3 justify-center">
                         <Button
                           variant="outline"
@@ -647,7 +647,7 @@ function TodaysBestDecision({ className }, ref) {
                       <span>Noted!</span>
                     </div>
                   ) : (
-                    <div className="rounded-md border border-[#D5D6CE]/50 bg-card p-4 hover:brightness-105 transition-all duration-200">
+                    <div className="rounded-md border border-[#D5D6CE]/25 bg-card p-4 hover:brightness-105 transition-all duration-200">
                       <div className="flex gap-3 justify-center">
                         <Button
                           variant="outline"

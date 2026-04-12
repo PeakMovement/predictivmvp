@@ -156,15 +156,25 @@ const CircularGauge = ({
       <div className="flex flex-col items-center justify-center gap-2">
         <div className="relative w-24 h-24 sm:w-32 sm:h-32">
           <svg className="w-24 h-24 sm:w-32 sm:h-32 transform -rotate-90" viewBox="0 0 100 100">
-            {/* Border ring — 50% black in light, 50% white in dark */}
+            {/* Outer rim — 30% opacity */}
             <circle
               cx="50"
               cy="50"
-              r="48"
+              r="49"
               stroke="currentColor"
-              strokeWidth="1"
+              strokeWidth="0.5"
               fill="transparent"
-              className="text-foreground/50"
+              className="text-foreground/30"
+            />
+            {/* Inner rim — 30% opacity */}
+            <circle
+              cx="50"
+              cy="50"
+              r="41"
+              stroke="currentColor"
+              strokeWidth="0.5"
+              fill="transparent"
+              className="text-foreground/30"
             />
             {/* Background track */}
             <circle

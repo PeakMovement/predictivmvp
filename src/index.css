@@ -522,6 +522,12 @@ code, pre {
     background-color: #EAEBE7 !important;
   }
 
+  /* ── Nav icons: bright white in dark, strong black in light ────────── */
+  .dark nav .text-foreground\/80,
+  :root nav .text-foreground\/80 {
+    color: rgb(255 255 255 / 0.9) !important;
+  }
+
   /* ── Text on the silver backdrop: bolder + solid black ──────────────
      Any text that sits outside a white card needs full contrast against
      the silver. Force foreground text variants to near-black and bump

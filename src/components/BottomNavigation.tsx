@@ -125,7 +125,7 @@ export const BottomNavigation = ({ activeTab, onNavigate }: BottomNavigationProp
     <nav
       role="navigation"
       aria-label="Main navigation"
-      className="fixed bottom-0 left-0 right-0 z-50 flex justify-around items-center h-[64px] bg-card border-t border-border px-3 pb-[calc(env(safe-area-inset-bottom)+4px)]"
+      className="fixed bottom-4 left-4 right-4 z-50 flex justify-around items-center h-[64px] bg-card rounded-full px-6 pb-[env(safe-area-inset-bottom)] shadow-lg"
     >
       {navItems.map(({ name, icon: Icon, label }) => {
         const isActive = activeTab === name;
@@ -137,16 +137,16 @@ export const BottomNavigation = ({ activeTab, onNavigate }: BottomNavigationProp
             aria-label={`Navigate to ${label}`}
             aria-current={isActive ? 'page' : undefined}
             className={cn(
-              "flex flex-col items-center justify-center px-2 py-1 transition-all duration-150 border-t-2",
+              "flex flex-col items-center justify-center px-2 py-1 transition-all duration-150",
               isActive
-                ? "text-primary border-t-primary"
-                : "text-muted-foreground/50 border-t-transparent hover:text-foreground hover:border-t-muted-foreground/30 hover:bg-muted"
+                ? "text-primary"
+                : "text-foreground/80 hover:text-foreground"
             )}
           >
             <div className="relative mb-1">
-              <Icon className={cn("h-5 w-5", isActive ? "text-primary" : "text-muted-foreground/40 group-hover:text-foreground")} />
+              <Icon className={cn("h-5 w-5", isActive ? "text-primary" : "text-foreground/80")} />
               {showBadge && (
-                <span className="absolute -top-1 -right-1 h-1.5 w-1.5 bg-critical" />
+                <span className="absolute -top-1 -right-1 h-1.5 w-1.5 bg-critical rounded-full" />
               )}
             </div>
             <span className="nav-label">{label}</span>

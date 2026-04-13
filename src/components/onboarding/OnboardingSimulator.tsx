@@ -109,7 +109,7 @@ export function OnboardingSimulator({
             showBack={false}
           >
             <div className="text-center space-y-6">
-              <div className="w-20 h-20 mx-auto bg-gradient-to-br from-primary/20 to-primary/40 flex items-center justify-center">
+              <div className="w-20 h-20 mx-auto bg-primary/20 flex items-center justify-center">
                 <Sparkles className="h-10 w-10 text-primary" />
               </div>
               <div className="space-y-3">
@@ -337,7 +337,7 @@ export function OnboardingSimulator({
             nextLabel="Finish"
           >
             <div className="text-center space-y-6">
-              <div className="w-20 h-20 mx-auto bg-gradient-to-br from-green-500/20 to-green-500/40 flex items-center justify-center">
+              <div className="w-20 h-20 mx-auto bg-bioGreen/20 flex items-center justify-center">
                 <CheckCircle2 className="h-10 w-10 text-bioGreen" />
               </div>
               <div className="space-y-3">

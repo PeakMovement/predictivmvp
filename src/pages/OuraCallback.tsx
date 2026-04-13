@@ -186,7 +186,7 @@ Expected redirect URI: https://predictiv.netlify.app/oauth/callback/oura`;
       <div className="max-w-md w-full bg-glass rounded-md border border-glass-border p-8 text-center space-y-6">
         {status === "loading" && (
           <>
-            <div className="w-16 h-16 mx-auto bg-gradient-to-br from-purple-500 to-indigo-500 flex items-center justify-center">
+            <div className="w-16 h-16 mx-auto bg-coldBlue flex items-center justify-center">
               <Loader2 className="w-8 h-8 text-white animate-spin" />
             </div>
             <div className="space-y-2">
@@ -202,7 +202,7 @@ Expected redirect URI: https://predictiv.netlify.app/oauth/callback/oura`;
 
         {status === "success" && (
           <>
-            <div className="w-16 h-16 mx-auto bg-gradient-to-br from-green-500 to-emerald-500 flex items-center justify-center">
+            <div className="w-16 h-16 mx-auto bg-bioGreen flex items-center justify-center">
               <svg
                 className="w-8 h-8 text-white"
                 fill="none"
@@ -230,7 +230,7 @@ Expected redirect URI: https://predictiv.netlify.app/oauth/callback/oura`;
 
         {status === "error" && (
           <>
-            <div className="w-16 h-16 mx-auto bg-gradient-to-br from-red-500 to-rose-500 flex items-center justify-center">
+            <div className="w-16 h-16 mx-auto bg-critical flex items-center justify-center">
               <svg
                 className="w-8 h-8 text-white"
                 fill="none"

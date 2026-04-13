@@ -91,7 +91,7 @@ export function LayoutEditor({
   };
 
   return (
-    <Card className="bg-gradient-to-br from-background via-background to-primary/5 border-2 border-primary/20 ">
+    <Card className="bg-background border-2 border-primary/20 ">
       <CardHeader className="pb-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">

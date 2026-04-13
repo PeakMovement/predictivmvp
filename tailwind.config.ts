@@ -25,22 +25,23 @@ export default {
         // Foundation
         void:    "#04040A",
         deep:    "#080812",
-        surface: "#0D0D1E",
+        surface: "#0D0D14",
+        surfaceAlt: "#0A0A12",
         panel:   "#12121F",
         lift:    "#1A1A2E",
 
         // Marble (typography)
         marble1: "#C8C2BE",
-        marble2: "#E8E2DC",
+        marble2: "#F0EEE8",
         marble3: "#F5F0EB",
         pure:    "#FAFAF8",
 
         // Accents
         coldBlue:  "#A8C4D4",
         ice:       "#D0E8F5",
-        bioGreen:  "#7ECBA1",
-        amber:     "#D4956A",
-        critical:  "#C46B6B",
+        bioGreen:  "#7ABFA0",
+        amber:     "#C4A46A",
+        critical:  "#B87070",
         gold:      "#C9A96E",
 
         // Structural
@@ -114,14 +115,14 @@ export default {
          the minimal-editorial feel. */
       borderRadius: {
         none: "0",
-        sm:  "2px",
-        DEFAULT: "4px",
-        md:  "6px",
-        lg:  "8px",
-        xl:  "12px",
-        "2xl": "16px",
-        "3xl": "24px",
-        full: "9999px",
+        sm:  "0",
+        DEFAULT: "0",
+        md:  "0",
+        lg:  "0",
+        xl:  "0",
+        "2xl": "0",
+        "3xl": "0",
+        full: "0",
       },
 
       /* ── LETTER SPACING ────────────────────────────────────────── */

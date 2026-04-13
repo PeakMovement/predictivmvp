@@ -183,15 +183,15 @@ code, pre {
 
     /* Surface layers (dark) — charcoal base, accent-tinted containers */
     --bg-root:     #3A3A3F;
-    --bg-surface:  #3C3C4A;
-    --bg-elevated: #404058;
-    --bg-card:     #464665;
-    --bg-input:    #404058;
+    --bg-surface:  #0D0D14;
+    --bg-elevated: #0A0A12;
+    --bg-card:     #0D0D14;
+    --bg-input:    #0A0A12;
 
     /* Text hierarchy (dark) */
-    --text-primary:   #E8E2DC;
-    --text-secondary: rgba(232,226,220,0.6);
-    --text-tertiary:  rgba(232,226,220,0.35);
+    --text-primary:   #F0EEE8;
+    --text-secondary: #6B7B82;
+    --text-tertiary:  #3A4448;
     --text-ghost:     rgba(232,226,220,0.15);
 
     /* Brand accents — only two */
@@ -201,9 +201,9 @@ code, pre {
     --gold-muted:        rgba(201,169,110,0.1);
 
     /* Status — exactly four */
-    --status-good:    #7ECBA1;   /* Recovery, optimal, safe */
-    --status-caution: #D4956A;   /* Elevated, watch, building */
-    --status-risk:    #C46B6B;   /* Injury risk, critical */
+    --status-good:    #7ABFA0;   /* Recovery, optimal, safe */
+    --status-caution: #C4A46A;   /* Elevated, watch, building */
+    --status-risk:    #B87070;   /* Injury risk, critical */
     --status-info:    #A8C4D4;   /* Neutral data, system, Yves */
 
     /* Status backgrounds (dark) */
@@ -218,13 +218,13 @@ code, pre {
     --device-polar:  #C05050;
 
     /* Structural */
-    --border-color: rgba(232,226,220,0.08);
+    --border-color: rgba(168,196,212,0.12);
 
     /* ── Tailwind/shadcn HSL variables (mapped to v2 palette) ───── */
     --background: 240 4% 24%;           /* #3A3A3F dark kettle charcoal */
-    --foreground: 0 0% 95%;            /* crystal clear near-white */
+    --foreground: 33 18% 93%;          /* #F0EEE8 warm near-white */
 
-    --card: var(--accent-hue) 18% 33%;
+    --card: 240 17% 6%;               /* #0D0D14 */
     --card-foreground: 0 0% 100%;      /* pure white text on cards */
 
     --popover: var(--accent-hue) 18% 30%;
@@ -237,27 +237,27 @@ code, pre {
     --secondary-foreground: 0 0% 95%;
 
     --muted: var(--accent-hue) 18% 30%;
-    --muted-foreground: 0 0% 75%;
+    --muted-foreground: 195 10% 46%;   /* #6B7B82 */
 
     --accent: 200 30% 75%;             /* Cold Steel — kept */
     --accent-foreground: 0 0% 100%;
 
-    --destructive: 0 40% 57%;          /* #C46B6B --status-risk */
+    --destructive: 0 28% 58%;          /* #B87070 --status-risk */
     --destructive-foreground: 30 20% 94%;
 
-    --border: 0 0% 100% / 0.12;        /* crisp white border on charcoal */
+    --border: 200 30% 75% / 0.12;      /* cold steel border */
     --input: var(--accent-hue) 18% 30%;
     --ring: 200 30% 75%;
 
-    --radius: 0.375rem;  /* 6px — soft editorial radius per brand guide */
+    --radius: 0;
 
     /* Legacy aliases */
     --glass-bg: var(--accent-hue) 18% 33% / 0.8;
     --glass-border: 0 0% 100% / 0.12;
     --glass-highlight: 0 0% 100% / 0.05;
-    --status-optimal: 147 44% 63%;     /* #7ECBA1 */
-    --status-warning: 25 55% 62%;      /* #D4956A */
-    --status-critical: 0 40% 57%;      /* #C46B6B */
+    --status-optimal: 160 30% 55%;     /* #7ABFA0 */
+    --status-warning: 42 35% 59%;      /* #C4A46A */
+    --status-critical: 0 28% 58%;      /* #B87070 */
 
     /* Sidebar */
     --sidebar-background: 240 4% 24%;
@@ -273,31 +273,31 @@ code, pre {
   /* Dark mode — identical to root */
   .dark {
     --bg-root:     #3A3A3F;
-    --bg-surface:  #3C3C4A;
-    --bg-elevated: #404058;
-    --bg-card:     #464665;
-    --bg-input:    #404058;
-    --text-primary:   #E8E2DC;
-    --text-secondary: rgba(232,226,220,0.6);
-    --text-tertiary:  rgba(232,226,220,0.35);
+    --bg-surface:  #0D0D14;
+    --bg-elevated: #0A0A12;
+    --bg-card:     #0D0D14;
+    --bg-input:    #0A0A12;
+    --text-primary:   #F0EEE8;
+    --text-secondary: #6B7B82;
+    --text-tertiary:  #3A4448;
     --text-ghost:     rgba(232,226,220,0.15);
     --accent-cold-steel: #A8C4D4;
     --accent-muted:      rgba(168,196,212,0.1);
     --gold:              #C9A96E;
     --gold-muted:        rgba(201,169,110,0.1);
-    --status-good:    #7ECBA1;
-    --status-caution: #D4956A;
-    --status-risk:    #C46B6B;
+    --status-good:    #7ABFA0;
+    --status-caution: #C4A46A;
+    --status-risk:    #B87070;
     --status-info:    #A8C4D4;
-    --status-good-bg:    rgba(126,203,161,0.08);
-    --status-caution-bg: rgba(212,149,106,0.08);
-    --status-risk-bg:    rgba(196,107,107,0.08);
+    --status-good-bg:    rgba(122,191,160,0.08);
+    --status-caution-bg: rgba(196,164,106,0.08);
+    --status-risk-bg:    rgba(184,112,112,0.08);
     --status-info-bg:    rgba(168,196,212,0.08);
-    --border-color: rgba(232,226,220,0.08);
+    --border-color: rgba(168,196,212,0.12);
 
     --background: 240 4% 24%;
-    --foreground: 0 0% 95%;
-    --card: var(--accent-hue) 18% 33%;
+    --foreground: 33 18% 93%;
+    --card: 240 17% 6%;
     --card-foreground: 0 0% 100%;
     --popover: var(--accent-hue) 18% 30%;
     --popover-foreground: 0 0% 100%;
@@ -306,36 +306,36 @@ code, pre {
     --secondary: var(--accent-hue) 18% 30%;
     --secondary-foreground: 0 0% 95%;
     --muted: var(--accent-hue) 18% 30%;
-    --muted-foreground: 0 0% 75%;
+    --muted-foreground: 195 10% 46%;
     --accent: 200 30% 75%;
     --accent-foreground: 0 0% 100%;
-    --destructive: 0 40% 57%;
+    --destructive: 0 28% 58%;
     --destructive-foreground: 0 0% 100%;
-    --border: 0 0% 100% / 0.12;
+    --border: 200 30% 75% / 0.12;
     --input: var(--accent-hue) 18% 30%;
     --ring: 200 30% 75%;
     --glass-bg: 240 30% 12% / 0.8;
-    --glass-border: 30 15% 88% / 0.08;
+    --glass-border: 200 30% 75% / 0.12;
     --glass-highlight: 0 0% 100% / 0.03;
   }
 
   /* Light mode — warm white, Riz v2 palette */
   .light {
-    /* Surface layers (light) — silver backdrop → white cards → blue inners */
-    --bg-root:     #D5D6CE;   /* eggshell silver backdrop */
-    --bg-surface:  #DDDDD7;
-    --bg-elevated: #E5E5E0;
-    --bg-card:     #FAF9F6;   /* eggshell white large cards */
+    /* Surface layers (light) — warm white backdrop */
+    --bg-root:     #F4F2EE;
+    --bg-surface:  #FFFFFF;
+    --bg-elevated: #ECEAE6;
+    --bg-card:     #FFFFFF;
     --bg-input:    #F5F4F0;
 
     /* Text hierarchy (light) */
-    --text-primary:   #1A1A2E;
-    --text-secondary: rgba(30,30,50,0.6);
+    --text-primary:   #1A1F22;
+    --text-secondary: #7A8A92;
     --text-tertiary:  rgba(30,30,50,0.35);
     --text-ghost:     rgba(30,30,50,0.15);
 
     /* Brand accents (light — darker for contrast) */
-    --accent-cold-steel: #4A7A8C;
+    --accent-cold-steel: #3D6B7E;
     --accent-muted:      rgba(74,122,140,0.1);
     --gold:              #9A7840;
     --gold-muted:        rgba(154,120,64,0.1);
@@ -350,19 +350,19 @@ code, pre {
     --status-risk-bg:    rgba(153,51,51,0.08);
     --status-info-bg:    rgba(74,122,140,0.08);
 
-    --border-color: transparent;
+    --border-color: rgba(60,80,90,0.12);
 
     /* Tailwind/shadcn HSL variables (light) */
-    --background: 60 9% 82%;              /* #D5D6CE eggshell silver */
-    --foreground: 0 0% 5%;              /* near-black, crystal clear */
+    --background: 36 14% 95%;             /* #F4F2EE warm white */
+    --foreground: 200 13% 12%;           /* #1A1F22 near-black */
 
-    --card: 40 20% 97%;                  /* #FAF9F6 eggshell white */
-    --card-foreground: 0 0% 5%;
+    --card: 0 0% 100%;                   /* #FFFFFF white */
+    --card-foreground: 200 13% 12%;
 
     --popover: 40 20% 98%;
     --popover-foreground: 0 0% 5%;
 
-    --primary: 196 31% 41%;            /* #4A7A8C — kept */
+    --primary: 196 35% 37%;            /* #3D6B7E */
     --primary-foreground: 0 0% 100%;
 
     --secondary: var(--accent-hue) 18% 82%;  /* blue inner containers */
@@ -377,9 +377,9 @@ code, pre {
     --destructive: 0 50% 40%;          /* #993333 */
     --destructive-foreground: 60 13% 98%;
 
-    --border: 0 0% 100% / 0;           /* borders removed in light mode */
-    --input: 40 20% 97%;                 /* eggshell white like cards */
-    --ring: 196 31% 41%;
+    --border: 200 20% 30% / 0.12;      /* subtle cool borders */
+    --input: 0 0% 100%;                  /* white like cards */
+    --ring: 196 35% 37%;
 
     --glass-bg: 0 0% 100% / 0.9;
     --glass-border: 240 30% 14% / 0.08;
@@ -406,6 +406,11 @@ code, pre {
     transition-property: background-color, border-color, color, fill, stroke, opacity, transform;
     transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
     transition-duration: 200ms;
+  }
+
+  *, *::before, *::after {
+    border-radius: 0 !important;
+    box-shadow: none !important;
   }
 
   html {
@@ -439,9 +444,9 @@ code, pre {
     background: #3A3A3F;
   }
 
-  /* Light mode — eggshell silver backdrop */
+  /* Light mode — warm white backdrop */
   .light body {
-    background: #D5D6CE;
+    background: #F4F2EE;
   }
 
   /* ── Light mode: override hardcoded dark-only colours ──────────────
@@ -488,7 +493,7 @@ code, pre {
   .light .bg-elevated,
   .light .bg-marble1,
   .light .bg-marble2 {
-    background-color: #FAF9F6 !important;
+    background-color: #FFFFFF !important;
   }
 
   /* Kill all borders in light mode for a seamless blend */
@@ -499,7 +504,7 @@ code, pre {
   .light .border-glass-border,
   .light .border-line,
   .light .predictiv-card {
-    border-color: transparent !important;
+    border-color: rgba(60,80,90,0.12) !important;
   }
 
   /* ── Hover lighten: cards brighten on hover to signal interactivity ──
@@ -678,7 +683,7 @@ code, pre {
   .predictiv-card {
     background: hsl(var(--card));
     border: 1px solid hsl(var(--glass-border));
-    border-radius: 6px;
+    border-radius: 0;
     transition: border-color 0.2s ease;
   }
 

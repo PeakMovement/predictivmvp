@@ -6,6 +6,7 @@ import { formatDistanceToNow } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
+import { useWearableSource } from "@/hooks/useWearableSource";
 
 interface WearableCalorieData {
   user_id: string;
@@ -19,20 +20,25 @@ export const CaloriesBurnedCard = () => {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const { toast } = useToast();
+  const { resolvedSource } = useWearableSource();
 
   const fetchCalorieData = async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      // Use wearable_sessions instead of non-existent fitbit_auto_data
-      const { data, error } = await supabase
+      let query = supabase
         .from("wearable_sessions")
         .select("user_id, active_calories, total_calories, fetched_at")
         .eq("user_id", user.id)
         .order("date", { ascending: false })
-        .limit(1)
-        .maybeSingle();
+        .limit(1);
+
+      if (resolvedSource) {
+        query = query.eq("source", resolvedSource);
+      }
+
+      const { data, error } = await query.maybeSingle();
 
       if (error) throw error;
 
@@ -78,7 +84,7 @@ export const CaloriesBurnedCard = () => {
       };
     });
 
-  }, []);
+  }, [resolvedSource]);
 
   const handleRefresh = async () => {
     setRefreshing(true);

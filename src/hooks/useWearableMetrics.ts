@@ -21,7 +21,7 @@ interface WearableSessionRow {
   fetched_at: string | null;
 }
 
-export const useWearableMetrics = () => {
+export const useWearableMetrics = (source?: string | null) => {
   const [metrics, setMetrics] = useState<WearableMetrics | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [lastSync, setLastSync] = useState<string | null>(null);
@@ -118,14 +118,21 @@ export const useWearableMetrics = () => {
         return;
       }
 
-      const { data, error } = await supabase
+      let query = supabase
         .from("wearable_sessions")
         .select("*")
         .eq("user_id", user.id)
-        .in("source", ["oura", "garmin"])
         .order("date", { ascending: false })
-        .limit(1)
-        .maybeSingle();
+        .limit(1);
+
+      // Filter by specific source when provided, otherwise fetch from all connected sources
+      if (source && source !== "auto") {
+        query = query.eq("source", source);
+      } else {
+        query = query.in("source", ["oura", "garmin"]);
+      }
+
+      const { data, error } = await query.maybeSingle();
 
       if (error) {
         console.error("Error fetching wearable metrics:", error);
@@ -145,7 +152,7 @@ export const useWearableMetrics = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [parseOuraMetrics]);
+  }, [parseOuraMetrics, source]);
 
   const refresh = useCallback(async () => {
     try {

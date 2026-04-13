@@ -38,6 +38,7 @@ import { OfflineBanner } from "@/components/OfflineBanner";
 import { AccessibilityWrapper } from "@/components/AccessibilityWrapper";
 import { SessionTimeoutWarning } from "@/components/SessionTimeoutWarning";
 import { useSessionTimeout } from "@/hooks/useSessionTimeout";
+import { WearableSourceProvider } from "@/hooks/useWearableSource";
 
 const Dashboard          = lazy(() => import("@/pages/Dashboard").then(m => ({ default: m.Dashboard })));
 const Training           = lazy(() => import("@/pages/Training").then(m => ({ default: m.Training })));
@@ -287,6 +288,7 @@ const AppInner = () => {
         const lsKeys = [
           "todays-decision-cache", "insightHistory", "wearable_connected",
           "wearable_last_sync", "layout_customization", "alert-settings",
+          "predictiv_wearable_source",
         ];
         lsKeys.forEach(k => localStorage.removeItem(k));
         const ssKeys = [
@@ -375,7 +377,11 @@ const AppInner = () => {
     );
   }
 
-  return <AuthenticatedApp />;
+  return (
+    <WearableSourceProvider>
+      <AuthenticatedApp />
+    </WearableSourceProvider>
+  );
 };
 
 const App = () => (

@@ -11,6 +11,7 @@ import {
 import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek,
   addDays, addMonths, subMonths, isSameMonth, isSameDay, isToday } from "date-fns";
 import { cn } from "@/lib/utils";
+import { useWearableSource } from "@/hooks/useWearableSource";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -80,6 +81,7 @@ function trainingStatusLabel(status: string | null): string {
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export const TrainingCalendar = () => {
+  const { resolvedSource } = useWearableSource();
   const { toast } = useToast();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [viewMode, setViewMode] = useState<"month" | "week">("month");
@@ -105,7 +107,7 @@ export const TrainingCalendar = () => {
         end = endOfWeek(date, { weekStartsOn: 1 });
       }
 
-      const { data, error } = await supabase
+      let query = supabase
         .from("wearable_sessions")
         .select(`id, date, session_type, duration_minutes, total_distance_km,
                  avg_heart_rate, max_heart_rate, training_load, active_calories,
@@ -115,6 +117,12 @@ export const TrainingCalendar = () => {
         .gte("date", format(start, "yyyy-MM-dd"))
         .lte("date", format(end, "yyyy-MM-dd"))
         .order("date", { ascending: true });
+
+      if (resolvedSource) {
+        query = query.eq("source", resolvedSource);
+      }
+
+      const { data, error } = await query;
 
       if (error) throw error;
       setSessions((data as unknown as DaySession[]) || []);

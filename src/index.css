@@ -182,7 +182,7 @@ code, pre {
     ─────────────────────────────────────────────────────────────── */
 
     /* Surface layers (dark) — charcoal base, accent-tinted containers */
-    --bg-root:     #3A3A3F;
+    --bg-root:     #04040A;
     --bg-surface:  #0D0D14;
     --bg-elevated: #0A0A12;
     --bg-card:     #0D0D14;
@@ -221,7 +221,7 @@ code, pre {
     --border-color: rgba(168,196,212,0.12);
 
     /* ── Tailwind/shadcn HSL variables (mapped to v2 palette) ───── */
-    --background: 240 4% 24%;           /* #3A3A3F dark kettle charcoal */
+    --background: 240 43% 3%;           /* #04040A dark kettle charcoal */
     --foreground: 33 18% 93%;          /* #F0EEE8 warm near-white */
 
     --card: 240 17% 6%;               /* #0D0D14 */
@@ -260,7 +260,7 @@ code, pre {
     --status-critical: 0 28% 58%;      /* #B87070 */
 
     /* Sidebar */
-    --sidebar-background: 240 4% 24%;
+    --sidebar-background: 240 43% 3%;
     --sidebar-foreground: 30 15% 88%;
     --sidebar-primary: 200 30% 75%;
     --sidebar-primary-foreground: 240 43% 3%;
@@ -272,7 +272,7 @@ code, pre {
 
   /* Dark mode — identical to root */
   .dark {
-    --bg-root:     #3A3A3F;
+    --bg-root:     #04040A;
     --bg-surface:  #0D0D14;
     --bg-elevated: #0A0A12;
     --bg-card:     #0D0D14;
@@ -295,7 +295,7 @@ code, pre {
     --status-info-bg:    rgba(168,196,212,0.08);
     --border-color: rgba(168,196,212,0.12);
 
-    --background: 240 4% 24%;
+    --background: 240 43% 3%;
     --foreground: 33 18% 93%;
     --card: 240 17% 6%;
     --card-foreground: 0 0% 100%;
@@ -408,11 +408,6 @@ code, pre {
     transition-duration: 200ms;
   }
 
-  *, *::before, *::after {
-    border-radius: 0 !important;
-    box-shadow: none !important;
-  }
-
   html {
     scroll-behavior: smooth;
     -webkit-font-smoothing: antialiased;
@@ -438,10 +433,10 @@ code, pre {
     overflow-y: auto;
   }
 
-  /* Dark mode — #3A3A3F dark kettle charcoal */
+  /* Dark mode — #04040A dark kettle charcoal */
   .dark body,
   :root body {
-    background: #3A3A3F;
+    background: #04040A;
   }
 
   /* Light mode — warm white backdrop */
@@ -792,4 +787,15 @@ code, pre {
     min-width: 44px;
     touch-action: manipulation;
   }
+}
+
+/* BRAND DESIGN #1 — NUCLEAR OVERRIDES — MUST be outside @layer */
+*, *::before, *::after {
+  border-radius: 0 !important;
+}
+*, *::before, *::after {
+  box-shadow: none !important;
+}
+[class*="bg-gradient"] {
+  background-image: none !important;
 }

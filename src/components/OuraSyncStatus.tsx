@@ -15,20 +15,23 @@ const OuraSyncStatus = ({ onSync, isSyncing = false }: OuraSyncStatusProps) => {
   const { isConnected: ouraConnected, lastSync: ouraLastSync, errorCode } = useOuraTokenStatus();
   const [garminConnected, setGarminConnected] = useState(false);
   const [garminLastSync, setGarminLastSync] = useState<Date | null>(null);
+  const [polarConnected, setPolarConnected] = useState(false);
+  const [polarLastSync, setPolarLastSync] = useState<Date | null>(null);
 
   useEffect(() => {
-    const checkGarminStatus = async () => {
+    const checkStatuses = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      const { data: token } = await supabase
+      // Garmin lives in wearable_tokens with scope='garmin'
+      const { data: garminToken } = await supabase
         .from("wearable_tokens")
         .select("scope")
         .eq("user_id", user.id)
         .eq("scope", "garmin")
         .maybeSingle();
 
-      if (token) {
+      if (garminToken) {
         setGarminConnected(true);
         const { data: lastSession } = await supabase
           .from("wearable_sessions")
@@ -43,13 +46,36 @@ const OuraSyncStatus = ({ onSync, isSyncing = false }: OuraSyncStatusProps) => {
           setGarminLastSync(new Date(lastSession.fetched_at));
         }
       }
+
+      // Polar lives in its own polar_tokens table
+      const { data: polarToken } = await supabase
+        .from("polar_tokens")
+        .select("user_id")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      if (polarToken) {
+        setPolarConnected(true);
+        const { data: lastSession } = await supabase
+          .from("wearable_sessions")
+          .select("fetched_at")
+          .eq("user_id", user.id)
+          .eq("source", "polar")
+          .order("fetched_at", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        if (lastSession?.fetched_at) {
+          setPolarLastSync(new Date(lastSession.fetched_at));
+        }
+      }
     };
 
-    checkGarminStatus();
+    checkStatuses();
   }, []);
 
-  const anyConnected = ouraConnected || garminConnected;
-  const latestSync = [ouraLastSync, garminLastSync]
+  const anyConnected = ouraConnected || garminConnected || polarConnected;
+  const latestSync = [ouraLastSync, garminLastSync, polarLastSync]
     .filter(Boolean)
     .sort((a, b) => (b?.getTime() || 0) - (a?.getTime() || 0))[0];
 

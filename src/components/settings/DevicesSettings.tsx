@@ -91,6 +91,73 @@ export const DevicesSettings = ({ isSectionVisible }: DevicesSettingsProps) => {
     }
   };
 
+  // Helper: delete rows and return the count actually deleted. Supabase RLS
+  // blocks return 0 rows silently with no error — `.select()` surfaces that.
+  const deleteReturnCount = async (
+    query: ReturnType<typeof supabase.from>,
+  ) => {
+    // @ts-expect-error — chained builder typing is flexible
+    const { data, error } = await query.select();
+    return { error, count: Array.isArray(data) ? data.length : 0 };
+  };
+
+  const disconnectDevice = async (
+    label: string,
+    deleter: (userIdValue: string) => Promise<{ error: unknown; count: number }>,
+  ) => {
+    if (!confirm(`Disconnect ${label}? You'll need to reconnect to resume syncing.`)) return;
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not signed in");
+      const { error, count } = await deleter(user.id);
+      if (error) throw error;
+      if (count === 0) {
+        throw new Error(
+          "Nothing was deleted. Your session may have expired — sign out and back in, then try again.",
+        );
+      }
+      toast({ title: `${label} disconnected`, description: "Sync has stopped." });
+      // Reload so every connection-state consumer (OuraSyncStatus, Dashboard
+      // checklist, etc.) picks up the change — avoids stale UI after delete.
+      setTimeout(() => window.location.reload(), 400);
+    } catch (err) {
+      toast({
+        title: "Disconnect failed",
+        description: err instanceof Error ? err.message : `Couldn't disconnect ${label}.`,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const disconnectOura = () =>
+    disconnectDevice("Oura", async (uid) => {
+      const [oura, wearable] = await Promise.all([
+        deleteReturnCount(
+          supabase.from("oura_tokens" as any).delete().eq("user_id", uid) as any,
+        ),
+        deleteReturnCount(
+          supabase.from("wearable_tokens").delete().eq("user_id", uid).eq("scope", "oura") as any,
+        ),
+      ]);
+      const error = oura.error || wearable.error;
+      const count = oura.count + wearable.count;
+      return { error, count };
+    });
+
+  const disconnectGarmin = () =>
+    disconnectDevice("Garmin", (uid) =>
+      deleteReturnCount(
+        supabase.from("wearable_tokens").delete().eq("user_id", uid).eq("scope", "garmin") as any,
+      ),
+    );
+
+  const disconnectPolar = () =>
+    disconnectDevice("Polar", (uid) =>
+      deleteReturnCount(
+        supabase.from("polar_tokens").delete().eq("user_id", uid) as any,
+      ),
+    );
+
   return (
     <LayoutBlock
       blockId="devices"
@@ -138,9 +205,18 @@ export const DevicesSettings = ({ isSectionVisible }: DevicesSettingsProps) => {
                 )}
               </div>
             </div>
-            {!isConnected && (
+            {!isConnected ? (
               <Button onClick={connectOura} size="sm" className="bg-primary/80 hover:bg-primary text-primary-foreground">
                 Connect Wearable
+              </Button>
+            ) : (
+              <Button
+                onClick={disconnectOura}
+                size="sm"
+                variant="outline"
+                className="border-destructive/40 text-destructive hover:bg-destructive/10 hover:text-destructive"
+              >
+                Disconnect
               </Button>
             )}
           </div>
@@ -181,12 +257,24 @@ export const DevicesSettings = ({ isSectionVisible }: DevicesSettingsProps) => {
                 </p>
               </div>
             </div>
-            <ConnectGarminButton
-              isConnected={isGarminConnected}
-              onConnectionChange={checkGarminConnection}
-              isExpired={garminTokenExpired}
-              userId={userId}
-            />
+            <div className="flex items-center gap-2">
+              {isGarminConnected && (
+                <Button
+                  onClick={disconnectGarmin}
+                  size="sm"
+                  variant="outline"
+                  className="border-destructive/40 text-destructive hover:bg-destructive/10 hover:text-destructive"
+                >
+                  Disconnect
+                </Button>
+              )}
+              <ConnectGarminButton
+                isConnected={isGarminConnected}
+                onConnectionChange={checkGarminConnection}
+                isExpired={garminTokenExpired}
+                userId={userId}
+              />
+            </div>
           </div>
           <GarminAttribution variant="inline" className="px-4 pb-3 pt-1" />
 
@@ -215,10 +303,22 @@ export const DevicesSettings = ({ isSectionVisible }: DevicesSettingsProps) => {
                 </p>
               </div>
             </div>
-            <ConnectPolarButton
-              isConnected={isPolarConnected}
-              onConnectionChange={checkPolarConnection}
-            />
+            <div className="flex items-center gap-2">
+              {isPolarConnected && (
+                <Button
+                  onClick={disconnectPolar}
+                  size="sm"
+                  variant="outline"
+                  className="border-destructive/40 text-destructive hover:bg-destructive/10 hover:text-destructive"
+                >
+                  Disconnect
+                </Button>
+              )}
+              <ConnectPolarButton
+                isConnected={isPolarConnected}
+                onConnectionChange={checkPolarConnection}
+              />
+            </div>
           </div>
         </div>
       </div>

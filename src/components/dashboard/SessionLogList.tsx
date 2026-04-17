@@ -82,25 +82,35 @@ export const SessionLogList = ({ onCompareRequested }: SessionLogListProps = {})
   const [selectedSession, setSelectedSession] = useState<Session | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
   const [isFetchingFallback, setIsFetchingFallback] = useState(false);
+  // Guard to prevent the fallback fetch from looping. Once we've tried the
+  // wearable_auto_data fallback for this trends state, don't try again unless
+  // a refresh event fires.
+  const [fallbackAttempted, setFallbackAttempted] = useState(false);
   const [compareMode, setCompareMode] = useState(false);
   const [selectedForCompare, setSelectedForCompare] = useState<Session[]>([]);
 
   // Fetch from wearable_auto_data if trends are empty
   useEffect(() => {
     const fetchFallbackActivities = async () => {
-      if (trends && trends.length === 0 && !isFetchingFallback) {
+      if (
+        trends &&
+        trends.length === 0 &&
+        !isFetchingFallback &&
+        !fallbackAttempted
+      ) {
         setIsFetchingFallback(true);
-        
+
         // Get current user for explicit filtering (defense-in-depth)
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) {
           setIsFetchingFallback(false);
+          setFallbackAttempted(true);
           return;
         }
-        
+
         const sevenDaysAgo = new Date();
         sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-        
+
         const { data, error } = await supabase
           .from('wearable_auto_data')
           .select('fetched_at, activity')
@@ -131,22 +141,24 @@ export const SessionLogList = ({ onCompareRequested }: SessionLogListProps = {})
           setFallbackSessions(activities.slice(0, 5));
         }
         setIsFetchingFallback(false);
+        setFallbackAttempted(true);
       }
     };
 
     fetchFallbackActivities();
-    
+
     // Listen for refresh events to refetch sessions
     const handleRefresh = () => {
       setIsFetchingFallback(false);
       setFallbackSessions([]);
+      setFallbackAttempted(false);
     };
     window.addEventListener("wearable_trends_refresh", handleRefresh);
-    
+
     return () => {
       window.removeEventListener("wearable_trends_refresh", handleRefresh);
     };
-  }, [trends, isFetchingFallback]);
+  }, [trends, isFetchingFallback, fallbackAttempted]);
 
   const sessions = useMemo(() => {
     // If we have fallback sessions and no trends, use fallback

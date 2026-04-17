@@ -180,7 +180,7 @@ Deno.serve(async (req) => {
       
       const onboardingIntelligence: YvesIntelligenceOutput = {
         dailyBriefing: {
-          summary: "I'm just getting to know you! Connect your Oura Ring and complete your profile so I can provide personalized insights tailored to your goals.",
+          summary: "I'm just getting to know you! Connect a wearable (Oura, Garmin, or Polar) and complete your profile so I can provide personalized insights tailored to your goals.",
           keyChanges: [],
           riskHighlights: [],
         },

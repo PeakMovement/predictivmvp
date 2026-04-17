@@ -29,122 +29,81 @@ export const PolarSyncButton = ({ isConnected, onSyncComplete }: PolarSyncButton
     let hasError = false;
     let errorMessage = "";
 
+    const consentToastDescription = (
+      <div className="space-y-2">
+        <p>Please accept consents at:</p>
+        <a
+          href="https://account.polar.com"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-primary hover:underline font-medium"
+        >
+          https://account.polar.com
+        </a>
+      </div>
+    );
+
     try {
-      const session = await supabase.auth.getSession();
-      const accessToken = session.data.session?.access_token;
-
-      if (!accessToken) {
-        throw new Error("Not authenticated");
-      }
-
-      const exerciseResponse = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/fetch-polar-exercises`,
-        {
-          method: "POST",
-          headers: {
-            "Authorization": `Bearer ${accessToken}`,
-            "Content-Type": "application/json",
-          },
-        }
+      const { data: exerciseData, error: exerciseError } = await supabase.functions.invoke(
+        "fetch-polar-exercises",
       );
 
-      if (exerciseResponse.status === 403) {
-        const data = await exerciseResponse.json();
-        if (data.error === "consent_required") {
+      if (exerciseError) {
+        const msg = exerciseError.message || "";
+        if (msg.includes("consent_required")) {
           toast({
             title: "Consent Required",
-            description: (
-              <div className="space-y-2">
-                <p>Please accept consents at:</p>
-                <a
-                  href="https://account.polar.com"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-primary hover:underline font-medium"
-                >
-                  https://account.polar.com
-                </a>
-              </div>
-            ),
+            description: consentToastDescription,
             variant: "destructive",
             duration: 8000,
           });
           setIsSyncing(false);
           return;
         }
-      }
-
-      if (exerciseResponse.status === 401) {
-        toast({
-          title: "Authentication Error",
-          description: "Reconnect Polar to continue",
-          variant: "destructive",
-        });
-        setIsSyncing(false);
-        return;
-      }
-
-      if (exerciseResponse.ok) {
-        const exerciseData = await exerciseResponse.json();
-        exercisesSynced = exerciseData.synced || 0;
-      } else {
+        if (msg.includes("invalid_or_revoked_token") || msg.includes("401")) {
+          toast({
+            title: "Authentication Error",
+            description: "Reconnect Polar to continue",
+            variant: "destructive",
+          });
+          setIsSyncing(false);
+          return;
+        }
         hasError = true;
         errorMessage = "Failed to sync exercises";
+      } else {
+        exercisesSynced = exerciseData?.synced || 0;
       }
 
-      const sleepResponse = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/fetch-polar-sleep`,
-        {
-          method: "POST",
-          headers: {
-            "Authorization": `Bearer ${accessToken}`,
-            "Content-Type": "application/json",
-          },
-        }
+      const { data: sleepData, error: sleepError } = await supabase.functions.invoke(
+        "fetch-polar-sleep",
       );
 
-      if (sleepResponse.status === 403) {
-        const data = await sleepResponse.json();
-        if (data.error === "consent_required") {
+      if (sleepError) {
+        const msg = sleepError.message || "";
+        if (msg.includes("consent_required")) {
           toast({
             title: "Consent Required",
-            description: (
-              <div className="space-y-2">
-                <p>Please accept consents at:</p>
-                <a
-                  href="https://account.polar.com"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-primary hover:underline font-medium"
-                >
-                  https://account.polar.com
-                </a>
-              </div>
-            ),
+            description: consentToastDescription,
             variant: "destructive",
             duration: 8000,
           });
           setIsSyncing(false);
           return;
         }
-      }
-
-      if (sleepResponse.status === 401) {
-        toast({
-          title: "Authentication Error",
-          description: "Reconnect Polar to continue",
-          variant: "destructive",
-        });
-        setIsSyncing(false);
-        return;
-      }
-
-      if (sleepResponse.ok) {
-        const sleepData = await sleepResponse.json();
-        sleepSynced = sleepData.synced || 0;
-      } else {
+        if (msg.includes("invalid_or_revoked_token") || msg.includes("401")) {
+          toast({
+            title: "Authentication Error",
+            description: "Reconnect Polar to continue",
+            variant: "destructive",
+          });
+          setIsSyncing(false);
+          return;
+        }
         hasError = true;
         errorMessage = errorMessage || "Failed to sync sleep data";
+      } else {
+        sleepSynced = sleepData?.synced || 0;
       }
 
       if (hasError) {
@@ -185,8 +144,7 @@ export const PolarSyncButton = ({ isConnected, onSyncComplete }: PolarSyncButton
       onClick={syncPolarData}
       disabled={isSyncing}
       size="sm"
-      variant="outline"
-      className="bg-glass/30 border-glass-border hover:bg-glass-highlight hover:scale-105 active:scale-95 transition-all duration-200"
+      className="bg-primary/80 hover:bg-primary text-primary-foreground active:scale-95 transition-all duration-200"
     >
       <RefreshCw size={14} className={`mr-2 ${isSyncing ? "animate-spin" : ""}`} />
       {isSyncing ? "Syncing..." : "Sync Data"}

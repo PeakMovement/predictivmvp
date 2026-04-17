@@ -47,17 +47,19 @@ export function WearableSourceProvider({ children }: { children: ReactNode }) {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user || cancelled) return;
 
-        // Check wearable_tokens for connected devices
-        const { data: tokens } = await supabase
-          .from("wearable_tokens")
-          .select("scope")
-          .eq("user_id", user.id);
+        // Oura and Garmin live in wearable_tokens (scope column);
+        // Polar has its own polar_tokens table. Query both.
+        const [{ data: tokens }, { data: polarToken }] = await Promise.all([
+          supabase.from("wearable_tokens").select("scope").eq("user_id", user.id),
+          supabase.from("polar_tokens").select("user_id").eq("user_id", user.id).maybeSingle(),
+        ]);
 
         if (cancelled) return;
 
         const scopes = (tokens || [])
           .map(t => t.scope)
           .filter(s => ["oura", "garmin", "polar"].includes(s));
+        if (polarToken) scopes.push("polar");
 
         // Deduplicate
         const uniqueSources = [...new Set(scopes)];

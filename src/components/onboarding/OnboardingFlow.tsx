@@ -103,10 +103,11 @@ export const OnboardingFlow = ({ onComplete, onSkip }: OnboardingFlowProps) => {
       setStep(row.onboarding_step);
     }
 
-    // Hydrate form from existing DB data
-    const [{ data: profile }, { data: aiProfile }, { data: medical }, { data: training }, { data: injuries }, { data: lifestyle }, { data: recovery }, { data: goals }] = await Promise.all([
-      supabase.from("user_profiles").select("full_name, date_of_birth, primary_goal").eq("user_id", user.id).maybeSingle(),
-      supabase.from("user_profile").select("name, dob, goals, gender, activity_level").eq("user_id", user.id).maybeSingle(),
+    // Hydrate form from existing DB data. user_profiles is the canonical
+    // source for identity fields (name, dob, gender, primary_goal). Domain
+    // tables own their own data.
+    const [{ data: profile }, { data: medical }, { data: training }, { data: injuries }, { data: lifestyle }, { data: recovery }, { data: goals }] = await Promise.all([
+      supabase.from("user_profiles").select("full_name, date_of_birth, gender, primary_goal").eq("user_id", user.id).maybeSingle(),
       supabase.from("user_medical").select("medical_notes, conditions").eq("user_id", user.id).maybeSingle(),
       supabase.from("user_training").select("preferred_activities, training_frequency, intensity_preference").eq("user_id", user.id).maybeSingle(),
       supabase.from("user_injuries").select("injuries, injury_details").eq("user_id", user.id).maybeSingle(),
@@ -130,12 +131,12 @@ export const OnboardingFlow = ({ onComplete, onSkip }: OnboardingFlowProps) => {
 
     setData((prev) => ({
       ...prev,
-      firstName: profile?.full_name || aiProfile?.name || prev.firstName,
-      dateOfBirth: profile?.date_of_birth || aiProfile?.dob || prev.dateOfBirth,
-      gender: aiProfile?.gender || prev.gender,
+      firstName: profile?.full_name || prev.firstName,
+      dateOfBirth: profile?.date_of_birth || prev.dateOfBirth,
+      gender: profile?.gender || prev.gender,
       wearables: savedWearables.length ? savedWearables : prev.wearables,
       sports: training?.preferred_activities?.map((s: string) => s.toLowerCase()) || prev.sports,
-      healthGoals: goals?.goals || aiProfile?.goals || prev.healthGoals,
+      healthGoals: goals?.goals || prev.healthGoals,
       injuryHistory: (injuries?.injury_details as any)?.type || prev.injuryHistory,
       injuryDescription: (injuries?.injury_details as any)?.description || prev.injuryDescription,
       stressLevel: lifestyle?.stress_level === "low" ? 2 : lifestyle?.stress_level === "medium" ? 5 : lifestyle?.stress_level === "high" ? 8 : prev.stressLevel,
@@ -240,7 +241,6 @@ export const OnboardingFlow = ({ onComplete, onSkip }: OnboardingFlowProps) => {
 
   const handleSkip = async () => {
     if (!userId) return;
-    await ensureUserProfileExists(userId);
     await supabase.from("user_profiles").upsert({
       user_id: userId,
       onboarding_skipped: true,
@@ -256,8 +256,6 @@ export const OnboardingFlow = ({ onComplete, onSkip }: OnboardingFlowProps) => {
     const now = new Date().toISOString();
 
     try {
-    await ensureUserProfileExists(userId);
-
     // Store raw questionnaire signals in memory bank (for AI prompts)
     await supabase.from("yves_memory_bank").upsert({
       user_id: userId,
@@ -424,30 +422,14 @@ export const OnboardingFlow = ({ onComplete, onSkip }: OnboardingFlowProps) => {
 async function saveAboutYou(userId: string, data: OnboardingData, now: string) {
   const { firstName, dateOfBirth, gender } = data;
 
-  // user_profiles (Settings canonical)
+  // user_profiles is the single canonical profile table. A database trigger
+  // mirrors full_name/date_of_birth/gender to user_profile (legacy AI read
+  // path) and full_name to profiles (auth-auto table) atomically.
   const settingsUpdate: Record<string, any> = { updated_at: now };
   if (firstName) settingsUpdate.full_name = firstName;
   if (dateOfBirth) settingsUpdate.date_of_birth = dateOfBirth;
+  if (gender) settingsUpdate.gender = gender;
   await supabase.from("user_profiles").upsert({ user_id: userId, ...settingsUpdate }, { onConflict: "user_id" });
-
-  // user_profile (AI reads)
-  const aiUpdate: Record<string, any> = { updated_at: now };
-  if (firstName) aiUpdate.name = firstName;
-  if (dateOfBirth) aiUpdate.dob = dateOfBirth;
-  if (gender) aiUpdate.gender = gender;
-  await upsertUserProfile(userId, aiUpdate);
-
-  // profiles (Supabase auth)
-  if (firstName) {
-    await supabase.from("profiles").upsert({ id: userId, full_name: firstName, updated_at: now }, { onConflict: "id" });
-  }
-
-  // memory bank
-  if (firstName) {
-    await supabase.from("yves_memory_bank").upsert({
-      user_id: userId, memory_key: "preferred_name", memory_value: firstName, last_updated: now,
-    }, { onConflict: "user_id,memory_key" });
-  }
 }
 
 async function savePreferences(userId: string, data: OnboardingData, now: string) {
@@ -550,15 +532,13 @@ async function saveGoals(userId: string, data: OnboardingData, now: string) {
 
   const primaryGoal = goalMap[healthGoals[0]] || healthGoals[0] || "";
 
-  // user_profiles.primary_goal
+  // user_profiles.primary_goal (canonical)
   await supabase.from("user_profiles").upsert({
     user_id: userId, primary_goal: primaryGoal, updated_at: now,
   }, { onConflict: "user_id" });
 
-  // user_profile.goals
-  await upsertUserProfile(userId, { goals: healthGoals, updated_at: now });
-
-  // user_wellness_goals
+  // user_wellness_goals is the domain table. A trigger mirrors its goals
+  // array into user_profile.goals for legacy AI reads.
   const { data: existingGoals } = await supabase.from("user_wellness_goals").select("user_id").eq("user_id", userId).maybeSingle();
   if (existingGoals) {
     await supabase.from("user_wellness_goals").update({ goals: healthGoals, updated_at: now }).eq("user_id", userId);
@@ -591,16 +571,14 @@ async function saveInjury(userId: string, data: OnboardingData, now: string) {
     ? `${label}: ${injuryDescription}`
     : label;
 
-  // user_injuries
+  // user_injuries is the domain table. A trigger mirrors its injuries
+  // array into user_profile.injuries for legacy AI reads.
   const { data: existing } = await supabase.from("user_injuries").select("user_id").eq("user_id", userId).maybeSingle();
   if (existing) {
     await supabase.from("user_injuries").update({ injuries: [fullDescription], injury_details: { type: injuryHistory, description: injuryDescription }, updated_at: now }).eq("user_id", userId);
   } else {
     await supabase.from("user_injuries").insert({ user_id: userId, injuries: [fullDescription], injury_details: { type: injuryHistory, description: injuryDescription }, updated_at: now } as any);
   }
-
-  // user_profile.injuries
-  await upsertUserProfile(userId, { injuries: [fullDescription], updated_at: now });
 
   // memory bank
   await supabase.from("yves_memory_bank").upsert({
@@ -644,20 +622,3 @@ async function saveLifestyle(userId: string, data: OnboardingData, now: string) 
   }, { onConflict: "user_id,memory_key" });
 }
 
-// ── Helpers ──────────────────────────────────────────────────────────
-
-async function ensureUserProfileExists(userId: string) {
-  const { data } = await supabase.from("user_profile").select("user_id").eq("user_id", userId).maybeSingle();
-  if (!data) {
-    await supabase.from("user_profile").insert({ user_id: userId, updated_at: new Date().toISOString() } as any);
-  }
-}
-
-async function upsertUserProfile(userId: string, fields: Record<string, any>) {
-  const { data: existing } = await supabase.from("user_profile").select("user_id").eq("user_id", userId).maybeSingle();
-  if (existing) {
-    await supabase.from("user_profile").update(fields).eq("user_id", userId);
-  } else {
-    await supabase.from("user_profile").insert({ user_id: userId, ...fields } as any);
-  }
-}

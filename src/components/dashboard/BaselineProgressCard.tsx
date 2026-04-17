@@ -17,7 +17,11 @@ const TIER_COPY: Record<
 > = {
   none: {
     headline: 'Connect a wearable to get started',
-    sub: () => "Yves can't personalise anything yet — sync your Oura Ring or Garmin to begin.",
+    sub: () => "Yves can't personalise anything yet — sync your Oura, Garmin, or Polar device to begin.",
+  },
+  connected: {
+    headline: 'Device connected — waiting for first sync',
+    sub: () => "Hit Sync now to pull your first data, or the auto-sync will run shortly.",
   },
   early: {
     headline: 'Yves is watching',
@@ -57,12 +61,14 @@ export function BaselineProgressCard({ maturity, onSyncComplete }: BaselineProgr
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      const { data: tokens } = await supabase
-        .from('wearable_tokens')
-        .select('scope')
-        .eq('user_id', user.id);
+      const [{ data: tokens }, { data: polarToken }] = await Promise.all([
+        supabase.from('wearable_tokens').select('scope').eq('user_id', user.id),
+        supabase.from('polar_tokens').select('user_id').eq('user_id', user.id).maybeSingle(),
+      ]);
 
       const scopes = tokens?.map((t) => t.scope) ?? [];
+      if (polarToken) scopes.push('polar');
+
       if (scopes.length === 0) {
         toast({
           title: 'No device connected',
@@ -74,6 +80,10 @@ export function BaselineProgressCard({ maturity, onSyncComplete }: BaselineProgr
       const invocations = scopes.flatMap((scope) => {
         if (scope === 'oura') return [supabase.functions.invoke('fetch-oura-data', { body: { user_id: user.id } })];
         if (scope === 'garmin') return [supabase.functions.invoke('fetch-garmin-data', { body: { user_id: user.id } })];
+        if (scope === 'polar') return [
+          supabase.functions.invoke('fetch-polar-exercises', { body: { user_id: user.id } }),
+          supabase.functions.invoke('fetch-polar-sleep', { body: { user_id: user.id } }),
+        ];
         return [];
       });
 

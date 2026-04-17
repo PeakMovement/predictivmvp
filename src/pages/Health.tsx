@@ -113,8 +113,12 @@ export const Health = () => {
 
   useEffect(() => {
     if (!userId) return;
-    supabase.from("wearable_tokens").select("scope").eq("user_id", userId)
-      .then(({ data }) => setHasAnyToken(!!data && data.length > 0));
+    Promise.all([
+      supabase.from("wearable_tokens").select("scope").eq("user_id", userId),
+      supabase.from("polar_tokens").select("user_id").eq("user_id", userId).maybeSingle(),
+    ]).then(([{ data: tokens }, { data: polarToken }]) => {
+      setHasAnyToken(!!(tokens && tokens.length > 0) || !!polarToken);
+    });
   }, [userId]);
 
   useEffect(() => {
@@ -160,12 +164,20 @@ export const Health = () => {
     if (!userId) return;
     setIsSyncing(true);
     try {
-      const { data: tokens } = await supabase.from("wearable_tokens").select("scope").eq("user_id", userId);
+      const [{ data: tokens }, { data: polarToken }] = await Promise.all([
+        supabase.from("wearable_tokens").select("scope").eq("user_id", userId),
+        supabase.from("polar_tokens").select("user_id").eq("user_id", userId).maybeSingle(),
+      ]);
       const scopes = tokens?.map((t) => t.scope) ?? [];
+      if (polarToken && !scopes.includes("polar")) scopes.push("polar");
       if (!scopes.length) { toast({ title: "No device connected", description: "Connect a wearable in Settings first." }); return; }
       const calls = scopes.flatMap((scope) => {
         if (scope === "oura") return [supabase.functions.invoke("fetch-oura-data", { body: { user_id: userId } })];
         if (scope === "garmin") return [supabase.functions.invoke("fetch-garmin-data", { body: { user_id: userId } })];
+        if (scope === "polar") return [
+          supabase.functions.invoke("fetch-polar-exercises", { body: { user_id: userId } }),
+          supabase.functions.invoke("fetch-polar-sleep", { body: { user_id: userId } }),
+        ];
         return [];
       });
       const results = await Promise.allSettled(calls);
@@ -283,7 +295,7 @@ export const Health = () => {
           <InfoIcon className="h-4 w-4 text-blue-500" />
           <AlertTitle className="text-blue-500">No data synced yet</AlertTitle>
           <AlertDescription className="text-sm text-muted-foreground">
-            Your device is connected. Wear it overnight and tap "Sync Now" after 8 AM.
+            Your device is connected. Tap "Sync Now" to pull your latest data.
           </AlertDescription>
         </Alert>
       )}

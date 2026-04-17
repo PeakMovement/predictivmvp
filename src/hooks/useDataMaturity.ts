@@ -1,7 +1,13 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
-export type DataMaturityTier = 'none' | 'early' | 'learning' | 'building' | 'ready';
+export type DataMaturityTier =
+  | 'none'
+  | 'connected'
+  | 'early'
+  | 'learning'
+  | 'building'
+  | 'ready';
 
 export interface DataMaturity {
   days_with_data: number;
@@ -15,8 +21,8 @@ export interface DataMaturity {
 
 const FULL_BASELINE_DAYS = 28;
 
-function classifyTier(days: number): DataMaturityTier {
-  if (days === 0) return 'none';
+function classifyTier(days: number, hasConnectedDevice: boolean): DataMaturityTier {
+  if (days === 0) return hasConnectedDevice ? 'connected' : 'none';
   if (days <= 6) return 'early';
   if (days <= 13) return 'learning';
   if (days <= 27) return 'building';
@@ -43,11 +49,16 @@ export function useDataMaturity(): DataMaturity & { refetch: () => void } {
       return;
     }
 
-    const { data, error } = await supabase
-      .from('wearable_sessions')
-      .select('date, source')
-      .eq('user_id', user.id)
-      .order('date', { ascending: false });
+    const [{ data, error }, { data: wearableTokens }, { data: polarToken }] =
+      await Promise.all([
+        supabase
+          .from('wearable_sessions')
+          .select('date, source')
+          .eq('user_id', user.id)
+          .order('date', { ascending: false }),
+        supabase.from('wearable_tokens').select('scope').eq('user_id', user.id).limit(1).maybeSingle(),
+        supabase.from('polar_tokens').select('user_id').eq('user_id', user.id).maybeSingle(),
+      ]);
 
     if (error || !data) {
       console.error('[useDataMaturity] fetch error:', error);
@@ -65,8 +76,9 @@ export function useDataMaturity(): DataMaturity & { refetch: () => void } {
       .filter((s) => KNOWN_SOURCES.includes(s))
       .sort();
 
+    const hasConnectedDevice = !!wearableTokens || !!polarToken;
     const baseline_percent = Math.min((days_with_data / FULL_BASELINE_DAYS) * 100, 100);
-    const tier = classifyTier(days_with_data);
+    const tier = classifyTier(days_with_data, hasConnectedDevice);
     const days_remaining = Math.max(0, FULL_BASELINE_DAYS - days_with_data);
 
     // Estimated date: today + days_remaining (assumes 1 sync/day going forward)

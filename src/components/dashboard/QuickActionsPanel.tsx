@@ -24,15 +24,21 @@ export const QuickActionsPanel = () => {
         return;
       }
 
-      // Detect connected wearable provider(s)
-      const { data: tokens, error: tokensError } = await supabase
-        .from("wearable_tokens")
-        .select("scope")
-        .eq("user_id", user.id);
+      // Detect connected wearable provider(s). Polar lives in its own
+      // polar_tokens table; everything else is scoped inside wearable_tokens.
+      const [{ data: tokens, error: tokensError }, { data: polarToken }] = await Promise.all([
+        supabase.from("wearable_tokens").select("scope").eq("user_id", user.id),
+        supabase.from("polar_tokens").select("user_id").eq("user_id", user.id).maybeSingle(),
+      ]);
 
       if (tokensError) throw tokensError;
 
-      if (!tokens || tokens.length === 0) {
+      const providerScopes: string[] = (tokens ?? []).map((t) => t.scope);
+      if (polarToken && !providerScopes.includes("polar")) {
+        providerScopes.push("polar");
+      }
+
+      if (providerScopes.length === 0) {
         toast({
           title: "No device connected",
           description: "Connect a wearable device in Settings first",
@@ -40,33 +46,41 @@ export const QuickActionsPanel = () => {
         return;
       }
 
-      // Map provider scope to edge function name
-      const providerFunctionMap: Record<string, string> = {
-        oura: "fetch-oura-data",
-        garmin: "fetch-garmin-data",
-        polar: "fetch-polar-sleep",
-      };
-
       const deviceNames: Record<string, string> = { oura: "Oura Ring", garmin: "Garmin", polar: "Polar" };
       const succeeded: string[] = [];
       const failed: string[] = [];
 
-      for (const token of tokens) {
-        const functionName = providerFunctionMap[token.scope];
-        if (!functionName) {
-          console.warn(`[sync] Unknown provider: ${token.scope}`);
+      // Each provider may invoke one or more edge functions (Polar needs two).
+      const providerFunctions: Record<string, string[]> = {
+        oura: ["fetch-oura-data"],
+        garmin: ["fetch-garmin-data"],
+        polar: ["fetch-polar-exercises", "fetch-polar-sleep"],
+      };
+
+      for (const scope of providerScopes) {
+        const functionNames = providerFunctions[scope];
+        if (!functionNames) {
+          console.warn(`[sync] Unknown provider: ${scope}`);
           continue;
         }
 
-        const { error } = await supabase.functions.invoke(functionName, {
-          body: token.scope === "oura"
-            ? { userId: user.id }
-            : { user_id: user.id },
-        });
+        const label = deviceNames[scope] ?? scope;
+        let providerFailed = false;
 
-        const label = deviceNames[token.scope] ?? token.scope;
-        if (error) {
-          console.error(`[sync] ${token.scope} sync failed:`, error);
+        for (const functionName of functionNames) {
+          const { error } = await supabase.functions.invoke(functionName, {
+            body: scope === "oura"
+              ? { userId: user.id }
+              : { user_id: user.id },
+          });
+
+          if (error) {
+            console.error(`[sync] ${scope}/${functionName} sync failed:`, error);
+            providerFailed = true;
+          }
+        }
+
+        if (providerFailed) {
           failed.push(label);
         } else {
           succeeded.push(label);

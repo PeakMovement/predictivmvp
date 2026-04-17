@@ -46,8 +46,7 @@ export const ConnectPolarButton = ({ isConnected, onConnectionChange }: ConnectP
       <Button
         onClick={onConnectionChange}
         size="sm"
-        variant="outline"
-        className="bg-glass/30 border-glass-border hover:bg-glass-highlight hover:scale-105 active:scale-95 transition-all duration-200"
+        className="bg-primary/80 hover:bg-primary text-primary-foreground active:scale-95 transition-all duration-200"
       >
         <RefreshCw size={14} className="mr-2" />
         Reconnect

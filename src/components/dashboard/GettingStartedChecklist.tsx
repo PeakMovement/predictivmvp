@@ -33,12 +33,27 @@ export function GettingStartedChecklist({ onNavigate }: GettingStartedChecklistP
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) { setLoading(false); return; }
 
-      const [profileRes, wearableRes, briefingRes, chatRes] = await Promise.all([
+      const [
+        profileRes,
+        wearableRes,
+        briefingRes,
+        chatRes,
+        wearableTokenRes,
+        polarTokenRes,
+      ] = await Promise.all([
         supabase.from("user_profiles").select("*").eq("user_id", user.id).maybeSingle(),
         supabase.from("wearable_sessions").select("id").eq("user_id", user.id).limit(1).maybeSingle(),
         supabase.from("daily_briefings").select("id").eq("user_id", user.id).limit(1).maybeSingle(),
         supabase.from("insight_history").select("id").eq("user_id", user.id).limit(1).maybeSingle(),
+        supabase.from("wearable_tokens").select("scope").eq("user_id", user.id).limit(1).maybeSingle(),
+        supabase.from("polar_tokens").select("user_id").eq("user_id", user.id).maybeSingle(),
       ]);
+
+      // "Connect a wearable" should tick as soon as ANY device token exists —
+      // waiting for first-sync data makes the step feel broken between connect
+      // and the next scheduled sync.
+      const hasDeviceToken = !!wearableTokenRes.data || !!polarTokenRes.data;
+      const hasWearableData = !!wearableRes.data;
 
       const profileCompletion = getProfileCompletion(profileRes.data as UserProfile | null);
 
@@ -54,9 +69,11 @@ export function GettingStartedChecklist({ onNavigate }: GettingStartedChecklistP
         {
           id: "wearable",
           label: "Connect a wearable",
-          description: "Link your Oura Ring or Garmin for live health data",
+          description: hasDeviceToken && !hasWearableData
+            ? "Device connected — syncing your first data"
+            : "Link your Oura, Garmin, or Polar device for live health data",
           icon: Watch,
-          done: !!wearableRes.data,
+          done: hasDeviceToken,
           navigateTo: "settings",
         },
         {

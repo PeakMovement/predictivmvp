@@ -277,10 +277,11 @@ export function getAIProvider(): AIProviderService {
   const anthropicKey = Deno.env.get('ANTHROPIC_API_KEY');
   const googleKey = Deno.env.get('GOOGLE_AI_API_KEY');
 
+  console.log('[ai-provider] Available keys:', {
     lovable: !!lovableKey,
     openai: !!openaiKey,
     anthropic: !!anthropicKey,
-    google: !!googleKey
+    google: !!googleKey,
   });
 
   // Prioritize Lovable AI (pre-configured, no billing issues)

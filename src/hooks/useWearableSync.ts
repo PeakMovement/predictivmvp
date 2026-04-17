@@ -122,26 +122,20 @@ export const useWearableSync = (): WearableSyncState => {
       }
 
 
-      // Detect which devices are connected
-      const { data: tokens } = await supabase
-        .from("wearable_tokens")
-        .select("scope")
-        .eq("user_id", user.id);
+      // Detect which devices are connected. Check Polar BEFORE the
+      // "no devices" guard so a Polar-only user isn't rejected.
+      const [{ data: tokens }, { data: polarToken }] = await Promise.all([
+        supabase.from("wearable_tokens").select("scope").eq("user_id", user.id),
+        supabase.from("polar_tokens").select("user_id").eq("user_id", user.id).maybeSingle(),
+      ]);
 
       const scopes = tokens?.map(t => t.scope) ?? [];
+      if (polarToken && !scopes.includes("polar")) {
+        scopes.push("polar");
+      }
 
       if (scopes.length === 0) {
         throw new Error("No wearable devices connected. Please connect one in Settings.");
-      }
-
-      // Also check polar_tokens for Polar devices
-      const { data: polarToken } = await supabase
-        .from("polar_tokens")
-        .select("user_id")
-        .eq("user_id", user.id)
-        .maybeSingle();
-      if (polarToken && !scopes.includes("polar")) {
-        scopes.push("polar");
       }
 
       const deviceNames: Record<string, string> = { oura: "Oura Ring", garmin: "Garmin", polar: "Polar" };

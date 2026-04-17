@@ -73,57 +73,8 @@ export const useProfile = () => {
       if (error) throw error;
 
       if (data) {
-        let fullName = data.full_name;
-        let avatarUrl = data.avatar_url;
-
-        // Fallback chain: profiles table (Supabase auto-created) → legacy
-        // user_profile → auth metadata. This prevents blank fields when
-        // another part of the system wrote to a different table.
-        if (!fullName || !avatarUrl) {
-          const { data: authProfile } = await supabase
-            .from("profiles")
-            .select("full_name, avatar_url")
-            .eq("id", user.id)
-            .maybeSingle();
-
-          if (!fullName) {
-            fullName = authProfile?.full_name || null;
-          }
-          if (!avatarUrl) {
-            avatarUrl = authProfile?.avatar_url || null;
-          }
-        }
-
-        if (!fullName) {
-          const { data: legacyProfile } = await supabase
-            .from("user_profile")
-            .select("name")
-            .eq("user_id", user.id)
-            .maybeSingle();
-          fullName =
-            legacyProfile?.name ||
-            (user.user_metadata?.full_name as string | undefined) ||
-            (user.user_metadata?.name as string | undefined) ||
-            null;
-        }
-
-        // Back-fill user_profiles so future loads are instant
-        if (fullName !== data.full_name || avatarUrl !== data.avatar_url) {
-          const backfill: Record<string, string> = {};
-          if (fullName && fullName !== data.full_name) backfill.full_name = fullName;
-          if (avatarUrl && avatarUrl !== data.avatar_url) backfill.avatar_url = avatarUrl;
-          if (Object.keys(backfill).length > 0) {
-            await supabase
-              .from("user_profiles")
-              .update(backfill)
-              .eq("user_id", user.id);
-          }
-        }
-
         setProfile({
           ...data,
-          full_name: fullName,
-          avatar_url: avatarUrl,
           email: user.email,
         });
       } else {
@@ -166,7 +117,6 @@ export const useProfile = () => {
       const { email, ...profileUpdates } = updates;
 
       if (Object.keys(profileUpdates).length > 0) {
-        // Use upsert so a row is created if one doesn't exist yet
         const { error: profileError } = await supabase
           .from("user_profiles")
           .upsert(
@@ -179,31 +129,6 @@ export const useProfile = () => {
           );
 
         if (profileError) throw profileError;
-
-        // Mirror to profiles table (Supabase auth-created) so reads from
-        // either table stay consistent
-        const profilesMirror: Record<string, unknown> = {};
-        if (profileUpdates.full_name !== undefined) profilesMirror.full_name = profileUpdates.full_name;
-        if (profileUpdates.avatar_url !== undefined) profilesMirror.avatar_url = profileUpdates.avatar_url;
-        if (Object.keys(profilesMirror).length > 0) {
-          await supabase
-            .from("profiles")
-            .upsert(
-              { id: user.id, ...profilesMirror, updated_at: new Date().toISOString() },
-              { onConflict: "id" },
-            );
-        }
-
-        // Mirror full_name to user_profile.name so AI functions (yves-chat,
-        // generate-daily-briefing) which read user_profile.name stay in sync
-        if (profileUpdates.full_name !== undefined) {
-          await supabase
-            .from("user_profile")
-            .upsert(
-              { user_id: user.id, name: profileUpdates.full_name },
-              { onConflict: "user_id" }
-            );
-        }
       }
 
       if (email && email !== user.email) {

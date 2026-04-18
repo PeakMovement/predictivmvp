@@ -47,7 +47,7 @@ const DESIGN_THEMES: {
 export const AppearanceSettings = () => {
   const [primaryHue, setPrimaryHue] = useState(263);
   const [isDragging, setIsDragging] = useState(false);
-  const { theme, setTheme, designTheme, setDesignTheme } = useTheme();
+  const { theme, setTheme, planDesignTheme, setPlanDesignTheme } = useTheme();
   const { isHighContrast, toggleHighContrast } = useHighContrast();
 
   useEffect(() => {
@@ -152,15 +152,16 @@ export const AppearanceSettings = () => {
         </div>
 
         <div>
-          <Label className="text-sm text-muted-foreground mb-3 block">Design Style</Label>
+          <Label className="text-sm text-muted-foreground mb-1 block">Design Style</Label>
+          <p className="text-xs text-muted-foreground mb-3 opacity-70">Applies to the Plan page only</p>
           <div className="flex flex-col gap-3">
             {DESIGN_THEMES.map((dt) => (
               <button
                 key={dt.id}
-                onClick={() => setDesignTheme(dt.id)}
+                onClick={() => setPlanDesignTheme(dt.id)}
                 className={cn(
                   "w-full p-4 border transition-all duration-200 text-left",
-                  designTheme === dt.id
+                  planDesignTheme === dt.id
                     ? "bg-primary/10 border-primary/30 ring-2 ring-primary/20"
                     : "bg-glass/30 border-glass-border hover:bg-glass-highlight",
                 )}
@@ -187,7 +188,7 @@ export const AppearanceSettings = () => {
                     </p>
                   </div>
                   <div className="flex-shrink-0 flex items-center justify-center w-10 h-10 border border-glass-border text-foreground/40">
-                    {designTheme === dt.id ? (
+                    {planDesignTheme === dt.id ? (
                       <span className="text-primary text-lg">✓</span>
                     ) : (
                       <span

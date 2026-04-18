@@ -3,13 +3,51 @@ import { Palette } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
-import { useTheme } from "@/components/ThemeProvider";
+import { useTheme, DesignTheme } from "@/components/ThemeProvider";
 import { useHighContrast } from "@/hooks/useHighContrast";
+
+const DESIGN_THEMES: {
+  id: DesignTheme;
+  label: string;
+  sub: string;
+  preview: { display: string; body: string; mono: string };
+}[] = [
+  {
+    id: "clinical",
+    label: "Clinical Precision",
+    sub: "Predictiv.",
+    preview: {
+      display: "'Cormorant Garamond', Georgia, serif",
+      body: "'Rajdhani', sans-serif",
+      mono: "'Space Mono', monospace",
+    },
+  },
+  {
+    id: "wellness",
+    label: "Organic Wellness",
+    sub: "Balance",
+    preview: {
+      display: "'DM Serif Display', Georgia, serif",
+      body: "'Plus Jakarta Sans', system-ui, sans-serif",
+      mono: "'Space Mono', monospace",
+    },
+  },
+  {
+    id: "performance",
+    label: "High Performance",
+    sub: "Peak",
+    preview: {
+      display: "'Syne', sans-serif",
+      body: "'Rajdhani', sans-serif",
+      mono: "'JetBrains Mono', monospace",
+    },
+  },
+];
 
 export const AppearanceSettings = () => {
   const [primaryHue, setPrimaryHue] = useState(263);
   const [isDragging, setIsDragging] = useState(false);
-  const { theme, setTheme } = useTheme();
+  const { theme, setTheme, designTheme, setDesignTheme } = useTheme();
   const { isHighContrast, toggleHighContrast } = useHighContrast();
 
   useEffect(() => {
@@ -78,7 +116,7 @@ export const AppearanceSettings = () => {
         <h3 className="text-lg font-semibold text-foreground">Theme</h3>
       </div>
 
-      <div className="space-y-6">
+      <div className="space-y-8">
         <div>
           <Label className="text-sm text-muted-foreground mb-3 block">Appearance</Label>
           <div className="flex gap-3">
@@ -110,6 +148,59 @@ export const AppearanceSettings = () => {
                 <p className="font-medium text-foreground">Dark</p>
               </div>
             </button>
+          </div>
+        </div>
+
+        <div>
+          <Label className="text-sm text-muted-foreground mb-3 block">Design Style</Label>
+          <div className="flex flex-col gap-3">
+            {DESIGN_THEMES.map((dt) => (
+              <button
+                key={dt.id}
+                onClick={() => setDesignTheme(dt.id)}
+                className={cn(
+                  "w-full p-4 border transition-all duration-200 text-left",
+                  designTheme === dt.id
+                    ? "bg-primary/10 border-primary/30 ring-2 ring-primary/20"
+                    : "bg-glass/30 border-glass-border hover:bg-glass-highlight",
+                )}
+              >
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex-1 min-w-0">
+                    <p
+                      className="text-base font-semibold text-foreground leading-tight mb-1"
+                      style={{ fontFamily: dt.preview.display }}
+                    >
+                      {dt.label}
+                    </p>
+                    <p
+                      className="text-xs text-muted-foreground mb-2"
+                      style={{ fontFamily: dt.preview.body, letterSpacing: "0.3px" }}
+                    >
+                      Body &amp; UI · {dt.preview.body.split(",")[0].replace(/'/g, "")}
+                    </p>
+                    <p
+                      className="text-[10px] tracking-widest uppercase opacity-60"
+                      style={{ fontFamily: dt.preview.mono }}
+                    >
+                      {dt.preview.mono.split(",")[0].replace(/'/g, "")} — data values
+                    </p>
+                  </div>
+                  <div className="flex-shrink-0 flex items-center justify-center w-10 h-10 border border-glass-border text-foreground/40">
+                    {designTheme === dt.id ? (
+                      <span className="text-primary text-lg">✓</span>
+                    ) : (
+                      <span
+                        className="text-sm font-bold opacity-40"
+                        style={{ fontFamily: dt.preview.display }}
+                      >
+                        {dt.sub[0]}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </button>
+            ))}
           </div>
         </div>
 
@@ -197,7 +288,7 @@ export const AppearanceSettings = () => {
                 </div>
               </div>
               <p className="text-xs text-center text-muted-foreground">
-                {isDragging ? "✨ Adjusting color..." : "Click and drag around the circle to select"}
+                {isDragging ? "Adjusting color..." : "Click and drag around the circle to select"}
               </p>
             </div>
           </div>

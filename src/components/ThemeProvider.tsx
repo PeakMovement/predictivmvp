@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
 
 type Theme = "dark" | "light";
+export type DesignTheme = "clinical" | "wellness" | "performance";
 
 type ThemeProviderProps = {
   children: ReactNode;
@@ -11,14 +12,21 @@ type ThemeProviderProps = {
 type ThemeProviderState = {
   theme: Theme;
   setTheme: (theme: Theme) => void;
+  designTheme: DesignTheme;
+  setDesignTheme: (design: DesignTheme) => void;
 };
 
 const initialState: ThemeProviderState = {
   theme: "dark",
   setTheme: () => null,
+  designTheme: "clinical",
+  setDesignTheme: () => null,
 };
 
 const ThemeProviderContext = createContext<ThemeProviderState>(initialState);
+
+const DESIGN_THEME_CLASSES: DesignTheme[] = ["clinical", "wellness", "performance"];
+const DESIGN_STORAGE_KEY = "ui-design-theme";
 
 export function ThemeProvider({
   children,
@@ -30,18 +38,15 @@ export function ThemeProvider({
     () => (localStorage.getItem(storageKey) as Theme) || defaultTheme
   );
 
+  const [designTheme, setDesignThemeState] = useState<DesignTheme>(
+    () => (localStorage.getItem(DESIGN_STORAGE_KEY) as DesignTheme) || "clinical"
+  );
+
   useEffect(() => {
     const root = window.document.documentElement;
-
     root.classList.remove("light", "dark");
+    root.classList.add(theme === "dark" ? "dark" : "light");
 
-    if (theme === "dark") {
-      root.classList.add("dark");
-    } else {
-      root.classList.add("light");
-    }
-
-    // Apply saved accent hue from color wheel
     const savedHue = localStorage.getItem("primary-hue");
     if (savedHue) {
       const hue = parseInt(savedHue);
@@ -51,11 +56,22 @@ export function ThemeProvider({
     }
   }, [theme]);
 
-  const value = {
+  useEffect(() => {
+    const root = window.document.documentElement;
+    DESIGN_THEME_CLASSES.forEach((cls) => root.classList.remove(`theme-${cls}`));
+    root.classList.add(`theme-${designTheme}`);
+  }, [designTheme]);
+
+  const value: ThemeProviderState = {
     theme,
-    setTheme: (theme: Theme) => {
-      localStorage.setItem(storageKey, theme);
-      setTheme(theme);
+    setTheme: (t: Theme) => {
+      localStorage.setItem(storageKey, t);
+      setTheme(t);
+    },
+    designTheme,
+    setDesignTheme: (d: DesignTheme) => {
+      localStorage.setItem(DESIGN_STORAGE_KEY, d);
+      setDesignThemeState(d);
     },
   };
 
@@ -68,9 +84,7 @@ export function ThemeProvider({
 
 export const useTheme = () => {
   const context = useContext(ThemeProviderContext);
-
   if (context === undefined)
     throw new Error("useTheme must be used within a ThemeProvider");
-
   return context;
 };

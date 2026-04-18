@@ -12,6 +12,7 @@ import { Label } from "@/components/ui/label";
 import jsPDF from "jspdf";
 import { useTrainingTrends } from "@/hooks/useTrainingTrends";
 import OuraSyncStatus from "@/components/OuraSyncStatus";
+import { useTheme } from "@/components/ThemeProvider";
 
 // Load accepted challenges from localStorage
 const getAcceptedChallenges = () => {
@@ -976,9 +977,16 @@ const UpcomingBookingsSection = () => {
 
 export const YourPlan = () => {
   const { userId } = useTrainingTrends({ days: 7 });
+  const { planDesignTheme, theme } = useTheme();
   
   return (
-    <div className="min-h-screen bg-background pb-nav-safe">
+    <div
+      className={cn(
+        "min-h-screen bg-background pb-nav-safe",
+        `theme-${planDesignTheme}`,
+        theme
+      )}
+    >
       <div className="container mx-auto px-4 md:px-6 pt-6 md:pt-8">
         {/* Header */}
         <div className="text-center mb-8 md:mb-12 space-y-3 md:space-y-4 px-4 md:px-0">
@@ -1004,7 +1012,6 @@ export const YourPlan = () => {
                   <TooltipTrigger asChild>
                     <button
                       onClick={() => {
-                        // Use default empty metrics - user should use the button in WeeklyInsightsSection
                         generateWeeklyReportPDF({
                           metrics: {
                             avgACWR: 0,

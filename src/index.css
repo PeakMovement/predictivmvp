@@ -179,12 +179,12 @@ code, pre {
     /* ── Accent hue — user-configurable via Settings color wheel ── */
     --accent-hue: 240;
 
-    /* ── PREDICTIV. BRAND v2 — Dark mode default ─────────────────── */
+    /* ── PREDICTIV. BRAND v2 — Dark mode default (Clinical) ──────── */
     --bg-root:     #04040A;
-    --bg-surface:  #0D0D14;
-    --bg-elevated: #0A0A12;
-    --bg-card:     #0D0D14;
-    --bg-input:    #0A0A12;
+    --bg-surface:  #10101A;
+    --bg-elevated: #0C0C14;
+    --bg-card:     #10101A;
+    --bg-input:    #0C0C14;
 
     --text-primary:   #F0EEE8;
     --text-secondary: #6B7B82;
@@ -214,7 +214,7 @@ code, pre {
 
     --background: 240 43% 3%;
     --foreground: 33 18% 93%;
-    --card: 240 17% 6%;
+    --card: 240 20% 8%;
     --card-foreground: 0 0% 100%;
     --popover: var(--accent-hue) 18% 30%;
     --popover-foreground: 0 0% 100%;
@@ -249,13 +249,13 @@ code, pre {
     --sidebar-ring: 200 30% 75%;
   }
 
-  /* Dark mode — identical to root */
+  /* Dark mode — Clinical dark (identical to root but explicit) */
   .dark {
     --bg-root:     #04040A;
-    --bg-surface:  #0D0D14;
-    --bg-elevated: #0A0A12;
-    --bg-card:     #0D0D14;
-    --bg-input:    #0A0A12;
+    --bg-surface:  #10101A;
+    --bg-elevated: #0C0C14;
+    --bg-card:     #10101A;
+    --bg-input:    #0C0C14;
     --text-primary:   #F0EEE8;
     --text-secondary: #6B7B82;
     --text-tertiary:  #3A4448;
@@ -276,7 +276,7 @@ code, pre {
 
     --background: 240 43% 3%;
     --foreground: 33 18% 93%;
-    --card: 240 17% 6%;
+    --card: 240 20% 8%;
     --card-foreground: 0 0% 100%;
     --popover: var(--accent-hue) 18% 30%;
     --popover-foreground: 0 0% 100%;
@@ -298,7 +298,7 @@ code, pre {
     --glass-highlight: 0 0% 100% / 0.03;
   }
 
-  /* Light mode — warm white, Riz v2 palette */
+  /* Light mode — Clinical light (warm white) */
   .light {
     --bg-root:     #F4F2EE;
     --bg-surface:  #FFFFFF;
@@ -360,13 +360,12 @@ code, pre {
 
   /* ══════════════════════════════════════════════════════════════════
      DESIGN THEME OVERRIDES
-     Each theme class on <html> overrides only the font tokens it owns.
-     Design 1 (clinical) is the :root default — no overrides needed.
+     Each theme class on <html> overrides font tokens + bg/surface tokens.
+     Design 1 (clinical) is the :root default — no font overrides needed.
+     Light/dark bg tokens are split by combining theme + mode classes.
      ══════════════════════════════════════════════════════════════════ */
 
-  /* Design 2 — Organic Wellness
-     Name headings / h1–h4 → DM Serif Display
-     Body, UI labels, buttons, inputs → Plus Jakarta Sans              */
+  /* ── Design 2 — Organic Wellness ───────────────────────────────── */
   .theme-wellness {
     --font-display:        'DM Serif Display', Georgia, serif;
     --font-display-weight: 400;
@@ -375,15 +374,69 @@ code, pre {
     --font-logo-weight:    400;
   }
 
-  /* Design 3 — High Performance
-     Logo, score numbers, stats → Syne weight 800
-     Status bar, labels, alerts → JetBrains Mono                       */
+  .theme-wellness.dark {
+    --bg-root:     #1A1714;
+    --bg-surface:  #231F1C;
+    --bg-elevated: #2C2825;
+    --bg-card:     #231F1C;
+    --bg-input:    #2C2825;
+    --border-color: rgba(210,185,140,0.1);
+    --accent-cold-steel: #C4976A;
+    --background: 22 12% 9%;
+    --card: 22 10% 13%;
+    --glass-bg: 22 10% 14% / 0.85;
+    --glass-border: 38 40% 68% / 0.1;
+  }
+
+  .theme-wellness.light {
+    --bg-root:     #FAF7F2;
+    --bg-surface:  #FFFFFF;
+    --bg-elevated: #F3EEE5;
+    --bg-card:     #FFFFFF;
+    --bg-input:    #F3EEE5;
+    --border-color: rgba(140,110,70,0.12);
+    --accent-cold-steel: #8B5E35;
+    --background: 38 30% 97%;
+    --card: 0 0% 100%;
+    --glass-bg: 0 0% 100% / 0.9;
+    --glass-border: 30 30% 40% / 0.1;
+  }
+
+  /* ── Design 3 — High Performance ───────────────────────────────── */
   .theme-performance {
     --font-logo:           'Syne', sans-serif;
     --font-logo-weight:    800;
     --font-display:        'Syne', sans-serif;
     --font-display-weight: 800;
     --font-status:         'JetBrains Mono', monospace;
+  }
+
+  .theme-performance.dark {
+    --bg-root:     #0C0C0C;
+    --bg-surface:  #141414;
+    --bg-elevated: #1C1C1C;
+    --bg-card:     #141414;
+    --bg-input:    #1C1C1C;
+    --border-color: rgba(255,255,255,0.06);
+    --accent-cold-steel: #E8FF4A;
+    --background: 0 0% 5%;
+    --card: 0 0% 8%;
+    --glass-bg: 0 0% 9% / 0.9;
+    --glass-border: 0 0% 100% / 0.06;
+  }
+
+  .theme-performance.light {
+    --bg-root:     #F0F0F0;
+    --bg-surface:  #FFFFFF;
+    --bg-elevated: #E8E8E8;
+    --bg-card:     #FFFFFF;
+    --bg-input:    #E8E8E8;
+    --border-color: rgba(0,0,0,0.08);
+    --accent-cold-steel: #1A1A1A;
+    --background: 0 0% 94%;
+    --card: 0 0% 100%;
+    --glass-bg: 0 0% 100% / 0.9;
+    --glass-border: 0 0% 0% / 0.08;
   }
 }
 
@@ -422,11 +475,11 @@ code, pre {
 
   .dark body,
   :root body {
-    background: #04040A;
+    background: var(--bg-root);
   }
 
   .light body {
-    background: #F4F2EE;
+    background: var(--bg-root);
   }
 
   .light .text-coldBlue              { color: rgb(74 122 140 / 1) !important; }

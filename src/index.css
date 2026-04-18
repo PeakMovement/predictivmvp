@@ -9,22 +9,22 @@
 
 /* STEP 2 — Global default font */
 * {
-  font-family: 'Rajdhani', sans-serif;
+  font-family: var(--font-ui);
   -webkit-font-smoothing: antialiased;
 }
 
 /* STEP 3 — Metric values: the big numbers */
 .font-display,
 [class*="font-display"] {
-  font-family: 'Cormorant Garamond', Georgia, serif !important;
-  font-weight: 300 !important;
+  font-family: var(--font-display) !important;
+  font-weight: var(--font-display-weight) !important;
   line-height: 1 !important;
   letter-spacing: -0.5px !important;
 }
 
-/* STEP 3b — Display headings: h1–h4 default to Cormorant Garamond.
+/* STEP 3b — Display headings: h1–h4 default to --font-display.
    These cover page titles, hero text, section titles, and any
-   large editorial moment. UI-label headings that need Rajdhani
+   large editorial moment. UI-label headings that need the UI font
    must opt out explicitly with `.font-sans`. */
 h1, h2, h3, h4 {
   font-family: var(--font-display) !important;
@@ -35,12 +35,12 @@ h1, h2, h3, h4 {
    semantic HTML. */
 .font-sans,
 [class*="font-sans"] {
-  font-family: 'Rajdhani', sans-serif !important;
+  font-family: var(--font-ui) !important;
 }
 
 /* STEP 4 — Unit labels (%, ms, km, bpm, mL/kg, TSS, kcal) */
 .metric-unit {
-  font-family: 'Space Mono', monospace !important;
+  font-family: var(--font-status) !important;
   font-size: 8px !important;
   letter-spacing: 2.5px !important;
   text-transform: uppercase !important;
@@ -48,7 +48,7 @@ h1, h2, h3, h4 {
 
 /* STEP 5 — Section header labels (RECOVERY, PERFORMANCE, LOAD) */
 .section-header {
-  font-family: 'Space Mono', monospace !important;
+  font-family: var(--font-status) !important;
   font-size: 8px !important;
   letter-spacing: 4px !important;
   text-transform: uppercase !important;
@@ -70,7 +70,7 @@ h1, h2, h3, h4 {
 
 /* STEP 6 — Card titles (Resting HR, VO2 Max, Strain, etc) */
 .card-title-metric {
-  font-family: 'Rajdhani', sans-serif !important;
+  font-family: var(--font-ui) !important;
   font-weight: 600 !important;
   font-size: 12px !important;
   letter-spacing: 2px !important;
@@ -79,7 +79,7 @@ h1, h2, h3, h4 {
 
 /* STEP 7 — Yves data output lines */
 .yves-data {
-  font-family: 'Space Mono', monospace !important;
+  font-family: var(--font-status) !important;
   font-size: 10px !important;
   letter-spacing: 1.5px !important;
   text-transform: uppercase !important;
@@ -88,8 +88,8 @@ h1, h2, h3, h4 {
 
 /* Yves italic insight */
 .yves-insight {
-  font-family: 'Cormorant Garamond', Georgia, serif !important;
-  font-weight: 300 !important;
+  font-family: var(--font-display) !important;
+  font-weight: var(--font-display-weight) !important;
   font-style: italic !important;
   font-size: 15px !important;
   line-height: 1.6 !important;
@@ -97,7 +97,7 @@ h1, h2, h3, h4 {
 
 /* STEP 8 — Body copy / descriptions */
 .body-text {
-  font-family: 'Rajdhani', sans-serif !important;
+  font-family: var(--font-ui) !important;
   font-weight: 400 !important;
   font-size: 15px !important;
   letter-spacing: 0.4px !important;
@@ -106,7 +106,7 @@ h1, h2, h3, h4 {
 
 /* STEP 9 — Navigation labels */
 .nav-label {
-  font-family: 'Space Mono', monospace !important;
+  font-family: var(--font-status) !important;
   font-size: 7px !important;
   letter-spacing: 2px !important;
   text-transform: uppercase !important;
@@ -116,7 +116,7 @@ h1, h2, h3, h4 {
 button,
 [role="button"],
 .btn-text {
-  font-family: 'Rajdhani', sans-serif !important;
+  font-family: var(--font-ui) !important;
   font-weight: 600 !important;
   letter-spacing: 3px !important;
   text-transform: uppercase !important;
@@ -124,7 +124,7 @@ button,
 
 /* Reset font for inputs inside buttons and non-button elements */
 input, textarea, select {
-  font-family: 'Rajdhani', sans-serif !important;
+  font-family: var(--font-ui) !important;
   font-weight: 400 !important;
   letter-spacing: 0.4px !important;
   text-transform: none !important;
@@ -133,7 +133,7 @@ input, textarea, select {
 /* STEP 11 — Timestamps, captions */
 .timestamp,
 .caption {
-  font-family: 'Space Mono', monospace !important;
+  font-family: var(--font-status) !important;
   font-size: 8px !important;
   letter-spacing: 2px !important;
   text-transform: uppercase !important;
@@ -142,124 +142,103 @@ input, textarea, select {
 
 /* STEP 12 — Status badges */
 .status-badge {
-  font-family: 'Space Mono', monospace !important;
+  font-family: var(--font-status) !important;
   font-size: 7px !important;
   letter-spacing: 2.5px !important;
   text-transform: uppercase !important;
 }
 
-/* ── Enforce Space Mono on all font-mono elements ──────────────────── */
+/* ── Enforce status/mono font on all font-mono elements ────────────── */
 .font-mono,
 [class*="font-mono"],
 code, pre {
-  font-family: 'Space Mono', monospace !important;
+  font-family: var(--font-status) !important;
+}
+
+/* ── Logo / wordmark ───────────────────────────────────────────────── */
+.font-logo,
+[class*="font-logo"] {
+  font-family: var(--font-logo) !important;
+  font-weight: var(--font-logo-weight) !important;
 }
 
 /* ══════════════════════════════════════════════════════════════════════
    PREDICTIV. DESIGN SYSTEM v1.0
-   ══════════════════════════════════════════════════════════════════════
-   Colour distribution law:
-     65% — void / deep (backgrounds)
-     20% — surface / panel (cards, modules)
-     10% — marble tones (all text)
-      5% — accents (icons, status, CTAs only)
    ══════════════════════════════════════════════════════════════════════ */
 
 @layer base {
   :root {
-    /* ── TYPOGRAPHY ─────────────────────────────────────────────── */
-    --font-display: 'Cormorant Garamond', Georgia, serif;
-    --font-ui: 'Rajdhani', sans-serif;
-    --font-mono: 'Space Mono', monospace;
+    /* ── DESIGN THEME FONT TOKENS — Design 1 (Clinical) defaults ─── */
+    --font-display:        'Cormorant Garamond', Georgia, serif;
+    --font-display-weight: 300;
+    --font-ui:             'Rajdhani', sans-serif;
+    --font-status:         'Space Mono', monospace;
+    --font-logo:           'Cormorant Garamond', Georgia, serif;
+    --font-logo-weight:    300;
 
     /* ── Accent hue — user-configurable via Settings color wheel ── */
     --accent-hue: 240;
 
-    /* ── PREDICTIV. BRAND v2 — Dark mode default ─────────────────
-       Surface hierarchy: root → surface → elevated → card → input
-       Containers carry a tint of --accent-hue for personality.
-       Base: Valspar Dark Kettle Black — warm charcoal, not void.
-    ─────────────────────────────────────────────────────────────── */
-
-    /* Surface layers (dark) — charcoal base, accent-tinted containers */
+    /* ── PREDICTIV. BRAND v2 — Dark mode default ─────────────────── */
     --bg-root:     #04040A;
     --bg-surface:  #0D0D14;
     --bg-elevated: #0A0A12;
     --bg-card:     #0D0D14;
     --bg-input:    #0A0A12;
 
-    /* Text hierarchy (dark) */
     --text-primary:   #F0EEE8;
     --text-secondary: #6B7B82;
     --text-tertiary:  #3A4448;
     --text-ghost:     rgba(232,226,220,0.15);
 
-    /* Brand accents — only two */
-    --accent-cold-steel: #A8C4D4;   /* Cold Steel — primary accent */
+    --accent-cold-steel: #A8C4D4;
     --accent-muted:      rgba(168,196,212,0.1);
-    --gold:              #C9A96E;   /* Gold — Yves insights ONLY */
+    --gold:              #C9A96E;
     --gold-muted:        rgba(201,169,110,0.1);
 
-    /* Status — exactly four */
-    --status-good:    #7ABFA0;   /* Recovery, optimal, safe */
-    --status-caution: #C4A46A;   /* Elevated, watch, building */
-    --status-risk:    #B87070;   /* Injury risk, critical */
-    --status-info:    #A8C4D4;   /* Neutral data, system, Yves */
+    --status-good:    #7ABFA0;
+    --status-caution: #C4A46A;
+    --status-risk:    #B87070;
+    --status-info:    #A8C4D4;
 
-    /* Status backgrounds (dark) */
     --status-good-bg:    rgba(126,203,161,0.08);
     --status-caution-bg: rgba(212,149,106,0.08);
     --status-risk-bg:    rgba(196,107,107,0.08);
     --status-info-bg:    rgba(168,196,212,0.08);
 
-    /* Device colours — wearable pages only */
     --device-oura:   #7B5EA8;
     --device-garmin: #2E8B6A;
     --device-polar:  #C05050;
 
-    /* Structural */
     --border-color: rgba(168,196,212,0.12);
 
-    /* ── Tailwind/shadcn HSL variables (mapped to v2 palette) ───── */
-    --background: 240 43% 3%;           /* #04040A dark kettle charcoal */
-    --foreground: 33 18% 93%;          /* #F0EEE8 warm near-white */
-
-    --card: 240 17% 6%;               /* #0D0D14 */
-    --card-foreground: 0 0% 100%;      /* pure white text on cards */
-
+    --background: 240 43% 3%;
+    --foreground: 33 18% 93%;
+    --card: 240 17% 6%;
+    --card-foreground: 0 0% 100%;
     --popover: var(--accent-hue) 18% 30%;
     --popover-foreground: 0 0% 100%;
-
-    --primary: 200 30% 75%;            /* #A8C4D4 Cold Steel — kept */
+    --primary: 200 30% 75%;
     --primary-foreground: 0 0% 100%;
-
     --secondary: var(--accent-hue) 18% 30%;
     --secondary-foreground: 0 0% 95%;
-
     --muted: var(--accent-hue) 18% 30%;
-    --muted-foreground: 195 10% 46%;   /* #6B7B82 */
-
-    --accent: 200 30% 75%;             /* Cold Steel — kept */
+    --muted-foreground: 195 10% 46%;
+    --accent: 200 30% 75%;
     --accent-foreground: 0 0% 100%;
-
-    --destructive: 0 28% 58%;          /* #B87070 --status-risk */
+    --destructive: 0 28% 58%;
     --destructive-foreground: 30 20% 94%;
-
-    --border: 200 30% 75% / 0.12;      /* cold steel border */
+    --border: 200 30% 75% / 0.12;
     --input: var(--accent-hue) 18% 30%;
     --ring: 200 30% 75%;
-
     --radius: 0;
-
-    /* Legacy aliases */
     --glass-bg: var(--accent-hue) 18% 33% / 0.8;
     --glass-border: 0 0% 100% / 0.12;
     --glass-highlight: 0 0% 100% / 0.05;
-    --status-optimal: 160 30% 55%;     /* #7ABFA0 */
-    --status-warning: 42 35% 59%;      /* #C4A46A */
-    --status-critical: 0 28% 58%;      /* #B87070 */
+    --status-optimal: 160 30% 55%;
+    --status-warning: 42 35% 59%;
+    --status-critical: 0 28% 58%;
 
-    /* Sidebar */
     --sidebar-background: 240 43% 3%;
     --sidebar-foreground: 30 15% 88%;
     --sidebar-primary: 200 30% 75%;
@@ -321,26 +300,19 @@ code, pre {
 
   /* Light mode — warm white, Riz v2 palette */
   .light {
-    /* Surface layers (light) — warm white backdrop */
     --bg-root:     #F4F2EE;
     --bg-surface:  #FFFFFF;
     --bg-elevated: #ECEAE6;
     --bg-card:     #FFFFFF;
     --bg-input:    #F5F4F0;
-
-    /* Text hierarchy (light) */
     --text-primary:   #1A1F22;
     --text-secondary: #7A8A92;
     --text-tertiary:  rgba(30,30,50,0.35);
     --text-ghost:     rgba(30,30,50,0.15);
-
-    /* Brand accents (light — darker for contrast) */
     --accent-cold-steel: #3D6B7E;
     --accent-muted:      rgba(74,122,140,0.1);
     --gold:              #9A7840;
     --gold-muted:        rgba(154,120,64,0.1);
-
-    /* Status (light) */
     --status-good:    #3A8C5A;
     --status-caution: #A06830;
     --status-risk:    #993333;
@@ -349,46 +321,33 @@ code, pre {
     --status-caution-bg: rgba(160,104,48,0.08);
     --status-risk-bg:    rgba(153,51,51,0.08);
     --status-info-bg:    rgba(74,122,140,0.08);
-
     --border-color: rgba(60,80,90,0.12);
 
-    /* Tailwind/shadcn HSL variables (light) */
-    --background: 36 14% 95%;             /* #F4F2EE warm white */
-    --foreground: 200 13% 12%;           /* #1A1F22 near-black */
-
-    --card: 0 0% 100%;                   /* #FFFFFF white */
+    --background: 36 14% 95%;
+    --foreground: 200 13% 12%;
+    --card: 0 0% 100%;
     --card-foreground: 200 13% 12%;
-
     --popover: 40 20% 98%;
     --popover-foreground: 0 0% 5%;
-
-    --primary: 196 35% 37%;            /* #3D6B7E */
+    --primary: 196 35% 37%;
     --primary-foreground: 0 0% 100%;
-
-    --secondary: var(--accent-hue) 18% 82%;  /* blue inner containers */
+    --secondary: var(--accent-hue) 18% 82%;
     --secondary-foreground: 0 0% 5%;
-
-    --muted: var(--accent-hue) 18% 82%;     /* blue inner containers */
+    --muted: var(--accent-hue) 18% 82%;
     --muted-foreground: 0 0% 5% / 0.75;
-
     --accent: 196 31% 41%;
     --accent-foreground: 60 13% 98%;
-
-    --destructive: 0 50% 40%;          /* #993333 */
+    --destructive: 0 50% 40%;
     --destructive-foreground: 60 13% 98%;
-
-    --border: 200 20% 30% / 0.12;      /* subtle cool borders */
-    --input: 0 0% 100%;                  /* white like cards */
+    --border: 200 20% 30% / 0.12;
+    --input: 0 0% 100%;
     --ring: 196 35% 37%;
-
     --glass-bg: 0 0% 100% / 0.9;
     --glass-border: 240 30% 14% / 0.08;
     --glass-highlight: 60 13% 98%;
-
     --status-optimal: 147 44% 35%;
     --status-warning: 25 55% 40%;
     --status-critical: 0 50% 40%;
-
     --sidebar-background: 60 13% 98%;
     --sidebar-foreground: 240 30% 14%;
     --sidebar-primary: 196 31% 41%;
@@ -397,6 +356,34 @@ code, pre {
     --sidebar-accent-foreground: 240 30% 14%;
     --sidebar-border: 240 30% 14% / 0.08;
     --sidebar-ring: 196 31% 41%;
+  }
+
+  /* ══════════════════════════════════════════════════════════════════
+     DESIGN THEME OVERRIDES
+     Each theme class on <html> overrides only the font tokens it owns.
+     Design 1 (clinical) is the :root default — no overrides needed.
+     ══════════════════════════════════════════════════════════════════ */
+
+  /* Design 2 — Organic Wellness
+     Name headings / h1–h4 → DM Serif Display
+     Body, UI labels, buttons, inputs → Plus Jakarta Sans              */
+  .theme-wellness {
+    --font-display:        'DM Serif Display', Georgia, serif;
+    --font-display-weight: 400;
+    --font-ui:             'Plus Jakarta Sans', system-ui, sans-serif;
+    --font-logo:           'DM Serif Display', Georgia, serif;
+    --font-logo-weight:    400;
+  }
+
+  /* Design 3 — High Performance
+     Logo, score numbers, stats → Syne weight 800
+     Status bar, labels, alerts → JetBrains Mono                       */
+  .theme-performance {
+    --font-logo:           'Syne', sans-serif;
+    --font-logo-weight:    800;
+    --font-display:        'Syne', sans-serif;
+    --font-display-weight: 800;
+    --font-status:         'JetBrains Mono', monospace;
   }
 }
 
@@ -433,21 +420,15 @@ code, pre {
     overflow-y: auto;
   }
 
-  /* Dark mode — #04040A dark kettle charcoal */
   .dark body,
   :root body {
     background: #04040A;
   }
 
-  /* Light mode — warm white backdrop */
   .light body {
     background: #F4F2EE;
   }
 
-  /* ── Light mode: override hardcoded dark-only colours ──────────────
-     coldBlue (#A8C4D4) is invisible on white — remap to darker #4A7A8C
-     ice (#D0E8F5) same issue — remap to #4A7A8C
-  ─────────────────────────────────────────────────────────────────── */
   .light .text-coldBlue              { color: rgb(74 122 140 / 1) !important; }
   .light .text-coldBlue\/10          { color: rgb(74 122 140 / 0.10) !important; }
   .light .text-coldBlue\/20          { color: rgb(74 122 140 / 0.20) !important; }
@@ -461,16 +442,11 @@ code, pre {
   .light .text-marble2               { color: rgb(0 0 0 / 0.95) !important; }
   .light .text-marble3               { color: rgb(0 0 0 / 1) !important; }
 
-  /* Backgrounds using coldBlue need to stay subtle in light mode */
   .light .bg-coldBlue\/10            { background-color: rgb(74 122 140 / 0.08) !important; }
   .light .bg-coldBlue\/20            { background-color: rgb(74 122 140 / 0.12) !important; }
   .light .border-coldBlue\/20        { border-color: rgb(74 122 140 / 0.25) !important; }
   .light .border-coldBlue\/30        { border-color: rgb(74 122 140 / 0.35) !important; }
 
-  /* ── Container interiors: accent-tinted cards in light mode ──────
-     Partial-opacity card utilities resolve to the accent-tinted card
-     color from var(--card). No hardcoded hex — the color wheel drives
-     the tint via --accent-hue. */
   .light .bg-card\/40,
   .light .bg-card\/50,
   .light .bg-card\/60,
@@ -491,9 +467,6 @@ code, pre {
     background-color: #FFFFFF !important;
   }
 
-  /* Kill all borders in light mode for a seamless blend */
-  /* Kill theme-variable borders but NOT custom color borders like
-     border-[#AAABA5]/50 which are intentional eggshell outlines */
   .light .border-border,
   .light [class*="border-border"],
   .light .border-glass-border,
@@ -502,18 +475,11 @@ code, pre {
     border-color: rgba(60,80,90,0.12) !important;
   }
 
-  /* ── Hover lighten: cards brighten on hover to signal interactivity ──
-     In light mode, hovering a card shifts it from #F2F3F0 toward white,
-     creating a subtle "lift" effect without shadows or borders. */
   .light .hover\:brightness-105:hover {
     background-color: hsl(var(--card) / 0.9) !important;
     filter: none !important;
   }
 
-  /* ── Nested sub-containers: slightly darker tint for depth ──────────
-     Creates the soft nested-container effect the brand guide uses.
-     Elements using bg-muted inside a bg-card parent get a slightly
-     darker silver tint so the nesting reads visually. */
   .light .bg-muted,
   .light .bg-muted\/30,
   .light .bg-muted\/50 {
@@ -525,16 +491,11 @@ code, pre {
     background-color: hsl(var(--accent-hue) 18% 82%) !important;
   }
 
-  /* ── Nav icons: bright white in dark, strong black in light ────────── */
   .dark nav .text-foreground\/80,
   :root nav .text-foreground\/80 {
     color: rgb(255 255 255 / 0.9) !important;
   }
 
-  /* ── Text on the silver backdrop: bolder + solid black ──────────────
-     Any text that sits outside a white card needs full contrast against
-     the silver. Force foreground text variants to near-black and bump
-     weight so small caps/labels stay legible on the backdrop. */
   .light .text-foreground\/80,
   .light .text-foreground\/70,
   .light .text-foreground\/60,
@@ -546,7 +507,6 @@ code, pre {
     color: rgb(0 0 0 / 0.75) !important;
   }
 
-  /* ── Focus states ──────────────────────────────────────────────── */
   *:focus-visible {
     outline: 1px solid hsl(var(--primary));
     outline-offset: 2px;
@@ -561,7 +521,6 @@ code, pre {
     outline-offset: 2px;
   }
 
-  /* ── Touch targets (WCAG 2.5.5) ───────────────────────────────── */
   button, a, input, select, textarea {
     min-height: 44px;
     min-width: 44px;
@@ -573,7 +532,6 @@ code, pre {
     padding: 10px;
   }
 
-  /* ── iOS Safe Area ─────────────────────────────────────────────── */
   @supports (padding: max(0px)) {
     body {
       padding-left: max(0px, env(safe-area-inset-left));
@@ -581,20 +539,15 @@ code, pre {
     }
   }
 
-  /* ── Typography refinement ────────────────────────────────────────── */
-
-  /* Rajdhani body text */
   p, li, span, div {
     line-height: 1.75;
   }
 
-  /* Space Mono — labels, identifiers, data */
   .font-mono, [class*="font-mono"] {
     line-height: 1.6;
     letter-spacing: 0.8px;
   }
 
-  /* Space Mono tiny labels (section headers, eyebrows) */
   .section-header,
   [class*="text-\\[7px\\]"],
   [class*="text-\\[8px\\]"],
@@ -602,18 +555,15 @@ code, pre {
     letter-spacing: 3px;
   }
 
-  /* Cormorant Garamond display — metric numbers */
   .font-display, [class*="font-display"] {
     line-height: 1;
-    font-weight: 300;
+    font-weight: var(--font-display-weight);
   }
 
-  /* Remove any text shadows */
   * {
     text-shadow: none;
   }
 
-  /* Scrollable containers */
   .scrollable-content {
     overscroll-behavior-y: contain;
     -webkit-overflow-scrolling: touch;
@@ -633,9 +583,8 @@ code, pre {
 }
 
 @layer utilities {
-  /* ── Section header label ────────────────────────────────────────── */
   .section-header {
-    font-family: var(--font-mono);
+    font-family: var(--font-status);
     font-size: 8px;
     letter-spacing: 4px;
     text-transform: uppercase;
@@ -649,9 +598,6 @@ code, pre {
     color: #A8C4D4;
   }
 
-  /* .light .section-header override lives in the !important block above */
-
-  /* ── Spacing system ────────────────────────────────────────────── */
   .page-container {
     padding-left: 24px;
     padding-right: 24px;
@@ -674,7 +620,6 @@ code, pre {
     margin-top: 48px;
   }
 
-  /* ── Predictiv. card — soft radius, no shadow, 1px border ────── */
   .predictiv-card {
     background: hsl(var(--card));
     border: 1px solid hsl(var(--glass-border));
@@ -686,12 +631,10 @@ code, pre {
     border-color: hsl(var(--primary) / 0.3);
   }
 
-  /* ── Accent-top card (highlighted data) ────────────────────────── */
   .card-accent-top {
     border-top: 1px solid hsl(var(--primary) / 0.4);
   }
 
-  /* ── Hairline loader sweep ─────────────────────────────────────── */
   @keyframes hairline-sweep {
     0% { transform: translateX(-100%); }
     100% { transform: translateX(100%); }
@@ -701,7 +644,6 @@ code, pre {
     animation: hairline-sweep 1.2s linear infinite;
   }
 
-  /* ── Fade in (screen transitions) ──────────────────────────────── */
   @keyframes predictiv-fade-in {
     0% { opacity: 0; transform: translateY(12px); }
     100% { opacity: 1; transform: translateY(0); }
@@ -720,7 +662,6 @@ code, pre {
     animation: predictiv-fade-in-slow 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
   }
 
-  /* ── Data reveal ───────────────────────────────────────────────── */
   @keyframes bar-grow {
     0% { transform: scaleX(0); }
     100% { transform: scaleX(1); }
@@ -731,7 +672,6 @@ code, pre {
     transform-origin: left;
   }
 
-  /* ── Slow border pulse (Yves alive indicator) ──────────────────── */
   @keyframes border-pulse {
     0%, 100% { opacity: 0.2; }
     50% { opacity: 0.6; }
@@ -741,7 +681,6 @@ code, pre {
     animation: border-pulse 6s ease-in-out infinite;
   }
 
-  /* ── Accordion (Radix) ─────────────────────────────────────────── */
   @keyframes accordion-down {
     from { height: 0; }
     to { height: var(--radix-accordion-content-height); }
@@ -760,7 +699,6 @@ code, pre {
     animation: accordion-up 0.2s ease-out;
   }
 
-  /* ── Nav safe area ─────────────────────────────────────────────── */
   .pb-nav-safe {
     padding-bottom: calc(6rem + env(safe-area-inset-bottom));
   }
@@ -781,7 +719,6 @@ code, pre {
     }
   }
 
-  /* ── Touch helpers ─────────────────────────────────────────────── */
   .touch-target {
     min-height: 44px;
     min-width: 44px;

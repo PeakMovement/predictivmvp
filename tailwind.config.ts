@@ -15,9 +15,16 @@ export default {
     extend: {
       /* ── PREDICTIV. TYPOGRAPHY ─────────────────────────────────── */
       fontFamily: {
-        display: ["'Cormorant Garamond'", "Georgia", "serif"],     // Hero titles, brand moments
-        sans:    ["'Rajdhani'", "system-ui", "sans-serif"],         // Body, labels, nav, buttons
-        mono:    ["'Space Mono'", "'Courier New'", "monospace"],    // Metrics, data, Yves, timestamps
+        // Design 1 — Clinical Precision (default)
+        display:  ["'Cormorant Garamond'", "Georgia", "serif"],
+        sans:     ["'Rajdhani'", "system-ui", "sans-serif"],
+        mono:     ["'Space Mono'", "'Courier New'", "monospace"],
+        // Design 2 — Organic Wellness
+        "dm-serif": ["'DM Serif Display'", "Georgia", "serif"],
+        jakarta:    ["'Plus Jakarta Sans'", "system-ui", "sans-serif"],
+        // Design 3 — High Performance
+        syne:       ["'Syne'", "sans-serif"],
+        jetbrains:  ["'JetBrains Mono'", "monospace"],
       },
 
       /* ── PREDICTIV. COLOURS ────────────────────────────────────── */
@@ -109,10 +116,6 @@ export default {
         vast:    "96px",
       },
 
-      /* ── SOFT EDITORIAL RADIUS — per brand guide ───────────────
-         Subtle rounding across the board. Not pill-soft, not sharp.
-         Matches the brand guide's mockup softness without losing
-         the minimal-editorial feel. */
       borderRadius: {
         none: "0",
         sm:  "0",
@@ -127,11 +130,11 @@ export default {
 
       /* ── LETTER SPACING ────────────────────────────────────────── */
       letterSpacing: {
-        body:    "0.4px",    // Rajdhani body text 14-16px
-        label:   "1.8px",   // Rajdhani bold uppercase 10-12px
-        data:    "0.8px",    // Space Mono body 11-13px
-        eyebrow: "3px",     // Space Mono tiny 7-9px
-        nav:     "2px",      // Navigation labels
+        body:    "0.4px",
+        label:   "1.8px",
+        data:    "0.8px",
+        eyebrow: "3px",
+        nav:     "2px",
       },
 
       /* ── LINE HEIGHT ───────────────────────────────────────────── */

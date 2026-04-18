@@ -14,6 +14,8 @@ type ThemeProviderState = {
   setTheme: (theme: Theme) => void;
   designTheme: DesignTheme;
   setDesignTheme: (design: DesignTheme) => void;
+  planDesignTheme: DesignTheme;
+  setPlanDesignTheme: (design: DesignTheme) => void;
 };
 
 const initialState: ThemeProviderState = {
@@ -21,12 +23,15 @@ const initialState: ThemeProviderState = {
   setTheme: () => null,
   designTheme: "clinical",
   setDesignTheme: () => null,
+  planDesignTheme: "clinical",
+  setPlanDesignTheme: () => null,
 };
 
 const ThemeProviderContext = createContext<ThemeProviderState>(initialState);
 
 const DESIGN_THEME_CLASSES: DesignTheme[] = ["clinical", "wellness", "performance"];
 const DESIGN_STORAGE_KEY = "ui-design-theme";
+const PLAN_DESIGN_STORAGE_KEY = "ui-plan-design-theme";
 
 export function ThemeProvider({
   children,
@@ -40,6 +45,10 @@ export function ThemeProvider({
 
   const [designTheme, setDesignThemeState] = useState<DesignTheme>(
     () => (localStorage.getItem(DESIGN_STORAGE_KEY) as DesignTheme) || "clinical"
+  );
+
+  const [planDesignTheme, setPlanDesignThemeState] = useState<DesignTheme>(
+    () => (localStorage.getItem(PLAN_DESIGN_STORAGE_KEY) as DesignTheme) || "clinical"
   );
 
   useEffect(() => {
@@ -72,6 +81,11 @@ export function ThemeProvider({
     setDesignTheme: (d: DesignTheme) => {
       localStorage.setItem(DESIGN_STORAGE_KEY, d);
       setDesignThemeState(d);
+    },
+    planDesignTheme,
+    setPlanDesignTheme: (d: DesignTheme) => {
+      localStorage.setItem(PLAN_DESIGN_STORAGE_KEY, d);
+      setPlanDesignThemeState(d);
     },
   };
 

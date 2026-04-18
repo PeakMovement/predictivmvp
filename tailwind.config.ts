@@ -16,9 +16,9 @@ export default {
       /* ── PREDICTIV. TYPOGRAPHY ─────────────────────────────────── */
       fontFamily: {
         // Design 1 — Clinical Precision (default)
-        display:  ["'Cormorant Garamond'", "Georgia", "serif"],
-        sans:     ["'Rajdhani'", "system-ui", "sans-serif"],
-        mono:     ["'Space Mono'", "'Courier New'", "monospace"],
+        display:  ["var(--font-display)"],
+        sans:     ["var(--font-ui)"],
+        mono:     ["var(--font-status)"],
         // Design 2 — Organic Wellness
         "dm-serif": ["'DM Serif Display'", "Georgia", "serif"],
         jakarta:    ["'Plus Jakarta Sans'", "system-ui", "sans-serif"],

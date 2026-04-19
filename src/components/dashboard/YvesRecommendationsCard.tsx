@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import jsPDF from "jspdf";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ExternalLink, Lightbulb, ChevronDown, ThumbsUp, ThumbsDown, Check, CircleHelp as HelpCircle, Download } from "lucide-react";
@@ -202,8 +201,9 @@ function RecommendationItem({ recommendation, categoryLabel, categoryIcon, prior
     }
   };
 
-  const handleDownloadPDF = (e: React.MouseEvent) => {
+  const handleDownloadPDF = async (e: React.MouseEvent) => {
     e.stopPropagation();
+    const { default: jsPDF } = await import("jspdf");
     const doc = new jsPDF();
     let y = 20;
 

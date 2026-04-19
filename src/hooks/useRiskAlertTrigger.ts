@@ -417,7 +417,20 @@ export function useRiskAlertTrigger(): UseRiskAlertTriggerResult {
   }, [currentAlert]);
 
   useEffect(() => {
-    checkForAlerts();
+    const ALERT_CHECK_INTERVAL_MS = 60 * 60 * 1000;
+    const lastChecked = sessionStorage.getItem("riskAlertLastChecked");
+    const now = Date.now();
+
+    if (lastChecked && now - parseInt(lastChecked, 10) < ALERT_CHECK_INTERVAL_MS) {
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      sessionStorage.setItem("riskAlertLastChecked", String(Date.now()));
+      checkForAlerts();
+    }, 5000);
+
+    return () => clearTimeout(timer);
   }, [checkForAlerts]);
 
   return { currentAlert, dismissAlert, checkForAlerts, snoozeAlert };

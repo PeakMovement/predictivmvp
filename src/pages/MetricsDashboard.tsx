@@ -36,7 +36,6 @@ import { MetricSparklineCard } from "@/components/charts/Sparkline";
 import { InteractiveChart } from "@/components/charts/InteractiveChart";
 import { useWearableMetrics } from "@/hooks/useWearableMetrics";
 import { useWearableSessions } from "@/hooks/useWearableSessions";
-import html2canvas from "html2canvas";
 import { useToast } from "@/hooks/use-toast";
 import { LoadingFallback } from "@/components/LoadingFallback";
 import { EmptyState } from "@/components/EmptyStates";
@@ -59,6 +58,7 @@ export default function MetricsDashboard() {
     if (!dashboardRef.current) return;
 
     try {
+      const { default: html2canvas } = await import("html2canvas");
       const canvas = await html2canvas(dashboardRef.current, {
         backgroundColor: "#ffffff",
         scale: 2,

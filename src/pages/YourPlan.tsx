@@ -9,7 +9,6 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import jsPDF from "jspdf";
 import { useTrainingTrends } from "@/hooks/useTrainingTrends";
 import OuraSyncStatus from "@/components/OuraSyncStatus";
 import { useTheme } from "@/components/ThemeProvider";
@@ -103,8 +102,9 @@ interface PDFOptions {
   recommendations: Array<{color: string; text: string}>;
 }
 
-const generateWeeklyReportPDF = (options: PDFOptions) => {
+const generateWeeklyReportPDF = async (options: PDFOptions) => {
   const { metrics, insightText, recommendations } = options;
+  const { default: jsPDF } = await import("jspdf");
   const doc = new jsPDF();
   const pageWidth = doc.internal.pageSize.getWidth();
   let yPosition = 20;

@@ -8,7 +8,6 @@ import { cn } from "@/lib/utils";
 import { useTodaysDecision } from "@/hooks/useTodaysDecision";
 import { useTrainingFocusRecommendation } from "@/hooks/useTrainingFocusRecommendation";
 import { toast } from "sonner";
-import jsPDF from "jspdf";
 
 export interface TodaysBestDecisionHandle {
   refresh: () => void;
@@ -176,8 +175,9 @@ function TodaysBestDecision({ className }, ref) {
     toast.info("Updating your guidance...");
   };
 
-  const handleDownloadPDF = () => {
+  const handleDownloadPDF = async () => {
     if (!session) return;
+    const { default: jsPDF } = await import("jspdf");
     const doc = new jsPDF();
     let y = 20;
 

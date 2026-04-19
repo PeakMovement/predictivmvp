@@ -65,7 +65,7 @@ const InjuryLog               = lazy(() => import("@/pages/InjuryLog"));
 const WeeklyPlan              = lazy(() => import("@/pages/WeeklyPlan"));
 
 const queryClient = new QueryClient({
-  defaultOptions: { queries: { staleTime: 0 } },
+  defaultOptions: { queries: { staleTime: 2 * 60 * 1000, gcTime: 10 * 60 * 1000 } },
   queryCache: new QueryCache({
     onError: (error, query) => {
       const onError = query.meta?.onError as ((e: Error) => void) | undefined;

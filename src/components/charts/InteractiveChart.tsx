@@ -38,7 +38,6 @@ import {
   ZoomOut,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import html2canvas from "html2canvas";
 import { useToast } from "@/hooks/use-toast";
 
 export type ChartType = "line" | "area" | "bar";
@@ -115,6 +114,7 @@ export const InteractiveChart = ({
     if (!chartRef.current) return;
 
     try {
+      const { default: html2canvas } = await import("html2canvas");
       const canvas = await html2canvas(chartRef.current, {
         backgroundColor: "#ffffff",
         scale: 2,

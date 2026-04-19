@@ -44,7 +44,6 @@ import { Check, ThumbsUp, ThumbsDown, CircleHelp as HelpCircle, Download } from 
 import { useEngagementTracking } from "@/hooks/useEngagementTracking";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 import { useToast } from "@/hooks/use-toast";
-import jsPDF from "jspdf";
 import { supabase } from "@/integrations/supabase/client";
 
 /**

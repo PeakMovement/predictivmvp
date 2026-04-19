@@ -76,7 +76,7 @@ export const BottomNavigation = ({ activeTab, onNavigate }: BottomNavigationProp
                       "min-h-[72px] touch-manipulation",
                       isActive
                         ? "bg-card text-primary"
-                        : "bg-background text-muted-foreground/50 hover:text-foreground hover:bg-card"
+                        : "bg-background text-foreground dark:text-muted-foreground/50 hover:text-foreground hover:bg-card"
                     )}
                   >
                     <div className="relative mb-1.5">
@@ -140,7 +140,7 @@ export const BottomNavigation = ({ activeTab, onNavigate }: BottomNavigationProp
               "flex flex-col items-center justify-center px-2 py-1 transition-all duration-150",
               isActive
                 ? "text-primary"
-                : "text-foreground/80 hover:text-foreground"
+                : "text-foreground dark:text-foreground/80 hover:text-foreground"
             )}
           >
             <div className="relative mb-1">

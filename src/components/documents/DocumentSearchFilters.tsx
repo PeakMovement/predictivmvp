@@ -105,7 +105,7 @@ export function DocumentSearchFilters({
           <PopoverContent align="end" className="w-80">
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <h4 className="font-sans font-semibold text-sm">Advanced Filters</h4>
+                <h4 className="font-sans font-semibold text-sm">Filter Options</h4>
                 {hasActiveFilters && (
                   <Button
                     variant="ghost"
@@ -122,7 +122,7 @@ export function DocumentSearchFilters({
               </div>
 
               <div className="space-y-2">
-                <Label>Document Type</Label>
+                <Label>Category</Label>
                 <Select
                   value={filters.documentType || 'all'}
                   onValueChange={handleTypeChange}
@@ -140,7 +140,7 @@ export function DocumentSearchFilters({
               </div>
 
               <div className="space-y-2">
-                <Label>Processing Status</Label>
+                <Label>Analysis Status</Label>
                 <Select
                   value={filters.processingStatus || 'all'}
                   onValueChange={handleStatusChange}
@@ -159,7 +159,7 @@ export function DocumentSearchFilters({
               </div>
 
               <div className="space-y-2">
-                <Label>Date Range</Label>
+                <Label>Uploaded Between</Label>
                 <div className="space-y-2">
                   <Popover>
                     <PopoverTrigger asChild>

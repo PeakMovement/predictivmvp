@@ -106,10 +106,10 @@ const MyDocuments = () => {
         <div className="space-y-1">
           <h1 className="text-3xl font-bold flex items-center gap-2">
             <FileText className="w-8 h-8 text-primary" />
-            My Documents
+            Your Health Documents
           </h1>
           <p className="text-muted-foreground">
-            Upload your health documents for AI powered insights
+            Store, organise, and get AI insights from your health files
           </p>
         </div>
         <CustomizeLayoutButton onClick={openLayoutEditor} isCustomized={layoutCustomized} />
@@ -148,24 +148,24 @@ const MyDocuments = () => {
             onUpload={uploadDocument}
             uploading={uploading}
             icon="🍽️"
-            title="Nutrition Plans"
-            description="Meal plans, dietary guidelines"
+            title="Nutrition & Diet"
+            description="Meal plans and dietary guides"
           />
           <DocumentUploadZone
             documentType="medical"
             onUpload={uploadDocument}
             uploading={uploading}
             icon="🏥"
-            title="Medical Records"
-            description="Lab results, prescriptions"
+            title="Medical Files"
+            description="Lab results, reports and prescriptions"
           />
           <DocumentUploadZone
             documentType="training"
             onUpload={uploadDocument}
             uploading={uploading}
             icon=""
-            title="Training Programs"
-            description="Workout plans, coaching"
+            title="Training & Workouts"
+            description="Workout plans and coaching notes"
           />
         </div>
       </LayoutBlock>
@@ -180,7 +180,7 @@ const MyDocuments = () => {
       >
         <Card className="bg-glass border-glass-border">
           <CardHeader>
-            <CardTitle className="text-lg">Document Summary</CardTitle>
+            <CardTitle className="text-lg">Your Upload Overview</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-3 gap-4">
@@ -212,7 +212,7 @@ const MyDocuments = () => {
         <Card className="bg-glass border-glass-border">
           <CardHeader className="space-y-4">
             <div className="flex items-center justify-between">
-              <CardTitle className="text-lg">Document Library</CardTitle>
+              <CardTitle className="text-lg">Browse Your Files</CardTitle>
               <div className="flex items-center gap-2">
                 <Filter className="w-4 h-4 text-muted-foreground" />
                 <Tabs value={activeFilter} onValueChange={(v) => setActiveFilter(v as any)}>

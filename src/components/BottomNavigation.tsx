@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Home, Dumbbell, Heart, FileText, User, ClipboardList, TrendingUp, Stethoscope, Menu, X, Calendar, LayoutGrid, Bell } from "lucide-react";
+import { Chrome as Home, Dumbbell, Heart, FileText, User, ClipboardList, TrendingUp, Stethoscope, Menu, X, Calendar, LayoutGrid, Bell } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { supabase } from "@/integrations/supabase/client";
@@ -80,7 +80,7 @@ export const BottomNavigation = ({ activeTab, onNavigate }: BottomNavigationProp
                     )}
                   >
                     <div className="relative mb-1.5">
-                      <Icon className={cn("h-5 w-5", isActive ? "text-primary" : "text-muted-foreground/40")} />
+                      <Icon className={cn("h-5 w-5", isActive ? "text-primary" : "text-foreground dark:text-muted-foreground/40")} />
                       {showBadge && (
                         <span className="absolute -top-1 -right-1 h-2 w-2 bg-critical" />
                       )}
@@ -144,7 +144,7 @@ export const BottomNavigation = ({ activeTab, onNavigate }: BottomNavigationProp
             )}
           >
             <div className="relative mb-1">
-              <Icon className={cn("h-5 w-5", isActive ? "text-primary" : "text-foreground/80")} />
+              <Icon className={cn("h-5 w-5", isActive ? "text-primary" : "text-foreground dark:text-foreground/80")} />
               {showBadge && (
                 <span className="absolute -top-1 -right-1 h-1.5 w-1.5 bg-critical rounded-full" />
               )}

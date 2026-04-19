@@ -55,19 +55,23 @@ export default function Genesis() {
       }
 
       if (data.user) {
-        fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/notify-signup`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
-          },
-          body: JSON.stringify({
-            user_id: data.user.id,
-            email,
-            username,
-            account_type: "user",
-          }),
-        }).catch(() => {});
+        try {
+          await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/notify-signup`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+            },
+            body: JSON.stringify({
+              user_id: data.user.id,
+              email,
+              username,
+              account_type: "user",
+            }),
+          });
+        } catch (webhookErr) {
+          console.error("notify-signup webhook failed:", webhookErr);
+        }
 
         if (data.session) {
           try {

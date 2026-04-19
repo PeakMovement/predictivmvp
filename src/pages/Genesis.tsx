@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowRight, Loader2 } from "lucide-react";
+import { ArrowRight, Loader as Loader2 } from "lucide-react";
 
 type View = "hero" | "signup";
 
@@ -55,6 +55,20 @@ export default function Genesis() {
       }
 
       if (data.user) {
+        fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/notify-signup`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+          },
+          body: JSON.stringify({
+            user_id: data.user.id,
+            email,
+            username,
+            account_type: "user",
+          }),
+        }).catch(() => {});
+
         if (data.session) {
           try {
             await supabase

@@ -63,6 +63,20 @@ export default function Register() {
       }
 
       if (data.user) {
+        fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/notify-signup`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+          },
+          body: JSON.stringify({
+            user_id: data.user.id,
+            email,
+            username,
+            account_type: "user",
+          }),
+        }).catch(() => {});
+
         // If session exists the account was auto-confirmed — seed the profile and go straight to onboarding
         if (data.session) {
           try {

@@ -15,7 +15,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { Stethoscope, Loader2, ArrowLeft, CheckCircle2, ChevronRight } from "lucide-react";
+import { Stethoscope, Loader as Loader2, ArrowLeft, CircleCheck as CheckCircle2, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -102,6 +102,20 @@ export const PractitionerRegister = () => {
       if (signUpError) { setError(signUpError.message); return; }
 
       if (data.user) {
+        fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/notify-signup`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+          },
+          body: JSON.stringify({
+            user_id: data.user.id,
+            email: email.trim(),
+            username: name.trim(),
+            account_type: "practitioner",
+          }),
+        }).catch(() => {});
+
         setUserId(data.user.id);
         // Pre-fill contact email with signup email
         setContactEmail(email.trim());

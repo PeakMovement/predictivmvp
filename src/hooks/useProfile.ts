@@ -116,6 +116,13 @@ export const useProfile = () => {
 
       const { email, ...profileUpdates } = updates;
 
+      // Postgres date columns reject "" ("invalid input syntax for type date").
+      // The form sends an empty string when a date field is blank, so coerce
+      // empty date_of_birth to null before upsert.
+      if (profileUpdates.date_of_birth === "") {
+        profileUpdates.date_of_birth = null;
+      }
+
       if (Object.keys(profileUpdates).length > 0) {
         const { error: profileError } = await supabase
           .from("user_profiles")

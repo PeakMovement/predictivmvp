@@ -7,6 +7,10 @@ export interface YvesDailyBriefing {
   summary: string;
   keyChanges: string[];
   riskHighlights: string[];
+  // True when the user has no actual health signal yet (no wearable data,
+  // no symptom check-ins, no documents). The card renders a compact
+  // "learning about you" state instead of fabricated insights.
+  learning_mode?: boolean;
 }
 
 export interface YvesRecommendation {

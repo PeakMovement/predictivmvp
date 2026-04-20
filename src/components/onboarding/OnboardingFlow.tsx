@@ -5,7 +5,6 @@ import { useToast } from "@/hooks/use-toast";
 import { OnboardingWelcome } from "./OnboardingWelcome";
 import { OnboardingAboutYou } from "./OnboardingAboutYou";
 import { OnboardingWearableQ } from "./OnboardingWearableQ";
-import { OnboardingTrainingType } from "./OnboardingTrainingType";
 import { OnboardingGoalsQ } from "./OnboardingGoalsQ";
 import { OnboardingInjuryQ } from "./OnboardingInjuryQ";
 import { OnboardingLifestyle } from "./OnboardingLifestyle";
@@ -20,19 +19,18 @@ export interface OnboardingData {
   gender: string;
   // Screen 3 — Wearable (Q1) — multi-select
   wearables: string[];
-  // Screen 4 — Activity Preferences (Stream 3)
+  // Screen 4 — Activity Preferences (Stream 3) — also the sole sport capture;
+  // `sport` + `training_type` are derived from preferredActivities server-side.
   preferredActivities: string[];
   excludedActivities: string[];
   equipmentAccess: string[];
   availableMinutes: number | null;
-  // Screen 5 — Sports (Q2) — multi-select individual sports
-  sports: string[];
-  // Screen 6 — Goals (Q6)
+  // Screen 5 — Goals (Q6)
   healthGoals: string[];
-  // Screen 7 — Injury (Q7)
+  // Screen 6 — Injury (Q7)
   injuryHistory: string;
   injuryDescription: string;
-  // Screen 8 — Lifestyle (Q3+Q4+Q5)
+  // Screen 7 — Lifestyle (Q3+Q4+Q5)
   stressLevel: number;
   sleepQuality: string;
   compliance: string;
@@ -47,7 +45,6 @@ const INITIAL_DATA: OnboardingData = {
   excludedActivities: [],
   equipmentAccess: [],
   availableMinutes: null,
-  sports: [],
   healthGoals: [],
   injuryHistory: "",
   injuryDescription: "",
@@ -61,7 +58,6 @@ const STEP_TITLES = [
   "About You",
   "Wearable",
   "Activity Preferences",
-  "Training",
   "Goals",
   "Injury History",
   "Daily Life",
@@ -106,10 +102,9 @@ export const OnboardingFlow = ({ onComplete, onSkip }: OnboardingFlowProps) => {
     // Hydrate form from existing DB data. user_profiles is the canonical
     // source for identity fields (name, dob, gender, primary_goal). Domain
     // tables own their own data.
-    const [{ data: profile }, { data: medical }, { data: training }, { data: injuries }, { data: lifestyle }, { data: recovery }, { data: goals }] = await Promise.all([
+    const [{ data: profile }, { data: interests }, { data: injuries }, { data: lifestyle }, { data: recovery }, { data: goals }] = await Promise.all([
       supabase.from("user_profiles").select("full_name, date_of_birth, gender, primary_goal").eq("user_id", user.id).maybeSingle(),
-      supabase.from("user_medical").select("medical_notes, conditions").eq("user_id", user.id).maybeSingle(),
-      supabase.from("user_training").select("preferred_activities, training_frequency, intensity_preference").eq("user_id", user.id).maybeSingle(),
+      supabase.from("user_interests").select("preferred_activities, excluded_activities, equipment_access, available_minutes").eq("user_id", user.id).maybeSingle(),
       supabase.from("user_injuries").select("injuries, injury_details").eq("user_id", user.id).maybeSingle(),
       supabase.from("user_lifestyle").select("stress_level").eq("user_id", user.id).maybeSingle(),
       supabase.from("user_recovery").select("sleep_quality, sleep_hours").eq("user_id", user.id).maybeSingle(),
@@ -135,7 +130,10 @@ export const OnboardingFlow = ({ onComplete, onSkip }: OnboardingFlowProps) => {
       dateOfBirth: profile?.date_of_birth || prev.dateOfBirth,
       gender: profile?.gender || prev.gender,
       wearables: savedWearables.length ? savedWearables : prev.wearables,
-      sports: training?.preferred_activities?.map((s: string) => s.toLowerCase()) || prev.sports,
+      preferredActivities: interests?.preferred_activities || prev.preferredActivities,
+      excludedActivities: interests?.excluded_activities || prev.excludedActivities,
+      equipmentAccess: interests?.equipment_access || prev.equipmentAccess,
+      availableMinutes: interests?.available_minutes ?? prev.availableMinutes,
       healthGoals: goals?.goals || prev.healthGoals,
       injuryHistory: (injuries?.injury_details as any)?.type || prev.injuryHistory,
       injuryDescription: (injuries?.injury_details as any)?.description || prev.injuryDescription,
@@ -160,23 +158,23 @@ export const OnboardingFlow = ({ onComplete, onSkip }: OnboardingFlowProps) => {
       setValidationError("Please select your wearable (or 'No Wearable')");
       return false;
     }
-    if (step === 4 && data.sports.length === 0) {
-      setValidationError("Please select at least one sport");
+    if (step === 3 && data.preferredActivities.length === 0) {
+      setValidationError("Please name at least one activity you enjoy");
       return false;
     }
-    if (step === 5 && data.healthGoals.length === 0) {
+    if (step === 4 && data.healthGoals.length === 0) {
       setValidationError("Please select at least one health goal");
       return false;
     }
-    if (step === 6 && !data.injuryHistory) {
+    if (step === 5 && !data.injuryHistory) {
       setValidationError("Please select your injury history");
       return false;
     }
-    if (step === 7 && !data.sleepQuality) {
+    if (step === 6 && !data.sleepQuality) {
       setValidationError("Please select your sleep quality");
       return false;
     }
-    if (step === 7 && !data.compliance) {
+    if (step === 6 && !data.compliance) {
       setValidationError("Please select your engagement preference");
       return false;
     }
@@ -200,11 +198,10 @@ export const OnboardingFlow = ({ onComplete, onSkip }: OnboardingFlowProps) => {
       switch (stepIndex) {
         case 1: await saveAboutYou(userId, data, now); break;
         case 2: await saveWearable(userId, data, now); break;
-        case 3: await savePreferences(userId, data, now); break; // Stream 3
-        case 4: await saveTraining(userId, data, now); break;
-        case 5: await saveGoals(userId, data, now); break;
-        case 6: await saveInjury(userId, data, now); break;
-        case 7: await saveLifestyle(userId, data, now); break;
+        case 3: await savePreferences(userId, data, now); break; // Stream 3 + derived sport/training
+        case 4: await saveGoals(userId, data, now); break;
+        case 5: await saveInjury(userId, data, now); break;
+        case 6: await saveLifestyle(userId, data, now); break;
       }
       return true;
     } catch (err) {
@@ -266,7 +263,6 @@ export const OnboardingFlow = ({ onComplete, onSkip }: OnboardingFlowProps) => {
         excludedActivities: data.excludedActivities,
         equipmentAccess: data.equipmentAccess,
         availableMinutes: data.availableMinutes,
-        sports: data.sports,
         healthGoals: data.healthGoals,
         injuryHistory: data.injuryHistory,
         injuryDescription: data.injuryDescription,
@@ -280,8 +276,8 @@ export const OnboardingFlow = ({ onComplete, onSkip }: OnboardingFlowProps) => {
     // Store in structured onboarding_signals table (for Life Formula engine)
     // Use first wearable for the single-value column; store all in health_goals overload
     const primaryWearable = data.wearables.includes("none") ? "none" : data.wearables[0] || null;
-    // Derive training_type from sport selections
-    const trainingType = deriveSportCategory(data.sports);
+    // Derive training_type from free-text preferred activities (Step 3).
+    const trainingType = deriveSportCategory(data.preferredActivities);
     await supabase.from("onboarding_signals" as any).upsert({
       user_id: userId,
       wearable: primaryWearable,
@@ -375,11 +371,10 @@ export const OnboardingFlow = ({ onComplete, onSkip }: OnboardingFlowProps) => {
               {step === 1 && <OnboardingAboutYou data={data} onUpdate={update} />}
               {step === 2 && <OnboardingWearableQ data={data} onUpdate={update} />}
               {step === 3 && <OnboardingPreferences data={data} onUpdate={update} />}
-              {step === 4 && <OnboardingTrainingType data={data} onUpdate={update} />}
-              {step === 5 && <OnboardingGoalsQ data={data} onUpdate={update} />}
-              {step === 6 && <OnboardingInjuryQ data={data} onUpdate={update} />}
-              {step === 7 && <OnboardingLifestyle data={data} onUpdate={update} />}
-              {step === 8 && <OnboardingComplete data={data} />}
+              {step === 4 && <OnboardingGoalsQ data={data} onUpdate={update} />}
+              {step === 5 && <OnboardingInjuryQ data={data} onUpdate={update} />}
+              {step === 6 && <OnboardingLifestyle data={data} onUpdate={update} />}
+              {step === 7 && <OnboardingComplete data={data} />}
             </div>
 
             {/* Validation error */}
@@ -458,6 +453,33 @@ async function savePreferences(userId: string, data: OnboardingData, now: string
     }),
     last_updated: now,
   }, { onConflict: "user_id,memory_key" });
+
+  // Step 3 is now the sole sport capture — derive user_training.preferred_activities
+  // and user_profiles.sport from the free-text preferredActivities so downstream
+  // code (Life Formula engine, training plans, AI prompts) keeps working.
+  if (preferredActivities.length) {
+    const activitiesDisplay = preferredActivities.map((s) => s.charAt(0).toUpperCase() + s.slice(1));
+
+    const { data: existingTraining } = await supabase.from("user_training").select("user_id").eq("user_id", userId).maybeSingle();
+    if (existingTraining) {
+      await supabase.from("user_training").update({ preferred_activities: activitiesDisplay, updated_at: now }).eq("user_id", userId);
+    } else {
+      await supabase.from("user_training").insert({ user_id: userId, preferred_activities: activitiesDisplay, updated_at: now } as any);
+    }
+
+    await supabase.from("user_profiles").upsert({
+      user_id: userId,
+      sport: activitiesDisplay[0] || "",
+      updated_at: now,
+    }, { onConflict: "user_id" });
+
+    await supabase.from("yves_memory_bank").upsert({
+      user_id: userId,
+      memory_key: "preferred_training",
+      memory_value: JSON.stringify({ activities: activitiesDisplay }),
+      last_updated: now,
+    }, { onConflict: "user_id,memory_key" });
+  }
 }
 
 async function saveWearable(userId: string, data: OnboardingData, now: string) {
@@ -469,52 +491,26 @@ async function saveWearable(userId: string, data: OnboardingData, now: string) {
   }, { onConflict: "user_id,memory_key" });
 }
 
-async function saveTraining(userId: string, data: OnboardingData, now: string) {
-  const { sports } = data;
-
-  // Capitalize sport names for display
-  const activities = sports.map((s) => s.charAt(0).toUpperCase() + s.slice(1));
-
-  // user_training
-  const { data: existing } = await supabase.from("user_training").select("user_id").eq("user_id", userId).maybeSingle();
-  if (existing) {
-    await supabase.from("user_training").update({ preferred_activities: activities, updated_at: now }).eq("user_id", userId);
-  } else {
-    await supabase.from("user_training").insert({ user_id: userId, preferred_activities: activities, updated_at: now } as any);
-  }
-
-  // user_profiles.sport (first sport)
-  await supabase.from("user_profiles").upsert({
-    user_id: userId, sport: activities[0] || "", updated_at: now,
-  }, { onConflict: "user_id" });
-
-  // memory bank
-  await supabase.from("yves_memory_bank").upsert({
-    user_id: userId,
-    memory_key: "preferred_training",
-    memory_value: JSON.stringify({ sports, activities }),
-    last_updated: now,
-  }, { onConflict: "user_id,memory_key" });
-}
-
-/** Derive the primary training category from individual sport selections */
-function deriveSportCategory(sports: string[]): string | null {
-  if (!sports.length) return null;
-  const endurance = ["running", "cycling", "swimming", "triathlon", "walking"];
-  const strength = ["gym", "crossfit", "boxing"];
-  const team = ["football", "rugby", "basketball", "tennis", "hockey", "cricket"];
-  const mindbody = ["yoga", "golf", "surfing", "dance"];
-  const rehab = ["physiotherapy"];
+/** Derive the primary training category from free-text activity names (Step 3). */
+function deriveSportCategory(activities: string[]): string | null {
+  if (!activities.length) return null;
+  const endurance = /run|cycl|bike|swim|triathlon|walk|hik|row/;
+  const strength = /gym|crossfit|lift|weight|box/;
+  const team = /football|soccer|rugby|basket|tennis|hockey|cricket|volleyball/;
+  const mindbody = /yoga|pilates|golf|surf|dance|mobility|stretch/;
+  const rehab = /physio|rehab|therapy/;
 
   const counts: Record<string, number> = { endurance: 0, strength: 0, team: 0, mindbody: 0, rehab: 0 };
-  for (const s of sports) {
-    if (endurance.includes(s)) counts.endurance++;
-    else if (strength.includes(s)) counts.strength++;
-    else if (team.includes(s)) counts.team++;
-    else if (mindbody.includes(s)) counts.mindbody++;
-    else if (rehab.includes(s)) counts.rehab++;
+  for (const a of activities) {
+    const token = a.toLowerCase();
+    if (endurance.test(token)) counts.endurance++;
+    else if (strength.test(token)) counts.strength++;
+    else if (team.test(token)) counts.team++;
+    else if (mindbody.test(token)) counts.mindbody++;
+    else if (rehab.test(token)) counts.rehab++;
   }
-  return Object.entries(counts).sort((a, b) => b[1] - a[1])[0][0];
+  const [top] = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+  return top[1] > 0 ? top[0] : null;
 }
 
 async function saveGoals(userId: string, data: OnboardingData, now: string) {

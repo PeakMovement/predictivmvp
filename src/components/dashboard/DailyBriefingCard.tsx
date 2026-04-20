@@ -209,6 +209,15 @@ export function DailyBriefingCard({
               {isGenerating ? "Compiling..." : "Compile Briefing"}
             </Button>
           </div>
+        ) : briefing.learning_mode ? (
+          <div className="text-center py-6 space-y-3 max-w-md mx-auto">
+            <p className="font-mono text-[9px] tracking-[0.3em] uppercase text-muted-foreground/60">
+              Yves is learning about you
+            </p>
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              {briefing.summary}
+            </p>
+          </div>
         ) : (
           <CollapsibleBriefingSections briefing={briefing} recommendations={recommendations} />
         )}

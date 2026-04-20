@@ -29,6 +29,7 @@ interface YvesIntelligenceOutput {
     summary: string;
     keyChanges: string[];
     riskHighlights: string[];
+    learning_mode?: boolean;
   };
   recommendations: Array<{
     text: string;
@@ -170,46 +171,58 @@ Deno.serve(async (req) => {
       wearable_connected: dataMaturity?.wearable_connected,
     });
 
-    // Only block if truly zero data — any partial data should allow personalized briefing
-    const hasAnyUsableData = (dataMaturity?.maturity_score ?? 0) > 0
+    // Cold-start gate: we only write a briefing if the LLM has something real
+    // to reason about. Profile completeness does NOT count — a stored name is
+    // not a health signal, and treating it as one caused fabricated briefings
+    // ("neutral day", "no deviations from baseline") on accounts with zero
+    // sessions, check-ins, or documents. The gate is strict by design.
+    //
+    // data_days alone proves we have real synced data, regardless of which
+    // token table (wearable_tokens / polar_tokens) holds the connection —
+    // the maturity view's wearable_connected flag is currently blind to
+    // polar_tokens, so relying on it would leave Polar-only users stuck
+    // in learning mode forever.
+    const hasAnyHealthSignal =
+         (dataMaturity?.data_days ?? 0) > 0
       || (dataMaturity?.symptom_checkins_count ?? 0) > 0
-      || (dataMaturity?.profile_completeness ?? 0) > 0
       || (dataMaturity?.documents_count ?? 0) > 0;
 
-    if (dataMaturity?.maturity_level === 'insufficient' && !hasAnyUsableData) {
-      
-      const onboardingIntelligence: YvesIntelligenceOutput = {
+    if (!hasAnyHealthSignal) {
+      const learningIntelligence: YvesIntelligenceOutput = {
         dailyBriefing: {
-          summary: "I'm just getting to know you! Connect a wearable (Oura, Garmin, or Polar) and complete your profile so I can provide personalized insights tailored to your goals.",
+          summary: "I'm still learning about you. Connect a wearable or log how you're feeling and I'll start building a picture of your baseline — real insights, no guesses.",
           keyChanges: [],
           riskHighlights: [],
+          learning_mode: true,
         },
-        recommendations: [{
-          text: "Complete your health profile with your goals, preferences, and any health conditions I should know about",
-          category: "performance",
-          priority: "high",
-          reasoning: "A complete profile helps me understand your unique needs and provide relevant, actionable advice"
-        }]
+        recommendations: [],
       };
 
       await supabase.from("daily_briefings").upsert({
         user_id: userId,
         date: today,
-        content: onboardingIntelligence.dailyBriefing.summary,
-        context_used: onboardingIntelligence,
+        content: learningIntelligence.dailyBriefing.summary,
+        context_used: learningIntelligence,
         category: "unified",
         focus_mode: focusMode || '',
       }, { onConflict: "user_id,date,category,focus_mode" });
+
+      // Clear any stale yves_recommendations — TodaysBestDecision reads from
+      // this table and would otherwise display a leftover fabricated rec from
+      // a pre-fix generation, defeating the learning-mode guard.
+      await supabase.from("yves_recommendations")
+        .delete()
+        .eq("user_id", userId);
 
       return new Response(
         JSON.stringify({
           success: true,
           cached: false,
-          data: onboardingIntelligence,
-          content: onboardingIntelligence.dailyBriefing.summary,
+          data: learningIntelligence,
+          content: learningIntelligence.dailyBriefing.summary,
           created_at: new Date().toISOString(),
           maturity: dataMaturity,
-          reasoning: { should_speak: false, silence_reason: "Insufficient data maturity" }
+          reasoning: { should_speak: false, silence_reason: "No health signal yet — learning mode" }
         }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );

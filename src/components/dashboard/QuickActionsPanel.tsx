@@ -131,7 +131,7 @@ export const QuickActionsPanel = () => {
       id: "sync-data",
       icon: isSyncing ? Loader2 : RefreshCw,
       label: "Sync Data",
-      description: "Update Oura data",
+      description: "Update wearable data",
       onClick: handleSyncData,
       color: "text-bioGreen",
       bgColor: "bg-bioGreen/10",

@@ -206,6 +206,14 @@ export function useTodaysDecision() {
         const userInterests = userInterestsResult.data;
         const userInjuries = userInjuriesResult.data;
 
+        // Fresh-connect guard: no wearable sessions and no self-report → no
+        // decision at all. The component has a proper empty state for this.
+        if (sessions.length === 0 && symptomCheckIns.length === 0) {
+          setDecision(null);
+          setIsLoading(false);
+          return;
+        }
+
         // Build user profile for personalization
         const userProfileData: UserProfile = {
           preferredActivities: userTraining?.preferred_activities || [],
@@ -241,9 +249,19 @@ export function useTodaysDecision() {
         const hrvBaseline = userBaselines.find(b => b.metric === 'hrv')?.rolling_avg || null;
         const weeklyStrain = trainingTrends.reduce((sum, t) => sum + (t.strain || 0), 0);
 
+        // Monotony (mean/stddev of strain) and ACWR (7-day vs 28-day load
+        // ratio) are unreliable without enough history. With a sparse
+        // rolling window, stddev collapses and monotony hits the cap (2.5);
+        // the card then fabricates "Pattern Identified / High training
+        // monotony" on a user with a handful of sessions. Require 14+
+        // training_trends days before either driver can influence the
+        // decision — this matches the "building" data-maturity tier.
+        const MIN_TRENDS_FOR_LOAD_DRIVERS = 14;
+        const hasStableLoadHistory = trainingTrends.length >= MIN_TRENDS_FOR_LOAD_DRIVERS;
+
         const riskMetrics: RiskMetrics = {
-          acwr: latestRecovery?.acwr ?? latestTraining?.acwr ?? null,
-          monotony: latestRecovery?.monotony ?? latestTraining?.monotony ?? null,
+          acwr: hasStableLoadHistory ? (latestRecovery?.acwr ?? latestTraining?.acwr ?? null) : null,
+          monotony: hasStableLoadHistory ? (latestRecovery?.monotony ?? latestTraining?.monotony ?? null) : null,
           strain: weeklyStrain || latestRecovery?.strain || null,
           hrvCurrent: hrvAvg,
           hrvBaseline: hrvBaseline,

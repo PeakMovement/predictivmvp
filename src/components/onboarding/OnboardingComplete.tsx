@@ -5,7 +5,7 @@ import { generateBriefing } from "@/api/dailyBriefing";
 interface OnboardingData {
   firstName: string;
   wearables: string[];
-  sports: string[];
+  preferredActivities: string[];
   healthGoals: string[];
   injuryHistory: string;
   injuryDescription: string;
@@ -53,7 +53,7 @@ export function OnboardingComplete({ data }: Props) {
       {/* Summary */}
       <div className="border border-border divide-y divide-line">
         <SummaryRow label="Wearables" value={data.wearables.map(label).join(", ") || "—"} />
-        <SummaryRow label="Sports" value={data.sports.map(label).join(", ") || "—"} />
+        <SummaryRow label="Activities" value={data.preferredActivities.map(label).join(", ") || "—"} />
         <SummaryRow label="Goals" value={data.healthGoals.map(label).join(", ") || "—"} />
         <SummaryRow label="Injury" value={label(data.injuryHistory)} />
         <SummaryRow label="Stress" value={`${data.stressLevel}/10`} />

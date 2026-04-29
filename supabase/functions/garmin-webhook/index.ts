@@ -127,6 +127,17 @@ async function handleRequest(req: Request): Promise<Response> {
       return ok200();
     }
 
+    // TEMP diagnostic — log full payload shape so we can see exactly what
+    // Garmin is sending when "No identifiers in payload" warnings fire.
+    // Remove after we've identified the schema and adjusted resolveUserId.
+    try {
+      const keys = Object.keys(payload);
+      console.log(`[garmin-webhook] [PAYLOAD-KEYS] ${JSON.stringify(keys)}`);
+      console.log(`[garmin-webhook] [PAYLOAD-RAW] ${JSON.stringify(payload).substring(0, 2000)}`);
+    } catch (e) {
+      console.warn(`[garmin-webhook] [PAYLOAD-LOG-FAILED] ${e instanceof Error ? e.message : String(e)}`);
+    }
+
 
     // Process each data type Garmin may push
     const results: string[] = [];

@@ -101,8 +101,8 @@ export const useWearableSync = (): WearableSyncState => {
         localStorage.setItem('wearable_last_sync', syncTime.toISOString());
       }
 
-      console.info('[WearableSync] Connection verified:', { connected: isTokenValid, userId: user.id });
-      return isTokenValid;
+      console.info('[WearableSync] Connection verified:', { connected: anyConnected, userId: user.id });
+      return anyConnected;
     } catch (error) {
       console.error("[WearableSync] Error checking connection:", error);
       setIsConnected(false);

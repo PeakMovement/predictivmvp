@@ -278,13 +278,16 @@ Deno.serve(async (req: Request) => {
       updated_at: now,
     };
 
-    // 1. Try UPDATE existing row
-    const { error: updateError, count: updateCount } = await supabase
+    // 1. Try UPDATE existing row. Returning the rows (without head:true) lets
+    // us check `data.length` reliably — the count field from head:true wasn't
+    // always populated, causing a stale INSERT that violated the
+    // (user_id, scope) unique constraint with `db_insert_failed`.
+    const { data: updatedRows, error: updateError } = await supabase
       .from("wearable_tokens")
       .update(tokenPayload)
       .eq("user_id", callbackUserId)
       .eq("scope", "garmin")
-      .select("user_id", { count: "exact", head: true });
+      .select("user_id");
 
     if (updateError) {
       console.error("[garmin-auth] [CALLBACK] UPDATE failed:", updateError.message);
@@ -296,7 +299,7 @@ Deno.serve(async (req: Request) => {
 
 
     // 2. If no row existed, INSERT
-    if (!updateCount || updateCount === 0) {
+    if (!updatedRows || updatedRows.length === 0) {
       const { error: insertError } = await supabase
         .from("wearable_tokens")
         .insert({
@@ -310,7 +313,7 @@ Deno.serve(async (req: Request) => {
         console.error("[garmin-auth] [CALLBACK] INSERT failed:", insertError.message);
         return new Response(null, {
           status: 302,
-          headers: { Location: `${FRONTEND_URL}/settings?garmin_error=db_insert_failed` },
+          headers: { Location: `${FRONTEND_URL}/settings?garmin_error=db_insert_failed&detail=${encodeURIComponent(insertError.message)}` },
         });
       }
     }

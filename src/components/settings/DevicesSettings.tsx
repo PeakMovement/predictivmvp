@@ -17,16 +17,16 @@ interface DevicesSettingsProps {
 export const DevicesSettings = ({ isSectionVisible }: DevicesSettingsProps) => {
   const [isGarminConnected, setIsGarminConnected] = useState(false);
   const [isPolarConnected, setIsPolarConnected] = useState(false);
+  const [isOuraConnected, setIsOuraConnected] = useState(false);
   const [userId, setUserId] = useState<string | undefined>(undefined);
   const [lastSyncTime, setLastSyncTime] = useState<Date | null>(null);
-  const { isConnected } = useWearableSync();
   const { toast } = useToast();
   const { isExpired: garminTokenExpired } = useGarminTokenStatus();
 
   useEffect(() => {
     checkGarminConnection();
     checkPolarConnection();
-    fetchLastSync();
+    checkOuraConnection();
   }, []);
 
   const checkPolarConnection = async () => {
@@ -44,16 +44,24 @@ export const DevicesSettings = ({ isSectionVisible }: DevicesSettingsProps) => {
     }
   };
 
-  const fetchLastSync = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
-    const { data } = await supabase
-      .from("wearable_tokens")
-      .select("updated_at")
-      .eq("user_id", user.id)
-      .eq("scope", "oura")
-      .maybeSingle();
-    if (data?.updated_at) setLastSyncTime(new Date(data.updated_at));
+  // Check Oura specifically — both legacy oura_tokens and wearable_tokens
+  // (scope='oura'). Don't rely on useWearableSync.isConnected, which is true
+  // for *any* connected wearable and would mis-label a Garmin-only user as
+  // having Oura connected.
+  const checkOuraConnection = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const [oura, wearable] = await Promise.all([
+        supabase.from("oura_tokens" as any).select("user_id").eq("user_id", user.id).maybeSingle(),
+        supabase.from("wearable_tokens").select("updated_at").eq("user_id", user.id).eq("scope", "oura").maybeSingle(),
+      ]);
+      const connected = !!oura.data || !!wearable.data;
+      setIsOuraConnected(connected);
+      if (wearable.data?.updated_at) setLastSyncTime(new Date(wearable.data.updated_at));
+    } catch (error) {
+      console.error("Error checking Oura connection:", error);
+    }
   };
 
   const checkGarminConnection = async () => {
@@ -182,13 +190,13 @@ export const DevicesSettings = ({ isSectionVisible }: DevicesSettingsProps) => {
               <div className="text-left flex-1">
                 <p className="font-medium text-foreground flex items-center gap-2">
                   Wearable (Oura)
-                  {isConnected && (
+                  {isOuraConnected && (
                     <span className="text-xs px-2 py-0.5 bg-bioGreen/20 text-bioGreen border border-bioGreen/30">
                       Connected
                     </span>
                   )}
                 </p>
-                {isConnected ? (
+                {isOuraConnected ? (
                   <div className="space-y-1">
                     <p className="text-xs text-muted-foreground flex items-center gap-1">
                       <Zap size={12} className="text-bioGreen" />
@@ -205,7 +213,7 @@ export const DevicesSettings = ({ isSectionVisible }: DevicesSettingsProps) => {
                 )}
               </div>
             </div>
-            {!isConnected ? (
+            {!isOuraConnected ? (
               <Button onClick={connectOura} size="sm" className="bg-primary/80 hover:bg-primary text-primary-foreground">
                 Connect Wearable
               </Button>

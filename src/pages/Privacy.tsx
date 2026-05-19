@@ -196,7 +196,22 @@ export default function Privacy() {
           </p>
         </Section>
 
-        <Section title="11. Changes to this policy">
+        <Section title="11. Garmin Connect device data" id="garmin-data">
+          <p>
+            Health and activity data obtained from Garmin devices via the Garmin Connect Developer Program API is handled separately from all other data sources. Specifically:
+          </p>
+          <ul className="list-disc pl-6 space-y-2">
+            <li>Garmin-sourced data is <strong>not</strong> processed by, shared with, or otherwise made available to any external artificial-intelligence provider or external data-processing service.</li>
+            <li>Garmin-sourced data is <strong>not</strong> used to generate AI insights, briefings, or recommendations, and is never transmitted to any large language model or third-party inference provider.</li>
+            <li>Garmin-sourced data is stored solely within our own infrastructure and is displayed only to the individual user who owns it.</li>
+            <li>Garmin-sourced data is never sold, rented, or traded to any third party.</li>
+          </ul>
+          <p>
+            Any future change to this section affecting Garmin data will be submitted to the Garmin Connect Developer Program for written approval before implementation.
+          </p>
+        </Section>
+
+        <Section title="12. Changes to this policy">
           <p>
             We may update this Privacy Policy from time to time. We will notify you of material changes by email or in-app notification at least 14 days before the changes take effect. The "Effective date" at the top of this page shows when the policy was last revised.
           </p>
@@ -212,10 +227,10 @@ export default function Privacy() {
   );
 }
 
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
+function Section({ title, children, id }: { title: string; children: React.ReactNode; id?: string }) {
   return (
-    <section className="mb-8">
-      <h2 className="text-lg font-semibold text-slate-900 mb-3">{title}</h2>
+    <section className="mb-8" id={id}>
+      <h2 className="text-lg font-semibold text-slate-900 mb-3 scroll-mt-24">{title}</h2>
       <div className="space-y-3 text-slate-600 leading-relaxed text-sm sm:text-base">
         {children}
       </div>

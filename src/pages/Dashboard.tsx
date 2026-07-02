@@ -39,20 +39,20 @@ const WelcomeHeader = ({
   userName: string | null;
   isLoadingProfile: boolean;
 }) => (
-  <div className="text-center mb-8 md:mb-12 space-y-3 md:space-y-4 px-4 md:px-0">
-    <div className="flex justify-end mb-2">
-      <CustomizeLayoutButton onClick={onCustomize} isCustomized={isCustomized} />
+  <div className="mb-8 md:mb-10 px-1">
+    <div className="flex items-start justify-between gap-4">
+      <div className="animate-fade-in-slow min-w-0">
+        <p className="text-sm font-medium text-muted-foreground mb-1">Hello,</p>
+        <h1 className="text-3xl md:text-4xl font-semibold text-foreground tracking-tight truncate">
+          {isLoadingProfile ? '\u2026' : (userName || 'Athlete')}
+        </h1>
+        <p className="text-muted-foreground text-[15px] mt-2">Here's your training overview for today</p>
+      </div>
+      <div className="shrink-0">
+        <CustomizeLayoutButton onClick={onCustomize} isCustomized={isCustomized} />
+      </div>
     </div>
-    <div className="animate-fade-in-slow">
-      <h1 className="text-xl md:text-2xl font-light text-muted-foreground mb-1 md:mb-2">Hello,</h1>
-      <h2 className="text-3xl md:text-4xl font-bold text-foreground tracking-tight">
-        {isLoadingProfile ? '...' : (userName || 'Athlete')}
-      </h2>
-    </div>
-    <div className="animate-slide-in" style={{ animationDelay: "0.2s", animationFillMode: "both" }}>
-      <p className="text-muted-foreground text-base md:text-lg">Here's your training overview for today</p>
-    </div>
-    <div className="flex justify-center animate-fade-in" style={{ animationDelay: "0.3s" }}>
+    <div className="mt-4 animate-fade-in" style={{ animationDelay: "0.3s" }}>
       <OuraSyncStatus />
     </div>
   </div>

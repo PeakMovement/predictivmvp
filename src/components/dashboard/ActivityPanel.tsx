@@ -140,7 +140,7 @@ const MetricCard = ({
                   style={{ marginLeft: '100%', transform: 'translateX(-50%)' }}
                 />
               </div>
-              <div className="flex justify-between text-[10px] text-muted-foreground">
+              <div className="flex justify-between text-[12px] text-muted-foreground">
                 <span>{baselinePercent}% of baseline</span>
                 <span className="opacity-50">Baseline: {formatNumber(baseline)}</span>
               </div>

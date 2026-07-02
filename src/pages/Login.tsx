@@ -54,14 +54,14 @@ export default function Login() {
       <div className="relative z-10 w-full max-w-sm">
         {/* Brand */}
         <div className="text-center mb-10">
-          <p className="font-mono text-[10px] tracking-[0.35em] uppercase text-coldBlue/50 mb-4">Predictiv.</p>
-          <h1 className="font-display font-light text-3xl text-foreground">Sign In</h1>
+          <p className="font-mono text-[12px] tracking-[0.05em] uppercase text-coldBlue/50 mb-4">Predictiv.</p>
+          <h1 className="font-display font-semibold text-3xl tracking-tight text-foreground">Sign in</h1>
         </div>
 
-        <div className="border border-border bg-card p-8">
+        <div className="border border-border bg-card p-8 rounded-2xl">
           <form onSubmit={handleLogin} className="space-y-5">
             <div className="space-y-1.5">
-              <label htmlFor="identifier" className="font-mono text-[9px] tracking-[0.3em] uppercase text-muted-foreground">
+              <label htmlFor="identifier" className="font-mono text-[11px] tracking-[0.05em] uppercase text-muted-foreground">
                 Email
               </label>
               <Input
@@ -70,20 +70,20 @@ export default function Login() {
                 value={identifier}
                 onChange={(e) => setIdentifier(e.target.value)}
                 placeholder="you@example.com"
-                className="bg-background border-border text-foreground placeholder:text-muted-foreground/40 font-sans"
+                className="bg-background border-border text-foreground placeholder:text-muted-foreground/40 font-sans rounded-lg h-11"
                 required
               />
             </div>
 
             <div className="space-y-1.5">
               <div className="flex items-center justify-between">
-                <label htmlFor="password" className="font-mono text-[9px] tracking-[0.3em] uppercase text-muted-foreground">
+                <label htmlFor="password" className="font-mono text-[11px] tracking-[0.05em] uppercase text-muted-foreground">
                   Password
                 </label>
                 <button
                   type="button"
                   onClick={() => navigate("/forgot-password")}
-                  className="font-mono text-[8px] tracking-[0.15em] text-coldBlue/40 hover:text-coldBlue transition-colors"
+                  className="font-mono text-[11px] tracking-[0.03em] text-coldBlue/40 hover:text-coldBlue transition-colors"
                 >
                   Forgot?
                 </button>
@@ -94,18 +94,18 @@ export default function Login() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Enter password"
-                className="bg-background border-border text-foreground placeholder:text-muted-foreground/40 font-sans"
+                className="bg-background border-border text-foreground placeholder:text-muted-foreground/40 font-sans rounded-lg h-11"
                 required
               />
             </div>
 
             {error && (
-              <p className="font-mono text-[10px] tracking-wider text-critical text-center">{error}</p>
+              <p className="font-mono text-[12px] tracking-wider text-critical text-center">{error}</p>
             )}
 
             <button
               type="submit"
-              className="w-full bg-marble3 text-background font-sans font-semibold text-xs tracking-[0.25em] uppercase py-4 mt-2 hover:opacity-90 active:scale-[0.97] active:opacity-85 transition-all duration-100 disabled:opacity-50"
+              className="w-full bg-primary text-primary-foreground font-semibold text-sm rounded-lg py-3.5 mt-2 hover:bg-primary/90 active:scale-[0.98] transition-all duration-150 disabled:opacity-50"
               disabled={isLoading}
             >
               {isLoading ? (
@@ -113,7 +113,7 @@ export default function Login() {
                   <Loader2 className="h-3.5 w-3.5 animate-spin" /> Signing in...
                 </span>
               ) : (
-                "Sign In"
+                "Sign in"
               )}
             </button>
           </form>
@@ -128,7 +128,7 @@ export default function Login() {
           </div>
 
           <div className="mt-6 pt-4 border-t border-border text-center">
-            <p className="font-mono text-[8px] tracking-[0.15em] uppercase text-muted-foreground/40">
+            <p className="font-mono text-[11px] tracking-[0.03em] uppercase text-muted-foreground/40">
               <a href="/terms" className="hover:text-muted-foreground">Terms</a>
               <span className="mx-2">&middot;</span>
               <a href="/privacy" className="hover:text-muted-foreground">Privacy</a>

@@ -47,14 +47,14 @@ export const TableRowSkeleton = () => (
 
 export const DashboardSkeleton = () => (
   <LoadingContainer>
-    <p className="font-mono text-[9px] tracking-[0.3em] uppercase text-muted-foreground/60">Loading dashboard</p>
+    <p className="font-mono text-[11px] tracking-[0.05em] uppercase text-muted-foreground/60">Loading dashboard</p>
     <HairlineSweep width="w-32" />
   </LoadingContainer>
 );
 
 export const HealthPageSkeleton = () => (
   <LoadingContainer>
-    <p className="font-mono text-[9px] tracking-[0.3em] uppercase text-muted-foreground/60">Loading health data</p>
+    <p className="font-mono text-[11px] tracking-[0.05em] uppercase text-muted-foreground/60">Loading health data</p>
     <HairlineSweep width="w-32" />
   </LoadingContainer>
 );

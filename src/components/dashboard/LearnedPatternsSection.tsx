@@ -83,7 +83,7 @@ function PatternItem({
         <p className="text-xs font-medium text-foreground">{formatKey(entry.key)}</p>
         <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">{formatValue(entry)}</p>
         <div className="flex items-center gap-2 mt-1.5">
-          <span className="text-[10px] text-muted-foreground/60 uppercase tracking-wide">
+          <span className="text-[12px] text-muted-foreground/60 uppercase tracking-wide">
             {entry.device_source ?? entry.source} · {Math.round(entry.confidence * 100)}% confidence
           </span>
         </div>

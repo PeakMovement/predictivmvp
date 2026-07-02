@@ -118,29 +118,34 @@ export default {
 
       borderRadius: {
         none: "0",
-        sm:  "0",
-        DEFAULT: "0",
-        md:  "0",
-        lg:  "0",
-        xl:  "0",
-        "2xl": "0",
-        "3xl": "0",
-        full: "0",
+        sm:  "calc(var(--radius) - 4px)",
+        DEFAULT: "calc(var(--radius) - 2px)",
+        md:  "calc(var(--radius) - 2px)",
+        lg:  "var(--radius)",
+        xl:  "calc(var(--radius) + 4px)",
+        "2xl": "calc(var(--radius) + 8px)",
+        "3xl": "calc(var(--radius) + 14px)",
+        full: "9999px",
       },
 
       /* ── LETTER SPACING ────────────────────────────────────────── */
       letterSpacing: {
-        body:    "0.4px",
-        label:   "1.8px",
-        data:    "0.8px",
-        eyebrow: "3px",
-        nav:     "2px",
+        tighter: "-0.02em",
+        tight:   "-0.01em",
+        normal:  "0",
+        body:    "0",
+        data:    "0",
+        label:   "0.02em",
+        nav:     "0.01em",
+        eyebrow: "0.08em",
+        wide:    "0.04em",
       },
 
       /* ── LINE HEIGHT ───────────────────────────────────────────── */
       lineHeight: {
-        body:    "1.75",
-        metric:  "1.4",
+        body:    "1.6",
+        snug:    "1.35",
+        metric:  "1.15",
         mono:    "1.6",
       },
 

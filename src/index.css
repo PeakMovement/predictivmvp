@@ -3,163 +3,165 @@
 @tailwind utilities;
 
 /* ══════════════════════════════════════════════════════════════════════
-   PREDICTIV. FONT ENFORCEMENT — These rules use !important to guarantee
-   fonts are applied regardless of component-level overrides.
+   PREDICTIV. TYPOGRAPHY — Clean, legible system (single Inter family).
+   Class names preserved for backwards compatibility; values modernised.
    ══════════════════════════════════════════════════════════════════════ */
 
-/* STEP 2 — Global default font */
+/* Global default font */
 * {
   font-family: var(--font-ui);
   -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
-/* STEP 3 — Metric values: the big numbers */
+/* Display headings — h1–h4 share the UI family at a heavier, tighter weight */
+h1, h2, h3, h4 {
+  font-family: var(--font-display);
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  line-height: 1.2;
+}
+h1 { font-size: clamp(1.75rem, 1.4rem + 1.6vw, 2.25rem); }
+h2 { font-size: clamp(1.375rem, 1.2rem + 0.9vw, 1.75rem); }
+h3 { font-size: 1.25rem; }
+h4 { font-size: 1.0625rem; }
+
+/* Big metric numbers */
 .font-display,
 [class*="font-display"] {
   font-family: var(--font-display) !important;
-  font-weight: var(--font-display-weight) !important;
-  line-height: 1 !important;
-  letter-spacing: -0.5px !important;
+  font-weight: 600 !important;
+  line-height: 1.05 !important;
+  letter-spacing: -0.02em !important;
+  font-feature-settings: "tnum" 1, "cv01" 1;
 }
 
-/* STEP 3b — Display headings: h1–h4 default to --font-display.
-   These cover page titles, hero text, section titles, and any
-   large editorial moment. UI-label headings that need the UI font
-   must opt out explicitly with `.font-sans`. */
-h1, h2, h3, h4 {
-  font-family: var(--font-display) !important;
-}
-
-/* Escape hatch: any heading (or element) that explicitly wants the
-   UI sans font — e.g. small uppercase labels wrapped in <h2> for
-   semantic HTML. */
+/* Escape hatch for the UI sans font */
 .font-sans,
 [class*="font-sans"] {
   font-family: var(--font-ui) !important;
 }
 
-/* STEP 4 — Unit labels (%, ms, km, bpm, mL/kg, TSS, kcal) */
+/* Unit labels (%, ms, km, bpm, TSS, kcal) */
 .metric-unit {
-  font-family: var(--font-status) !important;
-  font-size: 8px !important;
-  letter-spacing: 2.5px !important;
-  text-transform: uppercase !important;
+  font-family: var(--font-status);
+  font-size: 0.6875rem;      /* 11px */
+  letter-spacing: 0.02em;
+  text-transform: none;
+  color: hsl(var(--muted-foreground));
 }
 
-/* STEP 5 — Section header labels (RECOVERY, PERFORMANCE, LOAD) */
+/* Section header labels (RECOVERY, PERFORMANCE, LOAD) — quiet eyebrow */
 .section-header {
-  font-family: var(--font-status) !important;
-  font-size: 8px !important;
-  letter-spacing: 4px !important;
-  text-transform: uppercase !important;
-  opacity: 0.8 !important;
-  margin-bottom: 16px;
-  margin-top: 40px;
+  font-family: var(--font-ui);
+  font-size: 0.75rem;        /* 12px */
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: hsl(var(--muted-foreground));
+  margin-bottom: 12px;
+  margin-top: 32px;
 }
-
-.dark .section-header,
-:root .section-header {
-  color: #A8C4D4;
-}
-
 .light .section-header {
-  color: rgb(0, 0, 0) !important;
-  opacity: 1 !important;
-  font-weight: 700 !important;
+  color: hsl(var(--foreground) / 0.7);
 }
 
-/* STEP 6 — Card titles (Resting HR, VO2 Max, Strain, etc) */
+/* Card metric titles — readable, sentence-case */
 .card-title-metric {
-  font-family: var(--font-ui) !important;
-  font-weight: 600 !important;
-  font-size: 12px !important;
-  letter-spacing: 2px !important;
-  text-transform: uppercase !important;
+  font-family: var(--font-ui);
+  font-weight: 600;
+  font-size: 0.8125rem;      /* 13px */
+  letter-spacing: 0.01em;
+  text-transform: none;
+  color: hsl(var(--muted-foreground));
 }
 
-/* STEP 7 — Yves data output lines */
+/* Yves data output lines */
 .yves-data {
-  font-family: var(--font-status) !important;
-  font-size: 10px !important;
-  letter-spacing: 1.5px !important;
-  text-transform: uppercase !important;
-  line-height: 2.2 !important;
+  font-family: var(--font-status);
+  font-size: 0.8125rem;      /* 13px */
+  letter-spacing: 0.005em;
+  text-transform: none;
+  line-height: 1.7;
 }
 
 /* Yves italic insight */
 .yves-insight {
-  font-family: var(--font-display) !important;
-  font-weight: var(--font-display-weight) !important;
-  font-style: italic !important;
-  font-size: 15px !important;
-  line-height: 1.6 !important;
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-style: italic;
+  font-size: 1rem;           /* 16px */
+  line-height: 1.6;
 }
 
-/* STEP 8 — Body copy / descriptions */
+/* Body copy / descriptions */
 .body-text {
-  font-family: var(--font-ui) !important;
-  font-weight: 400 !important;
-  font-size: 15px !important;
-  letter-spacing: 0.4px !important;
-  line-height: 1.75 !important;
+  font-family: var(--font-ui);
+  font-weight: 400;
+  font-size: 0.9375rem;      /* 15px */
+  letter-spacing: 0;
+  line-height: 1.6;
 }
 
-/* STEP 9 — Navigation labels */
+/* Navigation labels */
 .nav-label {
-  font-family: var(--font-status) !important;
-  font-size: 7px !important;
-  letter-spacing: 2px !important;
-  text-transform: uppercase !important;
+  font-family: var(--font-ui);
+  font-size: 0.6875rem;      /* 11px */
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  text-transform: none;
 }
 
-/* STEP 10 — Button text */
+/* Buttons — inherit clean UI font; no forced caps/tracking.
+   Sizing & weight live in the Button component. */
 button,
 [role="button"],
 .btn-text {
-  font-family: var(--font-ui) !important;
-  font-weight: 600 !important;
-  letter-spacing: 3px !important;
-  text-transform: uppercase !important;
+  font-family: var(--font-ui);
+  letter-spacing: 0;
+  text-transform: none;
 }
 
-/* Reset font for inputs inside buttons and non-button elements */
+/* Inputs */
 input, textarea, select {
-  font-family: var(--font-ui) !important;
-  font-weight: 400 !important;
-  letter-spacing: 0.4px !important;
-  text-transform: none !important;
+  font-family: var(--font-ui);
+  font-weight: 400;
+  letter-spacing: 0;
+  text-transform: none;
 }
 
-/* STEP 11 — Timestamps, captions */
+/* Timestamps, captions */
 .timestamp,
 .caption {
-  font-family: var(--font-status) !important;
-  font-size: 8px !important;
-  letter-spacing: 2px !important;
-  text-transform: uppercase !important;
-  color: hsl(var(--muted-foreground)) !important;
+  font-family: var(--font-status);
+  font-size: 0.75rem;        /* 12px */
+  letter-spacing: 0.01em;
+  text-transform: none;
+  color: hsl(var(--muted-foreground));
 }
 
-/* STEP 12 — Status badges */
+/* Status badges */
 .status-badge {
-  font-family: var(--font-status) !important;
-  font-size: 7px !important;
-  letter-spacing: 2.5px !important;
-  text-transform: uppercase !important;
+  font-family: var(--font-ui);
+  font-size: 0.6875rem;      /* 11px */
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: none;
 }
 
-/* ── Enforce status/mono font on all font-mono elements ────────────── */
+/* Monospace for real data/code only */
 .font-mono,
 [class*="font-mono"],
 code, pre {
   font-family: var(--font-status) !important;
 }
 
-/* ── Logo / wordmark ───────────────────────────────────────────────── */
+/* Logo / wordmark */
 .font-logo,
 [class*="font-logo"] {
   font-family: var(--font-logo) !important;
   font-weight: var(--font-logo-weight) !important;
+  letter-spacing: -0.02em;
 }
 
 /* ══════════════════════════════════════════════════════════════════════
@@ -169,12 +171,12 @@ code, pre {
 @layer base {
   :root {
     /* ── DESIGN THEME FONT TOKENS — Design 1 (Clinical) defaults ─── */
-    --font-display:        'Cormorant Garamond', Georgia, serif;
-    --font-display-weight: 300;
-    --font-ui:             'Rajdhani', sans-serif;
-    --font-status:         'Space Mono', monospace;
-    --font-logo:           'Cormorant Garamond', Georgia, serif;
-    --font-logo-weight:    300;
+    --font-display:        'Inter', system-ui, sans-serif;
+    --font-display-weight: 600;
+    --font-ui:             'Inter', system-ui, sans-serif;
+    --font-status:         'JetBrains Mono', ui-monospace, monospace;
+    --font-logo:           'Inter', system-ui, sans-serif;
+    --font-logo-weight:    700;
 
     /* ── Accent hue — user-configurable via Settings color wheel ── */
     --accent-hue: 240;
@@ -231,7 +233,7 @@ code, pre {
     --border: 200 30% 75% / 0.12;
     --input: var(--accent-hue) 18% 30%;
     --ring: 200 30% 75%;
-    --radius: 0;
+    --radius: 0.625rem;
     --glass-bg: var(--accent-hue) 18% 33% / 0.8;
     --glass-border: 0 0% 100% / 0.12;
     --glass-highlight: 0 0% 100% / 0.05;
@@ -462,8 +464,8 @@ code, pre {
     @apply text-foreground;
     font-family: var(--font-ui);
     font-weight: 400;
-    letter-spacing: 0.4px;
-    line-height: 1.75;
+    letter-spacing: 0;
+    line-height: 1.6;
     min-height: 100vh;
     min-height: -webkit-fill-available;
     padding-bottom: env(safe-area-inset-bottom);
@@ -593,19 +595,18 @@ code, pre {
   }
 
   p, li, span, div {
-    line-height: 1.75;
+    line-height: 1.6;
   }
 
   .font-mono, [class*="font-mono"] {
     line-height: 1.6;
-    letter-spacing: 0.8px;
+    letter-spacing: 0;
   }
 
-  .section-header,
   [class*="text-\\[7px\\]"],
   [class*="text-\\[8px\\]"],
   [class*="text-\\[9px\\]"] {
-    letter-spacing: 3px;
+    letter-spacing: 0.04em;
   }
 
   .font-display, [class*="font-display"] {
@@ -637,13 +638,14 @@ code, pre {
 
 @layer utilities {
   .section-header {
-    font-family: var(--font-status);
-    font-size: 8px;
-    letter-spacing: 4px;
+    font-family: var(--font-ui);
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
     text-transform: uppercase;
-    opacity: 0.8;
-    margin-bottom: 16px;
-    margin-top: 40px;
+    color: hsl(var(--muted-foreground));
+    margin-bottom: 12px;
+    margin-top: 32px;
   }
 
   .dark .section-header,

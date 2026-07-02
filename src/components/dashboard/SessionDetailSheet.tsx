@@ -77,7 +77,7 @@ const AcwrZoneBar = ({ acwr }: { acwr: number | null }) => {
           style={{ left: `calc(${position}% - 7px)` }}
         />
       </div>
-      <div className="flex justify-between text-[10px] text-muted-foreground">
+      <div className="flex justify-between text-[12px] text-muted-foreground">
         <span>0</span>
         <span className="text-blue-400">0.8</span>
         <span className="text-bioGreen">1.3</span>

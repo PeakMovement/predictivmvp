@@ -115,7 +115,7 @@ function YvesQuestion({
     <div className="space-y-3">
       <div className="flex items-start gap-3">
         <div className="w-7 h-7 rounded-full bg-primary/20 flex items-center justify-center shrink-0 mt-0.5">
-          <span className="text-[10px] font-bold text-primary">Y</span>
+          <span className="text-[12px] font-bold text-primary">Y</span>
         </div>
         <div>
           <p className="text-sm font-medium text-foreground leading-snug">{question}</p>

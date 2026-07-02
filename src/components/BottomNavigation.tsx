@@ -98,7 +98,7 @@ export const BottomNavigation = ({ activeTab, onNavigate }: BottomNavigationProp
               className="w-full mt-3 py-3 bg-card border border-border text-muted-foreground flex items-center justify-center gap-2 hover:text-foreground transition-colors"
             >
               <X className="h-4 w-4" />
-              <span className="font-mono text-[9px] tracking-[0.2em] uppercase">Close</span>
+              <span className="text-xs font-medium text-muted-foreground">Close</span>
             </button>
           </div>
         )}
@@ -108,10 +108,10 @@ export const BottomNavigation = ({ activeTab, onNavigate }: BottomNavigationProp
             onClick={() => setIsOpen(!isOpen)}
             aria-label={isOpen ? "Close navigation" : "Open navigation"}
             aria-expanded={isOpen}
-            className="pointer-events-auto flex items-center justify-center gap-2 h-12 px-6 bg-marble3 text-background active:scale-[0.97] active:opacity-85 transition-all duration-100 touch-manipulation"
+            className="pointer-events-auto flex items-center justify-center gap-2 h-12 px-6 rounded-full bg-primary text-primary-foreground shadow-lg active:scale-[0.97] transition-all duration-100 touch-manipulation"
           >
             {isOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
-            <span className="font-sans text-xs font-semibold tracking-[0.2em] uppercase">
+            <span className="text-sm font-semibold tracking-normal">
               {isOpen ? "Close" : "Menu"}
             </span>
           </button>
@@ -137,10 +137,10 @@ export const BottomNavigation = ({ activeTab, onNavigate }: BottomNavigationProp
             aria-label={`Navigate to ${label}`}
             aria-current={isActive ? 'page' : undefined}
             className={cn(
-              "flex flex-col items-center justify-center px-2 py-1 transition-all duration-150",
+              "flex flex-col items-center justify-center gap-1 px-3 py-1.5 rounded-xl transition-colors duration-150",
               isActive
-                ? "text-primary"
-                : "text-foreground dark:text-foreground/80 hover:text-foreground"
+                ? "text-primary bg-primary/10"
+                : "text-muted-foreground hover:text-foreground hover:bg-card"
             )}
           >
             <div className="relative mb-1">

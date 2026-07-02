@@ -227,7 +227,7 @@ export function FindHelp() {
           <SlidersHorizontal size={14} />
           Filters
           {activeFilterCount > 0 && (
-            <span className="ml-1 flex h-5 w-5 items-center justify-center bg-primary text-[10px] font-bold text-primary-foreground">
+            <span className="ml-1 flex h-5 w-5 items-center justify-center bg-primary text-[12px] font-bold text-primary-foreground">
               {activeFilterCount}
             </span>
           )}

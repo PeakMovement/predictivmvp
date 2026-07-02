@@ -150,7 +150,7 @@ export function StructuredSessionCard({ session, className }: StructuredSessionC
                   <Dumbbell className="h-3 w-3 text-primary" />
                   Main Session
                 </div>
-                <span className="text-[10px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
+                <span className="text-[12px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
                   {session.mainBlock.format}
                 </span>
               </div>
@@ -189,7 +189,7 @@ export function StructuredSessionCard({ session, className }: StructuredSessionC
                           {exercise.prescription}
                         </div>
                         {exercise.notes && (
-                          <div className="text-[10px] text-primary/80 mt-0.5 italic">
+                          <div className="text-[12px] text-primary/80 mt-0.5 italic">
                             {exercise.notes}
                           </div>
                         )}

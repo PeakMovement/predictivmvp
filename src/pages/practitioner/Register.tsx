@@ -904,7 +904,7 @@ export const PractitionerRegister = () => {
  : "border-black/10 bg-white hover:border-black/20"
  }`}
           >
-            <span className="absolute -top-2.5 right-4 bg-[#6B5ED9] px-2.5 py-0.5 text-[10px] font-semibold text-white">
+            <span className="absolute -top-2.5 right-4 bg-[#6B5ED9] px-2.5 py-0.5 text-[12px] font-semibold text-white">
               Recommended
             </span>
             <p className="text-lg font-bold text-[#1a1a1a]">
@@ -1010,7 +1010,7 @@ export const PractitionerRegister = () => {
               Profile
             </span>
           </div>
-          <p className="mt-2 text-center text-[10px] text-[#ccc]">
+          <p className="mt-2 text-center text-[12px] text-[#ccc]">
             Preview only
           </p>
         </div>

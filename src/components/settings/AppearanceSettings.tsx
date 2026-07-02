@@ -181,7 +181,7 @@ export const AppearanceSettings = () => {
                       Body &amp; UI · {dt.preview.body.split(",")[0].replace(/'/g, "")}
                     </p>
                     <p
-                      className="text-[10px] tracking-widest uppercase opacity-60"
+                      className="text-[12px] tracking-[0.05em] uppercase opacity-60"
                       style={{ fontFamily: dt.preview.mono }}
                     >
                       {dt.preview.mono.split(",")[0].replace(/'/g, "")} — data values

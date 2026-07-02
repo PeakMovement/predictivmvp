@@ -208,7 +208,7 @@ const CircularGauge = ({
           </div>
         </div>
         {note && (
-          <p className="text-[10px] text-muted-foreground text-center leading-tight">{note}</p>
+          <p className="text-[12px] text-muted-foreground text-center leading-tight">{note}</p>
         )}
       </div>
     </div>

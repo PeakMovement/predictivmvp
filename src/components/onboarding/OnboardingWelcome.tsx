@@ -26,15 +26,15 @@ export const OnboardingWelcome = ({}: OnboardingWelcomeProps) => {
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-px bg-line mt-8">
         <div className="bg-card p-5 text-center">
-          <p className="font-mono text-[8px] tracking-[0.4em] uppercase text-coldBlue/40 mb-2">Track</p>
+          <p className="font-mono text-[11px] tracking-[0.05em] uppercase text-coldBlue/40 mb-2">Track</p>
           <p className="font-sans text-xs text-muted-foreground tracking-wide">Connect wearables and monitor biometrics</p>
         </div>
         <div className="bg-card p-5 text-center">
-          <p className="font-mono text-[8px] tracking-[0.4em] uppercase text-coldBlue/40 mb-2">Analyse</p>
+          <p className="font-mono text-[11px] tracking-[0.05em] uppercase text-coldBlue/40 mb-2">Analyse</p>
           <p className="font-sans text-xs text-muted-foreground tracking-wide">AI recommendations personalised daily</p>
         </div>
         <div className="bg-card p-5 text-center">
-          <p className="font-mono text-[8px] tracking-[0.4em] uppercase text-coldBlue/40 mb-2">Protect</p>
+          <p className="font-mono text-[11px] tracking-[0.05em] uppercase text-coldBlue/40 mb-2">Protect</p>
           <p className="font-sans text-xs text-muted-foreground tracking-wide">Alerts when health metrics need attention</p>
         </div>
       </div>

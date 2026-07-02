@@ -120,7 +120,7 @@ export function DailyBriefingCard({
         <CardHeader>
           <div className="flex items-center gap-2">
             <PredictivMark size={14} />
-            <span className="font-mono text-[9px] tracking-[3px] uppercase text-foreground/80">Yves · Daily Briefing</span>
+            <span className="font-mono text-[11px] tracking-[0.05em] uppercase text-foreground/80">Yves · Daily Briefing</span>
           </div>
         </CardHeader>
         <CardContent className="flex items-center justify-center py-8">
@@ -136,7 +136,7 @@ export function DailyBriefingCard({
         <div className="flex items-start sm:items-center justify-between gap-3">
           <div className="flex items-center gap-2 min-w-0">
             <PredictivMark size={14} />
-            <span className="font-mono text-[9px] tracking-[3px] uppercase text-foreground/80">Yves · Daily Briefing</span>
+            <span className="font-mono text-[11px] tracking-[0.05em] uppercase text-foreground/80">Yves · Daily Briefing</span>
           </div>
           <div className="relative">
             {isGenerating && (
@@ -202,7 +202,7 @@ export function DailyBriefingCard({
         
         {!briefing ? (
           <div className="text-center py-6 space-y-4">
-            <p className="font-mono text-[9px] tracking-[0.3em] uppercase text-muted-foreground/60">
+            <p className="font-mono text-[11px] tracking-[0.05em] uppercase text-muted-foreground/60">
               No briefing compiled yet
             </p>
             <Button onClick={() => onRefresh()} disabled={isGenerating} variant="outline" size="sm">
@@ -211,7 +211,7 @@ export function DailyBriefingCard({
           </div>
         ) : briefing.learning_mode ? (
           <div className="text-center py-6 space-y-3 max-w-md mx-auto">
-            <p className="font-mono text-[9px] tracking-[0.3em] uppercase text-muted-foreground/60">
+            <p className="font-mono text-[11px] tracking-[0.05em] uppercase text-muted-foreground/60">
               Yves is learning about you
             </p>
             <p className="text-sm text-muted-foreground leading-relaxed">

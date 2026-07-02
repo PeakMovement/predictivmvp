@@ -149,7 +149,7 @@ export const PractitionerLanding = () => {
 
       {/* ── How it works ───────────────────────────────────────── */}
       <section id="how-it-works" className="mx-auto max-w-5xl px-5 py-16">
-        <p className="mb-2 text-center text-xs font-semibold uppercase tracking-[0.2em] text-[#6B5ED9]">
+        <p className="mb-2 text-center text-xs font-semibold uppercase tracking-[0.04em] text-[#6B5ED9]">
           The Process
         </p>
         <h2 className="mb-12 text-center text-2xl font-bold text-[#1a1a1a] sm:text-3xl">
@@ -174,7 +174,7 @@ export const PractitionerLanding = () => {
       {/* ── Listing tiers ──────────────────────────────────────── */}
       <section style={{ background: "#eae7e1" }}>
         <div className="mx-auto max-w-5xl px-5 py-16">
-          <p className="mb-2 text-center text-xs font-semibold uppercase tracking-[0.2em] text-[#6B5ED9]">
+          <p className="mb-2 text-center text-xs font-semibold uppercase tracking-[0.04em] text-[#6B5ED9]">
             Pricing
           </p>
           <h2 className="mb-12 text-center text-2xl font-bold text-[#1a1a1a] sm:text-3xl">
@@ -212,7 +212,7 @@ export const PractitionerLanding = () => {
 
             {/* Verified Partner */}
             <div className="relative rounded-md border-2 border-[#6B5ED9] bg-white p-7 ">
-              <span className="absolute -top-3 right-5 bg-[#6B5ED9] px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-white">
+              <span className="absolute -top-3 right-5 bg-[#6B5ED9] px-3 py-1 text-[12px] font-bold uppercase tracking-wider text-white">
                 Recommended
               </span>
               <div className="flex items-center gap-3">

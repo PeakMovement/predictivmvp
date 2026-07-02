@@ -222,7 +222,7 @@ export const TrainingCalendar = () => {
           {/* Day headers */}
           <div className="grid grid-cols-7 mb-1">
             {weekHeaders.map(h => (
-              <div key={h} className="text-center text-[10px] font-medium text-muted-foreground py-1">
+              <div key={h} className="text-center text-[12px] font-medium text-muted-foreground py-1">
                 {h}
               </div>
             ))}
@@ -291,10 +291,10 @@ export const TrainingCalendar = () => {
           ].map(({ colour, label }) => (
             <div key={label} className="flex items-center gap-1">
               <div className={cn("w-2 h-2", colour)} />
-              <span className="text-[10px] text-muted-foreground">{label}</span>
+              <span className="text-[12px] text-muted-foreground">{label}</span>
             </div>
           ))}
-          <span className="text-[10px] text-muted-foreground ml-auto">Load intensity</span>
+          <span className="text-[12px] text-muted-foreground ml-auto">Load intensity</span>
         </div>
       </div>
 

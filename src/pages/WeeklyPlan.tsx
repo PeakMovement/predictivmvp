@@ -219,7 +219,7 @@ function DayCard({ day, onClick }: { day: DayPlan; onClick: () => void }) {
       <span className="text-xl leading-none">{meta.emoji}</span>
 
       <span className={cn(
-        "text-[9px] font-bold tracking-wider px-2 py-0.5 border",
+        "text-[11px] font-bold tracking-wider px-2 py-0.5 border",
         meta.pill,
       )}>
         {meta.label}

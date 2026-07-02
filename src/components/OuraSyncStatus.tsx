@@ -98,7 +98,7 @@ const OuraSyncStatus = ({ onSync, isSyncing = false }: OuraSyncStatusProps) => {
 
   return (
     <div className="flex items-center gap-2">
-      <span className={`font-mono text-[7px] tracking-[3px] uppercase ${statusColor}`}>
+      <span className={`font-mono text-[11px] tracking-[0.05em] uppercase ${statusColor}`}>
         {getStatusText()}
       </span>
       {onSync && anyConnected && (

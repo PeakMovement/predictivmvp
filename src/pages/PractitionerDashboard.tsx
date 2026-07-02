@@ -287,7 +287,7 @@ const PatientCard = ({ patient }: { patient: PatientSummary }) => {
                       {anomaly.deviationPct.toFixed(1)}% from baseline
                     </span>
                   )}
-                  <Badge variant="outline" className="text-[10px] py-0 px-1.5 capitalize border-current">
+                  <Badge variant="outline" className="text-[12px] py-0 px-1.5 capitalize border-current">
                     {anomaly.severity}
                   </Badge>
                 </div>

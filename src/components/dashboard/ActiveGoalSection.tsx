@@ -60,7 +60,7 @@ export function ActiveGoalSection({ className }: ActiveGoalSectionProps) {
 
   return (
     <div className={cn('space-y-2', className)}>
-      <p className="font-mono text-[8px] tracking-[0.4em] uppercase text-coldBlue/40">
+      <p className="font-mono text-[11px] tracking-[0.05em] uppercase text-coldBlue/40">
         Active Goal
       </p>
       <div className="border border-coldBlue/15 bg-coldBlue/[0.03] p-4">

@@ -161,19 +161,19 @@ export function BaselineProgressCard({ maturity, onSyncComplete }: BaselineProgr
         {/* Milestone ticks */}
         <div className="relative h-3">
           <span
-            className="absolute text-[9px] text-muted-foreground"
+            className="absolute text-[11px] text-muted-foreground"
             style={{ left: `${(7 / TOTAL) * 100}%`, transform: 'translateX(-50%)' }}
           >
             7d
           </span>
           <span
-            className="absolute text-[9px] text-muted-foreground"
+            className="absolute text-[11px] text-muted-foreground"
             style={{ left: `${(14 / TOTAL) * 100}%`, transform: 'translateX(-50%)' }}
           >
             14d
           </span>
           <span
-            className="absolute text-[9px] text-muted-foreground"
+            className="absolute text-[11px] text-muted-foreground"
             style={{ right: 0 }}
           >
             28d

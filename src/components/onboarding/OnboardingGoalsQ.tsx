@@ -18,7 +18,7 @@ export function OnboardingGoalsQ({ data, onUpdate }: Props) {
   return (
     <div className="space-y-6">
       <div className="text-center space-y-2">
-        <p className="font-mono text-[9px] tracking-[0.4em] uppercase text-coldBlue/40">Objectives</p>
+        <p className="font-mono text-[11px] tracking-[0.05em] uppercase text-coldBlue/40">Objectives</p>
         <h2 className="font-display font-light text-3xl text-foreground">Health Goals</h2>
         <p className="font-sans text-sm text-muted-foreground tracking-wide">
           Pick up to <span className="text-coldBlue font-medium">2</span> that matter most
@@ -35,7 +35,7 @@ export function OnboardingGoalsQ({ data, onUpdate }: Props) {
         size="md"
       />
 
-      <p className="font-mono text-[8px] tracking-[0.2em] uppercase text-muted-foreground/50 text-center">
+      <p className="font-mono text-[11px] tracking-[0.04em] uppercase text-muted-foreground/50 text-center">
         These determine which Life Formulas Yves prioritises.
       </p>
     </div>

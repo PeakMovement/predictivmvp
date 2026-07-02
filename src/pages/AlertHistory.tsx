@@ -131,7 +131,7 @@ function RiskScoreTimeline({ rows, loading }: { rows: RiskHistoryRow[]; loading:
               <p className="text-xs font-bold text-foreground">
                 {format(parseISO(row.calculated_at), "d MMM")}
               </p>
-              <p className="text-[10px] text-muted-foreground">
+              <p className="text-[12px] text-muted-foreground">
                 {format(parseISO(row.calculated_at), "EEE")}
               </p>
             </div>
@@ -140,7 +140,7 @@ function RiskScoreTimeline({ rows, loading }: { rows: RiskHistoryRow[]; loading:
             <div className="shrink-0 flex flex-col items-center gap-1">
               <span className="text-lg font-semibold text-foreground leading-none">{row.score}</span>
               <span className={cn(
-                "text-[9px] font-bold px-2 py-0.5 border",
+                "text-[11px] font-bold px-2 py-0.5 border",
                 badge.cls,
               )}>
                 {badge.label}
@@ -150,12 +150,12 @@ function RiskScoreTimeline({ rows, loading }: { rows: RiskHistoryRow[]; loading:
             {/* Component breakdown */}
             {top2.length > 0 && (
               <div className="flex-1 min-w-0">
-                <p className="text-[10px] text-muted-foreground mb-1">Top drivers</p>
+                <p className="text-[12px] text-muted-foreground mb-1">Top drivers</p>
                 <div className="flex flex-wrap gap-1.5">
                   {top2.map((c) => (
                     <span
                       key={c.key}
-                      className="text-[10px] font-semibold px-2 py-0.5 bg-muted/40 border border-border/30 text-muted-foreground"
+                      className="text-[12px] font-semibold px-2 py-0.5 bg-muted/40 border border-border/30 text-muted-foreground"
                     >
                       {COMPONENT_LABELS[c.key] ?? c.key}: {c.pts}pt
                     </span>
@@ -215,9 +215,9 @@ function RiskExplainer() {
       </div>
 
       <div className="flex items-center gap-3 pt-1 border-t border-border/30">
-        <span className="text-[10px] font-bold px-2 py-0.5 bg-bioGreen/15 text-bioGreen border border-bioGreen/30">0–33 Low</span>
-        <span className="text-[10px] font-bold px-2 py-0.5 bg-amber/15 text-yellow-400 border border-amber/30">34–66 Moderate</span>
-        <span className="text-[10px] font-bold px-2 py-0.5 bg-critical/15 text-red-400 border border-critical/30">67+ High</span>
+        <span className="text-[12px] font-bold px-2 py-0.5 bg-bioGreen/15 text-bioGreen border border-bioGreen/30">0–33 Low</span>
+        <span className="text-[12px] font-bold px-2 py-0.5 bg-amber/15 text-yellow-400 border border-amber/30">34–66 Moderate</span>
+        <span className="text-[12px] font-bold px-2 py-0.5 bg-critical/15 text-red-400 border border-critical/30">67+ High</span>
       </div>
     </div>
   );
@@ -368,7 +368,7 @@ export default function AlertHistory() {
             >
               {tab}
               {tab === "active" && countActive > 0 && (
-                <span className="ml-1 text-[10px] bg-critical text-white px-1.5 py-0.5">
+                <span className="ml-1 text-[12px] bg-critical text-white px-1.5 py-0.5">
                   {countActive}
                 </span>
               )}
@@ -479,28 +479,28 @@ function AlertCard({
                 {alert.metric_name} · {TYPE_LABEL[alert.alert_type] ?? alert.alert_type}
               </span>
               {isActive && (
-                <span className="text-[10px] font-bold px-2 py-0.5 bg-critical/15 text-red-400 border border-critical/25">
+                <span className="text-[12px] font-bold px-2 py-0.5 bg-critical/15 text-red-400 border border-critical/25">
                   Active
                 </span>
               )}
               {isSnoozed && (
-                <span className="flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 bg-muted/30 text-muted-foreground border border-border/30">
+                <span className="flex items-center gap-1 text-[12px] font-medium px-2 py-0.5 bg-muted/30 text-muted-foreground border border-border/30">
                   <Clock className="w-3 h-3" />
                   Snoozed
                 </span>
               )}
               {isResolved && (
-                <span className="flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 bg-bioGreen/15 text-bioGreen border border-bioGreen/25">
+                <span className="flex items-center gap-1 text-[12px] font-bold px-2 py-0.5 bg-bioGreen/15 text-bioGreen border border-bioGreen/25">
                   <CheckCircle2 className="w-3 h-3" />
                   Resolved
                 </span>
               )}
               {alert.status === "dismissed" && (
-                <span className="text-[10px] font-medium px-2 py-0.5 bg-muted/20 text-muted-foreground border border-border/20">
+                <span className="text-[12px] font-medium px-2 py-0.5 bg-muted/20 text-muted-foreground border border-border/20">
                   Dismissed
                 </span>
               )}
-              <span className={cn("text-[10px] font-bold px-2 py-0.5 border capitalize", SEVERITY_TEXT[alert.severity] || "")}>
+              <span className={cn("text-[12px] font-bold px-2 py-0.5 border capitalize", SEVERITY_TEXT[alert.severity] || "")}>
                 {alert.severity}
               </span>
             </div>

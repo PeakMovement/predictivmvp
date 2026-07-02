@@ -305,7 +305,7 @@ export const RiskScoreCard = () => {
           />
         </div>
       </div>
-      <div className="flex justify-between text-[10px] text-muted-foreground mb-4 mt-2">
+      <div className="flex justify-between text-[12px] text-muted-foreground mb-4 mt-2">
         <span>Low (0–33)</span>
         <span>Moderate (34–66)</span>
         <span>High (67–100)</span>
@@ -319,25 +319,25 @@ export const RiskScoreCard = () => {
       {/* Contributing factors */}
       <div className="grid grid-cols-4 gap-2 text-center">
         <div className="bg-glass/30 rounded-md p-2">
-          <p className="text-[10px] text-muted-foreground mb-0.5">ACWR</p>
+          <p className="text-[12px] text-muted-foreground mb-0.5">ACWR</p>
           <p className={cn("text-sm font-semibold", factors.acwr > 1.5 ? "text-red-400" : factors.acwr > 1.3 ? "text-yellow-400" : "text-foreground")}>
             {factors.acwr.toFixed(2)}
           </p>
         </div>
         <div className="bg-glass/30 rounded-md p-2">
-          <p className="text-[10px] text-muted-foreground mb-0.5">Fatigue</p>
+          <p className="text-[12px] text-muted-foreground mb-0.5">Fatigue</p>
           <p className={cn("text-sm font-semibold", factors.fatigueIndex > 70 ? "text-red-400" : factors.fatigueIndex > 50 ? "text-yellow-400" : "text-foreground")}>
             {factors.fatigueIndex}%
           </p>
         </div>
         <div className="bg-glass/30 rounded-md p-2">
-          <p className="text-[10px] text-muted-foreground mb-0.5">HRV Δ</p>
+          <p className="text-[12px] text-muted-foreground mb-0.5">HRV Δ</p>
           <p className={cn("text-sm font-semibold", factors.hrvDropPct !== null && factors.hrvDropPct >= 20 ? "text-red-400" : factors.hrvDropPct !== null && factors.hrvDropPct >= 10 ? "text-yellow-400" : "text-foreground")}>
             {factors.hrvDropPct !== null ? `${Math.round(factors.hrvDropPct) > 0 ? "-" : "+"}${Math.abs(Math.round(factors.hrvDropPct))}%` : "—"}
           </p>
         </div>
         <div className="bg-glass/30 rounded-md p-2">
-          <p className="text-[10px] text-muted-foreground mb-0.5">Sleep</p>
+          <p className="text-[12px] text-muted-foreground mb-0.5">Sleep</p>
           <p className={cn("text-sm font-semibold", factors.sleepScore !== null && factors.sleepScore < 60 ? "text-red-400" : factors.sleepScore !== null && factors.sleepScore < 70 ? "text-yellow-400" : "text-foreground")}>
             {factors.sleepScore !== null ? factors.sleepScore : "—"}
           </p>

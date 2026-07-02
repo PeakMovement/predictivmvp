@@ -20,7 +20,7 @@ export function OnboardingInjuryQ({ data, onUpdate }: Props) {
   return (
     <div className="space-y-6">
       <div className="text-center space-y-2">
-        <p className="font-mono text-[9px] tracking-[0.4em] uppercase text-coldBlue/40">Safety</p>
+        <p className="font-mono text-[11px] tracking-[0.05em] uppercase text-coldBlue/40">Safety</p>
         <h2 className="font-display font-light text-3xl text-foreground">Injury History</h2>
         <p className="font-sans text-sm text-muted-foreground tracking-wide">Helps Yves calibrate safety thresholds</p>
       </div>
@@ -41,7 +41,7 @@ export function OnboardingInjuryQ({ data, onUpdate }: Props) {
 
       {showDescription && (
         <div className="space-y-1.5 animate-fade-in">
-          <label htmlFor="injuryDesc" className="font-mono text-[9px] tracking-[0.3em] uppercase text-muted-foreground">
+          <label htmlFor="injuryDesc" className="font-mono text-[11px] tracking-[0.05em] uppercase text-muted-foreground">
             Brief description
           </label>
           <Textarea
@@ -53,12 +53,12 @@ export function OnboardingInjuryQ({ data, onUpdate }: Props) {
             maxLength={500}
             className="bg-card border-border text-foreground placeholder:text-muted-foreground/40 font-sans text-sm"
           />
-          <p className="font-mono text-[8px] tracking-wider text-muted-foreground/40 text-right">{data.injuryDescription.length}/500</p>
+          <p className="font-mono text-[11px] tracking-wider text-muted-foreground/40 text-right">{data.injuryDescription.length}/500</p>
         </div>
       )}
 
       <div className="border border-border p-3">
-        <p className="font-mono text-[8px] tracking-[0.15em] text-coldBlue/30">
+        <p className="font-mono text-[11px] tracking-[0.03em] text-coldBlue/30">
           This information is private and only used to calibrate safety thresholds.
         </p>
       </div>

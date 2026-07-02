@@ -409,7 +409,7 @@ export const Health = () => {
               {/* Sync status */}
               {lastSyncDate && (
                 <div className="mt-4 flex items-center justify-center">
-                  <span className={`font-mono text-[7px] tracking-[3px] uppercase ${isStale ? "text-amber" : "text-bioGreen"}`}>
+                  <span className={`font-mono text-[11px] tracking-[0.05em] uppercase ${isStale ? "text-amber" : "text-bioGreen"}`}>
                     {isStale
                       ? `Wearable · Sync Required`
                       : `Wearable · Synced`}

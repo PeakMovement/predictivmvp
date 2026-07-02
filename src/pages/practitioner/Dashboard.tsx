@@ -490,7 +490,7 @@ function ListingTab({ p }: { p: PractitionerData }) {
             Profile
           </span>
         </div>
-        <p className="mt-2 text-center text-[10px] text-[#ccc]">
+        <p className="mt-2 text-center text-[12px] text-[#ccc]">
           Preview only — this is how patients see your card
         </p>
       </div>
@@ -644,7 +644,7 @@ function StatCard({
       </div>
       <p className="text-2xl font-bold text-[#1a1a1a]">{value}</p>
       <p className="text-xs text-[#888]">{label}</p>
-      <p className="mt-0.5 text-[10px] italic text-[#bbb]">Coming soon</p>
+      <p className="mt-0.5 text-[12px] italic text-[#bbb]">Coming soon</p>
     </div>
   );
 }

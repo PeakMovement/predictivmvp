@@ -106,7 +106,7 @@ export function OnboardingChips({
               {opt.description && (
                 <p className={cn(
                   "mt-0.5 leading-tight tracking-wide",
-                  size === "sm" ? "text-[10px]" : "text-xs",
+                  size === "sm" ? "text-[12px]" : "text-xs",
                   isSelected ? "text-muted-foreground" : "text-muted-foreground/50"
                 )}>
                   {opt.description}

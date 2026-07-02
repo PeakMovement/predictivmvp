@@ -171,26 +171,26 @@ code, pre {
 @layer base {
   :root {
     /* ── DESIGN THEME FONT TOKENS — Design 1 (Clinical) defaults ─── */
-    --font-display:        'Inter', system-ui, sans-serif;
+    --font-display:        'Space Grotesk', 'Inter', system-ui, sans-serif;
     --font-display-weight: 600;
     --font-ui:             'Inter', system-ui, sans-serif;
     --font-status:         'JetBrains Mono', ui-monospace, monospace;
-    --font-logo:           'Inter', system-ui, sans-serif;
+    --font-logo:           'Space Grotesk', 'Inter', system-ui, sans-serif;
     --font-logo-weight:    700;
 
     /* ── Accent hue — user-configurable via Settings color wheel ── */
     --accent-hue: 240;
 
     /* ── PREDICTIV. BRAND v2 — Dark mode default (Clinical) ──────── */
-    --bg-root:     #04040A;
-    --bg-surface:  #10101A;
-    --bg-elevated: #0C0C14;
-    --bg-card:     #10101A;
-    --bg-input:    #0C0C14;
+    --bg-root:     #13151A;
+    --bg-surface:  #1B1E25;
+    --bg-elevated: #23272F;
+    --bg-card:     #1B1E25;
+    --bg-input:    #1B1E25;
 
-    --text-primary:   #F0EEE8;
-    --text-secondary: #6B7B82;
-    --text-tertiary:  #3A4448;
+    --text-primary:   #ECEAE4;
+    --text-secondary: #9BA4AC;
+    --text-tertiary:  #5C6670;
     --text-ghost:     rgba(232,226,220,0.15);
 
     --accent-cold-steel: #A8C4D4;
@@ -214,18 +214,18 @@ code, pre {
 
     --border-color: rgba(168,196,212,0.12);
 
-    --background: 240 43% 3%;
-    --foreground: 33 18% 93%;
-    --card: 240 20% 8%;
+    --background: 222 15% 9%;
+    --foreground: 43 18% 91%;
+    --card: 220 15% 13%;
     --card-foreground: 0 0% 100%;
     --popover: var(--accent-hue) 18% 30%;
     --popover-foreground: 0 0% 100%;
-    --primary: 200 30% 75%;
-    --primary-foreground: 0 0% 100%;
+    --primary: 197 33% 35%;
+    --primary-foreground: 43 18% 91%;
     --secondary: var(--accent-hue) 18% 30%;
     --secondary-foreground: 0 0% 95%;
     --muted: var(--accent-hue) 18% 30%;
-    --muted-foreground: 195 10% 46%;
+    --muted-foreground: 206 11% 64%;
     --accent: 200 30% 75%;
     --accent-foreground: 0 0% 100%;
     --destructive: 0 28% 58%;
@@ -241,11 +241,11 @@ code, pre {
     --status-warning: 42 35% 59%;
     --status-critical: 0 28% 58%;
 
-    --sidebar-background: 240 43% 3%;
+    --sidebar-background: 222 15% 9%;
     --sidebar-foreground: 30 15% 88%;
     --sidebar-primary: 200 30% 75%;
-    --sidebar-primary-foreground: 240 43% 3%;
-    --sidebar-accent: 240 35% 10%;
+    --sidebar-primary-foreground: 222 15% 9%;
+    --sidebar-accent: 220 15% 16%;
     --sidebar-accent-foreground: 30 15% 88%;
     --sidebar-border: 30 15% 88% / 0.08;
     --sidebar-ring: 200 30% 75%;
@@ -253,14 +253,14 @@ code, pre {
 
   /* Dark mode — Clinical dark (identical to root but explicit) */
   .dark {
-    --bg-root:     #04040A;
-    --bg-surface:  #10101A;
-    --bg-elevated: #0C0C14;
-    --bg-card:     #10101A;
-    --bg-input:    #0C0C14;
-    --text-primary:   #F0EEE8;
-    --text-secondary: #6B7B82;
-    --text-tertiary:  #3A4448;
+    --bg-root:     #13151A;
+    --bg-surface:  #1B1E25;
+    --bg-elevated: #23272F;
+    --bg-card:     #1B1E25;
+    --bg-input:    #1B1E25;
+    --text-primary:   #ECEAE4;
+    --text-secondary: #9BA4AC;
+    --text-tertiary:  #5C6670;
     --text-ghost:     rgba(232,226,220,0.15);
     --accent-cold-steel: #A8C4D4;
     --accent-muted:      rgba(168,196,212,0.1);
@@ -276,18 +276,18 @@ code, pre {
     --status-info-bg:    rgba(168,196,212,0.08);
     --border-color: rgba(168,196,212,0.12);
 
-    --background: 240 43% 3%;
-    --foreground: 33 18% 93%;
-    --card: 240 20% 8%;
+    --background: 222 15% 9%;
+    --foreground: 43 18% 91%;
+    --card: 220 15% 13%;
     --card-foreground: 0 0% 100%;
     --popover: var(--accent-hue) 18% 30%;
     --popover-foreground: 0 0% 100%;
-    --primary: 200 30% 75%;
-    --primary-foreground: 0 0% 100%;
+    --primary: 197 33% 35%;
+    --primary-foreground: 43 18% 91%;
     --secondary: var(--accent-hue) 18% 30%;
     --secondary-foreground: 0 0% 95%;
     --muted: var(--accent-hue) 18% 30%;
-    --muted-foreground: 195 10% 46%;
+    --muted-foreground: 206 11% 64%;
     --accent: 200 30% 75%;
     --accent-foreground: 0 0% 100%;
     --destructive: 0 28% 58%;
@@ -302,13 +302,13 @@ code, pre {
 
   /* Light mode — Clinical light (warm white) */
   .light {
-    --bg-root:     #F4F2EE;
-    --bg-surface:  #FFFFFF;
-    --bg-elevated: #ECEAE6;
-    --bg-card:     #FFFFFF;
-    --bg-input:    #F5F4F0;
-    --text-primary:   #1A1F22;
-    --text-secondary: #7A8A92;
+    --bg-root:     #E9E6DF;
+    --bg-surface:  #F6F4EF;
+    --bg-elevated: #DED9CF;
+    --bg-card:     #F6F4EF;
+    --bg-input:    #F1EEE7;
+    --text-primary:   #23282C;
+    --text-secondary: #6C747A;
     --text-tertiary:  rgba(30,30,50,0.35);
     --text-ghost:     rgba(30,30,50,0.15);
     --accent-cold-steel: #3D6B7E;
@@ -325,14 +325,14 @@ code, pre {
     --status-info-bg:    rgba(74,122,140,0.08);
     --border-color: rgba(60,80,90,0.12);
 
-    --background: 36 14% 95%;
+    --background: 42 19% 89%;
     --foreground: 200 13% 12%;
-    --card: 0 0% 100%;
+    --card: 43 27% 95%;
     --card-foreground: 200 13% 12%;
-    --popover: 40 20% 98%;
+    --popover: 43 24% 96%;
     --popover-foreground: 0 0% 5%;
-    --primary: 196 35% 37%;
-    --primary-foreground: 0 0% 100%;
+    --primary: 198 31% 64%;
+    --primary-foreground: 200 13% 14%;
     --secondary: var(--accent-hue) 18% 82%;
     --secondary-foreground: 0 0% 5%;
     --muted: var(--accent-hue) 18% 82%;
@@ -342,7 +342,7 @@ code, pre {
     --destructive: 0 50% 40%;
     --destructive-foreground: 60 13% 98%;
     --border: 200 20% 30% / 0.12;
-    --input: 0 0% 100%;
+    --input: 43 27% 95%;
     --ring: 196 35% 37%;
     --glass-bg: 0 0% 100% / 0.9;
     --glass-border: 240 30% 14% / 0.08;
@@ -350,7 +350,7 @@ code, pre {
     --status-optimal: 147 44% 35%;
     --status-warning: 25 55% 40%;
     --status-critical: 0 50% 40%;
-    --sidebar-background: 60 13% 98%;
+    --sidebar-background: 42 19% 92%;
     --sidebar-foreground: 240 30% 14%;
     --sidebar-primary: 196 31% 41%;
     --sidebar-primary-foreground: 60 13% 98%;
@@ -519,7 +519,7 @@ code, pre {
   .light .bg-elevated,
   .light .bg-marble1,
   .light .bg-marble2 {
-    background-color: #FFFFFF !important;
+    background-color: #F6F4EF !important;
   }
 
   .light .border-border,

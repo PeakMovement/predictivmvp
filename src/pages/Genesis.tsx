@@ -140,7 +140,7 @@ export default function Genesis() {
           {/* ── CTA ──────────────────────────────────────────────── */}
           <button
             onClick={() => setView("signup")}
-            className="group bg-marble3 text-background font-sans font-semibold text-xs tracking-[0.04em] uppercase px-10 py-4 hover:opacity-90 active:scale-[0.97] active:opacity-85 transition-all duration-100"
+            className="group bg-primary text-primary-foreground font-semibold text-sm rounded-lg px-10 py-4 hover:opacity-90 active:scale-[0.97] active:opacity-85 transition-all duration-100"
           >
             Begin
             <ArrowRight className="inline-block h-3.5 w-3.5 ml-3 group-hover:translate-x-0.5 transition-transform" />
@@ -269,7 +269,7 @@ export default function Genesis() {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full bg-marble3 text-background font-sans font-semibold text-xs tracking-[0.04em] uppercase py-4 hover:opacity-90 active:scale-[0.97] active:opacity-85 transition-all duration-100 disabled:opacity-50"
+              className="w-full bg-primary text-primary-foreground font-semibold text-sm rounded-lg py-4 hover:opacity-90 active:scale-[0.97] active:opacity-85 transition-all duration-100 disabled:opacity-50"
             >
               {isLoading ? (
                 <span className="flex items-center justify-center gap-2">

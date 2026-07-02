@@ -398,7 +398,7 @@ export const OnboardingFlow = ({ onComplete, onSkip }: OnboardingFlowProps) => {
                 )}
                 <button
                   onClick={handleNext}
-                  className="bg-marble3 text-background font-sans font-semibold text-xs tracking-[0.04em] uppercase px-8 py-3 hover:opacity-90 active:scale-[0.97] active:opacity-85 transition-all duration-100 flex items-center gap-2"
+                  className="bg-primary text-primary-foreground font-semibold text-sm rounded-lg px-8 py-3 hover:opacity-90 active:scale-[0.97] active:opacity-85 transition-all duration-100 flex items-center gap-2"
                 >
                   {step === TOTAL_STEPS - 1 ? "Go to Dashboard" : step === 0 ? "Begin" : "Next"}
                   {step < TOTAL_STEPS - 1 && <ChevronRight className="h-3.5 w-3.5" />}

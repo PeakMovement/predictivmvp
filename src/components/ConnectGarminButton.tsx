@@ -2,9 +2,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { RefreshCw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { functionUrl } from "@/lib/supabaseConfig";
 
 const GARMIN_AUTH_URL =
-  "https://ixtwbkikyuexskdgfpfq.supabase.co/functions/v1/garmin-auth";
+  functionUrl("garmin-auth");
 
 interface ConnectGarminButtonProps {
   isConnected: boolean;

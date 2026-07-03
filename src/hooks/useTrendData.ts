@@ -1,6 +1,7 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
+import { functionUrl } from "@/lib/supabaseConfig";
 
 interface DailyTrend {
   period_date: string;
@@ -76,7 +77,7 @@ async function fetchWithAuth(functionName: string, params?: Record<string, strin
     throw new Error("Not authenticated");
   }
 
-  const url = new URL(`https://ixtwbkikyuexskdgfpfq.supabase.co/functions/v1/${functionName}`);
+  const url = new URL(functionUrl(functionName));
   if (params) {
     Object.entries(params).forEach(([key, value]) => {
       if (value) url.searchParams.set(key, value);

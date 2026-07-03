@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { functionUrl } from "@/lib/supabaseConfig";
 
 export type ProfessionalType =
   | "physiotherapist"
@@ -34,7 +35,7 @@ export function useMatchProvider() {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.access_token) throw new Error("Not authenticated");
 
-      const url = `https://ixtwbkikyuexskdgfpfq.supabase.co/functions/v1/match-provider`;
+      const url = functionUrl("match-provider");
       const response = await fetch(url, {
         method: "POST",
         headers: {

@@ -23,8 +23,7 @@ import { PullToRefresh } from "@/components/PullToRefresh";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { HealthAnomalyBanner } from "@/components/dashboard/HealthAnomalyBanner";
 import { RiskAlertBanner } from "@/components/dashboard/RiskAlertBanner";
-import { useGarminTokenStatus } from "@/hooks/useGarminTokenStatus";
-import { GarminExpiredBanner } from "@/components/GarminExpiredBanner";
+import { WearableReconnectBanner } from "@/components/dashboard/WearableReconnectBanner";
 import { GettingStartedChecklist } from "@/components/dashboard/GettingStartedChecklist";
 import { LearnedPatternsSection } from "@/components/dashboard/LearnedPatternsSection";
 
@@ -90,7 +89,6 @@ export const Dashboard = () => {
   
   const { profile: injuryProfile } = useInjuryProfile();
   const dataMaturity = useDataMaturity();
-  const { isExpired: garminTokenExpired } = useGarminTokenStatus();
 
   // Unified Yves Intelligence - single source of truth for briefing & recommendations
   const {
@@ -242,13 +240,8 @@ export const Dashboard = () => {
             isLoadingProfile={isLoadingProfile}
           />
 
-          {/* Garmin token expired warning */}
-          {garminTokenExpired && (
-            <GarminExpiredBanner
-              className="mb-6"
-              onReconnect={() => window.dispatchEvent(new CustomEvent("navigate-tab", { detail: "settings" }))}
-            />
-          )}
+          {/* Unified wearable re-auth prompt (Oura / Garmin / Polar) */}
+          <WearableReconnectBanner className="mb-6" />
 
           {/* Getting Started Checklist — hidden once all steps complete */}
           <GettingStartedChecklist

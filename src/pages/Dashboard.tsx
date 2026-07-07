@@ -24,6 +24,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { HealthAnomalyBanner } from "@/components/dashboard/HealthAnomalyBanner";
 import { RiskAlertBanner } from "@/components/dashboard/RiskAlertBanner";
 import { WearableReconnectBanner } from "@/components/dashboard/WearableReconnectBanner";
+import { useWearableBackfill } from "@/hooks/useWearableBackfill";
 import { GettingStartedChecklist } from "@/components/dashboard/GettingStartedChecklist";
 import { LearnedPatternsSection } from "@/components/dashboard/LearnedPatternsSection";
 
@@ -67,6 +68,7 @@ export const Dashboard = () => {
   const { toast } = useToast();
   const hasShownConnectionToast = useRef(false);
   const isMobile = useIsMobile();
+  useWearableBackfill();
   
   // Layout customization
   const {

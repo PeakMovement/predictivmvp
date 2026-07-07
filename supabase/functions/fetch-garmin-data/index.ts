@@ -228,12 +228,15 @@ Deno.serve(async (req: Request) => {
     // ── 2. Determine target user(s) ─────────────────────────────────
     let targetUserIds: string[] = [];
 
-    let body: { user_id?: string } = {};
+    let body: { user_id?: string; days?: number } = {};
     try {
       body = await req.json();
     } catch {
       // No body — will fetch all Garmin users
     }
+
+    // Optional historical backfill window (default 7d, capped at 28d for rate limits)
+    const backfillDays = Math.min(Math.max(Number(body.days) || 7, 1), 28);
 
     if (body.user_id) {
       targetUserIds = [body.user_id];
@@ -268,7 +271,7 @@ Deno.serve(async (req: Request) => {
 
     for (const userId of targetUserIds) {
       try {
-        const userResult = await syncUserGarminData(supabase, userId);
+        const userResult = await syncUserGarminData(supabase, userId, backfillDays);
         results.push(userResult);
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err);
@@ -320,6 +323,7 @@ Deno.serve(async (req: Request) => {
 async function syncUserGarminData(
   supabase: SupabaseClient,
   userId: string,
+  daysToFetch = 7,
 ): Promise<{ user_id: string; success: boolean; sessions: number; trends: number; summaries: number; error?: string }> {
 
   // ── Get Garmin token ──────────────────────────────────────────────
@@ -353,9 +357,9 @@ async function syncUserGarminData(
     accessToken = refreshed.access_token!;
   }
 
-  // ── Define time range (last 7 days, paginated by day) ─────────────
+  // ── Define time range (paginated by day) ──────────────────────────
   // Garmin Wellness API enforces a max range of 86400 seconds (24h) per request.
-  const DAYS_TO_FETCH = 7;
+  const DAYS_TO_FETCH = daysToFetch;
   const DAY_SECONDS = 86400;
 
   let dailies: GarminDaily[] = [];

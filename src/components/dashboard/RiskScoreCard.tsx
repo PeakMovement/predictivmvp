@@ -146,6 +146,7 @@ export const RiskScoreCard = () => {
   const [trends, setTrends] = useState<RecoveryTrend[]>([]);
   const [sessions, setSessions] = useState<WearableSession[]>([]);
   const [hrvBaseline, setHrvBaseline] = useState<number | null>(null);
+  const [prev, setPrev] = useState<{ score: number; components: Record<string, number> } | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -160,7 +161,8 @@ export const RiskScoreCard = () => {
       cutoff.setDate(cutoff.getDate() - 7);
       const cutoffStr = cutoff.toISOString().split("T")[0];
 
-      const [{ data: trendData }, { data: sessionData }, { data: baselineData }] = await Promise.all([
+      const todayStr = new Date().toISOString().split("T")[0];
+      const [{ data: trendData }, { data: sessionData }, { data: baselineData }, { data: prevRow }] = await Promise.all([
         supabase
           .from("recovery_trends")
           .select("acwr, strain, monotony, period_date")
@@ -180,11 +182,22 @@ export const RiskScoreCard = () => {
           .eq("user_id", user.id)
           .eq("metric", "hrv")
           .maybeSingle(),
+        supabase
+          .from("risk_score_history")
+          .select("score, component_scores, calculated_at")
+          .eq("user_id", user.id)
+          .lt("calculated_at", todayStr)
+          .order("calculated_at", { ascending: false })
+          .limit(1)
+          .maybeSingle(),
       ]);
 
       setTrends(trendData || []);
       setSessions(sessionData || []);
       setHrvBaseline(baselineData?.rolling_avg ?? null);
+      if (prevRow && typeof prevRow.score === "number") {
+        setPrev({ score: prevRow.score, components: (prevRow.component_scores as Record<string, number>) ?? {} });
+      }
       setIsLoading(false);
     };
 
@@ -195,6 +208,20 @@ export const RiskScoreCard = () => {
     () => calcScore(trends, sessions, hrvBaseline),
     [trends, sessions, hrvBaseline],
   );
+
+  // ── "Why it moved": day-over-day delta + biggest-moving factor ──────────
+  const movement = useMemo(() => {
+    if (!prev) return null;
+    const delta = score - prev.score;
+    const labels: Record<string, string> = { acwr: "training load", fatigue: "fatigue", hrv: "HRV", sleep: "sleep" };
+    let topKey = ""; let topDiff = 0;
+    for (const k of Object.keys(componentScores) as Array<keyof typeof componentScores>) {
+      const diff = componentScores[k] - (prev.components?.[k] ?? 0);
+      if (Math.abs(diff) > Math.abs(topDiff)) { topDiff = diff; topKey = k; }
+    }
+    return { delta, driver: labels[topKey], driverDiff: topDiff };
+  }, [prev, score, componentScores]);
+
 
   // FIX 5: Persist risk score to risk_score_history (once per day, upsert on unique user_id+calculated_at)
   useEffect(() => {
@@ -312,9 +339,21 @@ export const RiskScoreCard = () => {
       </div>
 
       {/* Contextual explanation */}
-      <div className={cn("p-3 rounded-md border text-sm mb-4", colors.msg)}>
+      <div className={cn("p-3 rounded-md border text-sm mb-3", colors.msg)}>
         {explanation}
       </div>
+
+      {/* Why it moved — day-over-day delta + biggest driver */}
+      {movement && movement.delta !== 0 && (
+        <div className="flex items-center gap-2 text-[13px] text-muted-foreground mb-4">
+          <span className={cn("font-semibold", movement.delta > 0 ? "text-red-400" : "text-bioGreen")}>
+            {movement.delta > 0 ? "\u25B2" : "\u25BC"} {Math.abs(movement.delta)} vs yesterday
+          </span>
+          {movement.driver && (
+            <span>· {movement.driverDiff > 0 ? "rising" : "easing"} {movement.driver} drove the change</span>
+          )}
+        </div>
+      )}
 
       {/* Contributing factors */}
       <div className="grid grid-cols-4 gap-2 text-center">

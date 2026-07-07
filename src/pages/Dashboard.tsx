@@ -5,6 +5,7 @@ import { DailyBriefingCard } from "@/components/dashboard/DailyBriefingCard";
 import { BriefingDiagnostics } from "@/components/dashboard/BriefingDiagnostics";
 import { RiskScoreCard } from "@/components/dashboard/RiskScoreCard";
 import { SymptomInjuryTrendCard } from "@/components/dashboard/SymptomInjuryTrendCard";
+import { StreakRecapCard } from "@/components/dashboard/StreakRecapCard";
 import { QuickActionsPanel } from "@/components/dashboard/QuickActionsPanel";
 import { useRefreshTrends } from "@/hooks/useTrendData";
 import { supabase } from "@/integrations/supabase/client";
@@ -352,6 +353,19 @@ export const Dashboard = () => {
                     dataMaturityDays={dataMaturity.days_with_data}
                     recommendations={recommendations}
                   />
+                </div>
+              </LayoutBlock>
+
+              {/* Adherence streak + weekly recap */}
+              <LayoutBlock
+                blockId="streakRecap"
+                displayName="Streak & Weekly Recap"
+                pageId="dashboard"
+                size="wide"
+                visible={isSectionVisible('streakRecap')}
+              >
+                <div className="mb-8 transition-all duration-300">
+                  <StreakRecapCard />
                 </div>
               </LayoutBlock>
 

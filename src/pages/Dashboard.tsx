@@ -4,6 +4,7 @@ import OuraSyncStatus from "@/components/OuraSyncStatus";
 import { DailyBriefingCard } from "@/components/dashboard/DailyBriefingCard";
 import { BriefingDiagnostics } from "@/components/dashboard/BriefingDiagnostics";
 import { RiskScoreCard } from "@/components/dashboard/RiskScoreCard";
+import { SymptomInjuryTrendCard } from "@/components/dashboard/SymptomInjuryTrendCard";
 import { QuickActionsPanel } from "@/components/dashboard/QuickActionsPanel";
 import { useRefreshTrends } from "@/hooks/useTrendData";
 import { supabase } from "@/integrations/supabase/client";
@@ -316,6 +317,19 @@ export const Dashboard = () => {
 
               {/* Risk Alert Banner — shows when risk score ≥ 34, dismissable per session */}
               <RiskAlertBanner />
+
+              {/* Symptom & injury trend — surfaces self-reported signal */}
+              <LayoutBlock
+                blockId="symptomInjuryTrend"
+                displayName="Symptoms & Injuries"
+                pageId="dashboard"
+                size="wide"
+                visible={isSectionVisible('symptomInjuryTrend')}
+              >
+                <div className="mb-8 transition-all duration-300">
+                  <SymptomInjuryTrendCard />
+                </div>
+              </LayoutBlock>
 
               {/* Daily Briefing - Now at the top */}
               <LayoutBlock

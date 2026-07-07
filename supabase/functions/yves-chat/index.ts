@@ -249,6 +249,30 @@ Deno.serve(async (req) => {
       .order("created_at", { ascending: false })
       .limit(15);
 
+    // ─── LOAD PLAN ADHERENCE (streak + weekly recap for continuity) ──────────
+    const { data: adherenceRows } = await supabase
+      .from("plan_adherence")
+      .select("date, adherence_score")
+      .eq("user_id", user.id)
+      .gte("date", new Date(Date.now() - 21 * 864e5).toISOString().split("T")[0]);
+
+    const adherenceContext = (() => {
+      const rows = (adherenceRows ?? []) as Array<{ date: string; adherence_score: number | null }>;
+      if (rows.length === 0) return "No plan-adherence data logged yet.";
+      const byDate = new Map<string, number>();
+      rows.forEach((r) => byDate.set(r.date, r.adherence_score ?? 0));
+      const ymd = (d: Date) => d.toISOString().split("T")[0];
+      let streak = 0; const cur = new Date();
+      if (!byDate.has(ymd(cur))) cur.setDate(cur.getDate() - 1);
+      for (;;) {
+        const v = byDate.get(ymd(cur));
+        if (v !== undefined && v >= 0.7) { streak++; cur.setDate(cur.getDate() - 1); } else break;
+      }
+      const weekVals = rows.filter((r) => new Date(r.date).getTime() >= Date.now() - 7 * 864e5).map((r) => r.adherence_score ?? 0);
+      const weekPct = weekVals.length ? Math.round((weekVals.reduce((a, b) => a + b, 0) / weekVals.length) * 100) : null;
+      return `Current on-plan streak: ${streak} day(s) (>=70% adherence). This week average: ${weekPct !== null ? weekPct + "%" : "n/a"}.`;
+    })();
+
     // ─── LOAD PERSONAL BASELINE DATA ─────────────────────────────────────────
     const { data: userBaselines } = await supabase
       .from("user_baselines")
@@ -699,6 +723,9 @@ ${latestBriefing?.content ? latestBriefing.content.slice(0, 800) + (latestBriefi
 
 RECENT CONVERSATION HISTORY:
 ${conversationHistory}
+
+PLAN ADHERENCE (reference naturally for continuity — acknowledge streaks and week-over-week progress):
+${adherenceContext}
 
 LONG-TERM MEMORY:
 ${memoryContext}

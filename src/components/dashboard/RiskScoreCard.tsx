@@ -1,4 +1,5 @@
 import { ShieldAlert, Shield, ShieldCheck } from "lucide-react";
+import { FeatureGate } from "@/components/FeatureGate";
 import { cn } from "@/lib/utils";
 import { useMemo, useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -343,8 +344,9 @@ export const RiskScoreCard = () => {
         {explanation}
       </div>
 
-      {/* Why it moved — day-over-day delta + biggest driver */}
+      {/* Why it moved — day-over-day delta + biggest driver (Pro) */}
       {movement && movement.delta !== 0 && (
+      <FeatureGate min="pro">
         <div className="flex items-center gap-2 text-[13px] text-muted-foreground mb-4">
           <span className={cn("font-semibold", movement.delta > 0 ? "text-red-400" : "text-bioGreen")}>
             {movement.delta > 0 ? "\u25B2" : "\u25BC"} {Math.abs(movement.delta)} vs yesterday
@@ -354,6 +356,7 @@ export const RiskScoreCard = () => {
           )}
         </div>
       )}
+      </FeatureGate>
 
       {/* Contributing factors */}
       <div className="grid grid-cols-4 gap-2 text-center">

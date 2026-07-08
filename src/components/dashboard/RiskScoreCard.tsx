@@ -345,8 +345,8 @@ export const RiskScoreCard = () => {
       </div>
 
       {/* Why it moved — day-over-day delta + biggest driver (Pro) */}
-      {movement && movement.delta !== 0 && (
       <FeatureGate min="pro">
+      {movement && movement.delta !== 0 && (
         <div className="flex items-center gap-2 text-[13px] text-muted-foreground mb-4">
           <span className={cn("font-semibold", movement.delta > 0 ? "text-red-400" : "text-bioGreen")}>
             {movement.delta > 0 ? "\u25B2" : "\u25BC"} {Math.abs(movement.delta)} vs yesterday

@@ -7,6 +7,8 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { BookingResponse } from '@/hooks/useBookings';
+import { addEventToGoogleCalendar, isGoogleCalendarConnected } from '@/lib/googleCalendar';
+import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 
 interface BookingConfirmationModalProps {
@@ -21,19 +23,37 @@ export function BookingConfirmationModal({
   onClose,
 }: BookingConfirmationModalProps) {
   const navigate = useNavigate();
+  const { toast } = useToast();
 
   if (!booking) return null;
 
-  const handleAddToCalendar = () => {
+  const handleAddToCalendar = async () => {
     const startDate = new Date(`${booking.appointment.date} ${booking.appointment.time}`);
     const endDate = new Date(startDate.getTime() + 60 * 60 * 1000);
+    const summary = `Appointment with ${booking.physician.name}`;
+    const description = `${booking.physician.specialty}${isVirtual ? ' · Telehealth' : ''}`;
+    const location = isVirtual ? 'Telehealth' : (booking.physician.location || '');
 
-    const formatDate = (date: Date) => {
-      return date.toISOString().replace(/-|:|\.\d+/g, '');
-    };
+    // Preferred path: write directly to the user's Google Calendar via our API
+    try {
+      if (await isGoogleCalendarConnected()) {
+        await addEventToGoogleCalendar({
+          summary,
+          description,
+          location,
+          start: startDate.toISOString(),
+          end: endDate.toISOString(),
+        });
+        toast({ title: 'Added to Google Calendar', description: summary });
+        return;
+      }
+    } catch {
+      // fall through to the template URL below
+    }
 
-    const calendarUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=Appointment+with+${encodeURIComponent(booking.physician.name)}&dates=${formatDate(startDate)}/${formatDate(endDate)}&details=${encodeURIComponent(`Appointment with ${booking.physician.name}, ${booking.physician.specialty}`)}&location=${encodeURIComponent(booking.physician.location || '')}`;
-
+    // Fallback: open Google's pre-filled event template (no OAuth needed)
+    const fmt = (d: Date) => d.toISOString().replace(/-|:|\.\d+/g, '');
+    const calendarUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(summary)}&dates=${fmt(startDate)}/${fmt(endDate)}&details=${encodeURIComponent(description)}&location=${encodeURIComponent(location)}`;
     window.open(calendarUrl, '_blank');
   };
 

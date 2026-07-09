@@ -38,7 +38,7 @@ serve(async (req: Request) => {
 
     const googleClientId = Deno.env.get("GOOGLE_CLIENT_ID");
     const googleClientSecret = Deno.env.get("GOOGLE_CLIENT_SECRET");
-    const googleRedirectUri = Deno.env.get("GOOGLE_REDIRECT_URI") || `${supabaseUrl.replace('.supabase.co', '')}/google-calendar-callback`;
+    const googleRedirectUri = Deno.env.get("GOOGLE_REDIRECT_URI") || "https://predictiv.netlify.app/google-calendar-callback";
 
     if (!googleClientId || !googleClientSecret) {
       throw new Error("Google OAuth credentials not configured");

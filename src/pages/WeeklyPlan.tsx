@@ -7,7 +7,8 @@ import { useToast } from "@/hooks/use-toast";
 import {
   Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter,
 } from "@/components/ui/sheet";
-import { format, parseISO, isToday } from "date-fns";
+import { format, parseISO, isToday, addDays } from "date-fns";
+import { AddToGoogleCalendarButton } from "@/components/AddToGoogleCalendarButton";
 import { cn } from "@/lib/utils";
 
 // ── Types ──────────────────────────────────────────────────────────────────
@@ -431,7 +432,18 @@ export default function WeeklyPlan() {
                   )}
                 </div>
 
-                <SheetFooter className="pt-3">
+                <SheetFooter className="pt-3 flex-col gap-2 sm:flex-col sm:space-x-0">
+                  <AddToGoogleCalendarButton
+                    variant="outline"
+                    size="default"
+                    label="Add session to Google Calendar"
+                    event={{
+                      summary: `Predictiv: ${meta.label} session`,
+                      description: selected.advice,
+                      start: selected.date,
+                      end: format(addDays(parseISO(selected.date), 1), "yyyy-MM-dd"),
+                    }}
+                  />
                   <Button className="w-full" onClick={() => setSelected(null)}>
                     Got it
                   </Button>

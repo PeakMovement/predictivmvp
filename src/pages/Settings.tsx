@@ -4,6 +4,7 @@ import { useLayoutCustomization } from "@/hooks/useLayoutCustomization";
 import { ProfileSettings } from "@/components/settings/ProfileSettings";
 import { TonePreferenceSettings } from "@/components/settings/TonePreferenceSettings";
 import { DevicesSettings } from "@/components/settings/DevicesSettings";
+import { GoogleCalendarConnection } from "@/components/GoogleCalendarConnection";
 import { NotificationsSettings } from "@/components/settings/NotificationsSettings";
 import { AppearanceSettings } from "@/components/settings/AppearanceSettings";
 import { AccountSettings } from "@/components/settings/AccountSettings";
@@ -95,6 +96,10 @@ export const Settings = ({ onNavigate }: SettingsProps) => {
         </LayoutBlock>
 
         <DevicesSettings isSectionVisible={isSectionVisible} />
+
+        <LayoutBlock blockId="googleCalendar" displayName="Google Calendar" pageId="profile" size="standard" visible={isSectionVisible("googleCalendar")}>
+          <GoogleCalendarConnection />
+        </LayoutBlock>
 
         <NotificationsSettings isSectionVisible={isSectionVisible} onNavigate={onNavigate} />
 

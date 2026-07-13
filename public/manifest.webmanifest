@@ -1,0 +1,14 @@
+{
+  "name": "Predictiv — Your AI Performance Coach",
+  "short_name": "Predictiv",
+  "description": "Personalised daily briefings, training load analytics and injury prevention powered by AI",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#13151A",
+  "theme_color": "#13151A",
+  "icons": [
+    { "src": "/favicon.ico", "sizes": "48x48", "type": "image/x-icon" }
+  ]
+}

@@ -39,33 +39,49 @@ import { AccessibilityWrapper } from "@/components/AccessibilityWrapper";
 import { SessionTimeoutWarning } from "@/components/SessionTimeoutWarning";
 import { useSessionTimeout } from "@/hooks/useSessionTimeout";
 import { WearableSourceProvider } from "@/hooks/useWearableSource";
+import { lazyWithRetry } from "@/lib/lazyWithRetry";
 
-const Dashboard          = lazy(() => import("@/pages/Dashboard").then(m => ({ default: m.Dashboard })));
-const Training           = lazy(() => import("@/pages/Training").then(m => ({ default: m.Training })));
-const Health             = lazy(() => import("@/pages/Health").then(m => ({ default: m.Health })));
-const YourPlan           = lazy(() => import("@/pages/YourPlan").then(m => ({ default: m.YourPlan })));
-const Settings           = lazy(() => import("@/pages/Settings").then(m => ({ default: m.Settings })));
-const FindHelp           = lazy(() => import("@/pages/FindHelp").then(m => ({ default: m.FindHelp })));
-const InsightsTree       = lazy(() => import("@/pages/InsightsTree").then(m => ({ default: m.InsightsTree })));
-const OuraCallback       = lazy(() => import("@/pages/OuraCallback").then(m => ({ default: m.OuraCallback })));
-const PolarCallback      = lazy(() => import("@/pages/auth/polar"));
-const MyBaselines        = lazy(() => import("@/pages/MyBaselines"));
-const MyDocuments        = lazy(() => import("@/pages/MyDocuments"));
-const SymptomCheckIn     = lazy(() => import("@/pages/SymptomCheckIn").then(m => ({ default: m.SymptomCheckIn })));
-const PlanCompliance     = lazy(() => import("@/pages/PlanCompliance"));
-const Planner            = lazy(() => import("@/pages/Planner").then(m => ({ default: m.Planner })));
-const ProfileSetup       = lazy(() => import("@/pages/ProfileSetup").then(m => ({ default: m.ProfileSetup })));
-const AdminDashboard          = lazy(() => import("@/pages/AdminDashboard").then(m => ({ default: m.AdminDashboard })));
-const PersonalCanvas          = lazy(() => import("@/pages/PersonalCanvas"));
-const GoogleCalendarCallback  = lazy(() => import("@/pages/GoogleCalendarCallback").then(m => ({ default: m.GoogleCalendarCallback })));
-const AlertHistory            = lazy(() => import("@/pages/AlertHistory"));
-const MetricsDashboard        = lazy(() => import("@/pages/MetricsDashboard"));
-const PractitionerDashboard   = lazy(() => import("@/pages/PractitionerDashboard").then(m => ({ default: m.PractitionerDashboard })));
-const InjuryLog               = lazy(() => import("@/pages/InjuryLog"));
-const WeeklyPlan              = lazy(() => import("@/pages/WeeklyPlan"));
+const Dashboard          = lazyWithRetry(() => import("@/pages/Dashboard").then(m => ({ default: m.Dashboard })));
+const Training           = lazyWithRetry(() => import("@/pages/Training").then(m => ({ default: m.Training })));
+const Health             = lazyWithRetry(() => import("@/pages/Health").then(m => ({ default: m.Health })));
+const YourPlan           = lazyWithRetry(() => import("@/pages/YourPlan").then(m => ({ default: m.YourPlan })));
+const Settings           = lazyWithRetry(() => import("@/pages/Settings").then(m => ({ default: m.Settings })));
+const FindHelp           = lazyWithRetry(() => import("@/pages/FindHelp").then(m => ({ default: m.FindHelp })));
+const InsightsTree       = lazyWithRetry(() => import("@/pages/InsightsTree").then(m => ({ default: m.InsightsTree })));
+const OuraCallback       = lazyWithRetry(() => import("@/pages/OuraCallback").then(m => ({ default: m.OuraCallback })));
+const PolarCallback      = lazyWithRetry(() => import("@/pages/auth/polar"));
+const MyBaselines        = lazyWithRetry(() => import("@/pages/MyBaselines"));
+const MyDocuments        = lazyWithRetry(() => import("@/pages/MyDocuments"));
+const SymptomCheckIn     = lazyWithRetry(() => import("@/pages/SymptomCheckIn").then(m => ({ default: m.SymptomCheckIn })));
+const PlanCompliance     = lazyWithRetry(() => import("@/pages/PlanCompliance"));
+const Planner            = lazyWithRetry(() => import("@/pages/Planner").then(m => ({ default: m.Planner })));
+const ProfileSetup       = lazyWithRetry(() => import("@/pages/ProfileSetup").then(m => ({ default: m.ProfileSetup })));
+const AdminDashboard          = lazyWithRetry(() => import("@/pages/AdminDashboard").then(m => ({ default: m.AdminDashboard })));
+const PersonalCanvas          = lazyWithRetry(() => import("@/pages/PersonalCanvas"));
+const GoogleCalendarCallback  = lazyWithRetry(() => import("@/pages/GoogleCalendarCallback").then(m => ({ default: m.GoogleCalendarCallback })));
+const AlertHistory            = lazyWithRetry(() => import("@/pages/AlertHistory"));
+const MetricsDashboard        = lazyWithRetry(() => import("@/pages/MetricsDashboard"));
+const PractitionerDashboard   = lazyWithRetry(() => import("@/pages/PractitionerDashboard").then(m => ({ default: m.PractitionerDashboard })));
+const InjuryLog               = lazyWithRetry(() => import("@/pages/InjuryLog"));
+const WeeklyPlan              = lazyWithRetry(() => import("@/pages/WeeklyPlan"));
 
 const queryClient = new QueryClient({
-  defaultOptions: { queries: { staleTime: 2 * 60 * 1000, gcTime: 10 * 60 * 1000 } },
+  defaultOptions: {
+    queries: {
+      staleTime: 2 * 60 * 1000,
+      gcTime: 10 * 60 * 1000,
+      // Mobile-network resilience: retry transient failures with capped backoff,
+      // but don't retry auth/permission errors.
+      retry: (failureCount, error) => {
+        const status = (error as { status?: number; statusCode?: number })?.status
+          ?? (error as { statusCode?: number })?.statusCode;
+        if (status && [400, 401, 403, 404].includes(status)) return false;
+        return failureCount < 3;
+      },
+      retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 15000),
+      refetchOnWindowFocus: false,
+    },
+  },
   queryCache: new QueryCache({
     onError: (error, query) => {
       const onError = query.meta?.onError as ((e: Error) => void) | undefined;

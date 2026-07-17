@@ -74,11 +74,22 @@ export default function Genesis() {
         }
 
         if (data.session) {
-          try {
-            await supabase
-              .from("user_profiles")
-              .upsert({ user_id: data.user.id, full_name: username }, { onConflict: "user_id" });
-          } catch (_) {}
+          // NOTE: supabase upsert RESOLVES with { error } rather than throwing, so a
+          // try/catch here never fires. Check the returned error explicitly, otherwise
+          // the user's name silently fails to save with no signal at all.
+          const { error: profileError } = await supabase
+            .from("user_profiles")
+            .upsert({ user_id: data.user.id, full_name: username }, { onConflict: "user_id" });
+
+          if (profileError) {
+            console.error("[Genesis] user_profiles upsert failed:", profileError.message);
+            // Non-blocking: let signup continue; the name can be set later in Settings.
+            toast({
+              title: "Account created",
+              description: "We couldn't save your name just yet — you can add it in Settings.",
+            });
+          }
+
           navigate("/");
           return;
         }

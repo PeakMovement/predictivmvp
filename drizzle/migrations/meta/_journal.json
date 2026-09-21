@@ -15,6 +15,13 @@
       "when": 1789970194133,
       "tag": "0001_storage_object_policies",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1789970205303,
+      "tag": "0002_drop_temp_schema_applier",
+      "breakpoints": true
     }
   ]
 }

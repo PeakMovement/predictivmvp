@@ -5001,7 +5001,6 @@ export type Database = {
       }
     }
     Functions: {
-      __apply_schema_sql: { Args: { sql: string }; Returns: undefined }
       cleanup_expired_garmin_oauth_state: { Args: never; Returns: undefined }
       cleanup_expired_rate_limits: { Args: never; Returns: undefined }
       cleanup_old_pattern_views: { Args: never; Returns: undefined }

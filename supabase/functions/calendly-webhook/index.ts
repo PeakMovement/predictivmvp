@@ -274,6 +274,7 @@ serve(async (req) => {
     const appointmentEnd = eventData.end_time;
     const patientName = inviteeData.name;
     const patientEmail = inviteeData.email;
+    console.log("[calendly-webhook] invitee", {
 
       calendlyEventId,
       appointmentStart,

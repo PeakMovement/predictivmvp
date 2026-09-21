@@ -1,0 +1,34 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1789970074963,
+      "tag": "0000_temp_schema_applier",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1789970194133,
+      "tag": "0001_storage_object_policies",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1789970205303,
+      "tag": "0002_drop_temp_schema_applier",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1789970600973,
+      "tag": "0003_ensure_user_bootstrap_rpc",
+      "breakpoints": true
+    }
+  ]
+}

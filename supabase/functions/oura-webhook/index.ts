@@ -61,6 +61,7 @@ Deno.serve(async (req: Request) => {
       const timestamp = req.headers.get("x-oura-timestamp");
       const bodyText = await req.text();
       const body: WebhookEvent = JSON.parse(bodyText);
+      console.log("[oura-webhook] event", {
 
         event_type: body.event_type,
         data_type: body.data_type,

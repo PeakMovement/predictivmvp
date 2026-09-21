@@ -10,7 +10,7 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "13.0.5"
+    PostgrestVersion: "14.5"
   }
   public: {
     Tables: {
@@ -219,22 +219,7 @@ export type Database = {
           user_id?: string
           user_notes?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "alert_history_health_anomaly_id_fkey"
-            columns: ["health_anomaly_id"]
-            isOneToOne: false
-            referencedRelation: "health_anomalies"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "alert_history_symptom_checkin_id_fkey"
-            columns: ["symptom_checkin_id"]
-            isOneToOne: false
-            referencedRelation: "symptom_check_ins"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       alert_settings: {
         Row: {
@@ -308,6 +293,132 @@ export type Database = {
         }
         Relationships: []
       }
+      baseline_profiles: {
+        Row: {
+          acwr: number | null
+          acwr_source: string | null
+          anomaly_score: number | null
+          available_formulas: string[] | null
+          baseline_confidence: number | null
+          computed_at: string | null
+          created_at: string | null
+          data_days_available: number | null
+          date: string
+          device_source: string
+          f06_hrv_suppression_status: string | null
+          f06_hrv_suppression_value: number | null
+          f10_sleep_debt_hours: number | null
+          f10_sleep_debt_status: string | null
+          f12_temp_deviation_status: string | null
+          f12_temp_deviation_value: number | null
+          f14_allostatic_load_status: string | null
+          f14_allostatic_load_value: number | null
+          f19_readiness_status: string | null
+          f19_readiness_value: number | null
+          hrv_30d_avg: number | null
+          hrv_7d_avg: number | null
+          hrv_deviation_pct: number | null
+          hrv_streak_below_baseline: number | null
+          id: string
+          load_30d_avg: number | null
+          load_7d_avg: number | null
+          monotony_index: number | null
+          recovery_trend: string | null
+          rhr_30d_avg: number | null
+          rhr_7d_avg: number | null
+          rhr_deviation_pct: number | null
+          sleep_deviation_pct: number | null
+          sleep_efficiency_30d_avg: number | null
+          sleep_efficiency_7d_avg: number | null
+          sleep_score_30d_avg: number | null
+          sleep_score_7d_avg: number | null
+          user_id: string
+          weekly_load_progression_pct: number | null
+        }
+        Insert: {
+          acwr?: number | null
+          acwr_source?: string | null
+          anomaly_score?: number | null
+          available_formulas?: string[] | null
+          baseline_confidence?: number | null
+          computed_at?: string | null
+          created_at?: string | null
+          data_days_available?: number | null
+          date: string
+          device_source?: string
+          f06_hrv_suppression_status?: string | null
+          f06_hrv_suppression_value?: number | null
+          f10_sleep_debt_hours?: number | null
+          f10_sleep_debt_status?: string | null
+          f12_temp_deviation_status?: string | null
+          f12_temp_deviation_value?: number | null
+          f14_allostatic_load_status?: string | null
+          f14_allostatic_load_value?: number | null
+          f19_readiness_status?: string | null
+          f19_readiness_value?: number | null
+          hrv_30d_avg?: number | null
+          hrv_7d_avg?: number | null
+          hrv_deviation_pct?: number | null
+          hrv_streak_below_baseline?: number | null
+          id?: string
+          load_30d_avg?: number | null
+          load_7d_avg?: number | null
+          monotony_index?: number | null
+          recovery_trend?: string | null
+          rhr_30d_avg?: number | null
+          rhr_7d_avg?: number | null
+          rhr_deviation_pct?: number | null
+          sleep_deviation_pct?: number | null
+          sleep_efficiency_30d_avg?: number | null
+          sleep_efficiency_7d_avg?: number | null
+          sleep_score_30d_avg?: number | null
+          sleep_score_7d_avg?: number | null
+          user_id: string
+          weekly_load_progression_pct?: number | null
+        }
+        Update: {
+          acwr?: number | null
+          acwr_source?: string | null
+          anomaly_score?: number | null
+          available_formulas?: string[] | null
+          baseline_confidence?: number | null
+          computed_at?: string | null
+          created_at?: string | null
+          data_days_available?: number | null
+          date?: string
+          device_source?: string
+          f06_hrv_suppression_status?: string | null
+          f06_hrv_suppression_value?: number | null
+          f10_sleep_debt_hours?: number | null
+          f10_sleep_debt_status?: string | null
+          f12_temp_deviation_status?: string | null
+          f12_temp_deviation_value?: number | null
+          f14_allostatic_load_status?: string | null
+          f14_allostatic_load_value?: number | null
+          f19_readiness_status?: string | null
+          f19_readiness_value?: number | null
+          hrv_30d_avg?: number | null
+          hrv_7d_avg?: number | null
+          hrv_deviation_pct?: number | null
+          hrv_streak_below_baseline?: number | null
+          id?: string
+          load_30d_avg?: number | null
+          load_7d_avg?: number | null
+          monotony_index?: number | null
+          recovery_trend?: string | null
+          rhr_30d_avg?: number | null
+          rhr_7d_avg?: number | null
+          rhr_deviation_pct?: number | null
+          sleep_deviation_pct?: number | null
+          sleep_efficiency_30d_avg?: number | null
+          sleep_efficiency_7d_avg?: number | null
+          sleep_score_30d_avg?: number | null
+          sleep_score_7d_avg?: number | null
+          user_id?: string
+          weekly_load_progression_pct?: number | null
+        }
+        Relationships: []
+      }
       Bookings: {
         Row: {
           appointment_end: string | null
@@ -335,7 +446,7 @@ export type Database = {
           notes?: string | null
           patient_email?: string | null
           patient_name?: string | null
-          session_date?: string
+          session_date: string
           session_type?: string | null
           source?: string | null
           status?: string | null
@@ -357,15 +468,7 @@ export type Database = {
           status?: string | null
           user_id?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "Bookings_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "Users"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       csv_uploads: {
         Row: {
@@ -727,6 +830,117 @@ export type Database = {
         }
         Relationships: []
       }
+      fitbit_auto_data: {
+        Row: {
+          activity: Json | null
+          fetched_at: string | null
+          id: number
+          sleep: Json | null
+          user_id: string
+          user_id_uuid: string | null
+        }
+        Insert: {
+          activity?: Json | null
+          fetched_at?: string | null
+          id?: number
+          sleep?: Json | null
+          user_id: string
+          user_id_uuid?: string | null
+        }
+        Update: {
+          activity?: Json | null
+          fetched_at?: string | null
+          id?: number
+          sleep?: Json | null
+          user_id?: string
+          user_id_uuid?: string | null
+        }
+        Relationships: []
+      }
+      fitbit_tokens: {
+        Row: {
+          access_token: string
+          created_at: string | null
+          expires_in: number | null
+          fitbit_user_id: string | null
+          refresh_token: string | null
+          scope: string | null
+          token_type: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          access_token: string
+          created_at?: string | null
+          expires_in?: number | null
+          fitbit_user_id?: string | null
+          refresh_token?: string | null
+          scope?: string | null
+          token_type?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          access_token?: string
+          created_at?: string | null
+          expires_in?: number | null
+          fitbit_user_id?: string | null
+          refresh_token?: string | null
+          scope?: string | null
+          token_type?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      fitbit_trends: {
+        Row: {
+          acute_load: number | null
+          acwr: number | null
+          chronic_load: number | null
+          created_at: string | null
+          date: string
+          ewma: number | null
+          hrv: number | null
+          id: string
+          monotony: number | null
+          sleep_score: number | null
+          strain: number | null
+          training_load: number | null
+          user_id: string
+        }
+        Insert: {
+          acute_load?: number | null
+          acwr?: number | null
+          chronic_load?: number | null
+          created_at?: string | null
+          date: string
+          ewma?: number | null
+          hrv?: number | null
+          id?: string
+          monotony?: number | null
+          sleep_score?: number | null
+          strain?: number | null
+          training_load?: number | null
+          user_id: string
+        }
+        Update: {
+          acute_load?: number | null
+          acwr?: number | null
+          chronic_load?: number | null
+          created_at?: string | null
+          date?: string
+          ewma?: number | null
+          hrv?: number | null
+          id?: string
+          monotony?: number | null
+          sleep_score?: number | null
+          strain?: number | null
+          training_load?: number | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       function_execution_log: {
         Row: {
           completed_at: string | null
@@ -986,32 +1200,24 @@ export type Database = {
           updated_at?: string | null
           user_id?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "health_daily_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       health_data: {
         Row: {
           collected_at: string | null
-          id: number
+          id: number | null
           samples: Json | null
           user_id: string
         }
         Insert: {
           collected_at?: string | null
-          id?: number
+          id?: number | null
           samples?: Json | null
           user_id: string
         }
         Update: {
           collected_at?: string | null
-          id?: number
+          id?: number | null
           samples?: Json | null
           user_id?: string
         }
@@ -1209,7 +1415,7 @@ export type Database = {
       insight_history: {
         Row: {
           context_used: string | null
-          created_at: string
+          created_at: string | null
           id: string
           provider: string | null
           query: string
@@ -1219,7 +1425,7 @@ export type Database = {
         }
         Insert: {
           context_used?: string | null
-          created_at?: string
+          created_at?: string | null
           id?: string
           provider?: string | null
           query: string
@@ -1229,7 +1435,7 @@ export type Database = {
         }
         Update: {
           context_used?: string | null
-          created_at?: string
+          created_at?: string | null
           id?: string
           provider?: string | null
           query?: string
@@ -1293,6 +1499,159 @@ export type Database = {
         }
         Relationships: []
       }
+      onboarding_signals: {
+        Row: {
+          comp_high: boolean | null
+          comp_low: boolean | null
+          comp_med: boolean | null
+          compliance: string | null
+          created_at: string | null
+          health_goals: string[] | null
+          inj_acute: boolean | null
+          inj_current: boolean | null
+          inj_none: boolean | null
+          inj_overuse: boolean | null
+          inj_recurring: boolean | null
+          injury_history: string | null
+          is_endurance: boolean | null
+          is_mind_body: boolean | null
+          is_rehab_focus: boolean | null
+          is_strength: boolean | null
+          is_team_sport: boolean | null
+          sleep_ok: boolean | null
+          sleep_poor: boolean | null
+          sleep_quality: string | null
+          sleep_variable: boolean | null
+          stress_high: boolean | null
+          stress_level: number | null
+          stress_low: boolean | null
+          stress_med: boolean | null
+          training_type: string | null
+          updated_at: string | null
+          user_id: string
+          wearable: string | null
+        }
+        Insert: {
+          comp_high?: boolean | null
+          comp_low?: boolean | null
+          comp_med?: boolean | null
+          compliance?: string | null
+          created_at?: string | null
+          health_goals?: string[] | null
+          inj_acute?: boolean | null
+          inj_current?: boolean | null
+          inj_none?: boolean | null
+          inj_overuse?: boolean | null
+          inj_recurring?: boolean | null
+          injury_history?: string | null
+          is_endurance?: boolean | null
+          is_mind_body?: boolean | null
+          is_rehab_focus?: boolean | null
+          is_strength?: boolean | null
+          is_team_sport?: boolean | null
+          sleep_ok?: boolean | null
+          sleep_poor?: boolean | null
+          sleep_quality?: string | null
+          sleep_variable?: boolean | null
+          stress_high?: boolean | null
+          stress_level?: number | null
+          stress_low?: boolean | null
+          stress_med?: boolean | null
+          training_type?: string | null
+          updated_at?: string | null
+          user_id: string
+          wearable?: string | null
+        }
+        Update: {
+          comp_high?: boolean | null
+          comp_low?: boolean | null
+          comp_med?: boolean | null
+          compliance?: string | null
+          created_at?: string | null
+          health_goals?: string[] | null
+          inj_acute?: boolean | null
+          inj_current?: boolean | null
+          inj_none?: boolean | null
+          inj_overuse?: boolean | null
+          inj_recurring?: boolean | null
+          injury_history?: string | null
+          is_endurance?: boolean | null
+          is_mind_body?: boolean | null
+          is_rehab_focus?: boolean | null
+          is_strength?: boolean | null
+          is_team_sport?: boolean | null
+          sleep_ok?: boolean | null
+          sleep_poor?: boolean | null
+          sleep_quality?: string | null
+          sleep_variable?: boolean | null
+          stress_high?: boolean | null
+          stress_level?: number | null
+          stress_low?: boolean | null
+          stress_med?: boolean | null
+          training_type?: string | null
+          updated_at?: string | null
+          user_id?: string
+          wearable?: string | null
+        }
+        Relationships: []
+      }
+      oura_activity: {
+        Row: {
+          active_calories: number | null
+          day: string
+          id: string
+          inactivity_time: number | null
+          met_min_high: number | null
+          met_min_low: number | null
+          steps: number | null
+          total_calories: number | null
+          user_id: string
+        }
+        Insert: {
+          active_calories?: number | null
+          day: string
+          id?: string
+          inactivity_time?: number | null
+          met_min_high?: number | null
+          met_min_low?: number | null
+          steps?: number | null
+          total_calories?: number | null
+          user_id: string
+        }
+        Update: {
+          active_calories?: number | null
+          day?: string
+          id?: string
+          inactivity_time?: number | null
+          met_min_high?: number | null
+          met_min_low?: number | null
+          steps?: number | null
+          total_calories?: number | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      oura_cardiovascular_age: {
+        Row: {
+          day: string
+          id: string
+          user_id: string
+          vascular_age: number | null
+        }
+        Insert: {
+          day: string
+          id?: string
+          user_id: string
+          vascular_age?: number | null
+        }
+        Update: {
+          day?: string
+          id?: string
+          user_id?: string
+          vascular_age?: number | null
+        }
+        Relationships: []
+      }
       oura_logs: {
         Row: {
           created_at: string | null
@@ -1320,13 +1679,229 @@ export type Database = {
         }
         Relationships: []
       }
+      oura_readiness: {
+        Row: {
+          contributors: Json | null
+          day: string
+          id: string
+          score: number | null
+          temperature_deviation: number | null
+          temperature_trend_deviation: number | null
+          user_id: string
+        }
+        Insert: {
+          contributors?: Json | null
+          day: string
+          id?: string
+          score?: number | null
+          temperature_deviation?: number | null
+          temperature_trend_deviation?: number | null
+          user_id: string
+        }
+        Update: {
+          contributors?: Json | null
+          day?: string
+          id?: string
+          score?: number | null
+          temperature_deviation?: number | null
+          temperature_trend_deviation?: number | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      oura_resilience: {
+        Row: {
+          day: string
+          daytime_recovery: number | null
+          id: string
+          level: string | null
+          sleep_recovery: number | null
+          stress: number | null
+          user_id: string
+        }
+        Insert: {
+          day: string
+          daytime_recovery?: number | null
+          id?: string
+          level?: string | null
+          sleep_recovery?: number | null
+          stress?: number | null
+          user_id: string
+        }
+        Update: {
+          day?: string
+          daytime_recovery?: number | null
+          id?: string
+          level?: string | null
+          sleep_recovery?: number | null
+          stress?: number | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      oura_rest_mode: {
+        Row: {
+          end_day: string | null
+          end_time: string | null
+          episodes: Json | null
+          id: string
+          start_day: string | null
+          start_time: string | null
+          user_id: string
+        }
+        Insert: {
+          end_day?: string | null
+          end_time?: string | null
+          episodes?: Json | null
+          id?: string
+          start_day?: string | null
+          start_time?: string | null
+          user_id: string
+        }
+        Update: {
+          end_day?: string | null
+          end_time?: string | null
+          episodes?: Json | null
+          id?: string
+          start_day?: string | null
+          start_time?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      oura_ring_config: {
+        Row: {
+          color: string | null
+          design: string | null
+          firmware_version: string | null
+          hardware_type: string | null
+          id: string
+          setup_at: string | null
+          size: number | null
+          user_id: string
+        }
+        Insert: {
+          color?: string | null
+          design?: string | null
+          firmware_version?: string | null
+          hardware_type?: string | null
+          id?: string
+          setup_at?: string | null
+          size?: number | null
+          user_id: string
+        }
+        Update: {
+          color?: string | null
+          design?: string | null
+          firmware_version?: string | null
+          hardware_type?: string | null
+          id?: string
+          setup_at?: string | null
+          size?: number | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      oura_sleep: {
+        Row: {
+          average_heart_rate: number | null
+          average_hrv: number | null
+          bedtime_end: string | null
+          bedtime_start: string | null
+          day: string
+          deep_sleep_duration: number | null
+          efficiency: number | null
+          id: string
+          light_sleep_duration: number | null
+          rem_sleep_duration: number | null
+          total_sleep_duration: number | null
+          user_id: string
+        }
+        Insert: {
+          average_heart_rate?: number | null
+          average_hrv?: number | null
+          bedtime_end?: string | null
+          bedtime_start?: string | null
+          day: string
+          deep_sleep_duration?: number | null
+          efficiency?: number | null
+          id?: string
+          light_sleep_duration?: number | null
+          rem_sleep_duration?: number | null
+          total_sleep_duration?: number | null
+          user_id: string
+        }
+        Update: {
+          average_heart_rate?: number | null
+          average_hrv?: number | null
+          bedtime_end?: string | null
+          bedtime_start?: string | null
+          day?: string
+          deep_sleep_duration?: number | null
+          efficiency?: number | null
+          id?: string
+          light_sleep_duration?: number | null
+          rem_sleep_duration?: number | null
+          total_sleep_duration?: number | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      oura_spo2: {
+        Row: {
+          day: string
+          id: string
+          spo2_percentage_avg: number | null
+          user_id: string
+        }
+        Insert: {
+          day: string
+          id?: string
+          spo2_percentage_avg?: number | null
+          user_id: string
+        }
+        Update: {
+          day?: string
+          id?: string
+          spo2_percentage_avg?: number | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      oura_stress: {
+        Row: {
+          day: string
+          day_summary: string | null
+          id: string
+          recovery_high: number | null
+          stress_high: number | null
+          user_id: string
+        }
+        Insert: {
+          day: string
+          day_summary?: string | null
+          id?: string
+          recovery_high?: number | null
+          stress_high?: number | null
+          user_id: string
+        }
+        Update: {
+          day?: string
+          day_summary?: string | null
+          id?: string
+          recovery_high?: number | null
+          stress_high?: number | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       oura_sync_log: {
         Row: {
           data: Json | null
           date_used: string | null
           endpoint: string | null
           fetched_at: string | null
-          id: number
+          id: number | null
           user_id: string | null
         }
         Insert: {
@@ -1334,7 +1909,7 @@ export type Database = {
           date_used?: string | null
           endpoint?: string | null
           fetched_at?: string | null
-          id?: number
+          id?: number | null
           user_id?: string | null
         }
         Update: {
@@ -1342,8 +1917,62 @@ export type Database = {
           date_used?: string | null
           endpoint?: string | null
           fetched_at?: string | null
-          id?: number
+          id?: number | null
           user_id?: string | null
+        }
+        Relationships: []
+      }
+      oura_vo2max: {
+        Row: {
+          day: string
+          id: string
+          timestamp: string | null
+          user_id: string
+          vo2_max: number | null
+        }
+        Insert: {
+          day: string
+          id?: string
+          timestamp?: string | null
+          user_id: string
+          vo2_max?: number | null
+        }
+        Update: {
+          day?: string
+          id?: string
+          timestamp?: string | null
+          user_id?: string
+          vo2_max?: number | null
+        }
+        Relationships: []
+      }
+      oura_workout: {
+        Row: {
+          activity: string | null
+          calories: number | null
+          duration: number | null
+          id: string
+          source: string | null
+          start_datetime: string | null
+          user_id: string
+        }
+        Insert: {
+          activity?: string | null
+          calories?: number | null
+          duration?: number | null
+          id?: string
+          source?: string | null
+          start_datetime?: string | null
+          user_id: string
+        }
+        Update: {
+          activity?: string | null
+          calories?: number | null
+          duration?: number | null
+          id?: string
+          source?: string | null
+          start_datetime?: string | null
+          user_id?: string
         }
         Relationships: []
       }
@@ -1470,6 +2099,111 @@ export type Database = {
         }
         Relationships: []
       }
+      polar_logs: {
+        Row: {
+          created_at: string | null
+          data_type: string | null
+          details: Json | null
+          entries_synced: number | null
+          error_message: string | null
+          event_type: string | null
+          id: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          data_type?: string | null
+          details?: Json | null
+          entries_synced?: number | null
+          error_message?: string | null
+          event_type?: string | null
+          id?: string
+          status: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          data_type?: string | null
+          details?: Json | null
+          entries_synced?: number | null
+          error_message?: string | null
+          event_type?: string | null
+          id?: string
+          status?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      polar_tokens: {
+        Row: {
+          access_token: string
+          consent_error: boolean | null
+          created_at: string | null
+          id: string
+          member_id: string | null
+          polar_user_id: number | null
+          scope: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          access_token: string
+          consent_error?: boolean | null
+          created_at?: string | null
+          id?: string
+          member_id?: string | null
+          polar_user_id?: number | null
+          scope?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          access_token?: string
+          consent_error?: boolean | null
+          created_at?: string | null
+          id?: string
+          member_id?: string | null
+          polar_user_id?: number | null
+          scope?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      polar_webhooks: {
+        Row: {
+          active: boolean | null
+          created_at: string | null
+          events: string[]
+          id: string
+          signature_secret_key: string
+          updated_at: string | null
+          url: string
+          webhook_id: string | null
+        }
+        Insert: {
+          active?: boolean | null
+          created_at?: string | null
+          events?: string[]
+          id?: string
+          signature_secret_key: string
+          updated_at?: string | null
+          url: string
+          webhook_id?: string | null
+        }
+        Update: {
+          active?: boolean | null
+          created_at?: string | null
+          events?: string[]
+          id?: string
+          signature_secret_key?: string
+          updated_at?: string | null
+          url?: string
+          webhook_id?: string | null
+        }
+        Relationships: []
+      }
       practitioner_access: {
         Row: {
           access_granted_at: string
@@ -1480,7 +2214,7 @@ export type Database = {
           practitioner_email: string
           practitioner_id: string | null
           practitioner_name: string | null
-          practitioner_type: "physio" | "coach" | "doctor" | "trainer" | "other" | null
+          practitioner_type: string | null
           updated_at: string
         }
         Insert: {
@@ -1492,7 +2226,7 @@ export type Database = {
           practitioner_email: string
           practitioner_id?: string | null
           practitioner_name?: string | null
-          practitioner_type?: "physio" | "coach" | "doctor" | "trainer" | "other" | null
+          practitioner_type?: string | null
           updated_at?: string
         }
         Update: {
@@ -1504,10 +2238,45 @@ export type Database = {
           practitioner_email?: string
           practitioner_id?: string | null
           practitioner_name?: string | null
-          practitioner_type?: "physio" | "coach" | "doctor" | "trainer" | "other" | null
+          practitioner_type?: string | null
           updated_at?: string
         }
         Relationships: []
+      }
+      practitioner_bookings: {
+        Row: {
+          booked_at: string | null
+          id: string
+          patient_user_id: string | null
+          practitioner_id: string | null
+          source: string | null
+          status: string | null
+        }
+        Insert: {
+          booked_at?: string | null
+          id?: string
+          patient_user_id?: string | null
+          practitioner_id?: string | null
+          source?: string | null
+          status?: string | null
+        }
+        Update: {
+          booked_at?: string | null
+          id?: string
+          patient_user_id?: string | null
+          practitioner_id?: string | null
+          source?: string | null
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "practitioner_bookings_practitioner_id_fkey"
+            columns: ["practitioner_id"]
+            isOneToOne: false
+            referencedRelation: "practitioners"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       practitioner_specialties: {
         Row: {
@@ -1547,6 +2316,114 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      practitioners: {
+        Row: {
+          accepts_medical_aid: boolean | null
+          bio: string | null
+          contact_email: string | null
+          created_at: string | null
+          fee_per_session: number | null
+          id: string
+          location_city: string | null
+          location_suburb: string | null
+          name: string
+          phone: string | null
+          profile_status: string
+          specialisations: string[] | null
+          telehealth_available: boolean | null
+          type: string
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          accepts_medical_aid?: boolean | null
+          bio?: string | null
+          contact_email?: string | null
+          created_at?: string | null
+          fee_per_session?: number | null
+          id?: string
+          location_city?: string | null
+          location_suburb?: string | null
+          name: string
+          phone?: string | null
+          profile_status?: string
+          specialisations?: string[] | null
+          telehealth_available?: boolean | null
+          type: string
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          accepts_medical_aid?: boolean | null
+          bio?: string | null
+          contact_email?: string | null
+          created_at?: string | null
+          fee_per_session?: number | null
+          id?: string
+          location_city?: string | null
+          location_suburb?: string | null
+          name?: string
+          phone?: string | null
+          profile_status?: string
+          specialisations?: string[] | null
+          telehealth_available?: boolean | null
+          type?: string
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      prediction_log: {
+        Row: {
+          actual_outcome: string | null
+          anomaly_score: number | null
+          briefing_date: string | null
+          created_at: string | null
+          date: string
+          device_source: string | null
+          flag_key: string | null
+          flag_type: string
+          id: string
+          level: number
+          outcome_notes: string | null
+          outcome_recorded_at: string | null
+          prediction_text: string
+          user_id: string
+        }
+        Insert: {
+          actual_outcome?: string | null
+          anomaly_score?: number | null
+          briefing_date?: string | null
+          created_at?: string | null
+          date: string
+          device_source?: string | null
+          flag_key?: string | null
+          flag_type: string
+          id?: string
+          level?: number
+          outcome_notes?: string | null
+          outcome_recorded_at?: string | null
+          prediction_text: string
+          user_id: string
+        }
+        Update: {
+          actual_outcome?: string | null
+          anomaly_score?: number | null
+          briefing_date?: string | null
+          created_at?: string | null
+          date?: string
+          device_source?: string | null
+          flag_key?: string | null
+          flag_type?: string
+          id?: string
+          level?: number
+          outcome_notes?: string | null
+          outcome_recorded_at?: string | null
+          prediction_text?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       profiles: {
         Row: {
@@ -1590,7 +2467,7 @@ export type Database = {
           city?: string | null
           deposit_percent?: number | null
           full_name?: string | null
-          id: string
+          id?: string
           in_person?: boolean | null
           layout_preferences?: Json | null
           listing_active?: boolean | null
@@ -1738,7 +2615,7 @@ export type Database = {
         Insert: {
           is_throttled?: boolean | null
           last_request_at?: string | null
-          provider?: string
+          provider: string
           request_count?: number | null
           throttle_until?: string | null
           updated_at?: string | null
@@ -1903,38 +2780,6 @@ export type Database = {
           },
         ]
       }
-      "Risk Scores": {
-        Row: {
-          date: string | null
-          id: string
-          score: number | null
-          status: string | null
-          user_id: string
-        }
-        Insert: {
-          date?: string | null
-          id?: string
-          score?: number | null
-          status?: string | null
-          user_id?: string
-        }
-        Update: {
-          date?: string | null
-          id?: string
-          score?: number | null
-          status?: string | null
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "Risk Scores_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "Users"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       risk_alert_dismissals: {
         Row: {
           alert_key: string
@@ -1958,6 +2803,33 @@ export type Database = {
           dismissed_at?: string
           id?: string
           snooze_until?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      risk_score_history: {
+        Row: {
+          calculated_at: string
+          component_scores: Json
+          created_at: string
+          id: string
+          score: number
+          user_id: string
+        }
+        Insert: {
+          calculated_at?: string
+          component_scores?: Json
+          created_at?: string
+          id?: string
+          score: number
+          user_id: string
+        }
+        Update: {
+          calculated_at?: string
+          component_scores?: Json
+          created_at?: string
+          id?: string
+          score?: number
           user_id?: string
         }
         Relationships: []
@@ -2107,7 +2979,7 @@ export type Database = {
           latency_ms?: number | null
           retry_count?: number | null
           status: string
-          sync_type?: string
+          sync_type: string
           user_id: string
         }
         Update: {
@@ -2188,41 +3060,6 @@ export type Database = {
           terra_user_id?: string | null
           user_id?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "terra_connections_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      risk_score_history: {
-        Row: {
-          calculated_at: string
-          component_scores: Json
-          created_at: string
-          id: string
-          score: number
-          user_id: string
-        }
-        Insert: {
-          calculated_at?: string
-          component_scores?: Json
-          created_at?: string
-          id?: string
-          score: number
-          user_id: string
-        }
-        Update: {
-          calculated_at?: string
-          component_scores?: Json
-          created_at?: string
-          id?: string
-          score?: number
-          user_id?: string
-        }
         Relationships: []
       }
       training_trends: {
@@ -2238,6 +3075,7 @@ export type Database = {
           id: string
           monotony: number | null
           sleep_score: number | null
+          source: string
           strain: number | null
           training_load: number | null
           user_id: string
@@ -2247,13 +3085,14 @@ export type Database = {
           acwr?: number | null
           chronic_load?: number | null
           created_at?: string | null
-          data_gap?: boolean
+          data_gap: boolean
           date: string
           ewma?: number | null
           hrv?: number | null
           id?: string
           monotony?: number | null
           sleep_score?: number | null
+          source?: string
           strain?: number | null
           training_load?: number | null
           user_id: string
@@ -2270,6 +3109,7 @@ export type Database = {
           id?: string
           monotony?: number | null
           sleep_score?: number | null
+          source?: string
           strain?: number | null
           training_load?: number | null
           user_id?: string
@@ -2530,7 +3370,7 @@ export type Database = {
           deviation_threshold: number | null
           metric: string
           rolling_avg: number
-          updated_at: string
+          updated_at: string | null
           user_id: string
         }
         Insert: {
@@ -2538,7 +3378,7 @@ export type Database = {
           deviation_threshold?: number | null
           metric: string
           rolling_avg: number
-          updated_at?: string
+          updated_at?: string | null
           user_id: string
         }
         Update: {
@@ -2546,7 +3386,7 @@ export type Database = {
           deviation_threshold?: number | null
           metric?: string
           rolling_avg?: number
-          updated_at?: string
+          updated_at?: string | null
           user_id?: string
         }
         Relationships: []
@@ -2593,6 +3433,33 @@ export type Database = {
           target_value?: number | null
           user_id?: string
           week_start_date?: string
+        }
+        Relationships: []
+      }
+      user_context: {
+        Row: {
+          id: string
+          injuries: Json | null
+          preferences: Json | null
+          profile: Json | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          injuries?: Json | null
+          preferences?: Json | null
+          profile?: Json | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          id?: string
+          injuries?: Json | null
+          preferences?: Json | null
+          profile?: Json | null
+          updated_at?: string | null
+          user_id?: string
         }
         Relationships: []
       }
@@ -2844,6 +3711,72 @@ export type Database = {
         }
         Relationships: []
       }
+      user_injury_profiles: {
+        Row: {
+          body_location: string
+          clearance_milestones: Json
+          created_at: string
+          current_phase: Database["public"]["Enums"]["injury_phase_enum"]
+          id: string
+          injury_date: string
+          injury_type: Database["public"]["Enums"]["injury_type_enum"]
+          is_active: boolean
+          load_restrictions: string | null
+          notes: string | null
+          severity: number | null
+          surgery_date: string | null
+          target_return_date: string | null
+          treating_practitioner_name: string | null
+          treating_practitioner_type:
+            | Database["public"]["Enums"]["practitioner_type_enum"]
+            | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          body_location: string
+          clearance_milestones?: Json
+          created_at?: string
+          current_phase?: Database["public"]["Enums"]["injury_phase_enum"]
+          id?: string
+          injury_date: string
+          injury_type: Database["public"]["Enums"]["injury_type_enum"]
+          is_active?: boolean
+          load_restrictions?: string | null
+          notes?: string | null
+          severity?: number | null
+          surgery_date?: string | null
+          target_return_date?: string | null
+          treating_practitioner_name?: string | null
+          treating_practitioner_type?:
+            | Database["public"]["Enums"]["practitioner_type_enum"]
+            | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          body_location?: string
+          clearance_milestones?: Json
+          created_at?: string
+          current_phase?: Database["public"]["Enums"]["injury_phase_enum"]
+          id?: string
+          injury_date?: string
+          injury_type?: Database["public"]["Enums"]["injury_type_enum"]
+          is_active?: boolean
+          load_restrictions?: string | null
+          notes?: string | null
+          severity?: number | null
+          surgery_date?: string | null
+          target_return_date?: string | null
+          treating_practitioner_name?: string | null
+          treating_practitioner_type?:
+            | Database["public"]["Enums"]["practitioner_type_enum"]
+            | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_insight_actions: {
         Row: {
           acknowledged_at: string | null
@@ -2875,38 +3808,87 @@ export type Database = {
           suggestion?: string | null
           user_id?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "user_insight_actions_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       user_interests: {
         Row: {
+          available_minutes: number | null
+          collected_at: string | null
+          collection_method: string | null
           created_at: string | null
+          equipment_access: string[] | null
+          excluded_activities: string[] | null
           hobbies: string[] | null
           id: string
           interests: string[] | null
+          preferred_activities: string[] | null
           updated_at: string | null
           user_id: string
         }
         Insert: {
+          available_minutes?: number | null
+          collected_at?: string | null
+          collection_method?: string | null
           created_at?: string | null
+          equipment_access?: string[] | null
+          excluded_activities?: string[] | null
           hobbies?: string[] | null
           id?: string
           interests?: string[] | null
+          preferred_activities?: string[] | null
           updated_at?: string | null
           user_id: string
         }
         Update: {
+          available_minutes?: number | null
+          collected_at?: string | null
+          collection_method?: string | null
           created_at?: string | null
+          equipment_access?: string[] | null
+          excluded_activities?: string[] | null
           hobbies?: string[] | null
           id?: string
           interests?: string[] | null
+          preferred_activities?: string[] | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_life_formula: {
+        Row: {
+          assigned_at: string | null
+          device_source: string | null
+          formula_id: string
+          formula_name: string
+          id: string
+          rank: number | null
+          score: number | null
+          status: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          assigned_at?: string | null
+          device_source?: string | null
+          formula_id: string
+          formula_name: string
+          id?: string
+          rank?: number | null
+          score?: number | null
+          status: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          assigned_at?: string | null
+          device_source?: string | null
+          formula_id?: string
+          formula_name?: string
+          id?: string
+          rank?: number | null
+          score?: number | null
+          status?: string
           updated_at?: string | null
           user_id?: string
         }
@@ -3002,6 +3984,51 @@ export type Database = {
         }
         Relationships: []
       }
+      user_model: {
+        Row: {
+          active: boolean | null
+          category: string
+          confidence: number | null
+          created_at: string | null
+          device_source: string | null
+          first_detected: string | null
+          id: string
+          key: string
+          last_updated: string | null
+          source: string
+          user_id: string
+          value: Json
+        }
+        Insert: {
+          active?: boolean | null
+          category: string
+          confidence?: number | null
+          created_at?: string | null
+          device_source?: string | null
+          first_detected?: string | null
+          id?: string
+          key: string
+          last_updated?: string | null
+          source: string
+          user_id: string
+          value: Json
+        }
+        Update: {
+          active?: boolean | null
+          category?: string
+          confidence?: number | null
+          created_at?: string | null
+          device_source?: string | null
+          first_detected?: string | null
+          id?: string
+          key?: string
+          last_updated?: string | null
+          source?: string
+          user_id?: string
+          value?: Json
+        }
+        Relationships: []
+      }
       user_nutrition: {
         Row: {
           allergies: string[] | null
@@ -3082,6 +4109,7 @@ export type Database = {
           date_of_birth: string | null
           experience_level: string | null
           full_name: string | null
+          gender: string | null
           id: string
           onboarding_completed: boolean | null
           onboarding_skipped: boolean | null
@@ -3105,6 +4133,7 @@ export type Database = {
           date_of_birth?: string | null
           experience_level?: string | null
           full_name?: string | null
+          gender?: string | null
           id?: string
           onboarding_completed?: boolean | null
           onboarding_skipped?: boolean | null
@@ -3128,6 +4157,7 @@ export type Database = {
           date_of_birth?: string | null
           experience_level?: string | null
           full_name?: string | null
+          gender?: string | null
           id?: string
           onboarding_completed?: boolean | null
           onboarding_skipped?: boolean | null
@@ -3370,7 +4400,7 @@ export type Database = {
       }
       Users: {
         Row: {
-          created_at: string
+          created_at: string | null
           email: string | null
           email_preferences: Json | null
           id: string
@@ -3378,7 +4408,7 @@ export type Database = {
           wearables_connected: Json | null
         }
         Insert: {
-          created_at?: string
+          created_at?: string | null
           email?: string | null
           email_preferences?: Json | null
           id?: string
@@ -3386,22 +4416,14 @@ export type Database = {
           wearables_connected?: Json | null
         }
         Update: {
-          created_at?: string
+          created_at?: string | null
           email?: string | null
           email_preferences?: Json | null
           id?: string
           name?: string | null
           wearables_connected?: Json | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "Users_id_fkey"
-            columns: ["id"]
-            isOneToOne: true
-            referencedRelation: "Users"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       wearable_auto_data: {
         Row: {
@@ -3411,6 +4433,7 @@ export type Database = {
           id: number
           sleep: Json | null
           user_id: string
+          user_id_uuid: string | null
         }
         Insert: {
           activity?: Json | null
@@ -3419,6 +4442,7 @@ export type Database = {
           id?: number
           sleep?: Json | null
           user_id: string
+          user_id_uuid?: string | null
         }
         Update: {
           activity?: Json | null
@@ -3427,6 +4451,7 @@ export type Database = {
           id?: number
           sleep?: Json | null
           user_id?: string
+          user_id_uuid?: string | null
         }
         Relationships: []
       }
@@ -3434,71 +4459,161 @@ export type Database = {
         Row: {
           active_calories: number | null
           activity_score: number | null
+          avg_heart_rate: number | null
+          avg_hr_bpm: number | null
+          body_battery_end: number | null
+          body_battery_max: number | null
+          body_battery_min: number | null
+          body_battery_start: number | null
+          calories: number | null
           date: string
           deep_sleep_duration: number | null
+          device_model: string | null
+          distance_meters: number | null
+          duration_minutes: number | null
+          duration_seconds: number | null
+          end_time: string | null
           fetched_at: string | null
           hrv_avg: number | null
           id: string
+          intensity_minutes_moderate: number | null
+          intensity_minutes_vigorous: number | null
           light_sleep_duration: number | null
+          max_heart_rate: number | null
+          max_hr_bpm: number | null
           readiness_score: number | null
           rem_sleep_duration: number | null
+          respiration_rate_avg: number | null
           resting_hr: number | null
           running_distance_km: number | null
+          session_type: string | null
+          sleep_continuity_score: number | null
           sleep_efficiency: number | null
           sleep_score: number | null
+          sleep_stages: Json | null
           source: string
           spo2_avg: number | null
+          sport_type: string | null
+          start_time: string | null
+          stress_avg: number | null
+          stress_max: number | null
+          temperature_deviation: number | null
+          temperature_trend_deviation: number | null
           total_calories: number | null
           total_distance_km: number | null
           total_sleep_duration: number | null
           total_steps: number | null
+          training_load: number | null
+          training_status: string | null
+          updated_at: string | null
           user_id: string
+          vo2_max: number | null
         }
         Insert: {
           active_calories?: number | null
           activity_score?: number | null
+          avg_heart_rate?: number | null
+          avg_hr_bpm?: number | null
+          body_battery_end?: number | null
+          body_battery_max?: number | null
+          body_battery_min?: number | null
+          body_battery_start?: number | null
+          calories?: number | null
           date: string
           deep_sleep_duration?: number | null
+          device_model?: string | null
+          distance_meters?: number | null
+          duration_minutes?: number | null
+          duration_seconds?: number | null
+          end_time?: string | null
           fetched_at?: string | null
           hrv_avg?: number | null
           id?: string
+          intensity_minutes_moderate?: number | null
+          intensity_minutes_vigorous?: number | null
           light_sleep_duration?: number | null
+          max_heart_rate?: number | null
+          max_hr_bpm?: number | null
           readiness_score?: number | null
           rem_sleep_duration?: number | null
+          respiration_rate_avg?: number | null
           resting_hr?: number | null
           running_distance_km?: number | null
+          session_type?: string | null
+          sleep_continuity_score?: number | null
           sleep_efficiency?: number | null
           sleep_score?: number | null
+          sleep_stages?: Json | null
           source: string
           spo2_avg?: number | null
+          sport_type?: string | null
+          start_time?: string | null
+          stress_avg?: number | null
+          stress_max?: number | null
+          temperature_deviation?: number | null
+          temperature_trend_deviation?: number | null
           total_calories?: number | null
           total_distance_km?: number | null
           total_sleep_duration?: number | null
           total_steps?: number | null
+          training_load?: number | null
+          training_status?: string | null
+          updated_at?: string | null
           user_id: string
+          vo2_max?: number | null
         }
         Update: {
           active_calories?: number | null
           activity_score?: number | null
+          avg_heart_rate?: number | null
+          avg_hr_bpm?: number | null
+          body_battery_end?: number | null
+          body_battery_max?: number | null
+          body_battery_min?: number | null
+          body_battery_start?: number | null
+          calories?: number | null
           date?: string
           deep_sleep_duration?: number | null
+          device_model?: string | null
+          distance_meters?: number | null
+          duration_minutes?: number | null
+          duration_seconds?: number | null
+          end_time?: string | null
           fetched_at?: string | null
           hrv_avg?: number | null
           id?: string
+          intensity_minutes_moderate?: number | null
+          intensity_minutes_vigorous?: number | null
           light_sleep_duration?: number | null
+          max_heart_rate?: number | null
+          max_hr_bpm?: number | null
           readiness_score?: number | null
           rem_sleep_duration?: number | null
+          respiration_rate_avg?: number | null
           resting_hr?: number | null
           running_distance_km?: number | null
+          session_type?: string | null
+          sleep_continuity_score?: number | null
           sleep_efficiency?: number | null
           sleep_score?: number | null
+          sleep_stages?: Json | null
           source?: string
           spo2_avg?: number | null
+          sport_type?: string | null
+          start_time?: string | null
+          stress_avg?: number | null
+          stress_max?: number | null
+          temperature_deviation?: number | null
+          temperature_trend_deviation?: number | null
           total_calories?: number | null
           total_distance_km?: number | null
           total_sleep_duration?: number | null
           total_steps?: number | null
+          training_load?: number | null
+          training_status?: string | null
+          updated_at?: string | null
           user_id?: string
+          vo2_max?: number | null
         }
         Relationships: []
       }
@@ -3550,9 +4665,11 @@ export type Database = {
           expires_at: string | null
           expires_in: number | null
           fitbit_user_id: string | null
+          provider_user_id: string | null
           refresh_token: string | null
           refresh_token_encrypted: string | null
           scope: string
+          status: string
           token_type: string | null
           updated_at: string | null
           user_id: string
@@ -3565,9 +4682,11 @@ export type Database = {
           expires_at?: string | null
           expires_in?: number | null
           fitbit_user_id?: string | null
+          provider_user_id?: string | null
           refresh_token?: string | null
           refresh_token_encrypted?: string | null
           scope?: string
+          status?: string
           token_type?: string | null
           updated_at?: string | null
           user_id: string
@@ -3580,9 +4699,11 @@ export type Database = {
           expires_at?: string | null
           expires_in?: number | null
           fitbit_user_id?: string | null
+          provider_user_id?: string | null
           refresh_token?: string | null
           refresh_token_encrypted?: string | null
           scope?: string
+          status?: string
           token_type?: string | null
           updated_at?: string | null
           user_id?: string
@@ -3591,7 +4712,7 @@ export type Database = {
       }
       Wearables: {
         Row: {
-          created_at: string
+          created_at: string | null
           date: string | null
           heart_rate: number | null
           HRV: number | null
@@ -3601,7 +4722,7 @@ export type Database = {
           user_id: string | null
         }
         Insert: {
-          created_at?: string
+          created_at?: string | null
           date?: string | null
           heart_rate?: number | null
           HRV?: number | null
@@ -3611,7 +4732,7 @@ export type Database = {
           user_id?: string | null
         }
         Update: {
-          created_at?: string
+          created_at?: string | null
           date?: string | null
           heart_rate?: number | null
           HRV?: number | null
@@ -3620,15 +4741,7 @@ export type Database = {
           steps?: number | null
           user_id?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "Wearables_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "Users"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       weekly_reflections: {
         Row: {
@@ -3691,22 +4804,7 @@ export type Database = {
           recommendation_id?: string | null
           user_id?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "yves_feedback_recommendation_id_fkey"
-            columns: ["recommendation_id"]
-            isOneToOne: false
-            referencedRelation: "adaptive_recommendations"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "yves_feedback_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       yves_memory_bank: {
         Row: {
@@ -3743,7 +4841,7 @@ export type Database = {
           metric: string
           reasoning: string | null
           risk_status: string | null
-          updated_at: string
+          updated_at: string | null
           user_id: string
         }
         Insert: {
@@ -3753,7 +4851,7 @@ export type Database = {
           metric: string
           reasoning?: string | null
           risk_status?: string | null
-          updated_at?: string
+          updated_at?: string | null
           user_id: string
         }
         Update: {
@@ -3763,7 +4861,7 @@ export type Database = {
           metric?: string
           reasoning?: string | null
           risk_status?: string | null
-          updated_at?: string
+          updated_at?: string | null
           user_id?: string
         }
         Relationships: []
@@ -3906,6 +5004,7 @@ export type Database = {
       cleanup_expired_garmin_oauth_state: { Args: never; Returns: undefined }
       cleanup_expired_rate_limits: { Args: never; Returns: undefined }
       cleanup_old_pattern_views: { Args: never; Returns: undefined }
+      ensure_user_bootstrap: { Args: never; Returns: undefined }
       get_latest_insights: {
         Args: never
         Returns: {
@@ -3940,6 +5039,26 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "moderator" | "user"
+      injury_phase_enum:
+        | "acute"
+        | "sub_acute"
+        | "rehabilitation"
+        | "return_to_sport"
+        | "full_clearance"
+      injury_type_enum:
+        | "muscle_strain"
+        | "ligament_tear"
+        | "fracture"
+        | "surgery"
+        | "spinal"
+        | "tendinopathy"
+        | "other"
+      practitioner_type_enum:
+        | "physio"
+        | "surgeon"
+        | "sports_doctor"
+        | "biokineticist"
+        | "other"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -3955,12 +5074,12 @@ export type Tables<
   DefaultSchemaTableNameOrOptions extends
     | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
         DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -3984,11 +5103,11 @@ export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -4009,11 +5128,11 @@ export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -4034,11 +5153,11 @@ export type Enums<
   DefaultSchemaEnumNameOrOptions extends
     | keyof DefaultSchema["Enums"]
     | { schema: keyof DatabaseWithoutInternals },
-  EnumName extends DefaultSchemaEnumNameOrOptions extends {
+  EnumName extends (DefaultSchemaEnumNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaEnumNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -4051,11 +5170,11 @@ export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
     | keyof DefaultSchema["CompositeTypes"]
     | { schema: keyof DatabaseWithoutInternals },
-  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
+  CompositeTypeName extends (PublicCompositeTypeNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
-    : never = never,
+    : never) = never,
 > = PublicCompositeTypeNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -4068,6 +5187,29 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "moderator", "user"],
+      injury_phase_enum: [
+        "acute",
+        "sub_acute",
+        "rehabilitation",
+        "return_to_sport",
+        "full_clearance",
+      ],
+      injury_type_enum: [
+        "muscle_strain",
+        "ligament_tear",
+        "fracture",
+        "surgery",
+        "spinal",
+        "tendinopathy",
+        "other",
+      ],
+      practitioner_type_enum: [
+        "physio",
+        "surgeon",
+        "sports_doctor",
+        "biokineticist",
+        "other",
+      ],
     },
   },
 } as const

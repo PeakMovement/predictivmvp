@@ -293,12 +293,24 @@ const AppInner = () => {
   const isOAuthRoute = OAUTH_PATHS.some(p => location.pathname.startsWith(p));
 
   useEffect(() => {
+    // Creates the user's own base records the first time a session appears.
+    // Idempotent and safe to call on every sign-in.
+    const bootstrapUser = () => {
+      void supabase.rpc("ensure_user_bootstrap").then(({ error }) => {
+        if (error) console.error("user bootstrap failed:", error.message);
+      });
+    };
+
     supabase.auth.getSession().then(({ data: { session } }) => {
       setIsAuthenticated(!!session);
+      if (session) bootstrapUser();
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       setIsAuthenticated(!!session);
+      if (session && (event === "SIGNED_IN" || event === "USER_UPDATED")) {
+        setTimeout(bootstrapUser, 0);
+      }
       if (event === "SIGNED_OUT") {
         queryClient.clear();
         const lsKeys = [

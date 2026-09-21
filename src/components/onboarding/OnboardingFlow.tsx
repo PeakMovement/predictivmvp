@@ -121,7 +121,7 @@ export const OnboardingFlow = ({ onComplete, onSkip }: OnboardingFlowProps) => {
 
     let savedWearables: string[] = [];
     if (wearableMem?.memory_value) {
-      try { savedWearables = JSON.parse(wearableMem.memory_value); } catch { /* ignore */ }
+      try { savedWearables = JSON.parse(String(wearableMem.memory_value)); } catch { /* ignore */ }
     }
 
     setData((prev) => ({

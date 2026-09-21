@@ -104,7 +104,7 @@ export const DevicesSettings = ({ isSectionVisible }: DevicesSettingsProps) => {
   const deleteReturnCount = async (
     query: ReturnType<typeof supabase.from>,
   ) => {
-    // @ts-expect-error — chained builder typing is flexible
+    // chained builder typing is flexible
     const { data, error } = await query.select();
     return { error, count: Array.isArray(data) ? data.length : 0 };
   };

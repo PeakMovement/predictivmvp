@@ -5004,6 +5004,7 @@ export type Database = {
       cleanup_expired_garmin_oauth_state: { Args: never; Returns: undefined }
       cleanup_expired_rate_limits: { Args: never; Returns: undefined }
       cleanup_old_pattern_views: { Args: never; Returns: undefined }
+      ensure_user_bootstrap: { Args: never; Returns: undefined }
       get_latest_insights: {
         Args: never
         Returns: {

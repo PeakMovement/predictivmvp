@@ -20,7 +20,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      __apply_schema_sql: { Args: { sql: string }; Returns: undefined }
     }
     Enums: {
       [_ in never]: never

@@ -29,7 +29,7 @@ export function SymptomInjuryTrendCard() {
           .select("severity, created_at, symptom_type")
           .eq("user_id", user.id).gte("created_at", since)
           .order("created_at", { ascending: true }),
-        (supabase.from as (t: string) => ReturnType<typeof supabase.from>)("user_injury_profiles")
+        supabase.from("user_injury_profiles")
           .select("body_location, severity, is_active, injury_date")
           .eq("user_id", user.id).eq("is_active", true)
           .order("injury_date", { ascending: false }),

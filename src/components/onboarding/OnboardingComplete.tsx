@@ -24,7 +24,7 @@ const LABELS: Record<string, string> = {
   stress: "Stress Management", longevity: "Longevity", rehab: "Rehab / Healing",
   solid: "Solid", variable: "Variable", short: "Chronically short", disrupted: "Disrupted",
   high: "High", medium: "Balanced", low: "Passive",
-  "none": "No injuries", overuse: "Overuse history", acute: "Acute history",
+  overuse: "Overuse history", acute: "Acute history",
   current: "Current injury", multiple: "Multiple / recurring",
 };
 

@@ -1,7 +1,7 @@
-// Central Supabase config — single source of truth for the project URL and
-// Edge Functions base. Prefer VITE_SUPABASE_URL; fall back to the project URL.
-export const SUPABASE_URL: string =
-  import.meta.env.VITE_SUPABASE_URL ?? "https://ixtwbkikyuexskdgfpfq.supabase.co";
+// Central backend config — single source of truth for the project URL and
+// Edge Functions base. Always resolved from the environment so the app follows
+// whichever backend it is connected to.
+export const SUPABASE_URL: string = import.meta.env.VITE_SUPABASE_URL;
 
 export const FUNCTIONS_URL = `${SUPABASE_URL}/functions/v1`;
 

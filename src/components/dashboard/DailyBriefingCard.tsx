@@ -25,6 +25,7 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Loader as Loader2, RefreshCw, TriangleAlert as AlertTriangle, TrendingUp, ChevronDown, Brain, Lightbulb } from "lucide-react";
 import { format } from "date-fns";
+import { jsPDF } from "jspdf";
 import { PredictivMark } from "@/components/PredictivMark";
 import { YvesDailyBriefing, YvesRecommendation } from "@/hooks/useYvesIntelligence";
 import { cn } from "@/lib/utils";

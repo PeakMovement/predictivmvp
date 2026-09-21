@@ -46,6 +46,7 @@ serve(async (req) => {
     }
 
     // Log preferences (mock implementation)
+    console.log("[email-preferences] update", {
       timestamp: new Date().toISOString(),
       preferences: {
         weeklySummary: preferences.weeklySummary,

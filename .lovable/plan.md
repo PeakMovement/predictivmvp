@@ -1,174 +1,90 @@
+# Migrate Old Predictiv onto Lovable Cloud
 
+## What I found first (inventory done, nothing disconnected)
 
-## Predictiv — Full Platform Review
+I catalogued the whole product before proposing anything. The full write-up is
+saved as `MIGRATION_VALUE_INVENTORY.md` in the project.
 
-### What It Is
+Headline: **90 backend functions, 138 database migrations, ~130 tables, 40+ docs.**
 
-Predictiv is a **health intelligence platform** that connects to wearable devices (Oura Ring, Garmin, Polar, Fitbit) and uses AI to provide personalized health coaching, risk analysis, and training recommendations. The AI coach is called **Yves**.
+The paid analysis is concentrated in roughly 25 of those functions:
+- Risk and trend maths (risk drivers, baselines, deviation, anomalies, life formulas, data maturity)
+- The whole Yves AI system (daily briefing, intelligence, chat, memory, recommendations) — the briefing engine alone is 81 KB of logic and prompts
+- Clinical triage and provider matching, plus the 4-layer clinical reasoning library
+- Wearable ingestion for Oura, Garmin and Polar, including token refresh, webhooks and retry/rate-limit handling
+- The behavioural learning loop that adapts to each user
 
-### What It Aims To Be
+## Old Predictiv vs Predictiv Finder
 
-A comprehensive health command center that:
-- Ingests real-time wearable data (sleep, HRV, activity, heart rate)
-- Establishes personal baselines over 30 days and detects deviations
-- Assigns risk zones (green/yellow/red) based on deviation percentages
-- Provides an AI health coach (Yves) with full contextual awareness of the user's health history, training phase, injuries, and goals
-- Supports document intelligence (medical records, training plans)
-- Enables practitioner matching and symptom triage
-- Offers daily briefings, recommendations, and an insights timeline
+Finder has only 6 functions and covers a practitioner directory, bookings,
+simple symptom severity and AI health plans. Everything else in Old Predictiv is
+unique: wearables, Yves, risk engines, learning loop, escalation/alerting,
+planner and challenges, document intelligence, and the ops layer.
 
-### What Has Been Built (Version 121)
+So **merging into Finder is not the safe path** — Finder would have to absorb
+~85 unique functions. My recommendation is to keep Old Predictiv as its own
+product and move it onto its own Cloud backend, exactly as you asked.
 
-**Frontend (React + TypeScript + Tailwind + Shadcn/ui):**
-- Authentication (login/register) with Supabase Auth
-- 10-section onboarding profile (injuries, lifestyle, nutrition, training, medical, wellness goals, recovery, mindset, interests)
-- Dashboard with daily briefing, risk score, AI recommendations, personalization insights
-- Health page with score cards, trends, HRV/HR details
-- Training page with calendars, accountability challenges, session comparison
-- Planner with daily plan view and weekly reflections
-- Yves AI chat interface (conversational + sheet overlay)
-- Insights Tree (visual timeline of AI advice)
-- Symptom check-in system
-- Find Help / practitioner matching
-- Document upload and AI analysis
-- Settings with device connections, theme customization, notifications
-- Admin dashboard
-- Offline support, pull-to-refresh, session timeout, layout customization
-- Bottom navigation with tab-based routing (not React Router for main pages)
+## Things I found that look obsolete (evidence in the inventory, nothing deleted)
 
-**Backend (Supabase Edge Functions — ~60+ functions):**
-- Wearable data sync: Oura, Garmin, Fitbit, Polar
-- Baseline calculation (30-day rolling averages)
-- Deviation detection and risk zone assignment
-- AI intelligence layer (Yves chat, daily briefing, recommendations, insights tree, memory bank)
-- Document analysis
-- Notification system (SMS via Twilio, email summaries)
-- Health anomaly detection
-- Treatment plan generation
-- Provider matching and triage
-- Google Calendar integration
-- System health monitoring
+- `seed-physicians` — 30 hardcoded **US** demo doctors, superseded by the real SA practitioner list
+- `oura-auth-test`, `test-twilio-env` — debug probes
+- Fitbit tables with no matching backend code
+- Polar is built but outside the agreed Oura + Garmin scope — carried over dormant
 
-**Database (PostgreSQL via Supabase):**
-- ~30+ tables covering wearable sessions, summaries, training trends, user profiles (10 tables), AI memory/history, baselines, recommendations, documents, notifications, and logs
-- Row Level Security on all tables
-- Realtime subscriptions for live updates
+## The plan
 
-### What Has Been Struggled With
+**Step 1 — Archive first.** Commit the inventory plus a full copy of every
+function, migration, prompt and dataset to an archive path in this repo, so the
+IP is safe on disk regardless of what happens to the old Supabase project.
 
-**1. Garmin Integration (Current Active Issue)**
-The Garmin webhook (`garmin-webhook` edge function) is failing Garmin's Partner Verification portal with 403 errors and null responses. The root cause has been identified as **Cloudflare bot protection** sitting in front of Supabase's infrastructure, which blocks Garmin's automated verification requests before they reach the edge function. The code itself is correct — `verify_jwt = false` is set, and all code paths return HTTP 200. This is an **infrastructure-level issue** requiring Supabase support to whitelist Garmin's IP ranges.
+**Step 2 — Turn on Lovable Cloud.** This creates a brand-new backend for this
+project. The old one stays untouched and connected until the new one is proven.
 
-**2. Oura Integration (Previously Resolved)**
-Multiple rounds of debugging OAuth flows, token refresh, data syncing, and UI display. Documented extensively in 7+ troubleshooting files (OURA_AUTH_TROUBLESHOOTING.md, OURA_FIX_GUIDE.md, etc.).
+**Step 3 — Rebuild the database.** The 138 migrations contain replay artefacts
+and duplicate rebuilds, so replaying them blindly will fail. I'll build one
+clean consolidated schema covering all ~130 tables, their access rules, roles,
+triggers and helper functions, and apply that to Cloud.
 
-**3. Complex State Management**
-The app uses tab-based navigation via `useState` in App.tsx rather than React Router for main pages, with special-cased routes for OAuth callbacks. This creates complexity.
+**Step 4 — Redeploy the backend logic.** All 90 functions move across with their
+scoring models and prompts intact. Dead debug endpoints are dropped and noted.
 
----
+**Step 5 — Reconnect the outside world.** Re-enter every API key and update the
+callback addresses at Oura, Garmin, Polar, Google, Calendly and Stripe.
 
-## All Garmin-Related Code
+**Step 6 — Move your data.** This is the one step I cannot do alone (see below).
 
-Here is every file related to the Garmin API integration:
+**Step 7 — Verify, then cut over.** Sign in, run a wearable sync, generate a
+briefing, run a risk calculation and a provider match end to end. Only once
+those pass do we switch the app over and, if you want it reachable, publish it.
 
----
+**Step 8 — Deliver the "what we preserved from the R30k build" summary.**
 
-### 1. `supabase/config.toml` — Garmin JWT Settings (lines 144-157)
+## What I need from you
 
-```toml
-[functions.garmin-auth-initiate]
-verify_jwt = false
+1. **The database password** for the old project (`ixtwbkikyuexskdgfpfq`) —
+   found in its Supabase dashboard under Settings → Database. Without it I
+   cannot export your existing rows or user accounts. I'll ask for it through
+   the secure form, never in chat.
+2. **The API keys** again for Oura, Garmin, Polar, Google, Stripe, Twilio and
+   Resend. Supabase never reveals stored keys, so they have to be re-entered.
+3. A decision on **existing user accounts**: carry them across with their
+   passwords (needs the export above), or have people re-register.
 
-[functions.garmin-auth]
-verify_jwt = false
+If the password isn't available, I can still do everything except the data move
+— you'd get a fully working Cloud backend with an empty database, and we can
+import the data later.
 
-[functions.fetch-garmin-data]
-verify_jwt = false
+## Technical detail
 
-[functions.fetch-garmin-auto]
-verify_jwt = false
-
-[functions.garmin-webhook]
-verify_jwt = false
-```
-
-All five Garmin functions have `verify_jwt = false`.
-
----
-
-### 2. `supabase/functions/garmin-auth-initiate/index.ts` (174 lines)
-
-Initiates the Garmin OAuth 2.0 PKCE flow. Authenticates the Supabase user, generates a code_verifier/code_challenge, stores them in `garmin_oauth_state` table (10-min TTL), and returns the Garmin authorization URL.
-
-**Key env vars:** `GARMIN_CONSUMER_KEY`, `GARMIN_REDIRECT_URI`
-
-**Full file shown above in the tool results.**
-
----
-
-### 3. `supabase/functions/garmin-auth/index.ts` (231 lines)
-
-Handles the OAuth callback from Garmin. Validates state, retrieves PKCE code_verifier, exchanges the authorization code for tokens at `https://diauth.garmin.com/di-oauth2-service/oauth/token`, stores tokens in `wearable_tokens` (keyed on `user_id, scope='garmin'`), and redirects to the frontend.
-
-**Key env vars:** `GARMIN_CONSUMER_KEY`, `GARMIN_CONSUMER_SECRET`, `GARMIN_REDIRECT_URI`, `FRONTEND_URL`
-
-**Full file shown above in the tool results.**
-
----
-
-### 4. `supabase/functions/garmin-webhook/index.ts` (580 lines)
-
-Push notification webhook for Garmin Health API. Processes: dailies, sleeps, activities, activityDetails, hrvSummaries, deregistrations, userPermissionsChange. Every code path returns HTTP 200. Resolves Garmin's `userAccessToken` to internal `user_id` via the `wearable_tokens` table. After processing, triggers `calculate-oura-trends` for affected users.
-
-**THIS IS THE FUNCTION WITH THE 403 ISSUE** — the code is correct, but Cloudflare blocks Garmin's verification requests before they reach it.
-
-**Full file shown above in the tool results (all 580 lines).**
-
----
-
-### 5. `supabase/functions/fetch-garmin-data/index.ts` (615 lines)
-
-Pull-based data sync. Fetches last 7 days from Garmin Wellness API (`/dailies`, `/sleeps`, `/activities`), merges by date, upserts into `wearable_sessions`, calculates training trends (ACWR, strain, monotony), and upserts into `training_trends` and `wearable_summary`. Supports single-user or all-users mode. Includes token refresh logic.
-
-**Key env vars:** `GARMIN_CONSUMER_KEY`, `GARMIN_CONSUMER_SECRET`
-**API base:** `https://apis.garmin.com/wellness-api/rest`
-
-**Full file shown above in the tool results (all 615 lines).**
-
----
-
-### 6. `supabase/functions/fetch-garmin-auto/index.ts` (67 lines)
-
-Scheduled auto-sync wrapper. Simply POSTs to `fetch-garmin-data` with no `user_id` (processes all Garmin users). Designed for cron job invocation.
-
-**Full file shown above in the tool results.**
-
----
-
-### 7. `src/components/ConnectGarminButton.tsx` (84 lines)
-
-Frontend button component. Calls `garmin-auth-initiate` edge function, redirects to the returned `auth_url`. Shows connected/disconnected states.
-
-**Full file shown above in the tool results.**
-
----
-
-### Database Tables Used by Garmin
-
-- **`wearable_tokens`** — Stores OAuth tokens (access_token, refresh_token, expires_at) with composite key `(user_id, scope='garmin')`
-- **`garmin_oauth_state`** — Temporary PKCE state storage (state, code_verifier, expires_at) with 10-minute TTL
-- **`wearable_sessions`** — Raw daily metrics with composite key `(user_id, source='garmin', date)`
-- **`wearable_summary`** — Calculated metrics (strain, monotony, ACWR) with composite key `(user_id, source='garmin', date)`
-- **`training_trends`** — Historical trend data with composite key `(user_id, date)`
-- **`oura_logs`** — Sync operation logging (shared with Oura)
-
----
-
-### The 403 Problem Summary
-
-The `garmin-webhook` function code is correct. The 403 is produced by **Cloudflare's bot protection layer** that sits between Garmin's servers and Supabase's edge functions. Solutions:
-
-1. **Contact Supabase support** to whitelist Garmin's IPs at the Cloudflare level
-2. **Deploy a proxy** (Cloudflare Worker, Vercel, or Railway) that receives Garmin pushes and forwards them to the Supabase endpoint
-3. Garmin does not publish a public IP allowlist — coordinate through Supabase support
-
+- Consolidated baseline migration replaces the 138-file history; the originals
+  are preserved under the archive path for provenance.
+- `public.*` tables each get explicit `GRANT`s plus RLS scoped to
+  `auth.uid() = user_id`; roles stay in the separate `user_roles` table behind
+  the `has_role()` security-definer function.
+- `_shared/` libraries (`layered-reasoning`, `ai-provider`, `oura-token-refresh`,
+  `focus-mode-prompts`, `rate-limiter`, `sanitization`, `cache`) move verbatim.
+- `src/integrations/supabase/client.ts` and `src/lib/supabaseConfig.ts` currently
+  hardcode the old project URL; they get repointed to Cloud env vars at cutover.
+- `pg_cron` schedules for auto-sync and briefing generation are re-created on Cloud.
+- The old Supabase link is left in place until verification passes.
